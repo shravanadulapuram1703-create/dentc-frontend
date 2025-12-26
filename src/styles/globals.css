@@ -1,0 +1,607 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Medical Professional Color Palette */
+  --color-white: #FFFFFF;
+  --color-soft-white: #FAFBFC;
+  --color-light-gray: #F5F7FA;
+  --color-border-gray: #E4E7EB;
+  --color-medium-gray: #CBD5E1;
+  
+  /* Medical Accent Colors */
+  --color-medical-blue: #0077B6;
+  --color-medical-blue-light: #0096C7;
+  --color-medical-blue-dark: #023E8A;
+  --color-medical-teal: #009688;
+  --color-medical-teal-light: #26A69A;
+  --color-medical-green: #4CAF50;
+  --color-medical-green-light: #66BB6A;
+  
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-success-light: #D1FAE5;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-error: #EF4444;
+  --color-error-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+  
+  /* Text Colors - High Contrast */
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-text-white: #FFFFFF;
+  
+  /* Background Colors */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F8FAFC;
+  --color-bg-tertiary: #F1F5F9;
+  --color-bg-hover: #F1F5F9;
+  --color-bg-active: #E2E8F0;
+  
+  /* Border Colors */
+  --color-border-light: #E2E8F0;
+  --color-border-medium: #CBD5E1;
+  --color-border-dark: #94A3B8;
+  --color-border-focus: #0077B6;
+  
+  /* Input Backgrounds */
+  --color-input-bg: #FFFFFF;
+  --color-input-border: #CBD5E1;
+  --color-input-focus-border: #0077B6;
+  --color-input-disabled-bg: #F1F5F9;
+  
+  /* Typography */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Poppins', sans-serif;
+  --font-size-base: 16px;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  
+  /* Spacing System (8px base for medical precision) */
+  --spacing-xs: 0.25rem;     /* 4px */
+  --spacing-sm: 0.5rem;      /* 8px */
+  --spacing-md: 1rem;        /* 16px */
+  --spacing-lg: 1.5rem;      /* 24px */
+  --spacing-xl: 2rem;        /* 32px */
+  --spacing-2xl: 3rem;       /* 48px */
+  --spacing-3xl: 4rem;       /* 64px */
+  
+  /* Border Radius - Subtle, Professional */
+  --radius-sm: 0.375rem;     /* 6px */
+  --radius-md: 0.5rem;       /* 8px */
+  --radius-lg: 0.75rem;      /* 12px */
+  --radius-xl: 1rem;         /* 16px */
+  --radius-2xl: 1.5rem;      /* 24px */
+  --radius-full: 9999px;
+  
+  /* Shadows - Subtle, Professional */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(0, 119, 182, 0.15);
+  --shadow-glow-blue: 0 0 20px rgba(0, 119, 182, 0.2);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Legacy Compatibility */
+  --background: #FFFFFF;
+  --foreground: #1E293B;
+  --card: #FFFFFF;
+  --card-foreground: #1E293B;
+  --popover: #FFFFFF;
+  --popover-foreground: #1E293B;
+  --primary: #0077B6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #1E293B;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #009688;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2E8F0;
+  --input: #CBD5E1;
+  --ring: #0077B6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  --radius-sm: calc(var(--radius-md) - 2px);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: var(--font-size-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-primary);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+  
+  /* Professional Scrollbar */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--color-light-gray);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-medium-gray);
+    border-radius: var(--radius-full);
+    border: 3px solid var(--color-light-gray);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-medical-blue);
+  }
+}
+
+/**
+ * Medical-Grade Typography System
+ */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.3;
+  }
+  
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: 2rem;
+      font-weight: var(--font-weight-bold);
+      line-height: 1.2;
+      margin-bottom: var(--spacing-md);
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: var(--font-weight-bold);
+      line-height: 1.25;
+      margin-bottom: var(--spacing-md);
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    h4 {
+      font-size: 1.25rem;
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.4;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.5;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.01em;
+    }
+
+    button {
+      font-size: 0.9375rem;
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.5;
+      letter-spacing: 0.01em;
+    }
+
+    input, textarea, select {
+      font-size: 0.9375rem;
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+      color: var(--color-text-primary);
+    }
+    
+    p {
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-md);
+    }
+  }
+}
+
+/**
+ * MEDICAL-GRADE INPUT & SELECT SYSTEM - MAXIMUM VISIBILITY
+ */
+@layer base {
+  /* All Inputs - High Contrast, Professional */
+  input:not([type="checkbox"]):not([type="radio"]) {
+    background: var(--color-input-bg) !important;
+    color: var(--color-text-primary) !important;
+    border: 2px solid var(--color-input-border) !important;
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  input:not([type="checkbox"]):not([type="radio"]):focus {
+    background: var(--color-white) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-input-focus-border) !important;
+    outline: none !important;
+    box-shadow: var(--shadow-focus) !important;
+  }
+  
+  input:not([type="checkbox"]):not([type="radio"]):disabled {
+    background: var(--color-input-disabled-bg) !important;
+    color: var(--color-text-muted) !important;
+    cursor: not-allowed !important;
+  }
+  
+  /* Select Dropdowns - MAXIMUM VISIBILITY */
+  select {
+    background: var(--color-input-bg) !important;
+    color: var(--color-text-primary) !important;
+    border: 2px solid var(--color-input-border) !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: var(--radius-md) !important;
+    font-weight: var(--font-weight-medium) !important;
+    cursor: pointer !important;
+  }
+  
+  select:focus {
+    background: var(--color-white) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-input-focus-border) !important;
+    outline: none !important;
+    box-shadow: var(--shadow-focus) !important;
+  }
+  
+  /* Select Options - CRITICAL VISIBILITY */
+  select option {
+    background: var(--color-white) !important;
+    color: var(--color-text-primary) !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  select option:hover,
+  select option:checked,
+  select option:focus {
+    background: var(--color-medical-blue) !important;
+    color: var(--color-white) !important;
+  }
+  
+  select:disabled {
+    background: var(--color-input-disabled-bg) !important;
+    color: var(--color-text-muted) !important;
+    cursor: not-allowed !important;
+  }
+  
+  /* Textarea */
+  textarea {
+    background: var(--color-input-bg) !important;
+    color: var(--color-text-primary) !important;
+    border: 2px solid var(--color-input-border) !important;
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  textarea:focus {
+    background: var(--color-white) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-input-focus-border) !important;
+    outline: none !important;
+    box-shadow: var(--shadow-focus) !important;
+  }
+  
+  /* Placeholder Text - High Visibility */
+  input::placeholder,
+  textarea::placeholder,
+  select::placeholder {
+    color: var(--color-text-muted) !important;
+    opacity: 1 !important;
+    font-weight: var(--font-weight-normal) !important;
+  }
+  
+  /* Checkboxes and Radio Buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    border: 2px solid var(--color-input-border) !important;
+    cursor: pointer !important;
+  }
+  
+  input[type="checkbox"]:checked,
+  input[type="radio"]:checked {
+    background-color: var(--color-medical-blue) !important;
+    border-color: var(--color-medical-blue) !important;
+  }
+  
+  input[type="checkbox"]:focus,
+  input[type="radio"]:focus {
+    box-shadow: var(--shadow-focus) !important;
+  }
+}
+
+/**
+ * Medical Professional Components
+ */
+@layer components {
+  /* Professional Card */
+  .card-medical {
+    background: var(--color-white);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+  }
+  
+  .card-medical:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-border-medium);
+  }
+  
+  /* Medical Button - Primary */
+  .btn-medical-primary {
+    background: var(--color-medical-blue);
+    color: var(--color-white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .btn-medical-primary:hover {
+    background: var(--color-medical-blue-dark);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  
+  .btn-medical-primary:active {
+    transform: translateY(0);
+  }
+  
+  .btn-medical-primary:disabled {
+    background: var(--color-medium-gray);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  /* Medical Button - Secondary */
+  .btn-medical-secondary {
+    background: var(--color-white);
+    color: var(--color-medical-blue);
+    border: 2px solid var(--color-medical-blue);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-semibold);
+    transition: all var(--transition-base);
+    cursor: pointer;
+  }
+  
+  .btn-medical-secondary:hover {
+    background: var(--color-medical-blue);
+    color: var(--color-white);
+    transform: translateY(-1px);
+  }
+  
+  /* Medical Input - Professional */
+  .input-medical {
+    background: var(--color-white);
+    border: 2px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-base);
+    width: 100%;
+  }
+  
+  .input-medical:focus {
+    outline: none;
+    border-color: var(--color-medical-blue);
+    box-shadow: var(--shadow-focus);
+  }
+  
+  .input-medical::placeholder {
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-normal);
+  }
+  
+  /* Status Badge */
+  .badge-success {
+    background: var(--color-success-light);
+    color: var(--color-success);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .badge-warning {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .badge-error {
+    background: var(--color-error-light);
+    color: var(--color-error);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .badge-info {
+    background: var(--color-info-light);
+    color: var(--color-info);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/**
+ * Medical Professional Utilities
+ */
+@layer utilities {
+  /* Medical Icon Backgrounds - Solid, Crisp */
+  .icon-medical-blue {
+    background: var(--color-medical-blue);
+    color: var(--color-white);
+    border-radius: var(--radius-md);
+  }
+  
+  .icon-medical-teal {
+    background: var(--color-medical-teal);
+    color: var(--color-white);
+    border-radius: var(--radius-md);
+  }
+  
+  .icon-medical-green {
+    background: var(--color-medical-green);
+    color: var(--color-white);
+    border-radius: var(--radius-md);
+  }
+  
+  /* Hover Effects - Subtle, Professional */
+  .hover-lift {
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Focus Visible - Accessibility */
+  .focus-visible-medical:focus-visible {
+    outline: 2px solid var(--color-medical-blue);
+    outline-offset: 2px;
+  }
+  
+  /* Text Utilities */
+  .text-medical-blue {
+    color: var(--color-medical-blue);
+  }
+  
+  .text-medical-teal {
+    color: var(--color-medical-teal);
+  }
+  
+  .text-medical-green {
+    color: var(--color-medical-green);
+  }
+  
+  /* Background Utilities */
+  .bg-medical-blue {
+    background-color: var(--color-medical-blue);
+  }
+  
+  .bg-medical-teal {
+    background-color: var(--color-medical-teal);
+  }
+  
+  .bg-medical-green {
+    background-color: var(--color-medical-green);
+  }
+  
+  /* Border Utilities */
+  .border-medical-blue {
+    border-color: var(--color-medical-blue);
+  }
+  
+  .border-medical-teal {
+    border-color: var(--color-medical-teal);
+  }
+}
+
+/**
+ * Accessibility Enhancements
+ */
+@layer base {
+  /* Focus Indicators */
+  *:focus-visible {
+    outline: 2px solid var(--color-medical-blue);
+    outline-offset: 2px;
+  }
+  
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* High Contrast Mode Support */
+  @media (prefers-contrast: high) {
+    * {
+      border-width: 2px !important;
+    }
+  }
+}
