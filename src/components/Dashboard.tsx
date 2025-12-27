@@ -182,6 +182,7 @@ export default function Dashboard({ onLogout, currentOffice, setCurrentOffice, u
         {/* SECTION A: Welcome User / Identity Panel */}
         <div className="bg-white rounded-xl shadow-md border border-[#E2E8F0] overflow-hidden">
           {/* Header Bar - Slate Blue */}
+          {/* Header Bar - Slate Blue */}
           <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -192,19 +193,28 @@ export default function Dashboard({ onLogout, currentOffice, setCurrentOffice, u
                   Welcome, {user?.name || 'User'}
                 </h1>
                 <p className="text-white/80 text-sm font-medium">
-                  {roleInfo.label}
+                  {user?.role}
                 </p>
               </div>
             </div>
+
+            {/* Status Pill */}
             <div className="flex items-center gap-2">
-              <div className="px-4 py-2 bg-[#2FB9A7] rounded-lg">
+              <div
+                className={`px-4 py-2 rounded-lg ${
+                  user?.isActive ? 'bg-green-500' : 'bg-red-500'
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-white" strokeWidth={2} />
-                  <span className="text-white font-semibold text-sm">Active</span>
+                  <span className="text-white font-semibold text-sm">
+                    {user?.isActive ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
+
 
           {/* User Details Grid */}
           <div className="grid grid-cols-4 gap-4 p-6 bg-[#F7F9FC]">
@@ -254,19 +264,36 @@ export default function Dashboard({ onLogout, currentOffice, setCurrentOffice, u
             </div>
 
             {/* Account Status */}
+            {/* Account Status */}
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-[#2FB9A7]/10 rounded-lg">
-                  <CheckCircle2 className="w-4 h-4 text-[#2FB9A7]" strokeWidth={2} />
+                <div
+                  className={`p-2 rounded-lg ${
+                    user?.isActive ? 'bg-[#2FB9A7]/10' : 'bg-red-100'
+                  }`}
+                >
+                  <CheckCircle2
+                    className={`w-4 h-4 ${
+                      user?.isActive ? 'text-[#2FB9A7]' : 'text-red-600'
+                    }`}
+                    strokeWidth={2}
+                  />
                 </div>
+
                 <div className="text-xs font-bold text-[#1E293B] uppercase tracking-wide">
                   Account Status
                 </div>
               </div>
-              <div className="text-sm font-semibold text-[#2FB9A7]">
-                Active
+
+              <div
+                className={`text-sm font-semibold ${
+                  user?.isActive ? 'text-[#2FB9A7]' : 'text-red-600'
+                }`}
+              >
+                {user?.isActive ? 'Active' : 'Inactive'}
               </div>
             </div>
+
           </div>
         </div>
 

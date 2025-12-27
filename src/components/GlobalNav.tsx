@@ -719,10 +719,23 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
             <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-md">
               <Activity className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
-            <div>
+            {/* <div>
               <h1 className="text-lg font-bold text-white">DentalPMS</h1>
               <p className="text-xs text-white/70">Practice Management System</p>
+            </div> */}
+            <div
+              onClick={() => navigate('/dashboard')}
+              className="cursor-pointer select-none">
+              <h1 className="text-lg font-bold text-white hover:underline">
+                DentalPMS
+              </h1>
+              <p className="text-xs text-white/70 hover:text-white">
+                Practice Management System
+              </p>
             </div>
+
+
+
           </div>
         </div>
 

@@ -140,6 +140,16 @@ const mockPatientNotes: PatientNote[] = [
   }
 ];
 
+function toProperCase(text: string): string {
+  return text
+    .replace(/[^a-zA-Z\s]/g, " ")   // remove unwanted characters
+    .replace(/\s+/g, " ")           // collapse multiple spaces
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase()); // Proper case
+}
+
+
 export default function PatientNotesListing() {
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -358,6 +368,9 @@ export default function PatientNotesListing() {
                   <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-56">
                     Created Date
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-56">
+                    Created By
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -470,7 +483,13 @@ export default function PatientNotesListing() {
                         {/* Created Date Column */}
                         <td className="px-4 py-3">
                           <div className="text-sm font-medium text-slate-900">
-                            {note.createdDate} – <span className="font-bold">{note.createdBy}</span>
+                            {note.createdDate}
+                          </div>
+                        </td>
+                        {/* Created createdBy Column */}
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-slate-900">
+                            <span className="font-bold">{toProperCase(note.createdBy)}</span>
                           </div>
                         </td>
                       </tr>

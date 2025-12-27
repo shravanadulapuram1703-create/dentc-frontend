@@ -91,14 +91,65 @@ export default function Scheduler({ onLogout, currentOffice, setCurrentOffice }:
       operatory: 'OP2',
       provider: 'Dr. Smith',
       notes: 'Filling replacement'
-    }
+    },
+    {
+      id: '6',
+      patientId: '903298700',
+      patientName: 'Uday, Michael',
+      time: '08:00',
+      duration: 90,
+      procedureType: 'Restorative',
+      status: 'In Operatory',
+      operatory: 'OP4',
+      provider: 'Dr. Smith',
+      notes: 'Filling replacement'
+    },
+        {
+      id: '7',
+      patientId: '903298700',
+      patientName: 'Dinesh, Kadari',
+      time: '08:00',
+      duration: 45,
+      procedureType: 'Restorative',
+      status: 'Confirmed',
+      operatory: 'OP6',
+      provider: 'Dr. Shravan',
+      notes: 'Filling replacement'
+    },
+        {
+      id: '5',
+      patientId: '903298700',
+      patientName: 'Uday, Michael',
+      time: '13:00',
+      duration: 45,
+      procedureType: 'Restorative',
+      status: 'Confirmed',
+      operatory: 'OP5',
+      provider: 'Dr. Smith',
+      notes: 'Filling replacement'
+    },
+    {
+      id: '8',
+      patientId: '903298700',
+      patientName: 'Shravan, Adulapuram',
+      time: '11:00',
+      duration: 45,
+      procedureType: 'Restorative',
+      status: 'Confirmed',
+      operatory: 'OP6',
+      provider: 'Dr. Uday',
+      notes: 'Filling replacement'
+    },
   ]);
 
   // Operatories configuration
   const operatories = [
     { id: 'OP1', name: 'OP 1 - Hygiene', provider: 'Dr. Jinna', office: 'Moon, PA' },
     { id: 'OP2', name: 'OP 2 - Major', provider: 'Dr. Smith', office: 'Moon, PA' },
-    { id: 'OP3', name: 'OP 3 - Minor', provider: 'Dr. Jones', office: 'Moon, PA' }
+    { id: 'OP3', name: 'OP 3 - Minor', provider: 'Dr. Jones', office: 'Moon, PA' },
+    { id: 'OP4', name: 'OP 4 - Regular Checkup', provider: 'Dr. Dinesh', office: 'Moon, PA' },
+    { id: 'OP5', name: 'OP 5 - Rescheduled', provider: 'Dr. Uday', office: 'Moon, PA' },
+    { id: 'OP6', name: 'OP 6 - Surgery', provider: 'Dr. Shravan', office: 'Moon, PA' },
   ];
 
   // Generate time slots (8:00 AM to 5:00 PM in 10-minute increments)

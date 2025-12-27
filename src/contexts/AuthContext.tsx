@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const restoredUser: User = {
             id: String(u.id),
             email: u.email,
-            name: u.email,
-            role: 'staff',
+            name: u.name,
+            role: u.role,
             isFirstLogin: false,
           };
           setUser(restoredUser);
@@ -102,38 +102,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const res = await api.post('/api/v1/auth/login', {
-        email,
-        password,
-        tenant_id: 1,
-      });
+  // const login = async (email: string, password: string) => {
+  //   try {
+  //     const res = await api.post('/api/v1/auth/login', {
+  //       email,
+  //       password,
+  //       tenant_id: 1,
+  //     });
 
-      const { access_token, refresh_token } = res.data;
+  //     const { access_token, refresh_token } = res.data;
 
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
+  //     localStorage.setItem('access_token', access_token);
+  //     localStorage.setItem('refresh_token', refresh_token);
 
-      const meRes = await api.get('/api/v1/users/me');
+  //     const meRes = await api.get('/api/v1/users/me');
 
-      const u = meRes.data;
-      const newUser: User = {
-        id: String(u.id),
-        email: u.email,
-        name: u.email,
-        role: 'staff',
-        isFirstLogin: false,
-      };
+  //     const u = meRes.data;
+  //     const newUser: User = {
+  //       id: String(u.id),
+  //       email: u.email,
+  //       name: u.name,
+  //       role: u.role,
+  //       isFirstLogin: false,
+  //     };
 
-      setUser(newUser);
-      setIsAuthenticated(true);
-      return true;
-    } catch (err) {
-      console.error('Login failed', err);
-      return false;
-    }
-  };
+  //     setUser(newUser);
+  //     setIsAuthenticated(true);
+  //     return true;
+  //   } catch (err) {
+  //     console.error('Login failed', err);
+  //     return false;
+  //   }
+  // };
+
+const login = async (email: string, password: string) => {
+  try {
+    const res = await api.post('/api/v1/auth/login', {
+      email,
+      password,
+      tenant_id: 1,
+    });
+
+    const { access_token, refresh_token } = res.data;
+
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+
+    const meRes = await api.get('/api/v1/users/me');
+    const u = meRes.data;
+
+    const newUser: User = {
+      id: String(u.id),
+      email: u.email,
+      name: u.name,      //  dynamic
+      role: u.role, 
+      isActive:u.isactive,     //  dynamic
+      isFirstLogin: false,
+      isOrgOwner: true,
+      organizationId: 1,
+    };
+
+    setUser(newUser);
+    setIsAuthenticated(true);
+    return true;
+  } catch (err) {
+    console.error('Login failed', err);
+    return false;
+  }
+};
+
+
 
   const logout = async () => {
     try {
