@@ -1,30 +1,29 @@
-// import "./App.css";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext.js';
-import Login from './components/Login.js';
-import LoginPage from './pages/LoginPage.js';
-import ForgotPasswordPage from './pages/ForgotPasswordPage.js';
-import SignUpPage from './pages/SignUpPage.js';
-import Dashboard from './components/Dashboard.js';
-import Scheduler from './components/pages/Scheduler.js';
-import Patient from './components/pages/Patient.js';
-import PatientShellLayout from './components/PatientShellLayout.js';
-import PatientOverview from './components/pages/PatientOverview.js';
-import PatientLedger from './components/pages/PatientLedger.js';
-import Transactions from './components/pages/Transactions.js';
-import Charting from './components/pages/Charting.js';
-import Reports from './components/pages/Reports.js';
-import Utilities from './components/pages/Utilities.js';
-import Setup from './components/pages/Setup.js';
-import Help from './components/pages/Help.js';
-import MyPage from './components/pages/MyPage.js';
-import PlaceholderPage from './components/PlaceholderPage.js';
-import GlobalNav from './components/GlobalNav.js';
-import PatientNotesListing from './components/patient/PatientNotesListing.js';
-import AddEditPatientNote from './components/patient/AddEditPatientNote.js';
-import ProgressNotesListing from './components/patient/ProgressNotesListing.js';
-import AddEditProgressNote from './components/patient/AddEditProgressNote.js';
-import ClaimDetail from './components/patient/ClaimDetail.js';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
+import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import SignUpPage from './pages/SignUpPage';
+import Dashboard from './components/Dashboard';
+import Scheduler from './components/pages/Scheduler';
+import Patient from './components/pages/Patient';
+import PatientShellLayout from './components/PatientShellLayout';
+import PatientOverview from './components/patient/overview/PatientOverview';
+import PatientLedger from './components/pages/PatientLedger';
+import Transactions from './components/pages/Transactions';
+import Charting from './components/pages/Charting';
+import Reports from './components/pages/Reports';
+import Utilities from './components/pages/Utilities';
+import Setup from './components/pages/Setup';
+import Help from './components/pages/Help';
+import MyPage from './components/pages/MyPage';
+import PlaceholderPage from './components/PlaceholderPage';
+import GlobalNav from './components/GlobalNav';
+import PatientNotesListing from './components/patient/PatientNotesListing';
+import AddEditPatientNote from './components/patient/AddEditPatientNote';
+import ProgressNotesListing from './components/patient/ProgressNotesListing';
+import AddEditProgressNote from './components/patient/AddEditProgressNote';
+import ClaimDetail from './components/patient/ClaimDetail';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -134,7 +133,7 @@ function AppRoutes() {
         <Route path="progress-notes" element={<ProgressNotesListing />} />
         <Route path="progress-notes/new" element={<AddEditProgressNote mode="add" />} />
         <Route path="progress-notes/edit/:noteId" element={<AddEditProgressNote mode="edit" />} />
-        {/* <Route path="progress-notes/view/:noteId" element={<AddEditProgressNote mode="view" />} /> */}
+        <Route path="progress-notes/view/:noteId" element={<AddEditProgressNote mode="view" />} />
         <Route path="claim/:claimId" element={<ClaimDetail />} />
         <Route path="treatment" element={<PlaceholderPage title="Treatment Plan" />} />
         <Route path="prescriptions" element={<PlaceholderPage title="Prescriptions" />} />
@@ -331,11 +330,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen w-full bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]">
-        <Router>
-          <AppRoutes />
-        </Router>
-      </div>
+      <Router>
+        <AppRoutes />
+      </Router>
     </AuthProvider>
   );
 }
