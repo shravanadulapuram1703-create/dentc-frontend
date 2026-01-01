@@ -24,6 +24,9 @@ import AddEditPatientNote from './components/patient/AddEditPatientNote';
 import ProgressNotesListing from './components/patient/ProgressNotesListing';
 import AddEditProgressNote from './components/patient/AddEditProgressNote';
 import ClaimDetail from './components/patient/ClaimDetail';
+import UserSetup from './components/pages/setup/UserSetup';
+import OfficeSetup from './components/setup/offices/OfficeSetup';
+import TenantSetup from './components/pages/setup/TenantSetup';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -247,13 +250,16 @@ function AppRoutes() {
       />
       
       {/* Setup - Offices */}
-      <Route path="/setup/offices/office-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Office Setup" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/offices/office-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><OfficeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/offices/office-assignment" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Office Assignment" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/offices/vendor-api-settings-legacy" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Vendor API Settings (Legacy)" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/offices/vendor-api-settings-new" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Vendor API Settings (New)" /></AdminPageWrapper> : <Navigate to="/login" />} />
       
+      {/* Setup - Tenant (Super Admin Only) */}
+      <Route path="/setup/tenant" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><TenantSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      
       {/* Setup - Security */}
-      <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="User Management" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><UserSetup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Group Management" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Change My Password" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/my-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="My Settings" /></AdminPageWrapper> : <Navigate to="/login" />} />

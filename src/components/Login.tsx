@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Building2 } from 'lucide-react';
 
-interface LoginProps {
-  onLogin: (username: string, password: string) => boolean;
-}
-
-export default function Login({ onLogin }: LoginProps) {
+export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,17 +12,25 @@ export default function Login({ onLogin }: LoginProps) {
     e.preventDefault();
     setError('');
 
+    // Optional UX validation (can be removed if you want literally anything)
     if (!username || !password) {
       setError('Please enter both username and password');
       return;
     }
 
-    const success = onLogin(username, password);
-    if (success) {
-      navigate('/dashboard');
-    } else {
-      setError('Invalid credentials');
-    }
+    /**
+     * ✅ DEV MODE LOGIN
+     * - No backend
+     * - No credential validation
+     * - Any username/password is accepted
+     */
+
+    // (Optional) store fake auth flag
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('username', username);
+
+    // Redirect to dashboard
+    navigate('/dashboard');
   };
 
   return (
@@ -36,8 +40,12 @@ export default function Login({ onLogin }: LoginProps) {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600 rounded-full mb-4">
             <Building2 className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-gray-900 mb-2">Dental PMS</h1>
-          <p className="text-gray-600">Practice Management System</p>
+          <h1 className="text-gray-900 mb-2 text-xl font-bold">
+            Dental PMS
+          </h1>
+          <p className="text-gray-600">
+            Practice Management System
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -90,7 +98,7 @@ export default function Login({ onLogin }: LoginProps) {
         </form>
 
         <div className="mt-6 text-center text-gray-600">
-          <p>Demo credentials: Any username and password</p>
+          <p>Demo Mode: Any username & password</p>
         </div>
       </div>
     </div>

@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import api from '../services/api';
 
 // User role types
-export type UserRole = 'owner' | 'admin' | 'manager' | 'doctor' | 'provider' | 'front_desk' | 'staff';
+export type UserRole = 'owner' | 'admin' | 'manager' | 'doctor' | 'provider' | 'front_desk' | 'staff' | 'superadmin';
 
 interface User {
   id: string;
@@ -10,15 +9,15 @@ interface User {
   name: string;
   role: UserRole;
   isFirstLogin: boolean;
-  isOrgOwner?: boolean;
-  organizationId?: string;
+  isOrgOwner?: boolean; // Flag for organization ownership
+  organizationId?: string; // Current active organization
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  login: (email: string, password: string) => boolean;
+  logout: () => void;
   currentOffice: string;
   setCurrentOffice: (office: string) => void;
   currentOrganization: string;
@@ -38,10 +37,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Check localStorage for existing session
     return localStorage.getItem('isAuthenticated') === 'true';
   });
-
+  
   const [user, setUser] = useState<User | null>(() => {
+    // Try to restore user from localStorage
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   });
-
+  
   const [currentOffice, setCurrentOffice] = useState('Cranberry Dental Arts [108]');
   const [currentOrganization, setCurrentOrganization] = useState('Cranberry Dental Group');
   const [activePatient, setActivePatient] = useState<{
@@ -63,12 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dob: string;
   } | null>(null);
 
-  // Persist auth state
+  // Persist authentication state
   useEffect(() => {
     localStorage.setItem('isAuthenticated', String(isAuthenticated));
   }, [isAuthenticated]);
 
-  // Persist user
+  // Persist user data
   useEffect(() => {
     if (user) {
       localStorage.setItem('currentUser', JSON.stringify(user));
@@ -77,118 +78,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // Restore session on refresh
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token && !user) {
-      api.get('/api/v1/users/me')
-        .then(res => {
-          const u = res.data;
-          const restoredUser: User = {
-            id: String(u.id),
-            email: u.email,
-            name: u.name,
-            role: u.role,
-            isFirstLogin: false,
-          };
-          setUser(restoredUser);
-          setIsAuthenticated(true);
-        })
-        .catch(() => {
-          localStorage.clear();
-          setIsAuthenticated(false);
-          setUser(null);
-        });
-    }
-  }, []);
+  const login = (email: string, password: string) => {
+    // Mock authentication - accepts any credentials
+    if (email && password) {
+      // Simulate backend user role assignment based on email
+      let role: UserRole = 'staff';
+      let name = 'User';
+      let isFirstLogin = false;
+      let isOrgOwner = false;
+      let organizationId = 'ORG-001'; // Default organization
 
-  // const login = async (email: string, password: string) => {
-  //   try {
-  //     const res = await api.post('/api/v1/auth/login', {
-  //       email,
-  //       password,
-  //       tenant_id: 1,
-  //     });
-
-  //     const { access_token, refresh_token } = res.data;
-
-  //     localStorage.setItem('access_token', access_token);
-  //     localStorage.setItem('refresh_token', refresh_token);
-
-  //     const meRes = await api.get('/api/v1/users/me');
-
-  //     const u = meRes.data;
-  //     const newUser: User = {
-  //       id: String(u.id),
-  //       email: u.email,
-  //       name: u.name,
-  //       role: u.role,
-  //       isFirstLogin: false,
-  //     };
-
-  //     setUser(newUser);
-  //     setIsAuthenticated(true);
-  //     return true;
-  //   } catch (err) {
-  //     console.error('Login failed', err);
-  //     return false;
-  //   }
-  // };
-
-const login = async (email: string, password: string) => {
-  try {
-    const res = await api.post('/api/v1/auth/login', {
-      email,
-      password,
-      tenant_id: 1,
-    });
-
-    const { access_token, refresh_token } = res.data;
-
-    localStorage.setItem('access_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
-
-    const meRes = await api.get('/api/v1/users/me');
-    const u = meRes.data;
-
-    const newUser: User = {
-      id: String(u.id),
-      email: u.email,
-      name: u.name,      //  dynamic
-      role: u.role, 
-      isActive:u.isactive,     //  dynamic
-      isFirstLogin: false,
-      isOrgOwner: true,
-      organizationId: 1,
-    };
-
-    setUser(newUser);
-    setIsAuthenticated(true);
-    return true;
-  } catch (err) {
-    console.error('Login failed', err);
-    return false;
-  }
-};
-
-
-
-  const logout = async () => {
-    try {
-      const refresh = localStorage.getItem('refresh_token');
-      if (refresh) {
-        await api.post('/api/v1/auth/logout', {
-          refresh_token: refresh,
-        });
+      // Mock role detection based on email domain/pattern
+      if (email.toLowerCase().includes('owner')) {
+        role = 'owner';
+        name = 'John Doe (Owner)';
+        isOrgOwner = true;
+      } else if (email.toLowerCase().includes('admin')) {
+        role = 'admin';
+        name = 'Admin User';
+      } else if (email.toLowerCase().includes('manager')) {
+        role = 'manager';
+        name = 'Manager User';
+      } else if (email.toLowerCase().includes('doctor') || email.toLowerCase().includes('dr')) {
+        role = 'doctor';
+        name = 'Dr. Smith';
+      } else if (email.toLowerCase().includes('provider')) {
+        role = 'provider';
+        name = 'Provider User';
+      } else if (email.toLowerCase().includes('desk') || email.toLowerCase().includes('staff')) {
+        role = 'front_desk';
+        name = 'Front Desk User';
+      } else if (email.toLowerCase().includes('superadmin')) {
+        role = 'superadmin';
+        name = 'Super Admin User';
       }
-    } catch (err) {
-      console.warn('Logout API failed', err);
-    } finally {
-      setIsAuthenticated(false);
-      setUser(null);
-      setActivePatient(null);
-      localStorage.clear();
+
+      // Check if this is a first-time login (simulate with localStorage)
+      const userLoginHistory = localStorage.getItem(`login_history_${email}`);
+      if (!userLoginHistory) {
+        isFirstLogin = true;
+        localStorage.setItem(`login_history_${email}`, 'true');
+      }
+
+      const newUser: User = {
+        id: Math.random().toString(36).substring(7),
+        email,
+        name,
+        role,
+        isFirstLogin,
+        isOrgOwner,
+        organizationId,
+      };
+
+      setUser(newUser);
+      setIsAuthenticated(true);
+      return true;
     }
+    return false;
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    setActivePatient(null);
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('currentUser');
   };
 
   const markFirstLoginComplete = () => {
