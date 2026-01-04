@@ -712,24 +712,25 @@ export default function AddEditUserModal({
                   </div>
 
                   {/* Move Buttons */}
-                  <div className="flex flex-col justify-center gap-2">
-                    <button
-                      onClick={moveAllOfficesToAssigned}
-                      className="px-3 py-2 bg-[#3A6EA5] text-white rounded hover:bg-[#2d5080] text-sm"
-                      title="Assign all offices"
-                    >
-                      <ChevronRight className="w-4 h-4 mx-auto" />
-                      <ChevronRight className="w-4 h-4 mx-auto -mt-2" />
-                    </button>
-                    <button
-                      onClick={removeAllOfficesFromAssigned}
-                      className="px-3 py-2 bg-[#3A6EA5] text-white rounded hover:bg-[#2d5080] text-sm"
-                      title="Remove all offices"
-                    >
-                      <ChevronLeft className="w-4 h-4 mx-auto" />
-                      <ChevronLeft className="w-4 h-4 mx-auto -mt-2" />
-                    </button>
-                  </div>
+                    <div className="flex flex-col justify-center gap-2">
+                      <button
+                        onClick={moveOfficeToAssigned}
+                        className="w-10 h-10 bg-[#3A6EA5] text-white rounded hover:bg-[#2d5080]
+                                  flex items-center justify-center"
+                        title="Assign selected office"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+
+                      <button
+                        onClick={removeOfficeFromAssigned}
+                        className="w-10 h-10 bg-[#3A6EA5] text-white rounded hover:bg-[#2d5080]
+                                  flex items-center justify-center"
+                        title="Remove selected office"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    </div>
 
                   {/* Assigned Offices */}
                   <div>

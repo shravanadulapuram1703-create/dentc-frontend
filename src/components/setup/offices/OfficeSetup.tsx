@@ -264,12 +264,26 @@ export default function OfficeSetup() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
                       Status
                     </th>
+
+                    {/* 🔐 AUDIT COLUMNS */}
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Created By
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Created On
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Updated By
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Updated On
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E8F0]">
                   {filteredOffices.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center">
+                     <td colSpan={10} className="px-4 py-8 text-center">
                         <Building2 className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
                         <p className="text-[#64748B] font-bold text-sm">No offices found</p>
                       </td>
@@ -308,6 +322,25 @@ export default function OfficeSetup() {
                               Inactive
                             </span>
                           )}
+                        </td>
+                        {/* Created By */}
+                        <td className="px-4 py-3 text-sm text-[#1E293B]">
+                          {office.createdBy || "System"}
+                        </td>
+
+                        {/* Created On */}
+                        <td className="px-4 py-3 text-xs text-[#64748B]">
+                          {office.createdAt || "—"}
+                        </td>
+
+                        {/* Updated By */}
+                        <td className="px-4 py-3 text-sm text-[#1E293B]">
+                          {office.updatedBy || "—"}
+                        </td>
+
+                        {/* Updated On */}
+                        <td className="px-4 py-3 text-xs text-[#64748B]">
+                          {office.updatedAt || "—"}
                         </td>
                       </tr>
                     ))
@@ -365,7 +398,7 @@ export default function OfficeSetup() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 font-bold text-xs whitespace-nowrap rounded-t-lg transition-all ${
+                    className={`px-4 py-2 font-semibold text-sm whitespace-nowrap rounded-t-lg transition-all ${
                       activeTab === tab.id
                         ? "bg-white text-[#3A6EA5] border-t-4 border-[#3A6EA5]"
                         : "text-[#64748B] hover:text-[#1F3A5F] hover:bg-[#E8EFF7]"

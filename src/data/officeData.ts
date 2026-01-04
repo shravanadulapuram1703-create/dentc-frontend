@@ -85,7 +85,11 @@ export interface Office {
   operatories: Array<{
     id: string;
     name: string;
+    shortName?: string;
     order: number;
+    provider?: string;
+    isActive: boolean;
+    color?: string;
   }>;
   
   // Schedule
@@ -217,12 +221,12 @@ export const mockOffices: Office[] = [
     },
     acceptedCards: ["Visa", "Mastercard", "AmEx", "Discover"],
     operatories: [
-      { id: "op-001", name: "OP 1", order: 1 },
-      { id: "op-002", name: "OP 2", order: 2 },
-      { id: "op-003", name: "OP 3", order: 3 },
-      { id: "op-004", name: "OP 4", order: 4 },
-      { id: "op-005", name: "Hygiene 1", order: 5 },
-      { id: "op-006", name: "Hygiene 2", order: 6 }
+      { id: "op-001", name: "OP 1", order: 1, provider: "Dr. Sarah Johnson", isActive: true, color: "#FF5733" },
+      { id: "op-002", name: "OP 2", order: 2, provider: "Dr. Sarah Johnson", isActive: true, color: "#FF5733" },
+      { id: "op-003", name: "OP 3", order: 3, provider: "Dr. Sarah Johnson", isActive: true, color: "#FF5733" },
+      { id: "op-004", name: "OP 4", order: 4, provider: "Dr. Sarah Johnson", isActive: true, color: "#FF5733" },
+      { id: "op-005", name: "Hygiene 1", order: 5, provider: "Dr. Sarah Johnson", isActive: true, color: "#FF5733" },
+      { id: "op-006", name: "Hygiene 2", order: 6, provider: "Dr. Sarah Johnson", isActive: true, color: "#FF5733" }
     ],
     schedule: {
       monday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
@@ -323,9 +327,9 @@ export const mockOffices: Office[] = [
     statementPhone: "(415) 555-5678",
     acceptedCards: ["Visa", "Mastercard"],
     operatories: [
-      { id: "op-007", name: "Treatment Room 1", order: 1 },
-      { id: "op-008", name: "Treatment Room 2", order: 2 },
-      { id: "op-009", name: "Hygiene Suite", order: 3 }
+      { id: "op-007", name: "Treatment Room 1", order: 1, provider: "Dr. Michael Chen", isActive: true, color: "#33FF57" },
+      { id: "op-008", name: "Treatment Room 2", order: 2, provider: "Dr. Michael Chen", isActive: true, color: "#33FF57" },
+      { id: "op-009", name: "Hygiene Suite", order: 3, provider: "Dr. Michael Chen", isActive: true, color: "#33FF57" }
     ],
     schedule: {
       monday: { start: "09:00", end: "18:00", lunchStart: "13:00", lunchEnd: "14:00", closed: false },

@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  UserCheck,
+  UserX,
+} from "lucide-react";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
 
@@ -41,6 +48,11 @@ interface User {
   lastLogin?: string;
   role: string;
   securityGroup: string;
+  // 🔐 Audit fields
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
   // Login Info
   passwordLastChanged?: string;
   mustChangePassword?: boolean;
@@ -78,14 +90,24 @@ export default function UserSetup({
   setCurrentOffice,
 }: UserSetupProps) {
   const [searchText, setSearchText] = useState("");
-  const [searchScope, setSearchScope] = useState<"all" | "home">("all");
-  const [sortBy, setSortBy] = useState<"name" | "username">("name");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [searchScope, setSearchScope] = useState<
+    "all" | "home"
+  >("all");
+  const [sortBy, setSortBy] = useState<"name" | "username">(
+    "name",
+  );
+  const [selectedUser, setSelectedUser] = useState<User | null>(
+    null,
+  );
+  const [showAddEditModal, setShowAddEditModal] =
+    useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(
+    null,
+  );
   const [filterPGID, setFilterPGID] = useState<string>("all");
   const [filterOID, setFilterOID] = useState<string>("all");
-  const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
+  const [showViewDetailsModal, setShowViewDetailsModal] =
+    useState(false);
 
   // Available PGIDs and OIDs for filtering
   const availablePGIDs = [
@@ -113,10 +135,18 @@ export default function UserSetup({
       pgid: "P-001",
       pgidName: "Cranberry Dental Arts Corp",
       assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
+      assignedOfficeNames: [
+        "Cranberry Main",
+        "Cranberry North",
+      ],
       lastLogin: "2024-12-30 09:45 AM",
       role: "Office Manager",
       securityGroup: "Administrators",
+      // 🔐 Audit fields
+      createdBy: "admin@dentalclinic.com",
+      createdAt: "2023-01-10 09:15 AM",
+      updatedBy: "superadmin@dentalclinic.com",
+      updatedAt: "2024-12-15 04:42 PM",
       // Login Info
       passwordLastChanged: "2024-11-15 03:20 PM",
       mustChangePassword: false,
@@ -128,13 +158,15 @@ export default function UserSetup({
         {
           id: "IP-001",
           ipAddress: "192.168.1.100",
-          description: "Office Manager Workstation - Main Office",
+          description:
+            "Office Manager Workstation - Main Office",
           active: true,
         },
         {
           id: "IP-002",
           ipAddress: "192.168.2.50",
-          description: "Office Manager Workstation - North Office",
+          description:
+            "Office Manager Workstation - North Office",
           active: true,
         },
         {
@@ -150,24 +182,28 @@ export default function UserSetup({
           active: false,
         },
       ],
+
       // Group Memberships
       groupMemberships: [
         {
           groupId: "GRP-001",
           groupName: "Administrators",
-          description: "Full system access with administrative privileges including user management, security settings, and system configuration",
+          description:
+            "Full system access with administrative privileges including user management, security settings, and system configuration",
           joinedDate: "2023-01-15",
         },
         {
           groupId: "GRP-005",
           groupName: "Office Managers",
-          description: "Office management access including scheduling, staff coordination, and operational reports",
+          description:
+            "Office management access including scheduling, staff coordination, and operational reports",
           joinedDate: "2023-01-15",
         },
         {
           groupId: "GRP-010",
           groupName: "Billing Administrators",
-          description: "Full billing and financial access including claim processing, payment posting, and financial reports",
+          description:
+            "Full billing and financial access including claim processing, payment posting, and financial reports",
           joinedDate: "2023-03-20",
         },
       ],
@@ -233,7 +269,10 @@ export default function UserSetup({
       pgid: "P-001",
       pgidName: "Main Office",
       assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
+      assignedOfficeNames: [
+        "Cranberry Main",
+        "Cranberry North",
+      ],
       lastLogin: "2024-12-30 08:30 AM",
       role: "Dentist",
       securityGroup: "Doctor",
@@ -267,7 +306,10 @@ export default function UserSetup({
       pgid: "P-001",
       pgidName: "Main Office",
       assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
+      assignedOfficeNames: [
+        "Cranberry Main",
+        "Cranberry North",
+      ],
       lastLogin: "2024-11-15 03:20 PM",
       role: "Dental Assistant",
       securityGroup: "Assistant",
@@ -301,7 +343,10 @@ export default function UserSetup({
       pgid: "P-001",
       pgidName: "Main Office",
       assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
+      assignedOfficeNames: [
+        "Cranberry Main",
+        "Cranberry North",
+      ],
       lastLogin: "2024-12-30 07:50 AM",
       role: "Billing",
       securityGroup: "Billing",
@@ -329,7 +374,10 @@ export default function UserSetup({
   const filteredUsers = mockUsers
     .filter((user) => {
       // Search scope filter
-      if (searchScope === "home" && user.homeOffice !== currentOffice) {
+      if (
+        searchScope === "home" &&
+        user.homeOffice !== currentOffice
+      ) {
         return false;
       }
 
@@ -349,7 +397,10 @@ export default function UserSetup({
       }
 
       // OID filter
-      if (filterOID !== "all" && !user.assignedOfficeOIDs.includes(filterOID)) {
+      if (
+        filterOID !== "all" &&
+        !user.assignedOfficeOIDs.includes(filterOID)
+      ) {
         return false;
       }
 
@@ -378,20 +429,20 @@ export default function UserSetup({
 
   const handleDeleteUser = () => {
     if (!selectedUser) return;
-    
+
     // Check if user has historical data (in real system)
     const hasHistoricalData = true; // Mock
 
     if (hasHistoricalData) {
       alert(
-        "Cannot delete user with historical data. Please deactivate the user instead by editing and setting Active = No."
+        "Cannot delete user with historical data. Please deactivate the user instead by editing and setting Active = No.",
       );
       return;
     }
 
     if (
       confirm(
-        `Are you sure you want to delete user ${selectedUser.firstName} ${selectedUser.lastName} (${selectedUser.username})?`
+        `Are you sure you want to delete user ${selectedUser.firstName} ${selectedUser.lastName} (${selectedUser.username})?`,
       )
     ) {
       // Delete logic here
@@ -401,6 +452,19 @@ export default function UserSetup({
   };
 
   const handleSaveUser = (userData: any) => {
+    const now = new Date().toLocaleString();
+    const loggedInUserEmail = "admin@dentalclinic.com";
+
+    if (editingUser) {
+      userData.updatedBy = loggedInUserEmail;
+      userData.updatedAt = now;
+    } else {
+      userData.createdBy = loggedInUserEmail;
+      userData.createdAt = now;
+      userData.updatedBy = loggedInUserEmail;
+      userData.updatedAt = now;
+    }
+
     console.log("Saving user:", userData);
     setShowAddEditModal(false);
     setEditingUser(null);
@@ -433,7 +497,9 @@ export default function UserSetup({
                     type="text"
                     placeholder="Search by name or username..."
                     value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
+                    onChange={(e) =>
+                      setSearchText(e.target.value)
+                    }
                     className="w-full pl-10 pr-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                   />
                 </div>
@@ -452,7 +518,9 @@ export default function UserSetup({
                       value="all"
                       checked={searchScope === "all"}
                       onChange={(e) =>
-                        setSearchScope(e.target.value as "all" | "home")
+                        setSearchScope(
+                          e.target.value as "all" | "home",
+                        )
                       }
                       className="w-3.5 h-3.5 text-[#3A6EA5]"
                     />
@@ -467,7 +535,9 @@ export default function UserSetup({
                       value="home"
                       checked={searchScope === "home"}
                       onChange={(e) =>
-                        setSearchScope(e.target.value as "all" | "home")
+                        setSearchScope(
+                          e.target.value as "all" | "home",
+                        )
                       }
                       className="w-3.5 h-3.5 text-[#3A6EA5]"
                     />
@@ -479,18 +549,25 @@ export default function UserSetup({
               </div>
 
               {/* Sort By */}
-              <div className="mb-2">
-                <label className="block text-xs font-bold text-[#1F3A5F] mb-1">
+              <div className="mb-1">
+                <label className="block text-[11px] font-semibold text-[#1F3A5F] mb-0.5">
                   Sort By:
                 </label>
                 <select
                   value={sortBy}
                   onChange={(e) =>
-                    setSortBy(e.target.value as "name" | "username")
+                    setSortBy(
+                      e.target.value as "name" | "username",
+                    )
                   }
-                  className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs"
+                  className="w-full px-2 py-1 border border-[#E2E8F0] rounded-md
+               text-xs text-[#1E293B]
+               focus:outline-none focus:border-[#3A6EA5]
+               focus:ring-1 focus:ring-[#3A6EA5]/20"
                 >
-                  <option value="name">Last Name, First Name</option>
+                  <option value="name">
+                    Last Name, First Name
+                  </option>
                   <option value="username">Username</option>
                 </select>
               </div>
@@ -502,7 +579,9 @@ export default function UserSetup({
                 </label>
                 <select
                   value={filterPGID}
-                  onChange={(e) => setFilterPGID(e.target.value)}
+                  onChange={(e) =>
+                    setFilterPGID(e.target.value)
+                  }
                   className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs"
                 >
                   <option value="all">All PGIDs</option>
@@ -535,7 +614,7 @@ export default function UserSetup({
             </div>
 
             {/* User List */}
-            <div className="overflow-y-auto max-h-[600px]">
+            <div className="overflow-y-auto max-h-[calc(100vh-340px)]">
               {filteredUsers.length === 0 ? (
                 <div className="p-8 text-center text-[#64748B]">
                   No users found
@@ -545,23 +624,25 @@ export default function UserSetup({
                   <div
                     key={user.id}
                     onClick={() => setSelectedUser(user)}
-                    className={`p-4 border-b border-[#E2E8F0] cursor-pointer transition-colors ${
+                    className={`px-4 py-3 border-b border-[#E2E8F0] cursor-pointer transition-colors ${
                       selectedUser?.id === user.id
                         ? "bg-[#E8EFF7] border-l-4 border-l-[#3A6EA5]"
-                        : "hover:bg-[#F7F9FC]"
-                    } ${!user.active ? "opacity-50" : ""}`}
+                        : "hover:bg-[#F1F5F9]"
+                    } ${!user.active ? "bg-[#FAFAFA]" : ""}`}
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center gap-2">
                           <span
-                            className={`font-bold ${
+                            className={`font-semibold leading-tight ${
                               user.active
                                 ? "text-[#1E293B]"
                                 : "text-[#64748B]"
                             }`}
                           >
-                            {user.lastName}{", "}{user.firstName}
+                            {user.lastName}
+                            {", "}
+                            {user.firstName}
                           </span>
                           {!user.active && (
                             <span className="px-2 py-0.5 bg-[#FEE2E2] text-[#DC2626] text-xs rounded">
@@ -569,14 +650,14 @@ export default function UserSetup({
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-[#64748B] mb-1">
+                        <div className="text-xs text-[#64748B] tracking-wide">
                           ({user.username})
                         </div>
-                        <div className="text-xs text-[#64748B]">
+                        <div className="text-xs text-[#475569]">
                           {user.homeOffice}
                         </div>
                         {user.lastLogin && (
-                          <div className="text-xs text-[#64748B] mt-1">
+                          <div className="text-[11px] text-[#94A3B8] pt-0.5">
                             Last login: {user.lastLogin}
                           </div>
                         )}
@@ -608,7 +689,9 @@ export default function UserSetup({
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
                 >
                   <Edit className="w-4 h-4" />
-                  <span className="text-sm font-bold">Edit</span>
+                  <span className="text-sm font-bold">
+                    Edit
+                  </span>
                 </button>
                 <button
                   onClick={handleDeleteUser}
@@ -616,7 +699,9 @@ export default function UserSetup({
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors shadow-sm disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span className="text-sm font-bold">Delete</span>
+                  <span className="text-sm font-bold">
+                    Delete
+                  </span>
                 </button>
               </div>
             </div>
@@ -630,11 +715,13 @@ export default function UserSetup({
                 <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-bold mb-1">
-                        {selectedUser.firstName} {selectedUser.lastName}
+                      <h2 className="text-xl font-bold mb-1 text-white">
+                        {selectedUser.firstName}{" "}
+                        {selectedUser.lastName}
                       </h2>
-                      <p className="text-sm text-[#E2E8F0]">
-                        @{selectedUser.username} • {selectedUser.email}
+                      <p className="text-sm text-white/90">
+                        @{selectedUser.username} •{" "}
+                        {selectedUser.email}
                       </p>
                     </div>
                     <div
@@ -644,7 +731,9 @@ export default function UserSetup({
                           : "bg-[#EF4444] text-white"
                       }`}
                     >
-                      {selectedUser.active ? "ACTIVE" : "INACTIVE"}
+                      {selectedUser.active
+                        ? "ACTIVE"
+                        : "INACTIVE"}
                     </div>
                   </div>
                 </div>
@@ -670,10 +759,12 @@ export default function UserSetup({
                             PRACTICE GROUP ID (PGID)
                           </label>
                           <p className="text-sm text-[#1E293B]">
-                            {selectedUser.pgid} - {selectedUser.pgidName}
+                            {selectedUser.pgid} -{" "}
+                            {selectedUser.pgidName}
                           </p>
                           <p className="text-xs text-[#64748B] mt-0.5">
-                            Organizational boundary for data access
+                            Organizational boundary for data
+                            access
                           </p>
                         </div>
                         <div>
@@ -719,20 +810,30 @@ export default function UserSetup({
                             ASSIGNED OFFICES
                           </label>
                           <div className="space-y-1">
-                            {selectedUser.assignedOfficeOIDs.map((oid) => (
-                              <div
-                                key={oid}
-                                className="px-2 py-1 bg-[#E8EFF7] border border-[#3A6EA5] rounded text-xs"
-                              >
-                                <span className="text-[#1E293B] font-bold">
-                                  OID: {oid}
-                                </span>
-                              </div>
-                            ))}
+                            {selectedUser.assignedOfficeOIDs.map(
+                              (oid) => (
+                                <div
+                                  key={oid}
+                                  className="px-2 py-1 bg-[#E8EFF7] border border-[#3A6EA5] rounded text-xs"
+                                >
+                                  <span className="text-[#1E293B] font-bold">
+                                    OID: {oid}
+                                  </span>
+                                </div>
+                              ),
+                            )}
                           </div>
                           <p className="text-xs text-[#64748B] mt-1">
-                            User can access {selectedUser.assignedOfficeOIDs.length} office
-                            {selectedUser.assignedOfficeOIDs.length !== 1 ? "s" : ""}
+                            User can access{" "}
+                            {
+                              selectedUser.assignedOfficeOIDs
+                                .length
+                            }{" "}
+                            office
+                            {selectedUser.assignedOfficeOIDs
+                              .length !== 1
+                              ? "s"
+                              : ""}
                           </p>
                         </div>
                       </div>
@@ -751,14 +852,28 @@ export default function UserSetup({
                         </div>
                         <div className="flex-1">
                           <p className="text-xs text-[#1E293B] mb-1">
-                            <span className="font-bold">PGID {selectedUser.pgid}</span> access allows viewing all data within{" "}
-                            <span className="font-bold">{selectedUser.pgidName}</span>
+                            <span className="font-bold">
+                              PGID {selectedUser.pgid}
+                            </span>{" "}
+                            access allows viewing all data
+                            within{" "}
+                            <span className="font-bold">
+                              {selectedUser.pgidName}
+                            </span>
                           </p>
                           <p className="text-xs text-[#1E293B]">
-                            Can search patients and schedule appointments at{" "}
+                            Can search patients and schedule
+                            appointments at{" "}
                             <span className="font-bold">
-                              {selectedUser.assignedOfficeOIDs.length} assigned office location
-                              {selectedUser.assignedOfficeOIDs.length !== 1 ? "s" : ""}
+                              {
+                                selectedUser.assignedOfficeOIDs
+                                  .length
+                              }{" "}
+                              assigned office location
+                              {selectedUser.assignedOfficeOIDs
+                                .length !== 1
+                                ? "s"
+                                : ""}
                             </span>
                           </p>
                         </div>
@@ -766,34 +881,46 @@ export default function UserSetup({
                     </div>
                   </div>
 
-                  {/* Login Activity */}
+                  {/* Audit Information */}
                   <div className="mt-4 pt-4 border-t-2 border-[#E2E8F0]">
                     <h3 className="font-bold text-sm text-[#1F3A5F] mb-2 uppercase tracking-wide">
-                      Login Activity
+                      Audit Information
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-[#64748B] mb-0.5">
-                          LAST LOGIN
+                          CREATED BY
                         </label>
                         <p className="text-sm text-[#1E293B]">
-                          {selectedUser.lastLogin || "Never"}
+                          {selectedUser.createdBy || "System"}
                         </p>
                       </div>
+
                       <div>
                         <label className="block text-xs font-bold text-[#64748B] mb-0.5">
-                          STATUS
+                          CREATED ON
                         </label>
-                        <p
-                          className={
-                            selectedUser.active
-                              ? "text-sm text-[#22C55E] font-bold"
-                              : "text-sm text-[#EF4444] font-bold"
-                          }
-                        >
-                          {selectedUser.active
-                            ? "Active - Can log in"
-                            : "Inactive - Cannot log in"}
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.createdAt || "—"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#64748B] mb-0.5">
+                          LAST UPDATED BY
+                        </label>
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.updatedBy || "—"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#64748B] mb-0.5">
+                          LAST UPDATED ON
+                        </label>
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.updatedAt || "—"}
                         </p>
                       </div>
                     </div>
