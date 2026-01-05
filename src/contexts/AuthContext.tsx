@@ -1,7 +1,39 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import api from "../services/api";
 
-// User role types
-export type UserRole = 'owner' | 'admin' | 'manager' | 'doctor' | 'provider' | 'front_desk' | 'staff' | 'superadmin';
+/* -------------------- TYPES -------------------- */
+
+interface Office {
+  id: string;
+  name: string;
+  code: string;
+  address: string;
+  displayName: string;
+  is_current: boolean;
+}
+
+interface Organization {
+  id: string;
+  name: string;
+  code: string;
+  offices: Office[];
+  is_current: boolean;
+}
+
+export type UserRole =
+  | "owner"
+  | "admin"
+  | "manager"
+  | "doctor"
+  | "provider"
+  | "front_desk"
+  | "staff";
 
 interface User {
   id: string;
@@ -9,146 +41,237 @@ interface User {
   name: string;
   role: UserRole;
   isFirstLogin: boolean;
-  isOrgOwner?: boolean; // Flag for organization ownership
-  organizationId?: string; // Current active organization
+  isActive?: boolean;
+  isOrgOwner?: boolean;
+  organizationId?: string;
+}
+
+interface ActivePatient {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  dob: string;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
-  currentOffice: string;
-  setCurrentOffice: (office: string) => void;
+
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+
+  organizations: Organization[];
+
   currentOrganization: string;
-  setCurrentOrganization: (org: string) => void;
-  activePatient: {
-    id: string;
-    name: string;
-    age: number;
-    gender: string;
-    dob: string;
-  } | null;
-  setActivePatient: (patient: any) => void;
+  setCurrentOrganization: (orgId: string) => void;
+
+  currentOffice: string;
+  setCurrentOffice: (officeId: string) => void;
+
+  activePatient: ActivePatient | null;
+  setActivePatient: (patient: ActivePatient | null) => void;
+
   markFirstLoginComplete: () => void;
 }
 
+/* -------------------- CONTEXT -------------------- */
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/* -------------------- PROVIDER -------------------- */
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Check localStorage for existing session
-    return localStorage.getItem('isAuthenticated') === 'true';
-  });
-  
+  /* ---------- STATE (RESTORED FROM STORAGE) ---------- */
+
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem("access_token") !== null
+  );
+
   const [user, setUser] = useState<User | null>(() => {
-    // Try to restore user from localStorage
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        return JSON.parse(storedUser);
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    const stored = localStorage.getItem("me_full");
+    return stored ? JSON.parse(stored) : null;
   });
-  
-  const [currentOffice, setCurrentOffice] = useState('Cranberry Dental Arts [108]');
-  const [currentOrganization, setCurrentOrganization] = useState('Cranberry Dental Group');
-  const [activePatient, setActivePatient] = useState<{
-    id: string;
-    name: string;
-    age: number;
-    gender: string;
-    dob: string;
-  } | null>(null);
 
-  // Persist authentication state
-  useEffect(() => {
-    localStorage.setItem('isAuthenticated', String(isAuthenticated));
-  }, [isAuthenticated]);
+  const [organizations, setOrganizations] = useState<Organization[]>(() => {
+    const stored = localStorage.getItem("access_ctx");
+    return stored ? JSON.parse(stored) : [];
+  });
 
-  // Persist user data
+  const [currentOrganization, setCurrentOrganization] = useState(
+    localStorage.getItem("current_org") ?? ""
+  );
+
+  const [currentOffice, setCurrentOffice] = useState(
+    localStorage.getItem("current_office") ?? ""
+  );
+
+  const [activePatient, setActivePatient] = useState<ActivePatient | null>(
+    null
+  );
+
+  /* ---------- PERSIST SELECTIONS ---------- */
+
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('currentUser');
+    localStorage.setItem("current_org", currentOrganization);
+  }, [currentOrganization]);
+
+  useEffect(() => {
+    localStorage.setItem("current_office", currentOffice);
+  }, [currentOffice]);
+
+  /* ---------- RESTORE SESSION ON REFRESH ---------- */
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    // If already restored from storage → skip API calls
+    if (user && organizations.length > 0) {
+      setIsAuthenticated(true);
+      return;
     }
-  }, [user]);
 
-  const login = (email: string, password: string) => {
-    // Mock authentication - accepts any credentials
-    if (email && password) {
-      // Simulate backend user role assignment based on email
-      let role: UserRole = 'staff';
-      let name = 'User';
-      let isFirstLogin = false;
-      let isOrgOwner = false;
-      let organizationId = 'ORG-001'; // Default organization
+    (async () => {
+      try {
+        const [meRes, accessRes] = await Promise.all([
+          api.get("/api/v1/auth/me-full"),
+          api.get("/api/v1/users/me/access"),
+        ]);
 
-      // Mock role detection based on email domain/pattern
-      if (email.toLowerCase().includes('owner')) {
-        role = 'owner';
-        name = 'John Doe (Owner)';
-        isOrgOwner = true;
-      } else if (email.toLowerCase().includes('admin')) {
-        role = 'admin';
-        name = 'Admin User';
-      } else if (email.toLowerCase().includes('manager')) {
-        role = 'manager';
-        name = 'Manager User';
-      } else if (email.toLowerCase().includes('doctor') || email.toLowerCase().includes('dr')) {
-        role = 'doctor';
-        name = 'Dr. Smith';
-      } else if (email.toLowerCase().includes('provider')) {
-        role = 'provider';
-        name = 'Provider User';
-      } else if (email.toLowerCase().includes('desk') || email.toLowerCase().includes('staff')) {
-        role = 'front_desk';
-        name = 'Front Desk User';
-      } else if (email.toLowerCase().includes('superadmin')) {
-        role = 'superadmin';
-        name = 'Super Admin User';
+        const me = meRes.data;
+        const orgs: Organization[] = accessRes.data ?? [];
+
+        const restoredUser: User = {
+          id: String(me.user_id),
+          email: me.email,
+          name: `${me.first_name} ${me.last_name}`.trim(),
+          role: me.roles?.[0] ?? "staff",
+          isFirstLogin: false,
+          isActive: true,
+          isOrgOwner: me.is_super_admin ?? false,
+          organizationId: String(me.current_organization_id ?? ""),
+        };
+
+        setUser(restoredUser);
+        setOrganizations(orgs);
+
+        localStorage.setItem("me_full", JSON.stringify(restoredUser));
+        localStorage.setItem("access_ctx", JSON.stringify(orgs));
+
+        const activeOrg =
+          orgs.find((o) => o.is_current) ?? orgs[0];
+
+        if (activeOrg) {
+          setCurrentOrganization(activeOrg.id);
+
+          const office =
+            activeOrg.offices?.find((o) => o.is_current) ??
+            activeOrg.offices?.[0];
+
+          setCurrentOffice(office?.id ?? "");
+        }
+
+        setIsAuthenticated(true);
+      } catch {
+        localStorage.clear();
+        setIsAuthenticated(false);
+        setUser(null);
       }
+    })();
+  }, []);
 
-      // Check if this is a first-time login (simulate with localStorage)
-      const userLoginHistory = localStorage.getItem(`login_history_${email}`);
-      if (!userLoginHistory) {
-        isFirstLogin = true;
-        localStorage.setItem(`login_history_${email}`, 'true');
-      }
+  /* ---------- LOGIN ---------- */
+
+  const login = async (email: string, password: string) => {
+    try {
+      const loginRes = await api.post("/api/v1/auth/login", {
+        identifier: email,
+        password,
+      });
+
+      const token = loginRes.data.access_token;
+
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("refresh_token", loginRes.data.refresh_token);
+
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      const [meRes, accessRes] = await Promise.all([
+        api.get("/api/v1/auth/me-full"),
+        api.get("/api/v1/users/me/access"),
+      ]);
+
+      const me = meRes.data;
+      const orgs: Organization[] = accessRes.data ?? [];
 
       const newUser: User = {
-        id: Math.random().toString(36).substring(7),
-        email,
-        name,
-        role,
-        isFirstLogin,
-        isOrgOwner,
-        organizationId,
+        id: String(me.user_id),
+        email: me.email,
+        name: `${me.first_name} ${me.last_name}`.trim(),
+        role: me.roles?.[0] ?? "staff",
+        isFirstLogin: false,
+        isActive: true,
+        isOrgOwner: me.is_super_admin ?? false,
+        organizationId: String(me.current_organization_id ?? ""),
       };
 
       setUser(newUser);
+      setOrganizations(orgs);
+
+      localStorage.setItem("me_full", JSON.stringify(newUser));
+      localStorage.setItem("access_ctx", JSON.stringify(orgs));
+
+      const activeOrg =
+        orgs.find((o) => o.is_current) ?? orgs[0];
+
+      if (activeOrg) {
+        setCurrentOrganization(activeOrg.id);
+
+        const office =
+          activeOrg.offices?.find((o) => o.is_current) ??
+          activeOrg.offices?.[0];
+
+        setCurrentOffice(office?.id ?? "");
+      }
+
       setIsAuthenticated(true);
       return true;
+    } catch (err) {
+      console.error("Login failed", err);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    setActivePatient(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('currentUser');
+  /* ---------- LOGOUT ---------- */
+
+  const logout = async () => {
+    try {
+      const refresh = localStorage.getItem("refresh_token");
+      if (refresh) {
+        await api.post("/api/v1/auth/logout", { refresh_token: refresh });
+      }
+    } catch {}
+    finally {
+      localStorage.clear();
+      delete api.defaults.headers.common["Authorization"];
+
+      setIsAuthenticated(false);
+      setUser(null);
+      setOrganizations([]);
+      setCurrentOrganization("");
+      setCurrentOffice("");
+      setActivePatient(null);
+    }
   };
 
   const markFirstLoginComplete = () => {
-    if (user && user.isFirstLogin) {
-      const updatedUser = { ...user, isFirstLogin: false };
-      setUser(updatedUser);
+    if (user?.isFirstLogin) {
+      const updated = { ...user, isFirstLogin: false };
+      setUser(updated);
+      localStorage.setItem("me_full", JSON.stringify(updated));
     }
   };
 
@@ -159,10 +282,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         login,
         logout,
-        currentOffice,
-        setCurrentOffice,
+        organizations,
         currentOrganization,
         setCurrentOrganization,
+        currentOffice,
+        setCurrentOffice,
         activePatient,
         setActivePatient,
         markFirstLoginComplete,
@@ -173,10 +297,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/* -------------------- HOOK -------------------- */
+
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }

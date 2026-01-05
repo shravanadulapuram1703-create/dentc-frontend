@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
+import api from "../../../services/api";
+import { mapApiUserToUI } from "../../../mappers/userMapper";
+import { mapApiTenantToUI, mapApiOfficeToUI } from "../../../mappers/tenantMapper";
+import { mapSetupApiToUserUI } from "../../../mappers/mapSetupApiToUserUI";
+import { useMemo } from "react";
 
 interface PermittedIP {
   id: string;
@@ -25,6 +30,62 @@ interface TimeClockEntry {
   notes?: string;
 }
 
+// interface User {
+//   id: string;
+//   firstName: string;
+//   lastName: string;
+//   username: string;
+//   email: string;
+//   active: boolean;
+//   homeOffice: string;
+//   homeOfficeOID: string;
+//   pgid: string;
+//   pgidName: string;
+//   assignedOfficeOIDs: string[];
+//   assignedOfficeNames: string[];
+//   lastLogin?: string;
+//   role: string;
+//   updatedBy:string;
+//   securityGroup: string;
+//   // Login Info
+//   passwordLastChanged?: string;
+//   mustChangePassword?: boolean;
+//   accountLockedUntil?: string;
+//   failedLoginAttempts?: number;
+//   // Permitted IPs
+//   permittedIPs?: PermittedIP[];
+//   requireIPCheck?: boolean;
+//   // Group Memberships
+//   groupMemberships?: GroupMembership[];
+//   // Time Clock
+//   timeClockEnabled?: boolean;
+//   clockInRequired?: boolean;
+//   recentTimeEntries?: TimeClockEntry[];
+//   // User Settings
+//   // theme?: string;
+//   // language?: string;
+//   // dateFormat?: string;
+//   // timeFormat?: string;
+//   // emailNotifications?: boolean;
+//   // smsNotifications?: boolean;
+//   // defaultView?: string;
+//   // itemsPerPage?: number;
+//   startupScreen: string;
+//   perioTemplate: string | null;
+//   defaultNavigationSearch: boolean;
+//   defaultSearchBy: string;
+//   productionView: string;
+//   hideProviderTime: boolean;
+//   defaultView: string;
+//   showProductionColors: boolean;
+//   printLabels: boolean;
+//   promptEntryDate: boolean;
+//   includeInactivePatients: boolean;
+//   referralView: string | null;
+//   userRoleType: string | null;
+
+//   }
+
 interface User {
   id: string;
   firstName: string;
@@ -32,44 +93,78 @@ interface User {
   username: string;
   email: string;
   active: boolean;
+
   homeOffice: string;
   homeOfficeOID: string;
+
   pgid: string;
   pgidName: string;
+
   assignedOfficeOIDs: string[];
   assignedOfficeNames: string[];
-  lastLogin?: string;
+
   role: string;
   securityGroup: string;
-  // Login Info
-  passwordLastChanged?: string;
-  mustChangePassword?: boolean;
-  accountLockedUntil?: string;
-  failedLoginAttempts?: number;
-  // Permitted IPs
+
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+
   permittedIPs?: PermittedIP[];
-  requireIPCheck?: boolean;
-  // Group Memberships
   groupMemberships?: GroupMembership[];
-  // Time Clock
-  timeClockEnabled?: boolean;
-  clockInRequired?: boolean;
-  recentTimeEntries?: TimeClockEntry[];
-  // User Settings
-  theme?: string;
-  language?: string;
-  dateFormat?: string;
-  timeFormat?: string;
-  emailNotifications?: boolean;
-  smsNotifications?: boolean;
-  defaultView?: string;
-  itemsPerPage?: number;
 }
+
 
 interface UserSetupProps {
   onLogout: () => void;
   currentOffice: string;
   setCurrentOffice: (office: string) => void;
+}
+
+interface Tenant {
+  id: number;
+  name: string;
+  code: string;
+
+  status: string;
+  isActive: boolean;
+  isLocked: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+
+  createdBy?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+}
+
+interface Office {
+  id: number;
+
+  officeCode: string;
+  officeName: string;
+
+  phone1?: string;
+  phone2?: string;
+  fax?: string;
+  email?: string;
+
+  addressLine1?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+
+  tenantId: number;
+  timezone?: string;
+
+  isActive: boolean;
+
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function UserSetup({
@@ -86,295 +181,477 @@ export default function UserSetup({
   const [filterPGID, setFilterPGID] = useState<string>("all");
   const [filterOID, setFilterOID] = useState<string>("all");
   const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
+  const [viewUser, setViewUser] = useState<User | null>(null);
 
-  // Available PGIDs and OIDs for filtering
-  const availablePGIDs = [
-    { id: "P-001", name: "Cranberry Dental Arts Corp" },
-    { id: "P-002", name: "Pittsburgh Dental Group" },
-  ];
+  // const fetchFullUserDetails = async (user: User) => {
+  //   try {
+  //     setLoadingUserDetails(true);
 
-  const availableOIDs = [
-    { id: "O-001", name: "Cranberry Main" },
-    { id: "O-002", name: "Cranberry North" },
-    { id: "O-003", name: "Downtown Pittsburgh" },
-  ];
+  //     const id = normalizeUID(user.id); // or replace("U-", "")
+  //     const pgid = normalizePGID(user.pgid);
 
-  // Mock user data
-  const mockUsers: User[] = [
-    {
-      id: "U-001",
-      firstName: "Sarah",
-      lastName: "Johnson",
-      username: "sjohnson",
-      email: "sjohnson@dentalclinic.com",
-      active: true,
-      homeOffice: "Cranberry Main",
-      homeOfficeOID: "O-001",
-      pgid: "P-001",
-      pgidName: "Cranberry Dental Arts Corp",
-      assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
-      lastLogin: "2024-12-30 09:45 AM",
-      role: "Office Manager",
-      securityGroup: "Administrators",
-      // Login Info
-      passwordLastChanged: "2024-11-15 03:20 PM",
-      mustChangePassword: false,
-      accountLockedUntil: undefined,
-      failedLoginAttempts: 0,
-      // Permitted IPs
-      requireIPCheck: true,
-      permittedIPs: [
-        {
-          id: "IP-001",
-          ipAddress: "192.168.1.100",
-          description: "Office Manager Workstation - Main Office",
-          active: true,
-        },
-        {
-          id: "IP-002",
-          ipAddress: "192.168.2.50",
-          description: "Office Manager Workstation - North Office",
-          active: true,
-        },
-        {
-          id: "IP-003",
-          ipAddress: "10.0.0.25",
-          description: "VPN Access - Home Office",
-          active: true,
-        },
-        {
-          id: "IP-004",
-          ipAddress: "192.168.1.105",
-          description: "Backup Workstation - Main Office",
-          active: false,
-        },
-      ],
-      // Group Memberships
-      groupMemberships: [
-        {
-          groupId: "GRP-001",
-          groupName: "Administrators",
-          description: "Full system access with administrative privileges including user management, security settings, and system configuration",
-          joinedDate: "2023-01-15",
-        },
-        {
-          groupId: "GRP-005",
-          groupName: "Office Managers",
-          description: "Office management access including scheduling, staff coordination, and operational reports",
-          joinedDate: "2023-01-15",
-        },
-        {
-          groupId: "GRP-010",
-          groupName: "Billing Administrators",
-          description: "Full billing and financial access including claim processing, payment posting, and financial reports",
-          joinedDate: "2023-03-20",
-        },
-      ],
-      // Time Clock
-      timeClockEnabled: true,
-      clockInRequired: true,
-      recentTimeEntries: [
-        {
-          date: "2024-12-30",
-          clockIn: "08:00 AM",
-          clockOut: "05:00 PM",
-          totalHours: "9.0",
-          notes: "Regular shift",
-        },
-        {
-          date: "2024-12-27",
-          clockIn: "08:00 AM",
-          clockOut: "05:30 PM",
-          totalHours: "9.5",
-          notes: "Staff meeting until 5:30 PM",
-        },
-        {
-          date: "2024-12-26",
-          clockIn: "08:15 AM",
-          clockOut: "05:00 PM",
-          totalHours: "8.75",
-          notes: "Late arrival - traffic",
-        },
-        {
-          date: "2024-12-23",
-          clockIn: "08:00 AM",
-          clockOut: "04:00 PM",
-          totalHours: "8.0",
-          notes: "Holiday week - early closure",
-        },
-        {
-          date: "2024-12-20",
-          clockIn: "07:45 AM",
-          clockOut: "05:15 PM",
-          totalHours: "9.5",
-          notes: "Early arrival for inventory",
-        },
-      ],
-      // User Settings
-      theme: "Light Mode",
-      language: "English (US)",
-      dateFormat: "MM/DD/YYYY",
-      timeFormat: "12-hour",
-      emailNotifications: true,
-      smsNotifications: false,
-      defaultView: "Dashboard",
-      itemsPerPage: 50,
-    },
-    {
-      id: "U-002",
-      firstName: "Michael",
-      lastName: "Chen",
-      username: "mchen",
-      email: "mchen@dentalclinic.com",
-      active: true,
-      homeOffice: "Cranberry Main",
-      homeOfficeOID: "O-001",
-      pgid: "P-001",
-      pgidName: "Main Office",
-      assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
-      lastLogin: "2024-12-30 08:30 AM",
-      role: "Dentist",
-      securityGroup: "Doctor",
-    },
-    {
-      id: "U-003",
-      firstName: "Emily",
-      lastName: "Rodriguez",
-      username: "erodriguez",
-      email: "erodriguez@dentalclinic.com",
-      active: true,
-      homeOffice: "Cranberry North",
-      homeOfficeOID: "O-002",
-      pgid: "P-002",
-      pgidName: "North Office",
-      assignedOfficeOIDs: ["O-002"],
-      assignedOfficeNames: ["Cranberry North"],
-      lastLogin: "2024-12-29 04:15 PM",
-      role: "Front Desk",
-      securityGroup: "Clerical",
-    },
-    {
-      id: "U-004",
-      firstName: "David",
-      lastName: "Williams",
-      username: "dwilliams",
-      email: "dwilliams@dentalclinic.com",
-      active: false,
-      homeOffice: "Cranberry Main",
-      homeOfficeOID: "O-001",
-      pgid: "P-001",
-      pgidName: "Main Office",
-      assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
-      lastLogin: "2024-11-15 03:20 PM",
-      role: "Dental Assistant",
-      securityGroup: "Assistant",
-    },
-    {
-      id: "U-005",
-      firstName: "Jennifer",
-      lastName: "Martinez",
-      username: "jmartinez",
-      email: "jmartinez@dentalclinic.com",
-      active: true,
-      homeOffice: "Downtown Pittsburgh",
-      homeOfficeOID: "O-003",
-      pgid: "P-003",
-      pgidName: "Pittsburgh Office",
-      assignedOfficeOIDs: ["O-003"],
-      assignedOfficeNames: ["Downtown Pittsburgh"],
-      lastLogin: "2024-12-30 10:00 AM",
-      role: "Hygienist",
-      securityGroup: "Clinical",
-    },
-    {
-      id: "U-006",
-      firstName: "Robert",
-      lastName: "Anderson",
-      username: "randerson",
-      email: "randerson@dentalclinic.com",
-      active: true,
-      homeOffice: "Cranberry Main",
-      homeOfficeOID: "O-001",
-      pgid: "P-001",
-      pgidName: "Main Office",
-      assignedOfficeOIDs: ["O-001", "O-002"],
-      assignedOfficeNames: ["Cranberry Main", "Cranberry North"],
-      lastLogin: "2024-12-30 07:50 AM",
-      role: "Billing",
-      securityGroup: "Billing",
-    },
-    {
-      id: "U-007",
-      firstName: "Lisa",
-      lastName: "Thompson",
-      username: "lthompson",
-      email: "lthompson@dentalclinic.com",
-      active: false,
-      homeOffice: "Cranberry North",
-      homeOfficeOID: "O-002",
-      pgid: "P-002",
-      pgidName: "North Office",
-      assignedOfficeOIDs: ["O-002"],
-      assignedOfficeNames: ["Cranberry North"],
-      lastLogin: "2024-10-20 02:30 PM",
-      role: "Front Desk",
-      securityGroup: "Clerical",
-    },
-  ];
+  //     const [
+  //       userRes,
+  //       ipRes,
+  //       groupRes,
+  //     ] = await Promise.all([
+  //       api.get(`/api/v1/users/${id}`),          // full user
+  //       api.get(`/api/v1/users/${pgid}/${id}/ip-rules`),
+  //       api.get(`/api/v1/users/${id}/groups`),
+  //     ]);
+
+  //     const fullUser: User = {
+  //       ...mapApiUserToUI(userRes.data),
+  //       permittedIPs: ipRes.data,
+  //       groupMemberships: groupRes.data,
+  //     };
+
+  //     setSelectedUser(fullUser);
+  //     return fullUser;
+  //   } catch (err) {
+  //     console.error("Failed to load user details", err);
+  //     return null;
+  //   } finally {
+  //     setLoadingUserDetails(false);
+  //   }
+  // };
+
+
+
+  // // Available PGIDs and OIDs for filtering
+  // const availablePGIDs = [
+  //   { id: "P-001", name: "Cranberry Dental Arts Corp" },
+  //   { id: "P-002", name: "Pittsburgh Dental Group" },
+  // ];
+  // const [availablePGIDs, setAvailablePGIDs] = useState([]);
+
+  // useEffect(() => {
+  //   api.get("/pgids").then(res => {
+  //     setAvailablePGIDs(
+  //       res.data.map((p: any) => ({
+  //         id: `P-${p.id}`,
+  //         name: p.name,
+  //       }))
+  //     );
+  //   });
+  // }, []);
+
+  const fetchFullUserDetails = async (user: User) => {
+    try {
+      setLoadingUserDetails(true);
+
+      const id = normalizeUID(user.id);     // e.g. "U-61" → 61
+      const pgid = normalizePGID(user.pgid); // e.g. "ORG-1" → 1
+
+      // ✅ Single aggregation API
+      const res = await api.get(
+        `/api/v1/users/${pgid}/${id}/setup`
+      );
+
+      const data = res.data;
+
+      console.log("SETUP API RAW:", data);
+      
+
+
+      // const fullUser: User = {
+      //   ...mapApiUserToUI(data.user),
+
+      //   // 👇 coming from setup API
+      //   // offices: data.offices,
+      //   permittedIPs: data.ip_rules,
+      //   groupMemberships: data.groups,
+      //   // timeClock: data.time_clock,
+      //   // preferences: data.preferences,
+      //   // // map to existing fields
+      //   // permittedIPs: data.ip_rules ?? [],
+      //   // groupMemberships: data.groups ?? [],
+        
+      // };
+
+
+
+      const fullUser = mapSetupApiToUserUI(
+        data,
+        officeNameById // pass your memoized map
+      );
+
+      setSelectedUser(fullUser);
+      return fullUser;
+
+      
+      
+      console.log("FULL USER UI:", fullUser);
+
+      setSelectedUser(fullUser);
+      return fullUser;
+    } catch (err) {
+      console.error("Failed to load user details", err);
+      return null;
+    } finally {
+      setLoadingUserDetails(false);
+    }
+  };
+
+  
+  const [availablePGIDs, setAvailablePGIDs] = useState<Tenant[]>([]);
+
+  useEffect(() => {
+    api.get("/api/v1/users/all-tenants")
+      .then((res) => {
+        setAvailablePGIDs(res.data.map(mapApiTenantToUI));
+      })
+      .catch(() => {
+        console.error("Failed to load tenants");
+      });
+  }, []);
+
+
+
+  const [availableOIDs, setAvailableOIDs] = useState<Office[]>([]);
+
+  useEffect(() => {
+    api.get("/api/v1/users/all-offices")
+      .then((res) => {
+        setAvailableOIDs(res.data.map(mapApiOfficeToUI));
+      })
+      .catch(() => {
+        console.error("Failed to load offices");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (searchScope === "home") {
+      setFilterPGID("all");
+      setFilterOID("all");
+    }
+  }, [searchScope]);
+
+  const normalizeOID = (v: string | number) =>
+    String(v).replace(/^O-/, "");
+  const normalizeUID = (v: string | number) =>
+    String(v).replace(/^U-/, "");
+
+  const normalizePGID = (v: string | number) =>
+    String(v).replace(/^P-/, "");
+
+  console.log({currentOffice,OID: availableOIDs});
+
+  const filteredOIDs = useMemo(() => {
+    // Home Office only → show only home office
+    if (searchScope === "home") {
+      return availableOIDs.filter(
+        (o) => normalizeOID(o.id) === normalizeOID(currentOffice)
+      );
+    }
+
+    
+
+    // All PGIDs → all offices
+    if (filterPGID === "all") {
+      return availableOIDs;
+    }
+
+    // Specific PGID → only offices of that PGID
+    return availableOIDs.filter(
+      (o) => String(o.tenantId) === filterPGID
+    );
+  }, [availableOIDs, filterPGID, searchScope, currentOffice]);
+
+
+
+
+  
+
+  // const loadOffices = async (pgid: string) => {
+  //   const id = pgid.replace("P-", "");
+  //   const res = await api.get(`/offices?pgid=${id}`);
+
+  //   setAvailableOIDs(
+  //     res.data.map((o: any) => ({
+  //       id: `O-${o.id}`,
+  //       name: o.office_name,
+  //     }))
+  //   );
+  // };
+
+  const loadUserDetails = async (userId: string) => {
+    const id = userId.replace("U-", "");
+
+    const [ips, groups] = await Promise.all([
+      api.get(`/api/v1/users/${id}/ip-rules`),
+      api.get(`/api/v1/users/${id}/groups`)
+    ]);
+
+    setSelectedUser(prev => ({
+      ...prev!,
+      permittedIPs: ips.data,
+      groupMemberships: groups.data,
+    }));
+  };
+
+  
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/api/v1/users/list-with-home-office");
+      setUsers(res.data.map(mapApiUserToUI));
+    } catch {
+      setError("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  console.log({currentOffice,userHomeOID: users[1]?.homeOffice,});
+
+  // const filteredUsers = useMemo(() => {
+  //   console.log("---- FILTERING USERS ----");
+  //   console.log("Active PGID:", filterPGID);
+  //   console.log("Active OID:", filterOID);
+
+  //   return users
+  //     .filter((user) => {
+  //       // 1 Home Office only
+  //       if (searchScope === "home") {
+  //         console.log("check condition",user.homeOffice, currentOffice)
+  //         console.log("check condition",user.homeOffice === currentOffice)
+  //         return user.homeOffice === currentOffice;
+  //       //    return (
+  //       //       normalizeOID(user.homeOfficeOID) ===
+  //       //       normalizeOID(currentOffice)
+  //       //     );
+  //       }
+  //       // return (user.homeOfficeOID === currentOffice);
+
+  //       // 2 PGID filter
+  //       if (filterPGID !== "all" && user.pgid !== filterPGID) {
+  //         return false;
+  //       }
+
+  //       // 3 OID filter
+  //       // if (
+  //       //   filterOID !== "all" &&
+  //       //   !user.assignedOfficeOIDs.includes(filterOID)
+  //       // ) {
+  //       //   return false;
+  //       // }
+  //       if (
+  //         filterOID !== "all" &&
+  //         !user.assignedOfficeOIDs
+  //           .map(normalizeOID)
+  //           .includes(normalizeOID(filterOID))
+  //       ) {
+  //         return false;
+  //       }
+
+  //       // 4️⃣ Text search
+  //       if (searchText.trim()) {
+  //         const s = searchText.toLowerCase();
+  //         return (
+  //           user.firstName?.toLowerCase().includes(s) ||
+  //           user.lastName?.toLowerCase().includes(s) ||
+  //           user.username?.toLowerCase().includes(s)
+  //         );
+  //       }
+
+  //       return true;
+  //     })
+  //     .sort((a, b) => {
+  //       if (sortBy === "name") {
+  //         return `${a.lastName}, ${a.firstName}`.localeCompare(
+  //           `${b.lastName}, ${b.firstName}`
+  //         );
+  //       }
+  //       return a.username.localeCompare(b.username);
+  //     });
+  // }, [
+  //   users,
+  //   searchScope,
+  //   filterPGID,
+  //   filterOID,
+  //   searchText,
+  //   sortBy,
+  //   currentOffice,
+  // ]);
+
+  
+  const filteredUsers = useMemo(() => {
+    console.log("---- FILTERING USERS ----");
+    console.log("Scope:", searchScope);
+    console.log("PGID:", filterPGID);
+    console.log("OID (office name):", filterOID);
+    console.log("Current Office:", currentOffice);
+
+    return users
+      .filter((user) => {
+        /* ----------------------------------
+        1️⃣ Home Office scope
+        ---------------------------------- */
+        if (searchScope === "home") {
+          const match = user.homeOffice === currentOffice;
+
+          console.log("HOME CHECK:", {
+            user: user.username,
+            userHomeOffice: user.homeOffice,
+            currentOffice,
+            match,
+          });
+
+          return match;
+        }
+
+        console.log("PGID CHECK:", {
+            user_pgid:String(normalizePGID(user.pgid)),
+            filterPGID: String(filterPGID),
+          });
+
+        /* ----------------------------------
+        2️⃣ PGID filter
+        ---------------------------------- */
+        if (
+          filterPGID !== "all" &&
+          String(normalizePGID(user.pgid)) !== String(filterPGID)
+        ) {
+          return false;
+        }
+
+        // console.log("office CHECK:", {
+        //     user_offices:String(user.assignedOfficeOIDs ?? normalizeOID([])),
+        //     filterOID: String(filterOID),
+        //   });
+
+        /* ----------------------------------
+        3️⃣ Office (OID) filter — NAME based
+        ---------------------------------- */
+        if (filterOID !== "all") {
+          const normalizedAssignedOIDs = (user.assignedOfficeOIDs ?? []).map(
+            normalizeOID
+          );
+
+          const normalizedFilterOID = normalizeOID(filterOID);
+
+          const match = normalizedAssignedOIDs.includes(normalizedFilterOID);
+
+          console.log("OID MATCH RESULT:", {
+            user: user.username,
+            normalizedAssignedOIDs,
+            normalizedFilterOID,
+            match,
+          });
+
+          if (!match) return false;
+        }
+
+        /* ----------------------------------
+        4️⃣ Text search
+        ---------------------------------- */
+        if (searchText.trim()) {
+          const s = searchText.toLowerCase();
+          return (
+            user.firstName?.toLowerCase().includes(s) ||
+            user.lastName?.toLowerCase().includes(s) ||
+            user.username?.toLowerCase().includes(s)
+          );
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "name") {
+          return `${a.lastName}, ${a.firstName}`.localeCompare(
+            `${b.lastName}, ${b.firstName}`
+          );
+        }
+        return a.username.localeCompare(b.username);
+      });
+  }, [
+    users,
+    searchScope,
+    filterPGID,
+    filterOID,
+    searchText,
+    sortBy,
+    currentOffice,
+  ]);
+
+  
+  console.log("filteredUsers----> ",filteredUsers)
+
+
 
   // Filter and sort users
-  const filteredUsers = mockUsers
-    .filter((user) => {
-      // Search scope filter
-      if (searchScope === "home" && user.homeOffice !== currentOffice) {
-        return false;
-      }
+  // const filteredUsers = mockUsers
+  // const filteredUsers = users
+  //   .filter((user) => {
+  //     if (searchScope === "home" && user.homeOffice !== currentOffice) {
+  //       return false;
+  //     }
 
-      // Text search filter
-      if (searchText.trim()) {
-        const search = searchText.toLowerCase();
-        return (
-          user.firstName.toLowerCase().includes(search) ||
-          user.lastName.toLowerCase().includes(search) ||
-          user.username.toLowerCase().includes(search)
-        );
-      }
+  //     if (searchText.trim()) {
+  //       const search = searchText.toLowerCase();
+  //       return (
+  //         user.firstName?.toLowerCase().includes(search) ||
+  //         user.lastName?.toLowerCase().includes(search) ||
+  //         user.username?.toLowerCase().includes(search)
+  //       );
+  //     }
 
-      // PGID filter
-      if (filterPGID !== "all" && user.pgid !== filterPGID) {
-        return false;
-      }
+  //     if (filterPGID !== "all" && user.pgid !== filterPGID) {
+  //       return false;
+  //     }
 
-      // OID filter
-      if (filterOID !== "all" && !user.assignedOfficeOIDs.includes(filterOID)) {
-        return false;
-      }
+  //     if (
+  //       filterOID !== "all" &&
+  //       !user.assignedOfficeOIDs?.includes(filterOID)
+  //     ) {
+  //       return false;
+  //     }
 
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "name") {
-        const nameA = `${a.lastName}, ${a.firstName}`;
-        const nameB = `${b.lastName}, ${b.firstName}`;
-        return nameA.localeCompare(nameB);
-      } else {
-        return a.username.localeCompare(b.username);
-      }
-    });
+  //     return true;
+  //   })
+  //   .sort((a, b) => {
+  //     if (sortBy === "name") {
+  //       return `${a.lastName}, ${a.firstName}`.localeCompare(
+  //         `${b.lastName}, ${b.firstName}`
+  //       );
+  //     }
+  //     return a.username.localeCompare(b.username);
+  //   });
+
 
   const handleAddUser = () => {
     setEditingUser(null);
     setShowAddEditModal(true);
   };
 
-  const handleEditUser = () => {
+  // const handleEditUser = () => {
+  //   if (!selectedUser) return;
+  //   setEditingUser(selectedUser);
+  //   setShowAddEditModal(true);
+  // };
+
+  const handleEditUser = async () => {
     if (!selectedUser) return;
-    setEditingUser(selectedUser);
+
+    const fullUser = await fetchFullUserDetails(selectedUser);
+    if (!fullUser) return;
+
+    setEditingUser(fullUser);
     setShowAddEditModal(true);
   };
+
+
 
   const handleDeleteUser = () => {
     if (!selectedUser) return;
@@ -407,10 +684,38 @@ export default function UserSetup({
     setSelectedUser(null);
   };
 
-  const handleViewDetails = () => {
+  // const handleViewDetails = () => {
+  //   if (!selectedUser) return;
+  //   setShowViewDetailsModal(true);
+  // };
+  // const handleViewDetails = async () => {
+  //   if (!selectedUser) return;
+
+  //   const fullUser = await fetchFullUserDetails(selectedUser);
+  //   if (!fullUser) return;
+
+  //   setShowViewDetailsModal(true);
+  // };
+
+  const handleViewDetails = async () => {
     if (!selectedUser) return;
+
+    const fullUser = await fetchFullUserDetails(selectedUser);
+    if (!fullUser) return;
+
+    setViewUser(fullUser);        // ✅ explicitly set modal user
     setShowViewDetailsModal(true);
   };
+
+
+  const officeNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    availableOIDs.forEach(o =>
+      map.set(normalizeOID(o.id), o.officeName)
+    );
+    return map;
+  }, [availableOIDs]);
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -502,11 +807,21 @@ export default function UserSetup({
                 </label>
                 <select
                   value={filterPGID}
-                  onChange={(e) => setFilterPGID(e.target.value)}
+                  // onChange={(e) => setFilterPGID(e.target.value)}
+                  disabled={searchScope === "home"}
+                  onChange={(e) => {
+                    setFilterPGID(e.target.value);
+                    setFilterOID("all"); // reset OID
+                  }}
+                  
+
                   className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs"
                 >
+                  
+
                   <option value="all">All PGIDs</option>
                   {availablePGIDs.map((pgid) => (
+
                     <option key={pgid.id} value={pgid.id}>
                       {pgid.name}
                     </option>
@@ -521,13 +836,23 @@ export default function UserSetup({
                 </label>
                 <select
                   value={filterOID}
+                  // onChange={(e) => setFilterOID(e.target.value)}
+                  disabled={searchScope === "home"}
                   onChange={(e) => setFilterOID(e.target.value)}
                   className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs"
                 >
                   <option value="all">All OIDs</option>
-                  {availableOIDs.map((oid) => (
-                    <option key={oid.id} value={oid.id}>
-                      {oid.name}
+                  {/* {availableOIDs.map((oid) => ( */}
+                  {filteredOIDs.map((oid) => (
+                    // <option key={oid.id} value={oid.id}>
+                    //   {/* {oid.name} */}
+                    //   {oid.officeName}
+                    // </option>
+                    <option
+                      key={oid.id}
+                      value={normalizeOID(oid.id)}
+                    >
+                      {oid.officeName}
                     </option>
                   ))}
                 </select>
@@ -604,7 +929,7 @@ export default function UserSetup({
                 </button>
                 <button
                   onClick={handleEditUser}
-                  disabled={!selectedUser}
+                  disabled={!selectedUser || loadingUserDetails}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
                 >
                   <Edit className="w-4 h-4" />
@@ -630,7 +955,7 @@ export default function UserSetup({
                 <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-bold mb-1">
+                      <h2 className="text-xl font-bold mb-1 text-[#E2E8F0]">
                         {selectedUser.firstName} {selectedUser.lastName}
                       </h2>
                       <p className="text-sm text-[#E2E8F0]">
@@ -718,15 +1043,25 @@ export default function UserSetup({
                           <label className="block text-xs font-bold text-[#64748B] mb-0.5">
                             ASSIGNED OFFICES
                           </label>
-                          <div className="space-y-1">
-                            {selectedUser.assignedOfficeOIDs.map((oid) => (
+                          <div className="space-y-1 max-h-[120px] overflow-y-auto pr-1">
+                            {/* {selectedUser.assignedOfficeOIDs.map((oid, index) => {
+                              const officeName = selectedUser.assignedOfficeNames?.[index] ?? "Unknown Office";
+                              return (
                               <div
                                 key={oid}
                                 className="px-2 py-1 bg-[#E8EFF7] border border-[#3A6EA5] rounded text-xs"
                               >
-                                <span className="text-[#1E293B] font-bold">
-                                  OID: {oid}
-                                </span>
+                                <div className="text-[#1E293B] font-bold">
+                                  {oid} - {officeName}
+                                </div>
+                              </div>
+                              );
+                            })} */}
+                            {selectedUser.assignedOfficeOIDs.map((oid) => (
+                              <div key={oid} className="px-2 py-1 bg-[#E8EFF7] border rounded text-xs">
+                                <div className="font-bold">
+                                  {oid} - {officeNameById.get(normalizeOID(oid)) ?? "Unknown Office"}
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -767,7 +1102,7 @@ export default function UserSetup({
                   </div>
 
                   {/* Login Activity */}
-                  <div className="mt-4 pt-4 border-t-2 border-[#E2E8F0]">
+                  {/* <div className="mt-4 pt-4 border-t-2 border-[#E2E8F0]">
                     <h3 className="font-bold text-sm text-[#1F3A5F] mb-2 uppercase tracking-wide">
                       Login Activity
                     </h3>
@@ -797,6 +1132,50 @@ export default function UserSetup({
                         </p>
                       </div>
                     </div>
+                  </div> */}
+                  {/* Audit Information */}
+                  <div className="mt-4 pt-4 border-t-2 border-[#E2E8F0]">
+                    <h3 className="font-bold text-sm text-[#1F3A5F] mb-2 uppercase tracking-wide">
+                      Audit Information
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-[#64748B] mb-0.5">
+                          CREATED BY
+                        </label>
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.createdBy || "System"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#64748B] mb-0.5">
+                          CREATED ON
+                        </label>
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.createdAt || "—"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#64748B] mb-0.5">
+                          LAST UPDATED BY
+                        </label>
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.updatedBy || "—"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-[#64748B] mb-0.5">
+                          LAST UPDATED ON
+                        </label>
+                        <p className="text-sm text-[#1E293B]">
+                          {selectedUser.updatedAt || "—"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Quick Actions */}
@@ -804,6 +1183,7 @@ export default function UserSetup({
                     <div className="flex gap-3">
                       <button
                         onClick={handleEditUser}
+                        disabled={!selectedUser || loadingUserDetails}
                         className="flex items-center gap-2 px-5 py-2.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm font-bold text-sm"
                       >
                         <Edit className="w-4 h-4" />
@@ -850,9 +1230,13 @@ export default function UserSetup({
       {showViewDetailsModal && (
         <ViewUserDetailsModal
           isOpen={showViewDetailsModal}
-          onClose={() => setShowViewDetailsModal(false)}
-          user={selectedUser}
+          onClose={() => {
+            setShowViewDetailsModal(false);
+            setViewUser(null);
+          }}
+          user={viewUser}
         />
+
       )}
     </div>
   );

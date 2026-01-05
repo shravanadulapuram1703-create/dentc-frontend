@@ -14,9 +14,39 @@ interface AddEditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (userData: any) => void;
-  editingUser: any | null;
+  editingUser: BackendUser | null;
   currentOffice: string;
+
+
 }
+
+interface BackendUser {
+  user_id: number;
+  username: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone?: string | null;
+
+  is_active: boolean;
+
+  home_office_id: number | null;
+  assigned_offices: number[];
+
+  roles: string[];        // scopes / roles
+  security_groups: string[];
+
+  permitted_ips: string[];
+
+  time_clock?: {
+    pay_rate?: number | null;
+    overtime_method?: string | null;
+    overtime_rate?: number | null;
+  };
+
+  preferences?: Record<string, any>;
+}
+
 
 export default function AddEditUserModal({
   isOpen,
@@ -28,59 +58,111 @@ export default function AddEditUserModal({
   const [activeTab, setActiveTab] = useState(0);
 
   // Form Data State
-  const [formData, setFormData] = useState({
-    // Tab 1: Login Info & Office Access
-    username: editingUser?.username || "",
-    password: editingUser?.username || "", // Default = username
-    firstName: editingUser?.firstName || "",
-    lastName: editingUser?.lastName || "",
-    shortId: editingUser?.shortId || "",
-    email: editingUser?.email || "",
-    phone: editingUser?.phone || "",
-    active: editingUser?.active ?? true,
-    securityGroup: editingUser?.securityGroup || "Front Desk",
-    userRole: editingUser?.role || "Front Desk",
-    patientAccessLevel: "all",
-    allowedDays: {
-      Mon: true,
-      Tue: true,
-      Wed: true,
-      Thu: true,
-      Fri: true,
-      Sat: false,
-      Sun: false,
-    },
-    allowedFrom: "08:00 AM",
-    allowedUntil: "06:00 PM",
-    use24x7Access: false,
-    hipaaCompliantScheduler: false,
-    homeOffice: editingUser?.homeOffice || currentOffice,
-    assignedOffices: editingUser?.assignedOffices || [currentOffice],
+  // const [formData, setFormData] = useState({
+  //   // Tab 1: Login Info & Office Access
+  //   username: editingUser?.username || "",
+  //   password: editingUser?.username || "", // Default = username
+  //   firstName: editingUser?.firstName || "",
+  //   lastName: editingUser?.lastName || "",
+  //   shortId: editingUser?.shortId || "",
+  //   email: editingUser?.email || "",
+  //   phone: editingUser?.phone || "",
+  //   active: editingUser?.active ?? true,
+  //   securityGroup: editingUser?.securityGroup || "Front Desk",
+  //   userRole: editingUser?.role || "Front Desk",
+  //   patientAccessLevel: "all",
+  //   allowedDays: {
+  //     Mon: true,
+  //     Tue: true,
+  //     Wed: true,
+  //     Thu: true,
+  //     Fri: true,
+  //     Sat: false,
+  //     Sun: false,
+  //   },
+  //   allowedFrom: "08:00 AM",
+  //   allowedUntil: "06:00 PM",
+  //   use24x7Access: false,
+  //   hipaaCompliantScheduler: false,
+  //   homeOffice: editingUser?.homeOffice || currentOffice,
+  //   assignedOffices: editingUser?.assignedOffices || [currentOffice],
 
-    // Tab 2: Permitted IPs
-    permittedIPs: editingUser?.permittedIPs || [],
+  //   // Tab 2: Permitted IPs
+  //   permittedIPs: editingUser?.permittedIPs || [],
 
-    // Tab 3: Group Memberships
-    assignedGroups: editingUser?.assignedGroups || ["Front Desk"],
+  //   // Tab 3: Group Memberships
+  //   assignedGroups: editingUser?.assignedGroups || ["Front Desk"],
 
-    // Tab 4: Time Clock
-    timeClockPayRate: editingUser?.timeClockPayRate || "",
-    overtimeMethod: editingUser?.overtimeMethod || "daily",
-    overtimeRate: editingUser?.overtimeRate || "1.5",
+  //   // Tab 4: Time Clock
+  //   timeClockPayRate: editingUser?.timeClockPayRate || "",
+  //   overtimeMethod: editingUser?.overtimeMethod || "daily",
+  //   overtimeRate: editingUser?.overtimeRate || "1.5",
 
-    // Tab 5: User Settings
-    startupScreen: "Dashboard",
-    defaultPerioScreen: "Standard",
-    defaultNavigationSearch: "Patient",
-    defaultSearchBy: "lastName",
-    showProductionView: true,
-    hideProviderTime: false,
-    printLabelsForAppointments: false,
-    promptForEntryDate: false,
-    includeInactivePatientsInSearch: false,
-    defaultReferralView: "All",
-    isOrthoAssistant: false,
-  });
+  //   // Tab 5: User Settings
+  //   startupScreen: "Dashboard",
+  //   defaultPerioScreen: "Standard",
+  //   defaultNavigationSearch: "Patient",
+  //   defaultSearchBy: "lastName",
+  //   showProductionView: true,
+  //   hideProviderTime: false,
+  //   printLabelsForAppointments: false,
+  //   promptForEntryDate: false,
+  //   includeInactivePatientsInSearch: false,
+  //   defaultReferralView: "All",
+  //   isOrthoAssistant: false,
+  // });
+  const [formData, setFormData] = useState(() => ({
+    username: editingUser?.username ?? "",
+    password: "", // never prefill password
+    firstName: editingUser?.first_name ?? "",
+    lastName: editingUser?.last_name ?? "",
+    email: editingUser?.email ?? "",
+    phone: editingUser?.phone ?? "",
+
+    active: editingUser?.is_active ?? true,
+
+    homeOffice: editingUser?.home_office_id
+      ? String(editingUser.home_office_id)
+      : "",
+
+    assignedOffices: editingUser?.assigned_offices
+      ? editingUser.assigned_offices.map(String)
+      : [],
+
+    assignedGroups: editingUser?.security_groups ?? [],
+    roles: editingUser?.roles ?? [],
+
+    permittedIPs: editingUser?.permitted_ips ?? [],
+
+    timeClockPayRate:
+      editingUser?.time_clock?.pay_rate?.toString() ?? "",
+
+    overtimeMethod:
+      editingUser?.time_clock?.overtime_method ?? "daily",
+
+    overtimeRate:
+      editingUser?.time_clock?.overtime_rate?.toString() ?? "1.5",
+  }));
+  
+  const REQUIRED_FIELDS = [
+    "username",
+    "firstName",
+    "lastName",
+    "email",
+    "homeOffice",
+  ];
+
+  const missingFields = REQUIRED_FIELDS.filter(
+    (field) => !formData[field as keyof typeof formData]
+  );
+
+  const isFormValid = missingFields.length === 0;
+
+  const fieldError = (field: string) =>
+    missingFields.includes(field)
+      ? "border-[#EF4444] bg-[#FEF2F2]"
+      : "";
+
 
   const [newIP, setNewIP] = useState("");
 
@@ -335,14 +417,32 @@ export default function AddEditUserModal({
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                       Username <span className="text-[#EF4444]">*</span>
                     </label>
-                    <input
+                    {/* <input
                       type="text"
                       value={formData.username}
                       onChange={(e) =>
                         setFormData({ ...formData, username: e.target.value })
                       }
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                    /> */}
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) =>
+                        setFormData({ ...formData, username: e.target.value })
+                      }
+                      className={`w-full px-3 py-2 border-2 rounded-lg
+                        ${fieldError("username")}
+                        focus:outline-none focus:border-[#3A6EA5]`}
                     />
+
+                    {missingFields.includes("username") && (
+                      <p className="text-xs text-[#EF4444] mt-1">
+                        Backend must provide username
+                      </p>
+                    )}
+
+
                   </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
