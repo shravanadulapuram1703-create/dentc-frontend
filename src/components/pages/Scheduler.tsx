@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -493,6 +493,23 @@ export default function Scheduler({
     },
   ];
 
+  // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date
+  const appointmentsByOperatory = useMemo(() => {
+    const currentDate = formatDateYYYYMMDD(selectedDate);
+    const map = new Map<string, Appointment[]>();
+
+    appointments
+      .filter((appt) => appt.date === currentDate)
+      .forEach((appt) => {
+        if (!map.has(appt.operatory)) {
+          map.set(appt.operatory, []);
+        }
+        map.get(appt.operatory)!.push(appt);
+      });
+
+    return map;
+  }, [appointments, selectedDate]);
+
   // Generate time slots (8:00 AM to 5:00 PM in 10-minute increments)
   const generateTimeSlots = () => {
     const slots = [];
@@ -530,22 +547,15 @@ export default function Scheduler({
     return start1Min < end2Min && end1Min > start2Min;
   };
 
-  // Check if a specific slot is blocked by any appointment
+  // ✅ OPTIMIZED: Use precomputed map instead of filtering
   const isSlotBlocked = (
     slotTime: string,
     operatoryId: string,
-    date: string,
   ): boolean => {
-    // Calculate slot end time (10 minutes after start)
     const slotEndTime = calculateEndTime(slotTime, 10);
+    const operatoryAppointments =
+      appointmentsByOperatory.get(operatoryId) || [];
 
-    // Get all appointments for this operatory on this date
-    const operatoryAppointments = appointments.filter(
-      (appt) =>
-        appt.operatory === operatoryId && appt.date === date,
-    );
-
-    // Check if any appointment overlaps with this slot
     return operatoryAppointments.some((appt) =>
       timeRangesOverlap(
         slotTime,
@@ -556,18 +566,14 @@ export default function Scheduler({
     );
   };
 
-  // Get the appointment that occupies a specific slot (if any)
+  // ✅ OPTIMIZED: Use precomputed map
   const getSlotOccupyingAppointment = (
     slotTime: string,
     operatoryId: string,
-    date: string,
   ): Appointment | null => {
     const slotEndTime = calculateEndTime(slotTime, 10);
-
-    const operatoryAppointments = appointments.filter(
-      (appt) =>
-        appt.operatory === operatoryId && appt.date === date,
-    );
+    const operatoryAppointments =
+      appointmentsByOperatory.get(operatoryId) || [];
 
     return (
       operatoryAppointments.find((appt) =>
@@ -756,7 +762,10 @@ export default function Scheduler({
 
   // Debug: Log when selectedDate changes
   useEffect(() => {
-    console.log("Scheduler date changed:", formatDateYYYYMMDD(selectedDate));
+    console.log(
+      "Scheduler date changed:",
+      formatDateYYYYMMDD(selectedDate),
+    );
   }, [selectedDate]);
 
   // Format date for display
@@ -986,6 +995,13 @@ export default function Scheduler({
     });
   };
 
+  // ✅ CRITICAL FIX: Calculate dynamic min-width based on operatory count
+  const TIME_COLUMN_WIDTH = 80;
+  const OPERATORY_COLUMN_WIDTH = 250;
+  const schedulerMinWidth =
+    TIME_COLUMN_WIDTH +
+    operatories.length * OPERATORY_COLUMN_WIDTH;
+
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
       <GlobalNav
@@ -997,8 +1013,8 @@ export default function Scheduler({
       {/* Scheduler Header */}
       <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-0 z-10">
         {/* Slate Blue Header Bar */}
-        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-shrink-0">
             <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
               <Calendar
                 className="w-7 h-7 text-white"
@@ -1015,15 +1031,16 @@ export default function Scheduler({
             </div>
           </div>
 
-          {/* Center: Date Navigation */}
-          <div className="flex items-center gap-2">
+          {/* ✅ FIX: Center Date Navigation with overflow control */}
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-[50vw]">
             {/* Date Picker Button */}
             <button
               ref={calendarBtnRef}
               onClick={() =>
                 setShowCalendarPicker(!showCalendarPicker)
               }
-              className="px-3 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors flex items-center gap-2 text-white text-sm font-medium"
+              className="px-3 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors flex items-center gap-2 text-white text-sm font-medium flex-shrink-0"
+              aria-label="Select date"
             >
               <Calendar className="w-4 h-4" strokeWidth={2} />
               {selectedDate.toLocaleDateString("en-US", {
@@ -1036,7 +1053,8 @@ export default function Scheduler({
             {/* Day Navigation */}
             <button
               onClick={() => changeDate(-1)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1"
+              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+              aria-label="Previous day"
             >
               <ChevronLeft
                 className="w-3.5 h-3.5"
@@ -1046,31 +1064,10 @@ export default function Scheduler({
             </button>
             <button
               onClick={() => changeDate(1)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1"
+              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+              aria-label="Next day"
             >
               Next Day
-              <ChevronRight
-                className="w-3.5 h-3.5"
-                strokeWidth={2}
-              />
-            </button>
-
-            {/* Week Navigation */}
-            <button
-              onClick={() => changeDate(-7)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
-            >
-              <ChevronLeft
-                className="w-3.5 h-3.5"
-                strokeWidth={2}
-              />
-              Prev Week
-            </button>
-            <button
-              onClick={() => changeDate(7)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
-            >
-              Nxt Week
               <ChevronRight
                 className="w-3.5 h-3.5"
                 strokeWidth={2}
@@ -1080,32 +1077,49 @@ export default function Scheduler({
             {/* Month Navigation */}
             <button
               onClick={() => changeDate(-30)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
+              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+              aria-label="Previous month"
             >
-              -1 Month
+              <ChevronLeft
+                className="w-3.5 h-3.5"
+                strokeWidth={2}
+              />
+              Prev Month
             </button>
             <button
               onClick={() => changeDate(30)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
+              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+              aria-label="Next month"
             >
-              +1 Month
+              Next Month
+              <ChevronRight
+                className="w-3.5 h-3.5"
+                strokeWidth={2}
+              />
             </button>
           </div>
 
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-2">
+          {/* ✅ FIX: Right Action Buttons with overflow control */}
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-[30vw] flex-shrink-0">
             <button
               onClick={() => handleAddNewAppointment()}
-              className="px-3 py-1.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm"
+              className="px-3 py-1.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+              aria-label="Add new appointment"
             >
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               NEW APPOINTMENT
             </button>
-            <button className="px-3 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm">
+            <button
+              className="px-3 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+              aria-label="Quick fill appointments"
+            >
               <Search className="w-4 h-4" strokeWidth={2.5} />
               QUICK FILL
             </button>
-            <button className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm">
+            <button
+              className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+              aria-label="Print schedule"
+            >
               <Printer className="w-4 h-4" strokeWidth={2.5} />
               PRINT
             </button>
@@ -1113,21 +1127,29 @@ export default function Scheduler({
         </div>
       </div>
 
-      {/* Scheduler Grid */}
+      {/* ✅ FIX: Scheduler Grid with Tailwind class and ARIA */}
       <div
-        className="overflow-auto scheduler-scroll-container"
-        style={{ height: "calc(100vh - 170px)" }}
+        className="overflow-auto scheduler-scroll-container h-[calc(100vh-170px)]"
+        role="grid"
+        aria-label="Appointment scheduler"
+        aria-rowcount={timeSlots.length + 1}
+        aria-colcount={operatories.length + 1}
       >
-        <div className="inline-block min-w-full">
+        {/* ✅ CRITICAL FIX: Dynamic min-width calculation */}
+        <div
+          className="inline-block"
+          style={{ minWidth: `${schedulerMinWidth}px` }}
+        >
           <div className="flex">
             {/* Time Column */}
             <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md">
-              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080]"></div>
+              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
               {timeSlots.map((time, index) => (
                 <div
                   key={time}
                   className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                  style={{ minWidth: "80px" }}
+                  style={{ minWidth: `${TIME_COLUMN_WIDTH}px` }}
+                  role="rowheader"
                 >
                   {index % 6 === 0 && time}
                 </div>
@@ -1135,14 +1157,18 @@ export default function Scheduler({
             </div>
 
             {/* Operatory Columns */}
-            {operatories.map((operatory) => (
+            {operatories.map((operatory, colIndex) => (
               <div
                 key={operatory.id}
                 className="border-r-2 border-[#E2E8F0]"
-                style={{ minWidth: "250px" }}
+                style={{
+                  minWidth: `${OPERATORY_COLUMN_WIDTH}px`,
+                }}
+                role="gridcell"
+                aria-colindex={colIndex + 2}
               >
-                {/* Column Header - Sticky */}
-                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
+                {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
+                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
                   <div className="text-sm font-bold">
                     {operatory.name}
                   </div>
@@ -1153,19 +1179,15 @@ export default function Scheduler({
 
                 {/* Time Slots */}
                 <div className="relative bg-white">
-                  {timeSlots.map((time) => {
-                    const currentDate =
-                      formatDateYYYYMMDD(selectedDate);
+                  {timeSlots.map((time, rowIndex) => {
                     const slotBlocked = isSlotBlocked(
                       time,
                       operatory.id,
-                      currentDate,
                     );
                     const occupyingAppt =
                       getSlotOccupyingAppointment(
                         time,
                         operatory.id,
-                        currentDate,
                       );
 
                     return (
@@ -1192,53 +1214,55 @@ export default function Scheduler({
                             ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
                             : ""
                         }
+                        role="gridcell"
+                        aria-rowindex={rowIndex + 2}
+                        aria-colindex={colIndex + 2}
                       ></div>
                     );
                   })}
 
-                  {/* Appointments */}
-                  {appointments
-                    .filter(
-                      (appt) =>
-                        appt.operatory === operatory.id &&
-                        appt.date ===
-                          formatDateYYYYMMDD(selectedDate),
-                    )
-                    .map((appointment) => {
-                      const { top, height } =
-                        getAppointmentPosition(appointment);
-                      return (
-                        <div
-                          key={appointment.id}
-                          className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(appointment.status)}`}
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`,
-                          }}
-                          onContextMenu={(e) =>
-                            handleAppointmentRightClick(
-                              e,
-                              appointment,
-                            )
-                          }
-                        >
-                          <div className="text-xs truncate">
-                            <strong>
-                              {appointment.startTime}
-                            </strong>{" "}
-                            {appointment.patientName}
-                          </div>
-                          <div className="text-xs truncate">
-                            {appointment.procedureType}
-                          </div>
-                          {appointment.duration >= 30 && (
-                            <div className="text-xs opacity-75">
-                              {appointment.duration} min
-                            </div>
-                          )}
+                  {/* ✅ OPTIMIZED: Appointments from precomputed map */}
+                  {(
+                    appointmentsByOperatory.get(operatory.id) ||
+                    []
+                  ).map((appointment) => {
+                    const { top, height } =
+                      getAppointmentPosition(appointment);
+                    return (
+                      <div
+                        key={appointment.id}
+                        className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(appointment.status)}`}
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                        }}
+                        onContextMenu={(e) =>
+                          handleAppointmentRightClick(
+                            e,
+                            appointment,
+                          )
+                        }
+                        role="button"
+                        aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
+                        tabIndex={0}
+                      >
+                        <div className="text-xs truncate">
+                          <strong>
+                            {appointment.startTime}
+                          </strong>{" "}
+                          {appointment.patientName}
                         </div>
-                      );
-                    })}
+                        <div className="text-xs truncate">
+                          {appointment.procedureType}
+                        </div>
+                        {appointment.duration >= 30 && (
+                          <div className="text-xs opacity-75">
+                            {appointment.duration} min
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -1256,6 +1280,8 @@ export default function Scheduler({
             top: `${contextMenu.y}px`,
             minWidth: "220px",
           }}
+          role="menu"
+          aria-label="Appointment context menu"
         >
           {contextMenu.type === "empty" ? (
             <>
@@ -1267,13 +1293,20 @@ export default function Scheduler({
                   )
                 }
                 className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
               >
                 Add New Appointment
               </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
+              >
                 Search Quick-Fill
               </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm">
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
+                role="menuitem"
+              >
                 Paste
               </button>
             </>
@@ -1286,16 +1319,26 @@ export default function Scheduler({
                   )
                 }
                 className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
               >
                 Edit
               </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
+              >
                 Cut
               </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
+              >
                 Copy
               </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
+              >
                 Reschedule
               </button>
               <button
@@ -1305,19 +1348,25 @@ export default function Scheduler({
                   )
                 }
                 className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
+                role="menuitem"
               >
                 Delete
               </button>
 
               {/* Go To Submenu */}
               <div className="relative group">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between">
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
                   Go To
                   <span>›</span>
                 </button>
                 <div
                   className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
                   style={{ minWidth: "180px" }}
+                  role="menu"
                 >
                   <button
                     onClick={() =>
@@ -1327,10 +1376,14 @@ export default function Scheduler({
                       )
                     }
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
                   >
                     Patient Overview
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Treatment Plans
                   </button>
                   <button
@@ -1341,6 +1394,7 @@ export default function Scheduler({
                       )
                     }
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
                   >
                     Transactions
                   </button>
@@ -1352,19 +1406,32 @@ export default function Scheduler({
                       )
                     }
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
                   >
                     Ledger
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Progress Notes
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Notes
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Email
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Text Message
                   </button>
                   <button
@@ -1375,13 +1442,20 @@ export default function Scheduler({
                       )
                     }
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
                   >
                     Restorative Chart
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Perio Chart
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Imaging System
                   </button>
                 </div>
@@ -1389,13 +1463,18 @@ export default function Scheduler({
 
               {/* Set Status Submenu */}
               <div className="relative group">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between">
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
                   Set Status
                   <span>›</span>
                 </button>
                 <div
                   className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
                   style={{ minWidth: "180px" }}
+                  role="menu"
                 >
                   {[
                     "Scheduled",
@@ -1418,6 +1497,7 @@ export default function Scheduler({
                         )
                       }
                       className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
                     >
                       {status}
                     </button>
@@ -1427,18 +1507,29 @@ export default function Scheduler({
 
               {/* Print Submenu */}
               <div className="relative group">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between">
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
                   Print
                   <span>›</span>
                 </button>
                 <div
                   className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
                   style={{ minWidth: "180px" }}
+                  role="menu"
                 >
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Routing Slip
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                    role="menuitem"
+                  >
                     Walkout Report
                   </button>
                 </div>
@@ -1464,18 +1555,26 @@ export default function Scheduler({
       )}
 
       {/* Calendar Picker Portal */}
-      {showCalendarPicker && calendarBtnRef.current && createPortal(
-        <CalendarPicker
-          selectedDate={selectedDate}
-          onDateChange={handleSchedulerDateChange}
-          onClose={() => setShowCalendarPicker(false)}
-          position={{
-            top: calendarBtnRef.current.getBoundingClientRect().bottom + window.scrollY + 6,
-            left: calendarBtnRef.current.getBoundingClientRect().left + window.scrollX,
-          }}
-        />,
-        document.body
-      )}
+      {showCalendarPicker &&
+        calendarBtnRef.current &&
+        createPortal(
+          <CalendarPicker
+            selectedDate={selectedDate}
+            onDateChange={handleSchedulerDateChange}
+            onClose={() => setShowCalendarPicker(false)}
+            position={{
+              top:
+                calendarBtnRef.current.getBoundingClientRect()
+                  .bottom +
+                window.scrollY +
+                6,
+              left:
+                calendarBtnRef.current.getBoundingClientRect()
+                  .left + window.scrollX,
+            }}
+          />,
+          document.body,
+        )}
     </div>
   );
 }

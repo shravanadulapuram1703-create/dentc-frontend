@@ -9,7 +9,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { components } from "../../styles/theme";
 import SendEmailModal from "./SendEmailModal";
 import AddEditAppointmentForm from "./AddEditAppointmentForm";
@@ -93,6 +93,21 @@ export default function NewAppointmentModal({
     PatientSearchResult[]
   >([]);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // ✅ Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original overflow style
+      const originalOverflow = document.body.style.overflow;
+      // Prevent scrolling
+      document.body.style.overflow = "hidden";
+
+      // Cleanup function to restore scrolling when modal closes
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   // Form state
   const [formData, setFormData] = useState({

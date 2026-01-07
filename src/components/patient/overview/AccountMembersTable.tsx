@@ -14,9 +14,9 @@ export default function AccountMembersTable({ members, onAddMember }: AccountMem
         {onAddMember && (
           <button 
             onClick={onAddMember}
-            className="px-3 py-1.5 bg-white text-[#1F3A5F] border-2 border-white rounded hover:bg-[#F7F9FC] transition-colors flex items-center gap-2 text-sm font-medium"
+            className="px-2 py-1 bg-white text-[#1F3A5F] border border-white rounded hover:bg-[#F7F9FC] transition-colors flex items-center gap-1.5 text-xs font-semibold"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             ADD NEW MEMBER
           </button>
         )}

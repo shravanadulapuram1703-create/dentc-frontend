@@ -118,12 +118,6 @@ export default function AddEditAppointmentForm({
     // Flags
     missed: false,
     cancelled: false,
-    shortNotice: {
-      mon: { am: false, pm: false },
-      tue: { am: false, pm: false },
-      wed: { am: false, pm: false },
-      thu: { am: false, pm: false },
-    },
     
     // Lab
     lab: false,
@@ -619,7 +613,7 @@ export default function AddEditAppointmentForm({
             </div>
 
             {/* Flags Row */}
-            <div className="flex gap-4 mb-2.5">
+            <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -638,32 +632,6 @@ export default function AddEditAppointmentForm({
                 />
                 <span className="text-[#1E293B] font-medium text-sm">Cancelled</span>
               </label>
-            </div>
-
-            {/* Short Notice Section - Compact */}
-            <div className="bg-[#F7F9FC] border border-[#E2E8F0] rounded-lg p-2">
-              <label className="flex items-center gap-2 mb-1.5 cursor-pointer">
-                <span className="text-[#1E293B] font-medium text-sm">Short Notice</span>
-              </label>
-              <div className="grid grid-cols-5 gap-1 text-xs">
-                <div></div>
-                <div className="text-center font-medium text-[#64748B]">Mon</div>
-                <div className="text-center font-medium text-[#64748B]">Tue</div>
-                <div className="text-center font-medium text-[#64748B]">Wed</div>
-                <div className="text-center font-medium text-[#64748B]">Thu</div>
-                
-                <div className="text-right font-medium text-[#64748B] pr-1">AM:</div>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                
-                <div className="text-right font-medium text-[#64748B] pr-1">PM:</div>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-                <label className="flex justify-center"><input type="checkbox" className="w-3 h-3" /></label>
-              </div>
             </div>
           </div>
         </div>
