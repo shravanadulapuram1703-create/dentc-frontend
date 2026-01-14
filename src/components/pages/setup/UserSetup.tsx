@@ -7,6 +7,8 @@ import { mapApiUserToUI } from "../../../mappers/userMapper";
 import { mapApiTenantToUI, mapApiOfficeToUI } from "../../../mappers/tenantMapper";
 import { mapSetupApiToUserUI } from "../../../mappers/mapSetupApiToUserUI";
 import { useMemo } from "react";
+// import type { BackendUser } from "../../modals/AddEditUserModal";
+import type { BackendUser } from "../../../types/backendUser";
 
 interface PermittedIP {
   id: string;
@@ -177,7 +179,8 @@ export default function UserSetup({
   const [sortBy, setSortBy] = useState<"name" | "username">("name");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  // const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<BackendUser | null>(null);
   const [filterPGID, setFilterPGID] = useState<string>("all");
   const [filterOID, setFilterOID] = useState<string>("all");
   const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
@@ -237,55 +240,95 @@ export default function UserSetup({
   //   });
   // }, []);
 
+  // const fetchFullUserDetails = async (user: User) => {
+  //   try {
+  //     setLoadingUserDetails(true);
+
+  //     const id = normalizeUID(user.id);     // e.g. "U-61" → 61
+  //     const pgid = normalizePGID(user.pgid); // e.g. "ORG-1" → 1
+
+  //     // ✅ Single aggregation API
+  //     const res = await api.get(
+  //       `/api/v1/users/setup`
+  //     );
+
+  //     const data = res.data;
+
+  //     console.log("SETUP API RAW:", data);
+      
+
+
+  //     // const fullUser: User = {
+  //     //   ...mapApiUserToUI(data.user),
+
+  //     //   // 👇 coming from setup API
+  //     //   // offices: data.offices,
+  //     //   permittedIPs: data.ip_rules,
+  //     //   groupMemberships: data.groups,
+  //     //   // timeClock: data.time_clock,
+  //     //   // preferences: data.preferences,
+  //     //   // // map to existing fields
+  //     //   // permittedIPs: data.ip_rules ?? [],
+  //     //   // groupMemberships: data.groups ?? [],
+        
+  //     // };
+
+
+
+  //     const fullUser = mapSetupApiToUserUI(
+  //       data,
+  //       officeNameById // pass your memoized map
+  //     );
+
+  //     setSelectedUser(fullUser);
+  //     return fullUser;
+
+      
+      
+  //     console.log("FULL USER UI:", fullUser);
+
+  //     setSelectedUser(fullUser);
+  //     return fullUser;
+  //   } catch (err) {
+  //     console.error("Failed to load user details", err);
+  //     return null;
+  //   } finally {
+  //     setLoadingUserDetails(false);
+  //   }
+  // };
+
+  // const fetchFullUserDetails = async (user: User) => {
+  //   try {
+  //     setLoadingUserDetails(true);
+
+  //     const id = normalizeUID(user.id);
+
+  //     const res = await api.get(`/api/v1/users/setup`);
+
+  //     const backendUser: BackendUser = res.data.user;
+
+  //     return backendUser; // 👈 backend-shaped
+  //   } catch (err) {
+  //     console.error("Failed to load user details", err);
+  //     return null;
+  //   } finally {
+  //     setLoadingUserDetails(false);
+  //   }
+  // };
+
+
   const fetchFullUserDetails = async (user: User) => {
     try {
       setLoadingUserDetails(true);
 
-      const id = normalizeUID(user.id);     // e.g. "U-61" → 61
-      const pgid = normalizePGID(user.pgid); // e.g. "ORG-1" → 1
+      const id = normalizeUID(user.id);
 
-      // ✅ Single aggregation API
-      const res = await api.get(
-        `/api/v1/users/${pgid}/${id}/setup`
+      // 1️⃣ fetch user
+      const userRes = await api.get<BackendUser>(
+        '/api/v1/users/setup'
       );
 
-      const data = res.data;
-
-      console.log("SETUP API RAW:", data);
-      
-
-
-      // const fullUser: User = {
-      //   ...mapApiUserToUI(data.user),
-
-      //   // 👇 coming from setup API
-      //   // offices: data.offices,
-      //   permittedIPs: data.ip_rules,
-      //   groupMemberships: data.groups,
-      //   // timeClock: data.time_clock,
-      //   // preferences: data.preferences,
-      //   // // map to existing fields
-      //   // permittedIPs: data.ip_rules ?? [],
-      //   // groupMemberships: data.groups ?? [],
-        
-      // };
-
-
-
-      const fullUser = mapSetupApiToUserUI(
-        data,
-        officeNameById // pass your memoized map
-      );
-
-      setSelectedUser(fullUser);
-      return fullUser;
-
-      
-      
-      console.log("FULL USER UI:", fullUser);
-
-      setSelectedUser(fullUser);
-      return fullUser;
+      return userRes.data; //  backend user ONLY
     } catch (err) {
       console.error("Failed to load user details", err);
       return null;
@@ -293,6 +336,7 @@ export default function UserSetup({
       setLoadingUserDetails(false);
     }
   };
+
 
   
   const [availablePGIDs, setAvailablePGIDs] = useState<Tenant[]>([]);
@@ -641,14 +685,23 @@ export default function UserSetup({
   //   setShowAddEditModal(true);
   // };
 
+  // const handleEditUser = async () => {
+  //   if (!selectedUser) return;
+
+  //   const fullUser = await fetchFullUserDetails(selectedUser);
+  //   if (!fullUser) return;
+
+  //   setEditingUser(fullUser);
+  //   setShowAddEditModal(true);
+  // };
   const handleEditUser = async () => {
     if (!selectedUser) return;
 
-    const fullUser = await fetchFullUserDetails(selectedUser);
-    if (!fullUser) return;
+    const backendUser = await fetchFullUserDetails(selectedUser);
+    if (!backendUser) return;
 
-    setEditingUser(fullUser);
-    setShowAddEditModal(true);
+    setEditingUser(backendUser);   // BackendUser
+    setShowAddEditModal(true);     //  modal opens
   };
 
 
@@ -677,12 +730,32 @@ export default function UserSetup({
     }
   };
 
-  const handleSaveUser = (userData: any) => {
-    console.log("Saving user:", userData);
-    setShowAddEditModal(false);
-    setEditingUser(null);
-    setSelectedUser(null);
+  // const handleSaveUser = (userData: any) => {
+  //   console.log("Saving user:", userData);
+  //   setShowAddEditModal(false);
+  //   setEditingUser(null);
+  //   setSelectedUser(null);
+  // };
+
+  const handleSaveUser = async (payload: any) => {
+    try {
+      if (editingUser) {
+        await api.put(
+          `/api/v1/users/${editingUser.user_id}`,
+          payload
+        );
+      } else {
+        await api.post("/api/v1/users", payload);
+      }
+
+      await fetchUsers(); // refresh list
+    } finally {
+      setShowAddEditModal(false);
+      setEditingUser(null);
+      setSelectedUser(null);
+    }
   };
+
 
   // const handleViewDetails = () => {
   //   if (!selectedUser) return;

@@ -1,4 +1,10 @@
-import { Settings, DollarSign, Shield, Calendar, User, FileCheck } from "lucide-react";
+import {
+  Settings,
+  DollarSign,
+  Shield,
+  Calendar,
+  FileCheck,
+} from "lucide-react";
 import { type Office } from "../../../../data/officeData";
 
 interface AdvancedTabProps {
@@ -10,7 +16,7 @@ export default function AdvancedTab({
   formData,
   updateFormData,
 }: AdvancedTabProps) {
-  const advanced = formData.advanced || {};
+  const advanced = formData.advanced ?? {};
 
   const updateAdvanced = (field: string, value: any) => {
     updateFormData({
@@ -20,6 +26,41 @@ export default function AdvancedTab({
       } as any,
     });
   };
+
+  const updateSection = <T extends object>(
+    section: keyof typeof advanced,
+    updates: Partial<T>
+  ) => {
+      updateFormData({
+        advanced: {
+          ...formData.advanced,
+          sendECard: true,
+        } as Office["advanced"],
+      });
+  };
+
+  /* ================= FINANCIAL ================= */
+  // const financial = advanced.financial ?? {};
+
+  /* ================= SCHEDULER ================= */
+  // const scheduler = advanced.scheduler ?? {};
+
+  /* ================= INSURANCE ================= */
+  // const insurance = advanced.insurance ?? {};
+
+  /* ================= DEFAULTS ================= */
+  // const defaults = advanced.defaults ?? {};
+
+  /* ================= PATIENT CHECK-IN ================= */
+  // const patientCheckin = advanced.patientCheckin ?? {};
+
+  /* ================= AUTOMATION ================= */
+  // const automation = advanced.automation ?? {};
+
+  /* JSX BELOW IS IDENTICAL — ONLY BINDINGS CHANGE */
+  console.log("advanced == > ",advanced)
+  console.log(formData.advanced?.annualFinanceChargePercent);
+
 
   return (
     <div className="space-y-6">
@@ -38,7 +79,7 @@ export default function AdvancedTab({
             <input
               type="number"
               step="0.1"
-              value={advanced.annualFinanceChargePercent || ""}
+              value={formData.advanced?.annualFinanceChargePercent || ""}
               onChange={(e) =>
                 updateAdvanced("annualFinanceChargePercent", parseFloat(e.target.value))
               }
@@ -54,7 +95,7 @@ export default function AdvancedTab({
             <input
               type="number"
               step="0.01"
-              value={advanced.minimumBalance || ""}
+              value={formData.advanced?.minimumBalance || ""}
               onChange={(e) =>
                 updateAdvanced("minimumBalance", parseFloat(e.target.value))
               }
@@ -70,7 +111,7 @@ export default function AdvancedTab({
             <input
               type="number"
               step="0.01"
-              value={advanced.minimumFinanceCharge || ""}
+              value={formData.advanced?.minimumFinanceCharge || ""}
               onChange={(e) =>
                 updateAdvanced("minimumFinanceCharge", parseFloat(e.target.value))
               }
@@ -85,7 +126,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="number"
-              value={advanced.daysBeforeFinanceCharge || ""}
+              value={formData.advanced?.daysBeforeFinanceCharge || ""}
               onChange={(e) =>
                 updateAdvanced("daysBeforeFinanceCharge", parseInt(e.target.value))
               }
@@ -101,7 +142,7 @@ export default function AdvancedTab({
             <input
               type="number"
               step="0.1"
-              value={advanced.salesTaxPercent || ""}
+              value={formData.advanced?.salesTaxPercent || ""}
               onChange={(e) =>
                 updateAdvanced("salesTaxPercent", parseFloat(e.target.value))
               }
@@ -126,7 +167,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="text"
-              value={advanced.insuranceGroup || ""}
+              value={formData.advanced?.insuranceGroup || ""}
               onChange={(e) => updateAdvanced("insuranceGroup", e.target.value)}
               placeholder="e.g., PPO Network A"
               className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -139,7 +180,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="date"
-              value={advanced.schedulerEndDate || ""}
+              value={formData.advanced?.schedulerEndDate || ""}
               onChange={(e) =>
                 updateAdvanced("schedulerEndDate", e.target.value)
               }
@@ -153,7 +194,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="number"
-              value={advanced.eligibilityThresholdDays || ""}
+              value={formData.advanced?.eligibilityThresholdDays || ""}
               onChange={(e) =>
                 updateAdvanced("eligibilityThresholdDays", parseInt(e.target.value))
               }
@@ -166,7 +207,7 @@ export default function AdvancedTab({
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={advanced.sendECard || false}
+                checked={formData.advanced?.sendECard || false}
                 onChange={(e) => updateAdvanced("sendECard", e.target.checked)}
                 className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
               />
@@ -191,7 +232,7 @@ export default function AdvancedTab({
               Default Place of Service
             </label>
             <select
-              value={advanced.defaultPlaceOfService || ""}
+              value={formData.advanced?.defaultPlaceOfService || ""}
               onChange={(e) =>
                 updateAdvanced("defaultPlaceOfService", e.target.value)
               }
@@ -211,7 +252,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="number"
-              value={advanced.defaultAppointmentDuration || ""}
+              value={formData.advanced?.defaultAppointmentDuration || ""}
               onChange={(e) =>
                 updateAdvanced("defaultAppointmentDuration", parseInt(e.target.value))
               }
@@ -226,7 +267,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="text"
-              value={advanced.defaultAreaCode || ""}
+              value={formData.advanced?.defaultAreaCode || ""}
               onChange={(e) => updateAdvanced("defaultAreaCode", e.target.value)}
               placeholder="415"
               maxLength={3}
@@ -240,7 +281,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="text"
-              value={advanced.defaultCity || ""}
+              value={formData.advanced?.defaultCity || ""}
               onChange={(e) => updateAdvanced("defaultCity", e.target.value)}
               placeholder="City"
               className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -253,7 +294,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="text"
-              value={advanced.defaultState || ""}
+              value={formData.advanced?.defaultState || ""}
               onChange={(e) => updateAdvanced("defaultState", e.target.value)}
               placeholder="CA"
               maxLength={2}
@@ -267,7 +308,7 @@ export default function AdvancedTab({
             </label>
             <input
               type="text"
-              value={advanced.defaultZip || ""}
+              value={formData.advanced?.defaultZip || ""}
               onChange={(e) => updateAdvanced("defaultZip", e.target.value)}
               placeholder="12345"
               maxLength={10}
@@ -280,7 +321,7 @@ export default function AdvancedTab({
               Preferred Provider
             </label>
             <select
-              value={advanced.preferredProvider || ""}
+              value={formData.advanced?.preferredProvider || ""}
               onChange={(e) =>
                 updateAdvanced("preferredProvider", e.target.value)
               }
@@ -298,7 +339,7 @@ export default function AdvancedTab({
               Default Coverage Type
             </label>
             <select
-              value={advanced.defaultCoverageType || ""}
+              value={formData.advanced?.defaultCoverageType || ""}
               onChange={(e) =>
                 updateAdvanced("defaultCoverageType", e.target.value)
               }
@@ -316,7 +357,7 @@ export default function AdvancedTab({
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={advanced.isOrthoOffice || false}
+                checked={formData.advanced?.isOrthoOffice || false}
                 onChange={(e) =>
                   updateAdvanced("isOrthoOffice", e.target.checked)
                 }
@@ -341,7 +382,7 @@ export default function AdvancedTab({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={advanced.hipaaNotice || false}
+              checked={formData.advanced?.hipaaNotice || false}
               onChange={(e) => updateAdvanced("hipaaNotice", e.target.checked)}
               className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
             />
@@ -353,7 +394,7 @@ export default function AdvancedTab({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={advanced.consentForm || false}
+              checked={formData.advanced?.consentForm || false}
               onChange={(e) => updateAdvanced("consentForm", e.target.checked)}
               className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
             />
@@ -365,7 +406,7 @@ export default function AdvancedTab({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={advanced.additionalConsentForm || false}
+              checked={formData.advanced?.additionalConsentForm || false}
               onChange={(e) =>
                 updateAdvanced("additionalConsentForm", e.target.checked)
               }
@@ -391,7 +432,7 @@ export default function AdvancedTab({
           </label>
           <input
             type="date"
-            value={advanced.automatedCampaignsEffectiveDate || ""}
+            value={formData.advanced?.automatedCampaignsEffectiveDate || ""}
             onChange={(e) =>
               updateAdvanced("automatedCampaignsEffectiveDate", e.target.value)
             }

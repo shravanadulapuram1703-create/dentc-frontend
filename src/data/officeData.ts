@@ -1,113 +1,330 @@
 // Mock data for Office Setup module
 
+// export interface Office {
+//   id: string;
+//   officeId: number;
+//   officeName: string;
+//   shortId: string;
+  
+//   // Address
+//   address1: string;
+//   address2?: string;
+//   city: string;
+//   state: string;
+//   zip: string;
+//   timeZone: string;
+  
+//   // Contact
+//   phone1: string;
+//   phone1Ext?: string;
+//   phone2?: string;
+//   email: string;
+  
+//   // Billing
+//   billingProviderId: string;
+//   billingProviderName: string;
+//   useBillingLicense: boolean;
+//   taxId: string;
+//   openingDate: string;
+//   officeGroup?: string;
+  
+//   // Fee Schedules
+//   defaultUCRFeeSchedule: string;
+//   defaultFeeSchedule: string;
+  
+//   // Scheduler
+//   schedulerTimeInterval: number; // in minutes
+  
+//   // Statement
+//   statementMessages?: {
+//     general?: string;
+//     current?: string;
+//     day30?: string;
+//     day60?: string;
+//     day90?: string;
+//     day120?: string;
+//   };
+
+//   statementSettings?: {
+//   correspondenceName?: string;
+//   statementName?: string;
+//   statementAddress?: string;
+//   statementPhone?: string;
+//   logoUrl?: string;
+//   };
+
+  
+  
+//   // Integrations
+//   eClaims?: {
+//     vendorType: string;
+//     username: string;
+//     password: string;
+//   };
+//   transworld?: {
+//     acceleratorAccount: string;
+//     collectionsAccount: string;
+//     userId: string;
+//     password: string;
+//     agingDays: number;
+//   };
+//   imaging?: {
+//     system1?: { name: string; linkType: string; mode: string };
+//     system2?: { name: string; linkType: string; mode: string };
+//     system3?: { name: string; linkType: string; mode: string };
+//   };
+//   textMessaging?: {
+//     phoneNumber: string;
+//     verified: boolean;
+//   };
+//   patientUrls?: {
+//     formsUrl: string;
+//     schedulingUrl: string;
+//     financingUrl: string;
+//     customUrl1?: string;
+//     customUrl2?: string;
+//   };
+//   acceptedCards: string[];
+  
+//   // Operatories
+//   operatories: Array<{
+//     id: string;
+//     name: string;
+//     order: number;
+//     has_future_appointments?: boolean;
+//     is_active: boolean;
+//   }>;
+  
+//   // Schedule
+//   schedule: {
+//     monday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//     tuesday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//     wednesday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//     thursday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//     friday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//     saturday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//     sunday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+//   };
+  
+//   // Holidays
+//   holidays: Array<{
+//     id: string;
+//     name: string;
+//     fromDate: string;
+//     toDate: string;
+//   }>;
+  
+//   // Advanced
+//   advanced: {
+//     annualFinanceChargePercent: number;
+//     minimumBalance: number;
+//     minimumFinanceCharge: number;
+//     daysBeforeFinanceCharge: number;
+//     salesTaxPercent: number;
+//     insuranceGroup?: string;
+//     schedulerEndDate: string;
+//     eligibilityThresholdDays: number;
+//     sendECard: boolean;
+//     defaultPlaceOfService: string;
+//     defaultAppointmentDuration: number;
+//     defaultAreaCode: string;
+//     defaultCity: string;
+//     defaultState: string;
+//     defaultZip: string;
+//     preferredProvider?: string;
+//     defaultCoverageType: string;
+//     isOrthoOffice: boolean;
+//     hipaaNotice: boolean;
+//     consentForm: boolean;
+//     additionalConsentForm: boolean;
+//     automatedCampaignsEffectiveDate?: string;
+//   };
+  
+//   // SmartAssist
+//   smartAssist: {
+//     enabled: boolean;
+//     items: {
+//       payment: { enabled: boolean; frequency?: string; includeBal?: boolean };
+//       email: { enabled: boolean; frequency?: string };
+//       cellPhone: { enabled: boolean; frequency?: string };
+//       eligibility: { enabled: boolean; frequency?: string };
+//       medicalHistory: { enabled: boolean; frequency?: string; template: string };
+//       hipaa: { enabled: boolean; frequency?: string; template: string };
+//       consentForm1?: { enabled: boolean; frequency?: string; template: string };
+//       consentForm2?: { enabled: boolean; frequency?: string; template?: string };
+//       consentForm3?: { enabled: boolean; frequency?: string; template?: string };
+//       consentForm4?: { enabled: boolean; frequency?: string; template?: string };
+//       progressNotes: { enabled: boolean; frequency?: string };
+//       ledgerPosting: { enabled: boolean; frequency?: string; template: string };
+//     };
+//   };
+  
+//   // Metadata
+//   createdBy: string;
+//   createdDate: string;
+//   modifiedBy: string;
+//   modifiedDate: string;
+//   isActive: boolean;
+// }
+
 export interface Office {
   id: string;
   officeId: number;
   officeName: string;
   shortId: string;
-  
+
+  // =====================
   // Address
+  // =====================
   address1: string;
   address2?: string;
   city: string;
   state: string;
   zip: string;
   timeZone: string;
-  
+
+  // =====================
   // Contact
+  // =====================
   phone1: string;
   phone1Ext?: string;
   phone2?: string;
   email: string;
-  
+
+  // =====================
   // Billing
+  // =====================
   billingProviderId: string;
   billingProviderName: string;
   useBillingLicense: boolean;
   taxId: string;
   openingDate: string;
   officeGroup?: string;
-  
+
+  // =====================
   // Fee Schedules
+  // =====================
   defaultUCRFeeSchedule: string;
   defaultFeeSchedule: string;
-  
+
+  // =====================
   // Scheduler
-  schedulerTimeInterval: number; // in minutes
+  // =====================
+  schedulerTimeInterval: number; // minutes
+
+  // =====================
+  // Statements
+  // =====================
+  statementMessages?: {
+    general?: string;
+    current?: string;
+    day30?: string;
+    day60?: string;
+    day90?: string;
+    day120?: string;
+  };
+
+  statementSettings?: {
+    correspondenceName?: string;
+    statementName?: string;
+    statementAddress?: string;
+    statementPhone?: string;
+    logoUrl?: string;
+  };
+
+  // =====================
+  // Integrations ( FIXED)
+  // =====================
+  integrations?: {
+    eClaims?: {
+      vendorType?: string;
+      username?: string;
+      password?: string;
+    };
+
+    transworld?: {
+      acceleratorAccount?: string;
+      collectionsAccount?: string;
+      userId?: string;
+      password?: string;
+      agingDays?: number;
+    };
+
+    imaging?: {
+      system1?: {
+        name?: string;
+        linkType?: string;
+        mode?: string;
+      };
+      system2?: {
+        name?: string;
+        linkType?: string;
+        mode?: string;
+      };
+      system3?: {
+        name?: string;
+        linkType?: string;
+        mode?: string;
+      };
+    };
+
+    textMessaging?: {
+      phoneNumber?: string;
+      verified?: boolean;
+    };
+
+    patientUrls?: {
+      formsUrl?: string;
+      schedulingUrl?: string;
+      financingUrl?: string;
+      customUrl1?: string;
+      customUrl2?: string;
+    };
+    acceptedCards: string[];
+  };
+
+  // =====================
+  // Payments
+  // =====================
   
-  // Statement
-  statementMessages: {
-    general: string;
-    current: string;
-    day30: string;
-    day60: string;
-    day90: string;
-    day120: string;
-  };
-  correspondenceName: string;
-  statementName: string;
-  statementAddress: string;
-  statementPhone: string;
-  logoUrl?: string;
-  
-  // Integrations
-  eClaims?: {
-    vendorType: string;
-    username: string;
-    password: string;
-  };
-  transworld?: {
-    acceleratorAccount: string;
-    collectionsAccount: string;
-    userId: string;
-    password: string;
-    agingDays: number;
-  };
-  imaging?: {
-    system1?: { name: string; linkType: string; mode: string };
-    system2?: { name: string; linkType: string; mode: string };
-    system3?: { name: string; linkType: string; mode: string };
-  };
-  textMessaging?: {
-    phoneNumber: string;
-    verified: boolean;
-  };
-  patientUrls?: {
-    formsUrl: string;
-    schedulingUrl: string;
-    financingUrl: string;
-    customUrl1?: string;
-    customUrl2?: string;
-  };
-  acceptedCards: string[];
-  
+
+  // =====================
   // Operatories
+  // =====================
   operatories: Array<{
     id: string;
     name: string;
     order: number;
+    has_future_appointments?: boolean;
+    is_active: boolean;
   }>;
-  
+
+  // =====================
   // Schedule
+  // =====================
   schedule: {
-    monday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
-    tuesday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
-    wednesday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
-    thursday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
-    friday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
-    saturday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
-    sunday: { start: string; end: string; lunchStart: string; lunchEnd: string; closed: boolean };
+    monday: DaySchedule;
+    tuesday: DaySchedule;
+    wednesday: DaySchedule;
+    thursday: DaySchedule;
+    friday: DaySchedule;
+    saturday: DaySchedule;
+    sunday: DaySchedule;
   };
-  
+
+  // =====================
   // Holidays
+  // =====================
   holidays: Array<{
     id: string;
     name: string;
     fromDate: string;
     toDate: string;
   }>;
-  
+
+  // =====================
   // Advanced
+  // =====================
   advanced: {
     annualFinanceChargePercent: number;
     minimumBalance: number;
@@ -132,33 +349,50 @@ export interface Office {
     additionalConsentForm: boolean;
     automatedCampaignsEffectiveDate?: string;
   };
-  
+
+  // =====================
   // SmartAssist
+  // =====================
   smartAssist: {
     enabled: boolean;
     items: {
-      payment: { enabled: boolean; frequency: string; includeBal: boolean };
-      email: { enabled: boolean; frequency: string };
-      cellPhone: { enabled: boolean; frequency: string };
-      eligibility: { enabled: boolean; frequency: string };
-      medicalHistory: { enabled: boolean; frequency: string; template?: string };
-      hipaa: { enabled: boolean; frequency: string; template?: string };
-      consentForm1: { enabled: boolean; frequency: string; template?: string };
-      consentForm2: { enabled: boolean; frequency: string; template?: string };
-      consentForm3: { enabled: boolean; frequency: string; template?: string };
-      consentForm4: { enabled: boolean; frequency: string; template?: string };
-      progressNotes: { enabled: boolean; frequency: string };
-      ledgerPosting: { enabled: boolean; frequency: string };
+      payment?: { enabled: boolean; frequency?: string; includeBal?: boolean };
+      email?: { enabled: boolean; frequency?: string };
+      cellPhone?: { enabled: boolean; frequency?: string };
+      eligibility?: { enabled: boolean };
+      medicalHistory?: { enabled: boolean; template?: string };
+      hipaa?: { enabled: boolean; template?: string };
+      consentForm1?: { enabled: boolean; frequency?: string; template?: string };
+      consentForm2?: { enabled: boolean; frequency?: string; template?: string };
+      consentForm3?: { enabled: boolean; frequency?: string; template?: string };
+      consentForm4?: { enabled: boolean; frequency?: string; template?: string };
+      progressNotes?: { enabled: boolean; frequency?: string };
+      ledgerPosting?: { enabled: boolean; frequency?: string };
     };
   };
-  
+
+  // =====================
   // Metadata
+  // =====================
   createdBy: string;
   createdDate: string;
   modifiedBy: string;
   modifiedDate: string;
   isActive: boolean;
 }
+
+// =====================
+// Helper Type
+// =====================
+export interface DaySchedule {
+  start: string | null;
+  end: string | null;
+  lunchStart: string | null;
+  lunchEnd: string | null;
+  closed: boolean;
+}
+
+
 
 export const mockOffices: Office[] = [
   {
@@ -402,3 +636,41 @@ export function getAllOffices(): Office[] {
 export function getOfficeById(id: string): Office | undefined {
   return mockOffices.find(o => o.id === id);
 }
+
+
+// ###############################################################
+
+
+export interface OfficeSetupApiResponse {
+  office: Office;
+  statement: {
+    statement_messages: {
+      general?: string;
+      current?: string;
+      day30?: string;
+      day60?: string;
+      day90?: string;
+      day120?: string;
+    };
+    statement_settings?: {
+      correspondence_name?: string;
+      statement_name?: string;
+      statement_address?: string;
+      statement_phone?: string;
+      logo_url?: string;
+    };
+  };
+  integration: {
+    acceptedCards: string[];
+    correspondenceName: string;
+    statementName: string;
+    statementAddress: string;
+    statementPhone: string;
+  };
+  operatories: any[];
+  schedule: any;
+  holidays: any[];
+  advanced: any;
+  smartAssist: any;
+}
+

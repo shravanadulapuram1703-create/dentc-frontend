@@ -2,6 +2,14 @@ import { Plus, Edit2, Trash2, Activity } from "lucide-react";
 import { useState } from "react";
 import { type Office } from "../../../../data/officeData";
 
+interface Operatory {
+  id: string;
+  name: string;
+  order: number;
+  is_active: boolean;
+  has_future_appointments?: boolean;
+}
+
 interface OperatoriesTabProps {
   formData: Partial<Office>;
   updateFormData: (updates: Partial<Office>) => void;
@@ -15,58 +23,74 @@ export default function OperatoriesTab({
   const [editingOpId, setEditingOpId] = useState<string | null>(null);
   const [editOpName, setEditOpName] = useState("");
 
-  const operatories = formData.operatories || [];
+  const operatories: Operatory[] = formData.operatories || [];
 
+  /* -------------------- ADD -------------------- */
   const handleAddOperatory = () => {
     if (!newOpName.trim()) return;
 
-    const newOp = {
-      id: `op-${Date.now()}`,
-      name: newOpName,
+    const tempOp: Operatory = {
+      id: `temp-${Date.now()}`, // replaced by backend on save
+      name: newOpName.trim(),
       order: operatories.length + 1,
+      is_active: true,
     };
 
     updateFormData({
-      operatories: [...operatories, newOp],
+      operatories: [...operatories, tempOp],
     });
 
     setNewOpName("");
   };
 
+  /* -------------------- EDIT -------------------- */
   const handleEditOperatory = (opId: string) => {
     const op = operatories.find((o) => o.id === opId);
-    if (op) {
-      setEditingOpId(opId);
-      setEditOpName(op.name);
-    }
+    if (!op) return;
+
+    setEditingOpId(opId);
+    setEditOpName(op.name);
   };
 
   const handleSaveEdit = () => {
-    if (!editOpName.trim()) return;
+    if (!editOpName.trim() || !editingOpId) return;
 
-    const updated = operatories.map((op) =>
-      op.id === editingOpId ? { ...op, name: editOpName } : op
-    );
+    updateFormData({
+      operatories: operatories.map((op) =>
+        op.id === editingOpId ? { ...op, name: editOpName.trim() } : op
+      ),
+    });
 
-    updateFormData({ operatories: updated });
     setEditingOpId(null);
     setEditOpName("");
   };
 
+  /* -------------------- DELETE (SOFT) -------------------- */
   const handleDeleteOperatory = (opId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this operatory? This cannot be undone if there are future appointments."
-      )
-    )
+    const op = operatories.find((o) => o.id === opId);
+    if (!op) return;
+
+    if (op.has_future_appointments) {
+      alert(
+        "This operatory has future appointments and cannot be deleted."
+      );
       return;
+    }
+
+    if (!confirm("Are you sure you want to delete this operatory?")) return;
 
     const updated = operatories
-      .filter((op) => op.id !== opId)
-      .map((op, index) => ({ ...op, order: index + 1 }));
+      .map((o) =>
+        o.id === opId ? { ...o, is_active: false } : o
+      )
+      .filter((o) => o.is_active)
+      .map((o, index) => ({ ...o, order: index + 1 }));
 
     updateFormData({ operatories: updated });
   };
+
+  /* -------------------- JSX (UNCHANGED) -------------------- */
+  // ⬅️ Your JSX remains EXACTLY the same
 
   return (
     <div className="space-y-6">

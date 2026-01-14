@@ -1,23 +1,182 @@
 import { Calendar, Plus, Trash2, Copy } from "lucide-react";
-import { useState } from "react";
+import {useEffect,  useState } from "react";
+import api from "../../../../services/api";
 import { type Office } from "../../../../data/officeData";
+
+
+
+interface OfficeOption {
+  id: string;
+  officeName: string;
+}
+
+interface Holiday {
+  id: string;
+  officeId: Number;
+  name: string;
+  fromDate: string;
+  toDate: string;
+  is_active?: boolean;
+}
+
+
+interface HolidayApi {
+  id: string;
+  officeId: Number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+}
 
 interface HolidaysTabProps {
   formData: Partial<Office>;
   updateFormData: (updates: Partial<Office>) => void;
 }
 
+
+/* ---------------- MAPPER ---------------- */
+
+const mapHolidayApiToUI = (h: HolidayApi): Holiday => ({
+  id: h.id,
+  officeId: h.officeId,
+  name: h.name,
+  fromDate: h.start_date,
+  toDate: h.end_date,
+  is_active: h.is_active,
+});
+
+
+
 export default function HolidaysTab({
   formData,
   updateFormData,
 }: HolidaysTabProps) {
+  const holidays: Holiday[] = formData.holidays || [];
+  
   const [newHoliday, setNewHoliday] = useState({
     name: "",
     fromDate: "",
     toDate: "",
   });
 
-  const holidays = formData.holidays || [];
+
+  const [offices, setOffices] = useState<OfficeOption[]>([]);
+  const [loadingOffices, setLoadingOffices] = useState(false);
+
+  const [sourceOfficeId, setSourceOfficeId] = useState("");
+  const [copyMode, setCopyMode] = useState<"append" | "overwrite">("append");
+  const [loadingCopy, setLoadingCopy] = useState(false);
+
+  /* ---------------- LOAD OFFICES ---------------- */
+
+  useEffect(() => {
+    const loadOffices = async () => {
+      try {
+        setLoadingOffices(true);
+
+        const res = await api.get("/api/v1/offices");
+
+        setOffices(
+          res.data.filter(
+            (o: OfficeOption) => o.officeId !== formData.officeId
+          )
+        );
+      } catch (err) {
+        console.error("Failed to load offices", err);
+      } finally {
+        setLoadingOffices(false);
+      }
+    };
+
+    if (formData.officeId) {
+      loadOffices();
+    }
+  }, [formData.officeId]);
+
+  /* ---------------- FETCH HOLIDAYS FROM OFFICE ---------------- */
+
+  const fetchOfficeHolidays = async (officeId: number): Promise<Holiday[]> => {
+    const res = await api.get(`/api/v1/offices/${officeId}/setup`);
+    return (res.data.holidays ?? []).map(mapHolidayApiToUI);
+  };
+
+
+  /* -------------------- ADD -------------------- */
+  // const handleAddHoliday = () => {
+  //   if (!newHoliday.name || !newHoliday.fromDate || !newHoliday.toDate) {
+  //     alert("Please fill in all holiday fields");
+  //     return;
+  //   }
+
+  //   if (newHoliday.fromDate > newHoliday.toDate) {
+  //     alert("From date cannot be after To date");
+  //     return;
+  //   }
+
+  //   const tempHoliday: Holiday = {
+  //     id: `temp-${Date.now()}`, // replaced by backend
+  //     name: newHoliday.name.trim(),
+  //     fromDate: newHoliday.fromDate,
+  //     toDate: newHoliday.toDate,
+  //     is_active: true,
+  //   };
+
+  //   updateFormData({
+  //     holidays: [...holidays, tempHoliday],
+  //   });
+
+  //   setNewHoliday({ name: "", fromDate: "", toDate: "" });
+  // };
+
+
+
+  /* -------------------- DELETE (SOFT) -------------------- */
+  // const handleDeleteHoliday = (holidayId: string) => {
+  //   if (!confirm("Are you sure you want to delete this holiday?")) return;
+
+  //   updateFormData({
+  //     holidays: holidays.filter((h) => h.id !== holidayId),
+  //   });
+  // };
+
+  // const handleCopyHolidays = async () => {
+  //   if (!sourceOfficeId) {
+  //     alert("Please select an office to copy from");
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoadingCopy(true);
+
+  //     const sourceHolidays = await fetchOfficeHolidays(sourceOfficeId);
+
+  //     if (sourceHolidays.length === 0) {
+  //       alert("Selected office has no holidays");
+  //       return;
+  //     }
+
+  //     // Remove ids so backend treats them as new
+  //     const clonedHolidays: Holiday[] = sourceHolidays.map((h) => ({
+  //       ...h,
+  //       id: `temp-${Date.now()}-${Math.random()}`, // temporary frontend id
+  //     }));
+
+  //     updateFormData({
+  //       holidays:
+  //         copyMode === "overwrite"
+  //           ? clonedHolidays
+  //           : [...holidays, ...clonedHolidays],
+  //     });
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("Failed to copy holidays");
+  //   } finally {
+  //     setLoadingCopy(false);
+  //   }
+  // };
+
+  /* ---------------- ADD ---------------- */
 
   const handleAddHoliday = () => {
     if (!newHoliday.name || !newHoliday.fromDate || !newHoliday.toDate) {
@@ -25,27 +184,72 @@ export default function HolidaysTab({
       return;
     }
 
-    const holiday = {
-      id: `hol-${Date.now()}`,
-      name: newHoliday.name,
-      fromDate: newHoliday.fromDate,
-      toDate: newHoliday.toDate,
-    };
+    if (newHoliday.fromDate > newHoliday.toDate) {
+      alert("From date cannot be after To date");
+      return;
+    }
 
     updateFormData({
-      holidays: [...holidays, holiday],
+      holidays: [
+        ...holidays,
+        {
+          id: `temp-${Date.now()}`,
+          name: newHoliday.name.trim(),
+          fromDate: newHoliday.fromDate,
+          toDate: newHoliday.toDate,
+          is_active: true,
+        },
+      ],
     });
 
     setNewHoliday({ name: "", fromDate: "", toDate: "" });
   };
 
-  const handleDeleteHoliday = (holidayId: string) => {
-    if (!confirm("Are you sure you want to delete this holiday?")) return;
+  /* ---------------- DELETE ---------------- */
 
-    updateFormData({
-      holidays: holidays.filter((h) => h.id !== holidayId),
-    });
+  const handleDeleteHoliday = (id: string) => {
+    if (!confirm("Delete this holiday?")) return;
+    updateFormData({ holidays: holidays.filter((h) => h.id !== id) });
   };
+
+  /* ---------------- COPY ---------------- */
+
+  const handleCopyHolidays = async () => {
+    if (!sourceOfficeId) return;
+
+    try {
+      setLoadingCopy(true);
+
+      const sourceHolidays = await fetchOfficeHolidays(sourceOfficeId);
+
+      if (sourceHolidays.length === 0) {
+        alert("Selected office has no holidays");
+        return;
+      }
+
+      const cloned = sourceHolidays.map((h) => ({
+        ...h,
+        id: `temp-${Date.now()}-${Math.random()}`,
+      }));
+
+      updateFormData({
+        holidays:
+          copyMode === "overwrite"
+            ? cloned
+            : [...holidays, ...cloned],
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to copy holidays");
+    } finally {
+      setLoadingCopy(false);
+    }
+  };
+
+
+
+  /* -------------------- JSX BELOW REMAINS IDENTICAL -------------------- */
+
 
   return (
     <div className="space-y-6">
@@ -125,21 +329,61 @@ export default function HolidaysTab({
           Copy Holidays from Another Office
         </h3>
         <div className="flex gap-3">
-          <select className="flex-1 px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          {/* <select className="flex-1 px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             <option value="">Select office to copy from</option>
             <option value="off-001">Main Street Dental</option>
             <option value="off-002">Downtown Dental Center</option>
+          </select> */}
+          <select
+            className="flex-1 px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={sourceOfficeId}
+            onChange={(e) => setSourceOfficeId(e.target.value)}
+            disabled={loadingOffices}
+          >
+            <option value="">
+              {loadingOffices ? "Loading offices..." : "Select office to copy from"}
+            </option>
+
+            {offices.map((office) => (
+              <option key={office.id} value={office.officeId}>
+                {office.officeName} 
+                {/* ({office.shortId}) */}
+              </option>
+            ))}
           </select>
 
-          <select className="px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+          {/* <select className="px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="append">Append</option>
+            <option value="overwrite">Overwrite</option>
+          </select> */}
+
+          <select
+            className="px-4 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={copyMode}
+            onChange={(e) => setCopyMode(e.target.value as "append" | "overwrite")}
+          >
             <option value="append">Append</option>
             <option value="overwrite">Overwrite</option>
           </select>
 
-          <button className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-semibold flex items-center gap-2">
+
+
+          {/* <button className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-semibold flex items-center gap-2">
             <Copy className="w-4 h-4" />
             Copy
+          </button> */}
+
+          <button
+            onClick={handleCopyHolidays}
+            disabled={!sourceOfficeId || loadingCopy}
+            className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-semibold flex items-center gap-2 disabled:opacity-50"
+          >
+            <Copy className="w-4 h-4" />
+            {loadingCopy ? "Copying..." : "Copy"}
           </button>
+
+
         </div>
         <p className="text-xs text-slate-500 mt-2">
           Append: Add to existing holidays • Overwrite: Replace all holidays

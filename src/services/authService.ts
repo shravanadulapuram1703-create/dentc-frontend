@@ -47,3 +47,38 @@ export const authService = {
     return res.data;
   },
 };
+
+
+export interface EClaimsConfig {
+  vendorType?: string;
+  username?: string;
+  password?: string;
+}
+
+export interface TransworldConfig {
+  acceleratorAccount?: string;
+  collectionsAccount?: string;
+  userId?: string;
+  password?: string;
+  agingDays?: number;
+}
+
+export interface ImagingSystemConfig {
+  index: number;
+  name?: string;
+  linkType?: string;
+  mode?: string;
+}
+
+export interface TextMessagingConfig {
+  phoneNumber?: string;
+  verified?: boolean;
+}
+
+export interface PatientUrlsConfig {
+  formsUrl?: string;
+  schedulingUrl?: string;
+  financingUrl?: string;
+  customUrl1?: string;
+  customUrl2?: string;
+}

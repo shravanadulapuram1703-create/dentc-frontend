@@ -21,25 +21,40 @@ const SMARTASSIST_ITEMS = [
   { key: "ledgerPosting", label: "Ledger Posting", hasBalance: false, hasTemplate: false },
 ];
 
+const DEFAULT_ITEM = {
+  enabled: false,
+  frequency: "Every Visit",
+  includeBal: false,
+  template: "",
+};
+
+
 export default function SmartAssistTab({
   formData,
   updateFormData,
 }: SmartAssistTabProps) {
-  const smartAssist = formData.smartAssist || {
-    enabled: false,
-    items: {},
+  // const smartAssist = formData.smartAssist ?? {
+  //   enabled: false,
+  //   items: {},
+  // };
+
+  const smartAssist = {
+    enabled: formData.smartAssist?.enabled ?? false,
+    items: formData.smartAssist?.items ?? {},
   };
+  
 
   const toggleSmartAssist = (enabled: boolean) => {
     updateFormData({
       smartAssist: {
         ...smartAssist,
         enabled,
-      } as any,
+      },
     });
   };
 
   const updateItem = (itemKey: string, field: string, value: any) => {
+    const existingItem = smartAssist.items[itemKey] ?? DEFAULT_ITEM;
     updateFormData({
       smartAssist: {
         ...smartAssist,
@@ -50,9 +65,10 @@ export default function SmartAssistTab({
             [field]: value,
           },
         },
-      } as any,
+      },
     });
   };
+
 
   return (
     <div className="space-y-6">
@@ -112,7 +128,8 @@ export default function SmartAssistTab({
 
           <div className="space-y-3">
             {SMARTASSIST_ITEMS.map((item) => {
-              const itemData = (smartAssist.items as any)?.[item.key] || {
+              const itemData = (smartAssist.items as any)?.[item.key] 
+              || {
                 enabled: false,
                 frequency: "Every Visit",
                 includeBal: false,

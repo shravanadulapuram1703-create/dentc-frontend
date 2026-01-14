@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Building2, Search, Plus, Save, X } from "lucide-react";
-import { mockOffices, getNextOfficeId, type Office } from "../../../data/officeData";
+import api from "../../../services/api";
+import type { Office, OfficeSetupApiResponse } from "../../../data/officeData";
 
-// Import tab components
 import InfoTab from "./tabs/InfoTab";
 import StatementTab from "./tabs/StatementTab";
 import IntegrationTab from "./tabs/IntegrationTab";
@@ -22,6 +22,477 @@ type TabName =
   | "advanced"
   | "smartassist";
 
+// utils/scheduleMapper.ts
+// type DayName =
+//   | "monday"
+//   | "tuesday"
+//   | "wednesday"
+//   | "thursday"
+//   | "friday"
+//   | "saturday"
+//   | "sunday";
+
+// const DAYS: DayName[] = [
+//   "monday",
+//   "tuesday",
+//   "wednesday",
+//   "thursday",
+//   "friday",
+//   "saturday",
+//   "sunday",
+// ];
+
+interface HolidayApi {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+}
+
+
+interface AdvancedApi {
+  financial: {
+    annual_finance_charge_percent: number;
+    minimum_balance: number;
+    minimum_finance_charge: number;
+    days_before_finance_charge: number;
+    sales_tax_percent: number;
+  };
+  scheduler: {
+    end_date: string;
+    default_appointment_duration: number;
+  };
+  insurance: {
+    insurance_group?: string;
+    eligibility_threshold_days: number;
+    default_coverage_type: string;
+  };
+  defaults: {
+    place_of_service: string;
+    area_code: string;
+    city: string;
+    state: string;
+    zip: string;
+    preferred_provider_id?: string;
+    is_ortho_office: boolean;
+  };
+  patient_checkin: {
+    hipaa_notice: boolean;
+    consent_form: boolean;
+    additional_consent_form: boolean;
+  };
+  automation: {
+    send_ecard: boolean;
+    effective_date?: string;
+  };
+}
+
+
+function mapAdvancedApiToUI(api: AdvancedApi) {
+  return {
+    annualFinanceChargePercent:
+      api.financial.annual_finance_charge_percent,
+    minimumBalance:
+      api.financial.minimum_balance,
+    minimumFinanceCharge:
+      api.financial.minimum_finance_charge,
+    daysBeforeFinanceCharge:
+      api.financial.days_before_finance_charge,
+    salesTaxPercent:
+      api.financial.sales_tax_percent,
+
+    insuranceGroup:
+      api.insurance.insurance_group,
+    eligibilityThresholdDays:
+      api.insurance.eligibility_threshold_days,
+    defaultCoverageType:
+      api.insurance.default_coverage_type,
+
+    schedulerEndDate:
+      api.scheduler.end_date,
+    defaultAppointmentDuration:
+      api.scheduler.default_appointment_duration,
+
+    defaultPlaceOfService:
+      api.defaults.place_of_service,
+    defaultAreaCode:
+      api.defaults.area_code,
+    defaultCity:
+      api.defaults.city,
+    defaultState:
+      api.defaults.state,
+    defaultZip:
+      api.defaults.zip,
+    preferredProvider:
+      api.defaults.preferred_provider_id,
+    isOrthoOffice:
+      api.defaults.is_ortho_office,
+
+    hipaaNotice:
+      api.patient_checkin.hipaa_notice,
+    consentForm:
+      api.patient_checkin.consent_form,
+    additionalConsentForm:
+      api.patient_checkin.additional_consent_form,
+
+    sendECard:
+      api.automation.send_ecard,
+    automatedCampaignsEffectiveDate:
+      api.automation.effective_date,
+  };
+}
+
+
+function mapHolidayApiToUI(apiHoliday: HolidayApi) {
+  return {
+    id: apiHoliday.id,
+    name: apiHoliday.name,
+    fromDate: apiHoliday.start_date,
+    toDate: apiHoliday.end_date,
+    is_active: apiHoliday.is_active,
+  };
+}
+
+
+// export function mapBackendSchedule(schedule: any) {
+//   const week = schedule?.week ?? {};
+
+//   const result: any = {};
+
+//   DAYS.forEach((day) => {
+//     const d = week[day];
+
+//     result[day] = {
+//       start: d?.start ?? "",
+//       end: d?.end ?? "",
+//       lunchStart: d?.lunch_start ?? "",
+//       lunchEnd: d?.lunch_end ?? "",
+//       closed: d?.closed ?? false,
+//     };
+//   });
+
+//   return result;
+// }
+
+
+// const [officeSetup, setOfficeSetup] = useState<OfficeSetupResponse | null>(null);
+// const [loading, setLoading] = useState(true);
+
+// utils/scheduleMapper.ts
+
+type DayName =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+const DAYS: DayName[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+export function mapBackendSchedule(schedule: any) {
+  const result: Record<DayName, any> = {} as any;
+
+  DAYS.forEach((day) => {
+    const d = schedule?.[day];
+
+    result[day] = {
+      start: d?.start ?? "",
+      end: d?.end ?? "",
+      lunchStart: d?.lunchStart ?? "",
+      lunchEnd: d?.lunchEnd ?? "",
+      closed: d?.closed ?? false,
+    };
+  });
+
+  return result;
+}
+
+
+export default function OfficeSetup() {
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedOfficeId, setSelectedOfficeId] = useState<number | null>(null);
+  const [formData, setFormData] = useState<Partial<Office>>({});
+  const [activeTab, setActiveTab] = useState<TabName>("info");
+  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [showOfficeList, setShowOfficeList] = useState(true);
+  const [nextOfficeId, setNextOfficeId] = useState<number | null>(null);
+  const [officeSetup, setOfficeSetup] = useState<OfficeSetupApiResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+
+  /* -------------------- LOAD LIST -------------------- */
+  useEffect(() => {
+    api.get("/api/v1/offices").then((res) => setOffices(res.data));
+    api.get("/api/v1/offices/next-id").then((res) => setNextOfficeId(res.data.nextOfficeId));
+  }, []);
+
+  /* -------------------- FILTER -------------------- */
+  const filteredOffices = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return offices.filter(
+      (o) =>
+        o.officeName.toLowerCase().includes(q) ||
+        o.shortId.toLowerCase().includes(q) ||
+        String(o.officeId).includes(q)
+    );
+  }, [offices, searchQuery]);
+
+  /* -------------------- SELECT OFFICE -------------------- */
+  // const handleSelectOffice = async (office: Office) => {
+  //   const res = await api.get(`/api/v1/offices/${office.officeId}/setup`);
+  //   setFormData({
+  //     ...res.data.office,
+  //     statementMessages: res.data.statement.statement_messages,
+  //         statementSettings: {
+  //     correspondenceName:
+  //       res.data.statement.statement_settings.correspondence_name,
+  //     statementName:
+  //       res.data.statement.statement_settings.statement_name,
+  //     statementAddress:
+  //       res.data.statement.statement_settings.statement_address,
+  //     statementPhone:
+  //       res.data.statement.statement_settings.statement_phone,
+  //     logoUrl:
+  //       res.data.statement.statement_settings.logo_url,
+  //     },
+  //     acceptedCards: res.data.integration.acceptedCards,
+
+  //     operatories: res.data.operatories,
+  //     schedule: mapBackendSchedule(res.data.schedule),
+  //     holidays: (res.data.holidays ?? []).map(mapHolidayApiToUI),
+  //     advanced: mapAdvancedApiToUI(res.data.advanced),
+  //     smartAssist: res.data.smartAssist,
+  //     ...res.data.integration,
+  //   });
+
+  //   setSelectedOfficeId(office.officeId);
+  //   setMode("view");
+  //   setActiveTab("info");
+  //   setShowOfficeList(false);
+  // };
+
+  const handleSelectOffice = async (office: Office) => {
+    const res = await api.get(`/api/v1/offices/${office.officeId}/setup`);
+    const data = res.data;
+
+    setFormData({
+      officeId: data.officeId,
+      officeName: data.officeName,
+      shortId: data.shortId,
+
+      // 🔥 FLATTEN ADDRESS
+      address1: data.address?.address1 ?? "",
+      address2: data.address?.address2 ?? "",
+      city: data.address?.city ?? "",
+      state: data.address?.state ?? "",
+      zip: data.address?.zip ?? "",
+      timeZone: data.address?.timeZone ?? "",
+
+      //  FLATTEN CONTACT
+      phone1: data.contact?.phone1 ?? "",
+      phone1Ext: data.contact?.phone1Ext ?? "",
+      phone2: data.contact?.phone2 ?? "",
+      email: data.contact?.email ?? "",
+
+      // Billing
+      ...data.billing,
+
+      // Settings
+      schedulerTimeInterval: data.settings?.schedulerTimeInterval ?? null,
+      isActive: data.settings?.isActive ?? true,
+
+      // Statements
+      statementMessages: data.statementMessages,
+      statementSettings: data.statementSettings,
+
+
+        // INTEGRATIONS (FULLY WIRED)
+        integrations: {
+          eClaims: data.integrations?.eClaims ?? {},
+          transworld: data.integrations?.transworld ?? {},
+          imaging: data.integrations?.imaging ?? {},
+          textMessaging: data.integrations?.textMessaging ?? {},
+          patientUrls: data.integrations?.patientUrls ?? {},
+          acceptedCards: data.integrations?.acceptedCards ?? [],
+        },
+
+
+      acceptedCards: data.acceptedCards ?? [],
+      operatories: data.operatories ?? [],
+      schedule: mapBackendSchedule(data.schedule),
+      holidays: data.holidays ?? [],
+      advanced: data.advanced ?? {},
+      smartAssist: data.smartAssist ?? {},
+    });
+
+    console.log("Mapped schedule", mapBackendSchedule(data.schedule));
+
+
+    setSelectedOfficeId(data.officeId);
+    setMode("view");
+    setActiveTab("info");
+    setShowOfficeList(false);
+  };
+
+
+
+
+  /* -------------------- ADD OFFICE -------------------- */
+console.log("nextOfficeId----------->", nextOfficeId)
+const handleAddOffice = () => {
+  if (nextOfficeId != null) {
+    setFormData({ officeId: nextOfficeId });
+  } else {
+    setFormData({officeId: 999});
+  }
+
+  setMode("add");
+  setActiveTab("info");
+  setShowOfficeList(false);
+};
+
+/* -------------------- SAVE -------------------- */
+// const handleSave = async () => {
+//   if (!formData.officeName || !formData.shortId) {
+//     alert("Office Name and Short ID are required");
+//     return;
+//   }
+
+//   if (mode === "add") {
+//     await api.post("/api/v1/offices", formData);
+//   } else {
+//     await api.put(`/api/v1/offices/${selectedOfficeId}`, formData);
+//   }
+
+//   alert("Office saved successfully");
+//   setShowOfficeList(true);
+// };
+
+const sanitizeScheduleForApi = (schedule: any) => {
+  if (!schedule) return {};
+
+  const cleaned: any = {};
+
+  Object.entries(schedule).forEach(([day, value]: any) => {
+    const v = value ?? {};
+
+    cleaned[day] = {
+      start: v.start || null,
+      end: v.end || null,
+      lunchStart: v.lunchStart || null,
+      lunchEnd: v.lunchEnd || null,
+      closed: !!v.closed,
+    };
+  });
+
+  return cleaned;
+};
+
+
+const buildPutPayload = (formData: any) => {
+  return {
+    officeId: formData.officeId,
+    officeName: formData.officeName,
+    shortId: formData.shortId,
+
+    address: {
+      address1: formData.address1,
+      address2: formData.address2,
+      city: formData.city,
+      state: formData.state,
+      zip: formData.zip,
+      timeZone: formData.timeZone,
+    },
+
+    contact: {
+      phone1: formData.phone1,
+      phone1Ext: formData.phone1Ext,
+      phone2: formData.phone2,
+      email: formData.email,
+    },
+
+    
+
+    billing: {
+      billingProviderId: formData.billingProviderId,
+      billingProviderName: formData.billingProviderName,
+      useBillingLicense: formData.useBillingLicense,
+      taxId: formData.taxId,
+      openingDate: formData.openingDate,
+      officeGroup: formData.officeGroup,
+      defaultUCRFeeSchedule: formData.defaultUCRFeeSchedule,
+      defaultFeeSchedule: formData.defaultFeeSchedule,
+    },
+
+    settings: {
+      schedulerTimeInterval: formData.schedulerTimeInterval,
+      isActive: formData.isActive,
+    },
+
+    // INTEGRATIONS SENT BACK EXACTLY AS UI
+    integrations: {
+      eClaims: formData.integrations?.eClaims ?? {},
+      transworld: formData.integrations?.transworld ?? {},
+      imaging: formData.integrations?.imaging ?? {},
+      textMessaging: formData.integrations?.textMessaging ?? {},
+      patientUrls: formData.integrations?.patientUrls ?? {},
+      acceptedCards: formData.integrations?.acceptedCards ?? [],
+    },
+
+    statementMessages: formData.statementMessages,
+    statementSettings: formData.statementSettings,
+    acceptedCards: formData.acceptedCards,
+    operatories: formData.operatories,
+    // schedule: formData.schedule,
+    schedule: sanitizeScheduleForApi(formData.schedule),
+    holidays: formData.holidays,
+    advanced: formData.advanced,
+    smartAssist: formData.smartAssist,
+  };
+};
+
+
+const handleSave = async () => {
+  if (!formData.officeName || !formData.shortId) {
+    alert("Office Name and Short ID are required");
+    return;
+  }
+
+  const payload = buildPutPayload(formData);
+
+  if (mode === "add") {
+    await api.post("/api/v1/offices", payload);
+  } else {
+    await api.put(`/api/v1/offices/${selectedOfficeId}`, payload);
+  }
+
+  alert("Office saved successfully");
+  setShowOfficeList(true);
+};
+
+
+const updateFormData = (updates: Partial<Office>) =>
+  setFormData((prev) => ({ ...prev, ...updates }));
+
+const handleCancel = () => {
+  setShowOfficeList(true);
+  // setSelectedOffice(null);
+  setFormData({});
+  setMode("view");
+};
+
 const tabs: { id: TabName; label: string }[] = [
   { id: "info", label: "Info" },
   { id: "statement", label: "Statement" },
@@ -33,164 +504,9 @@ const tabs: { id: TabName; label: string }[] = [
   { id: "smartassist", label: "SmartAssist" },
 ];
 
-export default function OfficeSetup() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOffice, setSelectedOffice] = useState<Office | null>(null);
-  const [activeTab, setActiveTab] = useState<TabName>("info");
-  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
-  const [showOfficeList, setShowOfficeList] = useState(true);
-  const [formData, setFormData] = useState<Partial<Office>>({});
 
-  // Filter offices
-  const filteredOffices = useMemo(() => {
-    let filtered = mockOffices.filter((office) => {
-      const query = searchQuery.toLowerCase();
-      return (
-        office.officeName.toLowerCase().includes(query) ||
-        office.shortId.toLowerCase().includes(query) ||
-        office.officeId.toString().includes(query)
-      );
-    });
-
-    filtered.sort((a, b) => a.officeName.localeCompare(b.officeName));
-    return filtered;
-  }, [searchQuery]);
-
-  const handleSelectOffice = (office: Office) => {
-    setSelectedOffice(office);
-    setFormData(office);
-    setMode("view");
-    setActiveTab("info");
-    setShowOfficeList(false);
-  };
-
-  const handleAddOffice = () => {
-    const newOfficeTemplate: Partial<Office> = {
-      officeId: getNextOfficeId(),
-      officeName: "",
-      shortId: "",
-      address1: "",
-      address2: "",
-      city: "",
-      state: "",
-      zip: "",
-      timeZone: "America/Los_Angeles",
-      phone1: "",
-      phone1Ext: "",
-      email: "",
-      billingProviderId: "",
-      billingProviderName: "",
-      useBillingLicense: true,
-      taxId: "",
-      openingDate: new Date().toISOString().split("T")[0],
-      defaultUCRFeeSchedule: "",
-      defaultFeeSchedule: "",
-      schedulerTimeInterval: 10,
-      statementMessages: {
-        general: "",
-        current: "",
-        day30: "",
-        day60: "",
-        day90: "",
-        day120: "",
-      },
-      correspondenceName: "",
-      statementName: "",
-      statementAddress: "",
-      statementPhone: "",
-      acceptedCards: ["Visa", "Mastercard"],
-      operatories: [],
-      schedule: {
-        monday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        tuesday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        wednesday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        thursday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        friday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        saturday: { start: "", end: "", lunchStart: "", lunchEnd: "", closed: true },
-        sunday: { start: "", end: "", lunchStart: "", lunchEnd: "", closed: true },
-      },
-      holidays: [],
-      advanced: {
-        annualFinanceChargePercent: 18.0,
-        minimumBalance: 50.0,
-        minimumFinanceCharge: 2.0,
-        daysBeforeFinanceCharge: 30,
-        salesTaxPercent: 0,
-        schedulerEndDate: "",
-        eligibilityThresholdDays: 30,
-        sendECard: false,
-        defaultPlaceOfService: "Office",
-        defaultAppointmentDuration: 60,
-        defaultAreaCode: "",
-        defaultCity: "",
-        defaultState: "",
-        defaultZip: "",
-        defaultCoverageType: "PPO",
-        isOrthoOffice: false,
-        hipaaNotice: true,
-        consentForm: true,
-        additionalConsentForm: false,
-      },
-      smartAssist: {
-        enabled: false,
-        items: {
-          payment: { enabled: false, frequency: "Every Visit", includeBal: false },
-          email: { enabled: false, frequency: "Every Year" },
-          cellPhone: { enabled: false, frequency: "Every Year" },
-          eligibility: { enabled: false, frequency: "Every Visit" },
-          medicalHistory: { enabled: false, frequency: "Every Year" },
-          hipaa: { enabled: false, frequency: "Every Year" },
-          consentForm1: { enabled: false, frequency: "Every Visit" },
-          consentForm2: { enabled: false, frequency: "Every Visit" },
-          consentForm3: { enabled: false, frequency: "Every Visit" },
-          consentForm4: { enabled: false, frequency: "Every Visit" },
-          progressNotes: { enabled: false, frequency: "Every Visit" },
-          ledgerPosting: { enabled: false, frequency: "Every Visit" },
-        },
-      },
-      isActive: true,
-    };
-
-    setSelectedOffice(null);
-    setFormData(newOfficeTemplate);
-    setMode("add");
-    setActiveTab("info");
-    setShowOfficeList(false);
-  };
-
-  const handleSave = () => {
-    // Validation
-    if (!formData.officeName || !formData.shortId) {
-      alert("Office Name and Short ID are required");
-      return;
-    }
-    if (!formData.billingProviderId) {
-      alert("Billing Provider is required");
-      return;
-    }
-    if (!formData.timeZone) {
-      alert("Time Zone is required");
-      return;
-    }
-
-    console.log("Saving office:", formData);
-    alert(`Office ${mode === "add" ? "created" : "updated"} successfully!`);
-    setShowOfficeList(true);
-    setMode("view");
-  };
-
-  const handleCancel = () => {
-    setShowOfficeList(true);
-    setSelectedOffice(null);
-    setFormData({});
-    setMode("view");
-  };
-
-  const updateFormData = (updates: Partial<Office>) => {
-    setFormData((prev) => ({ ...prev, ...updates }));
-  };
-
-  const nextOfficeId = getNextOfficeId();
+/* -------------------- JSX (UNCHANGED UI) -------------------- */
+// ⬅️ Your existing JSX stays EXACTLY THE SAME
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -240,9 +556,9 @@ export default function OfficeSetup() {
                 </span>
               </div>
             </div>
-
+            {/* <div className="space-y-1 max-h-[120px] overflow-y-auto pr-1"> */}
             {/* Office Table */}
-            <div className="overflow-x-auto">
+            <div className="max-h-[600px] overflow-auto border border-[#E2E8F0] rounded-lg">
               <table className="w-full">
                 <thead className="bg-[#F7F9FC] border-b-2 border-[#E2E8F0]">
                   <tr>

@@ -1,12 +1,28 @@
+import React from "react";
 import { Clock, Copy } from "lucide-react";
 import { type Office } from "../../../../data/officeData";
+
+type DayName =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+interface DaySchedule {
+  start?: string;
+  end?: string;
+  lunchStart?: string;
+  lunchEnd?: string;
+  closed: boolean;
+}
 
 interface ScheduleTabProps {
   formData: Partial<Office>;
   updateFormData: (updates: Partial<Office>) => void;
 }
-
-type DayName = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 const DAYS: { key: DayName; label: string }[] = [
   { key: "monday", label: "Monday" },
@@ -18,21 +34,59 @@ const DAYS: { key: DayName; label: string }[] = [
   { key: "sunday", label: "Sunday" },
 ];
 
+const normalizeTime = (value?: string): string => {
+  if (!value) return "";
+  // Accepts "HH:MM", "HH:MM:SS", "HH:MM:SS.mmmmmm"
+  return value.slice(0, 5);
+};
+
 export default function ScheduleTab({
   formData,
   updateFormData,
 }: ScheduleTabProps) {
-  const schedule = formData.schedule || {};
+  /**
+   * 🔑 IMPORTANT:
+   * Normalize + memoize schedule so it rehydrates
+   * correctly when API data arrives.
+   */
+  const schedule = React.useMemo<
+    Partial<Record<DayName, DaySchedule>>
+  >(() => {
 
-  const updateDay = (day: DayName, field: string, value: string | boolean) => {
+    console.log("formData.schedule ====>",formData.schedule)
+    console.log("formData ====>",formData)
+    if (!formData.schedule) return {};
+
+    return Object.fromEntries(
+      Object.entries(formData.schedule).map(([day, data]) => [
+        day,
+        {
+          ...data,
+          start: normalizeTime((data as DaySchedule).start),
+          end: normalizeTime((data as DaySchedule).end),
+          lunchStart: normalizeTime((data as DaySchedule).lunchStart),
+          lunchEnd: normalizeTime((data as DaySchedule).lunchEnd),
+          closed: (data as DaySchedule).closed ?? false,
+        },
+      ])
+    ) as Partial<Record<DayName, DaySchedule>>;
+  }, [formData.schedule]);
+
+
+
+  const updateDay = (
+    day: DayName,
+    field: keyof DaySchedule,
+    value: string | boolean
+  ) => {
     updateFormData({
       schedule: {
         ...schedule,
         [day]: {
-          ...schedule[day],
+          ...(schedule[day] ?? { closed: false }),
           [field]: value,
         },
-      } as any,
+      },
     });
   };
 
@@ -40,13 +94,18 @@ export default function ScheduleTab({
     const monday = schedule.monday;
     if (!monday) return;
 
-    const newSchedule = { ...schedule };
-    ["tuesday", "wednesday", "thursday", "friday"].forEach((day) => {
-      newSchedule[day as DayName] = { ...monday };
-    });
+    const updated: typeof schedule = { ...schedule };
 
-    updateFormData({ schedule: newSchedule as any });
+    (["tuesday", "wednesday", "thursday", "friday"] as DayName[]).forEach(
+      (d) => {
+        updated[d] = { ...monday };
+      }
+    );
+
+    updateFormData({ schedule: updated });
   };
+
+  console.log("formData.schedule ====> 222222222",formData.schedule)
 
   return (
     <div className="space-y-6">
@@ -77,7 +136,7 @@ export default function ScheduleTab({
       {/* Days Schedule */}
       <div className="space-y-4">
         {DAYS.map((day) => {
-          const daySchedule = schedule[day.key] || {
+          const daySchedule: DaySchedule = schedule[day.key] ?? {
             start: "",
             end: "",
             lunchStart: "",
@@ -115,7 +174,7 @@ export default function ScheduleTab({
                     </label>
                     <input
                       type="time"
-                      value={daySchedule.start}
+                      value={daySchedule.start ?? ""}
                       onChange={(e) =>
                         updateDay(day.key, "start", e.target.value)
                       }
@@ -129,8 +188,10 @@ export default function ScheduleTab({
                     </label>
                     <input
                       type="time"
-                      value={daySchedule.end}
-                      onChange={(e) => updateDay(day.key, "end", e.target.value)}
+                      value={daySchedule.end ?? ""}
+                      onChange={(e) =>
+                        updateDay(day.key, "end", e.target.value)
+                      }
                       className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -141,7 +202,7 @@ export default function ScheduleTab({
                     </label>
                     <input
                       type="time"
-                      value={daySchedule.lunchStart}
+                      value={daySchedule.lunchStart ?? ""}
                       onChange={(e) =>
                         updateDay(day.key, "lunchStart", e.target.value)
                       }
@@ -155,7 +216,7 @@ export default function ScheduleTab({
                     </label>
                     <input
                       type="time"
-                      value={daySchedule.lunchEnd}
+                      value={daySchedule.lunchEnd ?? ""}
                       onChange={(e) =>
                         updateDay(day.key, "lunchEnd", e.target.value)
                       }

@@ -319,53 +319,58 @@ export default function ViewUserDetailsModal({
 
 
           {/* {activeTab === 4 && <div>Time Clock content</div>} */}
-          {/* {activeTab === 4 && (
-            <div className="text-sm">
-              {user.timeClockEnabled ? (
-                <div className="text-green-700 font-bold">
-                  Time Clock Enabled
-                </div>
-              ) : (
-                <div className="text-gray-500">
-                  Time Clock Not Enabled
-                </div>
-              )}
-            </div>
-          )} */}
-          <ReadOnlyField
+          {activeTab === 4 && (
+            <ReadOnlyField
             label="Time Clock"
             value={user.timeClockEnabled ? "Enabled" : "Not Enabled"}
-          />
+            />
+            // <div className="text-sm">
+            //   {user.timeClockEnabled ? (
+            //     <div className="text-green-700 font-bold">
+            //       Time Clock Enabled
+            //     </div>
+            //   ) : (
+            //     <div className="text-gray-500">
+            //       Time Clock Not Enabled
+            //     </div>
+            //   )}
+            // </div>
+          )}
+          {/* <ReadOnlyField
+            label="Time Clock"
+            value={user.timeClockEnabled ? "Enabled" : "Not Enabled"}
+          /> */}
 
 
 
 
           {/* {activeTab === 5 && <div>User Settings content</div>} */}
-          {/* {activeTab === 5 && (
-            <div className="grid grid-cols-2 gap-6 text-sm">
-              <div>
-                <label className="text-xs font-bold text-gray-500">
-                  Default View
-                </label>
-                <div>{user.defaultView || "—"}</div>
-              </div>
+          {activeTab === 5 && (
+            <ReadOnlyField label="Default View" value={user.defaultView} />
+            // <div className="grid grid-cols-2 gap-6 text-sm">
+            //   <div>
+            //     <label className="text-xs font-bold text-gray-500">
+            //       Default View
+            //     </label>
+            //     <div>{user.defaultView || "—"}</div>
+            //   </div>
 
-              <div>
-                <label className="text-xs font-bold text-gray-500">
-                  Theme
-                </label>
-                <div>{user.theme || "—"}</div>
-              </div>
+            //   <div>
+            //     <label className="text-xs font-bold text-gray-500">
+            //       Theme
+            //     </label>
+            //     <div>{user.theme || "—"}</div>
+            //   </div>
 
-              <div>
-                <label className="text-xs font-bold text-gray-500">
-                  Language
-                </label>
-                <div>{user.language || "—"}</div>
-              </div>
-            </div>
-          )} */}
-          <ReadOnlyField label="Default View" value={user.defaultView} />
+            //   <div>
+            //     <label className="text-xs font-bold text-gray-500">
+            //       Language
+            //     </label>
+            //     <div>{user.language || "—"}</div>
+            //   </div>
+            // </div>
+          )}
+          {/* <ReadOnlyField label="Default View" value={user.defaultView} /> */}
 
 
 

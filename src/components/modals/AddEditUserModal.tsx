@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
   User,
@@ -10,6 +10,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import api from "../../services/api";
+import type { UserSetupResponse } from "../../types/userSetup";
+
+
+
+
+
 interface AddEditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,7 +27,7 @@ interface AddEditUserModalProps {
 
 }
 
-interface BackendUser {
+export interface BackendUser {
   user_id: number;
   username: string | null;
   first_name: string | null;
@@ -57,92 +64,250 @@ export default function AddEditUserModal({
 }: AddEditUserModalProps) {
   const [activeTab, setActiveTab] = useState(0);
 
+  const [setup, setSetup] = useState<UserSetupResponse | null>(null);
+  const [setupLoading, setSetupLoading] = useState(false);
+
+  // useEffect(() => {
+  //   if (!isOpen) return;
+
+  //   setSetupLoading(true);
+  //   api
+  //     .get<UserSetupResponse>("/api/v1/users/setup")
+  //     .then(res => setSetup(res.data))
+  //     .finally(() => setSetupLoading(false));
+  // }, [isOpen]);
+
+
+
   // Form Data State
-  // const [formData, setFormData] = useState({
-  //   // Tab 1: Login Info & Office Access
-  //   username: editingUser?.username || "",
-  //   password: editingUser?.username || "", // Default = username
-  //   firstName: editingUser?.firstName || "",
-  //   lastName: editingUser?.lastName || "",
-  //   shortId: editingUser?.shortId || "",
-  //   email: editingUser?.email || "",
-  //   phone: editingUser?.phone || "",
-  //   active: editingUser?.active ?? true,
-  //   securityGroup: editingUser?.securityGroup || "Front Desk",
-  //   userRole: editingUser?.role || "Front Desk",
+  
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setSetupLoading(true);
+    api
+      .get<UserSetupResponse>("/api/v1/users/setup")
+      .then(res => setSetup(res.data))
+      .finally(() => setSetupLoading(false));
+  }, [isOpen]);
+
+  // const [formData, setFormData] = useState<any>({
+  //   username: "",
+  //   password: "",
+  //   firstName: "",
+  //   lastName: "",
+  //   email: "",
+  //   phone: "",
+
+  //   active: true,
+
+  //   homeOffice: "",
+  //   assignedOffices: [],
+
+  //   roles: [],
+  //   assignedGroups: [],
+
+  //   permittedIPs: [],
+
   //   patientAccessLevel: "all",
-  //   allowedDays: {
-  //     Mon: true,
-  //     Tue: true,
-  //     Wed: true,
-  //     Thu: true,
-  //     Fri: true,
-  //     Sat: false,
-  //     Sun: false,
-  //   },
-  //   allowedFrom: "08:00 AM",
-  //   allowedUntil: "06:00 PM",
-  //   use24x7Access: false,
-  //   hipaaCompliantScheduler: false,
-  //   homeOffice: editingUser?.homeOffice || currentOffice,
-  //   assignedOffices: editingUser?.assignedOffices || [currentOffice],
 
-  //   // Tab 2: Permitted IPs
-  //   permittedIPs: editingUser?.permittedIPs || [],
+  //   use24x7Access: true,
+  //   allowedDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+  //   allowedFrom: "08:00",
+  //   allowedUntil: "18:00",
 
-  //   // Tab 3: Group Memberships
-  //   assignedGroups: editingUser?.assignedGroups || ["Front Desk"],
+  //   timeClockPayRate: "",
+  //   overtimeMethod: "daily",
+  //   overtimeRate: "1.5",
 
-  //   // Tab 4: Time Clock
-  //   timeClockPayRate: editingUser?.timeClockPayRate || "",
-  //   overtimeMethod: editingUser?.overtimeMethod || "daily",
-  //   overtimeRate: editingUser?.overtimeRate || "1.5",
-
-  //   // Tab 5: User Settings
   //   startupScreen: "Dashboard",
   //   defaultPerioScreen: "Standard",
   //   defaultNavigationSearch: "Patient",
   //   defaultSearchBy: "lastName",
+  //   defaultReferralView: "All",
+
   //   showProductionView: true,
   //   hideProviderTime: false,
   //   printLabelsForAppointments: false,
   //   promptForEntryDate: false,
   //   includeInactivePatientsInSearch: false,
-  //   defaultReferralView: "All",
+  //   hipaaCompliantScheduler: false,
   //   isOrthoAssistant: false,
   // });
-  const [formData, setFormData] = useState(() => ({
-    username: editingUser?.username ?? "",
-    password: "", // never prefill password
-    firstName: editingUser?.first_name ?? "",
-    lastName: editingUser?.last_name ?? "",
-    email: editingUser?.email ?? "",
-    phone: editingUser?.phone ?? "",
 
-    active: editingUser?.is_active ?? true,
+  const [formData, setFormData] = useState({
+    // Identity
+    username: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
 
-    homeOffice: editingUser?.home_office_id
-      ? String(editingUser.home_office_id)
-      : "",
+    // Status
+    active: true,
 
-    assignedOffices: editingUser?.assigned_offices
-      ? editingUser.assigned_offices.map(String)
-      : [],
+    // Office Access
+    homeOffice: "",
+    assignedOffices: [] as string[],
 
-    assignedGroups: editingUser?.security_groups ?? [],
-    roles: editingUser?.roles ?? [],
+    // Security
+    roles: [] as string[],
+    securityGroups: [] as string[],
 
-    permittedIPs: editingUser?.permitted_ips ?? [],
+    // Network
+    permittedIPs: [] as string[],
 
-    timeClockPayRate:
-      editingUser?.time_clock?.pay_rate?.toString() ?? "",
+    // Patient access
+    patientAccessLevel: "all", // all | assigned
 
-    overtimeMethod:
-      editingUser?.time_clock?.overtime_method ?? "daily",
+    // Login restrictions
+    use24x7Access: true,
+    allowedDays: {
+      Mon: true,
+      Tue: true,
+      Wed: true,
+      Thu: true,
+      Fri: true,
+      Sat: false,
+      Sun: false,
+    },
+    allowedFrom: "08:00",
+    allowedUntil: "18:00",
 
-    overtimeRate:
-      editingUser?.time_clock?.overtime_rate?.toString() ?? "1.5",
-  }));
+    // Time clock
+    timeClockPayRate: "",
+    overtimeMethod: "daily",
+    overtimeRate: "1.5",
+
+    // Preferences
+    startupScreen: "Dashboard",
+    defaultPerioScreen: "Standard",
+    defaultNavigationSearch: "Patient",
+    defaultSearchBy: "lastName",
+    defaultReferralView: "All",
+
+    showProductionView: true,
+    hideProviderTime: false,
+    printLabelsForAppointments: false,
+    promptForEntryDate: false,
+    includeInactivePatientsInSearch: false,
+    hipaaCompliantScheduler: false,
+    isOrthoAssistant: false,
+  });
+
+
+
+  // useEffect(() => {
+  //   if (!editingUser) return;
+
+  //   setFormData(prev => ({
+  //     ...prev,
+
+  //     username: editingUser.username ?? "",
+  //     firstName: editingUser.first_name ?? "",
+  //     lastName: editingUser.last_name ?? "",
+  //     email: editingUser.email ?? "",
+  //     phone: editingUser.phone ?? "",
+
+  //     active: editingUser.is_active,
+
+  //     homeOffice: editingUser.home_office_id?.toString() ?? "",
+  //     assignedOffices: editingUser.assigned_offices?.map(String) ?? [],
+
+  //     roles: editingUser.roles ?? [],
+  //     assignedGroups: editingUser.security_groups ?? [],
+
+  //     permittedIPs: editingUser.permitted_ips ?? [],
+
+  //     timeClockPayRate: editingUser.time_clock?.pay_rate?.toString() ?? "",
+  //     overtimeMethod: editingUser.time_clock?.overtime_method ?? "daily",
+  //     overtimeRate: editingUser.time_clock?.overtime_rate?.toString() ?? "1.5",
+  //   }));
+  // }, [editingUser]);
+
+  
+  // const [formData, setFormData] = useState(() => ({
+  //   // Identity
+  //   username: editingUser?.username ?? "",
+  //   password: "",
+  //   firstName: editingUser?.first_name ?? "",
+  //   lastName: editingUser?.last_name ?? "",
+  //   email: editingUser?.email ?? "",
+  //   phone: editingUser?.phone ?? "",
+
+  //   // Status
+  //   active: editingUser?.is_active ?? true,
+
+  //   // Offices (IDs, not names)
+  //   homeOffice: editingUser?.home_office_id?.toString() ?? "",
+  //   assignedOffices: editingUser?.assigned_offices?.map(String) ?? [],
+
+  //   // Security
+  //   roles: editingUser?.roles ?? [],
+  //   assignedGroups: editingUser?.security_groups ?? [],
+
+  //   // Network
+  //   permittedIPs: editingUser?.permitted_ips ?? [],
+
+  //   // Patient access
+  //   patientAccessLevel: "all",
+
+  //   // Login restrictions
+  //   use24x7Access: true,
+  //   allowedDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+  //   allowedFrom: "08:00",
+  //   allowedUntil: "18:00",
+
+  //   // Time clock
+  //   timeClockPayRate: editingUser?.time_clock?.pay_rate?.toString() ?? "",
+  //   overtimeMethod: editingUser?.time_clock?.overtime_method ?? "daily",
+  //   overtimeRate: editingUser?.time_clock?.overtime_rate?.toString() ?? "1.5",
+
+  //   // Preferences
+  //   startupScreen: "Dashboard",
+  //   defaultPerioScreen: "Standard",
+  //   defaultNavigationSearch: "Patient",
+  //   defaultSearchBy: "lastName",
+  //   defaultReferralView: "All",
+
+  //   showProductionView: true,
+  //   hideProviderTime: false,
+  //   printLabelsForAppointments: false,
+  //   promptForEntryDate: false,
+  //   includeInactivePatientsInSearch: false,
+  //   hipaaCompliantScheduler: false,
+  //   isOrthoAssistant: false,
+  // }));
+
+  useEffect(() => {
+    if (!editingUser) return;
+
+    setFormData(prev => ({
+      ...prev,
+
+      username: editingUser.username ?? "",
+      firstName: editingUser.first_name ?? "",
+      lastName: editingUser.last_name ?? "",
+      email: editingUser.email ?? "",
+      phone: editingUser.phone ?? "",
+
+      active: editingUser.is_active,
+
+      homeOffice: editingUser.home_office_id?.toString() ?? "",
+      assignedOffices: editingUser.assigned_offices?.map(String) ?? [],
+
+      roles: editingUser.roles ?? [],
+      securityGroups: editingUser.security_groups ?? [],
+
+      permittedIPs: editingUser.permitted_ips ?? [],
+
+      timeClockPayRate: editingUser.time_clock?.pay_rate?.toString() ?? "",
+      overtimeMethod: editingUser.time_clock?.overtime_method ?? "daily",
+      overtimeRate: editingUser.time_clock?.overtime_rate?.toString() ?? "1.5",
+    }));
+  }, [editingUser]);
+
   
   const REQUIRED_FIELDS = [
     "username",
@@ -166,65 +331,30 @@ export default function AddEditUserModal({
 
   const [newIP, setNewIP] = useState("");
 
-  // Available options
-  const availableOffices = [
-    "Cranberry Main",
-    "Cranberry North",
-    "Downtown Pittsburgh",
-    "Shadyside",
-    "Oakland",
-  ];
+  const organization = setup?.organization;
 
-  const officeOIDMap: Record<string, string> = {
-    "Cranberry Main": "O-001",
-    "Cranberry North": "O-002",
-    "Downtown Pittsburgh": "O-003",
-    "Shadyside": "O-004",
-    "Oakland": "O-005",
-  };
+  // const availableOffices = setup?.offices ?? [];
+  // const securityGroups = setup?.security_groups ?? [];
+  // const userRoles = setup?.roles ?? [];
 
-  // System PGID (read-only, inherited from organization)
-  const systemPGID = "PG-108";
-  const systemPGIDName = "Cranberry Dental Arts Corporation";
+  const availableOffices = setup?.offices ?? [];
 
-  const securityGroups = [
-    "Administrators",
-    "Assistant",
-    "Billing",
-    "Clerical",
-    "Clinical",
-    "Doctor",
-    "Front Desk",
-    "Office Manager",
-    "Time Clock Only",
-    "Insurance Department",
-    "Call Center",
-  ];
+  const securityGroups =
+    setup?.security_groups?.map(g => g.code) ?? [];
 
-  const userRoles = [
-    "Office Manager",
-    "Front Desk",
-    "Dental Assistant",
-    "Hygienist",
-    "Dentist",
-    "Billing",
-    "Clinical",
-    "Administrator",
-  ];
+  const availableGroups = securityGroups;
 
-  const availableGroups = [
-    "Administrators",
-    "Assistant",
-    "Billing",
-    "Clerical",
-    "Clinical",
-    "Doctor",
-    "Front Desk",
-    "Office Manager",
-    "Time Clock Only",
-    "Insurance Department",
-    "Call Center",
-  ];
+  const userRoles =
+    setup?.roles?.map(r => r.code) ?? [];
+
+
+  const patientAccessLevels = setup?.patient_access_levels ?? [];
+
+  const overtimeMethods = setup?.time_clock.overtime_methods ?? [];
+  const overtimeRates = setup?.time_clock.overtime_rates ?? [];
+
+
+
 
   const tabs = [
     { id: 0, label: "Login Info & Office Access", icon: User },
@@ -261,7 +391,58 @@ export default function AddEditUserModal({
       return;
     }
 
-    onSave(formData);
+    // onSave(formData);
+    const handleSave = () => {
+    if (!isFormValid) return;
+
+    const payload = {
+      username: formData.username,
+      password: formData.password || undefined,
+
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+
+      is_active: formData.active,
+
+      home_office_id: Number(formData.homeOffice),
+      assigned_offices: formData.assignedOffices.map(Number),
+
+      roles: formData.roles,
+      security_groups: formData.assignedGroups,
+
+      permitted_ips: formData.permittedIPs,
+
+      time_clock: {
+        pay_rate: formData.timeClockPayRate
+          ? Number(formData.timeClockPayRate)
+          : null,
+        overtime_method: formData.overtimeMethod,
+        overtime_rate: Number(formData.overtimeRate),
+      },
+
+      preferences: {
+        startup_screen: formData.startupScreen,
+        default_perio_screen: formData.defaultPerioScreen,
+        default_navigation_search: formData.defaultNavigationSearch,
+        default_search_by: formData.defaultSearchBy,
+        default_referral_view: formData.defaultReferralView,
+
+        show_production_view: formData.showProductionView,
+        hide_provider_time: formData.hideProviderTime,
+        print_labels: formData.printLabelsForAppointments,
+        prompt_entry_date: formData.promptForEntryDate,
+        include_inactive_patients: formData.includeInactivePatientsInSearch,
+        hipaa_compliant_scheduler: formData.hipaaCompliantScheduler,
+        is_ortho_assistant: formData.isOrthoAssistant,
+      },
+    };
+
+    onSave(payload);
+  };
+
+
   };
 
   // Office Assignment Handlers
@@ -281,12 +462,22 @@ export default function AddEditUserModal({
     });
   };
 
+  // const moveAllOfficesToAssigned = () => {
+  //   setFormData({
+  //     ...formData,
+  //     assignedOffices: [...availableOffices],
+  //   });
+  // };
+
   const moveAllOfficesToAssigned = () => {
     setFormData({
       ...formData,
-      assignedOffices: [...availableOffices],
+      assignedOffices: availableOffices.map(o =>
+        String(o.office_id)
+      ),
     });
   };
+
 
   const removeAllOfficesFromAssigned = () => {
     setFormData({
@@ -296,11 +487,26 @@ export default function AddEditUserModal({
   };
 
   // Group Membership Handlers
+  // const addGroup = (group: string) => {
+  //   if (!formData.assignedGroups.includes(group)) {
+  //     setFormData({
+  //       ...formData,
+  //       assignedGroups: [...formData.assignedGroups, group],
+  //     });
+  //   }
+  // };
+
+  // const removeGroup = (group: string) => {
+  //   setFormData({
+  //     ...formData,
+  //     assignedGroups: formData.assignedGroups.filter((g) => g !== group),
+  //   });
+  // };
   const addGroup = (group: string) => {
-    if (!formData.assignedGroups.includes(group)) {
+    if (!formData.securityGroups.includes(group)) {
       setFormData({
         ...formData,
-        assignedGroups: [...formData.assignedGroups, group],
+        securityGroups: [...formData.securityGroups, group],
       });
     }
   };
@@ -308,9 +514,11 @@ export default function AddEditUserModal({
   const removeGroup = (group: string) => {
     setFormData({
       ...formData,
-      assignedGroups: formData.assignedGroups.filter((g) => g !== group),
+      securityGroups: formData.securityGroups.filter(g => g !== group),
     });
   };
+
+
 
   // IP Address Handlers
   const addIP = () => {
@@ -396,10 +604,11 @@ export default function AddEditUserModal({
                         PRACTICE GROUP ID (PGID)
                       </label>
                       <p className="font-bold text-[#1E293B] mb-1">
-                        {systemPGID} - {systemPGIDName}
+                        {/* {systemPGID} - {systemPGIDName} */}
+                        {organization?.pgid} - {organization?.pgid_name}
                       </p>
                       <p className="text-sm text-[#64748B]">
-                        This user will inherit data access permissions based on PGID {systemPGID}. 
+                        This user will inherit data access permissions based on PGID {organization?.pgid}. 
                         All users in this practice group share the same organizational boundary.
                       </p>
                     </div>
@@ -597,7 +806,7 @@ export default function AddEditUserModal({
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                       User Role / Type <span className="text-[#EF4444]">*</span>
                     </label>
-                    <select
+                    {/* <select
                       value={formData.userRole}
                       onChange={(e) =>
                         setFormData({ ...formData, userRole: e.target.value })
@@ -609,7 +818,19 @@ export default function AddEditUserModal({
                           {role}
                         </option>
                       ))}
-                    </select>
+                    </select> */}
+                    <select
+                      value={formData.roles[0] ?? ""}
+                      onChange={e =>
+                        setFormData({ ...formData, roles: [e.target.value] })
+                      }
+                    >
+                      {userRoles.map(role => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>                  
                   </div>
                 </div>
               </div>
@@ -792,7 +1013,7 @@ export default function AddEditUserModal({
                       Available Offices
                     </label>
                     <div className="border-2 border-[#E2E8F0] rounded-lg p-3 min-h-[200px] bg-[#F7F9FC]">
-                      {availableOffices
+                      {/* {availableOffices
                         .filter(
                           (office) => !formData.assignedOffices.includes(office)
                         )
@@ -807,6 +1028,22 @@ export default function AddEditUserModal({
                               OID: {officeOIDMap[office]}
                             </div>
                           </div>
+                        ))} */}
+                        {availableOffices
+                          .filter(o => !formData.assignedOffices.includes(String(o.office_id)))
+                          .map(o => (
+                            <div
+                              key={o.office_id}
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  assignedOffices: [...formData.assignedOffices, String(o.office_id)]
+                                })
+                              }
+                            >
+                              <div>{o.office_name}</div>
+                              <div className="text-xs">OID: {o.office_oid}</div>
+                            </div>
                         ))}
                     </div>
                   </div>
@@ -864,7 +1101,7 @@ export default function AddEditUserModal({
                   <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                     Home Office (OID) <span className="text-[#EF4444]">*</span>
                   </label>
-                  <select
+                  {/* <select
                     value={formData.homeOffice}
                     onChange={(e) =>
                       setFormData({ ...formData, homeOffice: e.target.value })
@@ -876,9 +1113,23 @@ export default function AddEditUserModal({
                         {office} (OID: {officeOIDMap[office]})
                       </option>
                     ))}
+                  </select> */}
+                  <select
+                    value={formData.homeOffice}
+                    onChange={(e) =>
+                      setFormData({ ...formData, homeOffice: e.target.value })
+                    }
+                  >
+                    {availableOffices
+                      .filter(o => formData.assignedOffices.includes(String(o.office_id)))
+                      .map(o => (
+                        <option key={o.office_id} value={o.office_id}>
+                          {o.office_name} (OID: {o.office_oid})
+                        </option>
+                      ))}
                   </select>
                   <p className="text-sm text-[#64748B] mt-1">
-                    Default office on login • Home OID: {officeOIDMap[formData.homeOffice] || "Not set"}
+                    Default office on login • Home OID: {formData.homeOffice || "Not set"}
                   </p>
                 </div>
               </div>
