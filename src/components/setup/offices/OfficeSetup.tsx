@@ -1,6 +1,10 @@
 import { useState, useMemo } from "react";
 import { Building2, Search, Plus, Save, X } from "lucide-react";
-import { mockOffices, getNextOfficeId, type Office } from "../../../data/officeData";
+import {
+  mockOffices,
+  getNextOfficeId,
+  type Office,
+} from "../../../data/officeData";
 
 // Import tab components
 import InfoTab from "./tabs/InfoTab";
@@ -35,9 +39,12 @@ const tabs: { id: TabName; label: string }[] = [
 
 export default function OfficeSetup() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOffice, setSelectedOffice] = useState<Office | null>(null);
+  const [selectedOffice, setSelectedOffice] =
+    useState<Office | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>("info");
-  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [mode, setMode] = useState<"view" | "add" | "edit">(
+    "view",
+  );
   const [showOfficeList, setShowOfficeList] = useState(true);
   const [formData, setFormData] = useState<Partial<Office>>({});
 
@@ -52,7 +59,9 @@ export default function OfficeSetup() {
       );
     });
 
-    filtered.sort((a, b) => a.officeName.localeCompare(b.officeName));
+    filtered.sort((a, b) =>
+      a.officeName.localeCompare(b.officeName),
+    );
     return filtered;
   }, [searchQuery]);
 
@@ -101,13 +110,55 @@ export default function OfficeSetup() {
       acceptedCards: ["Visa", "Mastercard"],
       operatories: [],
       schedule: {
-        monday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        tuesday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        wednesday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        thursday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        friday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
-        saturday: { start: "", end: "", lunchStart: "", lunchEnd: "", closed: true },
-        sunday: { start: "", end: "", lunchStart: "", lunchEnd: "", closed: true },
+        monday: {
+          start: "08:00",
+          end: "17:00",
+          lunchStart: "12:00",
+          lunchEnd: "13:00",
+          closed: false,
+        },
+        tuesday: {
+          start: "08:00",
+          end: "17:00",
+          lunchStart: "12:00",
+          lunchEnd: "13:00",
+          closed: false,
+        },
+        wednesday: {
+          start: "08:00",
+          end: "17:00",
+          lunchStart: "12:00",
+          lunchEnd: "13:00",
+          closed: false,
+        },
+        thursday: {
+          start: "08:00",
+          end: "17:00",
+          lunchStart: "12:00",
+          lunchEnd: "13:00",
+          closed: false,
+        },
+        friday: {
+          start: "08:00",
+          end: "17:00",
+          lunchStart: "12:00",
+          lunchEnd: "13:00",
+          closed: false,
+        },
+        saturday: {
+          start: "",
+          end: "",
+          lunchStart: "",
+          lunchEnd: "",
+          closed: true,
+        },
+        sunday: {
+          start: "",
+          end: "",
+          lunchStart: "",
+          lunchEnd: "",
+          closed: true,
+        },
       },
       holidays: [],
       advanced: {
@@ -134,18 +185,49 @@ export default function OfficeSetup() {
       smartAssist: {
         enabled: false,
         items: {
-          payment: { enabled: false, frequency: "Every Visit", includeBal: false },
+          payment: {
+            enabled: false,
+            frequency: "Every Visit",
+            includeBal: false,
+          },
           email: { enabled: false, frequency: "Every Year" },
-          cellPhone: { enabled: false, frequency: "Every Year" },
-          eligibility: { enabled: false, frequency: "Every Visit" },
-          medicalHistory: { enabled: false, frequency: "Every Year" },
+          cellPhone: {
+            enabled: false,
+            frequency: "Every Year",
+          },
+          eligibility: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
+          medicalHistory: {
+            enabled: false,
+            frequency: "Every Year",
+          },
           hipaa: { enabled: false, frequency: "Every Year" },
-          consentForm1: { enabled: false, frequency: "Every Visit" },
-          consentForm2: { enabled: false, frequency: "Every Visit" },
-          consentForm3: { enabled: false, frequency: "Every Visit" },
-          consentForm4: { enabled: false, frequency: "Every Visit" },
-          progressNotes: { enabled: false, frequency: "Every Visit" },
-          ledgerPosting: { enabled: false, frequency: "Every Visit" },
+          consentForm1: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
+          consentForm2: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
+          consentForm3: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
+          consentForm4: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
+          progressNotes: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
+          ledgerPosting: {
+            enabled: false,
+            frequency: "Every Visit",
+          },
         },
       },
       isActive: true,
@@ -174,7 +256,9 @@ export default function OfficeSetup() {
     }
 
     console.log("Saving office:", formData);
-    alert(`Office ${mode === "add" ? "created" : "updated"} successfully!`);
+    alert(
+      `Office ${mode === "add" ? "created" : "updated"} successfully!`,
+    );
     setShowOfficeList(true);
     setMode("view");
   };
@@ -206,7 +290,9 @@ export default function OfficeSetup() {
                     <Building2 className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-[#1F3A5F]">Office Setup</h1>
+                    <h1 className="text-xl font-bold text-[#1F3A5F]">
+                      Office Setup
+                    </h1>
                     <p className="text-xs text-[#64748B] font-bold">
                       Manage office locations and configurations
                     </p>
@@ -228,7 +314,9 @@ export default function OfficeSetup() {
                   type="text"
                   placeholder="Search offices..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) =>
+                    setSearchQuery(e.target.value)
+                  }
                   className="w-full pl-10 pr-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                 />
               </div>
@@ -264,21 +352,42 @@ export default function OfficeSetup() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
                       Status
                     </th>
+
+                    {/* 🔐 AUDIT COLUMNS */}
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Created By
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Created On
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Updated By
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Updated On
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E8F0]">
                   {filteredOffices.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center">
+                      <td
+                        colSpan={10}
+                        className="px-4 py-8 text-center"
+                      >
                         <Building2 className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
-                        <p className="text-[#64748B] font-bold text-sm">No offices found</p>
+                        <p className="text-[#64748B] font-bold text-sm">
+                          No offices found
+                        </p>
                       </td>
                     </tr>
                   ) : (
                     filteredOffices.map((office) => (
                       <tr
                         key={office.id}
-                        onClick={() => handleSelectOffice(office)}
+                        onClick={() =>
+                          handleSelectOffice(office)
+                        }
                         className="hover:bg-[#F7F9FC] cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3 text-sm font-bold text-[#1E293B]">
@@ -308,6 +417,25 @@ export default function OfficeSetup() {
                               Inactive
                             </span>
                           )}
+                        </td>
+                        {/* Created By */}
+                        <td className="px-4 py-3 text-sm text-[#1E293B]">
+                          {office.createdBy || "System"}
+                        </td>
+
+                        {/* Created On */}
+                        <td className="px-4 py-3 text-xs text-[#64748B]">
+                          {office.createdAt || "—"}
+                        </td>
+
+                        {/* Updated By */}
+                        <td className="px-4 py-3 text-sm text-[#1E293B]">
+                          {office.updatedBy || "—"}
+                        </td>
+
+                        {/* Updated On */}
+                        <td className="px-4 py-3 text-xs text-[#64748B]">
+                          {office.updatedAt || "—"}
                         </td>
                       </tr>
                     ))
@@ -365,7 +493,7 @@ export default function OfficeSetup() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 font-bold text-xs whitespace-nowrap rounded-t-lg transition-all ${
+                    className={`px-4 py-2 font-semibold text-sm whitespace-nowrap rounded-t-lg transition-all ${
                       activeTab === tab.id
                         ? "bg-white text-[#3A6EA5] border-t-4 border-[#3A6EA5]"
                         : "text-[#64748B] hover:text-[#1F3A5F] hover:bg-[#E8EFF7]"
@@ -380,28 +508,53 @@ export default function OfficeSetup() {
             {/* Tab Content */}
             <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto scrollbar-visible">
               {activeTab === "info" && (
-                <InfoTab formData={formData} updateFormData={updateFormData} mode={mode} />
+                <InfoTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  mode={mode}
+                />
               )}
               {activeTab === "statement" && (
-                <StatementTab formData={formData} updateFormData={updateFormData} />
+                <StatementTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "integration" && (
-                <IntegrationTab formData={formData} updateFormData={updateFormData} />
+                <IntegrationTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "operatories" && (
-                <OperatoriesTab formData={formData} updateFormData={updateFormData} />
+                <OperatoriesTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "schedule" && (
-                <ScheduleTab formData={formData} updateFormData={updateFormData} />
+                <ScheduleTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "holidays" && (
-                <HolidaysTab formData={formData} updateFormData={updateFormData} />
+                <HolidaysTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "advanced" && (
-                <AdvancedTab formData={formData} updateFormData={updateFormData} />
+                <AdvancedTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "smartassist" && (
-                <SmartAssistTab formData={formData} updateFormData={updateFormData} />
+                <SmartAssistTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, MapPin, Phone, Mail, DollarSign, Clock, Plus, X } from "lucide-react";
+import { Building2, MapPin, Phone, Mail, DollarSign, Clock, Plus, X, Info } from "lucide-react";
 import { type Office } from "../../../../data/officeData";
 
 interface InfoTabProps {
@@ -696,6 +696,99 @@ export default function InfoTab({ formData, updateFormData, mode = "view" }: Inf
           </div>
         </div>
       </div>
+
+      {/* 🔐 Audit Information Section */}
+      {mode === "view" && formData.createdBy && (
+        <div className="bg-[#F8FAFC] border-2 border-[#E2E8F0] rounded-lg p-4">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-3 pb-2 border-b-2 border-[#E2E8F0]">
+            <Info className="w-4 h-4 text-[#3A6EA5]" />
+            Audit Information
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Created By */}
+            <div>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
+                CREATED BY
+              </label>
+              <p className="text-sm text-[#1E293B] font-medium">
+                {formData.createdBy || "System"}
+              </p>
+            </div>
+
+            {/* Created Date */}
+            <div>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
+                CREATED ON
+              </label>
+              <p className="text-sm text-[#1E293B] font-medium">
+                {formData.createdDate
+                  ? new Date(formData.createdDate).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
+                  : "—"}
+              </p>
+            </div>
+
+            {/* Last Modified By */}
+            <div>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
+                LAST UPDATED BY
+              </label>
+              <p className="text-sm text-[#1E293B] font-medium">
+                {formData.modifiedBy || "—"}
+              </p>
+            </div>
+
+            {/* Last Modified Date */}
+            <div>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
+                LAST UPDATED ON
+              </label>
+              <p className="text-sm text-[#1E293B] font-medium">
+                {formData.modifiedDate
+                  ? new Date(formData.modifiedDate).toLocaleString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
+                  : "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#64748B] uppercase">
+                  OFFICE STATUS:
+                </span>
+                <span
+                  className={`px-2 py-0.5 text-xs font-bold rounded ${
+                    formData.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {formData.isActive ? "ACTIVE" : "INACTIVE"}
+                </span>
+              </div>
+              <div className="text-xs text-[#64748B]">
+                Office ID: <span className="font-bold text-[#1E293B]">{formData.officeId}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
