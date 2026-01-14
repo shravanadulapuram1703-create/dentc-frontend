@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -493,6 +493,23 @@ export default function Scheduler({
     },
   ];
 
+  // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date
+  const appointmentsByOperatory = useMemo(() => {
+    const currentDate = formatDateYYYYMMDD(selectedDate);
+    const map = new Map<string, Appointment[]>();
+
+    appointments
+      .filter((appt) => appt.date === currentDate)
+      .forEach((appt) => {
+        if (!map.has(appt.operatory)) {
+          map.set(appt.operatory, []);
+        }
+        map.get(appt.operatory)!.push(appt);
+      });
+
+    return map;
+  }, [appointments, selectedDate]);
+
   // Generate time slots (8:00 AM to 5:00 PM in 10-minute increments)
   const generateTimeSlots = () => {
     const slots = [];
@@ -530,22 +547,15 @@ export default function Scheduler({
     return start1Min < end2Min && end1Min > start2Min;
   };
 
-  // Check if a specific slot is blocked by any appointment
+  // ✅ OPTIMIZED: Use precomputed map instead of filtering
   const isSlotBlocked = (
     slotTime: string,
     operatoryId: string,
-    date: string,
   ): boolean => {
-    // Calculate slot end time (10 minutes after start)
     const slotEndTime = calculateEndTime(slotTime, 10);
+    const operatoryAppointments =
+      appointmentsByOperatory.get(operatoryId) || [];
 
-    // Get all appointments for this operatory on this date
-    const operatoryAppointments = appointments.filter(
-      (appt) =>
-        appt.operatory === operatoryId && appt.date === date,
-    );
-
-    // Check if any appointment overlaps with this slot
     return operatoryAppointments.some((appt) =>
       timeRangesOverlap(
         slotTime,
@@ -556,18 +566,14 @@ export default function Scheduler({
     );
   };
 
-  // Get the appointment that occupies a specific slot (if any)
+  // ✅ OPTIMIZED: Use precomputed map
   const getSlotOccupyingAppointment = (
     slotTime: string,
     operatoryId: string,
-    date: string,
   ): Appointment | null => {
     const slotEndTime = calculateEndTime(slotTime, 10);
-
-    const operatoryAppointments = appointments.filter(
-      (appt) =>
-        appt.operatory === operatoryId && appt.date === date,
-    );
+    const operatoryAppointments =
+      appointmentsByOperatory.get(operatoryId) || [];
 
     return (
       operatoryAppointments.find((appt) =>
@@ -756,7 +762,10 @@ export default function Scheduler({
 
   // Debug: Log when selectedDate changes
   useEffect(() => {
-    console.log("Scheduler date changed:", formatDateYYYYMMDD(selectedDate));
+    console.log(
+      "Scheduler date changed:",
+      formatDateYYYYMMDD(selectedDate),
+    );
   }, [selectedDate]);
 
   // Format date for display
@@ -986,6 +995,13 @@ export default function Scheduler({
     });
   };
 
+  // ✅ CRITICAL FIX: Calculate dynamic min-width based on operatory count
+  const TIME_COLUMN_WIDTH = 80;
+  const OPERATORY_COLUMN_WIDTH = 250;
+  const schedulerMinWidth =
+    TIME_COLUMN_WIDTH +
+    operatories.length * OPERATORY_COLUMN_WIDTH;
+
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
       <GlobalNav
@@ -994,217 +1010,224 @@ export default function Scheduler({
         setCurrentOffice={setCurrentOffice}
       />
 
-      {/* Scheduler Header */}
-      <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-0 z-10">
-        {/* Slate Blue Header Bar */}
-        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <Calendar
-                className="w-7 h-7 text-white"
-                strokeWidth={2}
-              />
+      {/* Scheduler Content with top padding */}
+      <div className="pt-[120px]">
+        {/* Scheduler Header */}
+        <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-[120px] z-10">
+          {/* Slate Blue Header Bar */}
+          <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Calendar
+                  className="w-7 h-7 text-white"
+                  strokeWidth={2}
+                />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Scheduler
+                </h1>
+                <p className="text-sm text-white/80">
+                  Office: {currentOffice}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                Scheduler
-              </h1>
-              <p className="text-sm text-white/80">
-                Office: {currentOffice}
-              </p>
+
+            {/* ✅ FIX: Center Date Navigation with overflow control */}
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-[50vw]">
+              {/* Date Picker Button */}
+              <button
+                ref={calendarBtnRef}
+                onClick={() =>
+                  setShowCalendarPicker(!showCalendarPicker)
+                }
+                className="px-3 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors flex items-center gap-2 text-white text-sm font-medium flex-shrink-0"
+                aria-label="Select date"
+              >
+                <Calendar className="w-4 h-4" strokeWidth={2} />
+                {selectedDate.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </button>
+
+              {/* Day Navigation */}
+              <button
+                onClick={() => changeDate(-1)}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                aria-label="Previous day"
+              >
+                <ChevronLeft
+                  className="w-3.5 h-3.5"
+                  strokeWidth={2}
+                />
+                Prev Day
+              </button>
+              <button
+                onClick={() => changeDate(1)}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                aria-label="Next day"
+              >
+                Next Day
+                <ChevronRight
+                  className="w-3.5 h-3.5"
+                  strokeWidth={2}
+                />
+              </button>
+
+              {/* Month Navigation */}
+              <button
+                onClick={() => changeDate(-30)}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                aria-label="Previous month"
+              >
+                <ChevronLeft
+                  className="w-3.5 h-3.5"
+                  strokeWidth={2}
+                />
+                Prev Month
+              </button>
+              <button
+                onClick={() => changeDate(30)}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                aria-label="Next month"
+              >
+                Next Month
+                <ChevronRight
+                  className="w-3.5 h-3.5"
+                  strokeWidth={2}
+                />
+              </button>
             </div>
-          </div>
 
-          {/* Center: Date Navigation */}
-          <div className="flex items-center gap-2">
-            {/* Date Picker Button */}
-            <button
-              ref={calendarBtnRef}
-              onClick={() =>
-                setShowCalendarPicker(!showCalendarPicker)
-              }
-              className="px-3 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors flex items-center gap-2 text-white text-sm font-medium"
-            >
-              <Calendar className="w-4 h-4" strokeWidth={2} />
-              {selectedDate.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </button>
-
-            {/* Day Navigation */}
-            <button
-              onClick={() => changeDate(-1)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1"
-            >
-              <ChevronLeft
-                className="w-3.5 h-3.5"
-                strokeWidth={2}
-              />
-              Prev Day
-            </button>
-            <button
-              onClick={() => changeDate(1)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1"
-            >
-              Next Day
-              <ChevronRight
-                className="w-3.5 h-3.5"
-                strokeWidth={2}
-              />
-            </button>
-
-            {/* Week Navigation */}
-            <button
-              onClick={() => changeDate(-7)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
-            >
-              <ChevronLeft
-                className="w-3.5 h-3.5"
-                strokeWidth={2}
-              />
-              Prev Week
-            </button>
-            <button
-              onClick={() => changeDate(7)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
-            >
-              Nxt Week
-              <ChevronRight
-                className="w-3.5 h-3.5"
-                strokeWidth={2}
-              />
-            </button>
-
-            {/* Month Navigation */}
-            <button
-              onClick={() => changeDate(-30)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
-            >
-              -1 Month
-            </button>
-            <button
-              onClick={() => changeDate(30)}
-              className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
-            >
-              +1 Month
-            </button>
-          </div>
-
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleAddNewAppointment()}
-              className="px-3 py-1.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm"
-            >
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
-              NEW APPOINTMENT
-            </button>
-            <button className="px-3 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm">
-              <Search className="w-4 h-4" strokeWidth={2.5} />
-              QUICK FILL
-            </button>
-            <button className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm">
-              <Printer className="w-4 h-4" strokeWidth={2.5} />
-              PRINT
-            </button>
+            {/* ✅ FIX: Right Action Buttons with overflow control */}
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-[30vw] flex-shrink-0">
+              <button
+                onClick={() => handleAddNewAppointment()}
+                className="px-3 py-1.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+                aria-label="Add new appointment"
+              >
+                <Plus className="w-4 h-4" strokeWidth={2.5} />
+                NEW APPOINTMENT
+              </button>
+              <button
+                className="px-3 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+                aria-label="Quick fill appointments"
+              >
+                <Search className="w-4 h-4" strokeWidth={2.5} />
+                QUICK FILL
+              </button>
+              <button
+                className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+                aria-label="Print schedule"
+              >
+                <Printer className="w-4 h-4" strokeWidth={2.5} />
+                PRINT
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Scheduler Grid */}
-      <div
-        className="overflow-auto scheduler-scroll-container"
-        style={{ height: "calc(100vh - 170px)" }}
-      >
-        <div className="inline-block min-w-full">
-          <div className="flex">
-            {/* Time Column */}
-            <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md">
-              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080]"></div>
-              {timeSlots.map((time, index) => (
+        {/* ✅ FIX: Scheduler Grid with Tailwind class and ARIA */}
+        <div
+          className="overflow-auto scheduler-scroll-container h-[calc(100vh-170px)]"
+          role="grid"
+          aria-label="Appointment scheduler"
+          aria-rowcount={timeSlots.length + 1}
+          aria-colcount={operatories.length + 1}
+        >
+          {/* ✅ CRITICAL FIX: Dynamic min-width calculation */}
+          <div
+            className="inline-block"
+            style={{ minWidth: `${schedulerMinWidth}px` }}
+          >
+            <div className="flex">
+              {/* Time Column */}
+              <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md">
+                <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
+                {timeSlots.map((time, index) => (
+                  <div
+                    key={time}
+                    className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
+                    style={{ minWidth: `${TIME_COLUMN_WIDTH}px` }}
+                    role="rowheader"
+                  >
+                    {index % 6 === 0 && time}
+                  </div>
+                ))}
+              </div>
+
+              {/* Operatory Columns */}
+              {operatories.map((operatory, colIndex) => (
                 <div
-                  key={time}
-                  className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                  style={{ minWidth: "80px" }}
+                  key={operatory.id}
+                  className="border-r-2 border-[#E2E8F0]"
+                  style={{
+                    minWidth: `${OPERATORY_COLUMN_WIDTH}px`,
+                  }}
+                  role="gridcell"
+                  aria-colindex={colIndex + 2}
                 >
-                  {index % 6 === 0 && time}
-                </div>
-              ))}
-            </div>
-
-            {/* Operatory Columns */}
-            {operatories.map((operatory) => (
-              <div
-                key={operatory.id}
-                className="border-r-2 border-[#E2E8F0]"
-                style={{ minWidth: "250px" }}
-              >
-                {/* Column Header - Sticky */}
-                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
-                  <div className="text-sm font-bold">
-                    {operatory.name}
+                  {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
+                  <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
+                    <div className="text-sm font-bold">
+                      {operatory.name}
+                    </div>
+                    <div className="text-xs opacity-90">
+                      {operatory.provider}
+                    </div>
                   </div>
-                  <div className="text-xs opacity-90">
-                    {operatory.provider}
-                  </div>
-                </div>
 
-                {/* Time Slots */}
-                <div className="relative bg-white">
-                  {timeSlots.map((time) => {
-                    const currentDate =
-                      formatDateYYYYMMDD(selectedDate);
-                    const slotBlocked = isSlotBlocked(
-                      time,
-                      operatory.id,
-                      currentDate,
-                    );
-                    const occupyingAppt =
-                      getSlotOccupyingAppointment(
+                  {/* Time Slots */}
+                  <div className="relative bg-white">
+                    {timeSlots.map((time, rowIndex) => {
+                      const slotBlocked = isSlotBlocked(
                         time,
                         operatory.id,
-                        currentDate,
                       );
+                      const occupyingAppt =
+                        getSlotOccupyingAppointment(
+                          time,
+                          operatory.id,
+                        );
 
-                    return (
-                      <div
-                        key={`${operatory.id}-${time}`}
-                        className={`h-10 border-b border-slate-200 transition-colors ${
-                          slotBlocked
-                            ? "bg-slate-100 cursor-not-allowed"
-                            : "hover:bg-[#F7F9FC] cursor-pointer"
-                        }`}
-                        onContextMenu={(e) => {
-                          if (!slotBlocked) {
-                            handleEmptySlotRightClick(
-                              e,
-                              time,
-                              operatory.id,
-                            );
-                          } else {
-                            e.preventDefault();
+                      return (
+                        <div
+                          key={`${operatory.id}-${time}`}
+                          className={`h-10 border-b border-slate-200 transition-colors ${
+                            slotBlocked
+                              ? "bg-slate-100 cursor-not-allowed"
+                              : "hover:bg-[#F7F9FC] cursor-pointer"
+                          }`}
+                          onContextMenu={(e) => {
+                            if (!slotBlocked) {
+                              handleEmptySlotRightClick(
+                                e,
+                                time,
+                                operatory.id,
+                              );
+                            } else {
+                              e.preventDefault();
+                            }
+                          }}
+                          title={
+                            slotBlocked && occupyingAppt
+                              ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
+                              : ""
                           }
-                        }}
-                        title={
-                          slotBlocked && occupyingAppt
-                            ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
-                            : ""
-                        }
-                      ></div>
-                    );
-                  })}
+                          role="gridcell"
+                          aria-rowindex={rowIndex + 2}
+                          aria-colindex={colIndex + 2}
+                        ></div>
+                      );
+                    })}
 
-                  {/* Appointments */}
-                  {appointments
-                    .filter(
-                      (appt) =>
-                        appt.operatory === operatory.id &&
-                        appt.date ===
-                          formatDateYYYYMMDD(selectedDate),
-                    )
-                    .map((appointment) => {
+                    {/* ✅ OPTIMIZED: Appointments from precomputed map */}
+                    {(
+                      appointmentsByOperatory.get(operatory.id) ||
+                      []
+                    ).map((appointment) => {
                       const { top, height } =
                         getAppointmentPosition(appointment);
                       return (
@@ -1221,6 +1244,9 @@ export default function Scheduler({
                               appointment,
                             )
                           }
+                          role="button"
+                          aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
+                          tabIndex={0}
                         >
                           <div className="text-xs truncate">
                             <strong>
@@ -1239,243 +1265,319 @@ export default function Scheduler({
                         </div>
                       );
                     })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Context Menu */}
-      {contextMenu.visible && (
-        <div
-          ref={contextMenuRef}
-          className="fixed bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 py-1 max-h-[500px]"
-          style={{
-            left: `${contextMenu.x}px`,
-            top: `${contextMenu.y}px`,
-            minWidth: "220px",
-          }}
-        >
-          {contextMenu.type === "empty" ? (
-            <>
-              <button
-                onClick={() =>
-                  handleAddNewAppointment(
-                    contextMenu.timeSlot,
-                    contextMenu.operatory,
-                  )
-                }
-                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
-              >
-                Add New Appointment
-              </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
-                Search Quick-Fill
-              </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm">
-                Paste
-              </button>
-            </>
-          ) : contextMenu.appointment ? (
-            <>
-              <button
-                onClick={() =>
-                  handleEditAppointment(
-                    contextMenu.appointment!,
-                  )
-                }
-                className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
-              >
-                Edit
-              </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
-                Cut
-              </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
-                Copy
-              </button>
-              <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]">
-                Reschedule
-              </button>
-              <button
-                onClick={() =>
-                  handleDeleteAppointment(
-                    contextMenu.appointment!,
-                  )
-                }
-                className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
-              >
-                Delete
-              </button>
-
-              {/* Go To Submenu */}
-              <div className="relative group">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between">
-                  Go To
-                  <span>›</span>
-                </button>
-                <div
-                  className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                  style={{ minWidth: "180px" }}
+        {/* Context Menu */}
+        {contextMenu.visible && (
+          <div
+            ref={contextMenuRef}
+            className="fixed bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 py-1 max-h-[500px]"
+            style={{
+              left: `${contextMenu.x}px`,
+              top: `${contextMenu.y}px`,
+              minWidth: "220px",
+            }}
+            role="menu"
+            aria-label="Appointment context menu"
+          >
+            {contextMenu.type === "empty" ? (
+              <>
+                <button
+                  onClick={() =>
+                    handleAddNewAppointment(
+                      contextMenu.timeSlot,
+                      contextMenu.operatory,
+                    )
+                  }
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
                 >
-                  <button
-                    onClick={() =>
-                      handleGoToPatient(
-                        "overview",
-                        contextMenu.appointment!,
-                      )
-                    }
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                  >
-                    Patient Overview
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Treatment Plans
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleGoToPatient(
-                        "transactions",
-                        contextMenu.appointment!,
-                      )
-                    }
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                  >
-                    Transactions
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleGoToPatient(
-                        "ledger",
-                        contextMenu.appointment!,
-                      )
-                    }
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                  >
-                    Ledger
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Progress Notes
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Notes
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Email
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Text Message
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleGoToPatient(
-                        "charting",
-                        contextMenu.appointment!,
-                      )
-                    }
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                  >
-                    Restorative Chart
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Perio Chart
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Imaging System
-                  </button>
-                </div>
-              </div>
-
-              {/* Set Status Submenu */}
-              <div className="relative group">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between">
-                  Set Status
-                  <span>›</span>
+                  Add New Appointment
                 </button>
-                <div
-                  className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                  style={{ minWidth: "180px" }}
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
                 >
-                  {[
-                    "Scheduled",
-                    "Confirmed",
-                    "Unconfirmed",
-                    "Left Message",
-                    "In Reception",
-                    "Available",
-                    "In Operatory",
-                    "Checked Out",
-                    "Missed",
-                    "Cancelled",
-                  ].map((status) => (
+                  Search Quick-Fill
+                </button>
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
+                  role="menuitem"
+                >
+                  Paste
+                </button>
+              </>
+            ) : contextMenu.appointment ? (
+              <>
+                <button
+                  onClick={() =>
+                    handleEditAppointment(
+                      contextMenu.appointment!,
+                    )
+                  }
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
+                >
+                  Edit
+                </button>
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
+                >
+                  Cut
+                </button>
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
+                >
+                  Copy
+                </button>
+                <button
+                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
+                >
+                  Reschedule
+                </button>
+                <button
+                  onClick={() =>
+                    handleDeleteAppointment(
+                      contextMenu.appointment!,
+                    )
+                  }
+                  className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
+                  role="menuitem"
+                >
+                  Delete
+                </button>
+
+                {/* Go To Submenu */}
+                <div className="relative group">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                    role="menuitem"
+                    aria-haspopup="true"
+                  >
+                    Go To
+                    <span>›</span>
+                  </button>
+                  <div
+                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
+                    style={{ minWidth: "180px" }}
+                    role="menu"
+                  >
                     <button
-                      key={status}
                       onClick={() =>
-                        handleSetStatus(
+                        handleGoToPatient(
+                          "overview",
                           contextMenu.appointment!,
-                          status as Appointment["status"],
                         )
                       }
                       className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
                     >
-                      {status}
+                      Patient Overview
                     </button>
-                  ))}
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Treatment Plans
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleGoToPatient(
+                          "transactions",
+                          contextMenu.appointment!,
+                        )
+                      }
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Transactions
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleGoToPatient(
+                          "ledger",
+                          contextMenu.appointment!,
+                        )
+                      }
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Ledger
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Progress Notes
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Notes
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Email
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Text Message
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleGoToPatient(
+                          "charting",
+                          contextMenu.appointment!,
+                        )
+                      }
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Restorative Chart
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Perio Chart
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Imaging System
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Print Submenu */}
-              <div className="relative group">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between">
-                  Print
-                  <span>›</span>
-                </button>
-                <div
-                  className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                  style={{ minWidth: "180px" }}
-                >
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Routing Slip
+                {/* Set Status Submenu */}
+                <div className="relative group">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                    role="menuitem"
+                    aria-haspopup="true"
+                  >
+                    Set Status
+                    <span>›</span>
                   </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900">
-                    Walkout Report
-                  </button>
+                  <div
+                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
+                    style={{ minWidth: "180px" }}
+                    role="menu"
+                  >
+                    {[
+                      "Scheduled",
+                      "Confirmed",
+                      "Unconfirmed",
+                      "Left Message",
+                      "In Reception",
+                      "Available",
+                      "In Operatory",
+                      "Checked Out",
+                      "Missed",
+                      "Cancelled",
+                    ].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() =>
+                          handleSetStatus(
+                            contextMenu.appointment!,
+                            status as Appointment["status"],
+                          )
+                        }
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                        role="menuitem"
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </>
-          ) : null}
-        </div>
-      )}
 
-      {/* New Appointment Modal */}
-      {showNewAppointment && (
-        <NewAppointmentModal
-          isOpen={showNewAppointment}
-          onClose={() => {
-            setShowNewAppointment(false);
-            setEditingAppointment(null);
-          }}
-          onSave={handleSaveAppointment}
-          selectedSlot={selectedSlot}
-          currentOffice={currentOffice}
-          editingAppointment={editingAppointment}
-        />
-      )}
+                {/* Print Submenu */}
+                <div className="relative group">
+                  <button
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                    role="menuitem"
+                    aria-haspopup="true"
+                  >
+                    Print
+                    <span>›</span>
+                  </button>
+                  <div
+                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
+                    style={{ minWidth: "180px" }}
+                    role="menu"
+                  >
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Routing Slip
+                    </button>
+                    <button
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
+                      role="menuitem"
+                    >
+                      Walkout Report
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
 
-      {/* Calendar Picker Portal */}
-      {showCalendarPicker && calendarBtnRef.current && createPortal(
-        <CalendarPicker
-          selectedDate={selectedDate}
-          onDateChange={handleSchedulerDateChange}
-          onClose={() => setShowCalendarPicker(false)}
-          position={{
-            top: calendarBtnRef.current.getBoundingClientRect().bottom + window.scrollY + 6,
-            left: calendarBtnRef.current.getBoundingClientRect().left + window.scrollX,
-          }}
-        />,
-        document.body
-      )}
+        {/* New Appointment Modal */}
+        {showNewAppointment && (
+          <NewAppointmentModal
+            isOpen={showNewAppointment}
+            onClose={() => {
+              setShowNewAppointment(false);
+              setEditingAppointment(null);
+            }}
+            onSave={handleSaveAppointment}
+            selectedSlot={selectedSlot}
+            currentOffice={currentOffice}
+            editingAppointment={editingAppointment}
+          />
+        )}
+
+        {/* Calendar Picker Portal */}
+        {showCalendarPicker &&
+          calendarBtnRef.current &&
+          createPortal(
+            <CalendarPicker
+              selectedDate={selectedDate}
+              onDateChange={handleSchedulerDateChange}
+              onClose={() => setShowCalendarPicker(false)}
+              position={{
+                top:
+                  calendarBtnRef.current.getBoundingClientRect()
+                    .bottom +
+                  window.scrollY +
+                  6,
+                left:
+                  calendarBtnRef.current.getBoundingClientRect()
+                    .left + window.scrollX,
+              }}
+            />,
+            document.body,
+          )}
+      </div>
     </div>
   );
 }

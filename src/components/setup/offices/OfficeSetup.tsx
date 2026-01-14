@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Building2, Search, Plus, Save, X } from "lucide-react";
 import api from "../../../services/api";
-import type { Office, OfficeSetupApiResponse } from "../../../data/officeData";
-
+import type { Office, OfficeSetupApiResponse } from "../../../data/officeData"
 import InfoTab from "./tabs/InfoTab";
 import StatementTab from "./tabs/StatementTab";
 import IntegrationTab from "./tabs/IntegrationTab";
@@ -225,7 +224,9 @@ export default function OfficeSetup() {
   const [selectedOfficeId, setSelectedOfficeId] = useState<number | null>(null);
   const [formData, setFormData] = useState<Partial<Office>>({});
   const [activeTab, setActiveTab] = useState<TabName>("info");
-  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [mode, setMode] = useState<"view" | "add" | "edit">(
+    "view",
+  );
   const [showOfficeList, setShowOfficeList] = useState(true);
   const [nextOfficeId, setNextOfficeId] = useState<number | null>(null);
   const [officeSetup, setOfficeSetup] = useState<OfficeSetupApiResponse | null>(null);
@@ -522,7 +523,9 @@ const tabs: { id: TabName; label: string }[] = [
                     <Building2 className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-[#1F3A5F]">Office Setup</h1>
+                    <h1 className="text-xl font-bold text-[#1F3A5F]">
+                      Office Setup
+                    </h1>
                     <p className="text-xs text-[#64748B] font-bold">
                       Manage office locations and configurations
                     </p>
@@ -544,7 +547,9 @@ const tabs: { id: TabName; label: string }[] = [
                   type="text"
                   placeholder="Search offices..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) =>
+                    setSearchQuery(e.target.value)
+                  }
                   className="w-full pl-10 pr-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                 />
               </div>
@@ -580,21 +585,42 @@ const tabs: { id: TabName; label: string }[] = [
                     <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
                       Status
                     </th>
+
+                    {/* 🔐 AUDIT COLUMNS */}
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Created By
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Created On
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Updated By
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                      Updated On
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E8F0]">
                   {filteredOffices.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center">
+                      <td
+                        colSpan={10}
+                        className="px-4 py-8 text-center"
+                      >
                         <Building2 className="w-12 h-12 text-[#CBD5E1] mx-auto mb-3" />
-                        <p className="text-[#64748B] font-bold text-sm">No offices found</p>
+                        <p className="text-[#64748B] font-bold text-sm">
+                          No offices found
+                        </p>
                       </td>
                     </tr>
                   ) : (
                     filteredOffices.map((office) => (
                       <tr
                         key={office.id}
-                        onClick={() => handleSelectOffice(office)}
+                        onClick={() =>
+                          handleSelectOffice(office)
+                        }
                         className="hover:bg-[#F7F9FC] cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3 text-sm font-bold text-[#1E293B]">
@@ -624,6 +650,25 @@ const tabs: { id: TabName; label: string }[] = [
                               Inactive
                             </span>
                           )}
+                        </td>
+                        {/* Created By */}
+                        <td className="px-4 py-3 text-sm text-[#1E293B]">
+                          {office.createdBy || "System"}
+                        </td>
+
+                        {/* Created On */}
+                        <td className="px-4 py-3 text-xs text-[#64748B]">
+                          {office.createdAt || "—"}
+                        </td>
+
+                        {/* Updated By */}
+                        <td className="px-4 py-3 text-sm text-[#1E293B]">
+                          {office.updatedBy || "—"}
+                        </td>
+
+                        {/* Updated On */}
+                        <td className="px-4 py-3 text-xs text-[#64748B]">
+                          {office.updatedAt || "—"}
                         </td>
                       </tr>
                     ))
@@ -681,7 +726,7 @@ const tabs: { id: TabName; label: string }[] = [
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 font-bold text-xs whitespace-nowrap rounded-t-lg transition-all ${
+                    className={`px-4 py-2 font-semibold text-sm whitespace-nowrap rounded-t-lg transition-all ${
                       activeTab === tab.id
                         ? "bg-white text-[#3A6EA5] border-t-4 border-[#3A6EA5]"
                         : "text-[#64748B] hover:text-[#1F3A5F] hover:bg-[#E8EFF7]"
@@ -696,28 +741,53 @@ const tabs: { id: TabName; label: string }[] = [
             {/* Tab Content */}
             <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto scrollbar-visible">
               {activeTab === "info" && (
-                <InfoTab formData={formData} updateFormData={updateFormData} mode={mode} />
+                <InfoTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  mode={mode}
+                />
               )}
               {activeTab === "statement" && (
-                <StatementTab formData={formData} updateFormData={updateFormData} />
+                <StatementTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "integration" && (
-                <IntegrationTab formData={formData} updateFormData={updateFormData} />
+                <IntegrationTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "operatories" && (
-                <OperatoriesTab formData={formData} updateFormData={updateFormData} />
+                <OperatoriesTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "schedule" && (
-                <ScheduleTab formData={formData} updateFormData={updateFormData} />
+                <ScheduleTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "holidays" && (
-                <HolidaysTab formData={formData} updateFormData={updateFormData} />
+                <HolidaysTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "advanced" && (
-                <AdvancedTab formData={formData} updateFormData={updateFormData} />
+                <AdvancedTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
               {activeTab === "smartassist" && (
-                <SmartAssistTab formData={formData} updateFormData={updateFormData} />
+                <SmartAssistTab
+                  formData={formData}
+                  updateFormData={updateFormData}
+                />
               )}
             </div>
           </div>
