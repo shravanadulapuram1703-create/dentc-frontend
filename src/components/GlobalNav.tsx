@@ -68,19 +68,47 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { components } from '../styles/theme.js';
 import OrganizationSwitcher from './navigation/OrganizationSwitcher.js';
-import { getOfficesForOrganization } from '../data/organizationData.js';
+// import { getOfficesForOrganization } from '../data/organizationData.js';
 import { useAuth } from '../contexts/AuthContext.js';
+import type { Organization, Office } from "../data/organizationData.js";
+
+/**
+ * Get organization by name / code / id
+ */
+export function getOrganizationByName(
+  organizations: Organization[],
+  name: string
+): Organization | undefined {
+  return organizations.find(
+    (org) =>
+      org.name === name ||
+      org.code === name ||
+      org.id === name
+  );
+}
+
+/**
+ * Get offices for a given organization
+ */
+export function getOfficesForOrganization(
+  organizations: Organization[],
+  orgName: string
+): Office[] {
+  const org = getOrganizationByName(organizations, orgName);
+  return org?.offices ?? [];
+}
+
 
 interface GlobalNavProps {
   onLogout: () => void;
-  currentOffice: string;
-  setCurrentOffice: (office: string) => void;
+  // currentOffice: string;
+  // setCurrentOffice: (office: string) => void;
 }
 
-export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }: GlobalNavProps) {
+export default function GlobalNav({ onLogout}: GlobalNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
+  // const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
@@ -107,11 +135,76 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
   }, []);
 
   // Get Auth Context for current organization
-  const { currentOrganization } = useAuth();
+  // const { currentOrganization } = useAuth();
+  // const { currentOrganization, organizations, currentOffice, setCurrentOffice, }
+  //  = useAuth();
+  const {
+    currentOrganization,
+    organizations,
+    currentOffice,
+    setCurrentOffice,
+  } = useAuth();
+
+  const activeOrganization = organizations.find(
+    (org) =>
+      org.name === currentOrganization ||
+      org.code === currentOrganization ||
+      org.id === currentOrganization
+  );
+
+  const organizationOffices = activeOrganization?.offices ?? [];
+  const offices = organizationOffices.map((office) => office.name);
+
+
+
+
+  console.log(currentOrganization,organizations,currentOffice)
+
+  
+  console.log(currentOrganization,organizationOffices,offices)
+
   
   // Get offices dynamically based on selected organization
-  const organizationOffices = getOfficesForOrganization(currentOrganization);
-  const offices = organizationOffices.map(office => office.displayName);
+  // const organizationOffices = getOfficesForOrganization(currentOrganization);
+  // const organizationOffices = getOfficesForOrganization(organizations, currentOrganization);
+
+
+  // const offices = organizationOffices.map(office => office.displayName);
+  // const activeOrganization = organizations.find(
+  //   (org) =>
+  //     org.name === currentOrganization ||
+  //     org.code === currentOrganization
+  // );
+
+  // const offices = activeOrganization
+  //   ? activeOrganization.offices.map((office) => office.displayName)
+  //   : [];
+
+  // const organizationOffices = getOfficesForOrganization(
+  //   organizations,
+  //   currentOrganization
+  // );
+
+  // const offices = organizationOffices.map(
+  //   (office) => office.displayName
+  // );
+
+
+
+
+  useEffect(() => {
+    if (offices.length > 0 && !offices.includes(currentOffice)) {
+      setCurrentOffice(offices[0]);
+    }
+  }, [currentOrganization, offices]);
+
+  
+  
+  console.log(currentOrganization, offices)
+
+  
+
+
 
   // PATIENT DROPDOWN MENU (Patient Context)
   const patientMenuItems = [
@@ -724,8 +817,9 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
               <p className="text-xs text-white/70">Practice Management System</p>
             </div> */}
             <div
-              onClick={() => navigate('/dashboard')}
-              className="cursor-pointer select-none">
+              onClick={() => navigate("/dashboard")}
+              className="cursor-pointer select-none"
+            >
               <h1 className="text-lg font-bold text-white hover:underline">
                 DentalPMS
               </h1>
@@ -733,9 +827,6 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
                 Practice Management System
               </p>
             </div>
-
-
-
           </div>
         </div>
 
@@ -747,7 +838,8 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
           {/* Office Selector (available to all users) */}
           <div className="relative" ref={(el) => (dropdownRefs.current['office'] = el)}>
             <button
-              onClick={() => setShowOfficeDropdown(!showOfficeDropdown)}
+              // onClick={() => setShowOfficeDropdown(!showOfficeDropdown)}
+              onClick={() => toggleDropdown("office")}
               className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg border border-white/30 transition-all backdrop-blur-sm"
             >
               <Building2 className="w-5 h-5 text-white" strokeWidth={2} />
@@ -757,9 +849,11 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
                 </span>
                 <span className="font-bold text-white text-sm">{currentOffice}</span>
               </div>
-              <ChevronDown className={`w-4 h-4 text-white transition-transform ${showOfficeDropdown ? 'rotate-180' : ''}`} strokeWidth={2} />
+              <ChevronDown className={`w-4 h-4 text-white transition-transform ${activeDropdown ? 'rotate-180' : ''}`} strokeWidth={2} />
             </button>
-            {showOfficeDropdown && (
+            {/* {showOfficeDropdown && ( */}
+            {activeDropdown === "office" && (
+
               <div className="absolute top-full right-0 mt-2 w-80 bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50">
                 <div className="py-1">
                   {offices.map((office, index) => (
@@ -767,7 +861,8 @@ export default function GlobalNav({ onLogout, currentOffice, setCurrentOffice }:
                       key={index}
                       onClick={() => {
                         setCurrentOffice(office);
-                        setShowOfficeDropdown(false);
+                        // setShowOfficeDropdown(false);
+                        setActiveDropdown(null);
                       }}
                       className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors ${
                         currentOffice === office

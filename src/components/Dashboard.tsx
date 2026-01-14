@@ -169,7 +169,7 @@ export default function Dashboard({ onLogout, currentOffice, setCurrentOffice, u
 
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC]">
+    <div className="min-h-screen bg-[#F7F9FC] overflow-x-auto">
 
         <GlobalNav 
           onLogout={handleLogout} 

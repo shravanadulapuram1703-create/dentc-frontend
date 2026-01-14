@@ -1,0 +1,43 @@
+// ===== Backend response types =====
+
+export interface MeFullResponse {
+  user_id: number;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+
+  pgid: number;
+  pgid_name: string;
+
+  home_office_id: number | null;
+  home_office_name: string | null;
+
+  assigned_offices: Array<{
+    office_id: number;
+    office_name: string;
+  }>;
+
+  roles: string[];
+  security_groups: string[];
+
+  permitted_ips: any[];
+  preferences: any;
+}
+
+export interface AccessResponse {
+  is_super_admin: boolean;
+  current_organization_id: number | null;
+  current_office_id: number | null;
+
+  organizations: {
+    id: number;
+    name: string;
+  }[];
+
+  offices: {
+    id: number;
+    name: string;
+    tenant_id: number;
+  }[];
+}

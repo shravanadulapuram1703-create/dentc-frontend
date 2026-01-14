@@ -2,18 +2,38 @@ import { useState, useRef, useEffect } from 'react';
 import { Building2, ChevronDown, Check, Settings, Plus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { components } from '../../styles/theme';
-import { mockOrganizations} from '../../data/organizationData';
-import type { Organization } from '../../data/organizationData';
+// import { mockOrganizations} from '../../data/organizationData';
+// import type { Organization } from '../../data/organizationData';
+// import { fetchOrganizations } from '../../services/organizationApi';
+
+interface Office {
+  id: string;
+  name: string;
+  code: string;
+  address: string;
+  displayName: string; // For dropdown display: "Office Name [Code]"
+  is_current: boolean
+}
+
+interface Organization {
+  id: string;
+  name: string;
+  code: string;
+  offices: Office[];
+  is_current: boolean;
+}
+
+
 
 export default function OrganizationSwitcher() {
-  const { user, currentOrganization, setCurrentOrganization } = useAuth();
+  const { user, organizations, currentOrganization, setCurrentOrganization } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get current organization object
-  const activeOrg = mockOrganizations.find(org => 
-    org.name === currentOrganization || org.code === currentOrganization
-  ) || mockOrganizations[0];
+  const activeOrg = organizations.find(org => 
+    org.name === currentOrganization || org.code === currentOrganization || org.id === currentOrganization
+    ) || organizations[0];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -30,9 +50,9 @@ export default function OrganizationSwitcher() {
   }, [isOpen]);
 
   // CRITICAL: Only render for OWNER role
-  if (!user || (user.role !== 'owner' && !user.isOrgOwner)) {
-    return null;
-  }
+  // if (!user || (user.role !== 'owner' && !user.isOrgOwner)) {
+  //   return null;
+  // }
 
   const handleOrgSwitch = (org: Organization) => {
     setCurrentOrganization(org.name);
@@ -53,7 +73,7 @@ export default function OrganizationSwitcher() {
             Organization
           </span>
           <span className="text-sm font-bold text-[#1F3A5F]">
-            {activeOrg.name}
+            {activeOrg?.name}
           </span>
         </div>
         <ChevronDown 
@@ -77,7 +97,7 @@ export default function OrganizationSwitcher() {
                 </h3>
               </div>
               <span className="text-xs font-semibold text-white/80 bg-white/20 px-2 py-1 rounded">
-                {mockOrganizations.length} Total
+                {organizations.length} Total
               </span>
             </div>
             <p className="text-xs text-white/70 mt-1">
@@ -87,8 +107,8 @@ export default function OrganizationSwitcher() {
 
           {/* Organizations List (WITHOUT nested offices) */}
           <div className="max-h-[400px] overflow-y-auto">
-            {mockOrganizations.map((org) => {
-              const isActive = org.id === activeOrg.id;
+            {organizations.map((org) => {
+              const isActive = org.id === activeOrg?.id;
               
               return (
                 <button
