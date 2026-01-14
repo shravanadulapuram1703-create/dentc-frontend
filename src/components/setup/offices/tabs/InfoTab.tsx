@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Building2, MapPin, Phone, Mail, DollarSign, Clock, Plus, X, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X } from "lucide-react";
+import api from "../../../../services/api";
 import { type Office } from "../../../../data/officeData";
 
 interface InfoTabProps {
@@ -8,91 +9,285 @@ interface InfoTabProps {
   mode?: "view" | "add" | "edit";
 }
 
-const US_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-];
+interface Provider {
+  id: string;
+  name: string;
+  npi?: string;
+  license?: string;
+}
 
-const TIME_ZONES = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Phoenix",
-  "America/Los_Angeles",
-  "America/Anchorage",
-  "Pacific/Honolulu",
-];
+interface FeeSchedule {
+  id: string;
+  name: string;
+  type: "STANDARD" | "UCR";
+}
 
-const mockProviders = [
-  { id: "prov-001", name: "Dr. Sarah Johnson" },
-  { id: "prov-002", name: "Dr. Michael Chen" },
-  { id: "prov-003", name: "Dr. Emily Rodriguez" },
-  { id: "prov-004", name: "Dr. David Kim" },
-];
 
-const mockFeeSchedules = [
-  "Standard Fee Schedule",
-  "UCR California 2024",
-  "PPO Network A",
-  "Medicaid Schedule",
-  "Pediatric Fee Schedule",
-];
 
-export default function InfoTab({ formData, updateFormData, mode = "view" }: InfoTabProps) {
+
+export default function InfoTab({ formData, updateFormData }: InfoTabProps) {
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [feeSchedules, setFeeSchedules] = useState<FeeSchedule[]>([]);
+  const [timeZones, setTimeZones] = useState<string[]>([]);
+
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [showAddFeeSchedule, setShowAddFeeSchedule] = useState(false);
   const [showAddUCRFeeSchedule, setShowAddUCRFeeSchedule] = useState(false);
-  const [newProvider, setNewProvider] = useState({
-    name: "",
-    npi: "",
-    license: "",
-  });
+
+  const [newProvider, setNewProvider] = useState({ name: "", npi: "", license: "" });
   const [newFeeSchedule, setNewFeeSchedule] = useState("");
   const [newUCRFeeSchedule, setNewUCRFeeSchedule] = useState("");
 
-  const handleAddProvider = () => {
+  const [standardFeeSchedules, setStandardFeeSchedules] = useState<any[]>([]);
+  const [ucrFeeSchedules, setUcrFeeSchedules] = useState<any[]>([]);
+
+
+  const defaultFeeScheduleName = formData.defaultFeeSchedule;
+
+  const defaultUCRFeeScheduleName = formData.defaultUCRFeeSchedule;
+
+  console.log("defaultFeeScheduleId",defaultFeeScheduleName)
+
+  console.log("defaultUCRFeeScheduleId",defaultUCRFeeScheduleName)
+
+  /* -------------------- LOAD METADATA -------------------- */
+  useEffect(() => {
+    api.get("/api/v1/offices/metadata").then((res) => {
+      setProviders(res.data.billing_providers);
+      // setFeeSchedules(res.data.fee_schedules);
+      setTimeZones(res.data.time_zones);
+
+      const allFeeSchedules = res.data.fee_schedules || [];
+
+      setStandardFeeSchedules(
+        allFeeSchedules.filter((fs: any) => fs.type === "STANDARD")
+      );
+
+      setUcrFeeSchedules(
+        allFeeSchedules.filter((fs: any) => fs.type === "UCR")
+      );
+
+
+
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!feeSchedules.length) return;
+
+    // Map DEFAULT Fee Schedule
+    if (formData.defaultFeeSchedule) {
+      const standard = feeSchedules.find(
+        (fs) => fs.name === formData.defaultFeeSchedule
+      );
+
+      if (standard && standard.id !== formData.defaultFeeSchedule) {
+        updateFormData({ defaultFeeSchedule: standard.id });
+      }
+    }
+
+    // Map UCR Fee Schedule
+    if (formData.defaultUCRFeeSchedule) {
+      const ucr = feeSchedules.find(
+        (fs) => fs.name === formData.defaultUCRFeeSchedule
+      );
+
+      if (ucr && ucr.id !== formData.defaultUCRFeeSchedule) {
+        updateFormData({ defaultUCRFeeSchedule: ucr.id });
+      }
+    }
+  }, [feeSchedules]);
+
+  console.log("SELECT VALUE", formData.defaultFeeSchedule);
+  console.log("OPTION IDS", feeSchedules.map(f => f.id));
+
+  /* -------------------- ADD PROVIDER -------------------- */
+  const handleAddProvider = async () => {
     if (!newProvider.name.trim()) {
       alert("Provider name is required");
       return;
     }
+
+    const res = await api.post("/api/v1/offices/billing-providers", newProvider);
+    setProviders((p) => [...p, res.data]);
     
-    const providerId = `prov-${Date.now()}`;
+
     updateFormData({
-      billingProviderId: providerId,
-      billingProviderName: newProvider.name,
+      billingProviderId: res.data.id,
+      billingProviderName: res.data.name,
     });
-    
-    alert(`Provider "${newProvider.name}" added successfully!`);
+
     setShowAddProvider(false);
     setNewProvider({ name: "", npi: "", license: "" });
   };
 
-  const handleAddFeeSchedule = () => {
+  /* -------------------- ADD FEE SCHEDULE -------------------- */
+  // const createFeeSchedule = async (name: string, type: "STANDARD" | "UCR") => {
+  //   const res = await api.post("/api/v1/fee-schedules", { name, type });
+  //   setFeeSchedules((f) => [...f, res.data]);
+  //   setStandardFeeSchedules((prev) => [...prev, res.data]);
+
+
+  //   if (type === "UCR") {
+  //     updateFormData({ defaultUCRFeeSchedule: res.data.name });
+  //     setUcrFeeSchedules((prev) => [...prev, res.data]);
+
+
+  //   } else {
+  //     updateFormData({ defaultFeeSchedule: res.data.name });
+  //     setStandardFeeSchedules((prev) => [...prev, res.data]);
+
+  //   }
+  // };
+
+
+
+  const createFeeSchedule = async (
+    name: string,
+    type: "STANDARD" | "UCR"
+  ) => {
+    const res = await api.post("/api/v1/fee-schedules", { name, type });
+    const newSchedule = res.data;
+
+    if (type === "UCR") {
+      setUcrFeeSchedules((prev) =>
+        prev.some((fs) => fs.id === newSchedule.id)
+          ? prev
+          : [...prev, newSchedule]
+      );
+
+      updateFormData({
+        defaultUCRFeeSchedule: newSchedule.id,
+      });
+    } else {
+      setStandardFeeSchedules((prev) =>
+        prev.some((fs) => fs.id === newSchedule.id)
+          ? prev
+          : [...prev, newSchedule]
+      );
+
+      updateFormData({
+        defaultFeeSchedule: newSchedule.id,
+      });
+    }
+  };
+
+  const US_STATES = [
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+  ];
+
+  // const TIME_ZONES = [
+  //   "America/New_York",
+  //   "America/Chicago",
+  //   "America/Denver",
+  //   "America/Phoenix",
+  //   "America/Los_Angeles",
+  //   "America/Anchorage",
+  //   "Pacific/Honolulu",
+  // ];
+
+  /* -------------------- JSX BELOW (UNCHANGED UI) -------------------- */
+
+  // ⬇️ All JSX from your original component remains the same
+  // Only replace:
+  // - mockProviders → providers
+  // - mockFeeSchedules → feeSchedules
+  // - TIME_ZONES → timeZones
+
+  // const mockFeeSchedules = [
+  //   "Standard Fee Schedule",
+  //   "UCR California 2024",
+  //   "PPO Network A",
+  //   "Medicaid Schedule",
+  //   "Pediatric Fee Schedule",
+  // ];
+  
+
+
+  console.log("feeSchedules item:", feeSchedules);
+  
+  // const handleAddFeeSchedule = () => {
+  //   if (!newFeeSchedule.trim()) {
+  //     alert("Fee Schedule name is required");
+  //     return;
+  //   }
+    
+  //   updateFormData({ defaultFeeSchedule: newFeeSchedule });
+  //   alert(`Fee Schedule "${newFeeSchedule}" added successfully!`);
+  //   setShowAddFeeSchedule(false);
+  //   setNewFeeSchedule("");
+  // };
+
+
+
+  const handleAddFeeSchedule = async () => {
     if (!newFeeSchedule.trim()) {
       alert("Fee Schedule name is required");
       return;
     }
-    
-    updateFormData({ defaultFeeSchedule: newFeeSchedule });
-    alert(`Fee Schedule "${newFeeSchedule}" added successfully!`);
-    setShowAddFeeSchedule(false);
-    setNewFeeSchedule("");
+
+    try {
+      const res = await api.post("/api/v1/offices/fee-schedules", {
+        name: newFeeSchedule,
+        type: "STANDARD"
+      });
+
+      setStandardFeeSchedules((prev) => [...prev, res.data]);
+
+      updateFormData({
+        defaultFeeSchedule: res.data.id
+      });
+
+      alert(`Fee Schedule "${res.data.name}" added successfully`);
+      setShowAddFeeSchedule(false);
+      setNewFeeSchedule("");
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to add fee schedule");
+    }
   };
 
-  const handleAddUCRFeeSchedule = () => {
+  // const handleAddUCRFeeSchedule = () => {
+  //   if (!newUCRFeeSchedule.trim()) {
+  //     alert("UCR Fee Schedule name is required");
+  //     return;
+  //   }
+    
+  //   updateFormData({ defaultUCRFeeSchedule: newUCRFeeSchedule });
+  //   alert(`UCR Fee Schedule "${newUCRFeeSchedule}" added successfully!`);
+  //   setShowAddUCRFeeSchedule(false);
+  //   setNewUCRFeeSchedule("");
+  // };
+
+  const handleAddUCRFeeSchedule = async () => {
     if (!newUCRFeeSchedule.trim()) {
       alert("UCR Fee Schedule name is required");
       return;
     }
-    
-    updateFormData({ defaultUCRFeeSchedule: newUCRFeeSchedule });
-    alert(`UCR Fee Schedule "${newUCRFeeSchedule}" added successfully!`);
-    setShowAddUCRFeeSchedule(false);
-    setNewUCRFeeSchedule("");
+
+    try {
+      const res = await api.post("/api/v1/offices/fee-schedules", {
+        name: newUCRFeeSchedule,
+        type: "UCR"
+      });
+
+      setUcrFeeSchedules((prev) => [...prev, res.data]);
+
+      updateFormData({
+        defaultUCRFeeSchedule: res.data.id
+      });
+
+      alert(`UCR Fee Schedule "${res.data.name}" added successfully`);
+      setShowAddUCRFeeSchedule(false);
+      setNewUCRFeeSchedule("");
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to add UCR fee schedule");
+    }
   };
+
 
   return (
     <div className="space-y-6">
@@ -263,7 +458,7 @@ export default function InfoTab({ formData, updateFormData, mode = "view" }: Inf
               onChange={(e) => updateFormData({ timeZone: e.target.value })}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             >
-              {TIME_ZONES.map((tz) => (
+              {timeZones.map((tz) => (
                 <option key={tz} value={tz}>
                   {tz}
                 </option>
@@ -364,7 +559,7 @@ export default function InfoTab({ formData, updateFormData, mode = "view" }: Inf
                     if (e.target.value === "__ADD_NEW__") {
                       setShowAddProvider(true);
                     } else {
-                      const selectedProvider = mockProviders.find(
+                      const selectedProvider = providers.find(
                         (p) => p.id === e.target.value
                       );
                       updateFormData({
@@ -376,7 +571,7 @@ export default function InfoTab({ formData, updateFormData, mode = "view" }: Inf
                   className="flex-1 px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                 >
                   <option value="">Select Provider</option>
-                  {mockProviders.map((provider) => (
+                  {providers.map((provider) => (
                     <option key={provider.id} value={provider.id}>
                       {provider.name}
                     </option>
@@ -526,25 +721,52 @@ export default function InfoTab({ formData, updateFormData, mode = "view" }: Inf
             </label>
             
             {!showAddUCRFeeSchedule ? (
+              // <select
+              //   value={formData.defaultUCRFeeSchedule || ""}
+              //   onChange={(e) => {
+              //     if (e.target.value === "__ADD_NEW__") {
+              //       setShowAddUCRFeeSchedule(true);
+              //     } else {
+              //       updateFormData({ defaultUCRFeeSchedule: e.target.value });
+              //     }
+              //   }}
+              //   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              // >
+              //   <option value="">Select UCR Fee Schedule</option>
+                
+              //   {feeSchedules.map((schedule) => (
+                  
+              //     <option key={schedule.id} value={schedule.id}>
+              //       {schedule.name}
+              //       {/* {defaultFeeScheduleName} */}
+                    
+              //     </option>
+              //   ))}
+              //   <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
+              //     + Add New Fee Schedule
+              //   </option>
+              // </select>
               <select
                 value={formData.defaultUCRFeeSchedule || ""}
-                onChange={(e) => {
+                onChange={(e) =>{
                   if (e.target.value === "__ADD_NEW__") {
                     setShowAddUCRFeeSchedule(true);
                   } else {
-                    updateFormData({ defaultUCRFeeSchedule: e.target.value });
+                  updateFormData({ defaultUCRFeeSchedule: e.target.value })
                   }
                 }}
-                className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+                className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
               >
                 <option value="">Select UCR Fee Schedule</option>
-                {mockFeeSchedules.map((schedule) => (
-                  <option key={schedule} value={schedule}>
-                    {schedule}
+
+                {ucrFeeSchedules.map((fs) => (
+                  <option key={fs.id} value={fs.id}>
+                    {fs.name}
                   </option>
                 ))}
+
                 <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
-                  + Add New Fee Schedule
+                  + Add New UCR Fee Schedule
                 </option>
               </select>
             ) : (
@@ -594,23 +816,48 @@ export default function InfoTab({ formData, updateFormData, mode = "view" }: Inf
             </label>
             
             {!showAddFeeSchedule ? (
+              // <select
+              //   value={formData.defaultFeeSchedule || ""}
+              //   onChange={(e) => {
+              //     if (e.target.value === "__ADD_NEW__") {
+              //       setShowAddFeeSchedule(true);
+              //     } else {
+              //       updateFormData({ defaultFeeSchedule: e.target.value });
+              //     }
+              //   }}
+              //   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              // >
+              //   <option value="">Select Fee Schedule</option>
+              //   {feeSchedules.map((schedule) => (
+              //     <option key={schedule.id} value={schedule.id}>
+              //       {schedule.name}
+              //       {/* {defaultUCRFeeScheduleName} */}
+              //     </option>
+              //   ))}
+              //   <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
+              //     + Add New Fee Schedule
+              //   </option>
+              // </select>
               <select
                 value={formData.defaultFeeSchedule || ""}
-                onChange={(e) => {
+                onChange={(e) =>{
                   if (e.target.value === "__ADD_NEW__") {
                     setShowAddFeeSchedule(true);
+                    
                   } else {
-                    updateFormData({ defaultFeeSchedule: e.target.value });
-                  }
-                }}
-                className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+                  updateFormData({ defaultFeeSchedule: e.target.value })
+                }
+              }}
+                className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
               >
-                <option value="">Select Fee Schedule</option>
-                {mockFeeSchedules.map((schedule) => (
-                  <option key={schedule} value={schedule}>
-                    {schedule}
+                <option value="">Select Standard Fee Schedule</option>
+
+                {standardFeeSchedules.map((fs) => (
+                  <option key={fs.id} value={fs.id}>
+                    {fs.name}
                   </option>
                 ))}
+
                 <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
                   + Add New Fee Schedule
                 </option>

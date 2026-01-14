@@ -785,7 +785,7 @@ export default function Scheduler({
     setSelectedDate(newDate);
   };
 
-  // ✅ STEP 4: Extract handler for CalendarPicker (single source of truth)
+  // STEP 4: Extract handler for CalendarPicker (single source of truth)
   const handleSchedulerDateChange = (date: Date) => {
     setSelectedDate(date);
   };
