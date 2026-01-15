@@ -8,42 +8,34 @@ import {
   Plus,
   Search,
   Printer,
+  Loader2,
 } from "lucide-react";
 import GlobalNav from "../GlobalNav";
 import NewAppointmentModal from "../modals/NewAppointmentModal";
 import DatePickerCalendar from "../modals/DatePickerCalendar";
 import CalendarPicker from "../CalendarPicker";
 import { components } from "../../styles/theme";
+import {
+  fetchAppointments,
+  fetchOperatories,
+  fetchSchedulerConfig,
+  fetchProcedureTypes,
+  createAppointment,
+  updateAppointment,
+  deleteAppointment,
+  updateAppointmentStatus,
+  type Appointment,
+  type Operatory,
+  type SchedulerConfig,
+  type ProcedureType,
+  type AppointmentCreateRequest,
+  type AppointmentUpdateRequest,
+} from "../../services/schedulerApi";
 
 interface SchedulerProps {
   onLogout: () => void;
   currentOffice: string;
   setCurrentOffice: (office: string) => void;
-}
-
-interface Appointment {
-  id: string;
-  patientId: string;
-  patientName: string;
-  date: string; // ISO format: YYYY-MM-DD
-  startTime: string; // Start time in "HH:MM" format
-  endTime: string; // End time in "HH:MM" format (calculated from startTime + duration)
-  duration: number; // Duration in minutes
-  procedureType: string;
-  status:
-    | "Scheduled"
-    | "Confirmed"
-    | "Unconfirmed"
-    | "Left Message"
-    | "In Reception"
-    | "Available"
-    | "In Operatory"
-    | "Checked Out"
-    | "Missed"
-    | "Cancelled";
-  operatory: string;
-  provider: string;
-  notes: string;
 }
 
 interface ContextMenuState {
@@ -88,6 +80,37 @@ export default function Scheduler({
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Generate time slots based on scheduler config
+  const generateTimeSlots = (config: SchedulerConfig): string[] => {
+    const slots: string[] = [];
+    for (let hour = config.startHour; hour < config.endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += config.slotInterval) {
+        const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        slots.push(time);
+      }
+    }
+    return slots;
+  };
+
+  // Default scheduler config
+  const defaultConfig: SchedulerConfig = {
+    startHour: 8,
+    endHour: 17,
+    slotInterval: 10,
+  };
+
+  // Data state
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [operatories, setOperatories] = useState<Operatory[]>([]);
+  const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
+  const [schedulerConfig, setSchedulerConfig] = useState<SchedulerConfig>(defaultConfig);
+  const [timeSlots, setTimeSlots] = useState<string[]>(() => generateTimeSlots(defaultConfig));
+
+  // Loading and error states
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
+  const [isLoadingOperatories, setIsLoadingOperatories] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // Helper function to format date as YYYY-MM-DD
   const formatDateYYYYMMDD = (date: Date): string => {
     const year = date.getFullYear();
@@ -96,422 +119,120 @@ export default function Scheduler({
     return `${year}-${month}-${day}`;
   };
 
-  // Helper function to get date offset
-  const getDateOffset = (daysOffset: number): string => {
-    const date = new Date();
-    date.setDate(date.getDate() + daysOffset);
-    return formatDateYYYYMMDD(date);
+  // Fetch operatories on mount and when office changes
+  useEffect(() => {
+    const loadOperatories = async () => {
+      setIsLoadingOperatories(true);
+      setError(null);
+      try {
+        // TODO: Map currentOffice to officeId if needed
+        const data = await fetchOperatories();
+        setOperatories(data);
+      } catch (err: any) {
+        setError(`Failed to load operatories: ${err.message}`);
+        console.error("Error loading operatories:", err);
+      } finally {
+        setIsLoadingOperatories(false);
+      }
+    };
+
+    loadOperatories();
+  }, [currentOffice]);
+
+  // Fetch procedure types on mount and when office changes
+  useEffect(() => {
+    const loadProcedureTypes = async () => {
+      try {
+        // TODO: Map currentOffice to officeId if needed
+        const data = await fetchProcedureTypes();
+        setProcedureTypes(data);
+      } catch (err: any) {
+        console.error("Error loading procedure types:", err);
+        // Don't set error state for procedure types - it's not critical for basic functionality
+      }
+    };
+
+    loadProcedureTypes();
+  }, [currentOffice]);
+
+  // Validate config to ensure it has valid values
+  const isValidConfig = (config: any): config is SchedulerConfig => {
+    return (
+      config &&
+      typeof config.startHour === "number" &&
+      config.startHour >= 0 &&
+      config.startHour < 24 &&
+      typeof config.endHour === "number" &&
+      config.endHour >= 0 &&
+      config.endHour < 24 &&
+      config.endHour > config.startHour &&
+      typeof config.slotInterval === "number" &&
+      config.slotInterval > 0
+    );
   };
 
-  // Generate dates for mock data
-  const today = getDateOffset(0);
-  const yesterday = getDateOffset(-1);
-  const lastWeek = getDateOffset(-7);
-  const nextWeek = getDateOffset(7);
-  const twoYearsAgo = getDateOffset(-730);
-  const oneYearAgo = getDateOffset(-365);
-  const nextMonth = getDateOffset(30);
+  // Fetch scheduler config on mount
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        // TODO: Map currentOffice to officeId if needed
+        const config = await fetchSchedulerConfig();
+        // Validate config before using it
+        if (isValidConfig(config)) {
+          setSchedulerConfig(config);
+        } else {
+          console.warn("Invalid config received from API, using default config", config);
+          // Keep using default config if API returns invalid data
+        }
+      } catch (err: any) {
+        console.error("Error loading scheduler config:", err);
+        // Keep using default config if API fails
+      }
+    };
 
-  // Mock appointments data - distributed across multiple dates
-  const [appointments, setAppointments] = useState<
-    Appointment[]
-  >([
-    // TODAY'S APPOINTMENTS
-    {
-      id: "today-1",
-      patientId: "900097",
-      patientName: "Miller, Nicolas",
-      date: today,
-      startTime: "09:00",
-      endTime: "10:00",
-      duration: 60,
-      procedureType: "New Patient",
-      status: "Confirmed",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "First visit",
-    },
-    {
-      id: "today-2",
-      patientId: "900098",
-      patientName: "Smith, John",
-      date: today,
-      startTime: "10:30",
-      endTime: "11:00",
-      duration: 30,
-      procedureType: "Cleaning",
-      status: "Scheduled",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "Routine cleaning",
-    },
-    {
-      id: "today-3",
-      patientId: "900099",
-      patientName: "Johnson, Sarah",
-      date: today,
-      startTime: "11:00",
-      endTime: "12:30",
-      duration: 90,
-      procedureType: "Crown",
-      status: "In Operatory",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Crown preparation",
-    },
-    {
-      id: "today-4",
-      patientId: "900100",
-      patientName: "Davis, Michael",
-      date: today,
-      startTime: "14:00",
-      endTime: "14:45",
-      duration: 45,
-      procedureType: "Restorative",
-      status: "Confirmed",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Filling replacement",
-    },
-    {
-      id: "today-5",
-      patientId: "903298700",
-      patientName: "Patel, Raj",
-      date: today,
-      startTime: "08:00",
-      endTime: "09:30",
-      duration: 90,
-      procedureType: "Root Canal",
-      status: "In Operatory",
-      operatory: "OP4",
-      provider: "Dr. Smith",
-      notes: "Root canal therapy",
-    },
-    {
-      id: "today-6",
-      patientId: "903298701",
-      patientName: "Wilson, Emma",
-      date: today,
-      startTime: "08:00",
-      endTime: "08:45",
-      duration: 45,
-      procedureType: "Checkup",
-      status: "Confirmed",
-      operatory: "OP6",
-      provider: "Dr. Shravan",
-      notes: "Routine checkup",
-    },
-    {
-      id: "today-7",
-      patientId: "903298702",
-      patientName: "Brown, Robert",
-      date: today,
-      startTime: "13:00",
-      endTime: "13:45",
-      duration: 45,
-      procedureType: "Filling",
-      status: "Confirmed",
-      operatory: "OP5",
-      provider: "Dr. Uday",
-      notes: "Composite filling",
-    },
-    {
-      id: "today-8",
-      patientId: "903298703",
-      patientName: "Garcia, Maria",
-      date: today,
-      startTime: "11:00",
-      endTime: "11:45",
-      duration: 45,
-      procedureType: "Cleaning",
-      status: "Scheduled",
-      operatory: "OP6",
-      provider: "Dr. Uday",
-      notes: "Deep cleaning",
-    },
+    loadConfig();
+  }, [currentOffice]);
 
-    // YESTERDAY'S APPOINTMENTS
-    {
-      id: "yesterday-1",
-      patientId: "900200",
-      patientName: "Anderson, Lisa",
-      date: yesterday,
-      startTime: "09:00",
-      endTime: "10:00",
-      duration: 60,
-      procedureType: "Crown Prep",
-      status: "Checked Out",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "Crown preparation completed",
-    },
-    {
-      id: "yesterday-2",
-      patientId: "900201",
-      patientName: "Martinez, Carlos",
-      date: yesterday,
-      startTime: "10:30",
-      endTime: "11:15",
-      duration: 45,
-      procedureType: "Filling",
-      status: "Checked Out",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Posterior filling",
-    },
-    {
-      id: "yesterday-3",
-      patientId: "900202",
-      patientName: "Thompson, James",
-      date: yesterday,
-      startTime: "14:00",
-      endTime: "14:30",
-      duration: 30,
-      procedureType: "Cleaning",
-      status: "Checked Out",
-      operatory: "OP3",
-      provider: "Dr. Jones",
-      notes: "Routine prophylaxis",
-    },
+  // Fetch appointments when date changes
+  useEffect(() => {
+    const loadAppointments = async () => {
+      setIsLoadingAppointments(true);
+      setError(null);
+      try {
+        const currentDate = formatDateYYYYMMDD(selectedDate);
+        // Fetch appointments for the selected date
+        // Optionally fetch a range (e.g., ±7 days) for better performance
+        const data = await fetchAppointments(currentDate, currentDate);
+        setAppointments(data);
+      } catch (err: any) {
+        setError(`Failed to load appointments: ${err.message}`);
+        console.error("Error loading appointments:", err);
+      } finally {
+        setIsLoadingAppointments(false);
+      }
+    };
 
-    // LAST WEEK'S APPOINTMENTS
-    {
-      id: "lastweek-1",
-      patientId: "900300",
-      patientName: "Lee, Jennifer",
-      date: lastWeek,
-      startTime: "09:00",
-      endTime: "10:30",
-      duration: 90,
-      procedureType: "Root Canal",
-      status: "Checked Out",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Endodontic treatment",
-    },
-    {
-      id: "lastweek-2",
-      patientId: "900301",
-      patientName: "Rodriguez, Diego",
-      date: lastWeek,
-      startTime: "11:00",
-      endTime: "12:00",
-      duration: 60,
-      procedureType: "Extraction",
-      status: "Checked Out",
-      operatory: "OP4",
-      provider: "Dr. Dinesh",
-      notes: "Wisdom tooth extraction",
-    },
-    {
-      id: "lastweek-3",
-      patientId: "900302",
-      patientName: "White, Amanda",
-      date: lastWeek,
-      startTime: "13:30",
-      endTime: "14:15",
-      duration: 45,
-      procedureType: "Cleaning",
-      status: "Checked Out",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "Periodontal maintenance",
-    },
+    loadAppointments();
+  }, [selectedDate, currentOffice]);
 
-    // NEXT WEEK'S APPOINTMENTS
-    {
-      id: "nextweek-1",
-      patientId: "900400",
-      patientName: "Taylor, David",
-      date: nextWeek,
-      startTime: "09:00",
-      endTime: "10:00",
-      duration: 60,
-      procedureType: "New Patient",
-      status: "Confirmed",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "Comprehensive exam",
-    },
-    {
-      id: "nextweek-2",
-      patientId: "900401",
-      patientName: "Harris, Rebecca",
-      date: nextWeek,
-      startTime: "10:30",
-      endTime: "11:15",
-      duration: 45,
-      procedureType: "Filling",
-      status: "Scheduled",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Anterior restoration",
-    },
-    {
-      id: "nextweek-3",
-      patientId: "900402",
-      patientName: "Clark, William",
-      date: nextWeek,
-      startTime: "14:00",
-      endTime: "15:30",
-      duration: 90,
-      procedureType: "Crown Seat",
-      status: "Confirmed",
-      operatory: "OP3",
-      provider: "Dr. Jones",
-      notes: "Crown cementation",
-    },
-
-    // ONE YEAR AGO
-    {
-      id: "1year-1",
-      patientId: "900500",
-      patientName: "Lewis, Patricia",
-      date: oneYearAgo,
-      startTime: "09:00",
-      endTime: "10:00",
-      duration: 60,
-      procedureType: "Cleaning",
-      status: "Checked Out",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "Annual cleaning",
-    },
-    {
-      id: "1year-2",
-      patientId: "900501",
-      patientName: "Walker, Christopher",
-      date: oneYearAgo,
-      startTime: "11:00",
-      endTime: "11:45",
-      duration: 45,
-      procedureType: "Exam",
-      status: "Checked Out",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Periodic exam",
-    },
-
-    // TWO YEARS AGO
-    {
-      id: "2years-1",
-      patientId: "900600",
-      patientName: "Hall, Margaret",
-      date: twoYearsAgo,
-      startTime: "10:00",
-      endTime: "11:00",
-      duration: 60,
-      procedureType: "Cleaning",
-      status: "Checked Out",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "Routine prophylaxis",
-    },
-    {
-      id: "2years-2",
-      patientId: "900601",
-      patientName: "Young, Daniel",
-      date: twoYearsAgo,
-      startTime: "13:00",
-      endTime: "14:30",
-      duration: 90,
-      procedureType: "Bridge Prep",
-      status: "Checked Out",
-      operatory: "OP3",
-      provider: "Dr. Jones",
-      notes: "Fixed bridge preparation",
-    },
-
-    // NEXT MONTH
-    {
-      id: "nextmonth-1",
-      patientId: "900700",
-      patientName: "King, Jessica",
-      date: nextMonth,
-      startTime: "09:00",
-      endTime: "10:00",
-      duration: 60,
-      procedureType: "Crown Delivery",
-      status: "Scheduled",
-      operatory: "OP2",
-      provider: "Dr. Smith",
-      notes: "Final crown placement",
-    },
-    {
-      id: "nextmonth-2",
-      patientId: "900701",
-      patientName: "Wright, Steven",
-      date: nextMonth,
-      startTime: "14:00",
-      endTime: "14:45",
-      duration: 45,
-      procedureType: "Checkup",
-      status: "Scheduled",
-      operatory: "OP1",
-      provider: "Dr. Jinna",
-      notes: "6-month recall",
-    },
-  ]);
-
-  // Operatories configuration
-  const operatories = [
-    {
-      id: "OP1",
-      name: "OP 1 - Hygiene",
-      provider: "Dr. Jinna",
-      office: "Moon, PA",
-    },
-    {
-      id: "OP2",
-      name: "OP 2 - Major",
-      provider: "Dr. Smith",
-      office: "Moon, PA",
-    },
-    {
-      id: "OP3",
-      name: "OP 3 - Minor",
-      provider: "Dr. Jones",
-      office: "Moon, PA",
-    },
-    {
-      id: "OP4",
-      name: "OP 4 - Regular Checkup",
-      provider: "Dr. Dinesh",
-      office: "Moon, PA",
-    },
-    {
-      id: "OP5",
-      name: "OP 5 - Rescheduled",
-      provider: "Dr. Uday",
-      office: "Moon, PA",
-    },
-    {
-      id: "OP6",
-      name: "OP 6 - Surgery",
-      provider: "Dr. Shravan",
-      office: "Moon, PA",
-    },
-  ];
-
-  // Generate time slots (8:00 AM to 5:00 PM in 10-minute increments)
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 8; hour < 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 10) {
-        const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-        slots.push(time);
+  // Update time slots when config changes - only if config is valid
+  useEffect(() => {
+    if (isValidConfig(schedulerConfig)) {
+      const newTimeSlots = generateTimeSlots(schedulerConfig);
+      // Only update if we get valid time slots
+      if (newTimeSlots.length > 0) {
+        setTimeSlots(newTimeSlots);
       }
     }
-    return slots;
-  };
-
-  const timeSlots = generateTimeSlots();
+  }, [schedulerConfig]);
 
   // ===== TIME BLOCKING & OVERLAP LOGIC =====
 
   // Convert time string (HH:MM) to minutes since midnight
   const timeToMinutes = (time: string): number => {
-    const [hours, minutes] = time.split(":").map(Number);
+    const parts = time.split(":").map(Number);
+    const hours = parts[0] ?? 0;
+    const minutes = parts[1] ?? 0;
     return hours * 60 + minutes;
   };
 
@@ -583,7 +304,60 @@ export default function Scheduler({
 
   // ===== END TIME BLOCKING LOGIC =====
 
-  // Status colors
+  // Get procedure type color
+  const getProcedureTypeColor = (procedureTypeName: string): string => {
+    const procedureType = procedureTypes.find(
+      (pt) => pt.name === procedureTypeName
+    );
+    
+    if (procedureType?.color) {
+      const color = procedureType.color.trim();
+      
+      // If it's already a full class string with border and text, use it directly
+      if (color.includes("border-") && color.includes("text-")) {
+        return color;
+      }
+      
+      // If it's just a background color, map it to a complete color set
+      // Map common Tailwind background colors to full class sets
+      const colorMap: Record<string, string> = {
+        "bg-red-100": "bg-red-100 border-red-400 text-red-900",
+        "bg-blue-100": "bg-blue-100 border-blue-400 text-blue-900",
+        "bg-green-100": "bg-green-100 border-green-400 text-green-900",
+        "bg-yellow-100": "bg-yellow-100 border-yellow-400 text-yellow-900",
+        "bg-purple-100": "bg-purple-100 border-purple-400 text-purple-900",
+        "bg-pink-100": "bg-pink-100 border-pink-400 text-pink-900",
+        "bg-indigo-100": "bg-indigo-100 border-indigo-400 text-indigo-900",
+        "bg-cyan-100": "bg-cyan-100 border-cyan-400 text-cyan-900",
+        "bg-teal-100": "bg-teal-100 border-teal-400 text-teal-900",
+        "bg-orange-100": "bg-orange-100 border-orange-400 text-orange-900",
+        "bg-emerald-100": "bg-emerald-100 border-emerald-400 text-emerald-900",
+        "bg-gray-100": "bg-gray-100 border-gray-400 text-gray-900",
+        "bg-slate-100": "bg-slate-100 border-slate-400 text-slate-900",
+      };
+      
+      // Check if we have a mapping for this color
+      if (colorMap[color]) {
+        return colorMap[color];
+      }
+      
+      // Try to extract color name and create a mapping
+      const bgMatch = color.match(/bg-(\w+)-(\d+)/);
+      if (bgMatch) {
+        const colorName = bgMatch[1];
+        // Return a complete color set using the extracted color name
+        return `bg-${colorName}-100 border-${colorName}-400 text-${colorName}-900`;
+      }
+      
+      // If we can't parse it, use as-is (might be a custom class)
+      return color;
+    }
+    
+    // Default fallback color
+    return "bg-gray-100 border-gray-400 text-gray-900";
+  };
+
+  // Status colors (kept for potential future use, but appointments now use procedure type colors)
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       Scheduled: "bg-blue-100 border-blue-400 text-blue-900",
@@ -609,9 +383,9 @@ export default function Scheduler({
 
   // Calculate appointment position
   const getAppointmentPosition = (appointment: Appointment) => {
-    const [hours, minutes] = appointment.startTime
-      .split(":")
-      .map(Number);
+    const parts = appointment.startTime.split(":").map(Number);
+    const hours = parts[0] ?? 0;
+    const minutes = parts[1] ?? 0;
     const startMinutes = (hours - 8) * 60 + minutes;
     const slotHeight = 40; // Height per 10-minute slot
     const top = (startMinutes / 10) * slotHeight;
@@ -818,64 +592,104 @@ export default function Scheduler({
   };
 
   // Handle appointment save
-  const handleSaveAppointment = (appointmentData: any) => {
-    if (editingAppointment) {
-      // Update existing appointment
-      const updatedAppointment: Appointment = {
-        ...editingAppointment,
-        patientId:
-          appointmentData.patientId ||
-          editingAppointment.patientId,
-        patientName: `${appointmentData.lastName}, ${appointmentData.firstName}`,
-        date: appointmentData.date || editingAppointment.date,
-        startTime:
-          appointmentData.time || editingAppointment.startTime,
-        endTime: calculateEndTime(
-          appointmentData.time || editingAppointment.startTime,
-          appointmentData.duration,
-        ),
-        duration: appointmentData.duration,
-        procedureType: appointmentData.procedureType,
-        status:
-          appointmentData.status || editingAppointment.status,
-        operatory:
-          appointmentData.operatory ||
-          editingAppointment.operatory,
-        provider:
-          appointmentData.provider ||
-          editingAppointment.provider,
-        notes: appointmentData.notes || "",
-      };
+  const handleSaveAppointment = async (appointmentData: any) => {
+    console.log("📥 Scheduler.handleSaveAppointment called with:", appointmentData);
+    try {
+      if (editingAppointment) {
+        // Update existing appointment
+        // Handle both old format (flat) and new format (nested)
+        const appointment = appointmentData.appointment || appointmentData;
+        
+        const updateData: AppointmentUpdateRequest = {
+          id: editingAppointment.id,
+          patientId: appointment.patientId || editingAppointment.patientId,
+          date: appointment.date || editingAppointment.date,
+          startTime: appointment.startTime || appointment.time || editingAppointment.startTime,
+          duration: appointment.duration || editingAppointment.duration,
+          procedureType: appointment.procedureType || editingAppointment.procedureType,
+          status: appointment.status || editingAppointment.status,
+          operatory: appointment.operatory || editingAppointment.operatory,
+          provider: appointment.provider || editingAppointment.provider,
+          notes: appointment.notes || "",
+        };
 
-      setAppointments(
-        appointments.map((appt) =>
-          appt.id === editingAppointment.id
-            ? updatedAppointment
-            : appt,
-        ),
-      );
-      setEditingAppointment(null);
-    } else {
-      // Create new appointment
-      const newAppointment: Appointment = {
-        id: Date.now().toString(),
-        patientId: appointmentData.patientId || "NEW",
-        patientName: `${appointmentData.lastName}, ${appointmentData.firstName}`,
-        date: selectedDate.toISOString().substring(0, 10),
-        startTime: selectedSlot?.time || appointmentData.time,
-        endTime: calculateEndTime(
-          selectedSlot?.time || appointmentData.time,
-          appointmentData.duration,
-        ),
-        duration: appointmentData.duration,
-        procedureType: appointmentData.procedureType,
-        status: "Scheduled",
-        operatory:
-          selectedSlot?.operatory || appointmentData.operatory,
-        provider: appointmentData.provider || "Dr. Jinna",
-        notes: appointmentData.notes || "",
-      };
-      setAppointments([...appointments, newAppointment]);
+        const updatedAppointment = await updateAppointment(updateData);
+        setAppointments(
+          appointments.map((appt) =>
+            appt.id === editingAppointment.id ? updatedAppointment : appt
+          )
+        );
+        setEditingAppointment(null);
+      } else {
+        // Create new appointment
+        // Handle both formats:
+        // 1. New format from modal: { patient: {...}, appointment: {...} } or flat { patient_id, ... }
+        // 2. Old format: flat object with camelCase fields
+        
+        let createData: AppointmentCreateRequest;
+        
+        // Check if this is the new API format (has patient object or snake_case fields)
+        if (appointmentData.patient && appointmentData.appointment) {
+          // New patient format: extract appointment data and let backend handle patient creation
+          const appointment = appointmentData.appointment;
+          createData = {
+            patientId: "NEW", // Backend will create patient and use the generated ID
+            date: appointment.date || appointment.start_date || formatDateYYYYMMDD(selectedDate),
+            startTime: appointment.start_time || appointment.startTime || selectedSlot?.time || "09:00",
+            duration: appointment.duration || 30,
+            procedureType: appointment.procedure_type || appointment.procedureType,
+            status: appointment.status || "Scheduled",
+            operatory: appointment.operatory || selectedSlot?.operatory || "",
+            provider: appointment.provider || "",
+            notes: appointment.notes || "",
+          };
+          // Note: Backend should handle patient creation from appointmentData.patient
+        } else if (appointmentData.patient_id || appointmentData.patientId) {
+          // Existing patient format (snake_case or camelCase)
+          createData = {
+            patientId: appointmentData.patient_id || appointmentData.patientId || "NEW",
+            date: appointmentData.date || formatDateYYYYMMDD(selectedDate),
+            startTime: appointmentData.start_time || appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
+            duration: appointmentData.duration || 30,
+            procedureType: appointmentData.procedure_type || appointmentData.procedureType,
+            status: appointmentData.status || "Scheduled",
+            operatory: appointmentData.operatory || selectedSlot?.operatory || "",
+            provider: appointmentData.provider || "",
+            notes: appointmentData.notes || "",
+          };
+        } else {
+          // Old format fallback (camelCase, flat structure)
+          createData = {
+            patientId: appointmentData.patientId || "NEW",
+            date: appointmentData.date || formatDateYYYYMMDD(selectedDate),
+            startTime: appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
+            duration: appointmentData.duration || 30,
+            procedureType: appointmentData.procedureType,
+            status: appointmentData.status || "Scheduled",
+            operatory: appointmentData.operatory || selectedSlot?.operatory || "",
+            provider: appointmentData.provider || "",
+            notes: appointmentData.notes || "",
+          };
+        }
+
+        // Validate required fields
+        if (!createData.operatory || !createData.provider || !createData.procedureType) {
+          alert("Missing required fields: Operatory, Provider, or Procedure Type");
+          return;
+        }
+
+        // TODO: For new patient flow, we need to send both patient and appointment data
+        // This requires updating the createAppointment API function to handle the nested format
+        // For now, we'll send the appointment data and let the backend handle patient creation
+        // if appointmentData.patient exists, it should be sent separately or the API should accept it
+        
+        const newAppointment = await createAppointment(createData);
+        setAppointments([...appointments, newAppointment]);
+      }
+    } catch (err: any) {
+      setError(`Failed to save appointment: ${err.message}`);
+      console.error("Error saving appointment:", err);
+      alert(`Failed to save appointment: ${err.message}`);
     }
   };
 
@@ -884,7 +698,9 @@ export default function Scheduler({
     startTime: string,
     duration: number,
   ): string => {
-    const [hours, minutes] = startTime.split(":").map(Number);
+    const parts = startTime.split(":").map(Number);
+    const hours = parts[0] ?? 0;
+    const minutes = parts[1] ?? 0;
     const totalMinutes = hours * 60 + minutes + duration;
     const endHours = Math.floor(totalMinutes / 60);
     const endMinutes = totalMinutes % 60;
@@ -946,15 +762,25 @@ export default function Scheduler({
   };
 
   // Set appointment status
-  const handleSetStatus = (
+  const handleSetStatus = async (
     appointment: Appointment,
     status: Appointment["status"],
   ) => {
-    setAppointments(
-      appointments.map((appt) =>
-        appt.id === appointment.id ? { ...appt, status } : appt,
-      ),
-    );
+    try {
+      const updatedAppointment = await updateAppointmentStatus(
+        appointment.id,
+        status
+      );
+      setAppointments(
+        appointments.map((appt) =>
+          appt.id === appointment.id ? updatedAppointment : appt
+        )
+      );
+    } catch (err: any) {
+      setError(`Failed to update status: ${err.message}`);
+      console.error("Error updating appointment status:", err);
+      alert(`Failed to update status: ${err.message}`);
+    }
     setContextMenu({
       visible: false,
       x: 0,
@@ -964,7 +790,7 @@ export default function Scheduler({
   };
 
   // Delete appointment
-  const handleDeleteAppointment = (
+  const handleDeleteAppointment = async (
     appointment: Appointment,
   ) => {
     if (
@@ -972,11 +798,16 @@ export default function Scheduler({
         `Delete appointment for ${appointment.patientName}?`,
       )
     ) {
-      setAppointments(
-        appointments.filter(
-          (appt) => appt.id !== appointment.id,
-        ),
-      );
+      try {
+        await deleteAppointment(appointment.id);
+        setAppointments(
+          appointments.filter((appt) => appt.id !== appointment.id)
+        );
+      } catch (err: any) {
+        setError(`Failed to delete appointment: ${err.message}`);
+        console.error("Error deleting appointment:", err);
+        alert(`Failed to delete appointment: ${err.message}`);
+      }
     }
     setContextMenu({
       visible: false,
@@ -988,11 +819,7 @@ export default function Scheduler({
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav
-        onLogout={onLogout}
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
+      <GlobalNav onLogout={onLogout} />
 
       {/* Scheduler Header */}
       <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-0 z-10">
@@ -1113,6 +940,40 @@ export default function Scheduler({
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mt-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <button
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-600"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Indicator */}
+      {(isLoadingAppointments || isLoadingOperatories) && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-[#1F3A5F]" />
+          <span className="ml-3 text-gray-600">
+            {isLoadingOperatories
+              ? "Loading operatories..."
+              : "Loading appointments..."}
+          </span>
+        </div>
+      )}
+
       {/* Scheduler Grid */}
       <div
         className="overflow-auto scheduler-scroll-container"
@@ -1210,7 +1071,7 @@ export default function Scheduler({
                       return (
                         <div
                           key={appointment.id}
-                          className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(appointment.status)}`}
+                          className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getProcedureTypeColor(appointment.procedureType)}`}
                           style={{
                             top: `${top}px`,
                             height: `${height}px`,

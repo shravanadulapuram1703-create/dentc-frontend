@@ -8,11 +8,28 @@ import {
   MessageSquare,
   Plus,
   Trash2,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { components } from "../../styles/theme";
 import SendEmailModal from "./SendEmailModal";
 import AddEditAppointmentForm from "./AddEditAppointmentForm";
+import {
+  fetchProviders,
+  fetchOperatories,
+  fetchProcedureTypes,
+  fetchSchedulerConfig,
+  type Provider,
+  type Operatory,
+  type ProcedureType,
+  type SchedulerConfig,
+} from "../../services/schedulerApi";
+import {
+  createPatient,
+  getPatients,
+  type PatientCreateRequest,
+  type Patient,
+} from "../../services/patientApi";
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -94,6 +111,20 @@ export default function NewAppointmentModal({
   >([]);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Dynamic metadata state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [operatories, setOperatories] = useState<Operatory[]>([]);
+  const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
+  const [schedulerConfig, setSchedulerConfig] = useState<SchedulerConfig | null>(null);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
+  
+  // Quick Save loading state
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Patient search loading state
+  const [isSearchingPatients, setIsSearchingPatients] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState({
     // Patient Information
@@ -109,82 +140,108 @@ export default function NewAppointmentModal({
     date: new Date().toISOString().split("T")[0],
     time: selectedSlot?.time || "09:00",
     duration: 10,
-    procedureType: "New Patient",
+    procedureType: "",
     notes: "",
-    operatory: selectedSlot?.operatory || "OP1",
-    provider: "Dr. Jinna",
+    operatory: selectedSlot?.operatory || "",
+    provider: "",
   });
 
-  // Mock patient data for search
-  const mockPatients: PatientSearchResult[] = [
-    {
-      patientId: "PT-000001",
-      name: "Smith, John",
-      gender: "M",
-      ssn: "***-**-1234",
-      phone: "(555) 123-4567",
-      birthdate: "05/15/1980",
-      age: 44,
-      respId: "R-001",
-      chartNumber: "CH-001",
-      patientType: "General",
-      office: "Cranberry Main",
-    },
-    {
-      patientId: "PT-000002",
-      name: "Johnson, Sarah",
-      gender: "F",
-      ssn: "***-**-5678",
-      phone: "(555) 234-5678",
-      birthdate: "08/22/1975",
-      age: 49,
-      respId: "R-002",
-      chartNumber: "CH-002",
-      patientType: "General",
-      office: "Cranberry North",
-    },
-    {
-      patientId: "PT-000003",
-      name: "Brown, Michael",
-      gender: "M",
-      ssn: "***-**-9012",
-      phone: "(555) 345-6789",
-      birthdate: "11/30/1992",
-      age: 32,
-      respId: "R-003",
-      chartNumber: "CH-003",
-      patientType: "Ortho",
-      office: "Cranberry Main",
-    },
-    {
-      patientId: "PT-000004",
-      name: "Davis, Emily",
-      gender: "F",
-      ssn: "***-**-3456",
-      phone: "(555) 456-7890",
-      birthdate: "03/12/1988",
-      age: 36,
-      respId: "R-004",
-      chartNumber: "CH-004",
-      patientType: "General",
-      office: "Downtown Pittsburgh",
-    },
-  ];
+  // Fetch metadata when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const procedureTypes = [
-    { name: "Cleaning", color: "bg-blue-100" },
-    { name: "Consult", color: "bg-purple-100" },
-    { name: "Crowns", color: "bg-yellow-100" },
-    { name: "Emergency", color: "bg-red-100" },
-    { name: "Endo / RCT", color: "bg-pink-100" },
-    { name: "Extraction", color: "bg-orange-100" },
-    { name: "Implants", color: "bg-indigo-100" },
-    { name: "Lab Case", color: "bg-cyan-100" },
-    { name: "New Patient", color: "bg-green-100" },
-    { name: "Perio", color: "bg-rose-100" },
-    { name: "Recall / Recare", color: "bg-teal-100" },
-    { name: "Restorative", color: "bg-amber-100" },
-  ];
+    const loadMetadata = async () => {
+      setIsLoadingMetadata(true);
+      setMetadataError(null);
+      try {
+        // Fetch all metadata in parallel
+        const [providersData, operatoriesData, procedureTypesData, configData] = await Promise.all([
+          fetchProviders(),
+          fetchOperatories(),
+          fetchProcedureTypes(),
+          fetchSchedulerConfig(),
+        ]);
+
+        setProviders(providersData);
+        setOperatories(operatoriesData);
+        setProcedureTypes(procedureTypesData);
+        setSchedulerConfig(configData);
+
+        // Set default values after data loads
+        if (operatoriesData.length > 0 && !selectedSlot?.operatory) {
+          const firstOperatory = operatoriesData[0];
+          if (firstOperatory) {
+            setFormData((prev) => ({
+              ...prev,
+              operatory: firstOperatory.id,
+            }));
+          }
+        }
+
+        if (providersData.length > 0) {
+          const firstProvider = providersData[0];
+          if (firstProvider) {
+            setFormData((prev) => ({
+              ...prev,
+              provider: firstProvider.name,
+            }));
+          }
+        }
+
+        if (procedureTypesData.length > 0) {
+          const firstProcedureType = procedureTypesData[0];
+          if (firstProcedureType) {
+            setFormData((prev) => ({
+              ...prev,
+              procedureType: firstProcedureType.name,
+            }));
+          }
+        }
+
+        if (configData) {
+          setFormData((prev) => ({
+            ...prev,
+            duration: configData.slotInterval || 10,
+          }));
+        }
+      } catch (err: any) {
+        setMetadataError(`Failed to load metadata: ${err.message}`);
+        console.error("Error loading metadata:", err);
+      } finally {
+        setIsLoadingMetadata(false);
+      }
+    };
+
+    loadMetadata();
+  }, [isOpen, selectedSlot]);
+
+  // Update form defaults when selectedSlot changes
+  useEffect(() => {
+    if (selectedSlot) {
+      setFormData((prev) => ({
+        ...prev,
+        time: selectedSlot.time,
+        operatory: selectedSlot.operatory,
+      }));
+
+      // Auto-select provider based on operatory
+      const operatory = operatories.find((op) => op.id === selectedSlot.operatory);
+      if (operatory && operatory.provider) {
+        setFormData((prev) => ({
+          ...prev,
+          provider: operatory.provider,
+        }));
+      }
+    }
+  }, [selectedSlot, operatories]);
+
+  // Note: Patient search now uses the Patients API via handlePatientSearch
+
+  // Helper to get procedure type color (fallback if not provided by API)
+  const getProcedureTypeColor = (procedureName: string): string => {
+    const procedure = procedureTypes.find((pt) => pt.name === procedureName);
+    return procedure?.color || "bg-gray-100";
+  };
 
   const handleTypeSelection = (
     type: typeof appointmentType,
@@ -199,25 +256,76 @@ export default function NewAppointmentModal({
     }
   };
 
-  const handlePatientSearch = () => {
+  // Convert API Patient to PatientSearchResult format
+  const convertPatientToSearchResult = (patient: Patient): PatientSearchResult => {
+    // Format name as "LastName, FirstName"
+    const name = `${patient.lastName}, ${patient.firstName}`;
+    
+    // Calculate age from DOB if available
+    let age = 0;
+    if (patient.dob) {
+      const birthDate = new Date(patient.dob);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+    
+    // Format birthdate from YYYY-MM-DD to MM/DD/YYYY if available
+    let birthdateFormatted = "";
+    if (patient.dob) {
+      const dateParts = patient.dob.split("-");
+      if (dateParts.length === 3) {
+        birthdateFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+      }
+    }
+    
+    return {
+      patientId: patient.chartNo || patient.id.toString(), // Use chartNo as primary ID, fallback to id
+      name: name,
+      gender: patient.gender || "U",
+      ssn: "***-**-****", // SSN not in Patient API, use placeholder
+      phone: patient.phone || "",
+      birthdate: birthdateFormatted,
+      age: age,
+      respId: "R-001", // Not in Patient API, use placeholder
+      chartNumber: patient.chartNo || `CH-${patient.id}`,
+      patientType: "General", // Not in Patient API, use default
+      office: currentOffice, // Use current office
+      ...(patient.email && { email: patient.email }),
+    };
+  };
+
+  const handlePatientSearch = async () => {
     if (!searchText.trim()) {
       alert("Please enter search criteria");
       return;
     }
 
-    // Mock search - filter patients based on search text
-    const results = mockPatients.filter((patient) => {
-      const searchLower = searchText.toLowerCase();
-      return (
-        patient.name.toLowerCase().includes(searchLower) ||
-        patient.patientId.toLowerCase().includes(searchLower) ||
-        patient.phone.includes(searchText) ||
-        patient.chartNumber.toLowerCase().includes(searchLower)
-      );
-    });
+    setIsSearchingPatients(true);
+    setHasSearched(false);
+    setSearchResults([]);
 
-    setSearchResults(results);
-    setHasSearched(true);
+    try {
+      // Call the Patients API with search term
+      // The API searches in: first name, last name, chart number, phone, email
+      const response = await getPatients(searchText.trim(), 100, 0);
+      
+      // Convert API patients to PatientSearchResult format
+      const results = response.patients.map(convertPatientToSearchResult);
+      
+      setSearchResults(results);
+      setHasSearched(true);
+    } catch (err: any) {
+      console.error("Error searching patients:", err);
+      const errorMessage = err.response?.data?.detail || err.message || "Failed to search patients";
+      alert(`Error searching patients: ${errorMessage}`);
+      setHasSearched(true); // Set to true so error message can be shown
+    } finally {
+      setIsSearchingPatients(false);
+    }
   };
 
   const handleSelectPatient = (
@@ -225,18 +333,34 @@ export default function NewAppointmentModal({
   ) => {
     setSelectedPatient(patient);
     // Pre-fill form data with selected patient
+    const nameParts = patient.name.split(", ");
     setFormData({
       ...formData,
-      lastName: patient.name.split(", ")[0],
-      firstName: patient.name.split(", ")[1],
-      phoneNumber: patient.phone,
-      birthdate: patient.birthdate,
+      lastName: nameParts[0] || "",
+      firstName: nameParts[1] || "",
+      phoneNumber: patient.phone || "",
+      birthdate: patient.birthdate || "",
     });
     setShowPatientSearch(false);
     setShowPatientForm(true);
   };
 
-  const handleQuickSave = () => {
+  const handleQuickSave = async () => {
+    // Debug: Log at the very beginning to confirm function is called
+    console.log("🚀 handleQuickSave called!");
+    console.log("=== Quick Save Debug (START) ===");
+    console.log("appointmentType:", appointmentType);
+    console.log("selectedPatient:", selectedPatient ? "EXISTS" : "NULL");
+    console.log("formData:", {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      birthdate: formData.birthdate,
+      phoneNumber: formData.phoneNumber,
+      operatory: formData.operatory,
+      provider: formData.provider,
+      procedureType: formData.procedureType,
+    });
+    
     // Validate required fields
     if (appointmentType === "new") {
       if (
@@ -245,6 +369,7 @@ export default function NewAppointmentModal({
         !formData.firstName ||
         !formData.phoneNumber
       ) {
+        console.log("❌ Validation failed: Missing patient fields");
         alert(
           "Please fill in all required fields (Birthdate, Last Name, First Name, Phone Number)",
         );
@@ -252,8 +377,105 @@ export default function NewAppointmentModal({
       }
     }
 
-    onSave(formData);
-    onClose();
+    // Validate appointment-specific required fields
+    if (!formData.operatory || !formData.provider || !formData.procedureType) {
+      console.log("❌ Validation failed: Missing appointment fields");
+      alert("Please select Operatory, Provider, and Procedure Type");
+      return;
+    }
+
+    console.log("✅ Validation passed, proceeding with save...");
+    setIsSaving(true);
+
+    try {
+      let patientId: string;
+
+      // Step 1: Create patient first (if new patient)
+      // Determine if we need to create a new patient
+      // For new patients: appointmentType is "new" OR no patient is selected
+      const isNewPatient = appointmentType === "new" || !selectedPatient;
+      
+      console.log("isNewPatient (should create patient):", isNewPatient);
+
+      if (isNewPatient) {
+        console.log("Creating new patient...");
+        
+        // Ensure we have required patient data
+        if (!formData.firstName || !formData.lastName) {
+          throw new Error("First name and last name are required to create a patient");
+        }
+        
+        // Convert birthdate from MM/DD/YYYY to YYYY-MM-DD format
+        let dobFormatted: string | undefined;
+        if (formData.birthdate) {
+          // Parse MM/DD/YYYY format and convert to YYYY-MM-DD
+          const parts = formData.birthdate.split("/");
+          if (parts.length === 3) {
+            const month = parts[0];
+            const day = parts[1];
+            const year = parts[2];
+            if (month && day && year) {
+              dobFormatted = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+            }
+          } else {
+            // If already in YYYY-MM-DD format, use as-is
+            dobFormatted = formData.birthdate;
+          }
+        }
+
+        // Create patient using Patient API
+        const patientData: PatientCreateRequest = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          ...(dobFormatted && { dob: dobFormatted }),
+          ...(formData.phoneNumber && { phone: formData.phoneNumber }),
+          ...(formData.email && { email: formData.email }),
+          // Note: phone_type is not in Patient API, but phone is stored
+          // gender can be added later if needed
+        };
+
+        console.log("Patient data to create:", patientData);
+        const newPatient = await createPatient(patientData);
+        console.log("Patient created successfully:", newPatient);
+        
+        // Use chartNo as patientId (or use id if chartNo is preferred)
+        // The appointment API expects patientId as string, so we'll use chartNo
+        patientId = newPatient.chartNo || newPatient.id.toString();
+        console.log("Using patientId:", patientId);
+      } else {
+        console.log("Using existing patient:", selectedPatient?.patientId);
+        // Existing patient: use their patient ID
+        patientId = selectedPatient.patientId;
+      }
+
+      // Step 2: Create appointment with the patient ID
+      // Format matches API contract: APPOINTMENT_API_CONTRACTS.md
+      // API expects snake_case field names
+      const appointmentPayload = {
+        patient_id: patientId,
+        date: formData.date,
+        start_time: formData.time,
+        duration: formData.duration,
+        procedure_type: formData.procedureType,
+        operatory: formData.operatory,
+        provider: formData.provider,
+        notes: formData.notes || undefined,
+        status: "Scheduled", // Default status for Quick Save
+      };
+
+      // Call onSave with the appointment payload
+      // The Scheduler component will handle the appointment creation API call
+      console.log("📤 Calling onSave with appointment payload:", appointmentPayload);
+      onSave(appointmentPayload);
+      console.log("✅ onSave called, closing modal...");
+      onClose();
+    } catch (err: any) {
+      console.error("Error in Quick Save:", err);
+      const errorMessage = err.response?.data?.detail || err.message || "Failed to save appointment";
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleContinue = () => {
@@ -340,6 +562,28 @@ export default function NewAppointmentModal({
             <X className="w-6 h-6" strokeWidth={2} />
           </button>
         </div>
+
+        {/* Loading Indicator */}
+        {isLoadingMetadata && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-[#1F3A5F]" />
+            <span className="ml-3 text-gray-600">Loading appointment options...</span>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {metadataError && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mt-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="text-red-400">⚠️</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{metadataError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Selected Slot Information - Medical Slate Theme */}
         {selectedSlot && (
@@ -807,7 +1051,7 @@ export default function NewAppointmentModal({
                         Patient ID:
                       </span>
                       <span className="ml-2 text-[#3A6EA5] font-bold">
-                        {selectedPatient.patientId}
+                        {(selectedPatient as PatientSearchResult).patientId}
                       </span>
                     </div>
                     <div>
@@ -815,7 +1059,7 @@ export default function NewAppointmentModal({
                         Name:
                       </span>
                       <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.name}
+                        {(selectedPatient as PatientSearchResult).name}
                       </span>
                     </div>
                     <div>
@@ -823,7 +1067,7 @@ export default function NewAppointmentModal({
                         DOB:
                       </span>
                       <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.birthdate}
+                        {(selectedPatient as PatientSearchResult).birthdate}
                       </span>
                     </div>
                     <div>
@@ -831,7 +1075,7 @@ export default function NewAppointmentModal({
                         Office:
                       </span>
                       <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.office}
+                        {(selectedPatient as PatientSearchResult).office}
                       </span>
                     </div>
                   </div>
@@ -1029,36 +1273,37 @@ export default function NewAppointmentModal({
                           procedureType: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
+                      disabled={isLoadingMetadata || procedureTypes.length === 0}
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      {procedureTypes.map((type) => (
-                        <option
-                          key={type.name}
-                          value={type.name}
-                        >
-                          {type.name}
-                        </option>
-                      ))}
+                      {procedureTypes.length === 0 ? (
+                        <option value="">Loading...</option>
+                      ) : (
+                        procedureTypes.map((type) => (
+                          <option key={type.id || type.name} value={type.name}>
+                            {type.name}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                 </div>
 
                 {/* Procedure Type Color Preview */}
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-sm text-[#64748B] font-medium">
-                    Color:
-                  </span>
-                  <div
-                    className={`px-3 py-1 rounded font-medium text-sm ${
-                      procedureTypes.find(
-                        (t) =>
-                          t.name === formData.procedureType,
-                      )?.color || "bg-gray-100"
-                    }`}
-                  >
-                    {formData.procedureType}
+                {formData.procedureType && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm text-[#64748B] font-medium">
+                      Color:
+                    </span>
+                    <div
+                      className={`px-3 py-1 rounded font-medium text-sm ${getProcedureTypeColor(
+                        formData.procedureType
+                      )}`}
+                    >
+                      {formData.procedureType}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Appointment Notes */}
                 <div className="mt-4">
@@ -1093,17 +1338,18 @@ export default function NewAppointmentModal({
                           provider: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
+                      disabled={isLoadingMetadata || providers.length === 0}
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      <option value="Dr. Jinna">
-                        Dr. Jinna
-                      </option>
-                      <option value="Dr. Smith">
-                        Dr. Smith
-                      </option>
-                      <option value="Dr. Jones">
-                        Dr. Jones
-                      </option>
+                      {providers.length === 0 ? (
+                        <option value="">Loading...</option>
+                      ) : (
+                        providers.map((provider) => (
+                          <option key={provider.id} value={provider.name}>
+                            {provider.name}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>
@@ -1112,28 +1358,29 @@ export default function NewAppointmentModal({
                     </label>
                     <select
                       value={formData.operatory}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const selectedOperatory = operatories.find(
+                          (op) => op.id === e.target.value
+                        );
                         setFormData({
                           ...formData,
                           operatory: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
+                          // Auto-update provider based on operatory
+                          provider: selectedOperatory?.provider || formData.provider,
+                        });
+                      }}
+                      disabled={isLoadingMetadata || operatories.length === 0}
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      <option value="OP1">
-                        OP 1 - Hygiene
-                      </option>
-                      <option value="OP2">OP 2 - Major</option>
-                      <option value="OP3">OP 3 - Minor</option>
-                      <option value="OP4">
-                        OP 4 - Regular Checkup
-                      </option>
-                      <option value="OP5">
-                        OP 5 - Rescheduled
-                      </option>
-                      <option value="OP6">
-                        OP 6 - Surgery
-                      </option>
+                      {operatories.length === 0 ? (
+                        <option value="">Loading...</option>
+                      ) : (
+                        operatories.map((operatory) => (
+                          <option key={operatory.id} value={operatory.id}>
+                            {operatory.name}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                 </div>
@@ -1155,10 +1402,24 @@ export default function NewAppointmentModal({
                 </button>
                 <div className="flex gap-3">
                   <button
-                    onClick={handleQuickSave}
-                    className={components.buttonPrimary}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("🔘 QUICK SAVE button clicked!");
+                      handleQuickSave();
+                    }}
+                    disabled={isSaving}
+                    type="button"
+                    className={`${components.buttonPrimary} ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    QUICK SAVE
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                        SAVING...
+                      </>
+                    ) : (
+                      "QUICK SAVE"
+                    )}
                   </button>
                   <button
                     onClick={handleContinue}
