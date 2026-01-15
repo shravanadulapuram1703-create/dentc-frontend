@@ -47,7 +47,9 @@ function AdminPageWrapper({
         currentOffice={currentOffice}
         setCurrentOffice={setCurrentOffice}
       />
-      {children}
+      <div className="pt-[120px]">
+        {children}
+      </div>
     </div>
   );
 }

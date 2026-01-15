@@ -170,10 +170,8 @@
     background: var(--color-bg-secondary);
     color: var(--color-text-primary);
     min-height: 100vh;
-    max-width: 100vw;
-    overflow-x: auto;
-    overflow-y: auto;
-    /* hidden; */
+    /* ❌ REMOVED: overflow-x: hidden; → This breaks DevTools & responsive layouts */
+    /* ✅ Let content containers handle their own scrolling */
     line-height: 1.6;
   }
   
@@ -195,6 +193,54 @@
   
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-medical-blue);
+  }
+
+  /* Enhanced Scrollbar for Modals */
+  .scrollbar-visible::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-track {
+    background: #E8EFF7;
+    border-left: 1px solid #CBD5E1;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-thumb {
+    background: #3A6EA5;
+    border-radius: 7px;
+    border: 3px solid #E8EFF7;
+  }
+  
+  .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+    background: #1F3A5F;
+  }
+
+  /* Thin Scrollbar for Context Menus */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #3A6EA5;
+  }
+
+  .scrollbar-thumb-\[--color-medium-gray\]::-webkit-scrollbar-thumb {
+    background: var(--color-medium-gray);
+  }
+
+  .scrollbar-track-\[--color-light-gray\]::-webkit-scrollbar-track {
+    background: var(--color-light-gray);
   }
 }
 

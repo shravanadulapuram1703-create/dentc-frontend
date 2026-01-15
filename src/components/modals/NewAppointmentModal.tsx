@@ -124,6 +124,20 @@ export default function NewAppointmentModal({
   
   // Patient search loading state
   const [isSearchingPatients, setIsSearchingPatients] = useState(false);
+  // ✅ Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original overflow style
+      const originalOverflow = document.body.style.overflow;
+      // Prevent scrolling
+      document.body.style.overflow = "hidden";
+
+      // Cleanup function to restore scrolling when modal closes
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   // Form state
   const [formData, setFormData] = useState({
