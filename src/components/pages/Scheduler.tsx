@@ -491,14 +491,41 @@ export default function Scheduler({
       provider: "Dr. Shravan",
       office: "Moon, PA",
     },
+        {
+      id: "OP7",
+      name: "OP 7 - Rescheduled",
+      provider: "Dr. Uday",
+      office: "Moon, PA",
+    },
+    {
+      id: "OP8",
+      name: "OP 8 - Surgery",
+      provider: "Dr. Shravan",
+      office: "Moon, PA",
+    },
   ];
+
+  // ✅ FIX: Create a Set of active operatory IDs for fast lookup
+  const activeOperatoryIds = useMemo(
+    () => new Set(operatories.map((op) => op.id)),
+    [operatories],
+  );
+
+  // ✅ FIX: Filter appointments to only include those with valid operatories
+  const validAppointments = useMemo(
+    () =>
+      appointments.filter((appt) =>
+        activeOperatoryIds.has(appt.operatory),
+      ),
+    [appointments, activeOperatoryIds],
+  );
 
   // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date
   const appointmentsByOperatory = useMemo(() => {
     const currentDate = formatDateYYYYMMDD(selectedDate);
     const map = new Map<string, Appointment[]>();
 
-    appointments
+    validAppointments
       .filter((appt) => appt.date === currentDate)
       .forEach((appt) => {
         if (!map.has(appt.operatory)) {
@@ -508,7 +535,7 @@ export default function Scheduler({
       });
 
     return map;
-  }, [appointments, selectedDate]);
+  }, [validAppointments, selectedDate]);
 
   // Generate time slots (8:00 AM to 5:00 PM in 10-minute increments)
   const generateTimeSlots = () => {
@@ -995,10 +1022,36 @@ export default function Scheduler({
     });
   };
 
-  // ✅ CRITICAL FIX: Calculate dynamic min-width based on operatory count
+  // ✅ Dynamic Column Width Calculation based on number of operatories
   const TIME_COLUMN_WIDTH = 80;
-  const OPERATORY_COLUMN_WIDTH = 250;
-  const schedulerMinWidth =
+  const MIN_OPERATORY_COLUMN_WIDTH = 250; // Minimum width per operatory
+  const SCROLLBAR_BUFFER = 20; // Account for scrollbar
+
+  // Calculate available viewport width
+  const viewportWidth =
+    typeof window !== "undefined" ? window.innerWidth : 1920;
+  const availableWidth =
+    viewportWidth - TIME_COLUMN_WIDTH - SCROLLBAR_BUFFER;
+
+  // Dynamic operatory column width:
+  // - If few operatories, expand to fill viewport
+  // - If many operatories, use minimum width and enable scroll
+  const dynamicOperatoryWidth = Math.max(
+    MIN_OPERATORY_COLUMN_WIDTH,
+    Math.floor(
+      availableWidth / Math.max(operatories.length, 1),
+    ),
+  );
+
+  // Use dynamic width if it provides better UX (columns fill screen for 1-4 operatories)
+  // Otherwise fallback to minimum width for many operatories
+  const OPERATORY_COLUMN_WIDTH =
+    operatories.length <= 4
+      ? dynamicOperatoryWidth
+      : MIN_OPERATORY_COLUMN_WIDTH;
+
+  // ✅ Calculate exact grid width based on actual column count
+  const gridWidth =
     TIME_COLUMN_WIDTH +
     operatories.length * OPERATORY_COLUMN_WIDTH;
 
@@ -1122,7 +1175,10 @@ export default function Scheduler({
                 className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
                 aria-label="Print schedule"
               >
-                <Printer className="w-4 h-4" strokeWidth={2.5} />
+                <Printer
+                  className="w-4 h-4"
+                  strokeWidth={2.5}
+                />
                 PRINT
               </button>
             </div>
@@ -1137,138 +1193,138 @@ export default function Scheduler({
           aria-rowcount={timeSlots.length + 1}
           aria-colcount={operatories.length + 1}
         >
-          {/* ✅ CRITICAL FIX: Dynamic min-width calculation */}
+          {/* ✅ CRITICAL FIX: Force exact width to prevent extra space */}
           <div
-            className="inline-block"
-            style={{ minWidth: `${schedulerMinWidth}px` }}
+            className="inline-flex"
+            style={{ width: `${gridWidth}px` }}
           >
-            <div className="flex">
-              {/* Time Column */}
-              <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md">
-                <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
-                {timeSlots.map((time, index) => (
-                  <div
-                    key={time}
-                    className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                    style={{ minWidth: `${TIME_COLUMN_WIDTH}px` }}
-                    role="rowheader"
-                  >
-                    {index % 6 === 0 && time}
-                  </div>
-                ))}
-              </div>
-
-              {/* Operatory Columns */}
-              {operatories.map((operatory, colIndex) => (
+            {/* Time Column */}
+            <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md flex-shrink-0">
+              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
+              {timeSlots.map((time, index) => (
                 <div
-                  key={operatory.id}
-                  className="border-r-2 border-[#E2E8F0]"
+                  key={time}
+                  className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
                   style={{
-                    minWidth: `${OPERATORY_COLUMN_WIDTH}px`,
+                    width: `${TIME_COLUMN_WIDTH}px`,
                   }}
-                  role="gridcell"
-                  aria-colindex={colIndex + 2}
+                  role="rowheader"
                 >
-                  {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
-                  <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
-                    <div className="text-sm font-bold">
-                      {operatory.name}
-                    </div>
-                    <div className="text-xs opacity-90">
-                      {operatory.provider}
-                    </div>
-                  </div>
-
-                  {/* Time Slots */}
-                  <div className="relative bg-white">
-                    {timeSlots.map((time, rowIndex) => {
-                      const slotBlocked = isSlotBlocked(
-                        time,
-                        operatory.id,
-                      );
-                      const occupyingAppt =
-                        getSlotOccupyingAppointment(
-                          time,
-                          operatory.id,
-                        );
-
-                      return (
-                        <div
-                          key={`${operatory.id}-${time}`}
-                          className={`h-10 border-b border-slate-200 transition-colors ${
-                            slotBlocked
-                              ? "bg-slate-100 cursor-not-allowed"
-                              : "hover:bg-[#F7F9FC] cursor-pointer"
-                          }`}
-                          onContextMenu={(e) => {
-                            if (!slotBlocked) {
-                              handleEmptySlotRightClick(
-                                e,
-                                time,
-                                operatory.id,
-                              );
-                            } else {
-                              e.preventDefault();
-                            }
-                          }}
-                          title={
-                            slotBlocked && occupyingAppt
-                              ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
-                              : ""
-                          }
-                          role="gridcell"
-                          aria-rowindex={rowIndex + 2}
-                          aria-colindex={colIndex + 2}
-                        ></div>
-                      );
-                    })}
-
-                    {/* ✅ OPTIMIZED: Appointments from precomputed map */}
-                    {(
-                      appointmentsByOperatory.get(operatory.id) ||
-                      []
-                    ).map((appointment) => {
-                      const { top, height } =
-                        getAppointmentPosition(appointment);
-                      return (
-                        <div
-                          key={appointment.id}
-                          className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(appointment.status)}`}
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`,
-                          }}
-                          onContextMenu={(e) =>
-                            handleAppointmentRightClick(
-                              e,
-                              appointment,
-                            )
-                          }
-                          role="button"
-                          aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
-                          tabIndex={0}
-                        >
-                          <div className="text-xs truncate">
-                            <strong>
-                              {appointment.startTime}
-                            </strong>{" "}
-                            {appointment.patientName}
-                          </div>
-                          <div className="text-xs truncate">
-                            {appointment.procedureType}
-                          </div>
-                          {appointment.duration >= 30 && (
-                            <div className="text-xs opacity-75">
-                              {appointment.duration} min
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {index % 6 === 0 && time}
                 </div>
               ))}
             </div>
+
+            {/* Operatory Columns */}
+            {operatories.map((operatory, colIndex) => (
+              <div
+                key={operatory.id}
+                className="border-r-2 border-[#E2E8F0] flex-shrink-0"
+                style={{
+                  width: `${OPERATORY_COLUMN_WIDTH}px`,
+                }}
+                role="gridcell"
+                aria-colindex={colIndex + 2}
+              >
+                {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
+                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
+                  <div className="text-sm font-bold">
+                    {operatory.name}
+                  </div>
+                  <div className="text-xs opacity-90">
+                    {operatory.provider}
+                  </div>
+                </div>
+
+                {/* Time Slots */}
+                <div className="relative bg-white">
+                  {timeSlots.map((time, rowIndex) => {
+                    const slotBlocked = isSlotBlocked(
+                      time,
+                      operatory.id,
+                    );
+                    const occupyingAppt =
+                      getSlotOccupyingAppointment(
+                        time,
+                        operatory.id,
+                      );
+
+                    return (
+                      <div
+                        key={`${operatory.id}-${time}`}
+                        className={`h-10 border-b border-slate-200 transition-colors ${
+                          slotBlocked
+                            ? "bg-slate-100 cursor-not-allowed"
+                            : "hover:bg-[#F7F9FC] cursor-pointer"
+                        }`}
+                        onContextMenu={(e) => {
+                          if (!slotBlocked) {
+                            handleEmptySlotRightClick(
+                              e,
+                              time,
+                              operatory.id,
+                            );
+                          } else {
+                            e.preventDefault();
+                          }
+                        }}
+                        title={
+                          slotBlocked && occupyingAppt
+                            ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
+                            : ""
+                        }
+                        role="gridcell"
+                        aria-rowindex={rowIndex + 2}
+                        aria-colindex={colIndex + 2}
+                      ></div>
+                    );
+                  })}
+
+                  {/* ✅ OPTIMIZED: Appointments from precomputed map */}
+                  {(
+                    appointmentsByOperatory.get(operatory.id) ||
+                    []
+                  ).map((appointment) => {
+                    const { top, height } =
+                      getAppointmentPosition(appointment);
+                    return (
+                      <div
+                        key={appointment.id}
+                        className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(appointment.status)}`}
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                        }}
+                        onContextMenu={(e) =>
+                          handleAppointmentRightClick(
+                            e,
+                            appointment,
+                          )
+                        }
+                        role="button"
+                        aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
+                        tabIndex={0}
+                      >
+                        <div className="text-xs truncate">
+                          <strong>
+                            {appointment.startTime}
+                          </strong>{" "}
+                          {appointment.patientName}
+                        </div>
+                        <div className="text-xs truncate">
+                          {appointment.procedureType}
+                        </div>
+                        {appointment.duration >= 30 && (
+                          <div className="text-xs opacity-75">
+                            {appointment.duration} min
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
