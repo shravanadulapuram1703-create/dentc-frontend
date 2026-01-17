@@ -75,6 +75,33 @@ export default function Scheduler({
       y: 0,
       type: "empty",
     });
+  const [activeSubmenu, setActiveSubmenu] = useState<{
+    type: "goto" | "status" | "print" | null;
+    anchorRect: DOMRect | null;
+  }>({
+    type: null,
+    anchorRect: null,
+  });
+
+  // ===============================
+  // STEP 2: Submenu open / close helpers
+  // ===============================
+  const openSubmenu = (
+    type: "goto" | "status" | "print",
+    target: HTMLElement,
+  ) => {
+    setActiveSubmenu({
+      type,
+      anchorRect: target.getBoundingClientRect(),
+    });
+  };
+
+  const closeSubmenu = () => {
+    setActiveSubmenu({
+      type: null,
+      anchorRect: null,
+    });
+  };
   const [showNewAppointment, setShowNewAppointment] =
     useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -491,7 +518,7 @@ export default function Scheduler({
       provider: "Dr. Shravan",
       office: "Moon, PA",
     },
-        {
+    {
       id: "OP7",
       name: "OP 7 - Rescheduled",
       provider: "Dr. Uday",
@@ -721,6 +748,7 @@ export default function Scheduler({
           y: 0,
           type: "empty",
         });
+        closeSubmenu(); // ✅ STEP 7: Close submenu when context menu closes
       }
     };
 
@@ -1411,187 +1439,38 @@ export default function Scheduler({
                   Delete
                 </button>
 
-                {/* Go To Submenu */}
-                <div className="relative group">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
-                    role="menuitem"
-                    aria-haspopup="true"
-                  >
-                    Go To
-                    <span>›</span>
-                  </button>
-                  <div
-                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                    style={{ minWidth: "180px" }}
-                    role="menu"
-                  >
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "overview",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Patient Overview
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Treatment Plans
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "transactions",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Transactions
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "ledger",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Ledger
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Progress Notes
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Notes
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Email
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Text Message
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "charting",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Restorative Chart
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Perio Chart
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Imaging System
-                    </button>
-                  </div>
-                </div>
+                {/* ✅ STEP 4: Go To - Click-based trigger */}
+                <button
+                  onClick={(e) => openSubmenu("goto", e.currentTarget)}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
+                  Go To
+                  <span>›</span>
+                </button>
 
-                {/* Set Status Submenu */}
-                <div className="relative group">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
-                    role="menuitem"
-                    aria-haspopup="true"
-                  >
-                    Set Status
-                    <span>›</span>
-                  </button>
-                  <div
-                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                    style={{ minWidth: "180px" }}
-                    role="menu"
-                  >
-                    {[
-                      "Scheduled",
-                      "Confirmed",
-                      "Unconfirmed",
-                      "Left Message",
-                      "In Reception",
-                      "Available",
-                      "In Operatory",
-                      "Checked Out",
-                      "Missed",
-                      "Cancelled",
-                    ].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() =>
-                          handleSetStatus(
-                            contextMenu.appointment!,
-                            status as Appointment["status"],
-                          )
-                        }
-                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                        role="menuitem"
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {/* ✅ STEP 4: Set Status - Click-based trigger */}
+                <button
+                  onClick={(e) => openSubmenu("status", e.currentTarget)}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
+                  Set Status
+                  <span>›</span>
+                </button>
 
-                {/* Print Submenu */}
-                <div className="relative group">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
-                    role="menuitem"
-                    aria-haspopup="true"
-                  >
-                    Print
-                    <span>›</span>
-                  </button>
-                  <div
-                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                    style={{ minWidth: "180px" }}
-                    role="menu"
-                  >
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Routing Slip
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Walkout Report
-                    </button>
-                  </div>
-                </div>
+                {/* ✅ STEP 4: Print - Click-based trigger */}
+                <button
+                  onClick={(e) => openSubmenu("print", e.currentTarget)}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
+                  Print
+                  <span>›</span>
+                </button>
               </>
             ) : null}
           </div>
@@ -1631,6 +1510,131 @@ export default function Scheduler({
                     .left + window.scrollX,
               }}
             />,
+            document.body,
+          )}
+
+        {/* ✅ STEP 5: Portal-based Submenu Rendering (CRITICAL FIX) */}
+        {activeSubmenu.type &&
+          activeSubmenu.anchorRect &&
+          createPortal(
+            <div
+              className="fixed bg-white border border-[#E2E8F0] rounded-lg shadow-xl py-1 z-[9999]"
+              style={{
+                top: activeSubmenu.anchorRect.top,
+                left: activeSubmenu.anchorRect.right + 6,
+                minWidth: "200px",
+                maxHeight: "400px",
+                overflowY: "auto",
+              }}
+              onMouseLeave={closeSubmenu}
+            >
+              {/* ✅ STEP 6: Go To Submenu */}
+              {activeSubmenu.type === "goto" && (
+                <>
+                  <button
+                    onClick={() => {
+                      handleGoToPatient("overview", contextMenu.appointment!);
+                      closeSubmenu();
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
+                  >
+                    Patient Overview
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Treatment Plans
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleGoToPatient("transactions", contextMenu.appointment!);
+                      closeSubmenu();
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
+                  >
+                    Transactions
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleGoToPatient("ledger", contextMenu.appointment!);
+                      closeSubmenu();
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
+                  >
+                    Ledger
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Progress Notes
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Notes
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Email
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Text Message
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleGoToPatient("charting", contextMenu.appointment!);
+                      closeSubmenu();
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
+                  >
+                    Restorative Chart
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Perio Chart
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Imaging System
+                  </button>
+                </>
+              )}
+
+              {/* ✅ STEP 6: Set Status Submenu */}
+              {activeSubmenu.type === "status" && (
+                <>
+                  {[
+                    "Scheduled",
+                    "Confirmed",
+                    "Unconfirmed",
+                    "Left Message",
+                    "In Reception",
+                    "Available",
+                    "In Operatory",
+                    "Checked Out",
+                    "Missed",
+                    "Cancelled",
+                  ].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        handleSetStatus(
+                          contextMenu.appointment!,
+                          status as Appointment["status"],
+                        );
+                        closeSubmenu();
+                      }}
+                      className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* ✅ STEP 6: Print Submenu */}
+              {activeSubmenu.type === "print" && (
+                <>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Routing Slip
+                  </button>
+                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
+                    Walkout Report
+                  </button>
+                </>
+              )}
+            </div>,
             document.body,
           )}
       </div>

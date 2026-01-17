@@ -104,7 +104,7 @@ export default function AddEditAppointmentForm({
     cellPhone: patient.cellPhone || patient.phone,
     workPhone: patient.workPhone || '',
     homePhone: patient.homePhone || '',
-    bypassPhone: false,
+    // bypassPhone: false,
     
     // Operatory & Scheduling
     appointmentDate: getTodayDate(), // NEW: Appointment date
@@ -436,7 +436,7 @@ export default function AddEditAppointmentForm({
                     <MessageSquare className="w-4 h-4" />
                   </button>
                 </div>
-                <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
+                {/* <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.bypassPhone}
@@ -444,7 +444,7 @@ export default function AddEditAppointmentForm({
                     className="w-3.5 h-3.5 rounded border-[#CBD5E1] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                   />
                   <span className="text-xs text-[#1E293B]">Bypass</span>
-                </label>
+                </label> */}
                 {phoneErrors.cellPhone && (
                   <p className="text-xs text-[#EF4444] mt-1">{phoneErrors.cellPhone}</p>
                 )}
