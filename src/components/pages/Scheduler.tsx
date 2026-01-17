@@ -82,7 +82,11 @@ export default function Scheduler({
     type: null,
     anchorRect: null,
   });
-
+  // ===============================
+  // MENU ITEM STYLE (STEP 2)
+  // ===============================
+  const menuItemClass =
+    "w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]";
   // ===============================
   // STEP 2: Submenu open / close helpers
   // ===============================
@@ -90,12 +94,40 @@ export default function Scheduler({
     type: "goto" | "status" | "print",
     target: HTMLElement,
   ) => {
-    setActiveSubmenu({
-      type,
-      anchorRect: target.getBoundingClientRect(),
+    setActiveSubmenu((prev) => {
+      // If clicking the same submenu, toggle it closed
+      if (prev.type === type) {
+        return { type: null, anchorRect: null };
+      }
+
+      return {
+        type,
+        anchorRect: target.getBoundingClientRect(),
+      };
     });
   };
 
+  // ===============================
+  // STEP 3: Submenu auto-flip helper
+  // ===============================
+  const SUBMENU_WIDTH = 240;
+  const SUBMENU_MAX_HEIGHT = 420;
+  const SUBMENU_MARGIN = 8;
+
+  const getSubmenuLeftPosition = () => {
+    if (!activeSubmenu.anchorRect) return 0;
+
+    const spaceOnRight =
+      window.innerWidth - activeSubmenu.anchorRect.right;
+
+    // Not enough space → open to the LEFT
+    if (spaceOnRight < SUBMENU_WIDTH + 10) {
+      return activeSubmenu.anchorRect.left - SUBMENU_WIDTH - 6;
+    }
+
+    // Default → open to the RIGHT
+    return activeSubmenu.anchorRect.right + 6;
+  };
   const closeSubmenu = () => {
     setActiveSubmenu({
       type: null,
@@ -738,17 +770,20 @@ export default function Scheduler({
   // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
+      const target = e.target as Node;
+
+      const clickedOutsideContextMenu =
         contextMenuRef.current &&
-        !contextMenuRef.current.contains(e.target as Node)
-      ) {
+        !contextMenuRef.current.contains(target);
+
+      if (clickedOutsideContextMenu) {
         setContextMenu({
           visible: false,
           x: 0,
           y: 0,
           type: "empty",
         });
-        closeSubmenu(); // ✅ STEP 7: Close submenu when context menu closes
+        closeSubmenu();
       }
     };
 
@@ -760,7 +795,7 @@ export default function Scheduler({
       );
   }, []);
 
-  // Close context menu on scroll
+  // ✅ Close context menu on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (contextMenu.visible) {
@@ -770,6 +805,7 @@ export default function Scheduler({
           y: 0,
           type: "empty",
         });
+        closeSubmenu();
       }
     };
 
@@ -794,6 +830,28 @@ export default function Scheduler({
     return () =>
       window.removeEventListener("scroll", handleScroll, true);
   }, [contextMenu.visible]);
+
+  // ✅ STEP 4: Close menus on ESC key (SEPARATE useEffect - not nested!)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (activeSubmenu.type) {
+          closeSubmenu();
+        } else if (contextMenu.visible) {
+          setContextMenu({
+            visible: false,
+            x: 0,
+            y: 0,
+            type: "empty",
+          });
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () =>
+      document.removeEventListener("keydown", handleKeyDown);
+  }, [activeSubmenu.type, contextMenu.visible]);
 
   // Close calendar picker when clicking outside
   useEffect(() => {
@@ -1255,7 +1313,7 @@ export default function Scheduler({
                 aria-colindex={colIndex + 2}
               >
                 {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
-                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
+                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-3 py-1.5 border-b-2 border-[#16293B] sticky top-0 z-20">
                   <div className="text-sm font-bold">
                     {operatory.name}
                   </div>
@@ -1360,14 +1418,13 @@ export default function Scheduler({
         {contextMenu.visible && (
           <div
             ref={contextMenuRef}
-            className="fixed bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 py-1 max-h-[500px]"
+            className="fixed bg-white border border-[#E2E8F0] rounded-lg shadow-xl z-50 py-0.5"
             style={{
               left: `${contextMenu.x}px`,
               top: `${contextMenu.y}px`,
-              minWidth: "220px",
+              width: "210px",
+              maxWidth: "210px",
             }}
-            role="menu"
-            aria-label="Appointment context menu"
           >
             {contextMenu.type === "empty" ? (
               <>
@@ -1378,19 +1435,19 @@ export default function Scheduler({
                       contextMenu.operatory,
                     )
                   }
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Add New Appointment
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Search Quick-Fill
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
+                  className="w-full px-3 py-1.5 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
                   role="menuitem"
                 >
                   Paste
@@ -1404,25 +1461,25 @@ export default function Scheduler({
                       contextMenu.appointment!,
                     )
                   }
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Edit
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Cut
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Copy
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Reschedule
@@ -1433,16 +1490,22 @@ export default function Scheduler({
                       contextMenu.appointment!,
                     )
                   }
-                  className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
                   role="menuitem"
                 >
                   Delete
                 </button>
-
+                {/* STEP 3.2: Divider between actions and submenus */}
+                <div className="my-1 border-t border-[#E2E8F0]" />
                 {/* ✅ STEP 4: Go To - Click-based trigger */}
                 <button
-                  onClick={(e) => openSubmenu("goto", e.currentTarget)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  onClick={(e) =>
+                    openSubmenu("goto", e.currentTarget)
+                  }
+                  className="w-full px-3 py-1.5 text-left
+             hover:bg-[#F7F9FC]
+             text-[#1E293B] font-medium text-sm
+             flex items-center justify-between"
                   role="menuitem"
                   aria-haspopup="true"
                 >
@@ -1452,8 +1515,13 @@ export default function Scheduler({
 
                 {/* ✅ STEP 4: Set Status - Click-based trigger */}
                 <button
-                  onClick={(e) => openSubmenu("status", e.currentTarget)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  onClick={(e) =>
+                    openSubmenu("status", e.currentTarget)
+                  }
+                  className="w-full px-3 py-1.5 text-left
+             hover:bg-[#F7F9FC]
+             text-[#1E293B] font-medium text-sm
+             flex items-center justify-between"
                   role="menuitem"
                   aria-haspopup="true"
                 >
@@ -1463,8 +1531,13 @@ export default function Scheduler({
 
                 {/* ✅ STEP 4: Print - Click-based trigger */}
                 <button
-                  onClick={(e) => openSubmenu("print", e.currentTarget)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
+                  onClick={(e) =>
+                    openSubmenu("print", e.currentTarget)
+                  }
+                  className="w-full px-3 py-1.5 text-left
+             hover:bg-[#F7F9FC]
+             text-[#1E293B] font-medium text-sm
+             flex items-center justify-between"
                   role="menuitem"
                   aria-haspopup="true"
                 >
@@ -1517,124 +1590,177 @@ export default function Scheduler({
         {activeSubmenu.type &&
           activeSubmenu.anchorRect &&
           createPortal(
-            <div
-              className="fixed bg-white border border-[#E2E8F0] rounded-lg shadow-xl py-1 z-[9999]"
-              style={{
-                top: activeSubmenu.anchorRect.top,
-                left: activeSubmenu.anchorRect.right + 6,
-                minWidth: "200px",
-                maxHeight: "400px",
-                overflowY: "auto",
-              }}
-              onMouseLeave={closeSubmenu}
-            >
-              {/* ✅ STEP 6: Go To Submenu */}
-              {activeSubmenu.type === "goto" && (
-                <>
-                  <button
-                    onClick={() => {
-                      handleGoToPatient("overview", contextMenu.appointment!);
-                      closeSubmenu();
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
-                  >
-                    Patient Overview
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Treatment Plans
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleGoToPatient("transactions", contextMenu.appointment!);
-                      closeSubmenu();
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
-                  >
-                    Transactions
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleGoToPatient("ledger", contextMenu.appointment!);
-                      closeSubmenu();
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
-                  >
-                    Ledger
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Progress Notes
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Notes
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Email
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Text Message
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleGoToPatient("charting", contextMenu.appointment!);
-                      closeSubmenu();
-                    }}
-                    className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
-                  >
-                    Restorative Chart
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Perio Chart
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Imaging System
-                  </button>
-                </>
-              )}
+            (() => {
+              // ✅ STEP 2: viewport-safe vertical calculation
+              const viewportHeight = window.innerHeight;
 
-              {/* ✅ STEP 6: Set Status Submenu */}
-              {activeSubmenu.type === "status" && (
-                <>
-                  {[
-                    "Scheduled",
-                    "Confirmed",
-                    "Unconfirmed",
-                    "Left Message",
-                    "In Reception",
-                    "Available",
-                    "In Operatory",
-                    "Checked Out",
-                    "Missed",
-                    "Cancelled",
-                  ].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        handleSetStatus(
-                          contextMenu.appointment!,
-                          status as Appointment["status"],
-                        );
-                        closeSubmenu();
-                      }}
-                      className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm"
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </>
-              )}
+              const idealTop = activeSubmenu.anchorRect.top;
+              const spaceBelow =
+                viewportHeight - idealTop - SUBMENU_MARGIN;
 
-              {/* ✅ STEP 6: Print Submenu */}
-              {activeSubmenu.type === "print" && (
-                <>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Routing Slip
-                  </button>
-                  <button className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] text-sm">
-                    Walkout Report
-                  </button>
-                </>
-              )}
-            </div>,
+              const submenuHeight = SUBMENU_MAX_HEIGHT;
+
+              const safeTop =
+                spaceBelow >= submenuHeight
+                  ? idealTop
+                  : Math.max(
+                      SUBMENU_MARGIN,
+                      viewportHeight - submenuHeight - SUBMENU_MARGIN,
+                    );
+
+              // ✅ STEP 3: Horizontal safety
+              const viewportWidth = window.innerWidth;
+
+              const idealLeft =
+                activeSubmenu.anchorRect.right + SUBMENU_MARGIN;
+
+              const spaceRight =
+                viewportWidth - idealLeft - SUBMENU_MARGIN;
+
+              const safeLeft =
+                spaceRight >= SUBMENU_WIDTH
+                  ? idealLeft
+                  : Math.max(
+                      SUBMENU_MARGIN,
+                      activeSubmenu.anchorRect.left -
+                        SUBMENU_WIDTH -
+                        SUBMENU_MARGIN,
+                    );
+
+              return (
+                <div
+                  className="fixed bg-white border border-[#E2E8F0] rounded-lg shadow-xl py-1 z-[9999]"
+                  style={{
+                    top: safeTop,
+                    left: safeLeft,
+                    width: SUBMENU_WIDTH,
+                    maxHeight: SUBMENU_MAX_HEIGHT,
+                    overflowY: "auto",
+                    boxSizing: "border-box",
+                  }}
+                  onMouseLeave={closeSubmenu}
+                >
+                  {/* ✅ STEP 6: Go To Submenu */}
+                  {activeSubmenu.type === "goto" && (
+                    <>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "overview",
+                            contextMenu.appointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Patient Overview
+                      </button>
+                      <button className={menuItemClass}>
+                        Treatment Plans
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "transactions",
+                            contextMenu.appointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Transactions
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "ledger",
+                            contextMenu.appointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Ledger
+                      </button>
+                      <button className={menuItemClass}>
+                        Progress Notes
+                      </button>
+                      <button className={menuItemClass}>
+                        Notes
+                      </button>
+                      <button className={menuItemClass}>
+                        Email
+                      </button>
+                      <button className={menuItemClass}>
+                        Text Message
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "charting",
+                            contextMenu.appointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Restorative Chart
+                      </button>
+                      <button className={menuItemClass}>
+                        Perio Chart
+                      </button>
+                      <button className={menuItemClass}>
+                        Imaging System
+                      </button>
+                    </>
+                  )}
+
+                  {/* ✅ STEP 6: Set Status Submenu */}
+                  {activeSubmenu.type === "status" && (
+                    <>
+                      {[
+                        "Scheduled",
+                        "Confirmed",
+                        "Unconfirmed",
+                        "Left Message",
+                        "In Reception",
+                        "Available",
+                        "In Operatory",
+                        "Checked Out",
+                        "Missed",
+                        "Cancelled",
+                      ].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            handleSetStatus(
+                              contextMenu.appointment!,
+                              status as Appointment["status"],
+                            );
+                            closeSubmenu();
+                          }}
+                          className={menuItemClass}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </>
+                  )}
+
+                  {/* ✅ STEP 6: Print Submenu */}
+                  {activeSubmenu.type === "print" && (
+                    <>
+                      <button className={menuItemClass}>
+                        Routing Slip
+                      </button>
+                      <button className={menuItemClass}>
+                        Walkout Report
+                      </button>
+                    </>
+                  )}
+                </div>
+              );
+            })(),
             document.body,
           )}
       </div>

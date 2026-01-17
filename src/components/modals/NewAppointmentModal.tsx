@@ -83,6 +83,7 @@ export default function NewAppointmentModal({
     useState(false);
   const [newPatientData, setNewPatientData] =
     useState<PatientSearchResult | null>(null);
+  const [phoneError, setPhoneError] = useState<string>("");
 
   // Patient Search State
   const [searchBy, setSearchBy] = useState("lastName");
@@ -250,6 +251,27 @@ export default function NewAppointmentModal({
     });
     setShowPatientSearch(false);
     setShowPatientForm(true);
+  };
+  const formatUSPhone = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, "");
+
+    // US phone numbers must be max 10 digits
+    if (digits.length > 10) return digits.slice(0, 10);
+
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6)
+      return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+
+    return `(${digits.slice(0, 3)}) ${digits.slice(
+      3,
+      6,
+    )}-${digits.slice(6)}`;
+  };
+
+  const isValidUSPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return digits.length === 10;
   };
 
   const handleQuickSave = () => {
@@ -817,49 +839,6 @@ export default function NewAppointmentModal({
           ) : (
             /* Patient and Appointment Form */
             <div className="space-y-6">
-              {/* Show selected patient info if existing patient was selected */}
-              {selectedPatient && (
-                <div className="bg-[#E8EFF7] border-2 border-[#3A6EA5] rounded-lg p-4">
-                  <h3 className="font-bold text-[#1F3A5F] mb-2">
-                    Selected Patient
-                  </h3>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        Patient ID:
-                      </span>
-                      <span className="ml-2 text-[#3A6EA5] font-bold">
-                        {selectedPatient.patientId}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        Name:
-                      </span>
-                      <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.name}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        DOB:
-                      </span>
-                      <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.birthdate}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        Office:
-                      </span>
-                      <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.office}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Personal Information */}
               <div>
                 <h3 className="font-bold text-[#1F3A5F] mb-4 uppercase tracking-wide border-b-2 border-[#E2E8F0] pb-2">
@@ -949,114 +928,96 @@ export default function NewAppointmentModal({
                   </div>
                 </div>
 
-                {/* Phone Number */}
-                {/* <div className="mt-4 grid grid-cols-3 gap-4"> */}
-                <div className="mt-4 grid grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-[#1E293B] font-medium mb-1">
-                      Phone Number{" "}
-                      <span className="text-[#EF4444]">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phoneNumber}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          phoneNumber: e.target.value,
-                        })
-                      }
-                      required
-                      disabled={!!selectedPatient}
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all disabled:bg-gray-100"
-                    />
-                  </div>
-                  {/* <div>
-                    <label className="block text-[#1E293B] font-medium mb-1">
-                      Type
-                    </label>
-                    <select
-                      value={formData.phoneType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          phoneType: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
-                    >
-                      <option value="Cell">Cell</option>
-                      <option value="Home">Home</option>
-                      <option value="Work">Work</option>
-                    </select>
-                  </div> */}
-                  {/* Phone Type */}
-                  <div>
-                    <label className="block text-[#1E293B] font-medium mb-1">
-                      Type
-                    </label>
-                    <select
-                      value={formData.phoneType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          phoneType: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
-               focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
-               focus:border-[#3A6EA5] transition-all"
-                    >
-                      <option value="Cell">Cell</option>
-                      <option value="Home">Home</option>
-                      <option value="Work">Work</option>
-                    </select>
-                  </div>
+{/* Phone Information */}
+<div className="mt-4 grid grid-cols-4 gap-4">
+  {/* Phone Number (2 columns) */}
+  <div className="col-span-2">
+    <label className="block text-[#1E293B] font-medium mb-1">
+      Phone Number <span className="text-[#EF4444]">*</span>
+    </label>
 
-                  {/* Gender */}
-                  <div>
-                    <label className="block text-[#1E293B] font-medium mb-1">
-                      Gender
-                    </label>
-                    <select
-                      value={formData.gender}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          gender: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
-               focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
-               focus:border-[#3A6EA5] transition-all"
-                    >
-                      <option value="">Select</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Non-Binary/Other">
-                        Non-Binary / Other
-                      </option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    {/* <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.bypassPhone}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            bypassPhone: e.target.checked,
-                          })
-                        }
-                        className="w-4 h-4 rounded border-2 border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-[#1E293B] font-medium">
-                        Bypass
-                      </span>
-                    </label> */}
-                  </div>
-                </div>
+    <input
+      type="tel"
+      inputMode="numeric"
+      placeholder="(555) 123-4567"
+      value={formData.phoneNumber}
+      onChange={(e) => {
+        const formatted = formatUSPhone(e.target.value);
+
+        setFormData({
+          ...formData,
+          phoneNumber: formatted,
+        });
+
+        if (formatted && !isValidUSPhone(formatted)) {
+          setPhoneError("Enter a valid US phone number");
+        } else {
+          setPhoneError("");
+        }
+      }}
+      required
+      disabled={!!selectedPatient}
+      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
+                 focus:border-[#3A6EA5] transition-all disabled:bg-gray-100"
+    />
+
+    {phoneError && (
+      <p className="mt-1 text-xs text-[#EF4444]">
+        {phoneError}
+      </p>
+    )}
+  </div>
+
+  {/* Phone Type */}
+  <div>
+    <label className="block text-[#1E293B] font-medium mb-1">
+      Type
+    </label>
+    <select
+      value={formData.phoneType}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          phoneType: e.target.value,
+        })
+      }
+      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
+                 focus:border-[#3A6EA5] transition-all"
+    >
+      <option value="Cell">Cell</option>
+      <option value="Home">Home</option>
+      <option value="Work">Work</option>
+    </select>
+  </div>
+
+  {/* Gender */}
+  <div>
+    <label className="block text-[#1E293B] font-medium mb-1">
+      Gender
+    </label>
+    <select
+      value={formData.gender}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          gender: e.target.value,
+        })
+      }
+      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
+                 focus:border-[#3A6EA5] transition-all"
+    >
+      <option value="">Select</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Non-Binary/Other">
+        Non-Binary / Other
+      </option>
+    </select>
+  </div>
+</div>
               </div>
 
               {/* Appointment Details */}
