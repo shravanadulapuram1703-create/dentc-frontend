@@ -82,6 +82,11 @@ export default function Scheduler({
     type: null,
     anchorRect: null,
   });
+
+  // ✅ Stable appointment reference - preserves appointment when submenu opens
+  const [submenuAppointment, setSubmenuAppointment] =
+    useState<Appointment | null>(null);
+
   // ===============================
   // MENU ITEM STYLE (STEP 2)
   // ===============================
@@ -105,6 +110,11 @@ export default function Scheduler({
         anchorRect: target.getBoundingClientRect(),
       };
     });
+
+    // ✅ Set stable appointment reference
+    if (contextMenu.appointment) {
+      setSubmenuAppointment(contextMenu.appointment);
+    }
   };
 
   // ===============================
@@ -787,10 +797,11 @@ export default function Scheduler({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    // ✅ FIX 1: Changed mousedown → click (fires AFTER submenu onClick)
+    document.addEventListener("click", handleClickOutside);
     return () =>
       document.removeEventListener(
-        "mousedown",
+        "click",
         handleClickOutside,
       );
   }, []);
@@ -1647,7 +1658,7 @@ export default function Scheduler({
                         onClick={() => {
                           handleGoToPatient(
                             "overview",
-                            contextMenu.appointment!,
+                            submenuAppointment!,
                           );
                           closeSubmenu();
                         }}
@@ -1662,7 +1673,7 @@ export default function Scheduler({
                         onClick={() => {
                           handleGoToPatient(
                             "transactions",
-                            contextMenu.appointment!,
+                            submenuAppointment!,
                           );
                           closeSubmenu();
                         }}
@@ -1674,7 +1685,7 @@ export default function Scheduler({
                         onClick={() => {
                           handleGoToPatient(
                             "ledger",
-                            contextMenu.appointment!,
+                            submenuAppointment!,
                           );
                           closeSubmenu();
                         }}
@@ -1698,7 +1709,7 @@ export default function Scheduler({
                         onClick={() => {
                           handleGoToPatient(
                             "charting",
-                            contextMenu.appointment!,
+                            submenuAppointment!,
                           );
                           closeSubmenu();
                         }}
@@ -1734,7 +1745,7 @@ export default function Scheduler({
                           key={status}
                           onClick={() => {
                             handleSetStatus(
-                              contextMenu.appointment!,
+                              submenuAppointment!,
                               status as Appointment["status"],
                             );
                             closeSubmenu();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Outlet, useNavigate } from 'react-router-dom';
-import GlobalNav from './GlobalNav.js';
-import PatientSecondaryNav from './PatientSecondaryNav.js';
+import GlobalNav from './GlobalNav';
+import PatientSecondaryNav from './PatientSecondaryNav';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle } from 'lucide-react';
 
 interface PatientShellLayoutProps {
@@ -109,91 +109,95 @@ export default function PatientShellLayout({
         setCurrentOffice={setCurrentOffice}
       />
 
-      {/* PATIENT CONTEXT SHELL - Persistent Container */}
-      <div className="bg-white border-b-2 border-slate-200 shadow-sm">
-        {/* Patient Summary Header */}
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Patient Info */}
-            <div className="flex items-center gap-4">
-              {/* Patient Avatar */}
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 shadow-md">
-                <User className="w-8 h-8 text-white" strokeWidth={2.5} />
-              </div>
-
-              {/* Patient Details */}
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-slate-900">{patient.name}</h2>
-                  <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-                    ID: {patient.id}
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
-                    {patient.age}y • {patient.gender}
-                  </span>
+      {/* ✅ STEP 3: Hard vertical offset for fixed GlobalNav */}
+      {/* DO NOT REMOVE: Required to prevent patient info from being covered by fixed navigation */}
+      <div className="pt-[120px]">
+        {/* PATIENT CONTEXT SHELL - Persistent Container */}
+        <div className="bg-white border-b-2 border-slate-200 shadow-sm">
+          {/* Patient Summary Header */}
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              {/* Patient Info */}
+              <div className="flex items-center gap-4">
+                {/* Patient Avatar */}
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 shadow-md">
+                  <User className="w-8 h-8 text-white" strokeWidth={2.5} />
                 </div>
-                <div className="flex items-center gap-6 text-sm text-slate-600">
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="w-4 h-4" />
-                    <span>{patient.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Mail className="w-4 h-4" />
-                    <span>{patient.email}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4" />
-                    <span>DOB: {patient.dob}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Patient Quick Stats */}
-            <div className="flex items-center gap-4">
-              {/* Balance */}
-              <div className="text-right">
-                <p className="text-xs text-slate-500 font-medium">Balance</p>
-                <p className={`text-lg font-bold ${patient.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  ${patient.balance.toFixed(2)}
-                </p>
-              </div>
-
-              {/* Next Appointment */}
-              <div className="text-right">
-                <p className="text-xs text-slate-500 font-medium">Next Appointment</p>
-                <p className="text-sm font-semibold text-slate-900">{patient.nextAppointment}</p>
-              </div>
-
-              {/* Alerts */}
-              {patient.alerts.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border-2 border-amber-200">
-                  <AlertCircle className="w-5 h-5 text-amber-600" />
-                  <div>
-                    <p className="text-xs text-amber-700 font-semibold">{patient.alerts.length} Alert(s)</p>
-                    <p className="text-xs text-amber-600">{patient.alerts[0]}</p>
+                {/* Patient Details */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-bold text-slate-900">{patient.name}</h2>
+                    <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                      ID: {patient.id}
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                      {patient.age}y • {patient.gender}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-6 text-sm text-slate-600">
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-4 h-4" />
+                      <span>{patient.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Mail className="w-4 h-4" />
+                      <span>{patient.email}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4" />
+                      <span>DOB: {patient.dob}</span>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Close Patient Button */}
-              <button
-                onClick={handleClosePatient}
-                className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-semibold border-2 border-slate-300 hover:bg-slate-200 hover:border-slate-400 transition-all duration-200"
-              >
-                Close Patient
-              </button>
+              {/* Patient Quick Stats */}
+              <div className="flex items-center gap-4">
+                {/* Balance */}
+                <div className="text-right">
+                  <p className="text-xs text-slate-500 font-medium">Balance</p>
+                  <p className={`text-lg font-bold ${patient.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    ${patient.balance.toFixed(2)}
+                  </p>
+                </div>
+
+                {/* Next Appointment */}
+                <div className="text-right">
+                  <p className="text-xs text-slate-500 font-medium">Next Appointment</p>
+                  <p className="text-sm font-semibold text-slate-900">{patient.nextAppointment}</p>
+                </div>
+
+                {/* Alerts */}
+                {patient.alerts.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 border-2 border-amber-200">
+                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                    <div>
+                      <p className="text-xs text-amber-700 font-semibold">{patient.alerts.length} Alert(s)</p>
+                      <p className="text-xs text-amber-600">{patient.alerts[0]}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Close Patient Button */}
+                <button
+                  onClick={handleClosePatient}
+                  className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-semibold border-2 border-slate-300 hover:bg-slate-200 hover:border-slate-400 transition-all duration-200"
+                >
+                  Close Patient
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Patient Secondary Navigation - Icon Bar */}
+          <PatientSecondaryNav patientId={patient.id} />
         </div>
 
-        {/* Patient Secondary Navigation - Icon Bar */}
-        <PatientSecondaryNav patientId={patient.id} />
-      </div>
-
-      {/* PATIENT CONTENT AREA - This changes based on route */}
-      <div className="min-h-[calc(100vh-400px)]">
-        <Outlet context={{ patient }} />
+        {/* PATIENT CONTENT AREA - This changes based on route */}
+        <div className="min-h-[calc(100vh-400px)]">
+          <Outlet context={{ patient }} />
+        </div>
       </div>
     </div>
   );
