@@ -100,6 +100,7 @@ export default function NewAppointmentModal({
     useState(false);
   const [newPatientData, setNewPatientData] =
     useState<PatientSearchResult | null>(null);
+  const [phoneError, setPhoneError] = useState<string>("");
 
   // Patient Search State
   const [searchBy, setSearchBy] = useState("lastName");
@@ -148,7 +149,8 @@ export default function NewAppointmentModal({
     email: "",
     phoneNumber: "",
     phoneType: "Cell",
-    bypassPhone: false,
+    // bypassPhone: false,
+    gender: "", //New field
 
     // Appointment Details
     date: new Date().toISOString().split("T")[0],
@@ -358,6 +360,27 @@ export default function NewAppointmentModal({
     setShowPatientSearch(false);
     setShowPatientForm(true);
   };
+  const formatUSPhone = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, "");
+
+    // US phone numbers must be max 10 digits
+    if (digits.length > 10) return digits.slice(0, 10);
+
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6)
+      return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+
+    return `(${digits.slice(0, 3)}) ${digits.slice(
+      3,
+      6,
+    )}-${digits.slice(6)}`;
+  };
+
+  const isValidUSPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return digits.length === 10;
+  };
 
   const handleQuickSave = async () => {
     // Debug: Log at the very beginning to confirm function is called
@@ -545,7 +568,13 @@ export default function NewAppointmentModal({
   };
 
   // ✅ Reusable Radio component (clean & safe)
-  const Radio = ({ label, value }: { label: string; value: string }) => (
+  const Radio = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string;
+  }) => (
     <label className="flex items-center gap-2 cursor-pointer">
       <input
         type="radio"
@@ -1065,7 +1094,7 @@ export default function NewAppointmentModal({
                         Patient ID:
                       </span>
                       <span className="ml-2 text-[#3A6EA5] font-bold">
-                        {(selectedPatient as PatientSearchResult).patientId}
+                        {selectedPatient.patientId}
                       </span>
                     </div>
                     <div>
@@ -1073,7 +1102,7 @@ export default function NewAppointmentModal({
                         Name:
                       </span>
                       <span className="ml-2 text-[#1E293B] font-semibold">
-                        {(selectedPatient as PatientSearchResult).name}
+                        {selectedPatient.name}
                       </span>
                     </div>
                     <div>
@@ -1081,7 +1110,7 @@ export default function NewAppointmentModal({
                         DOB:
                       </span>
                       <span className="ml-2 text-[#1E293B] font-semibold">
-                        {(selectedPatient as PatientSearchResult).birthdate}
+                        {selectedPatient.birthdate}
                       </span>
                     </div>
                     <div>
@@ -1089,7 +1118,7 @@ export default function NewAppointmentModal({
                         Office:
                       </span>
                       <span className="ml-2 text-[#1E293B] font-semibold">
-                        {(selectedPatient as PatientSearchResult).office}
+                        {selectedPatient.office}
                       </span>
                     </div>
                   </div>
@@ -1121,12 +1150,12 @@ export default function NewAppointmentModal({
                         disabled={!!selectedPatient}
                         className="flex-1 px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all disabled:bg-gray-100"
                       />
-                      <button className="px-3 py-2 border-2 border-[#E2E8F0] rounded-lg hover:bg-[#F7F9FC] hover:border-[#3A6EA5] transition-all">
+                      {/* <button className="px-3 py-2 border-2 border-[#E2E8F0] rounded-lg hover:bg-[#F7F9FC] hover:border-[#3A6EA5] transition-all">
                         <Calendar
                           className="w-5 h-5 text-[#64748B]"
                           strokeWidth={2}
                         />
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                   <div>
@@ -1185,65 +1214,96 @@ export default function NewAppointmentModal({
                   </div>
                 </div>
 
-                {/* Phone Number */}
-                <div className="mt-4 grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-[#1E293B] font-medium mb-1">
-                      Phone Number{" "}
-                      <span className="text-[#EF4444]">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phoneNumber}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          phoneNumber: e.target.value,
-                        })
-                      }
-                      required
-                      disabled={!!selectedPatient}
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all disabled:bg-gray-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[#1E293B] font-medium mb-1">
-                      Type
-                    </label>
-                    <select
-                      value={formData.phoneType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          phoneType: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
-                    >
-                      <option value="Cell">Cell</option>
-                      <option value="Home">Home</option>
-                      <option value="Work">Work</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.bypassPhone}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            bypassPhone: e.target.checked,
-                          })
-                        }
-                        className="w-4 h-4 rounded border-2 border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-[#1E293B] font-medium">
-                        Bypass
-                      </span>
-                    </label>
-                  </div>
-                </div>
+{/* Phone Information */}
+<div className="mt-4 grid grid-cols-4 gap-4">
+  {/* Phone Number (2 columns) */}
+  <div className="col-span-2">
+    <label className="block text-[#1E293B] font-medium mb-1">
+      Phone Number <span className="text-[#EF4444]">*</span>
+    </label>
+
+    <input
+      type="tel"
+      inputMode="numeric"
+      placeholder="(555) 123-4567"
+      value={formData.phoneNumber}
+      onChange={(e) => {
+        const formatted = formatUSPhone(e.target.value);
+
+        setFormData({
+          ...formData,
+          phoneNumber: formatted,
+        });
+
+        if (formatted && !isValidUSPhone(formatted)) {
+          setPhoneError("Enter a valid US phone number");
+        } else {
+          setPhoneError("");
+        }
+      }}
+      required
+      disabled={!!selectedPatient}
+      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
+                 focus:border-[#3A6EA5] transition-all disabled:bg-gray-100"
+    />
+
+    {phoneError && (
+      <p className="mt-1 text-xs text-[#EF4444]">
+        {phoneError}
+      </p>
+    )}
+  </div>
+
+  {/* Phone Type */}
+  <div>
+    <label className="block text-[#1E293B] font-medium mb-1">
+      Type
+    </label>
+    <select
+      value={formData.phoneType}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          phoneType: e.target.value,
+        })
+      }
+      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
+                 focus:border-[#3A6EA5] transition-all"
+    >
+      <option value="Cell">Cell</option>
+      <option value="Home">Home</option>
+      <option value="Work">Work</option>
+    </select>
+  </div>
+
+  {/* Gender */}
+  <div>
+    <label className="block text-[#1E293B] font-medium mb-1">
+      Gender
+    </label>
+    <select
+      value={formData.gender}
+      onChange={(e) =>
+        setFormData({
+          ...formData,
+          gender: e.target.value,
+        })
+      }
+      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg
+                 focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]
+                 focus:border-[#3A6EA5] transition-all"
+    >
+      <option value="">Select</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Non-Binary/Other">
+        Non-Binary / Other
+      </option>
+    </select>
+  </div>
+</div>
               </div>
 
               {/* Appointment Details */}

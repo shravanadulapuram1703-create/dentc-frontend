@@ -67,6 +67,75 @@ export default function Scheduler({
       y: 0,
       type: "empty",
     });
+  const [activeSubmenu, setActiveSubmenu] = useState<{
+    type: "goto" | "status" | "print" | null;
+    anchorRect: DOMRect | null;
+  }>({
+    type: null,
+    anchorRect: null,
+  });
+
+  // ✅ Stable appointment reference - preserves appointment when submenu opens
+  const [submenuAppointment, setSubmenuAppointment] =
+    useState<Appointment | null>(null);
+
+  // ===============================
+  // MENU ITEM STYLE (STEP 2)
+  // ===============================
+  const menuItemClass =
+    "w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]";
+  // ===============================
+  // STEP 2: Submenu open / close helpers
+  // ===============================
+  const openSubmenu = (
+    type: "goto" | "status" | "print",
+    target: HTMLElement,
+  ) => {
+    setActiveSubmenu((prev) => {
+      // If clicking the same submenu, toggle it closed
+      if (prev.type === type) {
+        return { type: null, anchorRect: null };
+      }
+
+      return {
+        type,
+        anchorRect: target.getBoundingClientRect(),
+      };
+    });
+
+    // ✅ Set stable appointment reference
+    if (contextMenu.appointment) {
+      setSubmenuAppointment(contextMenu.appointment);
+    }
+  };
+
+  // ===============================
+  // STEP 3: Submenu auto-flip helper
+  // ===============================
+  const SUBMENU_WIDTH = 240;
+  const SUBMENU_MAX_HEIGHT = 420;
+  const SUBMENU_MARGIN = 8;
+
+  const getSubmenuLeftPosition = () => {
+    if (!activeSubmenu.anchorRect) return 0;
+
+    const spaceOnRight =
+      window.innerWidth - activeSubmenu.anchorRect.right;
+
+    // Not enough space → open to the LEFT
+    if (spaceOnRight < SUBMENU_WIDTH + 10) {
+      return activeSubmenu.anchorRect.left - SUBMENU_WIDTH - 6;
+    }
+
+    // Default → open to the RIGHT
+    return activeSubmenu.anchorRect.right + 6;
+  };
+  const closeSubmenu = () => {
+    setActiveSubmenu({
+      type: null,
+      anchorRect: null,
+    });
+  };
   const [showNewAppointment, setShowNewAppointment] =
     useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -192,6 +261,38 @@ export default function Scheduler({
 
     loadConfig();
   }, [currentOffice]);
+
+  // ✅ FIX: Create a Set of active operatory IDs for fast lookup
+  const activeOperatoryIds = useMemo(
+    () => new Set(operatories.map((op) => op.id)),
+    [operatories],
+  );
+
+  // ✅ FIX: Filter appointments to only include those with valid operatories
+  const validAppointments = useMemo(
+    () =>
+      appointments.filter((appt) =>
+        activeOperatoryIds.has(appt.operatory),
+      ),
+    [appointments, activeOperatoryIds],
+  );
+
+  // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date
+  const appointmentsByOperatory = useMemo(() => {
+    const currentDate = formatDateYYYYMMDD(selectedDate);
+    const map = new Map<string, Appointment[]>();
+
+    validAppointments
+      .filter((appt) => appt.date === currentDate)
+      .forEach((appt) => {
+        if (!map.has(appt.operatory)) {
+          map.set(appt.operatory, []);
+        }
+        map.get(appt.operatory)!.push(appt);
+      });
+
+    return map;
+  }, [validAppointments, selectedDate]);
 
   // Fetch appointments when date changes
   useEffect(() => {
@@ -441,28 +542,33 @@ export default function Scheduler({
   // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
+      const target = e.target as Node;
+
+      const clickedOutsideContextMenu =
         contextMenuRef.current &&
-        !contextMenuRef.current.contains(e.target as Node)
-      ) {
+        !contextMenuRef.current.contains(target);
+
+      if (clickedOutsideContextMenu) {
         setContextMenu({
           visible: false,
           x: 0,
           y: 0,
           type: "empty",
         });
+        closeSubmenu();
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    // ✅ FIX 1: Changed mousedown → click (fires AFTER submenu onClick)
+    document.addEventListener("click", handleClickOutside);
     return () =>
       document.removeEventListener(
-        "mousedown",
+        "click",
         handleClickOutside,
       );
   }, []);
 
-  // Close context menu on scroll
+  // ✅ Close context menu on scroll
   useEffect(() => {
     const handleScroll = () => {
       if (contextMenu.visible) {
@@ -472,6 +578,7 @@ export default function Scheduler({
           y: 0,
           type: "empty",
         });
+        closeSubmenu();
       }
     };
 
@@ -496,6 +603,28 @@ export default function Scheduler({
     return () =>
       window.removeEventListener("scroll", handleScroll, true);
   }, [contextMenu.visible]);
+
+  // ✅ STEP 4: Close menus on ESC key (SEPARATE useEffect - not nested!)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (activeSubmenu.type) {
+          closeSubmenu();
+        } else if (contextMenu.visible) {
+          setContextMenu({
+            visible: false,
+            x: 0,
+            y: 0,
+            type: "empty",
+          });
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () =>
+      document.removeEventListener("keydown", handleKeyDown);
+  }, [activeSubmenu.type, contextMenu.visible]);
 
   // Close calendar picker when clicking outside
   useEffect(() => {
@@ -809,10 +938,36 @@ export default function Scheduler({
     });
   };
 
-  // ✅ CRITICAL FIX: Calculate dynamic min-width based on operatory count
+  // ✅ Dynamic Column Width Calculation based on number of operatories
   const TIME_COLUMN_WIDTH = 80;
-  const OPERATORY_COLUMN_WIDTH = 250;
-  const schedulerMinWidth =
+  const MIN_OPERATORY_COLUMN_WIDTH = 250; // Minimum width per operatory
+  const SCROLLBAR_BUFFER = 20; // Account for scrollbar
+
+  // Calculate available viewport width
+  const viewportWidth =
+    typeof window !== "undefined" ? window.innerWidth : 1920;
+  const availableWidth =
+    viewportWidth - TIME_COLUMN_WIDTH - SCROLLBAR_BUFFER;
+
+  // Dynamic operatory column width:
+  // - If few operatories, expand to fill viewport
+  // - If many operatories, use minimum width and enable scroll
+  const dynamicOperatoryWidth = Math.max(
+    MIN_OPERATORY_COLUMN_WIDTH,
+    Math.floor(
+      availableWidth / Math.max(operatories.length, 1),
+    ),
+  );
+
+  // Use dynamic width if it provides better UX (columns fill screen for 1-4 operatories)
+  // Otherwise fallback to minimum width for many operatories
+  const OPERATORY_COLUMN_WIDTH =
+    operatories.length <= 4
+      ? dynamicOperatoryWidth
+      : MIN_OPERATORY_COLUMN_WIDTH;
+
+  // ✅ Calculate exact grid width based on actual column count
+  const gridWidth =
     TIME_COLUMN_WIDTH +
     operatories.length * OPERATORY_COLUMN_WIDTH;
 
@@ -933,7 +1088,10 @@ export default function Scheduler({
                 className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
                 aria-label="Print schedule"
               >
-                <Printer className="w-4 h-4" strokeWidth={2.5} />
+                <Printer
+                  className="w-4 h-4"
+                  strokeWidth={2.5}
+                />
                 PRINT
               </button>
             </div>
@@ -974,26 +1132,6 @@ export default function Scheduler({
           </div>
         )}
 
-<!--         {/* Scheduler Grid */}
-        <div
-          className="overflow-auto scheduler-scroll-container"
-          style={{ height: "calc(100vh - 170px)" }}
-        >
-          <div className="inline-block min-w-full">
-            <div className="flex">
-              {/* Time Column */}
-              <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md">
-                <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080]"></div>
-                {timeSlots.map((time, index) => (
-                  <div
-                    key={time}
-                    className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                    style={{ minWidth: "80px" }}
-                  >
-                    {index % 6 === 0 && time}
-                  </div>
-                ))} -->
-
         {/* ✅ FIX: Scheduler Grid with Tailwind class and ARIA */}
         <div
           className="overflow-auto scheduler-scroll-container h-[calc(100vh-170px)]"
@@ -1002,138 +1140,138 @@ export default function Scheduler({
           aria-rowcount={timeSlots.length + 1}
           aria-colcount={operatories.length + 1}
         >
-          {/* ✅ CRITICAL FIX: Dynamic min-width calculation */}
+          {/* ✅ CRITICAL FIX: Force exact width to prevent extra space */}
           <div
-            className="inline-block"
-            style={{ minWidth: `${schedulerMinWidth}px` }}
+            className="inline-flex"
+            style={{ width: `${gridWidth}px` }}
           >
-            <div className="flex">
-              {/* Time Column */}
-              <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md">
-                <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
-                {timeSlots.map((time, index) => (
-                  <div
-                    key={time}
-                    className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                    style={{ minWidth: `${TIME_COLUMN_WIDTH}px` }}
-                    role="rowheader"
-                  >
-                    {index % 6 === 0 && time}
-                  </div>
-                ))}
-              </div>
-
-              {/* Operatory Columns */}
-              {operatories.map((operatory, colIndex) => (
+            {/* Time Column */}
+            <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md flex-shrink-0">
+              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
+              {timeSlots.map((time, index) => (
                 <div
-                  key={operatory.id}
-                  className="border-r-2 border-[#E2E8F0]"
+                  key={time}
+                  className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
                   style={{
-                    minWidth: `${OPERATORY_COLUMN_WIDTH}px`,
+                    width: `${TIME_COLUMN_WIDTH}px`,
                   }}
-                  role="gridcell"
-                  aria-colindex={colIndex + 2}
+                  role="rowheader"
                 >
-                  {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
-                  <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-4 py-2 border-b-2 border-[#16293B] sticky top-0 z-20">
-                    <div className="text-sm font-bold">
-                      {operatory.name}
-                    </div>
-                    <div className="text-xs opacity-90">
-                      {operatory.provider}
-                    </div>
-                  </div>
-
-                  {/* Time Slots */}
-                  <div className="relative bg-white">
-                    {timeSlots.map((time, rowIndex) => {
-                      const slotBlocked = isSlotBlocked(
-                        time,
-                        operatory.id,
-                      );
-                      const occupyingAppt =
-                        getSlotOccupyingAppointment(
-                          time,
-                          operatory.id,
-                        );
-
-                      return (
-                        <div
-                          key={`${operatory.id}-${time}`}
-                          className={`h-10 border-b border-slate-200 transition-colors ${
-                            slotBlocked
-                              ? "bg-slate-100 cursor-not-allowed"
-                              : "hover:bg-[#F7F9FC] cursor-pointer"
-                          }`}
-                          onContextMenu={(e) => {
-                            if (!slotBlocked) {
-                              handleEmptySlotRightClick(
-                                e,
-                                time,
-                                operatory.id,
-                              );
-                            } else {
-                              e.preventDefault();
-                            }
-                          }}
-                          title={
-                            slotBlocked && occupyingAppt
-                              ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
-                              : ""
-                          }
-                          role="gridcell"
-                          aria-rowindex={rowIndex + 2}
-                          aria-colindex={colIndex + 2}
-                        ></div>
-                      );
-                    })}
-
-                    {/* ✅ OPTIMIZED: Appointments from precomputed map */}
-                    {(
-                      appointmentsByOperatory.get(operatory.id) ||
-                      []
-                    ).map((appointment) => {
-                      const { top, height } =
-                        getAppointmentPosition(appointment);
-                      return (
-                        <div
-                          key={appointment.id}
-                          className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getProcedureTypeColor(appointment.procedureType)}`}
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`,
-                          }}
-                          onContextMenu={(e) =>
-                            handleAppointmentRightClick(
-                              e,
-                              appointment,
-                            )
-                          }
-                          role="button"
-                          aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
-                          tabIndex={0}
-                        >
-                          <div className="text-xs truncate">
-                            <strong>
-                              {appointment.startTime}
-                            </strong>{" "}
-                            {appointment.patientName}
-                          </div>
-                          <div className="text-xs truncate">
-                            {appointment.procedureType}
-                          </div>
-                          {appointment.duration >= 30 && (
-                            <div className="text-xs opacity-75">
-                              {appointment.duration} min
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {index % 6 === 0 && time}
                 </div>
               ))}
             </div>
+
+            {/* Operatory Columns */}
+            {operatories.map((operatory, colIndex) => (
+              <div
+                key={operatory.id}
+                className="border-r-2 border-[#E2E8F0] flex-shrink-0"
+                style={{
+                  width: `${OPERATORY_COLUMN_WIDTH}px`,
+                }}
+                role="gridcell"
+                aria-colindex={colIndex + 2}
+              >
+                {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
+                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-3 py-1.5 border-b-2 border-[#16293B] sticky top-0 z-20">
+                  <div className="text-sm font-bold">
+                    {operatory.name}
+                  </div>
+                  <div className="text-xs opacity-90">
+                    {operatory.provider}
+                  </div>
+                </div>
+
+                {/* Time Slots */}
+                <div className="relative bg-white">
+                  {timeSlots.map((time, rowIndex) => {
+                    const slotBlocked = isSlotBlocked(
+                      time,
+                      operatory.id,
+                    );
+                    const occupyingAppt =
+                      getSlotOccupyingAppointment(
+                        time,
+                        operatory.id,
+                      );
+
+                    return (
+                      <div
+                        key={`${operatory.id}-${time}`}
+                        className={`h-10 border-b border-slate-200 transition-colors ${
+                          slotBlocked
+                            ? "bg-slate-100 cursor-not-allowed"
+                            : "hover:bg-[#F7F9FC] cursor-pointer"
+                        }`}
+                        onContextMenu={(e) => {
+                          if (!slotBlocked) {
+                            handleEmptySlotRightClick(
+                              e,
+                              time,
+                              operatory.id,
+                            );
+                          } else {
+                            e.preventDefault();
+                          }
+                        }}
+                        title={
+                          slotBlocked && occupyingAppt
+                            ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
+                            : ""
+                        }
+                        role="gridcell"
+                        aria-rowindex={rowIndex + 2}
+                        aria-colindex={colIndex + 2}
+                      ></div>
+                    );
+                  })}
+
+                  {/* ✅ OPTIMIZED: Appointments from precomputed map */}
+                  {(
+                    appointmentsByOperatory.get(operatory.id) ||
+                    []
+                  ).map((appointment) => {
+                    const { top, height } =
+                      getAppointmentPosition(appointment);
+                    return (
+                      <div
+                        key={appointment.id}
+                        className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getProcedureTypeColor(appointment.procedureType)}`}
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                        }}
+                        onContextMenu={(e) =>
+                          handleAppointmentRightClick(
+                            e,
+                            appointment,
+                          )
+                        }
+                        role="button"
+                        aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
+                        tabIndex={0}
+                      >
+                        <div className="text-xs truncate">
+                          <strong>
+                            {appointment.startTime}
+                          </strong>{" "}
+                          {appointment.patientName}
+                        </div>
+                        <div className="text-xs truncate">
+                          {appointment.procedureType}
+                        </div>
+                        {appointment.duration >= 30 && (
+                          <div className="text-xs opacity-75">
+                            {appointment.duration} min
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1141,14 +1279,13 @@ export default function Scheduler({
         {contextMenu.visible && (
           <div
             ref={contextMenuRef}
-            className="fixed bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 py-1 max-h-[500px]"
+            className="fixed bg-white border border-[#E2E8F0] rounded-lg shadow-xl z-50 py-0.5"
             style={{
               left: `${contextMenu.x}px`,
               top: `${contextMenu.y}px`,
-              minWidth: "220px",
+              width: "210px",
+              maxWidth: "210px",
             }}
-            role="menu"
-            aria-label="Appointment context menu"
           >
             {contextMenu.type === "empty" ? (
               <>
@@ -1159,19 +1296,19 @@ export default function Scheduler({
                       contextMenu.operatory,
                     )
                   }
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Add New Appointment
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Search Quick-Fill
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
+                  className="w-full px-3 py-1.5 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
                   role="menuitem"
                 >
                   Paste
@@ -1185,25 +1322,25 @@ export default function Scheduler({
                       contextMenu.appointment!,
                     )
                   }
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Edit
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Cut
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Copy
                 </button>
                 <button
-                  className="w-full px-4 py-2 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
                 >
                   Reschedule
@@ -1214,193 +1351,60 @@ export default function Scheduler({
                       contextMenu.appointment!,
                     )
                   }
-                  className="w-full px-4 py-2 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
+                  className="w-full px-3 py-1.5 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
                   role="menuitem"
                 >
                   Delete
                 </button>
+                {/* STEP 3.2: Divider between actions and submenus */}
+                <div className="my-1 border-t border-[#E2E8F0]" />
+                {/* ✅ STEP 4: Go To - Click-based trigger */}
+                <button
+                  onClick={(e) =>
+                    openSubmenu("goto", e.currentTarget)
+                  }
+                  className="w-full px-3 py-1.5 text-left
+             hover:bg-[#F7F9FC]
+             text-[#1E293B] font-medium text-sm
+             flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
+                  Go To
+                  <span>›</span>
+                </button>
 
-                {/* Go To Submenu */}
-                <div className="relative group">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
-                    role="menuitem"
-                    aria-haspopup="true"
-                  >
-                    Go To
-                    <span>›</span>
-                  </button>
-                  <div
-                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                    style={{ minWidth: "180px" }}
-                    role="menu"
-                  >
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "overview",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Patient Overview
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Treatment Plans
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "transactions",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Transactions
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "ledger",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Ledger
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Progress Notes
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Notes
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Email
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Text Message
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleGoToPatient(
-                          "charting",
-                          contextMenu.appointment!,
-                        )
-                      }
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Restorative Chart
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Perio Chart
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Imaging System
-                    </button>
-                  </div>
-                </div>
+                {/* ✅ STEP 4: Set Status - Click-based trigger */}
+                <button
+                  onClick={(e) =>
+                    openSubmenu("status", e.currentTarget)
+                  }
+                  className="w-full px-3 py-1.5 text-left
+             hover:bg-[#F7F9FC]
+             text-[#1E293B] font-medium text-sm
+             flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
+                  Set Status
+                  <span>›</span>
+                </button>
 
-                {/* Set Status Submenu */}
-                <div className="relative group">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
-                    role="menuitem"
-                    aria-haspopup="true"
-                  >
-                    Set Status
-                    <span>›</span>
-                  </button>
-                  <div
-                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                    style={{ minWidth: "180px" }}
-                    role="menu"
-                  >
-                    {[
-                      "Scheduled",
-                      "Confirmed",
-                      "Unconfirmed",
-                      "Left Message",
-                      "In Reception",
-                      "Available",
-                      "In Operatory",
-                      "Checked Out",
-                      "Missed",
-                      "Cancelled",
-                    ].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() =>
-                          handleSetStatus(
-                            contextMenu.appointment!,
-                            status as Appointment["status"],
-                          )
-                        }
-                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                        role="menuitem"
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Print Submenu */}
-                <div className="relative group">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900 flex items-center justify-between"
-                    role="menuitem"
-                    aria-haspopup="true"
-                  >
-                    Print
-                    <span>›</span>
-                  </button>
-                  <div
-                    className="hidden group-hover:block absolute left-full top-0 bg-white border border-gray-300 rounded shadow-lg py-1 ml-1"
-                    style={{ minWidth: "180px" }}
-                    role="menu"
-                  >
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Routing Slip
-                    </button>
-                    <button
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-900"
-                      role="menuitem"
-                    >
-                      Walkout Report
-                    </button>
-                  </div>
-                </div>
+                {/* ✅ STEP 4: Print - Click-based trigger */}
+                <button
+                  onClick={(e) =>
+                    openSubmenu("print", e.currentTarget)
+                  }
+                  className="w-full px-3 py-1.5 text-left
+             hover:bg-[#F7F9FC]
+             text-[#1E293B] font-medium text-sm
+             flex items-center justify-between"
+                  role="menuitem"
+                  aria-haspopup="true"
+                >
+                  Print
+                  <span>›</span>
+                </button>
               </>
             ) : null}
           </div>
@@ -1440,6 +1444,184 @@ export default function Scheduler({
                     .left + window.scrollX,
               }}
             />,
+            document.body,
+          )}
+
+        {/* ✅ STEP 5: Portal-based Submenu Rendering (CRITICAL FIX) */}
+        {activeSubmenu.type &&
+          activeSubmenu.anchorRect &&
+          createPortal(
+            (() => {
+              // ✅ STEP 2: viewport-safe vertical calculation
+              const viewportHeight = window.innerHeight;
+
+              const idealTop = activeSubmenu.anchorRect.top;
+              const spaceBelow =
+                viewportHeight - idealTop - SUBMENU_MARGIN;
+
+              const submenuHeight = SUBMENU_MAX_HEIGHT;
+
+              const safeTop =
+                spaceBelow >= submenuHeight
+                  ? idealTop
+                  : Math.max(
+                      SUBMENU_MARGIN,
+                      viewportHeight - submenuHeight - SUBMENU_MARGIN,
+                    );
+
+              // ✅ STEP 3: Horizontal safety
+              const viewportWidth = window.innerWidth;
+
+              const idealLeft =
+                activeSubmenu.anchorRect.right + SUBMENU_MARGIN;
+
+              const spaceRight =
+                viewportWidth - idealLeft - SUBMENU_MARGIN;
+
+              const safeLeft =
+                spaceRight >= SUBMENU_WIDTH
+                  ? idealLeft
+                  : Math.max(
+                      SUBMENU_MARGIN,
+                      activeSubmenu.anchorRect.left -
+                        SUBMENU_WIDTH -
+                        SUBMENU_MARGIN,
+                    );
+
+              return (
+                <div
+                  className="fixed bg-white border border-[#E2E8F0] rounded-lg shadow-xl py-1 z-[9999]"
+                  style={{
+                    top: safeTop,
+                    left: safeLeft,
+                    width: SUBMENU_WIDTH,
+                    maxHeight: SUBMENU_MAX_HEIGHT,
+                    overflowY: "auto",
+                    boxSizing: "border-box",
+                  }}
+                  onMouseLeave={closeSubmenu}
+                >
+                  {/* ✅ STEP 6: Go To Submenu */}
+                  {activeSubmenu.type === "goto" && (
+                    <>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "overview",
+                            submenuAppointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Patient Overview
+                      </button>
+                      <button className={menuItemClass}>
+                        Treatment Plans
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "transactions",
+                            submenuAppointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Transactions
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "ledger",
+                            submenuAppointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Ledger
+                      </button>
+                      <button className={menuItemClass}>
+                        Progress Notes
+                      </button>
+                      <button className={menuItemClass}>
+                        Notes
+                      </button>
+                      <button className={menuItemClass}>
+                        Email
+                      </button>
+                      <button className={menuItemClass}>
+                        Text Message
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient(
+                            "charting",
+                            submenuAppointment!,
+                          );
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
+                        Restorative Chart
+                      </button>
+                      <button className={menuItemClass}>
+                        Perio Chart
+                      </button>
+                      <button className={menuItemClass}>
+                        Imaging System
+                      </button>
+                    </>
+                  )}
+
+                  {/* ✅ STEP 6: Set Status Submenu */}
+                  {activeSubmenu.type === "status" && (
+                    <>
+                      {[
+                        "Scheduled",
+                        "Confirmed",
+                        "Unconfirmed",
+                        "Left Message",
+                        "In Reception",
+                        "Available",
+                        "In Operatory",
+                        "Checked Out",
+                        "Missed",
+                        "Cancelled",
+                      ].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            handleSetStatus(
+                              submenuAppointment!,
+                              status as Appointment["status"],
+                            );
+                            closeSubmenu();
+                          }}
+                          className={menuItemClass}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </>
+                  )}
+
+                  {/* ✅ STEP 6: Print Submenu */}
+                  {activeSubmenu.type === "print" && (
+                    <>
+                      <button className={menuItemClass}>
+                        Routing Slip
+                      </button>
+                      <button className={menuItemClass}>
+                        Walkout Report
+                      </button>
+                    </>
+                  )}
+                </div>
+              );
+            })(),
             document.body,
           )}
       </div>
