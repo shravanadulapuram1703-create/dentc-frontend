@@ -973,7 +973,7 @@ export default function Scheduler({
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav onLogout={onLogout} />
+      <GlobalNav onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
 
       {/* Scheduler Content with top padding */}
       <div className="pt-[120px]">

@@ -70,7 +70,6 @@ import { createPortal } from "react-dom";
 import { SubmenuPortal } from "./navigation/SubmenuPortal";
 import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
-import { getOfficesForOrganization } from "../data/organizationData.js";
 import { useAuth } from "../contexts/AuthContext.js";
 
 interface GlobalNavProps {
@@ -150,15 +149,11 @@ export default function GlobalNav({
   }, []);
 
   // Get Auth Context for current organization
-  const { currentOrganization, user } = useAuth();
+  const { currentOrganization, user, organizations } = useAuth();
 
-  // Get offices dynamically based on selected organization
-  const organizationOffices = getOfficesForOrganization(
-    currentOrganization,
-  );
-  const offices = organizationOffices.map(
-    (office) => office.displayName,
-  );
+  // Get offices dynamically from API data (organizations from AuthContext)
+  const currentOrg = organizations.find((org) => org.id === currentOrganization);
+  const offices = currentOrg?.offices?.map((office) => office.name || office.id) || [];
 
   // PATIENT DROPDOWN MENU (Patient Context)
   const patientMenuItems = [
@@ -1557,7 +1552,9 @@ export default function GlobalNav({
           {/* Office Selector (available to all users) */}
           <div
             className="relative"
-            ref={(el) => (dropdownRefs.current["office"] = el)}
+            ref={(el) => {
+              dropdownRefs.current["office"] = el;
+            }}
           >
             <button
               onClick={() =>
@@ -1622,7 +1619,9 @@ export default function GlobalNav({
         {/* Patient - Dropdown */}
         <div
           className="relative"
-          ref={(el) => (dropdownRefs.current["patient"] = el)}
+          ref={(el) => {
+            dropdownRefs.current["patient"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("patient")}
@@ -1647,9 +1646,9 @@ export default function GlobalNav({
         {/* Transactions - Dropdown (Patient Context) */}
         <div
           className="relative"
-          ref={(el) =>
-            (dropdownRefs.current["transactions"] = el)
-          }
+          ref={(el) => {
+            dropdownRefs.current["transactions"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("transactions")}
@@ -1674,7 +1673,9 @@ export default function GlobalNav({
         {/* Charting - Dropdown (Patient Context) */}
         <div
           className="relative"
-          ref={(el) => (dropdownRefs.current["charting"] = el)}
+          ref={(el) => {
+            dropdownRefs.current["charting"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("charting")}
@@ -1699,7 +1700,9 @@ export default function GlobalNav({
         {/* Reports - Dropdown */}
         <div
           className="relative"
-          ref={(el) => (dropdownRefs.current["reports"] = el)}
+          ref={(el) => {
+            dropdownRefs.current["reports"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("reports")}
@@ -1724,7 +1727,9 @@ export default function GlobalNav({
         {/* Utilities - Dropdown */}
         <div
           className="relative"
-          ref={(el) => (dropdownRefs.current["utilities"] = el)}
+          ref={(el) => {
+            dropdownRefs.current["utilities"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("utilities")}
@@ -1749,7 +1754,9 @@ export default function GlobalNav({
         {/* Setup - Dropdown */}
         <div
           className="relative"
-          ref={(el) => (dropdownRefs.current["setup"] = el)}
+          ref={(el) => {
+            dropdownRefs.current["setup"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("setup")}
@@ -1774,7 +1781,9 @@ export default function GlobalNav({
         {/* Help */}
         <div
           className="relative"
-          ref={(el) => (dropdownRefs.current["help"] = el)}
+          ref={(el) => {
+            dropdownRefs.current["help"] = el;
+          }}
         >
           <button
             onClick={() => toggleDropdown("help")}
@@ -1846,7 +1855,9 @@ export default function GlobalNav({
             }
           }}
           activeSubmenuIndex={null}
-          ref={(el) => (submenuRefs.current[key] = el)}
+          ref={(el) => {
+            submenuRefs.current[key] = el;
+          }}
         />
       ))}
     </div>
