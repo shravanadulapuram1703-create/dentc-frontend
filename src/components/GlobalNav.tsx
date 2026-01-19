@@ -133,10 +133,17 @@ export default function GlobalNav({
         }
       });
 
+      // Check if click is inside office dropdown
+      const officeDropdownRef = dropdownRefs.current["office"];
+      if (officeDropdownRef && officeDropdownRef.contains(target)) {
+        clickedInside = true;
+      }
+
       if (!clickedInside) {
         setActiveDropdown(null);
         setActiveMenuPath([]);
         setOpenSubmenus({}); // Close all Portal submenus
+        setShowOfficeDropdown(false); // Close office dropdown
       }
     };
 
@@ -153,7 +160,17 @@ export default function GlobalNav({
 
   // Get offices dynamically from API data (organizations from AuthContext)
   const currentOrg = organizations.find((org) => org.id === currentOrganization);
-  const offices = currentOrg?.offices?.map((office) => office.name || office.id) || [];
+  const offices = currentOrg?.offices || [];
+  
+  // Find current office object to display name and code (currentOffice is passed as prop)
+  const currentOfficeObj = offices.find((office) => office.id === currentOffice);
+  
+  // Format office display name with code: "Office Name [Code]"
+  const formatOfficeDisplay = (office: typeof offices[0]) => {
+    if (office.displayName) return office.displayName;
+    if (office.code) return `${office.name} [${office.code}]`;
+    return office.name || office.id;
+  };
 
   // PATIENT DROPDOWN MENU (Patient Context)
   const patientMenuItems = [
@@ -1571,7 +1588,7 @@ export default function GlobalNav({
                   Office
                 </span>
                 <span className="font-bold text-white text-sm">
-                  {currentOffice}
+                  {currentOfficeObj ? formatOfficeDisplay(currentOfficeObj) : currentOffice || "Select Office"}
                 </span>
               </div>
               <ChevronDown
@@ -1582,22 +1599,31 @@ export default function GlobalNav({
             {showOfficeDropdown && (
               <div className="absolute top-full right-0 mt-2 w-80 bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50">
                 <div className="py-1">
-                  {offices.map((office, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setCurrentOffice(office);
-                        setShowOfficeDropdown(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors ${
-                        currentOffice === office
-                          ? "bg-[#3A6EA5] text-white"
-                          : "text-[#1E293B] hover:bg-[#F7F9FC] hover:text-[#3A6EA5]"
-                      }`}
-                    >
-                      {office}
-                    </button>
-                  ))}
+                  {offices.length === 0 ? (
+                    <div className="px-4 py-2 text-sm text-[#64748B]">
+                      No offices available
+                    </div>
+                  ) : (
+                    offices.map((office) => {
+                      const isSelected = office.id === currentOffice;
+                      return (
+                        <button
+                          key={office.id}
+                          onClick={() => {
+                            setCurrentOffice(office.id);
+                            setShowOfficeDropdown(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors ${
+                            isSelected
+                              ? "bg-[#3A6EA5] text-white"
+                              : "text-[#1E293B] hover:bg-[#F7F9FC] hover:text-[#3A6EA5]"
+                          }`}
+                        >
+                          {formatOfficeDisplay(office)}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
