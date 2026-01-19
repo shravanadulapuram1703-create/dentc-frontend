@@ -165,10 +165,15 @@ export default function GlobalNav({
   // Find current office object to display name and code (currentOffice is passed as prop)
   const currentOfficeObj = offices.find((office) => office.id === currentOffice);
   
-  // Format office display name with code: "Office Name [Code]"
+  // Format office display name with ID: "Office Name [ID]"
   const formatOfficeDisplay = (office: typeof offices[0]) => {
     if (office.displayName) return office.displayName;
-    if (office.code) return `${office.name} [${office.code}]`;
+    // Use office ID instead of code
+    if (office.id) {
+      // Extract just the ID part if it's in format "O-123" or similar
+      const officeId = office.id.replace(/^O-/, '');
+      return `${office.name} [${officeId}]`;
+    }
     return office.name || office.id;
   };
 

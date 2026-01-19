@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import GlobalNav from "./GlobalNav.js";
 import type { UserRole } from "../contexts/AuthContext.js";
+import { useAuth } from "../contexts/AuthContext.js";
 import PageHeader from "./ui/PageHeader.js";
 import SectionHeader from "./ui/SectionHeader.js";
 import { components } from "../styles/theme.js";
@@ -90,8 +91,29 @@ export default function Dashboard({
   user,
 }: DashboardProps) {
   const navigate = useNavigate();
+  const { organizations, currentOrganization } = useAuth();
   const roleInfo = getRoleInfo(user?.role);
   const RoleIcon = roleInfo.icon;
+
+  // Get current office object to display name with ID
+  const currentOrg = organizations.find((org) => org.id === currentOrganization);
+  const offices = currentOrg?.offices || [];
+  const currentOfficeObj = offices.find((office) => office.id === currentOffice);
+  
+  // Format office display name with ID: "Office Name [ID]"
+  const formatOfficeDisplay = (office: typeof offices[0] | undefined) => {
+    if (!office) return currentOffice || "Select Office";
+    if (office.displayName) return office.displayName;
+    // Use office ID instead of code
+    if (office.id) {
+      // Extract just the ID part if it's in format "O-123" or similar
+      const officeId = office.id.replace(/^O-/, '');
+      return `${office.name} [${officeId}]`;
+    }
+    return office.name || office.id;
+  };
+  
+  const currentOfficeDisplay = useMemo(() => formatOfficeDisplay(currentOfficeObj), [currentOfficeObj, currentOffice]);
 
   // SECTION B: Search State
   const [searchFor, setSearchFor] = useState<
@@ -296,7 +318,7 @@ export default function Dashboard({
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-[#1E293B]">
-                  {currentOffice}
+                  {currentOfficeDisplay}
                 </div>
               </div>
 
