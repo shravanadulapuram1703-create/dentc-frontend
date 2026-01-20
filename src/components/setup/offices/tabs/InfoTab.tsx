@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X } from "lucide-react";
+import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X, Info } from "lucide-react";
 import api from "../../../../services/api";
 import { type Office } from "../../../../data/officeData";
 
@@ -25,7 +25,7 @@ interface FeeSchedule {
 
 
 
-export default function InfoTab({ formData, updateFormData }: InfoTabProps) {
+export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [feeSchedules, setFeeSchedules] = useState<FeeSchedule[]>([]);
   const [timeZones, setTimeZones] = useState<string[]>([]);
@@ -287,6 +287,9 @@ export default function InfoTab({ formData, updateFormData }: InfoTabProps) {
       alert(err.response?.data?.detail || "Failed to add UCR fee schedule");
     }
   };
+
+  console.log("Mode item:", mode);
+  console.log("Form Data item:", formData);
 
 
   return (
@@ -945,7 +948,7 @@ export default function InfoTab({ formData, updateFormData }: InfoTabProps) {
       </div>
 
       {/* 🔐 Audit Information Section */}
-      {mode === "view" && formData.createdBy && (
+      {mode === "view" && (formData.createdBy || formData.createdDate || formData.modifiedBy || formData.modifiedDate) && (
         <div className="bg-[#F8FAFC] border-2 border-[#E2E8F0] rounded-lg p-4">
           <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-3 pb-2 border-b-2 border-[#E2E8F0]">
             <Info className="w-4 h-4 text-[#3A6EA5]" />

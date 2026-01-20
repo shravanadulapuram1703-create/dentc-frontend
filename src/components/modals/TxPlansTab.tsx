@@ -1,5 +1,6 @@
 import { ChevronRight, ChevronDown, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import type { TreatmentPlan as ApiTreatmentPlan } from '../../services/schedulerApi';
 
 interface TxPlanProcedure {
   id: string;
@@ -28,49 +29,88 @@ interface TxPlan {
 }
 
 interface TxPlansTabProps {
+  treatmentPlans: ApiTreatmentPlan[];
+  isLoading?: boolean;
   onSelectProcedures: (procedures: TxPlanProcedure[]) => void;
 }
 
-export default function TxPlansTab({ onSelectProcedures }: TxPlansTabProps) {
-  // Mock Tx Plans data - matching the screenshot structure
-  const [txPlans, setTxPlans] = useState<TxPlan[]>([
-    {
-      id: 'plan-1',
-      name: 'Plan 1',
+export default function TxPlansTab({ treatmentPlans: initialTreatmentPlans, isLoading = false, onSelectProcedures }: TxPlansTabProps) {
+  // Helper function to transform API treatment plans to UI format
+  const transformTreatmentPlans = (plans: ApiTreatmentPlan[]): TxPlan[] => {
+    if (!plans || !Array.isArray(plans)) return [];
+    
+    return plans.map(plan => ({
+      id: plan.id,
+      name: plan.name,
       expanded: true,
-      phases: [
-        {
-          id: 'phase-1',
-          name: 'Phase 1',
-          expanded: true,
-          procedures: [
-            {
-              id: 'proc-1',
-              code: 'Z6000',
-              description: 'Impressions Diagnosed (6963/JN, Ahmed, Mary)',
-              tooth: '',
-              surface: '',
-              diagnosedProvider: 'Dr. Ahmed',
-              fee: 250.00,
-              insuranceEstimate: 0,
-              status: 'Planned'
-            },
-            {
-              id: 'proc-2',
-              code: 'Z6000',
-              description: 'Impressions Diagnosed (6963/JN, Ahmed, Meier)',
-              tooth: '',
-              surface: '',
-              diagnosedProvider: 'Dr. Ahmed',
-              fee: 250.00,
-              insuranceEstimate: 0,
-              status: 'Planned'
-            }
-          ]
-        }
-      ]
-    }
-  ]);
+      phases: (plan.phases || []).map(phase => ({
+        id: phase.id,
+        name: phase.name,
+        expanded: true,
+        procedures: (phase.procedures || []).map((proc: any) => ({
+          id: proc.id,
+          code: proc.code,
+          description: proc.description,
+          tooth: proc.tooth || "",
+          surface: proc.surface || "",
+          // Handle both camelCase and snake_case from API
+          diagnosedProvider: proc.diagnosedProvider || proc.diagnosed_provider || "",
+          fee: proc.fee || 0,
+          insuranceEstimate: proc.insuranceEstimate || proc.insurance_estimate || 0,
+          status: proc.status || "Planned",
+        })),
+      })),
+    }));
+  };
+
+  // Use treatment plans from API (passed as prop)
+  const [txPlans, setTxPlans] = useState<TxPlan[]>(
+    transformTreatmentPlans(initialTreatmentPlans || [])
+  );
+
+  // Update when treatment plans prop changes
+  useEffect(() => {
+    setTxPlans(
+      transformTreatmentPlans(initialTreatmentPlans || [])
+    );
+  }, [initialTreatmentPlans]);
+  //   {
+  //     id: 'plan-1',
+  //     name: 'Plan 1',
+  //     expanded: true,
+  //     phases: [
+  //       {
+  //         id: 'phase-1',
+  //         name: 'Phase 1',
+  //         expanded: true,
+  //         procedures: [
+  //           {
+  //             id: 'proc-1',
+  //             code: 'Z6000',
+  //             description: 'Impressions Diagnosed (6963/JN, Ahmed, Mary)',
+  //             tooth: '',
+  //             surface: '',
+  //             diagnosedProvider: 'Dr. Ahmed',
+  //             fee: 250.00,
+  //             insuranceEstimate: 0,
+  //             status: 'Planned'
+  //           },
+  //           {
+  //             id: 'proc-2',
+  //             code: 'Z6000',
+  //             description: 'Impressions Diagnosed (6963/JN, Ahmed, Meier)',
+  //             tooth: '',
+  //             surface: '',
+  //             diagnosedProvider: 'Dr. Ahmed',
+  //             fee: 250.00,
+  //             insuranceEstimate: 0,
+  //             status: 'Planned'
+  //           }
+  //         ]
+  //       }
+  //     ]
+  //   }
+  // ]);
 
   const [selectedProcedures, setSelectedProcedures] = useState<string[]>([]);
 
@@ -144,7 +184,11 @@ export default function TxPlansTab({ onSelectProcedures }: TxPlansTabProps) {
 
       {/* Tree View */}
       <div className="border-2 border-[#E2E8F0] rounded-lg bg-white max-h-96 overflow-y-auto">
-        {txPlans.length === 0 ? (
+        {isLoading ? (
+          <div className="p-8 text-center text-[#64748B] text-sm">
+            Loading treatment plans...
+          </div>
+        ) : txPlans.length === 0 ? (
           <div className="p-8 text-center text-[#64748B] text-sm">
             No treatment plans found. Click "Add..." to create a new treatment plan.
           </div>

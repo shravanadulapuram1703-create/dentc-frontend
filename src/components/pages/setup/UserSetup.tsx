@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
@@ -6,7 +6,7 @@ import api from "../../../services/api";
 import { mapApiUserToUI } from "../../../mappers/userMapper";
 import { mapApiTenantToUI, mapApiOfficeToUI } from "../../../mappers/tenantMapper";
 import { mapSetupApiToUserUI } from "../../../mappers/mapSetupApiToUserUI";
-import { useMemo } from "react";
+import { useAuth } from "../../../contexts/AuthContext";
 // import type { BackendUser } from "../../modals/AddEditUserModal";
 import type { BackendUser } from "../../../types/backendUser";
 
@@ -174,6 +174,7 @@ export default function UserSetup({
   currentOffice,
   setCurrentOffice,
 }: UserSetupProps) {
+  const { currentOrganization } = useAuth();
   const [searchText, setSearchText] = useState("");
   const [searchScope, setSearchScope] = useState<"all" | "home">("all");
   const [sortBy, setSortBy] = useState<"name" | "username">("name");
@@ -184,8 +185,28 @@ export default function UserSetup({
   const [filterPGID, setFilterPGID] = useState<string>("all");
   const [filterOID, setFilterOID] = useState<string>("all");
   const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
-  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
-  const [viewUser, setViewUser] = useState<User | null>(null);
+
+  // Extract numeric organization/tenant ID from currentOrganization (e.g., "ORG-1" -> 1, "001" -> 1)
+  const getTenantId = (): number | null => {
+    if (!currentOrganization) {
+      console.warn("currentOrganization not available, API calls may fail");
+      return null;
+    }
+    // Extract numeric ID from formats like "ORG-1", "1", "001", etc.
+    const match = currentOrganization.match(/(\d+)$/);
+    if (match && match[1]) {
+      // Convert to number to remove leading zeros (e.g., "001" -> 1)
+      const numericId = parseInt(match[1], 10);
+      return isNaN(numericId) ? null : numericId;
+    }
+    // If no numeric match, try to use the value directly (might already be numeric)
+    if (/^\d+$/.test(currentOrganization)) {
+      const numericId = parseInt(currentOrganization, 10);
+      return isNaN(numericId) ? null : numericId;
+    }
+    console.warn(`Could not extract tenant_id from currentOrganization: ${currentOrganization}`);
+    return null;
+  };
 
   // const fetchFullUserDetails = async (user: User) => {
   //   try {
@@ -319,21 +340,24 @@ export default function UserSetup({
 
   const fetchFullUserDetails = async (user: User) => {
     try {
-      setLoadingUserDetails(true);
-
       const id = normalizeUID(user.id);
 
-      // 1️⃣ fetch user
+      // Fetch complete user data - same endpoint as ViewUserDetailsModal uses
+      // This returns a BackendUser with user_id and all editable fields
       const userRes = await api.get<BackendUser>(
-        '/api/v1/users/setup'
+        `/api/v1/users/${id}`
       );
 
-      return userRes.data; //  backend user ONLY
+      // Ensure user_id is present (it should be from the API response)
+      if (!userRes.data.user_id) {
+        console.warn("API response missing user_id, using extracted ID");
+        userRes.data.user_id = parseInt(id, 10);
+      }
+
+      return userRes.data; // BackendUser with user_id and all fields
     } catch (err) {
-      console.error("Failed to load user details", err);
+      console.error("Failed to load user details:", err);
       return null;
-    } finally {
-      setLoadingUserDetails(false);
     }
   };
 
@@ -342,28 +366,70 @@ export default function UserSetup({
   const [availablePGIDs, setAvailablePGIDs] = useState<Tenant[]>([]);
 
   useEffect(() => {
-    api.get("/api/v1/users/all-tenants")
+    const tenantId = getTenantId();
+    
+    // Try with tenant_id first if available, then without
+    const makeRequest = (withParams: boolean) => {
+      const config = withParams && tenantId 
+        ? { params: { tenant_id: tenantId } }
+        : {};
+      
+      return api.get("/api/v1/users/all-tenants", config);
+    };
+    
+    makeRequest(true)
       .then((res) => {
         setAvailablePGIDs(res.data.map(mapApiTenantToUI));
       })
-      .catch(() => {
-        console.error("Failed to load tenants");
+      .catch((err) => {
+        console.error("Failed to load tenants with params:", err.response?.data || err.message);
+        // Try without params as fallback
+        if (tenantId) {
+          makeRequest(false)
+            .then((res) => {
+              setAvailablePGIDs(res.data.map(mapApiTenantToUI));
+            })
+            .catch((fallbackErr) => {
+              console.error("Failed to load tenants without params:", fallbackErr.response?.data || fallbackErr.message);
+            });
+        }
       });
-  }, []);
+  }, [currentOrganization]);
 
 
 
   const [availableOIDs, setAvailableOIDs] = useState<Office[]>([]);
 
   useEffect(() => {
-    api.get("/api/v1/users/all-offices")
+    const tenantId = getTenantId();
+    
+    // Try with tenant_id first if available, then without
+    const makeRequest = (withParams: boolean) => {
+      const config = withParams && tenantId 
+        ? { params: { tenant_id: tenantId } }
+        : {};
+      
+      return api.get("/api/v1/users/all-offices", config);
+    };
+    
+    makeRequest(true)
       .then((res) => {
         setAvailableOIDs(res.data.map(mapApiOfficeToUI));
       })
-      .catch(() => {
-        console.error("Failed to load offices");
+      .catch((err) => {
+        console.error("Failed to load offices with params:", err.response?.data || err.message);
+        // Try without params as fallback
+        if (tenantId) {
+          makeRequest(false)
+            .then((res) => {
+              setAvailableOIDs(res.data.map(mapApiOfficeToUI));
+            })
+            .catch((fallbackErr) => {
+              console.error("Failed to load offices without params:", fallbackErr.response?.data || fallbackErr.message);
+            });
+        }
       });
-  }, []);
+  }, [currentOrganization]);
 
   useEffect(() => {
     if (searchScope === "home") {
@@ -447,10 +513,33 @@ export default function UserSetup({
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/v1/users/list-with-home-office");
+      const tenantId = getTenantId();
+      
+      // Try with tenant_id first if available
+      const config = tenantId 
+        ? { params: { tenant_id: tenantId } }
+        : {};
+      
+      const res = await api.get("/api/v1/users/list-with-home-office", config);
       setUsers(res.data.map(mapApiUserToUI));
-    } catch {
-      setError("Failed to load users");
+      setError(null);
+    } catch (err: any) {
+      console.error("Failed to load users with params:", err.response?.data || err.message);
+      const tenantId = getTenantId();
+      
+      // Try without params as fallback
+      if (tenantId) {
+        try {
+          const res = await api.get("/api/v1/users/list-with-home-office");
+          setUsers(res.data.map(mapApiUserToUI));
+          setError(null);
+        } catch (fallbackErr: any) {
+          console.error("Failed to load users without params:", fallbackErr.response?.data || fallbackErr.message);
+          setError(fallbackErr.response?.data?.detail || err.response?.data?.detail || "Failed to load users");
+        }
+      } else {
+        setError(err.response?.data?.detail || "Failed to load users");
+      }
     } finally {
       setLoading(false);
     }
@@ -770,22 +859,27 @@ export default function UserSetup({
   //   setShowViewDetailsModal(true);
   // };
 
-  const handleViewDetails = async () => {
+  const handleViewDetails = () => {
     if (!selectedUser) return;
-
-    const fullUser = await fetchFullUserDetails(selectedUser);
-    if (!fullUser) return;
-
-    setViewUser(fullUser);        // ✅ explicitly set modal user
     setShowViewDetailsModal(true);
   };
 
 
   const officeNameById = useMemo(() => {
     const map = new Map<string, string>();
-    availableOIDs.forEach(o =>
-      map.set(normalizeOID(o.id), o.officeName)
-    );
+    availableOIDs.forEach(o => {
+      // Handle both number and string IDs, normalize to string without "O-" prefix
+      const normalizedId = String(o.id).replace(/^O-/, "");
+      // Store with normalized ID (without "O-" prefix) as key
+      map.set(normalizedId, o.officeName);
+      // Also store with "O-" prefix for direct lookup
+      map.set(`O-${normalizedId}`, o.officeName);
+      // Also store with officeCode if available
+      if (o.officeCode) {
+        map.set(normalizeOID(o.officeCode), o.officeName);
+        map.set(o.officeCode, o.officeName);
+      }
+    });
     return map;
   }, [availableOIDs]);
 
@@ -973,9 +1067,9 @@ export default function UserSetup({
                         <div className="text-xs text-[#64748B]">
                           {user.homeOffice}
                         </div>
-                        {user.lastLogin && (
+                        {(user as any).lastLogin && (
                           <div className="text-xs text-[#64748B] mt-1">
-                            Last login: {user.lastLogin}
+                            Last login: {(user as any).lastLogin}
                           </div>
                         )}
                       </div>
@@ -992,26 +1086,26 @@ export default function UserSetup({
 
             {/* Action Buttons */}
             <div className="border-t-2 border-[#E2E8F0] p-4 bg-[#F7F9FC]">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleAddUser}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[#22C55E] text-white rounded-lg hover:bg-[#16A34A] transition-colors shadow-sm"
+                  className="flex items-center justify-center gap-2 px-24 py-2 bg-[#22C55E] text-white rounded-lg hover:bg-[#16A34A] transition-colors shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
                   <span className="text-sm font-bold">Add</span>
                 </button>
-                <button
+                {/* <button
                   onClick={handleEditUser}
-                  disabled={!selectedUser || loadingUserDetails}
+                  disabled={!selectedUser}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
                 >
                   <Edit className="w-4 h-4" />
                   <span className="text-sm font-bold">Edit</span>
-                </button>
+                </button> */}
                 <button
                   onClick={handleDeleteUser}
                   disabled={!selectedUser}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors shadow-sm disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-24 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors shadow-sm disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span className="text-sm font-bold">Delete</span>
@@ -1130,13 +1224,23 @@ export default function UserSetup({
                               </div>
                               );
                             })} */}
-                            {selectedUser.assignedOfficeOIDs.map((oid) => (
-                              <div key={oid} className="px-2 py-1 bg-[#E8EFF7] border rounded text-xs">
-                                <div className="font-bold">
-                                  {oid} - {officeNameById.get(normalizeOID(oid)) ?? "Unknown Office"}
+                            {selectedUser.assignedOfficeOIDs.map((oid, index) => {
+                              // Try to get office name from assignedOfficeNames array first
+                              const officeNameFromArray = selectedUser.assignedOfficeNames?.[index];
+                              // Fallback to map lookup
+                              const normalizedOid = normalizeOID(oid);
+                              const officeNameFromMap = officeNameById.get(normalizedOid);
+                              // Use the name from array if available, otherwise from map, otherwise "Unknown Office"
+                              const officeName = officeNameFromArray || officeNameFromMap || "Unknown Office";
+                              
+                              return (
+                                <div key={oid} className="px-2 py-1 bg-[#E8EFF7] border rounded text-xs">
+                                  <div className="font-bold">
+                                    {oid} - {officeName}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                           <p className="text-xs text-[#64748B] mt-1">
                             User can access {selectedUser.assignedOfficeOIDs.length} office
@@ -1185,7 +1289,7 @@ export default function UserSetup({
                           LAST LOGIN
                         </label>
                         <p className="text-sm text-[#1E293B]">
-                          {selectedUser.lastLogin || "Never"}
+                          {(selectedUser as any).lastLogin || "Never"}
                         </p>
                       </div>
                       <div>
@@ -1256,7 +1360,7 @@ export default function UserSetup({
                     <div className="flex gap-3">
                       <button
                         onClick={handleEditUser}
-                        disabled={!selectedUser || loadingUserDetails}
+                        disabled={!selectedUser}
                         className="flex items-center gap-2 px-5 py-2.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm font-bold text-sm"
                       >
                         <Edit className="w-4 h-4" />
@@ -1300,16 +1404,14 @@ export default function UserSetup({
       )}
 
       {/* View User Details Modal */}
-      {showViewDetailsModal && (
+      {showViewDetailsModal && selectedUser && (
         <ViewUserDetailsModal
           isOpen={showViewDetailsModal}
           onClose={() => {
             setShowViewDetailsModal(false);
-            setViewUser(null);
           }}
-          user={viewUser}
+          userId={selectedUser.id}
         />
-
       )}
     </div>
   );

@@ -715,6 +715,25 @@ export default function Scheduler({
   // Handle appointment save
   const handleSaveAppointment = async (appointmentData: any) => {
     console.log("📥 Scheduler.handleSaveAppointment called with:", appointmentData);
+    
+    // Check if appointment was already saved by AddEditAppointmentForm
+    // If _alreadySaved flag is true, AddEditAppointmentForm already saved the appointment via API,
+    // so we just need to refresh the appointments list
+    if (appointmentData._alreadySaved) {
+      console.log("✅ Appointment already saved by AddEditAppointmentForm, refreshing appointments list...");
+      // Just refresh the appointments list
+      try {
+        const currentDateStr = formatDateYYYYMMDD(selectedDate);
+        const data = await fetchAppointments(currentDateStr, currentDateStr);
+        setAppointments(data);
+        setEditingAppointment(null);
+      } catch (err: any) {
+        console.error("Error refreshing appointments:", err);
+        // Don't show error alert - appointment was already saved successfully
+      }
+      return;
+    }
+    
     try {
       if (editingAppointment) {
         // Update existing appointment
@@ -1422,6 +1441,7 @@ export default function Scheduler({
             selectedSlot={selectedSlot}
             currentOffice={currentOffice}
             editingAppointment={editingAppointment}
+            selectedDate={selectedDate}
           />
         )}
 

@@ -38,6 +38,7 @@ interface NewAppointmentModalProps {
   selectedSlot: { time: string; operatory: string } | null;
   currentOffice: string;
   editingAppointment?: any; // Appointment data when editing
+  selectedDate?: Date; // Selected date from scheduler (for default when no slot)
 }
 
 interface PatientSearchResult {
@@ -65,6 +66,7 @@ export default function NewAppointmentModal({
   selectedSlot,
   currentOffice,
   editingAppointment,
+  selectedDate,
 }: NewAppointmentModalProps) {
   const [appointmentType, setAppointmentType] = useState<
     "existing" | "new" | "family" | "block" | "quickfill"
@@ -100,6 +102,15 @@ export default function NewAppointmentModal({
     useState(false);
   const [newPatientData, setNewPatientData] =
     useState<PatientSearchResult | null>(null);
+  const [initialAppointmentData, setInitialAppointmentData] = useState<{
+    date?: string;
+    time?: string;
+    duration?: number;
+    procedureType?: string;
+    operatory?: string;
+    provider?: string;
+    notes?: string;
+  } | null>(null);
   const [phoneError, setPhoneError] = useState<string>("");
 
   // Patient Search State
@@ -140,6 +151,14 @@ export default function NewAppointmentModal({
     }
   }, [isOpen]);
 
+  // Helper to format date as YYYY-MM-DD
+  const formatDateYYYYMMDD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   // Form state
   const [formData, setFormData] = useState({
     // Patient Information
@@ -153,8 +172,10 @@ export default function NewAppointmentModal({
     gender: "", //New field
 
     // Appointment Details
-    date: new Date().toISOString().split("T")[0],
-    time: selectedSlot?.time || "09:00",
+    // Use selectedDate if provided, otherwise current date
+    // When selectedSlot is null, time should be empty (user must select)
+    date: selectedDate ? formatDateYYYYMMDD(selectedDate) : new Date().toISOString().split("T")[0],
+    time: selectedSlot?.time || "", // Empty when no slot selected - user must choose
     duration: 10,
     procedureType: "",
     notes: "",
@@ -231,9 +252,10 @@ export default function NewAppointmentModal({
     loadMetadata();
   }, [isOpen, selectedSlot]);
 
-  // Update form defaults when selectedSlot changes
+  // Update form defaults when selectedSlot or selectedDate changes
   useEffect(() => {
     if (selectedSlot) {
+      // When slot is selected, update time and operatory (view-only mode)
       setFormData((prev) => ({
         ...prev,
         time: selectedSlot.time,
@@ -248,8 +270,14 @@ export default function NewAppointmentModal({
           provider: operatory.provider,
         }));
       }
+    } else if (selectedDate) {
+      // When no slot selected but date is provided, update date (editable mode)
+      setFormData((prev) => ({
+        ...prev,
+        date: formatDateYYYYMMDD(selectedDate),
+      }));
     }
-  }, [selectedSlot, operatories]);
+  }, [selectedSlot, selectedDate, operatories]);
 
   // Note: Patient search now uses the Patients API via handlePatientSearch
 
@@ -421,6 +449,20 @@ export default function NewAppointmentModal({
       return;
     }
 
+    // Validate date and time when no slot is selected (red button flow)
+    if (!selectedSlot) {
+      if (!formData.date) {
+        console.log("❌ Validation failed: Missing date");
+        alert("Please select an appointment date");
+        return;
+      }
+      if (!formData.time) {
+        console.log("❌ Validation failed: Missing time");
+        alert("Please select an appointment time");
+        return;
+      }
+    }
+
     console.log("✅ Validation passed, proceeding with save...");
     setIsSaving(true);
 
@@ -467,8 +509,8 @@ export default function NewAppointmentModal({
           ...(dobFormatted && { dob: dobFormatted }),
           ...(formData.phoneNumber && { phone: formData.phoneNumber }),
           ...(formData.email && { email: formData.email }),
+          ...(formData.gender && { gender: formData.gender }),
           // Note: phone_type is not in Patient API, but phone is stored
-          // gender can be added later if needed
         };
 
         console.log("Patient data to create:", patientData);
@@ -488,10 +530,16 @@ export default function NewAppointmentModal({
       // Step 2: Create appointment with the patient ID
       // Format matches API contract: APPOINTMENT_API_CONTRACTS.md
       // API expects snake_case field names
+      // Use time from formData (either from selectedSlot or user input)
+      const appointmentTime = selectedSlot?.time || formData.time;
+      if (!appointmentTime) {
+        throw new Error("Appointment time is required");
+      }
+
       const appointmentPayload = {
         patient_id: patientId,
         date: formData.date,
-        start_time: formData.time,
+        start_time: appointmentTime,
         duration: formData.duration,
         procedure_type: formData.procedureType,
         operatory: formData.operatory,
@@ -535,7 +583,7 @@ export default function NewAppointmentModal({
     const tempPatient: PatientSearchResult = {
       patientId: "NEW-" + Date.now(), // Temporary ID
       name: `${formData.lastName}, ${formData.firstName}`,
-      gender: "U", // Unknown initially
+      gender: formData.gender || "U", // Use gender from form
       ssn: "***-**-****",
       phone: formData.phoneNumber,
       birthdate: formData.birthdate,
@@ -561,10 +609,22 @@ export default function NewAppointmentModal({
           : "",
     };
 
-    // Store the new patient data and show full appointment form
+    // Store the new patient data and initial appointment data
     setNewPatientData(tempPatient);
     setSelectedPatient(tempPatient);
     setShowFullAppointmentForm(true);
+    
+    // Store initial appointment data to pass to AddEditAppointmentForm
+    // This will be used when AddEditAppointmentForm is rendered
+    setInitialAppointmentData({
+      ...(formData.date && { date: formData.date }),
+      ...(formData.time && { time: formData.time }),
+      ...(formData.duration && { duration: formData.duration }),
+      ...(formData.procedureType && { procedureType: formData.procedureType }),
+      ...(formData.operatory && { operatory: formData.operatory }),
+      ...(formData.provider && { provider: formData.provider }),
+      ...(formData.notes && { notes: formData.notes }),
+    });
   };
 
   // ✅ Reusable Radio component (clean & safe)
@@ -628,7 +688,7 @@ export default function NewAppointmentModal({
           </div>
         )}
 
-        {/* Selected Slot Information - Medical Slate Theme */}
+        {/* Selected Slot Information - View-only when slot is selected */}
         {selectedSlot && (
           <div className="bg-[#E8EFF7] border-b-2 border-[#E2E8F0] p-4">
             <h3 className="font-bold text-[#1F3A5F] mb-2">
@@ -666,6 +726,59 @@ export default function NewAppointmentModal({
                 <span className="ml-2 text-[#1E293B] font-semibold">
                   {selectedSlot.operatory}
                 </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Editable Date & Time Selection - When no slot is selected (red button) */}
+        {!selectedSlot && (
+          <div className="bg-[#E8EFF7] border-b-2 border-[#E2E8F0] p-4">
+            <h3 className="font-bold text-[#1F3A5F] mb-4">
+              Select Appointment Date & Time
+            </h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-[#64748B] font-medium mb-1 text-sm">
+                  Date <span className="text-[#EF4444]">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      date: e.target.value,
+                    })
+                  }
+                  required
+                  className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[#64748B] font-medium mb-1 text-sm">
+                  Time <span className="text-[#EF4444]">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      time: e.target.value,
+                    })
+                  }
+                  required
+                  className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[#64748B] font-medium mb-1 text-sm">
+                  Office
+                </label>
+                <div className="px-3 py-2 bg-gray-100 border-2 border-[#E2E8F0] rounded-lg text-sm font-semibold text-[#1E293B]">
+                  {currentOffice}
+                </div>
               </div>
             </div>
           </div>
@@ -1076,54 +1189,14 @@ export default function NewAppointmentModal({
                 setSelectedPatient(null);
                 setShowPatientForm(false);
                 setShowPatientSearch(true);
+                setInitialAppointmentData(null);
               }}
               editingAppointment={editingAppointment}
+              {...(initialAppointmentData && { initialAppointmentData })}
             />
           ) : (
             /* Patient and Appointment Form */
             <div className="space-y-6">
-              {/* Show selected patient info if existing patient was selected */}
-              {selectedPatient && (
-                <div className="bg-[#E8EFF7] border-2 border-[#3A6EA5] rounded-lg p-4">
-                  <h3 className="font-bold text-[#1F3A5F] mb-2">
-                    Selected Patient
-                  </h3>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        Patient ID:
-                      </span>
-                      <span className="ml-2 text-[#3A6EA5] font-bold">
-                        {selectedPatient.patientId}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        Name:
-                      </span>
-                      <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.name}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        DOB:
-                      </span>
-                      <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.birthdate}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#64748B] font-medium">
-                        Office:
-                      </span>
-                      <span className="ml-2 text-[#1E293B] font-semibold">
-                        {selectedPatient.office}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Personal Information */}
               <div>

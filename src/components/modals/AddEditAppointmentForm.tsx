@@ -5,16 +5,33 @@ import {
   MessageSquare,
   Plus,
   Trash2,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SendEmailModal from "./SendEmailModal";
 import TxPlansTab from "./TxPlansTab";
 import DatePickerCalendar from "./DatePickerCalendar";
 import AddProcedure from "../patient/AddProcedure";
+import { useAuth } from "../../contexts/AuthContext";
 import {
-  procedureCodes,
-  type ProcedureCode,
-} from "../../data/procedureCodes";
+  fetchProviders,
+  fetchOperatories,
+  fetchProcedureTypes,
+  fetchAppointmentStatuses,
+  fetchProcedureCodes,
+  fetchProcedureCategories,
+  fetchTreatmentPlans,
+  fetchAppointment,
+  createAppointment,
+  updateAppointment,
+  type Provider,
+  type Operatory,
+  type ProcedureType,
+  type AppointmentStatus,
+  type ProcedureCode as ApiProcedureCode,
+  type ProcedureCategory,
+  type TreatmentPlan,
+} from "../../services/schedulerApi";
 
 interface PatientSearchResult {
   patientId: string;
@@ -42,6 +59,15 @@ interface AddEditAppointmentFormProps {
   onSave: (data: any) => void;
   onBack: () => void;
   editingAppointment?: any; // Optional: appointment data when editing
+  initialAppointmentData?: { // Optional: initial appointment data from New Patient flow
+    date?: string;
+    time?: string;
+    duration?: number;
+    procedureType?: string;
+    operatory?: string;
+    provider?: string;
+    notes?: string;
+  };
 }
 
 interface Treatment {
@@ -68,10 +94,281 @@ export default function AddEditAppointmentForm({
   onSave,
   onBack,
   editingAppointment,
+  initialAppointmentData,
 }: AddEditAppointmentFormProps) {
+  const { currentOrganization, organizations, currentOffice: currentOfficeId } = useAuth();
+  
+  // Find current organization and office details
+  const currentOrg = organizations.find((org) => org.id === currentOrganization);
+  const currentOfficeObj = currentOrg?.offices.find((office) => office.id === currentOfficeId);
+
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showSMSModal, setShowSMSModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Dynamic metadata state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [operatories, setOperatories] = useState<Operatory[]>([]);
+  const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
+  const [statusOptions, setStatusOptions] = useState<AppointmentStatus[]>([]);
+  const [procedureCodes, setProcedureCodes] = useState<ApiProcedureCode[]>([]);
+  const [procedureCategories, setProcedureCategories] = useState<ProcedureCategory[]>([]);
+  const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
+  
+  // Ensure procedureCodes is always an array (defensive check)
+  const safeProcedureCodes = procedureCodes || [];
+  
+  // Loading states
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
+  const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
+  const [appointmentLoaded, setAppointmentLoaded] = useState(false);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [appointmentError, setAppointmentError] = useState<string | null>(null);
+
+  // Fetch full appointment details when editing - Progressive loading (non-blocking)
+  useEffect(() => {
+    const loadAppointmentDetails = async () => {
+      if (!editingAppointment?.id) {
+        setAppointmentLoaded(true); // No appointment to load
+        return;
+      }
+      
+      setIsLoadingAppointment(true);
+      setAppointmentError(null);
+      // Don't block form display - allow progressive loading
+      
+      try {
+        console.log("Loading appointment details for editing:", editingAppointment.id);
+        const fullAppointment = await fetchAppointment(editingAppointment.id);
+        console.log("Full appointment data loaded:", fullAppointment);
+        console.log("Lab fields from API:", {
+          lab: fullAppointment.lab,
+          labDds: (fullAppointment as any).labDds,
+          lab_dds: fullAppointment.lab_dds,
+          labCost: (fullAppointment as any).labCost,
+          lab_cost: fullAppointment.lab_cost,
+          labSentOn: (fullAppointment as any).labSentOn,
+          lab_sent_on: fullAppointment.lab_sent_on,
+          labDueOn: (fullAppointment as any).labDueOn,
+          lab_due_on: fullAppointment.lab_due_on,
+          labRecvdOn: (fullAppointment as any).labRecvdOn,
+          lab_recvd_on: fullAppointment.lab_recvd_on,
+        });
+        console.log("Campaign field from API:", {
+          campaignId: (fullAppointment as any).campaignId,
+          campaign_id: fullAppointment.campaign_id,
+        });
+        
+        // Convert date from YYYY-MM-DD to MM/DD/YYYY
+        const convertDateToMMDDYYYY = (dateStr: string): string => {
+          if (!dateStr) return getTodayDate();
+          if (dateStr.includes("/")) return dateStr; // Already in MM/DD/YYYY
+          const parts = dateStr.split("-");
+          if (parts.length === 3) {
+            return `${parts[1]}/${parts[2]}/${parts[0]}`;
+          }
+          return dateStr;
+        };
+        
+        // Convert time from 24-hour (HH:MM) to 12-hour (HH:MM AM/PM)
+        const convertTimeTo12Hour = (timeStr: string): string => {
+          if (!timeStr) return "09:00 AM";
+          if (timeStr.includes("AM") || timeStr.includes("PM")) return timeStr;
+          const match = timeStr.match(/(\d{2}):(\d{2})/);
+          if (match) {
+            let hours = parseInt(match[1], 10);
+            const minutes = match[2];
+            const period = hours >= 12 ? "PM" : "AM";
+            if (hours > 12) hours -= 12;
+            if (hours === 0) hours = 12;
+            return `${hours.toString().padStart(2, "0")}:${minutes} ${period}`;
+          }
+          return timeStr;
+        };
+        
+        // Update form data with appointment details
+        // Handle both camelCase and snake_case from API response
+        const appointment: any = fullAppointment;
+        setFormData(prev => ({
+          ...prev,
+          // Scheduling
+          appointmentDate: convertDateToMMDDYYYY(fullAppointment.date),
+          startsAt: convertTimeTo12Hour(fullAppointment.startTime),
+          duration: fullAppointment.duration,
+          procedureType: fullAppointment.procedureType || prev.procedureType,
+          operatory: fullAppointment.operatory || prev.operatory,
+          provider: fullAppointment.provider || prev.provider,
+          status: fullAppointment.status || prev.status,
+          
+          // Lab information - handle both camelCase (labDds, labCost, labSentOn) and snake_case (lab_dds, lab_cost, lab_sent_on)
+          lab: appointment.lab || false,
+          labDDS: appointment.labDds || appointment.lab_dds || appointment.labDDS || "",
+          labCost: appointment.labCost?.toString() || appointment.lab_cost?.toString() || "",
+          // Keep dates in YYYY-MM-DD format for date inputs (HTML date inputs require this format)
+          labSentOn: appointment.labSentOn || appointment.lab_sent_on || "",
+          labDueOn: appointment.labDueOn || appointment.lab_due_on || "",
+          labRecvdOn: appointment.labRecvdOn || appointment.lab_recvd_on || "",
+          
+          // Flags
+          missed: appointment.missed || false,
+          cancelled: appointment.cancelled || false,
+          
+          // Notes & Campaign - handle both camelCase (campaignId) and snake_case (campaign_id)
+          notes: appointment.notes || "",
+          campaignId: appointment.campaignId || appointment.campaign_id || "",
+        }));
+        
+        // Load treatments if available
+        // Handle both camelCase (procedureCode) and snake_case (procedure_code)
+        if (fullAppointment.treatments && Array.isArray(fullAppointment.treatments)) {
+          const transformedTreatments: Treatment[] = fullAppointment.treatments.map((t: any) => ({
+            id: t.id || Date.now().toString() + Math.random(),
+            status: t.status || "TP",
+            code: t.procedureCode || t.procedure_code || "",
+            th: t.tooth || t.th || "",
+            surf: t.surface || t.surf || "",
+            description: t.description || "",
+            bill: t.billTo || t.bill_to || t.bill || "Patient",
+            duration: t.duration || 0,
+            provider: t.provider || "",
+            providerUnits: t.providerUnits || t.provider_units || 1,
+            estPatient: t.estPatient || t.est_patient || 0,
+            estInsurance: t.estInsurance || t.est_insurance || 0,
+            fee: t.fee || 0,
+          }));
+          setTreatments(transformedTreatments);
+          console.log("Loaded treatments:", transformedTreatments);
+          console.log("Treatment procedure codes:", transformedTreatments.map(t => t.code));
+        }
+        
+        // Mark appointment as loaded - form can now be shown
+        setAppointmentLoaded(true);
+        console.log("✅ Appointment details fully loaded, form can be displayed");
+      } catch (error: any) {
+        console.error("Error loading appointment details:", error);
+        setAppointmentError(error.response?.data?.detail || error.message || "Failed to load appointment details");
+        // Still mark as loaded to show form, but with error message
+        setAppointmentLoaded(true);
+      } finally {
+        setIsLoadingAppointment(false);
+      }
+    };
+    
+    loadAppointmentDetails();
+  }, [editingAppointment?.id]);
+
+  // Fetch all metadata on component mount
+  useEffect(() => {
+    const loadMetadata = async () => {
+      setIsLoadingMetadata(true);
+      setMetadataError(null);
+      
+      try {
+        // Fetch all metadata in parallel
+        const [
+          providersData,
+          operatoriesData,
+          procedureTypesData,
+          statusesData,
+          categoriesData,
+          treatmentPlansData,
+        ] = await Promise.all([
+          fetchProviders(currentOfficeId),
+          fetchOperatories(currentOfficeId),
+          fetchProcedureTypes(),
+          fetchAppointmentStatuses(),
+          fetchProcedureCategories().catch((err) => {
+            console.error("Error fetching procedure categories:", err);
+            return [];
+          }),
+          fetchTreatmentPlans(patient.patientId).catch((err) => {
+            console.error("Error fetching treatment plans:", err);
+            return [];
+          }),
+        ]);
+
+        setProviders(providersData);
+        setOperatories(operatoriesData);
+        setProcedureTypes(procedureTypesData);
+        setStatusOptions(statusesData);
+        setProcedureCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setTreatmentPlans(Array.isArray(treatmentPlansData) ? treatmentPlansData : []);
+        
+        console.log("Metadata loaded:", {
+          providers: providersData.length,
+          operatories: operatoriesData.length,
+          procedureTypes: procedureTypesData.length,
+          statuses: statusesData.length,
+          categories: Array.isArray(categoriesData) ? categoriesData.length : 0,
+          treatmentPlans: Array.isArray(treatmentPlansData) ? treatmentPlansData.length : 0,
+        });
+        console.log("Treatment plans data:", treatmentPlansData);
+        console.log("Procedure types with colors:", procedureTypesData.map(t => ({ name: t.name, color: t.color })));
+        console.log("Procedure categories:", categoriesData);
+
+        // Load procedure codes (can be lazy-loaded later if needed)
+        try {
+          console.log("Fetching procedure codes...");
+          const codesData = await fetchProcedureCodes();
+          const validCodes = Array.isArray(codesData) ? codesData : [];
+          setProcedureCodes(validCodes);
+          console.log("✅ Loaded procedure codes:", validCodes.length);
+          if (validCodes.length > 0) {
+            console.log("Sample procedure codes:", validCodes.slice(0, 3));
+          }
+        } catch (err: any) {
+          console.error("❌ Error fetching procedure codes:", err);
+          console.error("Error details:", err.response?.data || err.message);
+          setProcedureCodes([]);
+        }
+      } catch (err: any) {
+        console.error("Error loading metadata:", err);
+        setMetadataError(`Failed to load appointment metadata: ${err.message}`);
+      } finally {
+        setIsLoadingMetadata(false);
+      }
+    };
+
+    loadMetadata();
+  }, [currentOfficeId, patient.patientId]);
+
+  // Update formData when metadata loads (only once when metadata finishes loading)
+  useEffect(() => {
+    if (!isLoadingMetadata && statusOptions.length > 0 && procedureTypes.length > 0) {
+      setFormData(prev => {
+        const updates: any = {};
+        
+        // Update status if it's not set or doesn't match any available status
+        if (!prev.status || !statusOptions.some(s => s.name === prev.status)) {
+          updates.status = statusOptions[0].name;
+        }
+
+        // Update procedure type if it's not set or doesn't match any available type
+        if (!prev.procedureType || !procedureTypes.some(t => t.name === prev.procedureType)) {
+          updates.procedureType = procedureTypes[0].name;
+        }
+
+        // Update provider when operatories load
+        if (operatories.length > 0) {
+          if (prev.operatory) {
+            const operatory = operatories.find((op) => op.id === prev.operatory);
+            if (operatory?.provider && prev.provider !== operatory.provider) {
+              updates.provider = operatory.provider;
+            } else if (!prev.provider && providers.length > 0) {
+              updates.provider = providers[0].name;
+            }
+          } else {
+            // If no operatory is selected, set default operatory and provider
+            const defaultOperatory = operatories[0];
+            updates.operatory = defaultOperatory.id;
+            updates.provider = defaultOperatory.provider || (providers.length > 0 ? providers[0].name : "");
+          }
+        }
+
+        return Object.keys(updates).length > 0 ? { ...prev, ...updates } : prev;
+      });
+    }
+  }, [isLoadingMetadata, statusOptions.length, procedureTypes.length, operatories.length, providers.length]);
 
   // Get today's date in MM/DD/YYYY format
   const getTodayDate = () => {
@@ -79,37 +376,14 @@ export default function AddEditAppointmentForm({
     return `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}/${today.getFullYear()}`;
   };
 
-  // Operatory to Provider mapping
-  const operatoryProviderMap: { [key: string]: string } = {
-    Hygiene: "Dr. Sarah Johnson",
-    Major: "Dr. Michael Chen",
-    Minor: "Dr. Jinna",
-    Surgery: "Dr. Robert Williams",
+  // Get default provider based on operatory (from API data)
+  const getDefaultProvider = (operatoryId: string) => {
+    const operatory = operatories.find((op) => op.id === operatoryId);
+    return operatory?.provider || (providers.length > 0 ? providers[0].name : "");
   };
 
-  // ✅ STEP 1: Typed Provider List (for dropdowns)
-  type Provider = {
-    id: string;
-    name: string;
-    type: "Dentist" | "Hygienist" | "Specialist";
-  };
-
-  const providers: Provider[] = [
-    { id: "p1", name: "Dr. Jinna", type: "Dentist" },
-    { id: "p2", name: "Dr. Sarah Johnson", type: "Hygienist" },
-    { id: "p3", name: "Dr. Michael Chen", type: "Specialist" },
-    { id: "p4", name: "Dr. Robert Williams", type: "Dentist" },
-    { id: "p5", name: "Dr. Emily Davis", type: "Dentist" },
-    { id: "p6", name: "Dr. James Anderson", type: "Specialist" },
-  ];
-
-  // Available providers list (for simple selects)
+  // Available providers list (for simple selects) - from API
   const availableProviders = providers.map((p) => p.name);
-
-  // Get default provider based on operatory
-  const getDefaultProvider = (operatory: string) => {
-    return operatoryProviderMap[operatory] || "Dr. Jinna";
-  };
 
   // ✅ STEP 2: Default provider for new treatments
   const getDefaultProviderForTreatment = () => {
@@ -132,14 +406,14 @@ export default function AddEditAppointmentForm({
 
     // Operatory & Scheduling
     appointmentDate: getTodayDate(), // NEW: Appointment date
-    operatory: selectedSlot?.operatory || "Hygiene",
-    status: "Scheduled",
+    operatory: selectedSlot?.operatory || (operatories.length > 0 ? operatories[0].id : ""),
+    status: statusOptions.length > 0 ? statusOptions[0].name : "Scheduled",
     startsAt: selectedSlot?.time || "09:00 AM",
     duration: 30,
-    procedureType: "Cleaning",
+    procedureType: procedureTypes.length > 0 ? procedureTypes[0].name : "",
     provider: getDefaultProvider(
-      selectedSlot?.operatory || "Hygiene",
-    ), // Auto-populate provider
+      selectedSlot?.operatory || (operatories.length > 0 ? operatories[0].id : ""),
+    ), // Auto-populate provider from API
 
     // Flags
     missed: false,
@@ -158,12 +432,13 @@ export default function AddEditAppointmentForm({
     campaignId: "",
   });
 
-  // Handle operatory change - update provider automatically
-  const handleOperatoryChange = (newOperatory: string) => {
+  // Handle operatory change - update provider automatically (from API data)
+  const handleOperatoryChange = (newOperatoryId: string) => {
+    const newProvider = getDefaultProvider(newOperatoryId);
     setFormData({
       ...formData,
-      operatory: newOperatory,
-      provider: getDefaultProvider(newOperatory),
+      operatory: newOperatoryId,
+      provider: newProvider,
     });
   };
 
@@ -241,7 +516,7 @@ export default function AddEditAppointmentForm({
 
   // ✅ STEP 1: Multi-select state for Quick Add (informational only)
   const [selectedProcedures, setSelectedProcedures] = useState<
-    ProcedureCode[]
+    ApiProcedureCode[]
   >([]);
 
   // 🔹 NEW: Quick Add state (procedure browser → AddProcedure modal)
@@ -256,7 +531,7 @@ export default function AddEditAppointmentForm({
     useState("");
 
   // ✅ STEP 2: Toggle selection helper
-  const toggleProcedureSelection = (proc: ProcedureCode) => {
+  const toggleProcedureSelection = (proc: ApiProcedureCode) => {
     setSelectedProcedures((prev) => {
       const isSelected = prev.some((p) => p.code === proc.code);
       if (isSelected) {
@@ -288,47 +563,32 @@ export default function AddEditAppointmentForm({
     };
   };
 
-  const procedureTypes = [
-    { name: "Cleaning", color: "#FFE5E5" },
-    { name: "consult", color: "#2D5F4C" },
-    { name: "Crowns", color: "#D4F4DD" },
-    { name: "Emergency", color: "#C7E7FF" },
-    { name: "endo/rct", color: "#E5B3FF" },
-    { name: "Extraction", color: "#5B8FA3" },
-    { name: "Implants", color: "#FFF4C7" },
-    { name: "lab case", color: "#D4C5FF" },
-    { name: "New Patient", color: "#B8F4F4" },
-    { name: "Perio", color: "#E5D5C5" },
-    { name: "Recall/Rec", color: "#FFD5B5" },
-    { name: "Restorative", color: "#FFB5D5" },
-  ];
+  // Procedure categories for Quick Add (from API, with "All" option)
+  const procedureCategoriesForDisplay = useMemo(() => {
+    // Start with "All" option
+    const categories: Array<{ id: string; name: string; displayName: string }> = [
+      { id: "ALL", name: "ALL", displayName: "All" },
+    ];
+    
+    // Add API categories, filtering out any duplicate "ALL" that might come from API
+    if (procedureCategories && Array.isArray(procedureCategories)) {
+      procedureCategories.forEach(cat => {
+        // Only add if it doesn't already exist (avoid duplicates)
+        if (!categories.some(c => c.id === cat.id || c.id.toUpperCase() === cat.id.toUpperCase())) {
+          categories.push({
+            id: cat.id,
+            name: cat.name,
+            displayName: cat.displayName || cat.display_name || cat.name,
+          });
+        }
+      });
+    }
+    
+    console.log("procedureCategoriesForDisplay:", categories.length, "categories:", categories);
+    return categories;
+  }, [procedureCategories]);
 
-  const statusOptions = [
-    "Scheduled",
-    "Confirmed",
-    "Unconfirmed",
-    "Left Msg",
-    "In Operatory",
-    "Available",
-    "In Reception",
-    "Checked Out",
-  ];
-
-  const procedureCategories = [
-    "All",
-    "Diagnostic",
-    "Preventive",
-    "Restorative",
-    "Endodontics",
-    "Periodontics",
-    "Prosthodontics",
-    "Oral Surgery",
-    "Orthodontics",
-    "Implant Services",
-    "All Medical",
-  ];
-
-  const handleSave = () => {
+  const handleSave = async () => {
     // ✅ STEP 5: Validation - Hard stop if required fields missing
     const validationErrors: string[] = [];
 
@@ -360,10 +620,199 @@ export default function AddEditAppointmentForm({
       return; // ✅ HARD STOP - Do not save, do not close
     }
 
-    // ✅ All validation passed - Save and close
-    onSave({ ...formData, patient, treatments });
+    try {
+      // Convert date from MM/DD/YYYY to YYYY-MM-DD
+      const convertDateToYYYYMMDD = (dateStr: string): string => {
+        if (!dateStr) return "";
+        const parts = dateStr.split("/");
+        if (parts.length === 3) {
+          const [month, day, year] = parts;
+          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+        }
+        return dateStr; // Already in YYYY-MM-DD format
+      };
+
+      // Convert time from "09:00 AM" to "09:00" (24-hour format)
+      const convertTimeTo24Hour = (timeStr: string): string => {
+        if (!timeStr) return "";
+        // If already in 24-hour format (HH:MM), return as-is
+        if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
+        
+        // Parse "09:00 AM" or "2:30 PM" format
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (match) {
+          let hours = parseInt(match[1], 10);
+          const minutes = match[2];
+          const period = match[3].toUpperCase();
+          
+          if (period === "PM" && hours !== 12) hours += 12;
+          if (period === "AM" && hours === 12) hours = 0;
+          
+          return `${hours.toString().padStart(2, "0")}:${minutes}`;
+        }
+        return timeStr;
+      };
+
+      // Transform treatments to API format
+      // IMPORTANT: Always include procedure_code - use "UNKNOWN" as fallback if missing
+      const transformTreatments = treatments.map((t: any) => {
+        const procedureCode = t.code || t.procedure_code || "UNKNOWN";
+        
+        // Log warning if treatment doesn't have a valid procedure code
+        if (!t.code && !t.procedure_code) {
+          console.warn(`Treatment "${t.description || 'Unknown'}" is missing procedure_code, using "UNKNOWN" as fallback`);
+        }
+        
+        return {
+          procedure_code: procedureCode, // Always include, never empty
+          status: t.status || "TP", // Default to "Treatment Planned"
+          tooth: t.th || t.tooth || undefined,
+          surface: t.surf || t.surface || undefined,
+          description: t.description || "",
+          bill_to: t.bill || t.bill_to || "Patient",
+          duration: t.duration || 0,
+          provider: t.provider || formData.provider || "",
+          provider_units: t.providerUnits || t.provider_units || 1,
+          est_patient: t.estPatient || t.est_patient || undefined,
+          est_insurance: t.estInsurance || t.est_insurance || undefined,
+          fee: t.fee || 0,
+        };
+      });
+
+      // For new patients (patientId starts with "NEW-"), create patient first
+      let patientId = patient.patientId || patient.id?.toString() || "";
+      if (patientId.startsWith("NEW-")) {
+        console.log("Creating new patient before saving appointment...");
+        
+        // Import createPatient function
+        const { createPatient } = await import("../../services/patientApi");
+        
+        // Convert birthdate from MM/DD/YYYY to YYYY-MM-DD
+        let dobFormatted: string | undefined;
+        if (formData.birthdate) {
+          const parts = formData.birthdate.split("/");
+          if (parts.length === 3) {
+            dobFormatted = `${parts[2]}-${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
+          } else {
+            dobFormatted = formData.birthdate;
+          }
+        }
+        
+        // Create patient
+        const patientData: any = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          ...(dobFormatted && { dob: dobFormatted }),
+          ...(formData.cellPhone && { phone: formData.cellPhone }),
+          ...(formData.email && { email: formData.email }),
+        };
+        
+        // Only add gender if it's valid
+        if (patient.gender && (patient.gender === "M" || patient.gender === "F" || patient.gender === "O")) {
+          patientData.gender = patient.gender;
+        }
+        
+        const newPatient = await createPatient(patientData);
+        patientId = newPatient.chartNo || newPatient.id.toString();
+        console.log("Patient created with ID:", patientId);
+      }
+
+      // Normalize status to ensure it matches SQL enum (title case)
+      // Converts "MISSED" -> "Missed", "CANCELLED" -> "Cancelled"
+      const normalizeStatus = (status: string | undefined): string => {
+        if (!status) return "Scheduled";
+        // Convert common uppercase values to title case
+        const normalized = status.trim();
+        if (normalized.toUpperCase() === "MISSED") return "Missed";
+        if (normalized.toUpperCase() === "CANCELLED") return "Cancelled";
+        // Return as-is if already in correct format
+        return normalized;
+      };
+
+      // Build appointment payload
+      const appointmentPayload: any = {
+        patient_id: patientId,
+        date: convertDateToYYYYMMDD(formData.appointmentDate),
+        start_time: convertTimeTo24Hour(formData.startsAt),
+        duration: formData.duration,
+        procedure_type: formData.procedureType,
+        operatory: formData.operatory,
+        provider: formData.provider,
+        status: normalizeStatus(formData.status),
+        notes: formData.notes || undefined,
+        
+        // Lab information
+        lab: formData.lab || false,
+        lab_dds: formData.labDDS || undefined,
+        lab_cost: formData.labCost ? parseFloat(formData.labCost.toString()) : undefined,
+        // Date inputs return YYYY-MM-DD format, but convert if needed (MM/DD/YYYY -> YYYY-MM-DD)
+        lab_sent_on: formData.labSentOn 
+          ? (formData.labSentOn.includes("/") ? convertDateToYYYYMMDD(formData.labSentOn) : formData.labSentOn)
+          : undefined,
+        lab_due_on: formData.labDueOn
+          ? (formData.labDueOn.includes("/") ? convertDateToYYYYMMDD(formData.labDueOn) : formData.labDueOn)
+          : undefined,
+        lab_recvd_on: formData.labRecvdOn
+          ? (formData.labRecvdOn.includes("/") ? convertDateToYYYYMMDD(formData.labRecvdOn) : formData.labRecvdOn)
+          : undefined,
+        
+        // Flags
+        missed: formData.missed || false,
+        cancelled: formData.cancelled || false,
+        
+        // Additional fields
+        campaign_id: formData.campaignId || undefined,
+        
+        // Treatments - always include procedure_code (never empty, defaults to "UNKNOWN" if missing)
+        treatments: transformTreatments.length > 0 ? transformTreatments : undefined,
+      };
+
+      // Remove undefined fields (but keep treatments array - backend handles empty arrays)
+      Object.keys(appointmentPayload).forEach(key => {
+        if (appointmentPayload[key] === undefined && key !== 'treatments') {
+          delete appointmentPayload[key];
+        }
+      });
+      
+      // Log treatment details for debugging
+      if (transformTreatments.length > 0) {
+        console.log("📋 Treatments being saved:", transformTreatments.map(t => ({
+          procedure_code: t.procedure_code,
+          description: t.description,
+          fee: t.fee
+        })));
+      }
+
+      console.log("📤 Saving appointment with payload:", appointmentPayload);
+
+      // Call API to save appointment
+      if (editingAppointment?.id) {
+        // Update existing appointment
+        await updateAppointment({
+          id: editingAppointment.id,
+          ...appointmentPayload,
+        });
+        alert("✅ Appointment updated successfully!");
+      } else {
+        // Create new appointment
+        await createAppointment(appointmentPayload);
     alert("✅ Appointment saved successfully!");
+      }
+
+      // Call onSave callback for parent component to refresh
+      // Pass a flag to indicate appointment was already saved via API
+      onSave({ 
+        _alreadySaved: true, // Flag to indicate appointment was already saved
+        formData, 
+        patient, 
+        treatments 
+      });
     onClose(); // ✅ Close modal after successful save
+    } catch (error: any) {
+      console.error("Error saving appointment:", error);
+      const errorMessage = error.response?.data?.detail || error.message || "Failed to save appointment";
+      alert(`❌ Error: ${errorMessage}`);
+    }
   };
 
   const handleDeleteAppointment = () => {
@@ -420,6 +869,9 @@ export default function AddEditAppointmentForm({
     0,
   );
 
+  // Progressive loading: Show form immediately, load data in background
+  // No blocking loader - form opens instantly with placeholders
+
   return (
     <>
       <div className="space-y-4">
@@ -443,7 +895,7 @@ export default function AddEditAppointmentForm({
                   OID:
                 </span>
                 <span className="ml-2 font-semibold">
-                  OFF-001
+                  {currentOfficeObj?.id || currentOfficeId || "N/A"}
                 </span>
               </div>
             </div>
@@ -455,6 +907,38 @@ export default function AddEditAppointmentForm({
             </button>
           </div>
         </div>
+
+        {/* Non-blocking loading indicator - shows at top while data loads */}
+        {(isLoadingMetadata || (editingAppointment && isLoadingAppointment)) && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mb-4">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+              <p className="text-sm text-blue-700">
+                {isLoadingMetadata && editingAppointment && isLoadingAppointment
+                  ? "Loading appointment details and metadata..."
+                  : isLoadingMetadata
+                  ? "Loading metadata..."
+                  : "Loading appointment details..."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Error messages - inline, non-blocking */}
+        {appointmentError && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded mb-4">
+            <p className="text-sm text-red-700">
+              ⚠️ Error loading appointment details: {appointmentError}
+            </p>
+          </div>
+        )}
+        {metadataError && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4">
+            <p className="text-sm text-yellow-700">
+              ⚠️ Warning: {metadataError}
+            </p>
+          </div>
+        )}
 
         {/* SECTION 1: PERSONAL INFORMATION */}
         <div className="bg-white border-2 border-[#E2E8F0] rounded-lg p-3">
@@ -670,11 +1154,15 @@ export default function AddEditAppointmentForm({
                   }
                   className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white"
                 >
-                  {availableProviders.map((provider) => (
-                    <option key={provider} value={provider}>
-                      {provider}
+                  {providers.length === 0 ? (
+                    <option value="">{isLoadingMetadata ? "Loading..." : "No providers available"}</option>
+                  ) : (
+                    providers.map((provider) => (
+                      <option key={provider.id} value={provider.name}>
+                        {provider.name}
                     </option>
-                  ))}
+                    ))
+                  )}
                 </select>
               </div>
             </div>
@@ -740,12 +1228,18 @@ export default function AddEditAppointmentForm({
                   onChange={(e) =>
                     handleOperatoryChange(e.target.value)
                   }
-                  className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+                  disabled={isLoadingMetadata || operatories.length === 0}
+                  className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option>Hygiene</option>
-                  <option>Major</option>
-                  <option>Minor</option>
-                  <option>Surgery</option>
+                  {operatories.length === 0 ? (
+                    <option value="">{isLoadingMetadata ? "Loading..." : "No operatories available"}</option>
+                  ) : (
+                    operatories.map((operatory) => (
+                      <option key={operatory.id} value={operatory.id}>
+                        {operatory.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
               <div>
@@ -760,13 +1254,24 @@ export default function AddEditAppointmentForm({
                       status: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+                  disabled={isLoadingMetadata || statusOptions.length === 0}
+                  className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
+                  {statusOptions.length === 0 ? (
+                    <option value="">{isLoadingMetadata ? "Loading..." : "No statuses available"}</option>
+                  ) : (
+                    statusOptions.map((status) => (
+                      <option key={status.id} value={status.name}>
+                        {status.displayName || status.name}
                     </option>
-                  ))}
+                    ))
+                  )}
+                  {/* Fallback option if current status doesn't match any option */}
+                  {statusOptions.length > 0 && formData.status && !statusOptions.some(s => s.name === formData.status) && (
+                    <option value={formData.status} disabled>
+                      {formData.status} (Invalid)
+                    </option>
+                  )}
                 </select>
               </div>
               <div>
@@ -819,23 +1324,51 @@ export default function AddEditAppointmentForm({
                   }
                   className="flex-1 px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                 >
-                  {procedureTypes.map((type) => (
-                    <option key={type.name} value={type.name}>
+                  {procedureTypes.length === 0 ? (
+                    <option value="">{isLoadingMetadata ? "Loading..." : "No procedure types available"}</option>
+                  ) : (
+                    procedureTypes.map((type) => (
+                      <option key={type.id} value={type.name}>
                       {type.name}
                     </option>
-                  ))}
+                    ))
+                  )}
                 </select>
-                <div
-                  className="w-9 h-9 rounded border-2 border-[#CBD5E1]"
-                  style={{
-                    backgroundColor:
-                      procedureTypes.find(
-                        (t) =>
-                          t.name === formData.procedureType,
-                      )?.color || "#FFF",
-                  }}
-                  title="Procedure Type Color"
-                />
+                {(() => {
+                  const selectedType = procedureTypes.find(
+                    (t) => t.name === formData.procedureType
+                  );
+                  const colorValue = selectedType?.color;
+                  
+                  // Handle both hex colors (#FFE5E5) and Tailwind CSS classes (bg-purple-100)
+                  let backgroundColor = "#E2E8F0"; // Default gray
+                  let colorClass = "";
+                  
+                  if (colorValue) {
+                    // Check if it's a hex color (starts with #)
+                    if (colorValue.startsWith("#")) {
+                      backgroundColor = colorValue;
+                    } else if (colorValue.startsWith("bg-")) {
+                      // It's a Tailwind class - use it as a className
+                      colorClass = colorValue;
+                      // Also set a fallback background color in case Tailwind class doesn't apply
+                      backgroundColor = "#E2E8F0";
+                    } else {
+                      // Try to use it as-is (might be a valid CSS color name)
+                      backgroundColor = colorValue;
+                    }
+                  }
+                  
+                  return (
+                    <div
+                      className={`w-9 h-9 rounded border-2 border-[#CBD5E1] ${colorClass || ""}`}
+                      style={colorClass ? {} : {
+                        backgroundColor: backgroundColor,
+                      }}
+                      title={`Procedure Type: ${formData.procedureType || "None"}${colorValue ? ` (${colorValue})` : ""}`}
+                    />
+                  );
+                })()}
               </div>
             </div>
 
@@ -1143,14 +1676,18 @@ export default function AddEditAppointmentForm({
                             className="w-full px-1.5 py-0.5 border border-[#CBD5E1] rounded text-[11px] bg-white focus:outline-none focus:border-[#3A6EA5] leading-tight"
                             style={{ minWidth: '140px', maxWidth: '160px' }}
                           >
-                            {providers.map((provider) => (
+                            {providers.length === 0 ? (
+                              <option value="">No providers available</option>
+                            ) : (
+                              providers.map((provider) => (
                               <option
                                 key={provider.id}
                                 value={provider.name}
                               >
                                 {provider.name}
                               </option>
-                            ))}
+                              ))
+                            )}
                           </select>
                         </td>
                         <td className="px-2 py-2">
@@ -1214,6 +1751,8 @@ export default function AddEditAppointmentForm({
             {/* Tab Content */}
             {treatmentTab === "txplans" ? (
               <TxPlansTab
+                treatmentPlans={treatmentPlans}
+                isLoading={isLoadingMetadata}
                 onSelectProcedures={(procedures) => {
                   // Convert Tx Plan procedures to treatments
                   const newTreatments: Treatment[] =
@@ -1245,26 +1784,28 @@ export default function AddEditAppointmentForm({
                   QUICK ADD PROCEDURE
                 </h4>
                 <div className="flex gap-2 mb-3 flex-wrap">
-                  {procedureCategories.map((category) => (
+                  {procedureCategoriesForDisplay.length === 0 ? (
+                    <div className="text-sm text-[#64748B]">
+                      {isLoadingMetadata ? "Loading categories..." : "No categories available"}
+                    </div>
+                  ) : (
+                    procedureCategoriesForDisplay.map((category) => (
                     <button
-                      key={category}
-                      //onClick={() => setSelectedCategory(category)}
-                      onClick={() =>
-                        setSelectedCategory(
-                          category
-                            .toUpperCase()
-                            .replace(/\s+/g, ""),
-                        )
-                      }
+                        key={category.id}
+                        onClick={() => {
+                          console.log("Category selected:", category.id);
+                          setSelectedCategory(category.id.toUpperCase());
+                        }}
                       className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                        selectedCategory === category
+                          selectedCategory === category.id.toUpperCase()
                           ? "bg-[#3A6EA5] text-white"
                           : "bg-white border border-[#E2E8F0] text-[#1E293B] hover:border-[#3A6EA5]"
                       }`}
                     >
-                      {category}
+                        {category.displayName}
                     </button>
-                  ))}
+                    ))
+                  )}
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-sm">
                   <input
@@ -1359,7 +1900,9 @@ export default function AddEditAppointmentForm({
                         </tr>
                       </thead>
                       <tbody>
-                        {procedureCodes
+                        {(() => {
+                          // Filter procedure codes
+                          const filteredCodes = safeProcedureCodes
                           .filter((proc) => {
                             if (selectedCategory === "ALL")
                               return true;
@@ -1385,8 +1928,36 @@ export default function AddEditAppointmentForm({
                                   .includes(
                                     searchDescriptionFilter.toLowerCase(),
                                   )),
-                          )
-                          .map((proc) => {
+                            );
+                          
+                          // Debug logging
+                          if (safeProcedureCodes.length > 0) {
+                            console.log("Quick Add Debug:", {
+                              totalCodes: safeProcedureCodes.length,
+                              selectedCategory,
+                              filteredCount: filteredCodes.length,
+                              searchFilters: {
+                                code: searchCodeFilter,
+                                userCode: searchUserCodeFilter,
+                                description: searchDescriptionFilter,
+                              },
+                              sampleCodes: safeProcedureCodes.slice(0, 3).map(c => ({ code: c.code, category: c.category })),
+                            });
+                          }
+                          
+                          if (filteredCodes.length === 0) {
+                            return (
+                              <tr>
+                                <td colSpan={4} className="px-3 py-8 text-center text-[#64748B]">
+                                  {isLoadingMetadata 
+                                    ? "Loading procedure codes..." 
+                                    : `No procedure codes match filters (Total: ${safeProcedureCodes.length}, Category: ${selectedCategory}, Searches: ${searchCodeFilter || searchUserCodeFilter || searchDescriptionFilter ? "Active" : "None"})`}
+                                </td>
+                              </tr>
+                            );
+                          }
+                          
+                          return filteredCodes.map((proc) => {
                             // ✅ STEP 3: Check if procedure is selected
                             const isSelected = selectedProcedures.some(
                               (p) => p.code === proc.code,
@@ -1417,7 +1988,8 @@ export default function AddEditAppointmentForm({
                                 </td>
                               </tr>
                             );
-                          })}
+                            });
+                        })()}
                       </tbody>
                     </table>
                   </div>

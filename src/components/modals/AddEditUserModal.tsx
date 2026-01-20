@@ -8,10 +8,17 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 
 import api from "../../services/api";
 import type { UserSetupResponse } from "../../types/userSetup";
+import { fetchUserForEdit } from "../../services/userApi";
+import type { BackendUser } from "../../types/backendUser";
+
+// Re-export BackendUser for backward compatibility
+export type { BackendUser } from "../../types/backendUser";
 
 
 
@@ -21,39 +28,9 @@ interface AddEditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (userData: any) => void;
-  editingUser: BackendUser | null;
+  editingUser: BackendUser | null; // Can be null for add mode, or have user_id for edit mode
   currentOffice: string;
-
-
 }
-
-export interface BackendUser {
-  user_id: number;
-  username: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  phone?: string | null;
-
-  is_active: boolean;
-
-  home_office_id: number | null;
-  assigned_offices: number[];
-
-  roles: string[];        // scopes / roles
-  security_groups: string[];
-
-  permitted_ips: string[];
-
-  time_clock?: {
-    pay_rate?: number | null;
-    overtime_method?: string | null;
-    overtime_rate?: number | null;
-  };
-
-  preferences?: Record<string, any>;
-}
-
 
 export default function AddEditUserModal({
   isOpen,
@@ -63,9 +40,19 @@ export default function AddEditUserModal({
   currentOffice,
 }: AddEditUserModalProps) {
   const [activeTab, setActiveTab] = useState(0);
-
   const [setup, setSetup] = useState<UserSetupResponse | null>(null);
   const [setupLoading, setSetupLoading] = useState(false);
+  const [groupMembershipsMetadata, setGroupMembershipsMetadata] = useState<
+    Array<{ code: string; name: string; description?: string }>
+  >([]);
+  
+  // User data loading states (for edit mode)
+  const [userDataLoading, setUserDataLoading] = useState(false);
+  const [userDataError, setUserDataError] = useState<string | null>(null);
+  const [loadedUserData, setLoadedUserData] = useState<BackendUser | null>(null);
+  
+  // Determine mode - check if editingUser has user_id
+  const mode: "add" | "edit" = editingUser?.user_id ? "edit" : "add";
 
   // useEffect(() => {
   //   if (!isOpen) return;
@@ -81,6 +68,7 @@ export default function AddEditUserModal({
 
   // Form Data State
   
+  // Fetch setup data (offices, roles, groups, etc.)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -88,8 +76,66 @@ export default function AddEditUserModal({
     api
       .get<UserSetupResponse>("/api/v1/users/setup")
       .then(res => setSetup(res.data))
+      .catch(err => {
+        console.error("Failed to load setup data:", err);
+      })
       .finally(() => setSetupLoading(false));
   }, [isOpen]);
+
+  // Fetch available user group memberships metadata (dynamic from backend)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    api
+      .get<{ groups: Array<{ code: string; name: string; description?: string }> }>(
+        "/api/v1/users/groups-metadata"
+      )
+      .then(res => {
+        setGroupMembershipsMetadata(res.data?.groups || []);
+      })
+      .catch(err => {
+        console.error("Failed to load group memberships metadata:", err);
+        setGroupMembershipsMetadata([]);
+      });
+  }, [isOpen]);
+
+  // Fetch user data when in edit mode
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset state when modal closes
+      setUserDataError(null);
+      setLoadedUserData(null);
+      return;
+    }
+    
+    // If editingUser has user_id, fetch full user data for editing
+    if (mode === "edit" && editingUser?.user_id) {
+      setUserDataLoading(true);
+      setUserDataError(null);
+      
+      console.log("Fetching user data for editing, user_id:", editingUser.user_id);
+      
+      // Fetch user data using the same endpoint as ViewUserDetailsModal
+      // This should return complete user data including preferences, time_clock, etc.
+      fetchUserForEdit(editingUser.user_id)
+        .then(userData => {
+          console.log("User data loaded for editing:", userData);
+          setLoadedUserData(userData);
+          setUserDataError(null);
+        })
+        .catch(err => {
+          console.error("Failed to load user data for editing:", err);
+          setUserDataError(err.response?.data?.detail || err.message || "Failed to load user data");
+        })
+        .finally(() => {
+          setUserDataLoading(false);
+        });
+    } else if (mode === "add") {
+      // In add mode, ensure loadedUserData is null
+      setLoadedUserData(null);
+      setUserDataError(null);
+    }
+  }, [isOpen, editingUser?.user_id, mode]);
 
   // const [formData, setFormData] = useState<any>({
   //   username: "",
@@ -154,6 +200,9 @@ export default function AddEditUserModal({
     // Security
     roles: [] as string[],
     securityGroups: [] as string[],
+
+    // Group Memberships (separate from security groups)
+    groupMemberships: [] as string[],
 
     // Network
     permittedIPs: [] as string[],
@@ -280,33 +329,122 @@ export default function AddEditUserModal({
   //   isOrthoAssistant: false,
   // }));
 
+  // Populate form data when user data is loaded (edit mode) or reset for add mode
   useEffect(() => {
-    if (!editingUser) return;
+    if (!isOpen) {
+      // Reset form when modal closes
+      setFormData({
+        username: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        active: true,
+        homeOffice: "",
+        assignedOffices: [],
+        roles: [],
+        securityGroups: [],
+        groupMemberships: [],
+        permittedIPs: [],
+        patientAccessLevel: "all",
+        use24x7Access: true,
+        allowedDays: {
+          Mon: true,
+          Tue: true,
+          Wed: true,
+          Thu: true,
+          Fri: true,
+          Sat: false,
+          Sun: false,
+        },
+        allowedFrom: "08:00",
+        allowedUntil: "18:00",
+        timeClockPayRate: "",
+        overtimeMethod: "daily",
+        overtimeRate: "1.5",
+        startupScreen: "Dashboard",
+        defaultPerioScreen: "Standard",
+        defaultNavigationSearch: "Patient",
+        defaultSearchBy: "lastName",
+        defaultReferralView: "All",
+        showProductionView: true,
+        hideProviderTime: false,
+        printLabelsForAppointments: false,
+        promptForEntryDate: false,
+        includeInactivePatientsInSearch: false,
+        hipaaCompliantScheduler: false,
+        isOrthoAssistant: false,
+      });
+      return;
+    }
 
-    setFormData(prev => ({
-      ...prev,
+    // In add mode, keep default values
+    if (mode === "add") {
+      return;
+    }
 
-      username: editingUser.username ?? "",
-      firstName: editingUser.first_name ?? "",
-      lastName: editingUser.last_name ?? "",
-      email: editingUser.email ?? "",
-      phone: editingUser.phone ?? "",
-
-      active: editingUser.is_active,
-
-      homeOffice: editingUser.home_office_id?.toString() ?? "",
-      assignedOffices: editingUser.assigned_offices?.map(String) ?? [],
-
-      roles: editingUser.roles ?? [],
-      securityGroups: editingUser.security_groups ?? [],
-
-      permittedIPs: editingUser.permitted_ips ?? [],
-
-      timeClockPayRate: editingUser.time_clock?.pay_rate?.toString() ?? "",
-      overtimeMethod: editingUser.time_clock?.overtime_method ?? "daily",
-      overtimeRate: editingUser.time_clock?.overtime_rate?.toString() ?? "1.5",
-    }));
-  }, [editingUser]);
+    // In edit mode, populate from loaded user data
+    if (mode === "edit" && loadedUserData) {
+      setFormData(prev => ({
+        ...prev,
+        username: loadedUserData.username ?? "",
+        password: "", // Don't populate password in edit mode
+        firstName: loadedUserData.first_name ?? "",
+        lastName: loadedUserData.last_name ?? "",
+        email: loadedUserData.email ?? "",
+        phone: loadedUserData.phone ?? "",
+        active: loadedUserData.is_active,
+        homeOffice: loadedUserData.home_office_id?.toString() ?? "",
+        assignedOffices: loadedUserData.assigned_offices?.map(String) ?? [],
+        roles: loadedUserData.roles ?? [],
+        securityGroups: loadedUserData.security_groups ?? [],
+        groupMemberships: (loadedUserData as any).group_memberships?.map((g: any) => 
+          typeof g === 'string' ? g : (g.group_id || g.groupId || g.group_name || g.groupName || g)
+        ) ?? [],
+        permittedIPs: loadedUserData.permitted_ips ?? [],
+        patientAccessLevel: (loadedUserData as any).patient_access_level || "all",
+        use24x7Access: (loadedUserData as any).login_restrictions?.use_24x7_access !== false,
+        allowedDays: (loadedUserData as any).login_restrictions?.allowed_days 
+          ? {
+              Mon: (loadedUserData as any).login_restrictions.allowed_days.includes("Mon"),
+              Tue: (loadedUserData as any).login_restrictions.allowed_days.includes("Tue"),
+              Wed: (loadedUserData as any).login_restrictions.allowed_days.includes("Wed"),
+              Thu: (loadedUserData as any).login_restrictions.allowed_days.includes("Thu"),
+              Fri: (loadedUserData as any).login_restrictions.allowed_days.includes("Fri"),
+              Sat: (loadedUserData as any).login_restrictions.allowed_days.includes("Sat"),
+              Sun: (loadedUserData as any).login_restrictions.allowed_days.includes("Sun"),
+            }
+          : {
+              Mon: true,
+              Tue: true,
+              Wed: true,
+              Thu: true,
+              Fri: true,
+              Sat: false,
+              Sun: false,
+            },
+        allowedFrom: (loadedUserData as any).login_restrictions?.allowed_from || "08:00",
+        allowedUntil: (loadedUserData as any).login_restrictions?.allowed_until || "18:00",
+        timeClockPayRate: loadedUserData.time_clock?.pay_rate?.toString() ?? "",
+        overtimeMethod: loadedUserData.time_clock?.overtime_method ?? "daily",
+        overtimeRate: loadedUserData.time_clock?.overtime_rate?.toString() ?? "1.5",
+        // Preferences
+        startupScreen: loadedUserData.preferences?.startup_screen ?? "Dashboard",
+        defaultPerioScreen: loadedUserData.preferences?.default_perio_screen ?? "Standard",
+        defaultNavigationSearch: loadedUserData.preferences?.default_navigation_search ?? "Patient",
+        defaultSearchBy: loadedUserData.preferences?.default_search_by ?? "lastName",
+        defaultReferralView: loadedUserData.preferences?.default_referral_view ?? "All",
+        showProductionView: loadedUserData.preferences?.show_production_view ?? true,
+        hideProviderTime: loadedUserData.preferences?.hide_provider_time ?? false,
+        printLabelsForAppointments: loadedUserData.preferences?.print_labels ?? false,
+        promptForEntryDate: loadedUserData.preferences?.prompt_entry_date ?? false,
+        includeInactivePatientsInSearch: loadedUserData.preferences?.include_inactive_patients ?? false,
+        hipaaCompliantScheduler: loadedUserData.preferences?.hipaa_compliant_scheduler ?? false,
+        isOrthoAssistant: loadedUserData.preferences?.is_ortho_assistant ?? false,
+      }));
+    }
+  }, [isOpen, mode, loadedUserData]);
 
   
   const REQUIRED_FIELDS = [
@@ -315,11 +453,17 @@ export default function AddEditUserModal({
     "lastName",
     "email",
     "homeOffice",
+    "roles",
+    "securityGroups",
   ];
 
-  const missingFields = REQUIRED_FIELDS.filter(
-    (field) => !formData[field as keyof typeof formData]
-  );
+  const missingFields = REQUIRED_FIELDS.filter((field) => {
+    const value = formData[field as keyof typeof formData];
+    if (field === "roles" || field === "securityGroups") {
+      return !Array.isArray(value) || value.length === 0;
+    }
+    return !value;
+  });
 
   const isFormValid = missingFields.length === 0;
 
@@ -342,7 +486,8 @@ export default function AddEditUserModal({
   const securityGroups =
     setup?.security_groups?.map(g => g.code) ?? [];
 
-  const availableGroups = securityGroups;
+  // Available user group memberships (driven by /api/v1/users/groups-metadata)
+  const availableGroupMetadata = groupMembershipsMetadata || [];
 
   const userRoles =
     setup?.roles?.map(r => r.code) ?? [];
@@ -364,62 +509,91 @@ export default function AddEditUserModal({
     { id: 4, label: "User Settings", icon: Settings },
   ];
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
     // Validation
-    if (!formData.username.trim()) {
-      alert("Username is required");
+    if (!isFormValid) {
+      alert(`Please fill in all required fields: ${missingFields.join(", ")}`);
       return;
     }
-    if (!formData.firstName.trim()) {
-      alert("First Name is required");
+
+    // Validate required fields
+    if (formData.roles.length === 0) {
+      alert("Please select at least one User Role / Type");
       return;
     }
-    if (!formData.lastName.trim()) {
-      alert("Last Name is required");
+
+    if (formData.securityGroups.length === 0) {
+      alert("Please select at least one Primary Security Group");
       return;
     }
-    if (!formData.email.trim()) {
-      alert("Email is required");
-      return;
-    }
-    if (!formData.homeOffice) {
-      alert("Home Office is required");
-      return;
-    }
+
     if (!formData.assignedOffices.includes(formData.homeOffice)) {
       alert("Home Office must be one of the assigned offices");
       return;
     }
 
-    // onSave(formData);
-    const handleSave = () => {
-    if (!isFormValid) return;
+    // Validate login restrictions
+    if (!formData.use24x7Access) {
+      const enabledDays = Object.entries(formData.allowedDays).filter(([_, enabled]) => enabled);
+      if (enabledDays.length === 0) {
+        alert("Please select at least one allowed day for login restrictions");
+        return;
+      }
+      if (!formData.allowedFrom || !formData.allowedUntil) {
+        alert("Please specify both 'Allowed From' and 'Allowed Until' times");
+        return;
+      }
+      if (formData.allowedFrom >= formData.allowedUntil) {
+        alert("'Allowed From' time must be earlier than 'Allowed Until' time");
+        return;
+      }
+    }
 
+    // Build payload
     const payload = {
       username: formData.username,
-      password: formData.password || undefined,
+      // Only include password if provided (for add mode) or if user wants to change it (edit mode)
+      ...(mode === "add" || formData.password ? { password: formData.password || undefined } : {}),
 
       first_name: formData.firstName,
       last_name: formData.lastName,
       email: formData.email,
-      phone: formData.phone,
+      phone: formData.phone || null,
 
       is_active: formData.active,
 
       home_office_id: Number(formData.homeOffice),
       assigned_offices: formData.assignedOffices.map(Number),
 
-      roles: formData.roles,
-      security_groups: formData.assignedGroups,
+      roles: formData.roles.length > 0 ? formData.roles : [],
+      security_groups: formData.securityGroups.length > 0 ? formData.securityGroups : [],
+
+      // Group Memberships (array of group IDs or group codes)
+      group_memberships: formData.groupMemberships.length > 0 ? formData.groupMemberships : [],
 
       permitted_ips: formData.permittedIPs,
+
+      // Patient Access Level
+      patient_access_level: formData.patientAccessLevel || "all",
+
+      // Login Time Restrictions
+      login_restrictions: {
+        use_24x7_access: formData.use24x7Access,
+        allowed_days: formData.use24x7Access ? null : Object.entries(formData.allowedDays)
+          .filter(([_, enabled]) => enabled)
+          .map(([day, _]) => day),
+        allowed_from: formData.use24x7Access ? null : formData.allowedFrom,
+        allowed_until: formData.use24x7Access ? null : formData.allowedUntil,
+      },
 
       time_clock: {
         pay_rate: formData.timeClockPayRate
           ? Number(formData.timeClockPayRate)
           : null,
-        overtime_method: formData.overtimeMethod,
-        overtime_rate: Number(formData.overtimeRate),
+        overtime_method: formData.overtimeMethod || null,
+        overtime_rate: formData.overtimeRate ? Number(formData.overtimeRate) : null,
       },
 
       preferences: {
@@ -439,10 +613,15 @@ export default function AddEditUserModal({
       },
     };
 
-    onSave(payload);
-  };
-
-
+    setSaving(true);
+    try {
+      await onSave(payload);
+    } catch (error) {
+      console.error("Error saving user:", error);
+      // Error handling is done by parent component
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Office Assignment Handlers
@@ -502,19 +681,20 @@ export default function AddEditUserModal({
   //     assignedGroups: formData.assignedGroups.filter((g) => g !== group),
   //   });
   // };
-  const addGroup = (group: string) => {
-    if (!formData.securityGroups.includes(group)) {
+  // Group Membership handlers (separate from security groups)
+  const addGroupMembership = (group: string) => {
+    if (!formData.groupMemberships.includes(group)) {
       setFormData({
         ...formData,
-        securityGroups: [...formData.securityGroups, group],
+        groupMemberships: [...formData.groupMemberships, group],
       });
     }
   };
 
-  const removeGroup = (group: string) => {
+  const removeGroupMembership = (group: string) => {
     setFormData({
       ...formData,
-      securityGroups: formData.securityGroups.filter(g => g !== group),
+      groupMemberships: formData.groupMemberships.filter(g => g !== group),
     });
   };
 
@@ -586,6 +766,52 @@ export default function AddEditUserModal({
 
         {/* Tab Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)]">
+          {/* Loading State - User Data (Edit Mode) */}
+          {mode === "edit" && userDataLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <RefreshCw className="w-8 h-8 text-[#3A6EA5] animate-spin mx-auto mb-4" />
+                <p className="text-[#64748B] font-bold">Loading user data...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error State - User Data (Edit Mode) */}
+          {mode === "edit" && userDataError && !userDataLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center max-w-md">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-600 font-bold mb-2">Failed to load user data</p>
+                <p className="text-[#64748B] text-sm mb-4">{userDataError}</p>
+                <button
+                  onClick={() => {
+                    if (editingUser?.user_id) {
+                      setUserDataLoading(true);
+                      setUserDataError(null);
+                      fetchUserForEdit(editingUser.user_id)
+                        .then(userData => {
+                          setLoadedUserData(userData);
+                          setUserDataError(null);
+                        })
+                        .catch(err => {
+                          setUserDataError(err.response?.data?.detail || err.message || "Failed to load user data");
+                        })
+                        .finally(() => {
+                          setUserDataLoading(false);
+                        });
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Form Content - Only show if not loading user data or if in add mode */}
+          {(!userDataLoading && !userDataError) || mode === "add" ? (
+            <>
           {/* Tab 1: Login Info & Office Access */}
           {activeTab === 0 && (
             <div className="space-y-6">
@@ -693,21 +919,7 @@ export default function AddEditUserModal({
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
-                      Short ID (6 chars)
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={formData.shortId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortId: e.target.value })
-                      }
-                      placeholder="For reports/scheduler"
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
-                    />
-                  </div>
+                  {/* Short ID field removed - not in formData schema */}
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                       Email <span className="text-[#EF4444]">*</span>
@@ -786,15 +998,16 @@ export default function AddEditUserModal({
                       <span className="text-[#EF4444]">*</span>
                     </label>
                     <select
-                      value={formData.securityGroup}
+                      value={formData.securityGroups[0] ?? ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          securityGroup: e.target.value,
+                          securityGroups: e.target.value ? [e.target.value] : [],
                         })
                       }
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
                     >
+                      <option value="">Select Security Group</option>
                       {securityGroups.map((group) => (
                         <option key={group} value={group}>
                           {group}
@@ -1085,10 +1298,17 @@ export default function AddEditUserModal({
                             onClick={() => removeOfficeFromAssigned(office)}
                             className="px-3 py-2 bg-[#E8EFF7] hover:bg-[#F7F9FC] rounded cursor-pointer text-sm border border-[#3A6EA5] mb-1"
                           >
-                            <div className="font-bold text-[#1E293B]">{office}</div>
-                            <div className="text-xs text-[#3A6EA5] font-bold">
-                              OID: {officeOIDMap[office]}
-                            </div>
+                            {(() => {
+                              const officeData = availableOffices.find(o => String(o.office_id) === office);
+                              return (
+                                <>
+                                  <div className="font-bold text-[#1E293B]">{officeData?.office_name || office}</div>
+                                  <div className="text-xs text-[#3A6EA5] font-bold">
+                                    OID: {officeData?.office_oid || "—"}
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         ))
                       )}
@@ -1248,15 +1468,15 @@ export default function AddEditUserModal({
                       Available User Groups
                     </label>
                     <div className="border-2 border-[#E2E8F0] rounded-lg p-3 min-h-[300px] bg-[#F7F9FC]">
-                      {availableGroups
-                        .filter((group) => !formData.assignedGroups.includes(group))
+                      {availableGroupMetadata
+                        .filter((group) => !formData.groupMemberships.includes(group.code))
                         .map((group) => (
                           <div
-                            key={group}
-                            onClick={() => addGroup(group)}
+                            key={group.code}
+                            onClick={() => addGroupMembership(group.code)}
                             className="px-3 py-2 hover:bg-white rounded cursor-pointer text-sm border border-transparent hover:border-[#3A6EA5] mb-1 flex items-center justify-between"
                           >
-                            <span>{group}</span>
+                            <span>{group.name || group.code}</span>
                             <ChevronRight className="w-4 h-4 text-[#64748B]" />
                           </div>
                         ))}
@@ -1266,30 +1486,34 @@ export default function AddEditUserModal({
                   {/* Assigned Groups */}
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-2 text-sm">
-                      Assigned User Groups ({formData.assignedGroups.length})
+                      Assigned User Groups ({formData.groupMemberships.length})
                     </label>
                     <div className="border-2 border-[#3A6EA5] rounded-lg p-3 min-h-[300px] bg-white">
-                      {formData.assignedGroups.length === 0 ? (
+                      {formData.groupMemberships.length === 0 ? (
                         <div className="text-center text-[#64748B] text-sm mt-8">
                           No groups assigned
                         </div>
                       ) : (
-                        formData.assignedGroups.map((group) => (
+                        formData.groupMemberships.map((groupCode) => {
+                          const meta = availableGroupMetadata.find(g => g.code === groupCode);
+                          const label = meta?.name || groupCode;
+                          return (
                           <div
-                            key={group}
+                            key={groupCode}
                             className="px-3 py-2 bg-[#E8EFF7] rounded text-sm border border-[#3A6EA5] mb-1 flex items-center justify-between"
                           >
                             <span className="font-bold text-[#1E293B]">
-                              {group}
+                              {label}
                             </span>
                             <button
-                              onClick={() => removeGroup(group)}
+                              onClick={() => removeGroupMembership(groupCode)}
                               className="text-[#EF4444] hover:text-[#DC2626]"
                             >
                               <X className="w-4 h-4" />
                             </button>
                           </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>
@@ -1606,6 +1830,8 @@ export default function AddEditUserModal({
               </div>
             </div>
           )}
+            </>
+          ) : null}
         </div>
 
         {/* Footer Buttons */}

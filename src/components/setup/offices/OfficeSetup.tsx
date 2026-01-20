@@ -235,7 +235,18 @@ export default function OfficeSetup() {
 
   /* -------------------- LOAD LIST -------------------- */
   useEffect(() => {
-    api.get("/api/v1/offices").then((res) => setOffices(res.data));
+    api.get("/api/v1/offices").then((res) => {
+      // Map API response to Office interface, handling both camelCase and snake_case
+      const mappedOffices = res.data.map((office: any) => ({
+        ...office,
+        // Map audit fields from snake_case to camelCase if needed
+        createdBy: office.createdBy || office.created_by || "System",
+        createdAt: office.createdAt || office.created_at || office.createdDate || office.created_date || "",
+        updatedBy: office.updatedBy || office.updated_by || office.modifiedBy || office.modified_by || "",
+        updatedAt: office.updatedAt || office.updated_at || office.modifiedDate || office.modified_date || "",
+      }));
+      setOffices(mappedOffices);
+    });
     api.get("/api/v1/offices/next-id").then((res) => setNextOfficeId(res.data.nextOfficeId));
   }, []);
 
@@ -336,6 +347,12 @@ export default function OfficeSetup() {
       holidays: data.holidays ?? [],
       advanced: data.advanced ?? {},
       smartAssist: data.smartAssist ?? {},
+
+      // 🔐 AUDIT FIELDS - Handle both camelCase and snake_case from API
+      createdBy: data.createdBy || data.created_by || "",
+      createdDate: data.createdDate || data.created_date || data.createdAt || data.created_at || "",
+      modifiedBy: data.modifiedBy || data.modified_by || data.updatedBy || data.updated_by || "",
+      modifiedDate: data.modifiedDate || data.modified_date || data.modified_at || data.updatedAt || data.updated_at || "",
     });
 
     console.log("Mapped schedule", mapBackendSchedule(data.schedule));

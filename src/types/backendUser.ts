@@ -14,6 +14,7 @@ export interface BackendUser {
 
   roles: string[];
   security_groups: string[];
+  group_memberships?: string[];
 
   permitted_ips: string[];
 
