@@ -197,21 +197,10 @@ export default function Dashboard({
     alert("Add New Patient workflow will open here");
   };
   const handleLogout = async () => {
-    try {
-      const refreshToken =
-        localStorage.getItem("refresh_token");
-      if (refreshToken) {
-        await api.post("/api/v1/auth/logout", {
-          refresh_token: refreshToken,
-        });
-      }
-    } catch (err) {
-      console.error("Backend logout failed", err);
-      // Even if backend fails, proceed with frontend logout
-    } finally {
-      onLogout();
-      navigate("/login");
-    }
+    // Call onLogout immediately to show loading overlay
+    // onLogout will handle the API call and state management
+    await onLogout();
+    navigate("/login");
   };
 
   return (

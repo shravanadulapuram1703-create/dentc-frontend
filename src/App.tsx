@@ -27,6 +27,7 @@ import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
+import { Loader2 } from 'lucide-react';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -55,7 +56,7 @@ function AdminPageWrapper({
 }
 
 function AppRoutes() {
-  const { isAuthenticated, user, logout, currentOffice, setCurrentOffice, login } = useAuth();
+  const { isAuthenticated, user, logout, currentOffice, setCurrentOffice, login, isLoggingOut } = useAuth();
 
   return (
     <Routes>
@@ -335,11 +336,34 @@ function AppRoutes() {
   );
 }
 
+// Logout Loading Overlay Component
+function LogoutOverlay() {
+  const { isLoggingOut } = useAuth();
+  
+  if (!isLoggingOut) return null;
+  
+  return (
+    <div 
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[9999] flex items-center justify-center"
+      style={{ pointerEvents: 'all' }}
+    >
+      <div className="bg-white rounded-lg shadow-2xl p-8 flex flex-col items-center gap-4 min-w-[300px]">
+        <Loader2 className="w-12 h-12 text-[#3A6EA5] animate-spin" />
+        <p className="text-[#1E293B] font-bold text-lg">Logging out...</p>
+        <p className="text-[#64748B] text-sm text-center">
+          Please wait while we securely log you out
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <AppRoutes />
+        <LogoutOverlay />
       </Router>
     </AuthProvider>
   );

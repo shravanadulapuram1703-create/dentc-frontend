@@ -57,6 +57,7 @@ interface ActivePatient {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
+  isLoggingOut: boolean;
 
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -109,6 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [activePatient, setActivePatient] = useState<ActivePatient | null>(
     null
   );
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   /* ---------- PERSIST SELECTIONS ---------- */
 
@@ -248,13 +251,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* ---------- LOGOUT ---------- */
 
   const logout = async () => {
+    // Set loading state immediately - this triggers the overlay to show
+    setIsLoggingOut(true);
     try {
       const refresh = localStorage.getItem("refresh_token");
       if (refresh) {
         await api.post("/api/v1/auth/logout", { refresh_token: refresh });
       }
-    } catch {}
-    finally {
+    } catch (err) {
+      console.error("Logout API error:", err);
+      // Continue with logout even if API fails
+    } finally {
       localStorage.clear();
       delete api.defaults.headers.common["Authorization"];
 
@@ -264,6 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCurrentOrganization("");
       setCurrentOffice("");
       setActivePatient(null);
+      setIsLoggingOut(false);
     }
   };
 
@@ -280,6 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         isAuthenticated,
         user,
+        isLoggingOut,
         login,
         logout,
         organizations,
