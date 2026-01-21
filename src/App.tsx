@@ -27,6 +27,7 @@ import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
+import AddNewPatient from './components/pages/AddNewPatient';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -91,6 +92,16 @@ function AppRoutes() {
         element={
           isAuthenticated ? 
           <Patient onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> : 
+          <Navigate to="/login" />
+        } 
+      />
+
+      {/* Add New Patient */}
+      <Route 
+        path="/patient/new" 
+        element={
+          isAuthenticated ? 
+          <AddNewPatient onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> : 
           <Navigate to="/login" />
         } 
       />
