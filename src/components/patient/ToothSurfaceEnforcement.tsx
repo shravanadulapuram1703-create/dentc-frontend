@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
+import { type ProcedureCode } from '../../data/procedureCodes';
 
 interface Props {
   isOpen: boolean;
@@ -10,98 +11,198 @@ interface Props {
     surfaces: string[];
     materials: string[];
   }) => void;
-  procedureCode: string;
-  procedureDescription: string;
-  requirements: {
-    tooth?: boolean;
-    surface?: boolean;
-    quadrant?: boolean;
-    materials?: boolean;
-  };
+  procedure: ProcedureCode;
   initialTooth?: string;
   initialQuadrant?: string;
   initialSurfaces?: string[];
   initialMaterials?: string[];
 }
 
+// Permanent teeth (1-32) for adult dentition
+const PERMANENT_TEETH = Array.from({ length: 32 }, (_, i) => (i + 1).toString());
+
+// Primary teeth (A-T) for pediatric dentition
+const PRIMARY_TEETH = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
+
 export default function ToothSurfaceEnforcement({
   isOpen,
   onClose,
   onSave,
-  procedureCode,
-  procedureDescription,
-  requirements,
+  procedure,
   initialTooth = '',
   initialQuadrant = '',
   initialSurfaces = [],
   initialMaterials = []
 }: Props) {
-  const [toothNumber, setToothNumber] = useState(initialTooth);
+  const [selectedTeeth, setSelectedTeeth] = useState<string[]>(initialTooth ? [initialTooth] : []);
   const [selectedQuadrant, setSelectedQuadrant] = useState(initialQuadrant);
   const [selectedSurfaces, setSelectedSurfaces] = useState<string[]>(initialSurfaces);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>(initialMaterials);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Available surfaces
-  const surfaces = ['M', 'O', 'D', 'B', 'L', 'I', 'F'];
-  
-  // Available quadrants
-  const quadrants = [
-    { value: 'UR', label: 'UR - Upper Right' },
-    { value: 'UL', label: 'UL - Upper Left' },
-    { value: 'LR', label: 'LR - Lower Right' },
-    { value: 'LL', label: 'LL - Lower Left' }
-  ];
+  // ✅ MUTUAL EXCLUSIVITY: Determine active mode
+  const activeMode = procedure.anatomyRules.mode;
 
-  // Materials for this procedure (code-driven)
-  const materials = [
-    { value: 'High Noble Metal', label: 'Cast High Noble Metal' },
-    { value: 'Base Metal', label: 'Cast Base Metal' },
-    { value: 'Noble Metal', label: 'Cast Noble Metal' },
-    { value: 'Titanium', label: 'Titanium' },
-    { value: 'Resin', label: 'Resin Based Composite' }
-  ];
+  // ✅ Get allowed teeth based on procedure rules
+  const getAllowedTeeth = (): string[] => {
+    const toothSet = procedure.anatomyRules.allowedToothSet;
+    if (toothSet === "PERMANENT_ONLY") return PERMANENT_TEETH;
+    if (toothSet === "PRIMARY_ONLY") return PRIMARY_TEETH;
+    if (toothSet === "BOTH") return [...PERMANENT_TEETH, ...PRIMARY_TEETH];
+    return [];
+  };
+
+  // ✅ Get allowed quadrants from procedure rules
+  const getAllowedQuadrants = () => {
+    return procedure.anatomyRules.allowedQuadrants || [];
+  };
+
+  // ✅ Get allowed surfaces from procedure rules
+  const getAllowedSurfaces = () => {
+    if (!procedure.surfaceRules.enabled) return [];
+    return procedure.surfaceRules.allowedSurfaces || ['M', 'O', 'D', 'B', 'L', 'I', 'F'];
+  };
+
+  // ✅ Get allowed materials from procedure rules
+  const getAllowedMaterials = () => {
+    if (!procedure.materialsRules.enabled) return [];
+    return procedure.materialsRules.options || [
+      'High Noble Metal',
+      'Base Metal',
+      'Noble Metal',
+      'Titanium',
+      'Resin',
+      'Porcelain/Ceramic',
+      'Zirconia',
+      'E.max'
+    ];
+  };
+
+  // ✅ MUTUAL EXCLUSIVITY ENFORCEMENT
+  const handleToothSelect = (tooth: string) => {
+    if (activeMode !== "TOOTH") {
+      setValidationErrors(['This procedure requires quadrant/arch selection, not individual teeth']);
+      return;
+    }
+
+    // Clear quadrant when tooth is selected
+    setSelectedQuadrant('');
+
+    if (procedure.anatomyRules.allowMultipleTeeth) {
+      setSelectedTeeth(prev =>
+        prev.includes(tooth)
+          ? prev.filter(t => t !== tooth)
+          : [...prev, tooth]
+      );
+    } else {
+      setSelectedTeeth([tooth]);
+    }
+    setValidationErrors([]);
+  };
+
+  const handleQuadrantSelect = (quadrant: string) => {
+    if (activeMode !== "QUADRANT" && activeMode !== "ARCH" && activeMode !== "FULL_MOUTH") {
+      setValidationErrors(['This procedure requires tooth selection, not quadrant']);
+      return;
+    }
+
+    // Clear teeth when quadrant is selected
+    setSelectedTeeth([]);
+    setSelectedSurfaces([]);
+    setSelectedQuadrant(quadrant);
+    setValidationErrors([]);
+  };
 
   const toggleSurface = (surface: string) => {
-    setSelectedSurfaces(prev => 
-      prev.includes(surface)
-        ? prev.filter(s => s !== surface)
-        : [...prev, surface]
-    );
+    if (!procedure.surfaceRules.enabled) {
+      setValidationErrors(['Surfaces are not applicable for this procedure']);
+      return;
+    }
+
+    const newSelection = selectedSurfaces.includes(surface)
+      ? selectedSurfaces.filter(s => s !== surface)
+      : [...selectedSurfaces, surface];
+
+    // Check min/max constraints
+    const { min, max } = procedure.surfaceRules;
+    if (max && newSelection.length > max) {
+      setValidationErrors([`Maximum ${max} surface(s) allowed for this procedure`]);
+      return;
+    }
+
+    setSelectedSurfaces(newSelection);
+    setValidationErrors([]);
   };
 
   const toggleMaterial = (material: string) => {
-    setSelectedMaterials(prev => 
-      prev.includes(material)
-        ? prev.filter(m => m !== material)
-        : [...prev, material]
-    );
+    if (!procedure.materialsRules.enabled) {
+      setValidationErrors(['Materials are not applicable for this procedure']);
+      return;
+    }
+
+    const newSelection = selectedMaterials.includes(material)
+      ? selectedMaterials.filter(m => m !== material)
+      : [...selectedMaterials, material];
+
+    // Check min/max constraints
+    const { min, max } = procedure.materialsRules;
+    if (max && newSelection.length > max) {
+      setValidationErrors([`Maximum ${max} material(s) allowed for this procedure`]);
+      return;
+    }
+
+    setSelectedMaterials(newSelection);
+    setValidationErrors([]);
   };
 
   const handleSave = () => {
-    // STEP 5.4: Validation
-    if (requirements.tooth && !toothNumber) {
-      alert('Tooth # is required');
-      return;
+    const errors: string[] = [];
+
+    // ✅ COMPREHENSIVE VALIDATION
+    if (activeMode === "TOOTH") {
+      if (procedure.requirements.tooth && selectedTeeth.length === 0) {
+        errors.push('At least one tooth must be selected');
+      }
+      if (procedure.surfaceRules.enabled) {
+        const { min, max } = procedure.surfaceRules;
+        if (min && selectedSurfaces.length < min) {
+          errors.push(`Minimum ${min} surface(s) required`);
+        }
+        if (max && selectedSurfaces.length > max) {
+          errors.push(`Maximum ${max} surface(s) allowed`);
+        }
+      }
     }
 
-    if (requirements.quadrant && !selectedQuadrant) {
-      alert('Quadrant is required');
-      return;
+    if (activeMode === "QUADRANT" || activeMode === "ARCH" || activeMode === "FULL_MOUTH") {
+      if (procedure.requirements.quadrant && !selectedQuadrant) {
+        errors.push('Quadrant/Arch must be selected');
+      }
     }
 
-    if (requirements.surface && selectedSurfaces.length === 0) {
-      alert('At least one surface must be selected');
-      return;
+    if (procedure.materialsRules.enabled) {
+      const { min, max } = procedure.materialsRules;
+      if (min && selectedMaterials.length < min) {
+        errors.push(`Minimum ${min} material(s) required`);
+      }
+      if (max && selectedMaterials.length > max) {
+        errors.push(`Maximum ${max} material(s) allowed`);
+      }
     }
 
-    if (requirements.materials && selectedMaterials.length === 0) {
-      alert('At least one material must be selected');
+    // ✅ MUTUAL EXCLUSIVITY CHECK
+    if (selectedTeeth.length > 0 && selectedQuadrant) {
+      errors.push('Cannot select both tooth and quadrant - they are mutually exclusive');
+    }
+
+    if (errors.length > 0) {
+      setValidationErrors(errors);
       return;
     }
 
     // All validations passed
     onSave({
-      tooth: toothNumber,
+      tooth: selectedTeeth.join(','),
       quadrant: selectedQuadrant,
       surfaces: selectedSurfaces,
       materials: selectedMaterials
@@ -110,12 +211,20 @@ export default function ToothSurfaceEnforcement({
 
   if (!isOpen) return null;
 
+  const allowedTeeth = getAllowedTeeth();
+  const allowedQuadrants = getAllowedQuadrants();
+  const allowedSurfaces = getAllowedSurfaces();
+  const allowedMaterials = getAllowedMaterials();
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl border-4 border-[#3A6EA5]">
-        {/* Header - Medical Slate Theme */}
-        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between rounded-t-lg border-b-4 border-[#1F3A5F]">
-          <h2 className="text-xl font-bold text-white">TOOTH / SURFACE / QUADRANT</h2>
+    <div className="fixed inset-0 bg-transparent flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-auto border-4 border-[#3A6EA5]">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between sticky top-0 z-10 rounded-t-lg border-b-4 border-[#1F3A5F]">
+          <div>
+            <h2 className="text-xl font-bold text-white">PROCEDURE ANATOMY ENFORCEMENT</h2>
+            <p className="text-sm text-white/80">{procedure.code} - {procedure.description}</p>
+          </div>
           <button
             onClick={onClose}
             className="text-white hover:bg-[#16314d] rounded p-1 transition-colors"
@@ -124,135 +233,245 @@ export default function ToothSurfaceEnforcement({
           </button>
         </div>
 
-        {/* Instruction - Medical Slate Theme */}
-        <div className="px-6 py-3 bg-[#F7F9FC] border-b-2 border-[#E2E8F0]">
-          <p className="text-sm font-bold text-[#1F3A5F] uppercase">
-            Please specify tooth# and/or surface(s) for the procedure.
-          </p>
+        {/* Mode Indicator */}
+        <div className="px-6 py-3 bg-[#E0F2FE] border-b-2 border-[#3A6EA5]">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-[#3A6EA5]" />
+            <span className="text-sm font-bold text-[#1F3A5F]">
+              MODE: {activeMode.replace('_', ' ')} | 
+              {procedure.anatomyRules.allowedToothSet !== "NONE" && ` DENTITION: ${procedure.anatomyRules.allowedToothSet.replace('_', ' ')}`}
+              {procedure.anatomyRules.allowMultipleTeeth && ` | MULTIPLE TEETH ALLOWED`}
+            </span>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 bg-white">
-          {/* Procedure Info */}
-          <div className="mb-6 pb-4 border-b-2 border-[#E2E8F0]">
-            <table className="w-full text-sm">
-              <thead className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white">
-                <tr>
-                  <th className="px-4 py-2 text-left font-bold">CODE</th>
-                  <th className="px-4 py-2 text-left font-bold">Description</th>
-                  <th className="px-4 py-2 text-left font-bold">Tooth#</th>
-                  <th className="px-4 py-2 text-left font-bold">Quadrant</th>
-                  <th className="px-4 py-2 text-left font-bold">Surfaces</th>
-                  <th className="px-4 py-2 text-left font-bold">Materials</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-[#E2E8F0]">
-                  <td className="px-4 py-3">
-                    <span className="text-[#3A6EA5] font-bold text-base">{procedureCode}</span>
-                  </td>
-                  <td className="px-4 py-3 text-[#1E293B]">{procedureDescription}</td>
-                  <td className="px-4 py-3">
-                    <input
-                      type="text"
-                      value={toothNumber}
-                      onChange={(e) => setToothNumber(e.target.value)}
-                      className="w-20 px-3 py-2 border-2 border-[#3A6EA5] rounded text-center font-semibold focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-transparent"
-                      placeholder="##"
-                      maxLength={2}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={selectedQuadrant}
-                      onChange={(e) => setSelectedQuadrant(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-[#3A6EA5] rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-transparent"
-                    >
-                      <option value="">-- Select --</option>
-                      {quadrants.map((quad) => (
-                        <option key={quad.value} value={quad.value}>
-                          {quad.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      {surfaces.map((surface) => (
-                        <button
-                          key={surface}
-                          onClick={() => toggleSurface(surface)}
-                          className={`w-8 h-8 rounded font-bold text-sm transition-colors ${
-                            selectedSurfaces.includes(surface)
-                              ? 'bg-[#3A6EA5] text-white'
-                              : 'bg-[#E2E8F0] text-[#64748B] hover:bg-[#CBD5E1]'
-                          }`}
-                        >
-                          {surface}
-                        </button>
-                      ))}
-                    </div>
-                    {selectedSurfaces.length > 0 && (
-                      <div className="text-xs text-[#3A6EA5] font-semibold mt-1">
-                        Selected: {selectedSurfaces.join('')}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="space-y-1">
-                      {materials.map((material) => (
-                        <label key={material.value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedMaterials.includes(material.value)}
-                            onChange={() => toggleMaterial(material.value)}
-                            className="w-4 h-4 rounded border-2 border-[#3A6EA5] text-[#3A6EA5] focus:ring-[#3A6EA5]"
-                          />
-                          <span className="text-sm text-[#1E293B]">{material.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <div className="mx-6 mt-4 bg-red-50 border-2 border-red-400 rounded-lg p-4">
+            <h3 className="font-bold text-red-800 mb-2">⚠️ Validation Errors:</h3>
+            <ul className="space-y-1">
+              {validationErrors.map((error, idx) => (
+                <li key={idx} className="text-sm text-red-700">• {error}</li>
+              ))}
+            </ul>
           </div>
+        )}
 
-          {/* Validation Messages - Medical Slate Theme */}
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* TOOTH SELECTION */}
+          {activeMode === "TOOTH" && allowedTeeth.length > 0 && (
+            <div className="border-2 border-[#E2E8F0] rounded-lg p-4">
+              <h3 className="font-bold text-[#1F3A5F] mb-3 uppercase tracking-wide">
+                SELECT TOOTH # ({procedure.anatomyRules.allowMultipleTeeth ? 'Multiple Allowed' : 'Single Only'})
+              </h3>
+              
+              {/* Permanent Teeth Grid */}
+              {procedure.anatomyRules.allowedToothSet !== "PRIMARY_ONLY" && (
+                <div className="mb-4">
+                  <p className="text-xs text-[#64748B] mb-2 font-semibold">PERMANENT DENTITION (1-32)</p>
+                  <div className="grid grid-cols-16 gap-1">
+                    {PERMANENT_TEETH.map(tooth => (
+                      <button
+                        key={tooth}
+                        onClick={() => handleToothSelect(tooth)}
+                        disabled={procedure.anatomyRules.allowedToothSet === "PRIMARY_ONLY"}
+                        className={`
+                          px-2 py-2 rounded font-bold text-sm transition-all
+                          ${selectedTeeth.includes(tooth)
+                            ? 'bg-[#3A6EA5] text-white ring-2 ring-[#1F3A5F]'
+                            : procedure.anatomyRules.allowedToothSet === "PRIMARY_ONLY"
+                              ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                              : 'bg-[#E2E8F0] text-[#1F3A5F] hover:bg-[#CBD5E1]'
+                          }
+                        `}
+                      >
+                        {tooth}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Primary Teeth Grid */}
+              {procedure.anatomyRules.allowedToothSet !== "PERMANENT_ONLY" && (
+                <div>
+                  <p className="text-xs text-[#64748B] mb-2 font-semibold">PRIMARY DENTITION (A-T)</p>
+                  <div className="grid grid-cols-20 gap-1">
+                    {PRIMARY_TEETH.map(tooth => (
+                      <button
+                        key={tooth}
+                        onClick={() => handleToothSelect(tooth)}
+                        disabled={procedure.anatomyRules.allowedToothSet === "PERMANENT_ONLY"}
+                        className={`
+                          px-2 py-2 rounded font-bold text-sm transition-all
+                          ${selectedTeeth.includes(tooth)
+                            ? 'bg-[#2FB9A7] text-white ring-2 ring-[#1F7F73]'
+                            : procedure.anatomyRules.allowedToothSet === "PERMANENT_ONLY"
+                              ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                              : 'bg-[#D1FAE5] text-[#1F7F73] hover:bg-[#A7F3D0]'
+                          }
+                        `}
+                      >
+                        {tooth}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTeeth.length > 0 && (
+                <div className="mt-3 p-2 bg-[#E0F2FE] rounded">
+                  <span className="text-sm font-semibold text-[#3A6EA5]">
+                    Selected: {selectedTeeth.join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* QUADRANT / ARCH / FULL MOUTH SELECTION */}
+          {(activeMode === "QUADRANT" || activeMode === "ARCH" || activeMode === "FULL_MOUTH") && allowedQuadrants.length > 0 && (
+            <div className="border-2 border-[#E2E8F0] rounded-lg p-4">
+              <h3 className="font-bold text-[#1F3A5F] mb-3 uppercase tracking-wide">
+                SELECT {activeMode === "FULL_MOUTH" ? "FULL MOUTH" : activeMode === "ARCH" ? "ARCH" : "QUADRANT"}
+              </h3>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { value: 'UR', label: 'UR - Upper Right', description: 'Quadrant 1' },
+                  { value: 'UL', label: 'UL - Upper Left', description: 'Quadrant 2' },
+                  { value: 'LR', label: 'LR - Lower Right', description: 'Quadrant 4' },
+                  { value: 'LL', label: 'LL - Lower Left', description: 'Quadrant 3' },
+                  { value: 'UA', label: 'UA - Upper Arch', description: 'Maxillary' },
+                  { value: 'LA', label: 'LA - Lower Arch', description: 'Mandibular' },
+                  { value: 'FM', label: 'FM - Full Mouth', description: 'All Teeth' }
+                ].filter(quad => allowedQuadrants.includes(quad.value as any)).map((quad) => (
+                  <button
+                    key={quad.value}
+                    onClick={() => handleQuadrantSelect(quad.value)}
+                    className={`
+                      p-4 rounded-lg border-2 transition-all text-left
+                      ${selectedQuadrant === quad.value
+                        ? 'bg-[#3A6EA5] text-white border-[#1F3A5F] ring-2 ring-[#3A6EA5]'
+                        : 'bg-white text-[#1F3A5F] border-[#E2E8F0] hover:border-[#3A6EA5] hover:bg-[#F7F9FC]'
+                      }
+                    `}
+                  >
+                    <div className="font-bold text-lg">{quad.value}</div>
+                    <div className={`text-xs mt-1 ${selectedQuadrant === quad.value ? 'text-white/90' : 'text-[#64748B]'}`}>
+                      {quad.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SURFACE SELECTION */}
+          {procedure.surfaceRules.enabled && allowedSurfaces.length > 0 && selectedTeeth.length > 0 && (
+            <div className="border-2 border-[#E2E8F0] rounded-lg p-4">
+              <h3 className="font-bold text-[#1F3A5F] mb-3 uppercase tracking-wide">
+                SELECT SURFACES 
+                {procedure.surfaceRules.min && procedure.surfaceRules.max && 
+                  ` (${procedure.surfaceRules.min} - ${procedure.surfaceRules.max} Required)`
+                }
+              </h3>
+              <div className="flex gap-2">
+                {allowedSurfaces.map((surface) => (
+                  <button
+                    key={surface}
+                    onClick={() => toggleSurface(surface)}
+                    className={`
+                      w-12 h-12 rounded font-bold text-lg transition-all
+                      ${selectedSurfaces.includes(surface)
+                        ? 'bg-[#3A6EA5] text-white ring-2 ring-[#1F3A5F]'
+                        : 'bg-[#E2E8F0] text-[#64748B] hover:bg-[#CBD5E1]'
+                      }
+                    `}
+                  >
+                    {surface}
+                  </button>
+                ))}
+              </div>
+              {selectedSurfaces.length > 0 && (
+                <div className="mt-3 p-2 bg-[#E0F2FE] rounded">
+                  <span className="text-sm font-semibold text-[#3A6EA5]">
+                    Selected: {selectedSurfaces.join('')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MATERIALS SELECTION */}
+          {procedure.materialsRules.enabled && allowedMaterials.length > 0 && (
+            <div className="border-2 border-[#E2E8F0] rounded-lg p-4">
+              <h3 className="font-bold text-[#1F3A5F] mb-3 uppercase tracking-wide">
+                SELECT MATERIALS
+                {procedure.materialsRules.min && procedure.materialsRules.max && 
+                  ` (${procedure.materialsRules.min} - ${procedure.materialsRules.max} Required)`
+                }
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {allowedMaterials.map((material) => (
+                  <label
+                    key={material}
+                    className={`
+                      flex items-center gap-3 p-3 rounded border-2 cursor-pointer transition-all
+                      ${selectedMaterials.includes(material)
+                        ? 'bg-[#3A6EA5]/10 border-[#3A6EA5] ring-2 ring-[#3A6EA5]/30'
+                        : 'bg-white border-[#E2E8F0] hover:border-[#3A6EA5] hover:bg-[#F7F9FC]'
+                      }
+                    `}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMaterials.includes(material)}
+                      onChange={() => toggleMaterial(material)}
+                      className="w-5 h-5 rounded border-2 border-[#3A6EA5] text-[#3A6EA5] focus:ring-[#3A6EA5]"
+                    />
+                    <span className="text-sm font-semibold text-[#1E293B]">{material}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Requirements Checklist */}
           <div className="bg-[#FEF3C7] border-2 border-[#F59E0B] rounded-lg p-4">
-            <h3 className="font-bold text-[#92400E] mb-2">⚠️ Required Fields:</h3>
+            <h3 className="font-bold text-[#92400E] mb-2">✓ Requirements Checklist:</h3>
             <ul className="space-y-1 text-sm text-[#92400E]">
-              {requirements.tooth && (
-                <li className={toothNumber ? 'line-through text-[#2FB9A7]' : ''}>
-                  ✓ Tooth # {!toothNumber && '(Required)'}
+              {activeMode === "TOOTH" && procedure.requirements.tooth && (
+                <li className={selectedTeeth.length > 0 ? 'line-through text-[#2FB9A7]' : ''}>
+                  • Tooth selection {selectedTeeth.length === 0 && '(Required)'}
                 </li>
               )}
-              {requirements.quadrant && (
+              {(activeMode === "QUADRANT" || activeMode === "ARCH" || activeMode === "FULL_MOUTH") && procedure.requirements.quadrant && (
                 <li className={selectedQuadrant ? 'line-through text-[#2FB9A7]' : ''}>
-                  ✓ Quadrant {!selectedQuadrant && '(Required)'}
+                  • {activeMode.replace('_', ' ')} selection {!selectedQuadrant && '(Required)'}
                 </li>
               )}
-              {requirements.surface && (
-                <li className={selectedSurfaces.length > 0 ? 'line-through text-[#2FB9A7]' : ''}>
-                  ✓ At least one Surface {selectedSurfaces.length === 0 && '(Required)'}
+              {procedure.surfaceRules.enabled && (
+                <li className={selectedSurfaces.length >= (procedure.surfaceRules.min || 0) ? 'line-through text-[#2FB9A7]' : ''}>
+                  • Surfaces ({procedure.surfaceRules.min || 0} - {procedure.surfaceRules.max || '∞'}) {selectedSurfaces.length < (procedure.surfaceRules.min || 0) && '(Required)'}
                 </li>
               )}
-              {requirements.materials && (
-                <li className={selectedMaterials.length > 0 ? 'line-through text-[#2FB9A7]' : ''}>
-                  ✓ At least one Material {selectedMaterials.length === 0 && '(Required)'}
+              {procedure.materialsRules.enabled && (
+                <li className={selectedMaterials.length >= (procedure.materialsRules.min || 0) ? 'line-through text-[#2FB9A7]' : ''}>
+                  • Materials ({procedure.materialsRules.min || 0} - {procedure.materialsRules.max || '∞'}) {selectedMaterials.length < (procedure.materialsRules.min || 0) && '(Required)'}
                 </li>
               )}
             </ul>
           </div>
         </div>
 
-        {/* Footer Actions - Medical Slate Theme */}
-        <div className="bg-[#F7F9FC] border-t-2 border-[#E2E8F0] px-6 py-3 flex items-center justify-end gap-3 rounded-b-lg">
+        {/* Footer Actions */}
+        <div className="bg-[#F7F9FC] border-t-2 border-[#E2E8F0] px-6 py-3 flex items-center justify-end gap-3 sticky bottom-0 rounded-b-lg">
           <button
             onClick={handleSave}
             className="px-8 py-2 bg-[#2FB9A7] hover:bg-[#26a396] text-white rounded font-bold transition-colors"
           >
-            ✓ SAVE
+            ✓ SAVE & APPLY
           </button>
           <button
             onClick={onClose}

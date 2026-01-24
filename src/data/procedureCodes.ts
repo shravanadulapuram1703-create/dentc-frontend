@@ -9,171 +9,867 @@ export interface ProcedureCode {
     quadrant?: boolean;
     materials?: boolean;
   };
+  // ✅ NEW: Comprehensive anatomy rules (MANDATORY FOR CLAIMS)
+  anatomyRules: {
+    mode: "TOOTH" | "QUADRANT" | "ARCH" | "FULL_MOUTH" | "NONE";
+    allowedToothSet: "PERMANENT_ONLY" | "PRIMARY_ONLY" | "BOTH" | "NONE";
+    allowedQuadrants?: ("UR" | "UL" | "LR" | "LL" | "UA" | "LA" | "FM")[];
+    allowMultipleTeeth: boolean;
+  };
+  // ✅ NEW: Surface-specific rules
+  surfaceRules: {
+    enabled: boolean;
+    min?: number;
+    max?: number;
+    allowedSurfaces?: string[];
+  };
+  // ✅ NEW: Materials-specific rules
+  materialsRules: {
+    enabled: boolean;
+    options?: string[];
+    min?: number;
+    max?: number;
+  };
   defaultFee: number;
 }
 
 export const procedureCodes: ProcedureCode[] = [
-  // DIAGNOSTIC
-  { code: 'D0120', userCode: '-', description: 'Periodic Oral Evaluation', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 75.00 },
-  { code: 'D0140', userCode: '-', description: 'Limited Oral Eval Prob Focused', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 85.00 },
-  { code: 'D0145', userCode: '-', description: 'Oral Eval Pt Under 3 Yrs, Counsel Primary', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 65.00 },
-  { code: 'D0150', userCode: '-', description: 'Compsve Oral Eval- New/Est Pat', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 120.00 },
-  { code: 'D0160', userCode: '-', description: 'Detailed & Ext Oral Eval By Rp', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D0170', userCode: '-', description: 'Re-Evaluation- Limited', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 65.00 },
-  { code: 'D0171', userCode: '-', description: 'Re-Evaluation - Post-Operative Office Visit', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D0180', userCode: '-', description: 'Compsve Perio Eval New/Est Pat', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 130.00 },
-  { code: 'D0190', userCode: '-', description: 'Screening Of A Patient', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 40.00 },
-  { code: 'D0191', userCode: '-', description: 'Assessment Of A Patient', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 45.00 },
-  { code: 'D0210', userCode: '-', description: 'Intraoral - Complete Series Of Radiographic Images', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 180.00 },
-  { code: 'D0220', userCode: '-', description: 'Intraoral - Peripical First Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 40.00 },
-  { code: 'D0230', userCode: '-', description: 'Intraoral - Peripical Each Addl Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 30.00 },
-  { code: 'D0240', userCode: '-', description: 'Intraoral - Occlusal Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 45.00 },
-  { code: 'D0250', userCode: '-', description: 'Extraoral - First Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D0251', userCode: '-', description: 'Extra-oral Posterior Dental Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D0260', userCode: '-', description: 'Extraoral - Each Addnl Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 40.00 },
-  { code: 'D0270', userCode: '-', description: 'Bitewing - Single Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 35.00 },
-  { code: 'D0272', userCode: '-', description: 'Bitewings - Two Radiographic Images', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 55.00 },
-  { code: 'D0273', userCode: '-', description: 'Bitewings - Three Radiographic Images', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 70.00 },
-  { code: 'D0274', userCode: '-', description: 'Bitewings - Four Radiographic Images', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 85.00 },
-  { code: 'D0277', userCode: '-', description: 'Vertical Bitewings - 7-8 Radiographic Images', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 120.00 },
-  { code: 'D0330', userCode: '-', description: 'Panoramic Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 140.00 },
-  { code: 'D0340', userCode: '-', description: 'Cephalometric Radiographic Image', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D0460', userCode: '-', description: 'Pulp Vitality Tests', category: 'DIAGNOSTIC', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 45.00 },
-  { code: 'D0470', userCode: '-', description: 'Diagnostic Casts', category: 'DIAGNOSTIC', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 75.00 },
+  // ==================== DIAGNOSTIC ====================
+  {
+    code: 'D0120',
+    userCode: '-',
+    description: 'Periodic Oral Evaluation',
+    category: 'DIAGNOSTIC',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 75.00
+  },
+  {
+    code: 'D0150',
+    userCode: '-',
+    description: 'Comprehensive Oral Evaluation - New/Est Pat',
+    category: 'DIAGNOSTIC',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 120.00
+  },
+  {
+    code: 'D0274',
+    userCode: '-',
+    description: 'Bitewings - Four Radiographic Images',
+    category: 'DIAGNOSTIC',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 85.00
+  },
+  {
+    code: 'D0460',
+    userCode: '-',
+    description: 'Pulp Vitality Tests',
+    category: 'DIAGNOSTIC',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: true },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 45.00
+  },
 
-  // PREVENTIVE
-  { code: 'D1110', userCode: 'ProphyAdult', description: 'Prophylaxis - Adult', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 100.00 },
-  { code: 'D1120', userCode: 'ProphyChild', description: 'Prophylaxis - Child', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 85.00 },
-  { code: 'D1206', userCode: 'fluoride', description: 'Topical Application Of Fluoride Varnish', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 45.00 },
-  { code: 'D1208', userCode: '-', description: 'Topical Application Of Fluoride-Excluding Varnish', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 40.00 },
-  { code: 'D1310', userCode: '-', description: 'Nutritional Counseling', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D1320', userCode: '-', description: 'Tobacco Counsel For Oral Disea', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D1330', userCode: '-', description: 'Oral Hygiene Instructions', category: 'PREVENTIVE', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 40.00 },
-  { code: 'D1351', userCode: '-', description: 'Sealant - Per Tooth', category: 'PREVENTIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 55.00 },
-  { code: 'D1352', userCode: '-', description: 'Prev Resin Restoratn In Mod-high Caries Pt (Perman', category: 'PREVENTIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 75.00 },
-  { code: 'D1353', userCode: '-', description: 'Sealant Repair - Per Tooth', category: 'PREVENTIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 35.00 },
+  // ==================== PREVENTIVE ====================
+  {
+    code: 'D1110',
+    userCode: 'ProphyAdult',
+    description: 'Prophylaxis - Adult',
+    category: 'PREVENTIVE',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "PERMANENT_ONLY", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 100.00
+  },
+  {
+    code: 'D1120',
+    userCode: 'ProphyChild',
+    description: 'Prophylaxis - Child',
+    category: 'PREVENTIVE',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "PRIMARY_ONLY", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 85.00
+  },
+  {
+    code: 'D1206',
+    userCode: 'fluoride',
+    description: 'Topical Application Of Fluoride Varnish',
+    category: 'PREVENTIVE',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "BOTH", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 45.00
+  },
+  {
+    code: 'D1351',
+    userCode: '-',
+    description: 'Sealant - Per Tooth',
+    category: 'PREVENTIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 55.00
+  },
+  {
+    code: 'D1352',
+    userCode: '-',
+    description: 'Preventive Resin Restoration (Permanent Tooth)',
+    category: 'PREVENTIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 1, max: 5, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 75.00
+  },
 
-  // RESTORATIVE
-  { code: 'D2140', userCode: 'amal1', description: 'Amalgam One Surface', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D2150', userCode: 'amal2', description: 'Amalgam Two Surface', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 180.00 },
-  { code: 'D2160', userCode: 'amal3', description: 'Amalgam Three Surfaces', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 210.00 },
-  { code: 'D2161', userCode: 'amal4', description: 'Amalgam Four/More Surfaces', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 240.00 },
-  { code: 'D2330', userCode: 'resin1', description: 'Resin Composite One Surface Anterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 160.00 },
-  { code: 'D2331', userCode: 'resin2', description: 'Resin Composite Two Surfaces Anterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 195.00 },
-  { code: 'D2332', userCode: 'resin3', description: 'Resin Composite Three Surfaces Anterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 230.00 },
-  { code: 'D2335', userCode: 'resin4', description: 'Resin Composite Four/More Surf Anterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 265.00 },
-  { code: 'D2390', userCode: '-', description: 'Resin Composite Crown Anterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 450.00 },
-  { code: 'D2391', userCode: 'resin1', description: 'Resin Composite One Surface Posterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 175.00 },
-  { code: 'D2392', userCode: 'resin2', description: 'Resin Composite Two Surfaces Posterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 210.00 },
-  { code: 'D2393', userCode: 'resin3', description: 'Resin Composite Three Surfaces Posterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 245.00 },
-  { code: 'D2394', userCode: 'resin4', description: 'Resin Composite Four/More Surfaces Posterior', category: 'RESTORATIVE', requirements: { tooth: true, surface: true, quadrant: false, materials: false }, defaultFee: 280.00 },
-  { code: 'D2710', userCode: '-', description: 'Crown - Resin Composite Indirect', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 750.00 },
-  { code: 'D2740', userCode: '-', description: 'Crown Porcelain/Ceramic Substrate', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1250.00 },
-  { code: 'D2750', userCode: '-', description: 'Crown Porcelain Fused High Noble Metal', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1350.00 },
-  { code: 'D2751', userCode: '-', description: 'Crown Porcelain Fused Base Metal', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1150.00 },
-  { code: 'D2752', userCode: '-', description: 'Crown Porcelain Fused Noble Metal', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1250.00 },
-  { code: 'D2790', userCode: '-', description: 'Crown Full Cast High Noble Metal', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1400.00 },
-  { code: 'D2791', userCode: '-', description: 'Crown Full Cast Base Predominately Metal', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1200.00 },
-  { code: 'D2792', userCode: '-', description: 'Crown Full Cast Noble Metal', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1300.00 },
-  { code: 'D2794', userCode: '-', description: 'Crown - Titanium', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: true }, defaultFee: 1350.00 },
-  { code: 'D2910', userCode: '-', description: 'Recement Or Rebond Inlay/Onlay/Veneer/Partial Cvrg', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 85.00 },
-  { code: 'D2920', userCode: '-', description: 'Recement Or Rebond Crown', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 85.00 },
-  { code: 'D2930', userCode: '-', description: 'Prefabricated SS Crown Primary Tooth', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 275.00 },
-  { code: 'D2931', userCode: '-', description: 'Prefabricated SS Crown Perm Tooth', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 285.00 },
-  { code: 'D2950', userCode: '-', description: 'Core Buildup, Including Any Pins When Required', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 350.00 },
-  { code: 'D2952', userCode: '-', description: 'Post & Core (Addition To Crown), Indirect Fab', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 450.00 },
-  { code: 'D2954', userCode: '-', description: 'Prefab Post & Core (Addition To Crown)', category: 'RESTORATIVE', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 350.00 },
+  // ==================== RESTORATIVE ====================
+  {
+    code: 'D2140',
+    userCode: 'amal1',
+    description: 'Amalgam - One Surface',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 1, max: 1, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 150.00
+  },
+  {
+    code: 'D2150',
+    userCode: 'amal2',
+    description: 'Amalgam - Two Surfaces',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 2, max: 2, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 180.00
+  },
+  {
+    code: 'D2160',
+    userCode: 'amal3',
+    description: 'Amalgam - Three Surfaces',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 3, max: 3, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 210.00
+  },
+  {
+    code: 'D2161',
+    userCode: 'amal4',
+    description: 'Amalgam - Four or More Surfaces',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 4, max: 5, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 240.00
+  },
+  {
+    code: 'D2330',
+    userCode: 'resin1',
+    description: 'Resin Composite - One Surface, Anterior',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 1, max: 1, allowedSurfaces: ['M', 'D', 'I', 'F', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 160.00
+  },
+  {
+    code: 'D2391',
+    userCode: 'resin1',
+    description: 'Resin Composite - One Surface, Posterior',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 1, max: 1, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 175.00
+  },
+  {
+    code: 'D2392',
+    userCode: 'resin2',
+    description: 'Resin Composite - Two Surfaces, Posterior',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 2, max: 2, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 210.00
+  },
+  {
+    code: 'D2393',
+    userCode: 'resin3',
+    description: 'Resin Composite - Three Surfaces, Posterior',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 3, max: 3, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 245.00
+  },
+  {
+    code: 'D2740',
+    userCode: '-',
+    description: 'Crown - Porcelain/Ceramic Substrate',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Porcelain/Ceramic', 'Zirconia', 'E.max', 'Bruxir']
+    },
+    defaultFee: 1250.00
+  },
+  {
+    code: 'D2750',
+    userCode: '-',
+    description: 'Crown - Porcelain Fused to High Noble Metal',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['High Noble Metal', 'Gold', 'Palladium']
+    },
+    defaultFee: 1350.00
+  },
+  {
+    code: 'D2751',
+    userCode: '-',
+    description: 'Crown - Porcelain Fused to Base Metal',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Base Metal', 'Nickel-Chromium', 'Cobalt-Chromium']
+    },
+    defaultFee: 1150.00
+  },
+  {
+    code: 'D2790',
+    userCode: '-',
+    description: 'Crown - Full Cast High Noble Metal',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['High Noble Metal', 'Gold', 'Palladium']
+    },
+    defaultFee: 1400.00
+  },
+  {
+    code: 'D2794',
+    userCode: '-',
+    description: 'Crown - Titanium',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Titanium', 'Titanium Alloy']
+    },
+    defaultFee: 1350.00
+  },
+  {
+    code: 'D2930',
+    userCode: '-',
+    description: 'Prefabricated Stainless Steel Crown - Primary Tooth',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PRIMARY_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 275.00
+  },
+  {
+    code: 'D2931',
+    userCode: '-',
+    description: 'Prefabricated Stainless Steel Crown - Permanent Tooth',
+    category: 'RESTORATIVE',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 285.00
+  },
 
-  // ENDODONTICS
-  { code: 'D3110', userCode: '-', description: 'Pulp Cap Direct', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 120.00 },
-  { code: 'D3120', userCode: '-', description: 'Pulp Cap Indirect', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 110.00 },
-  { code: 'D3220', userCode: '-', description: 'Therapeutic Pulpotomy', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 250.00 },
-  { code: 'D3310', userCode: 'rct1', description: 'Endodontic Therapy, Anterior Tooth', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 850.00 },
-  { code: 'D3320', userCode: 'rct2', description: 'Endodontic Therapy, Bicuspid Tooth', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 950.00 },
-  { code: 'D3330', userCode: 'rct3', description: 'Endodontic Therapy, Molar Tooth', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 1250.00 },
-  { code: 'D3346', userCode: '-', description: 'Retreat RCT/Anterior', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 950.00 },
-  { code: 'D3347', userCode: '-', description: 'Retreat RCT/Bicuspid', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 1050.00 },
-  { code: 'D3348', userCode: '-', description: 'Retreat RCT/Molar', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 1400.00 },
-  { code: 'D3410', userCode: '-', description: 'Apicoectomy - Anterior', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 900.00 },
-  { code: 'D3421', userCode: '-', description: 'Apicoectomy - Bicuspid (First Root)', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 1000.00 },
-  { code: 'D3425', userCode: '-', description: 'Apicoectomy - Molar (First Root)', category: 'ENDODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 1100.00 },
+  // ==================== ENDODONTICS ====================
+  {
+    code: 'D3110',
+    userCode: '-',
+    description: 'Pulp Cap - Direct',
+    category: 'ENDODONTICS',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 120.00
+  },
+  {
+    code: 'D3220',
+    userCode: '-',
+    description: 'Therapeutic Pulpotomy',
+    category: 'ENDODONTICS',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 250.00
+  },
+  {
+    code: 'D3310',
+    userCode: 'rct1',
+    description: 'Endodontic Therapy - Anterior Tooth',
+    category: 'ENDODONTICS',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 850.00
+  },
+  {
+    code: 'D3320',
+    userCode: 'rct2',
+    description: 'Endodontic Therapy - Bicuspid Tooth',
+    category: 'ENDODONTICS',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 950.00
+  },
+  {
+    code: 'D3330',
+    userCode: 'rct3',
+    description: 'Endodontic Therapy - Molar Tooth',
+    category: 'ENDODONTICS',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1250.00
+  },
 
-  // PERIODONTICS
-  { code: 'D4210', userCode: '-', description: 'Gingect/Gingipsty 4+T/Per Quad', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: true, materials: false }, defaultFee: 450.00 },
-  { code: 'D4211', userCode: '-', description: 'Ginvect/Gingipsty 1-3t Pr Quad', category: 'PERIODONTICS', requirements: { tooth: true, surface: false, quadrant: true, materials: false }, defaultFee: 250.00 },
-  { code: 'D4240', userCode: '-', description: 'Gingiv Flap Rtpln 4+T/Per Quad', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: true, materials: false }, defaultFee: 650.00 },
-  { code: 'D4241', userCode: '-', description: 'Gingi Flap Rtpln 1-3t Pr Quad', category: 'PERIODONTICS', requirements: { tooth: true, surface: false, quadrant: true, materials: false }, defaultFee: 450.00 },
-  { code: 'D4249', userCode: '-', description: 'Clinical Crown Lengthening Hard Tis', category: 'PERIODONTICS', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 750.00 },
-  { code: 'D4260', userCode: '-', description: 'Osseous Surgery 4+T/Per Quad', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: true, materials: false }, defaultFee: 950.00 },
-  { code: 'D4261', userCode: '-', description: 'Osseous Surgery 1-3t Pr Quad', category: 'PERIODONTICS', requirements: { tooth: true, surface: false, quadrant: true, materials: false }, defaultFee: 650.00 },
-  { code: 'D4341', userCode: 'scale', description: 'Perio Sclg Rt Pln SRP 4+T/Per Quad', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: true, materials: false }, defaultFee: 350.00 },
-  { code: 'D4342', userCode: '-', description: 'Perio Sclg Rt Pln SRP 1-3t Pr Quad', category: 'PERIODONTICS', requirements: { tooth: true, surface: false, quadrant: true, materials: false }, defaultFee: 200.00 },
-  { code: 'D4346', userCode: '-', description: 'Scaling In Presence Of Generalized Moderate Or Sev', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D4355', userCode: '-', description: 'Full Mouth Debridement', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 180.00 },
-  { code: 'D4910', userCode: '-', description: 'Periodontal Maintenance', category: 'PERIODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 135.00 },
+  // ==================== PERIODONTICS ====================
+  {
+    code: 'D4210',
+    userCode: '-',
+    description: 'Gingivectomy or Gingivoplasty - Four or More Contiguous Teeth',
+    category: 'PERIODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: true, materials: false },
+    anatomyRules: { mode: "QUADRANT", allowedToothSet: "NONE", allowedQuadrants: ["UR", "UL", "LR", "LL"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 450.00
+  },
+  {
+    code: 'D4341',
+    userCode: '-',
+    description: 'Periodontal Scaling and Root Planing - Four or More Teeth Per Quadrant',
+    category: 'PERIODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: true, materials: false },
+    anatomyRules: { mode: "QUADRANT", allowedToothSet: "NONE", allowedQuadrants: ["UR", "UL", "LR", "LL"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 280.00
+  },
 
-  // PROSTTH. FIXED
-  { code: 'D6205', userCode: '-', description: 'Pontic - Indirect Resin Based Composite', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 850.00 },
-  { code: 'D6210', userCode: '-', description: 'Pontic Cast High Noble Metal', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 950.00 },
-  { code: 'D6211', userCode: '-', description: 'Pontic Cast Base Metal', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 850.00 },
-  { code: 'D6212', userCode: '-', description: 'Pontic Cast Noble Metal', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 900.00 },
-  { code: 'D6214', userCode: '-', description: 'Pontic - Titanium', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 950.00 },
-  { code: 'D6240', userCode: '-', description: 'Pontic Porcln Fused Hi Nobl Mt', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 1100.00 },
-  { code: 'D6241', userCode: '-', description: 'Pontic Porcln Fused Base Metal', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 950.00 },
-  { code: 'D6242', userCode: '-', description: 'Pontic Prcln Fused Noble Metal', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 1050.00 },
-  { code: 'D6245', userCode: '-', description: 'Pontic Porcelain/Ceramic', category: 'PROSTTH. FIXED', requirements: { tooth: true, surface: true, quadrant: true, materials: true }, defaultFee: 1150.00 },
+  // ==================== PEDIATRIC (PRIMARY DENTITION) ====================
+  {
+    code: 'T7111',
+    userCode: '-',
+    description: 'Extraction of Erupted Tooth or Exposed Root - Coronal Remnants (Deciduous Tooth)',
+    category: 'ORAL SURGERY',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PRIMARY_ONLY", allowMultipleTeeth: true },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 120.00
+  },
 
-  // ORAL SURGERY
-  { code: 'D7111', userCode: '-', description: 'Coronal Remnants - Decidus Th', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 100.00 },
-  { code: 'D7140', userCode: '-', description: 'Extract Erpted Th/Expsed Root', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 175.00 },
-  { code: 'D7210', userCode: '-', description: 'Surg Removal Erupted Tooth', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 250.00 },
-  { code: 'D7220', userCode: '-', description: 'Remov Impacted Tooth Soft Tiss', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 350.00 },
-  { code: 'D7230', userCode: '-', description: 'Remov Impacted Th Partial Bony', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 450.00 },
-  { code: 'D7240', userCode: '-', description: 'Remov Impacted Th Complet Bony', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 550.00 },
-  { code: 'D7241', userCode: '-', description: 'Remov Impt Th Cmp Bny W/Compli', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 650.00 },
-  { code: 'D7250', userCode: '-', description: 'Surg Remv/Resid Root', category: 'ORAL SURGERY', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 200.00 },
-  { code: 'D7285', userCode: '-', description: 'Incisional Biopsy Of Oral Tissue - Hard(Bone/tooth', category: 'ORAL SURGERY', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 350.00 },
-  { code: 'D7286', userCode: '-', description: 'Incisional Biopsy Of Oral Tissue - Soft', category: 'ORAL SURGERY', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 300.00 },
-  { code: 'D7510', userCode: '-', description: 'I&D Of Abscess - Intraoral Soft', category: 'ORAL SURGERY', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 200.00 },
-  { code: 'D7960', userCode: '-', description: 'Frenulectomy / Frenectomy / Frenotomy', category: 'ORAL SURGERY', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 450.00 },
+  // ==================== ORAL SURGERY ====================
+  {
+    code: 'D7140',
+    userCode: '-',
+    description: 'Extraction - Erupted Tooth or Exposed Root',
+    category: 'ORAL SURGERY',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 180.00
+  },
+  {
+    code: 'D7210',
+    userCode: '-',
+    description: 'Extraction - Erupted Tooth Requiring Removal of Bone/Sectioning',
+    category: 'ORAL SURGERY',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 295.00
+  },
+  {
+    code: 'D7240',
+    userCode: '-',
+    description: 'Removal of Impacted Tooth - Completely Bony',
+    category: 'ORAL SURGERY',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 450.00
+  },
 
-  // ORTHODONTICS
-  { code: 'D8010', userCode: '-', description: 'Limited Primary Dentition', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 2500.00 },
-  { code: 'D8020', userCode: '-', description: 'Limited Transitional Dentition', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 2800.00 },
-  { code: 'D8030', userCode: '-', description: 'Limited Adolescent Dentition', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 3200.00 },
-  { code: 'D8040', userCode: '-', description: 'Limited Adult Dentition', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 3500.00 },
-  { code: 'D8070', userCode: '-', description: 'Comprehensive Trans Dentition', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 4500.00 },
-  { code: 'D8080', userCode: '-', description: 'Comprehensive Adoles Dentition', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 5000.00 },
-  { code: 'D8090', userCode: '-', description: 'Comprehensive Ortho Treatment', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 5500.00 },
-  { code: 'D8670', userCode: '-', description: 'Periodic Orthodontic Treatment Visit', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D8680', userCode: '-', description: 'Ortho Retention', category: 'ORTHODONTICS', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 750.00 },
+  // ==================== PROSTTH. REMOV (Removable Prosthodontics) ====================
+  {
+    code: 'D5110',
+    userCode: '-',
+    description: 'Complete Denture - Upper',
+    category: 'PROSTTH. REMOV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "ARCH", allowedToothSet: "NONE", allowedQuadrants: ["UA"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1800.00
+  },
+  {
+    code: 'D5120',
+    userCode: '-',
+    description: 'Complete Denture - Lower',
+    category: 'PROSTTH. REMOV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "ARCH", allowedToothSet: "NONE", allowedQuadrants: ["LA"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1800.00
+  },
+  {
+    code: 'D5211',
+    userCode: '-',
+    description: 'Upper Partial Denture - Resin Base',
+    category: 'PROSTTH. REMOV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "ARCH", allowedToothSet: "NONE", allowedQuadrants: ["UA"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1400.00
+  },
+  {
+    code: 'D5212',
+    userCode: '-',
+    description: 'Lower Partial Denture - Resin Base',
+    category: 'PROSTTH. REMOV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "ARCH", allowedToothSet: "NONE", allowedQuadrants: ["LA"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1400.00
+  },
+  {
+    code: 'D5213',
+    userCode: '-',
+    description: 'Upper Partial Denture - Cast Metal Framework',
+    category: 'PROSTTH. REMOV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "ARCH", allowedToothSet: "NONE", allowedQuadrants: ["UA"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1900.00
+  },
+  {
+    code: 'D5214',
+    userCode: '-',
+    description: 'Lower Partial Denture - Cast Metal Framework',
+    category: 'PROSTTH. REMOV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "ARCH", allowedToothSet: "NONE", allowedQuadrants: ["LA"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 1900.00
+  },
 
-  // ADJUNCT SERV
-  { code: 'D9110', userCode: '-', description: 'Emergency Treatment/Palliative', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D9210', userCode: '-', description: 'Local Anesthesia No Surg', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D9215', userCode: '-', description: 'Local Anesthesia', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D9230', userCode: '-', description: 'Inhalation Of Nitrous Oxide (Anxiolysis, Analgesia', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 85.00 },
-  { code: 'D9310', userCode: '-', description: 'Consultation - Diag Srvc Other Than Reqstg Prvdr', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 100.00 },
-  { code: 'D9430', userCode: '-', description: 'Office Visit For Observation', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 75.00 },
-  { code: 'D9440', userCode: '-', description: 'Office Visit After Hours', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D9910', userCode: '-', description: 'Application Of Desensitizing', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 75.00 },
-  { code: 'D9940', userCode: '-', description: 'Occlusal Guard, By Rpt', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 550.00 },
-  { code: 'D9941', userCode: '-', description: 'Fabricate Athletic Mouth Guard', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 450.00 },
-  { code: 'D9944', userCode: '-', description: 'Occlusal Guard- Hard Applience Full Arch', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 600.00 },
-  { code: 'D9945', userCode: '-', description: 'Occlusal Guard- Soft Appliance Full Arch', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 550.00 },
-  { code: 'D9972', userCode: '-', description: 'External Bleaching - Per Arch - In Office', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 350.00 },
-  { code: 'D9973', userCode: '-', description: 'Bleaching Per Tooth, External', category: 'ADJUNCT SERV', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 150.00 },
-  { code: 'D9974', userCode: '-', description: 'Bleaching Per Tooth, Internal', category: 'ADJUNCT SERV', requirements: { tooth: true, surface: false, quadrant: false, materials: false }, defaultFee: 175.00 },
-  { code: 'D9975', userCode: '-', description: 'External Bleaching Home Application, Per Arch', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 300.00 },
-  { code: 'D9986', userCode: '-', description: 'Missed Appointment', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'D9987', userCode: '-', description: 'Cancelled Appointment', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 35.00 },
-  { code: 'D9999', userCode: '-', description: 'Unspecified Adjunctive Procedure', category: 'ADJUNCT SERV', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 0.00 },
+  // ==================== MAXILLO BIOSTM (Maxillofacial / Biomaterials) ====================
+  {
+    code: 'D7111',
+    userCode: '-',
+    description: 'Extraction of Erupted Tooth or Exposed Root - Coronal Remnants',
+    category: 'MAXILLO BIOSTM',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "BOTH", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 150.00
+  },
+  {
+    code: 'D7510',
+    userCode: '-',
+    description: 'Incision and Drainage of Abscess - Intraoral Soft Tissue',
+    category: 'MAXILLO BIOSTM',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 285.00
+  },
+  {
+    code: 'D7953',
+    userCode: '-',
+    description: 'Bone Replacement Graft - Each Additional Site',
+    category: 'MAXILLO BIOSTM',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Autograft', 'Allograft', 'Xenograft', 'Synthetic']
+    },
+    defaultFee: 550.00
+  },
 
-  // OTHER (Z-CODES)
-  { code: 'Z0062', userCode: '-', description: 'Broken Appointment Fee', category: 'OTHER', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'Z0090.0', userCode: '-', description: 'MISSED APPOINTMENT', category: 'OTHER', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'Z1234', userCode: '-', description: 'LAB FEES', category: 'OTHER', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 0.00 },
-  { code: 'ZF0001', userCode: '-', description: 'Broken Appointment Fee', category: 'OTHER', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 50.00 },
-  { code: 'ZF0002', userCode: '-', description: 'Office Visit', category: 'OTHER', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 75.00 },
-  { code: 'ZF0050', userCode: '-', description: 'Lab Fee', category: 'OTHER', requirements: { tooth: false, surface: false, quadrant: false, materials: false }, defaultFee: 0.00 },
+  // ==================== IMPLANT SERV (Implant Services) ====================
+  {
+    code: 'D6010',
+    userCode: '-',
+    description: 'Surgical Placement of Implant Body - Endosteal Implant',
+    category: 'IMPLANT SERV',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 2200.00
+  },
+  {
+    code: 'D6056',
+    userCode: '-',
+    description: 'Prefabricated Abutment - Includes Placement',
+    category: 'IMPLANT SERV',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 650.00
+  },
+  {
+    code: 'D6057',
+    userCode: '-',
+    description: 'Custom Abutment - Includes Placement',
+    category: 'IMPLANT SERV',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 850.00
+  },
+  {
+    code: 'D6058',
+    userCode: '-',
+    description: 'Abutment Supported Porcelain/Ceramic Crown',
+    category: 'IMPLANT SERV',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Porcelain/Ceramic', 'Zirconia', 'E.max', 'Bruxir']
+    },
+    defaultFee: 1600.00
+  },
+  {
+    code: 'D6065',
+    userCode: '-',
+    description: 'Implant Supported Porcelain/Ceramic Crown',
+    category: 'IMPLANT SERV',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Porcelain/Ceramic', 'Zirconia', 'E.max', 'Bruxir']
+    },
+    defaultFee: 1750.00
+  },
+
+  // ==================== PROSTTH. FIXED (Fixed Prosthodontics) ====================
+  {
+    code: 'D6205',
+    userCode: '-',
+    description: 'Pontic - Indirect Resin Based Composite',
+    category: 'PROSTTH. FIXED',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 850.00
+  },
+  {
+    code: 'D6240',
+    userCode: '-',
+    description: 'Pontic - Porcelain Fused to High Noble Metal',
+    category: 'PROSTTH. FIXED',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['High Noble Metal', 'Gold', 'Palladium']
+    },
+    defaultFee: 1250.00
+  },
+  {
+    code: 'D6245',
+    userCode: '-',
+    description: 'Pontic - Porcelain/Ceramic',
+    category: 'PROSTTH. FIXED',
+    requirements: { tooth: true, surface: false, quadrant: false, materials: true },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: {
+      enabled: true,
+      min: 1,
+      max: 1,
+      options: ['Porcelain/Ceramic', 'Zirconia', 'E.max']
+    },
+    defaultFee: 1150.00
+  },
+  {
+    code: 'D6600',
+    userCode: '-',
+    description: 'Retainer Inlay - Porcelain/Ceramic, Two Surfaces',
+    category: 'PROSTTH. FIXED',
+    requirements: { tooth: true, surface: true, quadrant: false, materials: false },
+    anatomyRules: { mode: "TOOTH", allowedToothSet: "PERMANENT_ONLY", allowMultipleTeeth: false },
+    surfaceRules: { enabled: true, min: 2, max: 2, allowedSurfaces: ['M', 'O', 'D', 'B', 'L'] },
+    materialsRules: { enabled: false },
+    defaultFee: 950.00
+  },
+
+  // ==================== ORTHODONTICS ====================
+  {
+    code: 'D8010',
+    userCode: '-',
+    description: 'Limited Orthodontic Treatment - Primary Dentition',
+    category: 'ORTHODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "PRIMARY_ONLY", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 2500.00
+  },
+  {
+    code: 'D8020',
+    userCode: '-',
+    description: 'Limited Orthodontic Treatment - Transitional Dentition',
+    category: 'ORTHODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "BOTH", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 3500.00
+  },
+  {
+    code: 'D8030',
+    userCode: '-',
+    description: 'Limited Orthodontic Treatment - Adolescent Dentition',
+    category: 'ORTHODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "PERMANENT_ONLY", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 4500.00
+  },
+  {
+    code: 'D8080',
+    userCode: '-',
+    description: 'Comprehensive Orthodontic Treatment - Adolescent Dentition',
+    category: 'ORTHODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "PERMANENT_ONLY", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 6500.00
+  },
+  {
+    code: 'D8090',
+    userCode: '-',
+    description: 'Comprehensive Orthodontic Treatment - Adult Dentition',
+    category: 'ORTHODONTICS',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "FULL_MOUTH", allowedToothSet: "PERMANENT_ONLY", allowedQuadrants: ["FM"], allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 7500.00
+  },
+
+  // ==================== ADJUNCT SERV (Adjunctive General Services) ====================
+  {
+    code: 'D9110',
+    userCode: '-',
+    description: 'Palliative (Emergency) Treatment of Dental Pain',
+    category: 'ADJUNCT SERV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 95.00
+  },
+  {
+    code: 'D9210',
+    userCode: '-',
+    description: 'Local Anesthesia Not in Conjunction with Operative/Surgical Procedures',
+    category: 'ADJUNCT SERV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 55.00
+  },
+  {
+    code: 'D9220',
+    userCode: '-',
+    description: 'Deep Sedation/General Anesthesia - First 15 Minutes',
+    category: 'ADJUNCT SERV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 350.00
+  },
+  {
+    code: 'D9230',
+    userCode: '-',
+    description: 'Analgesia, Anxiolysis, Inhalation of Nitrous Oxide',
+    category: 'ADJUNCT SERV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 85.00
+  },
+  {
+    code: 'D9310',
+    userCode: '-',
+    description: 'Consultation - Diagnostic Service',
+    category: 'ADJUNCT SERV',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 125.00
+  },
+
+  // ==================== OTHER ====================
+  {
+    code: 'D9995',
+    userCode: '-',
+    description: 'Teledentistry - Synchronous; Real-Time Encounter',
+    category: 'OTHER',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 45.00
+  },
+  {
+    code: 'D9996',
+    userCode: '-',
+    description: 'Teledentistry - Asynchronous; Information Stored and Forwarded',
+    category: 'OTHER',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 35.00
+  },
+  {
+    code: 'D9997',
+    userCode: '-',
+    description: 'Dental Case Management - Patients with Special Health Care Needs',
+    category: 'OTHER',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 150.00
+  },
+
+  // ==================== ALL MEDICAL ====================
+  {
+    code: 'M0001',
+    userCode: '-',
+    description: 'Medical Consultation - Physician',
+    category: 'ALL MEDICAL',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 200.00
+  },
+  {
+    code: 'M0002',
+    userCode: '-',
+    description: 'Medical Emergency Treatment',
+    category: 'ALL MEDICAL',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 350.00
+  },
+  {
+    code: 'M0003',
+    userCode: '-',
+    description: 'Medical Laboratory Testing',
+    category: 'ALL MEDICAL',
+    requirements: { tooth: false, surface: false, quadrant: false, materials: false },
+    anatomyRules: { mode: "NONE", allowedToothSet: "NONE", allowMultipleTeeth: false },
+    surfaceRules: { enabled: false },
+    materialsRules: { enabled: false },
+    defaultFee: 125.00
+  },
 ];

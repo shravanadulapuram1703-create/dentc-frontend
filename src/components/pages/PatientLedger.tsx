@@ -4,6 +4,7 @@ import { FileText, DollarSign, Plus, Filter, Calendar, Eye, X, FileCheck } from 
 import PaymentsAdjustments from '../patient/PaymentsAdjustments';
 import AddProcedure from '../patient/AddProcedure';
 import { components } from '../../styles/theme';
+import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 
 interface LedgerTransaction {
   id: string;
@@ -510,35 +511,168 @@ export default function PatientLedger() {
           <div>
             {/* Ledger Grid */}
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
                 <thead className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white border-b-2 border-[#16293B] sticky top-0">
                   <tr>
-                    <th className="px-2 py-3 text-left">
+                    <th className="w-[40px] px-2 py-3 text-left">
                       <input 
                         type="checkbox" 
                         onChange={(e) => handleSelectAll(e.target.checked)}
                         className="rounded"
                       />
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Date</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Patient</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Office</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">A</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Code</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">TH</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Surf</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">T</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">N</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">EOB</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Description</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Bill</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Dur</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Provider</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Est Pat</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Est Ins</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Amount</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Balance</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">User</th>
+                    <th className="w-[95px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">POSTED</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Date the transaction was posted to the account</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[120px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">MEMBER</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Patient associated with this transaction</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[80px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">LOC</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Office or location where the transaction occurred</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">APPLY</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Indicates who the transaction is applied to (Patient or Responsible Party)</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[80px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">PROC</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Procedure or transaction code associated with this entry</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">TOOTH</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Tooth number related to the procedure</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">AREA</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Tooth surface(s) involved in the procedure</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[50px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">TYPE</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Financial type of the transaction (Production or Collection)</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[50px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">NOTES</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Indicates whether notes exist for this transaction</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[50px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">DOCS</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Indicates whether supporting documents or EOBs are attached</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[260px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">DETAILS</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Description of the procedure or transaction</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[70px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">BILLING</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Billing status and order used for insurance processing</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">TIME</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Duration of the procedure in minutes</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[100px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">RENDERED BY</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Provider who performed the procedure</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[90px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">PAT EST</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Estimated portion expected from the patient</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[90px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">INS EST</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Estimated portion expected from insurance</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[100px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">POSTED AMT</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Actual posted transaction amount</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[110px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">RUNNING BAL</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Account balance after this transaction</TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="w-[80px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">CREATED BY</span>
+                        </TooltipTrigger>
+                        <TooltipContent>User who created or posted this transaction</TooltipContent>
+                      </Tooltip>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -549,7 +683,7 @@ export default function PatientLedger() {
                         txn.status === 'Not Sent' ? 'bg-yellow-50' : ''
                       }`}
                     >
-                      <td className="px-2 py-2">
+                      <td className="w-[40px] px-2 py-2">
                         {txn.status === 'Not Sent' && txn.transactionType === 'Procedure' && (
                           <input 
                             type="checkbox" 
@@ -559,12 +693,12 @@ export default function PatientLedger() {
                           />
                         )}
                       </td>
-                      <td className="px-2 py-2 text-gray-900">{txn.date}</td>
-                      <td className="px-2 py-2 text-gray-900 text-xs">{txn.patientName}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.office}</td>
-                      <td className="px-2 py-2 text-gray-700">{txn.applyTo}</td>
-                      <td className="px-2 py-2">
-                        <span className={`text-xs px-1 py-0.5 rounded ${
+                      <td className="w-[95px] px-2 py-2 text-gray-900 font-mono truncate">{txn.date}</td>
+                      <td className="w-[120px] px-2 py-2 text-gray-900 text-xs truncate">{txn.patientName}</td>
+                      <td className="w-[80px] px-2 py-2 text-gray-700 text-xs truncate">{txn.office}</td>
+                      <td className="w-[60px] px-2 py-2 text-gray-700 text-center font-mono">{txn.applyTo}</td>
+                      <td className="w-[80px] px-2 py-2">
+                        <span className={`text-xs px-1 py-0.5 rounded font-mono ${
                           txn.code === 'PMT' ? 'bg-green-100 text-green-800' :
                           txn.code === 'CLM-P' ? 'bg-blue-100 text-blue-800' :
                           txn.code === 'ADJ' ? 'bg-orange-100 text-orange-800' :
@@ -573,34 +707,34 @@ export default function PatientLedger() {
                           {txn.code}
                         </span>
                       </td>
-                      <td className="px-2 py-2 text-gray-700 text-center">{txn.tooth}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.surface}</td>
-                      <td className="px-2 py-2 text-gray-700">{txn.type}</td>
-                      <td className="px-2 py-2 text-center">
+                      <td className="w-[60px] px-2 py-2 text-gray-700 text-center font-mono">{txn.tooth}</td>
+                      <td className="w-[60px] px-2 py-2 text-gray-700 text-xs text-center font-mono">{txn.surface}</td>
+                      <td className="w-[50px] px-2 py-2 text-gray-700 text-center font-mono">{txn.type}</td>
+                      <td className="w-[50px] px-2 py-2 text-center">
                         {txn.hasNotes && <FileText className="w-3 h-3 text-blue-600 inline" />}
                       </td>
-                      <td className="px-2 py-2 text-center">
+                      <td className="w-[50px] px-2 py-2 text-center">
                         {txn.hasEOB && <FileText className="w-3 h-3 text-green-600 inline" />}
                       </td>
-                      <td className="px-2 py-2 text-gray-900 text-xs">{txn.description}</td>
-                      <td className="px-2 py-2 text-gray-700">{txn.bill}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.duration}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.provider}</td>
-                      <td className="px-2 py-2 text-right text-red-700">
+                      <td className="w-[260px] px-2 py-2 text-gray-900 text-xs truncate">{txn.description}</td>
+                      <td className="w-[70px] px-2 py-2 text-gray-700 text-center font-mono">{txn.bill}</td>
+                      <td className="w-[60px] px-2 py-2 text-gray-700 text-xs text-center font-mono">{txn.duration}</td>
+                      <td className="w-[100px] px-2 py-2 text-gray-700 text-xs truncate">{txn.provider}</td>
+                      <td className="w-[90px] px-2 py-2 text-right text-red-700 font-mono">
                         {txn.estPat !== 0 ? `$${Math.abs(txn.estPat).toFixed(2)}` : ''}
                       </td>
-                      <td className="px-2 py-2 text-right text-blue-700">
+                      <td className="w-[90px] px-2 py-2 text-right text-blue-700 font-mono">
                         {txn.estIns !== 0 ? `$${Math.abs(txn.estIns).toFixed(2)}` : ''}
                       </td>
-                      <td className={`px-2 py-2 text-right ${
+                      <td className={`w-[100px] px-2 py-2 text-right font-mono ${
                         txn.amount < 0 ? 'text-green-700' : 'text-gray-900'
                       }`}>
                         ${Math.abs(txn.amount).toFixed(2)}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-900">
+                      <td className="w-[110px] px-2 py-2 text-right text-gray-900 font-mono">
                         ${txn.balance.toFixed(2)}
                       </td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.user}</td>
+                      <td className="w-[80px] px-2 py-2 text-gray-700 text-xs truncate">{txn.user}</td>
                     </tr>
                   ))}
                 </tbody>

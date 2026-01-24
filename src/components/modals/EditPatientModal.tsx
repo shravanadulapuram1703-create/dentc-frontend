@@ -1480,7 +1480,7 @@ export default function EditPatientModal({
 
       {/* Appointment Times Popup - Medical Slate Theme */}
       {showAppointmentTimes && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl border-4 border-[#3A6EA5]">
             <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-2.5 flex items-center justify-between rounded-t-lg border-b-4 border-[#1F3A5F]">
               <h3 className="font-bold text-white">

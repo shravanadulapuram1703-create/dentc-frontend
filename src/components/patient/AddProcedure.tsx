@@ -651,9 +651,7 @@ export default function AddProcedure({
           isOpen={showEnforcement}
           onClose={() => setShowEnforcement(false)}
           onSave={handleEnforcementSave}
-          procedureCode={selectedProcedure.code}
-          procedureDescription={selectedProcedure.description}
-          requirements={selectedProcedure.requirements}
+          procedure={selectedProcedure}
           initialTooth={toothNumber}
           initialQuadrant={quadrant}
           initialSurfaces={surfaces}

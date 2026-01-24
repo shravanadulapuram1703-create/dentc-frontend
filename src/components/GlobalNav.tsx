@@ -179,11 +179,11 @@ export default function GlobalNav({
       icon: Link2,
     },
     { type: "divider" },
-    {
-      label: "Patient Overview",
-      path: "/patient/:patientId/overview",
-      icon: User,
-    },
+    // {
+    //   label: "Patient Overview",
+    //   path: "/patient/:patientId/overview",
+    //   icon: User,
+    // },
     {
       label: "Patient Information",
       path: "/patient/:patientId/information",
