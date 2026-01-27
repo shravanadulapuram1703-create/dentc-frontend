@@ -71,6 +71,7 @@ import { SubmenuPortal } from "./navigation/SubmenuPortal";
 import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth } from "../contexts/AuthContext.js";
+import { useAIChat } from "../contexts/AIChatContext.js";
 
 interface GlobalNavProps {
   onLogout: () => void;
@@ -95,6 +96,10 @@ export default function GlobalNav({
   const location = useLocation();
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Get chat width to adjust GlobalNav position
+  // GlobalNav is always within AIChatProvider context (wraps Router)
+  const { chatWidth } = useAIChat();
   
   // CLICK-DRIVEN STATE MANAGEMENT
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -1536,7 +1541,13 @@ export default function GlobalNav({
   };
 
   return (
-    <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] border-b-2 border-[#162942] shadow-lg fixed top-0 left-0 right-0 z-50">
+    <div 
+      className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] border-b-2 border-[#162942] shadow-lg fixed top-0 left-0 z-50"
+      style={{
+        right: `${chatWidth}px`,
+        transition: 'right 0.3s ease-in-out',
+      }}
+    >
       {/* Top Bar */}
       <div className="px-6 py-3 flex items-center justify-between border-b border-white/10">
         {/* Logo & System Name */}

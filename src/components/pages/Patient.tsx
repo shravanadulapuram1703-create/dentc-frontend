@@ -14,11 +14,13 @@ import {
   Printer,
   Building2,
   CreditCard,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { components } from '../../styles/theme';
+import { searchPatients, type Patient as ApiPatient } from '../../services/patientApi';
 
 interface PatientProps {
   onLogout: () => void;
@@ -67,6 +69,56 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
   const [searchResults, setSearchResults] = useState<Patient[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [expandedPatientId, setExpandedPatientId] = useState<number | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  
+  // Helper to extract numeric office ID from currentOffice (e.g., "OFF-1" -> "1")
+  const extractOfficeIdNumber = (officeId?: string): string | undefined => {
+    if (!officeId) return undefined;
+    if (/^\d+$/.test(officeId)) return officeId;
+    const match = officeId.match(/(\d+)$/);
+    return match ? match[1] : officeId;
+  };
+  
+  // Convert API Patient to Patient interface for display
+  const convertApiPatientToDisplay = (apiPatient: ApiPatient): Patient => {
+    // Format DOB from YYYY-MM-DD to MM/DD/YYYY
+    let dobFormatted = '';
+    if (apiPatient.dob) {
+      const dateParts = apiPatient.dob.split('-');
+      if (dateParts.length === 3) {
+        dobFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+      }
+    }
+    
+    // Format name
+    const name = `${apiPatient.firstName} ${apiPatient.lastName}`;
+    
+    return {
+      id: apiPatient.id,
+      patientId: apiPatient.chartNo || `PT-${apiPatient.id.toString().padStart(6, '0')}`,
+      name: name,
+      firstName: apiPatient.firstName,
+      lastName: apiPatient.lastName,
+      dob: apiPatient.dob || dobFormatted,
+      phone: apiPatient.phone || '',
+      email: apiPatient.email || '',
+      address: apiPatient.address ||'', // Not in basic Patient API - will need extended API
+      city: apiPatient.city || '', // Not in basic Patient API
+      state: apiPatient.state || '', // Not in basic Patient API
+      zip: apiPatient.zip || '', // Not in basic Patient API
+      insurance: apiPatient.insurance || '', // Not in basic Patient API
+      lastVisit: apiPatient.lastVisit || '', // Not in basic Patient API
+      nextAppointment: apiPatient.nextAppointment || '', // Not in basic Patient API
+      balance: apiPatient.balance || '', // Not in basic Patient API
+      officeId: apiPatient.officeId?.toString() || '',
+      officeName: apiPatient.officeName || '', // Will need to fetch from offices API
+      chartNumber: apiPatient.chartNumber || `CH-${apiPatient.id}`,
+      ssn: apiPatient.ssn || '***-**-****', // Not in basic Patient API
+      emergencyContact: apiPatient.emergencyContact || '', // Not in basic Patient API
+      emergencyPhone: apiPatient.emergencyPhone ||'', // Not in basic Patient API
+    };
+  };
 
   const searchByOptions = [
     { value: 'lastName', label: 'Last Name' },
@@ -87,112 +139,13 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
     { value: 'subscriberId', label: 'Subscriber ID' },
   ];
 
-  // Mock patient data
-  const mockPatients: Patient[] = [
-    {
-      id: 1,
-      patientId: 'PT-000001',
-      name: 'John Smith',
-      firstName: 'John',
-      lastName: 'Smith',
-      dob: '05/15/1980',
-      phone: '(555) 123-4567',
-      email: 'john.smith@email.com',
-      address: '123 Main St',
-      city: 'Pittsburgh',
-      state: 'PA',
-      zip: '15201',
-      insurance: 'Delta Dental - Premium',
-      lastVisit: '03/15/2024',
-      nextAppointment: '04/20/2024',
-      balance: '$150.00',
-      officeId: '108',
-      officeName: 'Cranberry Main',
-      chartNumber: 'CH-001',
-      ssn: '***-**-1234',
-      emergencyContact: 'Jane Smith',
-      emergencyPhone: '(555) 123-4568'
-    },
-    {
-      id: 2,
-      patientId: 'PT-000002',
-      name: 'Sarah Johnson',
-      firstName: 'Sarah',
-      lastName: 'Johnson',
-      dob: '08/22/1975',
-      phone: '(555) 234-5678',
-      email: 'sarah.j@email.com',
-      address: '456 Oak Ave',
-      city: 'Pittsburgh',
-      state: 'PA',
-      zip: '15202',
-      insurance: 'Cigna Dental',
-      lastVisit: '03/18/2024',
-      nextAppointment: '04/15/2024',
-      balance: '$0.00',
-      officeId: '109',
-      officeName: 'Cranberry North',
-      chartNumber: 'CH-002',
-      ssn: '***-**-5678',
-      emergencyContact: 'Mike Johnson',
-      emergencyPhone: '(555) 234-5679'
-    },
-    {
-      id: 3,
-      patientId: 'PT-000003',
-      name: 'Michael Brown',
-      firstName: 'Michael',
-      lastName: 'Brown',
-      dob: '11/30/1992',
-      phone: '(555) 345-6789',
-      email: 'mbrown@email.com',
-      address: '789 Pine Rd',
-      city: 'Pittsburgh',
-      state: 'PA',
-      zip: '15203',
-      insurance: 'MetLife Dental',
-      lastVisit: '03/10/2024',
-      nextAppointment: '05/05/2024',
-      balance: '$225.50',
-      officeId: '108',
-      officeName: 'Cranberry Main',
-      chartNumber: 'CH-003',
-      ssn: '***-**-9012',
-      emergencyContact: 'Lisa Brown',
-      emergencyPhone: '(555) 345-6790'
-    },
-    {
-      id: 4,
-      patientId: 'PT-000004',
-      name: 'Emily Davis',
-      firstName: 'Emily',
-      lastName: 'Davis',
-      dob: '03/12/1988',
-      phone: '(555) 456-7890',
-      email: 'emily.davis@email.com',
-      address: '321 Elm St',
-      city: 'Pittsburgh',
-      state: 'PA',
-      zip: '15204',
-      insurance: 'Aetna Dental',
-      lastVisit: '03/20/2024',
-      nextAppointment: '04/25/2024',
-      balance: '$75.00',
-      officeId: '201',
-      officeName: 'Downtown Pittsburgh',
-      chartNumber: 'CH-004',
-      ssn: '***-**-3456',
-      emergencyContact: 'Robert Davis',
-      emergencyPhone: '(555) 456-7891'
-    },
-  ];
 
   const getPlaceholder = () => {
     const option = searchByOptions.find((o) => o.value === searchBy);
     return `Enter ${option?.label}...`;
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchText.trim()) {
       alert('Please enter search criteria');
       return;
@@ -201,21 +154,43 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
     const query = `${searchBy}:${searchText}|scope:${searchScope}|type:${searchFor}`;
     setLastSearchQuery(query);
 
-    // Mock search - filter patients based on search text
-    const results = mockPatients.filter(patient => {
-      const searchLower = searchText.toLowerCase();
-      return (
-        patient.name.toLowerCase().includes(searchLower) ||
-        patient.patientId.toLowerCase().includes(searchLower) ||
-        patient.email.toLowerCase().includes(searchLower) ||
-        patient.phone.includes(searchText) ||
-        patient.chartNumber.toLowerCase().includes(searchLower)
-      );
-    });
-
-    setSearchResults(results);
-    setHasSearched(true);
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults([]);
+    setHasSearched(false);
     setExpandedPatientId(null);
+
+    try {
+      // Extract numeric office ID
+      const officeIdNum = searchScope === 'current' ? extractOfficeIdNumber(currentOffice) : undefined;
+      
+      // Call advanced search API
+      const response = await searchPatients({
+        searchBy: searchBy,
+        searchValue: searchText.trim(),
+        searchFor: searchFor,
+        patientType: patientType === 'both' ? undefined : patientType,
+        searchScope: searchScope,
+        includeInactive: includeInactive,
+        officeId: officeIdNum,
+        limit: 100,
+        offset: 0,
+      });
+
+      // Convert API patients to display format
+      const results = response.patients.map(convertApiPatientToDisplay);
+      
+      setSearchResults(results);
+      setHasSearched(true);
+    } catch (error: any) {
+      console.error('Error searching patients:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to search patients';
+      setSearchError(errorMessage);
+      setHasSearched(true);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleLastSearch = () => {
@@ -235,8 +210,8 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
   };
 
   const handleViewOverview = (patient: Patient) => {
-    // Navigate to patient overview with patient ID
-    navigate('/patient-overview', { state: { patientId: patient.patientId } });
+    // Navigate to patient overview using numeric ID (API expects numeric ID, not chart number)
+    navigate(`/patient/${patient.id}/overview`);
   };
 
   const handleEdit = (patient: Patient) => {
@@ -303,10 +278,15 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
               {/* Action Buttons */}
               <button
                 onClick={handleSearch}
-                className="px-5 py-2.5 bg-[#3A6EA5] text-white text-sm font-bold rounded-lg hover:bg-[#2d5080] transition-colors shadow-md flex items-center gap-2"
+                disabled={isSearching}
+                className="px-5 py-2.5 bg-[#3A6EA5] text-white text-sm font-bold rounded-lg hover:bg-[#2d5080] transition-colors shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Search className="w-4 h-4" strokeWidth={2} />
-                SEARCH
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                ) : (
+                  <Search className="w-4 h-4" strokeWidth={2} />
+                )}
+                {isSearching ? 'SEARCHING...' : 'SEARCH'}
               </button>
 
               <button
@@ -495,7 +475,11 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
                   Search Results
                 </h2>
                 <p className="text-white/80 text-sm font-medium">
-                  Found {searchResults.length} patient(s)
+                  {searchError ? (
+                    <span className="text-red-200">Error: {searchError}</span>
+                  ) : (
+                    `Found ${searchResults.length} patient(s)`
+                  )}
                 </p>
               </div>
             </div>

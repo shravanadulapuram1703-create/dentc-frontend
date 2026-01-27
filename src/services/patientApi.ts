@@ -37,9 +37,403 @@ export interface PatientUpdateRequest {
   homeOfficeId?: number;
 }
 
+// Comprehensive patient details interface (for Patient Overview)
+export interface PatientDetails {
+  id: number;
+  chart_no: string;
+  first_name: string;
+  last_name: string;
+  preferred_name?: string;
+  dob?: string;
+  gender?: "M" | "F" | "O";
+  title?: string;
+  pronouns?: string;
+  marital_status?: string;
+  guardian_name?: string; // May be at root level in API response
+  guardian_phone?: string; // May be at root level in API response
+  
+  address?: {
+    address_line_1?: string;
+    address_line_2?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  
+  contact?: {
+    home_phone?: string;
+    cell_phone?: string;
+    work_phone?: string;
+    email?: string;
+    preferred_contact?: string;
+  };
+  
+  office?: {
+    home_office_id?: number;
+    home_office_name?: string;
+    home_office_code?: string;
+  };
+  
+  provider?: {
+    preferred_provider_id?: string;
+    preferred_provider_name?: string;
+    preferred_hygienist_id?: string;
+    preferred_hygienist_name?: string;
+  };
+  
+  fee_schedule?: {
+    fee_schedule_id?: string;
+    fee_schedule_name?: string;
+  };
+  
+  patient_type?: string;
+  patient_flags?: {
+    is_active?: boolean;
+    is_ortho?: boolean;
+    is_child?: boolean;
+    is_collection_problem?: boolean;
+    is_employee_family?: boolean;
+    is_short_notice?: boolean;
+    is_senior?: boolean;
+    is_spanish_speaking?: boolean;
+    assign_benefits?: boolean;
+    hipaa_agreement?: boolean;
+    no_correspondence?: boolean;
+    no_auto_email?: boolean;
+    no_auto_sms?: boolean;
+    add_to_quickfill?: boolean;
+  };
+  
+  responsible_party?: {
+    id?: string;
+    name?: string;
+    type?: string;
+    relationship?: string;
+    phone?: string;
+    email?: string;
+    home_office?: string;
+  };
+  
+  insurance?: {
+    primary_dental?: any;
+    secondary_dental?: any;
+    primary_medical?: any;
+    secondary_medical?: any;
+  };
+  
+  account_members?: Array<{
+    id: number;
+    name: string;
+    age: number;
+    gender: string;
+    next_visit?: string;
+    recall?: string;
+    last_visit?: string;
+    is_active: boolean;
+  }>;
+  
+  appointments?: Array<{
+    id: string;
+    date: string;
+    time: string;
+    office: string;
+    operatory: string;
+    procedure: string;
+    provider: string;
+    duration: number;
+    status: string;
+    last_updated: string;
+    member: string;
+  }>;
+  
+  recalls?: Array<{
+    code: string;
+    age_range: string;
+    next_date: string;
+    frequency: string;
+  }>;
+  
+  balances?: {
+    account_balance: number | string; // Backend may return string or number
+    today_charges: number | string;
+    today_est_insurance: number | string;
+    today_est_patient: number | string;
+    last_insurance_payment?: number | string | null;
+    last_insurance_payment_date?: string | null;
+    last_patient_payment?: number | string | null;
+    last_patient_payment_date?: string | null;
+    aging?: {
+      current: number | string;
+      over_30: number | string;
+      over_60: number | string;
+      over_90: number | string;
+      over_120: number | string;
+    };
+  };
+  
+  clinical?: {
+    first_visit?: string;
+    last_visit?: string;
+    next_visit?: string;
+    next_recall?: string;
+    last_pano_chart?: string;
+    medical_alerts?: Array<{
+      alert: string;
+      date: string;
+      entered_by: string;
+    }>;
+  };
+  
+  notes?: {
+    patient_notes?: string;
+    hipaa_sharing?: string;
+  };
+  
+  referral?: {
+    referral_type?: string;
+    referred_by?: string;
+    referred_to?: string;
+    referral_to_date?: string;
+  };
+  
+  guardian?: {
+    guardian_name?: string;
+    guardian_phone?: string;
+  };
+  
+  preferences?: {
+    preferred_language?: string;
+    contact_preference?: string;
+  };
+  
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Comprehensive patient create request (for AddNewPatient form)
+export interface PatientCreateRequestFull {
+  identity: {
+    first_name: string;
+    last_name: string;
+    preferred_name?: string;
+    dob: string; // YYYY-MM-DD
+    gender?: "M" | "F" | "O";
+    title?: string;
+    pronouns?: string;
+    marital_status?: string;
+    ssn?: string; // Social Security Number (digits only, no dashes)
+  };
+  
+  address?: {
+    address_line_1?: string;
+    address_line_2?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  
+  contact?: {
+    home_phone?: string;
+    cell_phone?: string;
+    work_phone?: string;
+    email?: string;
+    preferred_contact?: string;
+  };
+  
+  office: {
+    home_office_id: number;
+  };
+  
+  provider?: {
+    preferred_provider_id?: string;
+    preferred_hygienist_id?: string;
+  };
+  
+  fee_schedule?: {
+    fee_schedule_id?: string;
+  };
+  
+  patient_type?: string;
+  patient_flags?: {
+    is_ortho?: boolean;
+    is_child?: boolean;
+    is_collection_problem?: boolean;
+    is_employee_family?: boolean;
+    is_short_notice?: boolean;
+    is_senior?: boolean;
+    is_spanish_speaking?: boolean;
+    assign_benefits?: boolean;
+    hipaa_agreement?: boolean;
+    no_correspondence?: boolean;
+    no_auto_email?: boolean;
+    no_auto_sms?: boolean;
+    add_to_quickfill?: boolean;
+  };
+  
+  responsible_party?: {
+    relationship?: string;
+    responsible_party_id?: string;
+  };
+  
+  coverage?: {
+    no_coverage?: boolean;
+    primary_dental?: boolean;
+    secondary_dental?: boolean;
+    primary_medical?: boolean;
+    secondary_medical?: boolean;
+  };
+  
+  referral?: {
+    referral_type?: string;
+    referred_by?: string;
+    referred_to?: string;
+    referral_to_date?: string;
+  };
+  
+  guardian?: {
+    guardian_name?: string;
+    guardian_phone?: string;
+  };
+  
+  notes?: {
+    patient_notes?: string;
+    hipaa_sharing?: string;
+  };
+  
+  starting_balances?: {
+    current?: number;
+    over_30?: number;
+    over_60?: number;
+    over_90?: number;
+    over_120?: number;
+  };
+  
+  patient_types?: string[]; // Array of patient type codes (e.g., ["CH", "OR"])
+}
+
+/**
+ * Update Patient Request (Full) - Same structure as PatientCreateRequestFull
+ * Used for updating existing patients with all fields
+ */
+export interface PatientUpdateRequestFull {
+  identity?: {
+    first_name?: string;
+    last_name?: string;
+    preferred_name?: string;
+    dob?: string; // YYYY-MM-DD
+    gender?: "M" | "F" | "O";
+    title?: string;
+    pronouns?: string;
+    marital_status?: string;
+    ssn?: string; // Social Security Number (digits only, no dashes)
+  };
+  
+  address?: {
+    address_line_1?: string;
+    address_line_2?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  
+  contact?: {
+    home_phone?: string;
+    cell_phone?: string;
+    work_phone?: string;
+    email?: string;
+    preferred_contact?: string;
+  };
+  
+  office?: {
+    home_office_id?: number;
+  };
+  
+  provider?: {
+    preferred_provider_id?: string;
+    preferred_hygienist_id?: string;
+  };
+  
+  fee_schedule?: {
+    fee_schedule_id?: string;
+  };
+  
+  patient_type?: string;
+  patient_flags?: {
+    is_ortho?: boolean;
+    is_child?: boolean;
+    is_collection_problem?: boolean;
+    is_employee_family?: boolean;
+    is_short_notice?: boolean;
+    is_senior?: boolean;
+    is_spanish_speaking?: boolean;
+    assign_benefits?: boolean;
+    hipaa_agreement?: boolean;
+    no_correspondence?: boolean;
+    no_auto_email?: boolean;
+    no_auto_sms?: boolean;
+    add_to_quickfill?: boolean;
+  };
+  
+  responsible_party?: {
+    relationship?: string;
+    responsible_party_id?: string;
+  };
+  
+  coverage?: {
+    no_coverage?: boolean;
+    primary_dental?: boolean;
+    secondary_dental?: boolean;
+    primary_medical?: boolean;
+    secondary_medical?: boolean;
+  };
+  
+  referral?: {
+    referral_type?: string;
+    referred_by?: string;
+    referred_to?: string;
+    referral_to_date?: string;
+  };
+  
+  guardian?: {
+    guardian_name?: string;
+    guardian_phone?: string;
+  };
+  
+  notes?: {
+    patient_notes?: string;
+    hipaa_sharing?: string;
+  };
+  
+  starting_balances?: {
+    current?: number;
+    over_30?: number;
+    over_60?: number;
+    over_90?: number;
+    over_120?: number;
+  };
+  
+  patient_types?: string[]; // Array of patient type codes (e.g., ["CH", "OR"])
+}
+
 export interface PatientListResponse {
   patients: Patient[];
   total: number;
+}
+
+// Advanced search parameters
+export interface PatientSearchParams {
+  searchBy?: string; // Field to search in (e.g., 'lastName', 'firstName', 'chartNumber', etc.)
+  searchValue?: string; // The search term
+  searchFor?: 'patient' | 'responsible'; // Search for patient or responsible party
+  patientType?: 'both' | 'general' | 'ortho'; // Filter by patient type
+  searchScope?: 'current' | 'all' | 'group'; // Search scope (current office, all offices, office group)
+  includeInactive?: boolean; // Include inactive patients
+  officeId?: string; // Current office ID for scope filtering
+  limit?: number; // Pagination limit
+  offset?: number; // Pagination offset
 }
 
 // ===== API FUNCTIONS =====
@@ -88,6 +482,58 @@ export const getPatients = async (
 };
 
 /**
+ * Advanced patient search with field-specific search and filters
+ * @param params - Search parameters including searchBy, searchValue, filters, etc.
+ */
+export const searchPatients = async (
+  params: PatientSearchParams
+): Promise<PatientListResponse> => {
+  const queryParams: Record<string, string> = {};
+  
+  // Add search parameters
+  if (params.searchBy && params.searchValue) {
+    queryParams.search_by = params.searchBy;
+    queryParams.search_value = params.searchValue;
+  }
+  
+  // Add filters
+  if (params.searchFor) {
+    queryParams.search_for = params.searchFor;
+  }
+  
+  if (params.patientType && params.patientType !== 'both') {
+    queryParams.patient_type = params.patientType;
+  }
+  
+  if (params.searchScope) {
+    queryParams.search_scope = params.searchScope;
+  }
+  
+  if (params.includeInactive !== undefined) {
+    queryParams.include_inactive = params.includeInactive.toString();
+  }
+  
+  if (params.officeId) {
+    queryParams.office_id = params.officeId;
+  }
+  
+  // Add pagination
+  if (params.limit !== undefined) {
+    queryParams.limit = params.limit.toString();
+  }
+  
+  if (params.offset !== undefined) {
+    queryParams.offset = params.offset.toString();
+  }
+
+  const response = await api.get<PatientListResponse>("/api/v1/patients/search", {
+    params: queryParams,
+  });
+  
+  return response.data;
+};
+
+/**
  * Get a single patient by ID
  */
 export const getPatientById = async (patientId: number): Promise<Patient> => {
@@ -104,6 +550,32 @@ export const getPatientByChartNo = async (chartNo: string): Promise<Patient> => 
 };
 
 /**
+ * Get comprehensive patient details (for Patient Overview screen)
+ * @param patientId - Patient numeric ID (API expects numeric ID, not chart number)
+ */
+export const getPatientDetails = async (patientId: string | number): Promise<PatientDetails> => {
+  // Convert to number - API expects numeric ID (e.g., 123) not chart number (e.g., "CH008")
+  const numericId = typeof patientId === 'string' ? Number(patientId) : patientId;
+  
+  if (isNaN(numericId)) {
+    throw new Error(`Invalid patient ID: ${patientId}. Expected numeric ID, not chart number.`);
+  }
+  
+  const response = await api.get<PatientDetails>(`/api/v1/patients/${numericId}`);
+  return response.data;
+};
+
+/**
+ * Create a new patient with full details (for AddNewPatient form)
+ */
+export const createPatientFull = async (
+  data: PatientCreateRequestFull
+): Promise<PatientDetails> => {
+  const response = await api.post<PatientDetails>("/api/v1/patients", data);
+  return response.data;
+};
+
+/**
  * Update an existing patient
  */
 export const updatePatient = async (
@@ -111,6 +583,26 @@ export const updatePatient = async (
   data: PatientUpdateRequest
 ): Promise<Patient> => {
   const response = await api.put<Patient>(`/api/v1/patients/${patientId}`, data);
+  return response.data;
+};
+
+/**
+ * Update an existing patient with full details (for EditPatientModal)
+ * @param patientId - Patient numeric ID
+ * @param data - Full patient update request
+ */
+export const updatePatientFull = async (
+  patientId: number | string,
+  data: PatientUpdateRequestFull
+): Promise<PatientDetails> => {
+  // Convert to number - API expects numeric ID
+  const numericId = typeof patientId === 'string' ? Number(patientId) : patientId;
+  
+  if (isNaN(numericId)) {
+    throw new Error(`Invalid patient ID: ${patientId}. Expected numeric ID.`);
+  }
+  
+  const response = await api.put<PatientDetails>(`/api/v1/patients/${numericId}`, data);
   return response.data;
 };
 

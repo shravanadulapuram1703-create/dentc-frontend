@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AIChatProvider, useAIChat } from './contexts/AIChatContext';
 import Login from './components/Login';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -28,6 +29,8 @@ import UserSetup from './components/pages/setup/UserSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import { Loader2 } from 'lucide-react';
+import AIChat from './components/ai-chat/AIChat';
+import AddNewPatient from './components/pages/AddNewPatient';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -92,6 +95,16 @@ function AppRoutes() {
         element={
           isAuthenticated ? 
           <Patient onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> : 
+          <Navigate to="/login" />
+        } 
+      />
+
+      {/* Add New Patient */}
+      <Route 
+        path="/patient/new" 
+        element={
+          isAuthenticated ? 
+          <AddNewPatient onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> : 
           <Navigate to="/login" />
         } 
       />
@@ -358,13 +371,34 @@ function LogoutOverlay() {
   );
 }
 
+function AppContent() {
+  const { chatWidth } = useAIChat();
+
+  return (
+    <div 
+      style={{ 
+        marginRight: chatWidth > 0 ? `${chatWidth}px` : '0',
+        transition: 'margin-right 0.3s ease-in-out'
+      }}
+    >
+      <AppRoutes />
+      <LogoutOverlay />
+      {/* Global AI Chat Assistant - Available on all screens */}
+      <AIChat />
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppRoutes />
-        <LogoutOverlay />
-      </Router>
+      <AIChatProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AIChatProvider>
     </AuthProvider>
   );
 }
+
+

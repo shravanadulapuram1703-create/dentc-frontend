@@ -52,17 +52,62 @@ export default function InsuranceCard({
               </div>
 
               {/* Primary details */}
-              <div className="space-y-2 text-sm">
-                <div>
-                  <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
-                    Carrier Name
+              {dentalInsurance.primary ? (
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
+                      Carrier Name
+                    </div>
+                    <div className="text-[#1E293B] font-semibold">
+                      {dentalInsurance.primary.carrierName || "—"}
+                    </div>
                   </div>
-                  <div className="text-[#1E293B] font-semibold">
-                    {dentalInsurance.primary.carrierName}
+                  <div>
+                    <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
+                      Group Number
+                    </div>
+                    <div className="text-[#1E293B] font-semibold">
+                      {dentalInsurance.primary.groupNumber || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
+                      Carrier Phone
+                    </div>
+                    <div className="text-[#1E293B] font-semibold">
+                      {dentalInsurance.primary.carrierPhone || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
+                      Subscriber
+                    </div>
+                    <div className="text-[#1E293B] font-semibold">
+                      {dentalInsurance.primary.subscriber || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
+                      Individual Max Remaining
+                    </div>
+                    <div className="text-[#1E293B] font-semibold">
+                      {dentalInsurance.primary.indMaxRemain || "$0.00"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[#64748B] text-xs uppercase tracking-wide mb-0.5">
+                      Individual Deductible Remaining
+                    </div>
+                    <div className="text-[#1E293B] font-semibold">
+                      {dentalInsurance.primary.indDedRemain || "$0.00"}
+                    </div>
                   </div>
                 </div>
-                {/* remaining fields unchanged */}
-              </div>
+              ) : (
+                <div className="text-[#94A3B8] italic text-sm">
+                  No primary insurance
+                </div>
+              )}
             </div>
 
             {/* SECONDARY */}
