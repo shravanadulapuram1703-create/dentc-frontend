@@ -427,36 +427,40 @@ export const mockOffices: Office[] = [
       day90: "Your account is 90 days past due. This is your final notice.",
       day120: "Your account has been sent to collections."
     },
-    correspondenceName: "Main Street Dental",
-    statementName: "Main Street Dental - Billing Department",
-    statementAddress: "123 Main Street, Suite 200, San Francisco, CA 94102",
-    statementPhone: "(415) 555-1234",
-    eClaims: {
-      vendorType: "DentalXChange",
-      username: "msd_claims",
-      password: "encrypted"
+    statementSettings: {
+      correspondenceName: "Main Street Dental",
+      statementName: "Main Street Dental - Billing Department",
+      statementAddress: "123 Main Street, Suite 200, San Francisco, CA 94102",
+      statementPhone: "(415) 555-1234",
     },
-    imaging: {
-      system1: { name: "Dentiray", linkType: "Patient ID", mode: "Default" },
-      system2: { name: "XVWeb", linkType: "Patient ID", mode: "Default" }
+    integrations: {
+      eClaims: {
+        vendorType: "DentalXChange",
+        username: "msd_claims",
+        password: "encrypted"
+      },
+      imaging: {
+        system1: { name: "Dentiray", linkType: "Patient ID", mode: "Default" },
+        system2: { name: "XVWeb", linkType: "Patient ID", mode: "Default" }
+      },
+      textMessaging: {
+        phoneNumber: "(415) 555-9999",
+        verified: true
+      },
+      patientUrls: {
+        formsUrl: "https://forms.mainstreetdental.com",
+        schedulingUrl: "https://schedule.mainstreetdental.com",
+        financingUrl: "https://carecredit.com/mainstreet"
+      },
+      acceptedCards: ["Visa", "Mastercard", "AmEx", "Discover"],
     },
-    textMessaging: {
-      phoneNumber: "(415) 555-9999",
-      verified: true
-    },
-    patientUrls: {
-      formsUrl: "https://forms.mainstreetdental.com",
-      schedulingUrl: "https://schedule.mainstreetdental.com",
-      financingUrl: "https://carecredit.com/mainstreet"
-    },
-    acceptedCards: ["Visa", "Mastercard", "AmEx", "Discover"],
     operatories: [
-      { id: "op-001", name: "OP 1", order: 1 },
-      { id: "op-002", name: "OP 2", order: 2 },
-      { id: "op-003", name: "OP 3", order: 3 },
-      { id: "op-004", name: "OP 4", order: 4 },
-      { id: "op-005", name: "Hygiene 1", order: 5 },
-      { id: "op-006", name: "Hygiene 2", order: 6 }
+      { id: "op-001", name: "OP 1", order: 1, is_active: true },
+      { id: "op-002", name: "OP 2", order: 2, is_active: true },
+      { id: "op-003", name: "OP 3", order: 3, is_active: true },
+      { id: "op-004", name: "OP 4", order: 4, is_active: true },
+      { id: "op-005", name: "Hygiene 1", order: 5, is_active: true },
+      { id: "op-006", name: "Hygiene 2", order: 6, is_active: true }
     ],
     schedule: {
       monday: { start: "08:00", end: "17:00", lunchStart: "12:00", lunchEnd: "13:00", closed: false },
@@ -505,9 +509,9 @@ export const mockOffices: Office[] = [
         payment: { enabled: true, frequency: "Every Visit", includeBal: true },
         email: { enabled: true, frequency: "Every Year" },
         cellPhone: { enabled: true, frequency: "Every Year" },
-        eligibility: { enabled: true, frequency: "Every Visit" },
-        medicalHistory: { enabled: true, frequency: "Every Year", template: "Standard Medical History" },
-        hipaa: { enabled: true, frequency: "Every Year", template: "HIPAA Consent 2024" },
+        eligibility: { enabled: true },
+        medicalHistory: { enabled: true, template: "Standard Medical History" },
+        hipaa: { enabled: true, template: "HIPAA Consent 2024" },
         consentForm1: { enabled: true, frequency: "Every Visit", template: "Treatment Consent" },
         consentForm2: { enabled: false, frequency: "Every Visit" },
         consentForm3: { enabled: false, frequency: "Every Visit" },
@@ -551,15 +555,19 @@ export const mockOffices: Office[] = [
       day90: "Final Notice: Your account will be sent to collections if not paid.",
       day120: "Your account has been forwarded to our collection agency."
     },
-    correspondenceName: "Downtown Dental Center",
-    statementName: "Downtown Dental Center",
-    statementAddress: "456 Market Street, San Francisco, CA 94103",
-    statementPhone: "(415) 555-5678",
-    acceptedCards: ["Visa", "Mastercard"],
+    statementSettings: {
+      correspondenceName: "Downtown Dental Center",
+      statementName: "Downtown Dental Center",
+      statementAddress: "456 Market Street, San Francisco, CA 94103",
+      statementPhone: "(415) 555-5678",
+    },
+    integrations: {
+      acceptedCards: ["Visa", "Mastercard"],
+    },
     operatories: [
-      { id: "op-007", name: "Treatment Room 1", order: 1 },
-      { id: "op-008", name: "Treatment Room 2", order: 2 },
-      { id: "op-009", name: "Hygiene Suite", order: 3 }
+      { id: "op-007", name: "Treatment Room 1", order: 1, is_active: true },
+      { id: "op-008", name: "Treatment Room 2", order: 2, is_active: true },
+      { id: "op-009", name: "Hygiene Suite", order: 3, is_active: true }
     ],
     schedule: {
       monday: { start: "09:00", end: "18:00", lunchStart: "13:00", lunchEnd: "14:00", closed: false },
@@ -602,9 +610,9 @@ export const mockOffices: Office[] = [
         payment: { enabled: false, frequency: "Every Visit", includeBal: false },
         email: { enabled: false, frequency: "Every Year" },
         cellPhone: { enabled: false, frequency: "Every Year" },
-        eligibility: { enabled: false, frequency: "Every Visit" },
-        medicalHistory: { enabled: false, frequency: "Every Year" },
-        hipaa: { enabled: false, frequency: "Every Year" },
+        eligibility: { enabled: false },
+        medicalHistory: { enabled: false },
+        hipaa: { enabled: false },
         consentForm1: { enabled: false, frequency: "Every Visit" },
         consentForm2: { enabled: false, frequency: "Every Visit" },
         consentForm3: { enabled: false, frequency: "Every Visit" },

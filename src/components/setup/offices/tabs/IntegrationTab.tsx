@@ -23,7 +23,14 @@ export default function IntegrationTab({
   // const textMessaging = formData.textMessaging ?? {};
   // const patientUrls = formData.patientUrls ?? {};
   // const acceptedCards = formData.acceptedCards ?? [];
-  const integrations = formData.integrations ?? {};
+  const integrations = formData.integrations ?? {} as {
+    eClaims?: any;
+    transworld?: any;
+    imaging?: any;
+    textMessaging?: any;
+    patientUrls?: any;
+    acceptedCards?: string[];
+  };
 
   const eClaims = integrations.eClaims ?? {};
   const transworld = integrations.transworld ?? {};
@@ -107,7 +114,8 @@ export default function IntegrationTab({
           ...(formData.integrations?.eClaims ?? {}),
           [field]: value,
         },
-      },
+        acceptedCards: (formData.integrations as any)?.acceptedCards || [],
+      } as any,
     });
   };
 
@@ -119,7 +127,8 @@ export default function IntegrationTab({
           ...(formData.integrations?.transworld ?? {}),
           [field]: value,
         },
-      },
+        acceptedCards: (formData.integrations as any)?.acceptedCards || [],
+      } as any,
     });
   };
 
@@ -154,7 +163,8 @@ export default function IntegrationTab({
             [field]: value,
           },
         },
-      },
+        acceptedCards: (formData.integrations as any)?.acceptedCards || [],
+      } as any,
     });
   };
 
@@ -167,7 +177,8 @@ export default function IntegrationTab({
           ...(formData.integrations?.textMessaging ?? {}),
           [field]: value,
         },
-      },
+        acceptedCards: (formData.integrations as any)?.acceptedCards || [],
+      } as any,
     });
   };
 
@@ -179,14 +190,15 @@ export default function IntegrationTab({
           ...(formData.integrations?.patientUrls ?? {}),
           [field]: value,
         },
-      },
+        acceptedCards: (formData.integrations as any)?.acceptedCards || [],
+      } as any,
     });
   };
 
   
   
   const toggleCard = (card: string) => {
-    const cards = integrations.acceptedCards ?? [];
+    const cards = (integrations as any).acceptedCards ?? [];
 
     const updatedCards = cards.includes(card)
       ? cards.filter((c) => c !== card)
@@ -441,7 +453,7 @@ export default function IntegrationTab({
         <div className="space-y-6">
           {[1, 2, 3].map((num) => {
             const systemKey = `system${num}` as "system1" | "system2" | "system3";
-            const system = integrations.imaging?.[systemKey] ?? {};
+            const system = (integrations as any).imaging?.[systemKey] ?? {};
 
             return (
               <div
@@ -653,7 +665,7 @@ export default function IntegrationTab({
               <input
                 type="checkbox"
                 // checked={(formData.acceptedCards || []).includes(card)}
-                checked={(integrations.acceptedCards || []).includes(card)}
+                checked={((integrations as any).acceptedCards || []).includes(card)}
                 onChange={() => toggleCard(card)}
                 className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
               />

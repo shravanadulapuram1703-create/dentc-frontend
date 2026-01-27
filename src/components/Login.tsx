@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Building2 } from 'lucide-react';
 
-export default function Login() {
+interface LoginProps {
+  onLogin?: (email: string, password: string) => Promise<boolean>;
+}
+
+export default function Login({ onLogin }: LoginProps = {}) {
+  // onLogin prop is optional - if provided, use it; otherwise use default behavior
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

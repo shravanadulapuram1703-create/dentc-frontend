@@ -43,11 +43,9 @@ export default function InsuranceCard({
                 {/* Icons = indicators only */}
                 <AlertTriangle
                   className="w-4 h-4 text-orange-500"
-                  title="Status of the primary dental insurance changes"
                 />
                 <Ban
                   className="w-4 h-4 text-red-600"
-                  title="Patient name to subscriber name and/or relationship do not match"
                 />
               </div>
 
@@ -126,7 +124,6 @@ export default function InsuranceCard({
 
                 <AlertTriangle
                   className="w-4 h-4 text-orange-500"
-                  title="Secondary insurance status"
                 />
               </div>
 

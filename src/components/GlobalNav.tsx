@@ -73,7 +73,7 @@ import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAIChat } from "../contexts/AIChatContext.js";
 
-interface GlobalNavProps {
+export interface GlobalNavProps {
   onLogout: () => void;
   currentOffice: string;
   setCurrentOffice: (office: string) => void;

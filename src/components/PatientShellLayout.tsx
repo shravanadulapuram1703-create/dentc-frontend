@@ -93,8 +93,12 @@ export default function PatientShellLayout({
       !!phone && phone.replace(/\D/g, '').length >= 1;
   
     // 1. Try preferred contact first
-    if (preferred_contact && contact[preferred_contact]) {
-      const preferred = contact[preferred_contact];
+    if (preferred_contact) {
+      const preferred = preferred_contact === 'home_phone' ? home_phone
+        : preferred_contact === 'cell_phone' ? cell_phone
+        : preferred_contact === 'work_phone' ? work_phone
+        : preferred_contact === 'email' ? contact.email
+        : undefined;
       if (isValidPhone(preferred)) {
         return formatPhone(preferred);
       }
@@ -149,7 +153,7 @@ export default function PatientShellLayout({
             ? parseFloat(apiPatient.balances.account_balance) || 0
             : apiPatient.balances?.account_balance || 0,
           nextAppointment: apiPatient.appointments && apiPatient.appointments.length > 0
-            ? formatDate(apiPatient.appointments[0].date) + ' ' + apiPatient.appointments[0].time
+            ? formatDate(apiPatient.appointments[0]?.date) + ' ' + (apiPatient.appointments[0]?.time || '')
             : '—',
           alerts: apiPatient.clinical?.medical_alerts?.map((alert: any) => 
             typeof alert === 'string' ? alert : alert.alert || alert.message || 'Unknown alert'

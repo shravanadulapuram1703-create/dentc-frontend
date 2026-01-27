@@ -509,7 +509,7 @@ export default function NewAppointmentModal({
           ...(dobFormatted && { dob: dobFormatted }),
           ...(formData.phoneNumber && { phone: formData.phoneNumber }),
           ...(formData.email && { email: formData.email }),
-          ...(formData.gender && { gender: formData.gender }),
+          ...(formData.gender && { gender: formData.gender as "M" | "F" | "O" }),
           // Note: phone_type is not in Patient API, but phone is stored
         };
 

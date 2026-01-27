@@ -86,7 +86,7 @@ export async function checkDuplicatePatient(
         birthdate: dup.dob,
         name: dup.name,
         officeShortId: '', // Not in API response, will be empty
-        patientId: dup.id || dup.chart_no,
+        patientId: String(dup.id || dup.chart_no || ''),
         email: '', // Not in API response, will be empty
         provider: '', // Not in API response, will be empty
         status: 'Active', // Default, not in API response

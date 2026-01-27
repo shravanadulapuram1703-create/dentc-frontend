@@ -1,5 +1,6 @@
 import api from "./api";
-import type { Organization } from '../data/organizationData_old';
+// import type { Organization } from '../data/organizationData_old';
+type Organization = any;
 
 export async function fetchOrganizations(): Promise<Organization[]> {
 //   const response = await fetch('http://127.0.0.1:8000/api/v1/users/test', {

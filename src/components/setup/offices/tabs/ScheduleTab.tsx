@@ -12,11 +12,12 @@ type DayName =
   | "sunday";
 
 interface DaySchedule {
-  start?: string;
-  end?: string;
+  start: string;
+  end: string;
   lunchStart?: string;
   lunchEnd?: string;
   closed: boolean;
+  isOpen?: boolean;
 }
 
 interface ScheduleTabProps {
@@ -81,12 +82,19 @@ export default function ScheduleTab({
   ) => {
     updateFormData({
       schedule: {
+        monday: schedule.monday || { start: "09:00", end: "17:00", isOpen: true },
+        tuesday: schedule.tuesday || { start: "09:00", end: "17:00", isOpen: true },
+        wednesday: schedule.wednesday || { start: "09:00", end: "17:00", isOpen: true },
+        thursday: schedule.thursday || { start: "09:00", end: "17:00", isOpen: true },
+        friday: schedule.friday || { start: "09:00", end: "17:00", isOpen: true },
+        saturday: schedule.saturday || { start: "09:00", end: "17:00", isOpen: false },
+        sunday: schedule.sunday || { start: "09:00", end: "17:00", isOpen: false },
         ...schedule,
         [day]: {
-          ...(schedule[day] ?? { closed: false }),
+          ...(schedule[day] ?? { start: "09:00", end: "17:00", isOpen: true }),
           [field]: value,
         },
-      },
+      } as any,
     });
   };
 
@@ -102,7 +110,18 @@ export default function ScheduleTab({
       }
     );
 
-    updateFormData({ schedule: updated });
+    updateFormData({ 
+      schedule: {
+        monday: updated.monday || { start: "09:00", end: "17:00", isOpen: true },
+        tuesday: updated.tuesday || { start: "09:00", end: "17:00", isOpen: true },
+        wednesday: updated.wednesday || { start: "09:00", end: "17:00", isOpen: true },
+        thursday: updated.thursday || { start: "09:00", end: "17:00", isOpen: true },
+        friday: updated.friday || { start: "09:00", end: "17:00", isOpen: true },
+        saturday: updated.saturday || { start: "09:00", end: "17:00", isOpen: false },
+        sunday: updated.sunday || { start: "09:00", end: "17:00", isOpen: false },
+        ...updated,
+      } as any
+    });
   };
 
   console.log("formData.schedule ====> 222222222",formData.schedule)

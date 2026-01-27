@@ -1,3 +1,49 @@
+// Define User type based on what the mapper returns
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  active: boolean;
+  isPlatformUser?: boolean;
+  isLocked?: boolean;
+  pgid: string;
+  pgidName: string;
+  homeOffice: string;
+  homeOfficeOID?: string;
+  assignedOfficeOIDs: string[];
+  assignedOfficeNames: string[];
+  role: string;
+  securityGroup: string;
+  lastLogin?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  permittedIPs?: any[];
+  groupMemberships?: any[];
+  recentTimeEntries?: string[];
+  timeClockEnabled?: boolean;
+  clockInRequired?: boolean;
+  startupScreen?: string;
+  perioTemplate?: string | null;
+  defaultNavigationSearch?: boolean;
+  defaultSearchBy?: string;
+  productionView?: string;
+  hideProviderTime?: boolean;
+  defaultView?: string;
+  showProductionColors?: boolean;
+  printLabels?: boolean;
+  promptEntryDate?: boolean;
+  includeInactivePatients?: boolean;
+  referralView?: string | null;
+  userRoleType?: string | null;
+  patientAccessLevel?: string | null;
+  allowedDays?: any[];
+  allowedFrom?: string | null;
+  allowedUntil?: string | null;
+}
+
 export const mapApiUserToUI = (api: any): User => {
   return {
     // Core identity

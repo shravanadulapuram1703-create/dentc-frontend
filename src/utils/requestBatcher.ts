@@ -71,7 +71,9 @@ class RequestBatcher {
       const results = await Promise.allSettled(promises);
       
       results.forEach((result, index) => {
-        const { resolve, reject } = requests[index];
+        const request = requests[index];
+        if (!request) return;
+        const { resolve, reject } = request;
         if (result.status === 'fulfilled') {
           resolve(result.value);
         } else {

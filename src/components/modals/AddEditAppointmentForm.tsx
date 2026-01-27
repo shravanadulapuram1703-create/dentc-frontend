@@ -175,7 +175,7 @@ export default function AddEditAppointmentForm({
           if (!timeStr) return "09:00 AM";
           if (timeStr.includes("AM") || timeStr.includes("PM")) return timeStr;
           const match = timeStr.match(/(\d{2}):(\d{2})/);
-          if (match) {
+          if (match && match[1]) {
             let hours = parseInt(match[1], 10);
             const minutes = match[2];
             const period = hours >= 12 ? "PM" : "AM";
@@ -339,13 +339,13 @@ export default function AddEditAppointmentForm({
         const updates: any = {};
         
         // Update status if it's not set or doesn't match any available status
-        if (!prev.status || !statusOptions.some(s => s.name === prev.status)) {
-          updates.status = statusOptions[0].name;
+        if ((!prev.status || !statusOptions.some(s => s.name === prev.status)) && statusOptions.length > 0) {
+          updates.status = statusOptions[0]?.name || "";
         }
 
         // Update procedure type if it's not set or doesn't match any available type
-        if (!prev.procedureType || !procedureTypes.some(t => t.name === prev.procedureType)) {
-          updates.procedureType = procedureTypes[0].name;
+        if ((!prev.procedureType || !procedureTypes.some(t => t.name === prev.procedureType)) && procedureTypes.length > 0) {
+          updates.procedureType = procedureTypes[0]?.name || "";
         }
 
         // Update provider when operatories load
@@ -355,13 +355,15 @@ export default function AddEditAppointmentForm({
             if (operatory?.provider && prev.provider !== operatory.provider) {
               updates.provider = operatory.provider;
             } else if (!prev.provider && providers.length > 0) {
-              updates.provider = providers[0].name;
+              updates.provider = providers[0]?.name || "";
             }
           } else {
             // If no operatory is selected, set default operatory and provider
             const defaultOperatory = operatories[0];
-            updates.operatory = defaultOperatory.id;
-            updates.provider = defaultOperatory.provider || (providers.length > 0 ? providers[0].name : "");
+            if (defaultOperatory) {
+              updates.operatory = defaultOperatory.id;
+              updates.provider = defaultOperatory.provider || (providers.length > 0 ? providers[0]?.name || "" : "");
+            }
           }
         }
 
@@ -379,7 +381,7 @@ export default function AddEditAppointmentForm({
   // Get default provider based on operatory (from API data)
   const getDefaultProvider = (operatoryId: string) => {
     const operatory = operatories.find((op) => op.id === operatoryId);
-    return operatory?.provider || (providers.length > 0 ? providers[0].name : "");
+    return operatory?.provider || (providers.length > 0 ? providers[0]?.name || "" : "");
   };
 
   // Available providers list (for simple selects) - from API
@@ -406,13 +408,13 @@ export default function AddEditAppointmentForm({
 
     // Operatory & Scheduling
     appointmentDate: getTodayDate(), // NEW: Appointment date
-    operatory: selectedSlot?.operatory || (operatories.length > 0 ? operatories[0].id : ""),
-    status: statusOptions.length > 0 ? statusOptions[0].name : "Scheduled",
+    operatory: selectedSlot?.operatory || (operatories.length > 0 ? operatories[0]?.id || "" : ""),
+    status: statusOptions.length > 0 ? statusOptions[0]?.name || "Scheduled" : "Scheduled",
     startsAt: selectedSlot?.time || "09:00 AM",
     duration: 30,
-    procedureType: procedureTypes.length > 0 ? procedureTypes[0].name : "",
+    procedureType: procedureTypes.length > 0 ? procedureTypes[0]?.name || "" : "",
     provider: getDefaultProvider(
-      selectedSlot?.operatory || (operatories.length > 0 ? operatories[0].id : ""),
+      selectedSlot?.operatory || (operatories.length > 0 ? operatories[0]?.id || "" : ""),
     ), // Auto-populate provider from API
 
     // Flags
@@ -523,7 +525,7 @@ export default function AddEditAppointmentForm({
   const [showAddProcedure, setShowAddProcedure] =
     useState(false);
   const [selectedProcedureForAdd, setSelectedProcedureForAdd] =
-    useState<ProcedureCode | null>(null);
+    useState<ApiProcedureCode | null>(null);
   const [searchCodeFilter, setSearchCodeFilter] = useState("");
   const [searchUserCodeFilter, setSearchUserCodeFilter] =
     useState("");
@@ -578,7 +580,7 @@ export default function AddEditAppointmentForm({
           categories.push({
             id: cat.id,
             name: cat.name,
-            displayName: cat.displayName || cat.display_name || cat.name,
+            displayName: cat.displayName || cat.name,
           });
         }
       });
@@ -627,7 +629,9 @@ export default function AddEditAppointmentForm({
         const parts = dateStr.split("/");
         if (parts.length === 3) {
           const [month, day, year] = parts;
-          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+          if (month && day && year) {
+            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+          }
         }
         return dateStr; // Already in YYYY-MM-DD format
       };
@@ -640,7 +644,7 @@ export default function AddEditAppointmentForm({
         
         // Parse "09:00 AM" or "2:30 PM" format
         const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-        if (match) {
+        if (match && match[1] && match[2] && match[3]) {
           let hours = parseInt(match[1], 10);
           const minutes = match[2];
           const period = match[3].toUpperCase();
@@ -680,7 +684,7 @@ export default function AddEditAppointmentForm({
       });
 
       // For new patients (patientId starts with "NEW-"), create patient first
-      let patientId = patient.patientId || patient.id?.toString() || "";
+      let patientId = patient.patientId || (patient as any).id?.toString() || "";
       if (patientId.startsWith("NEW-")) {
         console.log("Creating new patient before saving appointment...");
         
@@ -691,7 +695,7 @@ export default function AddEditAppointmentForm({
         let dobFormatted: string | undefined;
         if (formData.birthdate) {
           const parts = formData.birthdate.split("/");
-          if (parts.length === 3) {
+          if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
             dobFormatted = `${parts[2]}-${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
           } else {
             dobFormatted = formData.birthdate;
@@ -1667,10 +1671,14 @@ export default function AddEditAppointmentForm({
                             value={treatment.provider}
                             onChange={(e) => {
                               const updated = [...treatments];
-                              updated[index] = {
-                                ...updated[index],
-                                provider: e.target.value,
-                              };
+                              const current = updated[index];
+                              if (current) {
+                                updated[index] = {
+                                  ...current,
+                                  id: current.id || `temp-${Date.now()}-${index}`, // Ensure id is always present
+                                  provider: e.target.value,
+                                };
+                              }
                               setTreatments(updated);
                             }}
                             className="w-full px-1.5 py-0.5 border border-[#CBD5E1] rounded text-[11px] bg-white focus:outline-none focus:border-[#3A6EA5] leading-tight"

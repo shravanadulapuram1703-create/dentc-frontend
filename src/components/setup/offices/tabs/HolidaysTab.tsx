@@ -52,7 +52,7 @@ export default function HolidaysTab({
   formData,
   updateFormData,
 }: HolidaysTabProps) {
-  const holidays: Holiday[] = formData.holidays || [];
+  const holidays: any[] = formData.holidays || [];
   
   const [newHoliday, setNewHoliday] = useState({
     name: "",
@@ -79,7 +79,7 @@ export default function HolidaysTab({
 
         setOffices(
           res.data.filter(
-            (o: OfficeOption) => o.officeId !== formData.officeId
+            (o: any) => (o.officeId || o.id) !== formData.officeId
           )
         );
       } catch (err) {
@@ -197,7 +197,7 @@ export default function HolidaysTab({
           name: newHoliday.name.trim(),
           fromDate: newHoliday.fromDate,
           toDate: newHoliday.toDate,
-          is_active: true,
+          officeId: formData.officeId ? Number(formData.officeId) : 0,
         },
       ],
     });
@@ -220,7 +220,7 @@ export default function HolidaysTab({
     try {
       setLoadingCopy(true);
 
-      const sourceHolidays = await fetchOfficeHolidays(sourceOfficeId);
+      const sourceHolidays = await fetchOfficeHolidays(Number(sourceOfficeId));
 
       if (sourceHolidays.length === 0) {
         alert("Selected office has no holidays");
@@ -345,7 +345,7 @@ export default function HolidaysTab({
             </option>
 
             {offices.map((office) => (
-              <option key={office.id} value={office.officeId}>
+              <option key={office.id} value={(office as any).officeId || office.id}>
                 {office.officeName} 
                 {/* ({office.shortId}) */}
               </option>

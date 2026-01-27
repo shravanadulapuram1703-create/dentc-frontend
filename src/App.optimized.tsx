@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Suspense } from 'react-router-dom';
+import { Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, memo } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AIChatProvider, useAIChat } from './contexts/AIChatContext';

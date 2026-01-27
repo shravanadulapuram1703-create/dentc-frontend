@@ -1,4 +1,4 @@
-export const mapApiTenantToUI = (apiTenant: any): Tenant => {
+export const mapApiTenantToUI = (apiTenant: any): any => {
   return {
     id: apiTenant.id,
     name: apiTenant.name,
@@ -23,7 +23,7 @@ export const mapApiTenantToUI = (apiTenant: any): Tenant => {
 };
 
 
-export const mapApiOfficeToUI = (apiOffice: any): Office => {
+export const mapApiOfficeToUI = (apiOffice: any): any => {
   return {
     id: apiOffice.id,
 

@@ -675,17 +675,17 @@ const tabs: { id: TabName; label: string }[] = [
 
                         {/* Created On */}
                         <td className="px-4 py-3 text-xs text-[#64748B]">
-                          {office.createdAt || "—"}
+                          {office.createdDate || "—"}
                         </td>
 
                         {/* Updated By */}
                         <td className="px-4 py-3 text-sm text-[#1E293B]">
-                          {office.updatedBy || "—"}
+                          {(office as any).updatedBy || "—"}
                         </td>
 
                         {/* Updated On */}
                         <td className="px-4 py-3 text-xs text-[#64748B]">
-                          {office.updatedAt || "—"}
+                          {(office as any).updatedAt || "—"}
                         </td>
                       </tr>
                     ))

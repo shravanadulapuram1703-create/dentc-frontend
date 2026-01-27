@@ -742,11 +742,11 @@ export default function Scheduler({
         
         const updateData: AppointmentUpdateRequest = {
           id: editingAppointment.id,
-          patientId: appointment.patientId || editingAppointment.patientId,
+          patient_id: appointment.patientId || editingAppointment.patientId || appointment.patient_id,
           date: appointment.date || editingAppointment.date,
-          startTime: appointment.startTime || appointment.time || editingAppointment.startTime,
+          start_time: appointment.startTime || appointment.time || editingAppointment.startTime,
           duration: appointment.duration || editingAppointment.duration,
-          procedureType: appointment.procedureType || editingAppointment.procedureType,
+          procedure_type: appointment.procedureType || editingAppointment.procedureType || appointment.procedure_type,
           status: appointment.status || editingAppointment.status,
           operatory: appointment.operatory || editingAppointment.operatory,
           provider: appointment.provider || editingAppointment.provider,
@@ -773,11 +773,11 @@ export default function Scheduler({
           // New patient format: extract appointment data and let backend handle patient creation
           const appointment = appointmentData.appointment;
           createData = {
-            patientId: "NEW", // Backend will create patient and use the generated ID
+            patient_id: "NEW", // Backend will create patient and use the generated ID
             date: appointment.date || appointment.start_date || formatDateYYYYMMDD(selectedDate),
-            startTime: appointment.start_time || appointment.startTime || selectedSlot?.time || "09:00",
+            start_time: appointment.start_time || appointment.startTime || selectedSlot?.time || "09:00",
             duration: appointment.duration || 30,
-            procedureType: appointment.procedure_type || appointment.procedureType,
+            procedure_type: appointment.procedure_type || appointment.procedureType,
             status: appointment.status || "Scheduled",
             operatory: appointment.operatory || selectedSlot?.operatory || "",
             provider: appointment.provider || "",
@@ -787,11 +787,11 @@ export default function Scheduler({
         } else if (appointmentData.patient_id || appointmentData.patientId) {
           // Existing patient format (snake_case or camelCase)
           createData = {
-            patientId: appointmentData.patient_id || appointmentData.patientId || "NEW",
+            patient_id: appointmentData.patient_id || appointmentData.patientId || "NEW",
             date: appointmentData.date || formatDateYYYYMMDD(selectedDate),
-            startTime: appointmentData.start_time || appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
+            start_time: appointmentData.start_time || appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
             duration: appointmentData.duration || 30,
-            procedureType: appointmentData.procedure_type || appointmentData.procedureType,
+            procedure_type: appointmentData.procedure_type || appointmentData.procedureType,
             status: appointmentData.status || "Scheduled",
             operatory: appointmentData.operatory || selectedSlot?.operatory || "",
             provider: appointmentData.provider || "",
@@ -800,11 +800,11 @@ export default function Scheduler({
         } else {
           // Old format fallback (camelCase, flat structure)
           createData = {
-            patientId: appointmentData.patientId || "NEW",
+            patient_id: appointmentData.patientId || "NEW",
             date: appointmentData.date || formatDateYYYYMMDD(selectedDate),
-            startTime: appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
+            start_time: appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
             duration: appointmentData.duration || 30,
-            procedureType: appointmentData.procedureType,
+            procedure_type: appointmentData.procedureType || appointmentData.procedure_type,
             status: appointmentData.status || "Scheduled",
             operatory: appointmentData.operatory || selectedSlot?.operatory || "",
             provider: appointmentData.provider || "",
@@ -813,7 +813,7 @@ export default function Scheduler({
         }
 
         // Validate required fields
-        if (!createData.operatory || !createData.provider || !createData.procedureType) {
+        if (!createData.operatory || !createData.provider || !createData.procedure_type) {
           alert("Missing required fields: Operatory, Provider, or Procedure Type");
           return;
         }

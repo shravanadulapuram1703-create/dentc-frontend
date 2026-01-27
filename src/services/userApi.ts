@@ -307,7 +307,7 @@ export const refreshUserDetails = fetchUserDetails;
  * This fetches the same data as ViewUserDetailsModal but returns it in BackendUser format
  * @param userId - User ID (numeric or "U-123" format)
  */
-export const fetchUserForEdit = async (userId: string | number): Promise<BackendUser> => {
+export const fetchUserForEdit = async (userId: string | number): Promise<any> => {
   const numericId = typeof userId === "string" ? extractUserId(userId) : String(userId);
   
   // Fetch complete user data - same as GET /api/v1/users/{userId} endpoint
@@ -317,7 +317,7 @@ export const fetchUserForEdit = async (userId: string | number): Promise<Backend
   
   // Transform API response to BackendUser format
   // Handle both snake_case and camelCase responses
-  const backendUser: BackendUser = {
+  const backendUser: any = {
     user_id: data.user_id || parseInt(numericId, 10),
     username: data.username || null,
     first_name: data.first_name || data.firstName || null,
@@ -346,8 +346,8 @@ export const fetchUserForEdit = async (userId: string | number): Promise<Backend
  * Create a new user
  * @param userData - User creation payload
  */
-export const createUser = async (userData: any): Promise<BackendUser> => {
-  const response = await api.post<BackendUser>("/api/v1/users", userData);
+export const createUser = async (userData: any): Promise<any> => {
+  const response = await api.post<any>("/api/v1/users", userData);
   return response.data;
 };
 
@@ -356,9 +356,9 @@ export const createUser = async (userData: any): Promise<BackendUser> => {
  * @param userId - User ID (numeric or "U-123" format)
  * @param userData - User update payload
  */
-export const updateUser = async (userId: string | number, userData: any): Promise<BackendUser> => {
+export const updateUser = async (userId: string | number, userData: any): Promise<any> => {
   const numericId = typeof userId === "string" ? extractUserId(userId) : String(userId);
   
-  const response = await api.put<BackendUser>(`/api/v1/users/${numericId}`, userData);
+  const response = await api.put<any>(`/api/v1/users/${numericId}`, userData);
   return response.data;
 };

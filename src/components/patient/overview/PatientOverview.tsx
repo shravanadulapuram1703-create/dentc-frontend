@@ -160,16 +160,25 @@ export default function PatientOverview() {
   const responsibleParty = mapResponsibleParty(patientDetails);
   
   // Extract data from API response
-  const dentalInsurance = patientDetails.insurance ? {
-    primary: patientDetails.insurance.primary_dental ? {
+  const defaultInsurancePlan = {
+    carrierName: "",
+    groupNumber: "",
+    carrierPhone: "",
+    subscriber: "",
+    indMaxRemain: "$0.00",
+    indDedRemain: "$0.00",
+  };
+  
+  const dentalInsurance = {
+    primary: patientDetails.insurance?.primary_dental ? {
       carrierName: patientDetails.insurance.primary_dental.carrier_name || "",
       groupNumber: patientDetails.insurance.primary_dental.group_number || "",
       carrierPhone: patientDetails.insurance.primary_dental.carrier_phone || "",
       subscriber: patientDetails.insurance.primary_dental.subscriber_name || "",
       indMaxRemain: `$${safeToFixed(patientDetails.insurance.primary_dental.individual_max_remaining)}`,
       indDedRemain: `$${safeToFixed(patientDetails.insurance.primary_dental.individual_deductible_remaining)}`,
-    } : null,
-    secondary: patientDetails.insurance.secondary_dental ? {
+    } : defaultInsurancePlan,
+    secondary: patientDetails.insurance?.secondary_dental ? {
       carrierName: patientDetails.insurance.secondary_dental.carrier_name || "",
       groupNumber: patientDetails.insurance.secondary_dental.group_number || "",
       carrierPhone: patientDetails.insurance.secondary_dental.carrier_phone || "",
@@ -177,7 +186,7 @@ export default function PatientOverview() {
       indMaxRemain: `$${safeToFixed(patientDetails.insurance.secondary_dental.individual_max_remaining)}`,
       indDedRemain: `$${safeToFixed(patientDetails.insurance.secondary_dental.individual_deductible_remaining)}`,
     } : null,
-  } : { primary: null, secondary: null };
+  };
   
   const accountMembers = patientDetails.account_members?.map(member => ({
     name: member.name,

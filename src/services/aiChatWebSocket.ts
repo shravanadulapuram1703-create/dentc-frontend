@@ -47,7 +47,7 @@ type ErrorHandler = (error: Error) => void;
 class AIChatWebSocket {
   private ws: WebSocket | null = null;
   private url: string;
-  private token: string;
+  private token: string = '';
   private sessionId: string | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;

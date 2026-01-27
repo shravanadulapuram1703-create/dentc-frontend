@@ -266,7 +266,7 @@ export default function UserSetup({
           isOpen
           onClose={() => setShowAddEditModal(false)}
           onSave={handleSaveUser}
-          editingUser={editingUser}
+          editingUser={editingUser as any}
           currentOffice={currentOffice}
         />
       )}
@@ -275,7 +275,7 @@ export default function UserSetup({
         <ViewUserDetailsModal
           isOpen
           onClose={() => setShowViewDetailsModal(false)}
-          user={selectedUser}
+          userId={selectedUser?.id || null}
         />
       )}
     </div>

@@ -35,7 +35,7 @@ export interface FeeScheduleResponse {
 }
 
 export interface ProcedureCodesResponse {
-  procedures: ProcedureCode[];
+  procedures: ProcedureCode[] | undefined;
   feeScheduleId: string;
   feeScheduleName: string;
 }
@@ -270,10 +270,10 @@ export async function getProcedureCodesByFeeSchedule(
     
     // Return mock data as fallback
     const feeSchedule = MOCK_FEE_SCHEDULES.find(fs => fs.feeScheduleId === feeScheduleId);
-    const procedures = MOCK_PROCEDURE_CODES[feeScheduleId] || MOCK_PROCEDURE_CODES['FS-001'];
+    const procedures = MOCK_PROCEDURE_CODES[feeScheduleId] || MOCK_PROCEDURE_CODES['FS-001'] || [];
     
     const mockResponse: ProcedureCodesResponse = {
-      procedures,
+      procedures: procedures || [],
       feeScheduleId,
       feeScheduleName: feeSchedule?.feeScheduleName || 'Unknown Fee Schedule',
     };

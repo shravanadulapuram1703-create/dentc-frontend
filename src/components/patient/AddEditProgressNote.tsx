@@ -68,7 +68,7 @@ const mockMacros: Macro[] = [
 ];
 
 interface AddEditProgressNoteProps {
-  mode?: 'add' | 'edit';
+  mode?: 'add' | 'edit' | 'view';
 }
 
 export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNoteProps) {
@@ -86,7 +86,10 @@ export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNot
   const [toothInput, setToothInput] = useState<string>('');
   const [surface, setSurface] = useState<string>('');
   const [region, setRegion] = useState<string>('');
-  const [dos, setDos] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [dos, setDos] = useState<string>(() => {
+    const dateStr = new Date().toISOString().split('T')[0];
+    return dateStr || '';
+  });
   const [clinicalNotes, setClinicalNotes] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSigned, setIsSigned] = useState(false);

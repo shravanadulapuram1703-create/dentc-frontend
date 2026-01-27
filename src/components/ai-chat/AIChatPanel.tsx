@@ -248,9 +248,9 @@ export default function AIChatPanel({
           <div className="text-xs text-[#64748B] text-center">
             {messages.length > 0 ? (
               <p className="truncate">
-                {messages[messages.length - 1].role === 'user' ? 'You' : 'AI'}:{' '}
-                {messages[messages.length - 1].content.substring(0, 50)}
-                {messages[messages.length - 1].content.length > 50 ? '...' : ''}
+                {messages[messages.length - 1]?.role === 'user' ? 'You' : 'AI'}:{' '}
+                {messages[messages.length - 1]?.content?.substring(0, 50) || ''}
+                {(messages[messages.length - 1]?.content?.length || 0) > 50 ? '...' : ''}
               </p>
             ) : (
               <p>Click to expand and start chatting</p>

@@ -103,20 +103,20 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
       dob: apiPatient.dob || dobFormatted,
       phone: apiPatient.phone || '',
       email: apiPatient.email || '',
-      address: apiPatient.address ||'', // Not in basic Patient API - will need extended API
-      city: apiPatient.city || '', // Not in basic Patient API
-      state: apiPatient.state || '', // Not in basic Patient API
-      zip: apiPatient.zip || '', // Not in basic Patient API
-      insurance: apiPatient.insurance || '', // Not in basic Patient API
-      lastVisit: apiPatient.lastVisit || '', // Not in basic Patient API
-      nextAppointment: apiPatient.nextAppointment || '', // Not in basic Patient API
-      balance: apiPatient.balance || '', // Not in basic Patient API
-      officeId: apiPatient.officeId?.toString() || '',
-      officeName: apiPatient.officeName || '', // Will need to fetch from offices API
-      chartNumber: apiPatient.chartNumber || `CH-${apiPatient.id}`,
-      ssn: apiPatient.ssn || '***-**-****', // Not in basic Patient API
-      emergencyContact: apiPatient.emergencyContact || '', // Not in basic Patient API
-      emergencyPhone: apiPatient.emergencyPhone ||'', // Not in basic Patient API
+      address: (apiPatient as any).address ||'', // Not in basic Patient API - will need extended API
+      city: (apiPatient as any).city || '', // Not in basic Patient API
+      state: (apiPatient as any).state || '', // Not in basic Patient API
+      zip: (apiPatient as any).zip || '', // Not in basic Patient API
+      insurance: (apiPatient as any).insurance || '', // Not in basic Patient API
+      lastVisit: (apiPatient as any).lastVisit || '', // Not in basic Patient API
+      nextAppointment: (apiPatient as any).nextAppointment || '', // Not in basic Patient API
+      balance: (apiPatient as any).balance || '', // Not in basic Patient API
+      officeId: (apiPatient as any).officeId?.toString() || '',
+      officeName: (apiPatient as any).officeName || '', // Will need to fetch from offices API
+      chartNumber: apiPatient.chartNo || `CH-${apiPatient.id}`,
+      ssn: (apiPatient as any).ssn || '***-**-****', // Not in basic Patient API
+      emergencyContact: (apiPatient as any).emergencyContact || '', // Not in basic Patient API
+      emergencyPhone: (apiPatient as any).emergencyPhone ||'', // Not in basic Patient API
     };
   };
 
@@ -169,7 +169,7 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
         searchBy: searchBy,
         searchValue: searchText.trim(),
         searchFor: searchFor,
-        patientType: patientType === 'both' ? undefined : patientType,
+        patientType: patientType === 'both' ? 'both' : patientType || 'both',
         searchScope: searchScope,
         includeInactive: includeInactive,
         officeId: officeIdNum,

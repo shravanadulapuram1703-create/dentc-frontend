@@ -311,11 +311,13 @@ export default function AddNewPatient({
           const defaultSchedule = response.feeSchedules.find(fs => fs.feeScheduleName === 'CP-50') 
             || response.feeSchedules[0];
           
+          if (defaultSchedule) {
             setFormData(prev => ({
               ...prev,
-            feeSchedule: defaultSchedule.feeScheduleName,
-            feeScheduleId: defaultSchedule.feeScheduleId,
+              feeSchedule: defaultSchedule.feeScheduleName,
+              feeScheduleId: defaultSchedule.feeScheduleId,
             }));
+          }
         }
       } catch (error) {
         console.error('Error loading fee schedules:', error);
@@ -464,7 +466,7 @@ export default function AddNewPatient({
         if (!officeId) return undefined;
         if (/^\d+$/.test(officeId)) return parseInt(officeId, 10);
         const match = officeId.match(/(\d+)$/);
-        return match ? parseInt(match[1], 10) : undefined;
+        return match && match[1] ? parseInt(match[1], 10) : undefined;
       };
 
       const officeIdNum = extractOfficeIdNumber(currentOffice);

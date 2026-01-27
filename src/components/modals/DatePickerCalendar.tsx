@@ -107,7 +107,10 @@ export default function DatePickerCalendar({ selectedDate, onSelectDate, onClose
 
   const isSelectedDate = (day: number) => {
     if (!selectedDate) return false;
-    const [month, dayNum, year] = selectedDate.split('/').map(Number);
+    const parts = selectedDate.split('/').map(Number);
+    if (parts.length !== 3) return false;
+    const [month, dayNum, year] = parts;
+    if (month === undefined || dayNum === undefined || year === undefined) return false;
     return day === dayNum && 
            viewMonth === month - 1 && 
            viewYear === year;
