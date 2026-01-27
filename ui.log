@@ -1,0 +1,10 @@
+nohup: ignoring input
+
+> dentc-frontend@0.0.0 dev
+> vite
+
+
+  VITE v7.3.0  ready in 448 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.128.0.2:5173/
