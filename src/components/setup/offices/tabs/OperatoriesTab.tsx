@@ -1,6 +1,7 @@
 import { Plus, Edit2, Trash2, Activity } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type Office } from "../../../../data/officeData";
+import { fetchProviders, type Provider } from "../../../../services/schedulerApi";
 
 interface Operatory {
   id: string;
@@ -8,6 +9,8 @@ interface Operatory {
   order: number;
   is_active: boolean;
   has_future_appointments?: boolean;
+  defaultProviderId?: string;
+  defaultProviderName?: string;
 }
 
 interface OperatoriesTabProps {
@@ -22,8 +25,34 @@ export default function OperatoriesTab({
   const [newOpName, setNewOpName] = useState("");
   const [editingOpId, setEditingOpId] = useState<string | null>(null);
   const [editOpName, setEditOpName] = useState("");
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providersError, setProvidersError] = useState<string | null>(null);
 
-  const operatories: Operatory[] = formData.operatories || [];
+  // Load providers for this office (if officeId is present)
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        setProvidersError(null);
+        const officeId =
+          formData.officeId !== undefined
+            ? String(formData.officeId)
+            : formData.officeIdNumber
+              ? String(formData.officeIdNumber)
+              : undefined;
+        const data = await fetchProviders(officeId);
+        setProviders(data);
+      } catch (error) {
+        console.error("Error loading providers for operatories:", error);
+        setProvidersError("Unable to load providers for this office.");
+      }
+    };
+
+    loadProviders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.officeId, formData.officeIdNumber]);
+
+  const operatories: Operatory[] =
+    [...(formData.operatories || [])].sort((a, b) => a.order - b.order);
 
   /* -------------------- ADD -------------------- */
   const handleAddOperatory = () => {
@@ -89,6 +118,40 @@ export default function OperatoriesTab({
     updateFormData({ operatories: updated });
   };
 
+  /* -------------------- REORDER -------------------- */
+  const updateOrder = (updated: Operatory[]) => {
+    // Normalize order to 1..N and push to parent
+    const normalized = updated
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((op, index) => ({ ...op, order: index + 1 }));
+    updateFormData({ operatories: normalized });
+  };
+
+  const handleMoveUp = (opId: string) => {
+    const index = operatories.findIndex((o) => o.id === opId);
+    if (index <= 0) return;
+
+    const updated = [...operatories];
+    const tempOrder = updated[index - 1].order;
+    updated[index - 1] = { ...updated[index - 1], order: updated[index].order };
+    updated[index] = { ...updated[index], order: tempOrder };
+
+    updateOrder(updated);
+  };
+
+  const handleMoveDown = (opId: string) => {
+    const index = operatories.findIndex((o) => o.id === opId);
+    if (index === -1 || index >= operatories.length - 1) return;
+
+    const updated = [...operatories];
+    const tempOrder = updated[index + 1].order;
+    updated[index + 1] = { ...updated[index + 1], order: updated[index].order };
+    updated[index] = { ...updated[index], order: tempOrder };
+
+    updateOrder(updated);
+  };
+
   /* -------------------- JSX (UNCHANGED) -------------------- */
   // ⬅️ Your JSX remains EXACTLY the same
 
@@ -146,7 +209,7 @@ export default function OperatoriesTab({
           </div>
         ) : (
           <div className="space-y-2">
-            {operatories.map((op) => (
+            {operatories.map((op, idx) => (
               <div
                 key={op.id}
                 className="flex items-center gap-3 p-4 bg-white border-2 border-slate-200 rounded-lg hover:border-blue-300 transition-colors"
@@ -166,15 +229,69 @@ export default function OperatoriesTab({
                     className="flex-1 px-3 py-1.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-1">
                     <p className="font-bold text-slate-900">{op.name}</p>
                     <p className="text-xs text-slate-500">
                       Order: {op.order} • ID: {op.id}
                     </p>
+
+                    {/* Default provider selector */}
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-slate-600">Default provider:</span>
+                      <select
+                        className="border border-slate-300 rounded px-2 py-1 text-xs bg-white"
+                        value={op.defaultProviderId ?? ""}
+                        onChange={(e) => {
+                          const providerId = e.target.value || undefined;
+                          const provider = providers.find(
+                            (p) => String(p.id) === providerId
+                          );
+                          const updated = operatories.map((o) =>
+                            o.id === op.id
+                              ? {
+                                  ...o,
+                                  defaultProviderId: providerId,
+                                  defaultProviderName: provider?.name ?? undefined,
+                                }
+                              : o
+                          );
+                          updateFormData({ operatories: updated });
+                        }}
+                      >
+                        <option value="">None</option>
+                        {providers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  {/* Order controls */}
+                  <div className="flex flex-col gap-1 mr-2">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => handleMoveUp(op.id)}
+                      className="px-1 py-0.5 text-xs rounded border border-slate-300 disabled:opacity-40"
+                      title="Move up"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === operatories.length - 1}
+                      onClick={() => handleMoveDown(op.id)}
+                      className="px-1 py-0.5 text-xs rounded border border-slate-300 disabled:opacity-40"
+                      title="Move down"
+                    >
+                      ↓
+                    </button>
+                  </div>
+
                   {editingOpId === op.id ? (
                     <button
                       onClick={handleSaveEdit}

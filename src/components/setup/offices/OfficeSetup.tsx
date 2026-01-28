@@ -342,7 +342,23 @@ export default function OfficeSetup() {
 
 
       acceptedCards: data.acceptedCards ?? [],
-      operatories: data.operatories ?? [],
+      operatories: (data.operatories ?? []).map((op: any, index: number) => ({
+        id: op.id ?? op.operatoryId ?? op.operatory_id ?? `op-${index + 1}`,
+        name: op.name ?? op.operatoryName ?? op.operatory_name ?? `Operatory ${index + 1}`,
+        order: op.order ?? index + 1,
+        is_active: op.is_active ?? op.isActive ?? true,
+        has_future_appointments:
+          op.has_future_appointments ?? op.hasFutureAppointments ?? false,
+        // Map any backend provider id/name into our defaultProvider fields
+        defaultProviderId:
+          op.defaultProviderId ??
+          op.default_provider_id ??
+          (op.provider_id != null ? String(op.provider_id) : undefined),
+        defaultProviderName:
+          op.defaultProviderName ??
+          op.default_provider_name ??
+          op.provider_name,
+      })),
       schedule: mapBackendSchedule(data.schedule),
       holidays: data.holidays ?? [],
       advanced: data.advanced ?? {},

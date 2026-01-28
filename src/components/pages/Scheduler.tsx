@@ -957,47 +957,18 @@ export default function Scheduler({
     });
   };
 
-  // ✅ Dynamic Column Width Calculation based on number of operatories
-  const TIME_COLUMN_WIDTH = 80;
-  const MIN_OPERATORY_COLUMN_WIDTH = 250; // Minimum width per operatory
-  const SCROLLBAR_BUFFER = 20; // Account for scrollbar
-
-  // Calculate available viewport width
-  const viewportWidth =
-    typeof window !== "undefined" ? window.innerWidth : 1920;
-  const availableWidth =
-    viewportWidth - TIME_COLUMN_WIDTH - SCROLLBAR_BUFFER;
-
-  // Dynamic operatory column width:
-  // - If few operatories, expand to fill viewport
-  // - If many operatories, use minimum width and enable scroll
-  const dynamicOperatoryWidth = Math.max(
-    MIN_OPERATORY_COLUMN_WIDTH,
-    Math.floor(
-      availableWidth / Math.max(operatories.length, 1),
-    ),
-  );
-
-  // Use dynamic width if it provides better UX (columns fill screen for 1-4 operatories)
-  // Otherwise fallback to minimum width for many operatories
-  const OPERATORY_COLUMN_WIDTH =
-    operatories.length <= 4
-      ? dynamicOperatoryWidth
-      : MIN_OPERATORY_COLUMN_WIDTH;
-
-  // ✅ Calculate exact grid width based on actual column count
-  const gridWidth =
-    TIME_COLUMN_WIDTH +
-    operatories.length * OPERATORY_COLUMN_WIDTH;
+  // Layout note:
+  // We let flexbox handle column widths so that columns expand/shrink
+  // with the number of operatories, avoiding empty gaps on the right.
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
       <GlobalNav onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
 
-      {/* Scheduler Content with top padding */}
-      <div className="pt-[120px]">
+      {/* Scheduler Content with top padding (match GlobalNav height) */}
+      <div className="pt-[120px] md:pt-[136px]">
         {/* Scheduler Header */}
-        <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-[120px] z-10">
+        <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-[120px] md:top-[136px] z-10">
           {/* Slate Blue Header Bar */}
           <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-shrink-0">
@@ -1159,21 +1130,16 @@ export default function Scheduler({
           aria-rowcount={timeSlots.length + 1}
           aria-colcount={operatories.length + 1}
         >
-          {/* ✅ CRITICAL FIX: Force exact width to prevent extra space */}
-          <div
-            className="inline-flex"
-            style={{ width: `${gridWidth}px` }}
-          >
+          {/* Time + Operatory Columns */}
+          <div className="flex min-w-full">
             {/* Time Column */}
-            <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md flex-shrink-0">
-              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm"></div>
+            <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md flex-shrink-0 w-20">
+              {/* Sticky blue time header */}
+              <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm sticky top-0 z-20"></div>
               {timeSlots.map((time, index) => (
                 <div
                   key={time}
                   className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                  style={{
-                    width: `${TIME_COLUMN_WIDTH}px`,
-                  }}
                   role="rowheader"
                 >
                   {index % 6 === 0 && time}
@@ -1185,10 +1151,7 @@ export default function Scheduler({
             {operatories.map((operatory, colIndex) => (
               <div
                 key={operatory.id}
-                className="border-r-2 border-[#E2E8F0] flex-shrink-0"
-                style={{
-                  width: `${OPERATORY_COLUMN_WIDTH}px`,
-                }}
+                className="border-r-2 border-[#E2E8F0] flex-1 min-w-[220px]"
                 role="gridcell"
                 aria-colindex={colIndex + 2}
               >

@@ -1549,7 +1549,7 @@ export default function GlobalNav({
       }}
     >
       {/* Top Bar */}
-      <div className="px-6 py-3 flex items-center justify-between border-b border-white/10">
+      <div className="px-4 py-2 md:px-6 md:py-3 flex items-center justify-between border-b border-white/10">
         {/* Logo & System Name */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
@@ -1648,7 +1648,7 @@ export default function GlobalNav({
       </div>
 
       {/* Main Navigation */}
-      <div className="px-6 py-2 flex items-center gap-1 overflow-x-auto">
+      <div className="px-4 py-1 md:px-6 md:py-2 flex items-center gap-1 overflow-x-auto">
         {/* Scheduler - No Dropdown */}
         <button
           onClick={handleSchedulerClick}

@@ -295,6 +295,10 @@ export interface Office {
     id: string;
     name: string;
     order: number;
+    /** Optional default provider id for this operatory */
+    defaultProviderId?: string;
+    /** Optional default provider display name for this operatory */
+    defaultProviderName?: string;
     has_future_appointments?: boolean;
     is_active: boolean;
   }>;
