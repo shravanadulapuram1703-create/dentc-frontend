@@ -31,6 +31,7 @@ import {
   type AppointmentCreateRequest,
   type AppointmentUpdateRequest,
 } from "../../services/schedulerApi";
+import { getPatientByChartNo } from "../../services/patientApi";
 
 interface SchedulerProps {
   onLogout: () => void;
@@ -848,7 +849,7 @@ export default function Scheduler({
   };
 
   // Navigate to patient module
-  const handleGoToPatient = (
+  const handleGoToPatient = async (
     module: string,
     appointment: Appointment,
   ) => {
@@ -859,9 +860,33 @@ export default function Scheduler({
       type: "empty",
     });
 
+    // Helper to get numeric patient ID
+    // Check if patientId is a chart number (contains non-numeric characters)
+    let numericPatientId = appointment.patientId;
+    
+    // If patientId looks like a chart number (e.g., "CH014", "CH-014"), look up the numeric ID
+    if (appointment.patientId && !/^\d+$/.test(appointment.patientId)) {
+      // It's a chart number - look up the patient to get the numeric ID
+      try {
+        const patient = await getPatientByChartNo(appointment.patientId);
+        numericPatientId = patient.id.toString();
+      } catch (err: any) {
+        // If lookup fails, try to extract numeric part as fallback
+        // (e.g., "CH014" -> "14" - this might work if chart numbers are "CH" + ID)
+        const numericMatch = appointment.patientId.match(/(\d+)$/);
+        if (numericMatch) {
+          numericPatientId = numericMatch[1];
+        } else {
+          // If we can't extract, use the chart number and let PatientShellLayout handle it
+          // The getPatientDetails function should handle chart numbers
+          numericPatientId = appointment.patientId;
+        }
+      }
+    }
+
     // Set patient context in sessionStorage
     const patientContext = {
-      id: appointment.patientId,
+      id: numericPatientId,
       name: appointment.patientName,
       age: 34, // Mock data
       gender: "M",
@@ -885,16 +910,16 @@ export default function Scheduler({
 
     switch (module) {
       case "overview":
-        navigate("/patient-overview");
+        navigate(`/patient/${numericPatientId}/overview`);
         break;
       case "ledger":
-        navigate("/patient-ledger");
+        navigate(`/patient/${numericPatientId}/ledger`);
         break;
       case "transactions":
-        navigate("/transactions");
+        navigate(`/patient/${numericPatientId}/transaction`);
         break;
       case "charting":
-        navigate("/charting");
+        navigate(`/patient/${numericPatientId}/restorative`);
         break;
       default:
         break;

@@ -19,25 +19,27 @@ export default function PatientContextHeader({
   const navigate = useNavigate();
 
   const handleIconClick = (module: string) => {
-    // Patient context is already in sessionStorage, just navigate
+    // Navigate using patient ID from props
     switch (module) {
       case 'overview':
-        navigate('/patient-overview');
+        navigate(`/patient/${patientId}/overview`);
         break;
       case 'ledger':
-        navigate('/patient-ledger');
+        navigate(`/patient/${patientId}/ledger`);
         break;
       case 'charting':
-        navigate('/charting');
+        navigate(`/patient/${patientId}/restorative`);
         break;
       case 'treatment':
         // Navigate to treatment plans
+        navigate(`/patient/${patientId}/overview`);
         break;
       case 'notes':
-        // Navigate to notes
+        navigate(`/patient/${patientId}/notes`);
         break;
       case 'imaging':
         // Navigate to imaging
+        navigate(`/patient/${patientId}/overview`);
         break;
       default:
         break;

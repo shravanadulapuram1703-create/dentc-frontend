@@ -325,11 +325,11 @@ export default function AIChat({}: AIChatProps) {
 
   return (
     <>
-      {/* <AIChatButton
+      <AIChatButton
         onClick={handleToggleChat}
         isOpen={isOpen}
         unreadCount={unreadCount}
-      /> */}
+      />
       <AIChatPanel
         isOpen={isOpen}
         isMinimized={isMinimized}

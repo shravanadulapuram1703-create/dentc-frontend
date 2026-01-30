@@ -21,6 +21,7 @@ interface PatientDisplayData {
   phone: string;
   email: string;
   office: string;
+  officeId?: string; // Office ID for API calls
   balance: number;
   nextAppointment: string;
   alerts: string[];
@@ -149,6 +150,7 @@ export default function PatientShellLayout({
           phone: getPreferredPhone(apiPatient.contact),
           email: apiPatient.contact?.email || '—',
           office: apiPatient.office?.home_office_name || '—',
+          officeId: apiPatient.office?.home_office_id?.toString() || undefined,
           balance: typeof apiPatient.balances?.account_balance === 'string' 
             ? parseFloat(apiPatient.balances.account_balance) || 0
             : apiPatient.balances?.account_balance || 0,
@@ -331,7 +333,7 @@ export default function PatientShellLayout({
           </div>
 
           {/* Patient Secondary Navigation - Icon Bar */}
-          <PatientSecondaryNav patientId={patient.chartNo} />
+          <PatientSecondaryNav patientId={patient.id} />
         </div>
 
         {/* PATIENT CONTENT AREA - This changes based on route */}

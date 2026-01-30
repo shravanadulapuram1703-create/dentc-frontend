@@ -545,20 +545,54 @@ export const getPatientById = async (patientId: number): Promise<Patient> => {
  * Get a patient by chart number
  */
 export const getPatientByChartNo = async (chartNo: string): Promise<Patient> => {
-  const response = await api.get<Patient>(`/api/v1/patients/chart/${chartNo}`);
-  return response.data;
+  // Normalize chart number - remove "CH" prefix and any dashes if present
+  // e.g., "CH014" -> "014", "CH-014" -> "014"
+  let normalizedChartNo = chartNo.trim();
+  if (normalizedChartNo.toUpperCase().startsWith('CH')) {
+    normalizedChartNo = normalizedChartNo.substring(2).replace(/^-/, '').trim();
+  }
+  
+  // Try with normalized chart number first
+  try {
+    const response = await api.get<Patient>(`/api/v1/patients/chart/${normalizedChartNo}`);
+    return response.data;
+  } catch (err: any) {
+    // If normalized fails, try with original chart number
+    if (normalizedChartNo !== chartNo) {
+      try {
+        const response = await api.get<Patient>(`/api/v1/patients/chart/${chartNo}`);
+        return response.data;
+      } catch (err2: any) {
+        throw err; // Throw original error
+      }
+    }
+    throw err;
+  }
 };
 
 /**
  * Get comprehensive patient details (for Patient Overview screen)
- * @param patientId - Patient numeric ID (API expects numeric ID, not chart number)
+ * @param patientId - Patient numeric ID or chart number (e.g., "123" or "CH014")
  */
 export const getPatientDetails = async (patientId: string | number): Promise<PatientDetails> => {
-  // Convert to number - API expects numeric ID (e.g., 123) not chart number (e.g., "CH008")
-  const numericId = typeof patientId === 'string' ? Number(patientId) : patientId;
+  let numericId: number;
   
-  if (isNaN(numericId)) {
-    throw new Error(`Invalid patient ID: ${patientId}. Expected numeric ID, not chart number.`);
+  // Check if patientId is a chart number (contains non-numeric characters)
+  if (typeof patientId === 'string' && !/^\d+$/.test(patientId)) {
+    // It's a chart number, first get the patient by chart number to retrieve the numeric ID
+    try {
+      const patient = await getPatientByChartNo(patientId);
+      numericId = patient.id;
+    } catch (err: any) {
+      throw new Error(`Patient not found with chart number: ${patientId}. Please use the numeric patient ID.`);
+    }
+  } else {
+    // It's a numeric ID
+    numericId = typeof patientId === 'string' ? Number(patientId) : patientId;
+    
+    if (isNaN(numericId)) {
+      throw new Error(`Invalid patient ID: ${patientId}. Expected numeric ID or chart number.`);
+    }
   }
   
   const response = await api.get<PatientDetails>(`/api/v1/patients/${numericId}`);

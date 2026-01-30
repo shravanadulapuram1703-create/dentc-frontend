@@ -1,20 +1,28 @@
-import { useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { FileText, DollarSign, Plus, Filter, Calendar, Eye, X, FileCheck } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { FileText, DollarSign, Plus, Filter, Calendar, Eye, X, FileCheck, Loader2, AlertCircle } from 'lucide-react';
 import PaymentsAdjustments from '../patient/PaymentsAdjustments';
 import AddProcedure from '../patient/AddProcedure';
 import { components } from '../../styles/theme';
+import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
+import {
+  getPatientLedger,
+  getPatientBalances,
+  createClaim,
+  type LedgerEntry,
+  type BalancesResponse,
+} from '../../services/ledgerApi';
 
 interface LedgerTransaction {
   id: string;
   date: string;
   patientName: string;
   office: string;
-  applyTo: string; // Responsible party initial
-  code: string; // CDT code, AUTO, PMT, CLM-P, ADJ
+  applyTo: string;
+  code: string;
   tooth: string;
   surface: string;
-  type: 'P' | 'C'; // Production or Collection
+  type: 'P' | 'C';
   hasNotes: boolean;
   hasEOB: boolean;
   description: string;
@@ -29,354 +37,274 @@ interface LedgerTransaction {
   status: 'Not Sent' | 'Sent' | 'Paid' | 'Partial' | 'Denied' | 'Posted' | '';
   transactionType: 'Procedure' | 'Patient Payment' | 'Insurance Payment' | 'Adjustment' | 'Claim Event';
   selected: boolean;
+  procedure_id: string | null;
+  claim_id: string | null; // If not null, procedure is already in a claim
 }
 
-// No props needed - gets data from outlet context
+// Helper function to format date from YYYY-MM-DD to MM/DD/YYYY
+const formatDate = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+};
+
+// Helper function to map API status to UI status
+const mapStatus = (status: string): LedgerTransaction['status'] => {
+  const statusMap: Record<string, LedgerTransaction['status']> = {
+    'not_sent': 'Not Sent',
+    'sent': 'Sent',
+    'paid': 'Paid',
+    'partial': 'Partial',
+    'denied': 'Denied',
+    'posted': 'Posted',
+  };
+  return statusMap[status] || '';
+};
+
+// Helper function to map API transaction type to UI transaction type
+const mapTransactionType = (type: string): LedgerTransaction['transactionType'] => {
+  const typeMap: Record<string, LedgerTransaction['transactionType']> = {
+    'procedure': 'Procedure',
+    'patient_payment': 'Patient Payment',
+    'insurance_payment': 'Insurance Payment',
+    'adjustment': 'Adjustment',
+    'claim_event': 'Claim Event',
+  };
+  return typeMap[type] || 'Procedure';
+};
+
+// Helper function to convert API LedgerEntry to UI LedgerTransaction
+const mapLedgerEntryToTransaction = (entry: LedgerEntry): LedgerTransaction => {
+  return {
+    id: entry.id,
+    date: formatDate(entry.posted_date),
+    patientName: entry.patient_name,
+    office: entry.office_name,
+    applyTo: entry.apply_to,
+    code: entry.code,
+    tooth: entry.tooth || '',
+    surface: entry.surface || '',
+    type: entry.type,
+    hasNotes: entry.has_notes,
+    hasEOB: entry.has_eob,
+    description: entry.description,
+    bill: entry.billing_order || '',
+    duration: entry.duration_minutes ? entry.duration_minutes.toString() : '',
+    provider: entry.provider_name,
+    estPat: entry.est_patient,
+    estIns: entry.est_insurance,
+    amount: entry.posted_amount,
+    balance: entry.running_balance,
+    user: entry.created_by,
+    status: mapStatus(entry.status),
+    transactionType: mapTransactionType(entry.transaction_type),
+    selected: false,
+    procedure_id: entry.procedure_id,
+    claim_id: entry.claim_id, // Map claim_id to track if procedure is already in a claim
+  };
+};
+
 export default function PatientLedger() {
   const { patient } = useOutletContext<{ patient: any }>();
+  const { patientId: patientIdParam } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'ledger' | 'balances'>('ledger');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'provider' | 'code'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showPaymentsAdjustments, setShowPaymentsAdjustments] = useState(false);
   const [showAddProcedure, setShowAddProcedure] = useState(false);
 
-  // Get patient data from context
-  const patientData = {
-    id: patient?.id || '12345',
-    name: patient?.name || 'Sarah Johnson',
-    age: patient?.age || 28,
-    gender: patient?.gender || 'F',
-    dob: patient?.dob || '05/22/1996',
-    responsibleParty: patient?.responsibleParty || 'Self',
-    homeOffice: patient?.homeOffice || 'Cranberry Dental Arts [108]',
-    primaryInsurance: patient?.primaryInsurance || 'Delta Dental PPO',
-    secondaryInsurance: patient?.secondaryInsurance || '',
-    accountBalance: patient?.accountBalance || 1245.00,
-    estInsurance: patient?.estInsurance || 850.00,
-    estPatient: patient?.estPatient || 395.00,
-    firstVisit: patient?.firstVisit || '01/15/2018',
-    lastVisit: patient?.lastVisit || '11/20/2024',
-    nextVisit: patient?.nextVisit || '01/15/2025',
-    nextRecall: patient?.nextRecall || '05/20/2025'
-  };
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [loadingBalances, setLoadingBalances] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [errorBalances, setErrorBalances] = useState<string | null>(null);
 
-  // Mock ledger transactions
-  const [transactions, setTransactions] = useState<LedgerTransaction[]>([
-    {
-      id: '1',
-      date: '12/15/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'D0150',
-      tooth: '',
-      surface: '',
-      type: 'P',
-      hasNotes: true,
-      hasEOB: false,
-      description: 'Comprehensive Oral Evaluation',
-      bill: 'P',
-      duration: '30',
-      provider: 'Dr. Jinna',
-      estPat: 35.00,
-      estIns: 85.00,
-      amount: 120.00,
-      balance: 1245.00,
-      user: 'ADMIN',
-      status: 'Not Sent',
-      transactionType: 'Procedure',
-      selected: false
-    },
-    {
-      id: '2',
-      date: '12/15/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'D1110',
-      tooth: '',
-      surface: '',
-      type: 'P',
-      hasNotes: true,
-      hasEOB: false,
-      description: 'Prophylaxis - Adult',
-      bill: 'P',
-      duration: '45',
-      provider: 'Dr. Jinna',
-      estPat: 20.00,
-      estIns: 80.00,
-      amount: 100.00,
-      balance: 1345.00,
-      user: 'ADMIN',
-      status: 'Not Sent',
-      transactionType: 'Procedure',
-      selected: false
-    },
-    {
-      id: '3',
-      date: '12/15/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'D0274',
-      tooth: '',
-      surface: '',
-      type: 'P',
-      hasNotes: false,
-      hasEOB: false,
-      description: 'Bitewing - Four Films',
-      bill: 'P',
-      duration: '15',
-      provider: 'Dr. Jinna',
-      estPat: 10.00,
-      estIns: 50.00,
-      amount: 60.00,
-      balance: 1405.00,
-      user: 'ADMIN',
-      status: 'Not Sent',
-      transactionType: 'Procedure',
-      selected: false
-    },
-    {
-      id: '4',
-      date: '11/20/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'D2391',
-      tooth: '14',
-      surface: 'MOD',
-      type: 'P',
-      hasNotes: true,
-      hasEOB: true,
-      description: 'Resin - One Surface Posterior',
-      bill: 'P',
-      duration: '60',
-      provider: 'Dr. Smith',
-      estPat: 50.00,
-      estIns: 200.00,
-      amount: 250.00,
-      balance: 1405.00,
-      user: 'ADMIN',
-      status: 'Paid',
-      transactionType: 'Procedure',
-      selected: false
-    },
-    {
-      id: '5',
-      date: '11/25/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'CLM-P',
-      tooth: '',
-      surface: '',
-      type: 'C',
-      hasNotes: false,
-      hasEOB: true,
-      description: 'Insurance Payment - Delta Dental',
-      bill: '',
-      duration: '',
-      provider: '',
-      estPat: 0,
-      estIns: -200.00,
-      amount: -200.00,
-      balance: 1205.00,
-      user: 'AUTO',
-      status: 'Posted',
-      transactionType: 'Insurance Payment',
-      selected: false
-    },
-    {
-      id: '6',
-      date: '11/25/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'PMT',
-      tooth: '',
-      surface: '',
-      type: 'C',
-      hasNotes: false,
-      hasEOB: false,
-      description: 'Patient Payment - Check #1234',
-      bill: '',
-      duration: '',
-      provider: '',
-      estPat: -50.00,
-      estIns: 0,
-      amount: -50.00,
-      balance: 1155.00,
-      user: 'ADMIN',
-      status: 'Posted',
-      transactionType: 'Patient Payment',
-      selected: false
-    },
-    {
-      id: '7',
-      date: '10/10/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'D2740',
-      tooth: '3',
-      surface: '',
-      type: 'P',
-      hasNotes: true,
-      hasEOB: true,
-      description: 'Crown - Porcelain Fused to High Noble Metal',
-      bill: 'P',
-      duration: '90',
-      provider: 'Dr. Smith',
-      estPat: 300.00,
-      estIns: 650.00,
-      amount: 950.00,
-      balance: 1205.00,
-      user: 'ADMIN',
-      status: 'Partial',
-      transactionType: 'Procedure',
-      selected: false
-    },
-    {
-      id: '8',
-      date: '10/15/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'CLM-P',
-      tooth: '',
-      surface: '',
-      type: 'C',
-      hasNotes: false,
-      hasEOB: true,
-      description: 'Insurance Payment - Delta Dental',
-      bill: '',
-      duration: '',
-      provider: '',
-      estPat: 0,
-      estIns: -650.00,
-      amount: -650.00,
-      balance: 555.00,
-      user: 'AUTO',
-      status: 'Posted',
-      transactionType: 'Insurance Payment',
-      selected: false
-    },
-    {
-      id: '9',
-      date: '10/15/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'ADJ',
-      tooth: '',
-      surface: '',
-      type: 'C',
-      hasNotes: true,
-      hasEOB: false,
-      description: 'Contractual Adjustment - Insurance Write-off',
-      bill: '',
-      duration: '',
-      provider: '',
-      estPat: 0,
-      estIns: 0,
-      amount: -100.00,
-      balance: 455.00,
-      user: 'ADMIN',
-      status: '',
-      transactionType: 'Adjustment',
-      selected: false
-    },
-    {
-      id: '10',
-      date: '10/20/2024',
-      patientName: 'Miller, Nicolas',
-      office: 'Moon, PA',
-      applyTo: 'M',
-      code: 'PMT',
-      tooth: '',
-      surface: '',
-      type: 'C',
-      hasNotes: false,
-      hasEOB: false,
-      description: 'Patient Payment - Credit Card',
-      bill: '',
-      duration: '',
-      provider: '',
-      estPat: -210.00,
-      estIns: 0,
-      amount: -210.00,
-      balance: 245.00,
-      user: 'ADMIN',
-      status: 'Posted',
-      transactionType: 'Patient Payment',
-      selected: false
+  // Data states
+  const [transactions, setTransactions] = useState<LedgerTransaction[]>([]);
+  const [balanceData, setBalanceData] = useState<BalancesResponse | null>(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    limit: 25,
+    offset: 0,
+    has_more: false,
+  });
+
+  // Get patient ID from context (preferred) or URL params (fallback)
+  const patientId = patient?.id || patientIdParam;
+  const patientName = patient?.name || 'Unknown Patient';
+
+  // Fetch ledger entries
+  const fetchLedgerEntries = useCallback(async () => {
+    if (!patientId) {
+      setError('Patient ID is required');
+      setLoading(false);
+      return;
     }
-  ]);
 
-  // Balances and aging
-  const balanceData = {
-    accountBalance: 1245.00,
-    patientBalance: 395.00,
-    current: 280.00,
-    age30: 65.00,
-    age60: 35.00,
-    age90: 15.00,
-    age120: 0.00,
-    estInsurance: 850.00,
-    estPatient: 395.00,
-    todayCharges: 280.00,
-    lastInsPmt: 200.00,
-    lastInsPmtDate: '11/25/2024',
-    lastPatPmt: 50.00,
-    lastPatPmtDate: '11/25/2024'
-  };
+    setLoading(true);
+    setError(null);
 
-  // Calculate pagination
-  const totalItems = transactions.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-  const displayedTransactions = transactions.slice(startIndex, endIndex);
+    try {
+      const params: Parameters<typeof getPatientLedger>[1] = {
+        limit: itemsPerPage,
+        offset: (currentPage - 1) * itemsPerPage,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      };
 
-  // Toggle selection
+      if (dateFrom) {
+        // Convert MM/DD/YYYY to YYYY-MM-DD
+        const parts = dateFrom.split('/');
+        if (parts.length === 3) {
+          const [month, day, year] = parts;
+          if (month && day && year) {
+            params.date_from = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+        }
+      }
+
+      if (dateTo) {
+        // Convert MM/DD/YYYY to YYYY-MM-DD
+        const parts = dateTo.split('/');
+        if (parts.length === 3) {
+          const [month, day, year] = parts;
+          if (month && day && year) {
+            params.date_to = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+        }
+      }
+
+      const response = await getPatientLedger(patientId, params);
+      
+      const mappedTransactions = response.ledger_entries.map(mapLedgerEntryToTransaction);
+      setTransactions(mappedTransactions);
+      setPagination(response.pagination);
+    } catch (err: any) {
+      console.error('Error fetching ledger entries:', err);
+      setError(err.response?.data?.error?.message || err.message || 'Failed to load ledger entries');
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [patientId, itemsPerPage, currentPage, sortBy, sortOrder, dateFrom, dateTo]);
+
+  // Fetch balances
+  const fetchBalances = useCallback(async () => {
+    if (!patientId) {
+      setErrorBalances('Patient ID is required');
+      setLoadingBalances(false);
+      return;
+    }
+
+    setLoadingBalances(true);
+    setErrorBalances(null);
+
+    try {
+      const balances = await getPatientBalances(patientId);
+      setBalanceData(balances);
+    } catch (err: any) {
+      console.error('Error fetching balances:', err);
+      setErrorBalances(err.response?.data?.error?.message || err.message || 'Failed to load balances');
+    } finally {
+      setLoadingBalances(false);
+    }
+  }, [patientId]);
+
+  // Load data on mount and when dependencies change
+  useEffect(() => {
+    fetchLedgerEntries();
+  }, [fetchLedgerEntries]);
+
+  useEffect(() => {
+    if (activeTab === 'balances') {
+      fetchBalances();
+    }
+  }, [activeTab, fetchBalances]);
+
+  // Toggle selection - only allow selection if procedure is not already in a claim
   const handleToggleSelection = (id: string) => {
-    setTransactions(transactions.map(t => 
-      t.id === id ? { ...t, selected: !t.selected } : t
-    ));
+    setTransactions(transactions.map(t => {
+      if (t.id === id) {
+        // Don't allow selection if procedure is already in a claim
+        if (t.claim_id) {
+          return t; // Keep current state, don't toggle
+        }
+        return { ...t, selected: !t.selected };
+      }
+      return t;
+    }));
   };
 
-  // Select all
+  // Select all - only select procedures that are not already in a claim
   const handleSelectAll = (checked: boolean) => {
     setTransactions(transactions.map(t => 
-      t.status === 'Not Sent' && t.transactionType === 'Procedure' 
+      t.status === 'Not Sent' && t.transactionType === 'Procedure' && !t.claim_id
         ? { ...t, selected: checked } 
         : t
     ));
   };
 
-  // Check if any procedures are selected
-  const selectedProcedures = transactions.filter(t => t.selected && t.status === 'Not Sent');
+  // Check if any procedures are selected (only procedures not already in claims)
+  const selectedProcedures = transactions.filter(t => 
+    t.selected && 
+    t.status === 'Not Sent' && 
+    t.transactionType === 'Procedure' &&
+    !t.claim_id // Only procedures not already in a claim
+  );
   const canCreateClaim = selectedProcedures.length > 0;
 
   // Handle create claim
-  const handleCreateClaim = () => {
-    if (canCreateClaim) {
-      // Generate a unique claim ID
-      const claimId = `CLM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-      
-      // Navigate to Claim Detail screen with selected procedures
-      navigate(`/patient/${patientData.id}/claim/${claimId}`, {
-        state: { 
-          procedures: selectedProcedures,
-          createdDate: new Date().toLocaleDateString('en-US'),
-          createdTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          createdBy: 'ADMIN'
+  const handleCreateClaim = async () => {
+    if (!canCreateClaim || !patientId) return;
+
+    try {
+      const procedureIds = selectedProcedures
+        .map(t => t.procedure_id)
+        .filter((id): id is string => id !== null);
+
+      if (procedureIds.length === 0) {
+        alert('No valid procedures selected');
+        return;
+      }
+
+      // Get date range from selected procedures
+      const dates = selectedProcedures.map(t => {
+        const parts = t.date.split('/');
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const month = parts[0];
+          const day = parts[1];
+          const year = parts[2];
+          return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
         }
-      });
+        return new Date();
+      }).filter(d => !isNaN(d.getTime()));
+      const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+      const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+
+      const claimData = {
+        procedure_ids: procedureIds,
+        claim_type: 'dental' as const,
+        billing_order: 'primary',
+        date_of_service_from: minDate.toISOString().split('T')[0],
+        date_of_service_to: maxDate.toISOString().split('T')[0],
+        notes: null,
+      };
+
+      const claim = await createClaim(patientId, claimData);
+      
+      // Navigate to Claim Detail screen
+      navigate(`/patient/${patientId}/claim/${claim.claim_id}`);
+    } catch (err: any) {
+      console.error('Error creating claim:', err);
+      alert(err.response?.data?.error?.message || err.message || 'Failed to create claim');
     }
   };
 
@@ -386,45 +314,51 @@ export default function PatientLedger() {
   };
 
   // Handle save procedure from AddProcedure modal
-  const handleSaveProcedure = (newProcedure: any) => {
-    // STEP 11: Add to ledger and recalculate balances
-    const newTransaction: LedgerTransaction = {
-      id: newProcedure.id,
-      date: newProcedure.date,
-      patientName: newProcedure.patientName,
-      office: newProcedure.office,
-      applyTo: 'M',
-      code: newProcedure.code,
-      tooth: newProcedure.tooth,
-      surface: newProcedure.surfaces,
-      type: 'P',
-      hasNotes: newProcedure.notes ? true : false,
-      hasEOB: false,
-      description: newProcedure.description,
-      bill: 'P',
-      duration: newProcedure.duration,
-      provider: newProcedure.provider,
-      estPat: newProcedure.estPatient,
-      estIns: newProcedure.estInsurance,
-      amount: newProcedure.fee,
-      balance: transactions[0]?.balance + newProcedure.fee || newProcedure.fee,
-      user: newProcedure.createdBy,
-      status: 'Not Sent',
-      transactionType: 'Procedure',
-      selected: false
-    };
-
-    // Add to top of transactions list
-    setTransactions([newTransaction, ...transactions]);
-    
-    // Success message
-    alert(`Procedure ${newProcedure.code} added successfully to ledger!`);
+  const handleSaveProcedure = async (newProcedure: any) => {
+    // The AddProcedure component should call the API directly
+    // This callback is just for UI updates
+    // Refresh ledger entries after procedure is added
+    await fetchLedgerEntries();
+    if (activeTab === 'balances') {
+      await fetchBalances();
+    }
   };
 
   // Handle payments/adjustments
   const handlePaymentsAdjustments = () => {
     setShowPaymentsAdjustments(true);
   };
+
+  // Handle date filter changes
+  const handleDateFilterChange = () => {
+    setCurrentPage(1);
+    fetchLedgerEntries();
+  };
+
+  // Handle sort change
+  const handleSortChange = (newSortBy: 'date' | 'amount' | 'provider' | 'code') => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(pagination.total / itemsPerPage);
+
+  if (!patientId) {
+    return (
+      <div className="p-6 bg-slate-50 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <p className="text-red-600 font-medium">Patient ID is required</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-slate-50">
@@ -439,9 +373,9 @@ export default function PatientLedger() {
         
         <button 
           onClick={handleCreateClaim}
-          disabled={!canCreateClaim}
+          disabled={!canCreateClaim || loading}
           className={`px-6 py-2 rounded flex items-center gap-2 transition-colors ${
-            canCreateClaim 
+            canCreateClaim && !loading
               ? components.buttonSecondary
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
@@ -472,12 +406,56 @@ export default function PatientLedger() {
 
         <div className="ml-auto flex items-center gap-2">
           <label className={components.label}>Sort By:</label>
-          <select className={components.select}>
-            <option>Date</option>
-            <option>Amount</option>
-            <option>Provider</option>
+          <select 
+            className={components.select}
+            value={sortBy}
+            onChange={(e) => handleSortChange(e.target.value as 'date' | 'amount' | 'provider' | 'code')}
+          >
+            <option value="date">Date</option>
+            <option value="amount">Amount</option>
+            <option value="provider">Provider</option>
+            <option value="code">Code</option>
           </select>
         </div>
+      </div>
+
+      {/* Date Filters */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <label className={components.label}>From:</label>
+          <input
+            type="text"
+            placeholder="MM/DD/YYYY"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            onBlur={handleDateFilterChange}
+            className={components.input}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className={components.label}>To:</label>
+          <input
+            type="text"
+            placeholder="MM/DD/YYYY"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            onBlur={handleDateFilterChange}
+            className={components.input}
+          />
+        </div>
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => {
+              setDateFrom('');
+              setDateTo('');
+              setCurrentPage(1);
+              fetchLedgerEntries();
+            }}
+            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            Clear Filters
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -508,227 +486,419 @@ export default function PatientLedger() {
         {/* Ledger Tab */}
         {activeTab === 'ledger' && (
           <div>
-            {/* Ledger Grid */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white border-b-2 border-[#16293B] sticky top-0">
-                  <tr>
-                    <th className="px-2 py-3 text-left">
-                      <input 
-                        type="checkbox" 
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="rounded"
-                      />
-                    </th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Date</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Patient</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Office</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">A</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Code</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">TH</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Surf</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">T</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">N</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">EOB</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Description</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Bill</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Dur</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">Provider</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Est Pat</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Est Ins</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Amount</th>
-                    <th className="px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">Balance</th>
-                    <th className="px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">User</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayedTransactions.map((txn, index) => (
-                    <tr 
-                      key={txn.id} 
-                      className={`border-b hover:bg-gray-50 ${
-                        txn.status === 'Not Sent' ? 'bg-yellow-50' : ''
-                      }`}
-                    >
-                      <td className="px-2 py-2">
-                        {txn.status === 'Not Sent' && txn.transactionType === 'Procedure' && (
+            {loading ? (
+              <div className="flex items-center justify-center p-12">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                <span className="ml-3 text-gray-600">Loading ledger entries...</span>
+              </div>
+            ) : error ? (
+              <div className="p-6 text-center">
+                <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                <p className="text-red-600 font-medium">{error}</p>
+                <button
+                  onClick={fetchLedgerEntries}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No ledger entries found
+              </div>
+            ) : (
+              <>
+                {/* Ledger Grid */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
+                    <thead className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white border-b-2 border-[#16293B] sticky top-0">
+                      <tr>
+                        <th className="w-[40px] px-2 py-3 text-left">
                           <input 
                             type="checkbox" 
-                            checked={txn.selected}
-                            onChange={() => handleToggleSelection(txn.id)}
+                            onChange={(e) => handleSelectAll(e.target.checked)}
+                            checked={transactions.some(t => 
+                              t.status === 'Not Sent' && 
+                              t.transactionType === 'Procedure' && 
+                              !t.claim_id && 
+                              t.selected
+                            )}
                             className="rounded"
+                            title="Select all procedures not yet in claims"
                           />
-                        )}
-                      </td>
-                      <td className="px-2 py-2 text-gray-900">{txn.date}</td>
-                      <td className="px-2 py-2 text-gray-900 text-xs">{txn.patientName}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.office}</td>
-                      <td className="px-2 py-2 text-gray-700">{txn.applyTo}</td>
-                      <td className="px-2 py-2">
-                        <span className={`text-xs px-1 py-0.5 rounded ${
-                          txn.code === 'PMT' ? 'bg-green-100 text-green-800' :
-                          txn.code === 'CLM-P' ? 'bg-blue-100 text-blue-800' :
-                          txn.code === 'ADJ' ? 'bg-orange-100 text-orange-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {txn.code}
-                        </span>
-                      </td>
-                      <td className="px-2 py-2 text-gray-700 text-center">{txn.tooth}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.surface}</td>
-                      <td className="px-2 py-2 text-gray-700">{txn.type}</td>
-                      <td className="px-2 py-2 text-center">
-                        {txn.hasNotes && <FileText className="w-3 h-3 text-blue-600 inline" />}
-                      </td>
-                      <td className="px-2 py-2 text-center">
-                        {txn.hasEOB && <FileText className="w-3 h-3 text-green-600 inline" />}
-                      </td>
-                      <td className="px-2 py-2 text-gray-900 text-xs">{txn.description}</td>
-                      <td className="px-2 py-2 text-gray-700">{txn.bill}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.duration}</td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.provider}</td>
-                      <td className="px-2 py-2 text-right text-red-700">
-                        {txn.estPat !== 0 ? `$${Math.abs(txn.estPat).toFixed(2)}` : ''}
-                      </td>
-                      <td className="px-2 py-2 text-right text-blue-700">
-                        {txn.estIns !== 0 ? `$${Math.abs(txn.estIns).toFixed(2)}` : ''}
-                      </td>
-                      <td className={`px-2 py-2 text-right ${
-                        txn.amount < 0 ? 'text-green-700' : 'text-gray-900'
-                      }`}>
-                        ${Math.abs(txn.amount).toFixed(2)}
-                      </td>
-                      <td className="px-2 py-2 text-right text-gray-900">
-                        ${txn.balance.toFixed(2)}
-                      </td>
-                      <td className="px-2 py-2 text-gray-700 text-xs">{txn.user}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </th>
+                        <th className="w-[95px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">POSTED</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Date the transaction was posted to the account</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[120px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">MEMBER</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Patient associated with this transaction</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[80px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">LOC</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Office or location where the transaction occurred</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">APPLY</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Indicates who the transaction is applied to (Patient or Responsible Party)</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[80px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">PROC</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Procedure or transaction code associated with this entry</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">TOOTH</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Tooth number related to the procedure</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">AREA</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Tooth surface(s) involved in the procedure</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[50px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">TYPE</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Financial type of the transaction (Production or Collection)</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[50px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">NOTES</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Indicates whether notes exist for this transaction</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[50px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">DOCS</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Indicates whether supporting documents or EOBs are attached</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[260px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">DETAILS</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Description of the procedure or transaction</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[70px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">BILLING</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Billing status and order used for insurance processing</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[60px] px-2 py-3 text-center text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">TIME</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Duration of the procedure in minutes</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[100px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">RENDERED BY</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Provider who performed the procedure</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[90px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">PAT EST</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Estimated portion expected from the patient</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[90px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">INS EST</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Estimated portion expected from insurance</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[100px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">POSTED AMT</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Actual posted transaction amount</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[110px] px-2 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">RUNNING BAL</span>
+                            </TooltipTrigger>
+                            <TooltipContent>Account balance after this transaction</TooltipContent>
+                          </Tooltip>
+                        </th>
+                        <th className="w-[80px] px-2 py-3 text-left text-xs font-bold uppercase tracking-wide">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">CREATED BY</span>
+                            </TooltipTrigger>
+                            <TooltipContent>User who created or posted this transaction</TooltipContent>
+                          </Tooltip>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.map((txn) => (
+                        <tr 
+                          key={txn.id} 
+                          className={`border-b hover:bg-gray-50 ${
+                            txn.status === 'Not Sent' ? 'bg-yellow-50' : ''
+                          }`}
+                        >
+                          <td className="w-[40px] px-2 py-2">
+                            {txn.status === 'Not Sent' && txn.transactionType === 'Procedure' && (
+                              <input 
+                                type="checkbox" 
+                                checked={txn.selected}
+                                onChange={() => handleToggleSelection(txn.id)}
+                                disabled={!!txn.claim_id} // Disable if procedure is already in a claim
+                                className={`rounded ${txn.claim_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                title={txn.claim_id ? 'This procedure is already in a claim' : ''}
+                              />
+                            )}
+                          </td>
+                          <td className="w-[95px] px-2 py-2 text-gray-900 font-mono truncate">{txn.date}</td>
+                          <td className="w-[120px] px-2 py-2 text-gray-900 text-xs truncate">{txn.patientName}</td>
+                          <td className="w-[80px] px-2 py-2 text-gray-700 text-xs truncate">{txn.office}</td>
+                          <td className="w-[60px] px-2 py-2 text-gray-700 text-center font-mono">{txn.applyTo}</td>
+                          <td className="w-[80px] px-2 py-2">
+                            <span className={`text-xs px-1 py-0.5 rounded font-mono ${
+                              txn.code === 'PMT' ? 'bg-green-100 text-green-800' :
+                              txn.code === 'CLM-P' ? 'bg-blue-100 text-blue-800' :
+                              txn.code === 'ADJ' ? 'bg-orange-100 text-orange-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {txn.code}
+                            </span>
+                          </td>
+                          <td className="w-[60px] px-2 py-2 text-gray-700 text-center font-mono">{txn.tooth}</td>
+                          <td className="w-[60px] px-2 py-2 text-gray-700 text-xs text-center font-mono">{txn.surface}</td>
+                          <td className="w-[50px] px-2 py-2 text-gray-700 text-center font-mono">{txn.type}</td>
+                          <td className="w-[50px] px-2 py-2 text-center">
+                            {txn.hasNotes && <FileText className="w-3 h-3 text-blue-600 inline" />}
+                          </td>
+                          <td className="w-[50px] px-2 py-2 text-center">
+                            {txn.hasEOB && <FileText className="w-3 h-3 text-green-600 inline" />}
+                          </td>
+                          <td className="w-[260px] px-2 py-2 text-gray-900 text-xs truncate">{txn.description}</td>
+                          <td className="w-[70px] px-2 py-2 text-gray-700 text-center font-mono">{txn.bill}</td>
+                          <td className="w-[60px] px-2 py-2 text-gray-700 text-xs text-center font-mono">{txn.duration}</td>
+                          <td className="w-[100px] px-2 py-2 text-gray-700 text-xs truncate">{txn.provider}</td>
+                          <td className="w-[90px] px-2 py-2 text-right text-red-700 font-mono">
+                            {txn.estPat !== 0 ? `$${Math.abs(txn.estPat).toFixed(2)}` : ''}
+                          </td>
+                          <td className="w-[90px] px-2 py-2 text-right text-blue-700 font-mono">
+                            {txn.estIns !== 0 ? `$${Math.abs(txn.estIns).toFixed(2)}` : ''}
+                          </td>
+                          <td className={`w-[100px] px-2 py-2 text-right font-mono ${
+                            txn.amount < 0 ? 'text-green-700' : 'text-gray-900'
+                          }`}>
+                            ${Math.abs(txn.amount).toFixed(2)}
+                          </td>
+                          <td className="w-[110px] px-2 py-2 text-right text-gray-900 font-mono">
+                            ${txn.balance.toFixed(2)}
+                          </td>
+                          <td className="w-[80px] px-2 py-2 text-gray-700 text-xs truncate">{txn.user}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between p-4 border-t">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span>Showing {startIndex + 1} to {endIndex} of {totalItems}</span>
-                <select 
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="px-2 py-1 border rounded text-gray-700"
-                >
-                  <option value={10}>10 per page</option>
-                  <option value={25}>25 per page</option>
-                  <option value={50}>50 per page</option>
-                  <option value={100}>100 per page</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+                {/* Pagination */}
+                <div className="flex items-center justify-between p-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total}</span>
+                    <select 
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="px-2 py-1 border rounded text-gray-700"
+                    >
+                      <option value={10}>10 per page</option>
+                      <option value={25}>25 per page</option>
+                      <option value={50}>50 per page</option>
+                      <option value={100}>100 per page</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1 || loading}
+                      className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages || loading}
+                      className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Balances Tab */}
         {activeTab === 'balances' && (
           <div className="p-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Account Summary */}
-              <div className="border rounded-lg p-4">
-                <h3 className="text-gray-900 mb-4">Account Summary</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Account Balance:</span>
-                    <span className="text-gray-900">${balanceData.accountBalance.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Patient Balance:</span>
-                    <span className="text-red-700">${balanceData.patientBalance.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Estimated Insurance:</span>
-                    <span className="text-blue-700">${balanceData.estInsurance.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Estimated Patient:</span>
-                    <span className="text-red-700">${balanceData.estPatient.toFixed(2)}</span>
+            {loadingBalances ? (
+              <div className="flex items-center justify-center p-12">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                <span className="ml-3 text-gray-600">Loading balances...</span>
+              </div>
+            ) : errorBalances ? (
+              <div className="text-center">
+                <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                <p className="text-red-600 font-medium">{errorBalances}</p>
+                <button
+                  onClick={fetchBalances}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : balanceData ? (
+              <div className="grid grid-cols-2 gap-6">
+                {/* Account Summary */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-gray-900 mb-4">Account Summary</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">Account Balance:</span>
+                      <span className="text-gray-900">${balanceData.account_balance.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">Patient Balance:</span>
+                      <span className="text-red-700">${balanceData.patient_balance.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">Estimated Insurance:</span>
+                      <span className="text-blue-700">${balanceData.estimated_insurance.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">Estimated Patient:</span>
+                      <span className="text-red-700">${balanceData.estimated_patient.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Aging Buckets */}
-              <div className="border rounded-lg p-4">
-                <h3 className="text-gray-900 mb-4">Aging Buckets</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Current:</span>
-                    <span className="text-gray-900">${balanceData.current.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">30 Days:</span>
-                    <span className="text-gray-900">${balanceData.age30.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">60 Days:</span>
-                    <span className="text-orange-600">${balanceData.age60.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">90 Days:</span>
-                    <span className="text-orange-700">${balanceData.age90.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">120+ Days:</span>
-                    <span className="text-red-700">${balanceData.age120.toFixed(2)}</span>
+                {/* Aging Buckets */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-gray-900 mb-4">Aging Buckets</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">Current:</span>
+                      <span className="text-gray-900">${balanceData.aging.current.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">30 Days:</span>
+                      <span className="text-gray-900">${balanceData.aging.age_30.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">60 Days:</span>
+                      <span className="text-orange-600">${balanceData.aging.age_60.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">90 Days:</span>
+                      <span className="text-orange-700">${balanceData.aging.age_90.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">120+ Days:</span>
+                      <span className="text-red-700">${balanceData.aging.age_120.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Payment History */}
-              <div className="border rounded-lg p-4">
-                <h3 className="text-gray-900 mb-4">Recent Activity</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Today's Charges:</span>
-                    <span className="text-gray-900">${balanceData.todayCharges.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Last Insurance Payment:</span>
-                    <span className="text-blue-700">${balanceData.lastInsPmt.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700 text-xs">Date:</span>
-                    <span className="text-gray-600 text-xs">{balanceData.lastInsPmtDate}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Last Patient Payment:</span>
-                    <span className="text-green-700">${balanceData.lastPatPmt.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700 text-xs">Date:</span>
-                    <span className="text-gray-600 text-xs">{balanceData.lastPatPmtDate}</span>
+                {/* Payment History */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-gray-900 mb-4">Recent Activity</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <span className="text-gray-700">Today's Charges:</span>
+                      <span className="text-gray-900">${balanceData.recent_activity.today_charges.toFixed(2)}</span>
+                    </div>
+                    {balanceData.recent_activity.last_insurance_payment && (
+                      <>
+                        <div className="flex justify-between items-center border-b pb-2">
+                          <span className="text-gray-700">Last Insurance Payment:</span>
+                          <span className="text-blue-700">${balanceData.recent_activity.last_insurance_payment.amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-2">
+                          <span className="text-gray-700 text-xs">Date:</span>
+                          <span className="text-gray-600 text-xs">{formatDate(balanceData.recent_activity.last_insurance_payment.date)}</span>
+                        </div>
+                      </>
+                    )}
+                    {balanceData.recent_activity.last_patient_payment && (
+                      <>
+                        <div className="flex justify-between items-center border-b pb-2">
+                          <span className="text-gray-700">Last Patient Payment:</span>
+                          <span className="text-green-700">${balanceData.recent_activity.last_patient_payment.amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-2">
+                          <span className="text-gray-700 text-xs">Date:</span>
+                          <span className="text-gray-600 text-xs">{formatDate(balanceData.recent_activity.last_patient_payment.date)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
         )}
       </div>
@@ -738,8 +908,8 @@ export default function PatientLedger() {
         <PaymentsAdjustments
           isOpen={showPaymentsAdjustments}
           onClose={() => setShowPaymentsAdjustments(false)}
-          patientName={patientData.name}
-          patientId={patientData.id}
+          patientName={patientName}
+          patientId={patientId}
         />
       )}
 
@@ -748,9 +918,9 @@ export default function PatientLedger() {
         <AddProcedure
           isOpen={showAddProcedure}
           onClose={() => setShowAddProcedure(false)}
-          patientName={patientData.name}
-          patientId={patientData.id}
-          office={patientData.homeOffice}
+          patientName={patientName}
+          patientId={patientId}
+          office={patient?.officeId || patient?.office || ''}
           onSave={handleSaveProcedure}
         />
       )}
