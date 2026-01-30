@@ -296,7 +296,7 @@ let wsInstance: AIChatWebSocket | null = null;
 export function getAIChatWebSocket(): AIChatWebSocket {
   if (!wsInstance) {
     // Get base URL from api.ts configuration
-    const apiBaseURL = 'http://127.0.0.1:8000'; // Match api.ts default
+    const apiBaseURL = 'http://34.66.199.55:8000'; // Match api.ts default
     wsInstance = new AIChatWebSocket(apiBaseURL);
   }
   return wsInstance;
