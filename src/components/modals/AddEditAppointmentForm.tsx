@@ -2142,7 +2142,20 @@ export default function AddEditAppointmentForm({
           patientName={patient.name}
           patientId={patient.patientId}
           office={currentOffice}
-          initialProcedure={selectedProcedureForAdd}
+          initialProcedure={{
+            code: selectedProcedureForAdd.code,
+            userCode: selectedProcedureForAdd.userCode || "",
+            description: selectedProcedureForAdd.description,
+            category: selectedProcedureForAdd.category,
+            requirements: {
+              tooth: selectedProcedureForAdd.requirements?.tooth ?? false,
+              surface: selectedProcedureForAdd.requirements?.surface ?? false,
+              quadrant: selectedProcedureForAdd.requirements?.quadrant ?? false,
+              materials: selectedProcedureForAdd.requirements?.materials ?? false,
+            },
+            defaultFee: 0,
+            defaultDuration: undefined,
+          }}
           onSave={(procedure) => {
             const newTreatment =
               mapProcedureToTreatment(procedure);

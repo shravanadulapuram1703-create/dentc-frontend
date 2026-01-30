@@ -874,7 +874,7 @@ export default function Scheduler({
         // If lookup fails, try to extract numeric part as fallback
         // (e.g., "CH014" -> "14" - this might work if chart numbers are "CH" + ID)
         const numericMatch = appointment.patientId.match(/(\d+)$/);
-        if (numericMatch) {
+        if (numericMatch && numericMatch[1]) {
           numericPatientId = numericMatch[1];
         } else {
           // If we can't extract, use the chart number and let PatientShellLayout handle it

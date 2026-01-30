@@ -36,9 +36,7 @@ export default function OperatoriesTab({
         const officeId =
           formData.officeId !== undefined
             ? String(formData.officeId)
-            : formData.officeIdNumber
-              ? String(formData.officeIdNumber)
-              : undefined;
+            : undefined;
         const data = await fetchProviders(officeId);
         setProviders(data);
       } catch (error) {
@@ -49,7 +47,7 @@ export default function OperatoriesTab({
 
     loadProviders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.officeId, formData.officeIdNumber]);
+  }, [formData.officeId]);
 
   const operatories: Operatory[] =
     [...(formData.operatories || [])].sort((a, b) => a.order - b.order);
@@ -133,9 +131,14 @@ export default function OperatoriesTab({
     if (index <= 0) return;
 
     const updated = [...operatories];
-    const tempOrder = updated[index - 1].order;
-    updated[index - 1] = { ...updated[index - 1], order: updated[index].order };
-    updated[index] = { ...updated[index], order: tempOrder };
+    const prevOp = updated[index - 1];
+    const currentOp = updated[index];
+    
+    if (!prevOp || !currentOp) return;
+    
+    const tempOrder = prevOp.order;
+    updated[index - 1] = { ...prevOp, order: currentOp.order };
+    updated[index] = { ...currentOp, order: tempOrder };
 
     updateOrder(updated);
   };
@@ -145,9 +148,14 @@ export default function OperatoriesTab({
     if (index === -1 || index >= operatories.length - 1) return;
 
     const updated = [...operatories];
-    const tempOrder = updated[index + 1].order;
-    updated[index + 1] = { ...updated[index + 1], order: updated[index].order };
-    updated[index] = { ...updated[index], order: tempOrder };
+    const nextOp = updated[index + 1];
+    const currentOp = updated[index];
+    
+    if (!nextOp || !currentOp) return;
+    
+    const tempOrder = nextOp.order;
+    updated[index + 1] = { ...nextOp, order: currentOp.order };
+    updated[index] = { ...currentOp, order: tempOrder };
 
     updateOrder(updated);
   };
