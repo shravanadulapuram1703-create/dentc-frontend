@@ -105,7 +105,7 @@ export default function ToothSurfaceEnforcement({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl border-4 border-blue-500">
+      <div className="pointer-events-auto bg-white rounded-lg shadow-2xl w-full max-w-4xl border-4 border-blue-500">
         {/* Header */}
         <div className="bg-blue-600 px-6 py-3 flex items-center justify-between rounded-t-lg border-b-4 border-blue-700">
           <h2 className="text-xl font-bold text-white">TOOTH / SURFACE / QUADRANT</h2>
