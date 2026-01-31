@@ -1,0 +1,25 @@
+
+> dentc-frontend@0.0.0 dev
+> vite
+
+
+  VITE v7.3.0  ready in 518 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.128.0.2:5173/
+The request id "/var/www/dentc-frontend/.env" is outside of Vite serving allow list.
+
+- /var/www/dentc-frontend
+
+Refer to docs https://vite.dev/config/server-options.html#server-fs-allow for configurations and more details.
+
+12:05:38 AM [vite] (client) hmr update /src/styles/globals.css
+12:05:38 AM [vite] (client) hmr update /src/styles/globals.css
+Files in the public directory are served at the root path.
+Instead of /public/.env, use /.env.
+12:05:44 AM [vite] (client) hmr update /src/styles/globals.css
+The request id "/proc/self/environ" is outside of Vite serving allow list.
+12:06:00 AM [vite] (client) hmr update /src/styles/globals.css
+The request id "/var/www/dentc-frontend/.env" is outside of Vite serving allow list.
+12:06:00 AM [vite] (client) hmr update /src/styles/globals.css
+Killed

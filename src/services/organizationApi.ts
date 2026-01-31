@@ -3,7 +3,7 @@ import api from "./api";
 type Organization = any;
 
 export async function fetchOrganizations(): Promise<Organization[]> {
-//   const response = await fetch('http://127.0.0.1:8000/api/v1/users/test', {
+//   const response = await fetch('http://34.66.199.55:8000/api/v1/users/test', {
 //     method: 'GET',
 //     credentials: 'include', // important if using cookies / session
 //     headers: {
