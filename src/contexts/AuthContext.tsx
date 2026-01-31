@@ -283,6 +283,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /* ---------- LISTEN FOR 401 UNAUTHORIZED EVENTS ---------- */
+  
+  useEffect(() => {
+    const handleUnauthorized = async (event: Event) => {
+      const customEvent = event as CustomEvent<{ message?: string }>;
+      const message = customEvent.detail?.message || "Your session has expired. Please log in again.";
+      
+      // Show alert to user
+      alert(message);
+      
+      // Call logout to clean up state
+      await logout();
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+
+    return () => {
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    };
+  }, [logout]);
+
   return (
     <AuthContext.Provider
       value={{

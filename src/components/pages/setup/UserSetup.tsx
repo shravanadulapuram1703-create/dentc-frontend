@@ -401,34 +401,46 @@ export default function UserSetup({
   const [availableOIDs, setAvailableOIDs] = useState<Office[]>([]);
 
   useEffect(() => {
-    const tenantId = getTenantId();
-    
-    // Try with tenant_id first if available, then without
-    const makeRequest = (withParams: boolean) => {
-      const config = withParams && tenantId 
-        ? { params: { tenant_id: tenantId } }
-        : {};
-      
-      return api.get("/api/v1/users/all-offices", config);
+    const fetchOffices = async () => {
+      try {
+        // Use the same endpoint as GlobalNav for consistency
+        const response = await api.get("/api/v1/offices");
+        
+        // Map API response to Office format, handling both camelCase and snake_case
+        const mappedOffices = response.data.map((office: any) => {
+          // Extract office name from various possible fields
+          const officeName = office.officeName || office.office_name || office.name || "";
+          const officeId = office.officeId || office.office_id || office.id;
+          const officeCode = office.officeCode || office.office_code || "";
+          
+          return {
+            id: officeId,
+            officeCode: officeCode,
+            officeName: officeName || `Office ${officeId}`, // Fallback if name is missing
+            tenantId: office.tenantId || office.tenant_id || null,
+            isActive: office.isActive !== undefined ? office.isActive : (office.is_active !== undefined ? office.is_active : true),
+            phone1: office.phone1 || "",
+            phone2: office.phone2 || "",
+            fax: office.fax || "",
+            email: office.email || "",
+            addressLine1: office.addressLine1 || office.address_line1 || "",
+            city: office.city || "",
+            state: office.state || "",
+            zip: office.zip || "",
+            timezone: office.timezone || "",
+            createdAt: office.createdAt || office.created_at || "",
+            updatedAt: office.updatedAt || office.updated_at || "",
+          };
+        });
+        
+        setAvailableOIDs(mappedOffices);
+      } catch (err: any) {
+        console.error("Failed to load offices:", err.response?.data || err.message);
+        setAvailableOIDs([]);
+      }
     };
     
-    makeRequest(true)
-      .then((res) => {
-        setAvailableOIDs(res.data.map(mapApiOfficeToUI));
-      })
-      .catch((err) => {
-        console.error("Failed to load offices with params:", err.response?.data || err.message);
-        // Try without params as fallback
-        if (tenantId) {
-          makeRequest(false)
-            .then((res) => {
-              setAvailableOIDs(res.data.map(mapApiOfficeToUI));
-            })
-            .catch((fallbackErr) => {
-              console.error("Failed to load offices without params:", fallbackErr.response?.data || fallbackErr.message);
-            });
-        }
-      });
+    fetchOffices();
   }, [currentOrganization]);
 
   useEffect(() => {
@@ -456,17 +468,39 @@ export default function UserSetup({
       );
     }
 
-    
-
     // All PGIDs → all offices
     if (filterPGID === "all") {
       return availableOIDs;
     }
 
     // Specific PGID → only offices of that PGID
-    return availableOIDs.filter(
-      (o) => String(o.tenantId) === filterPGID
-    );
+    // filterPGID is the tenant.id (number) from the dropdown, but HTML select converts it to string
+    // Convert filterPGID to number for comparison
+    const filterTenantId = typeof filterPGID === 'string' 
+      ? parseInt(filterPGID, 10)
+      : Number(filterPGID);
+    
+    if (isNaN(filterTenantId)) {
+      console.warn("Invalid filterPGID:", filterPGID);
+      return availableOIDs;
+    }
+    
+    return availableOIDs.filter((o) => {
+      // Compare tenant IDs - both should be numbers
+      const officeTenantId = o.tenantId ? Number(o.tenantId) : null;
+      const matches = officeTenantId !== null && officeTenantId === filterTenantId;
+      
+      // Debug logging (can be removed later)
+      if (matches) {
+        console.log("Office matches tenant:", {
+          officeName: o.officeName,
+          officeTenantId,
+          filterTenantId
+        });
+      }
+      
+      return matches;
+    });
   }, [availableOIDs, filterPGID, searchScope, currentOffice]);
 
 
@@ -885,8 +919,22 @@ export default function UserSetup({
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Page Content */}
+    <>
+      {/* Ensure dropdown options are visible */}
+      <style>{`
+        select option {
+          background-color: #FFFFFF !important;
+          color: #1E293B !important;
+        }
+        select option:hover,
+        select option:focus,
+        select option:checked {
+          background-color: #3A6EA5 !important;
+          color: #FFFFFF !important;
+        }
+      `}</style>
+      <div className="min-h-screen bg-[#F8FAFC]">
+        {/* Page Content */}
       <div className="max-w-[1800px] mx-auto p-6">
         <div className="grid grid-cols-12 gap-6">
           {/* Left Panel - User List */}
@@ -1001,28 +1049,38 @@ export default function UserSetup({
                 <label className="block text-xs font-bold text-[#1F3A5F] mb-1">
                   Office (OID):
                 </label>
-                <select
-                  value={filterOID}
-                  // onChange={(e) => setFilterOID(e.target.value)}
-                  disabled={searchScope === "home"}
-                  onChange={(e) => setFilterOID(e.target.value)}
-                  className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs"
-                >
-                  <option value="all">All OIDs</option>
-                  {/* {availableOIDs.map((oid) => ( */}
-                  {filteredOIDs.map((oid) => (
-                    // <option key={oid.id} value={oid.id}>
-                    //   {/* {oid.name} */}
-                    //   {oid.officeName}
-                    // </option>
-                    <option
-                      key={oid.id}
-                      value={normalizeOID(oid.id)}
-                    >
-                      {oid.officeName}
+                <div className="relative">
+                  <select
+                    value={filterOID}
+                    disabled={searchScope === "home"}
+                    onChange={(e) => setFilterOID(e.target.value)}
+                    className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs text-[#1E293B] bg-white appearance-none cursor-pointer"
+                    style={{
+                      color: '#1E293B',
+                      backgroundColor: '#FFFFFF'
+                    }}
+                  >
+                    <option value="all" className="bg-white text-[#1E293B]">
+                      All OIDs
                     </option>
-                  ))}
-                </select>
+                    {filteredOIDs.map((oid) => {
+                      // Ensure we have a proper office name
+                      const displayName = oid.officeName && oid.officeName.trim() !== "" 
+                        ? oid.officeName 
+                        : `Office ${normalizeOID(oid.id)}`;
+                      
+                      return (
+                        <option
+                          key={oid.id}
+                          value={normalizeOID(oid.id)}
+                          className="bg-white text-[#1E293B]"
+                        >
+                          {displayName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1413,6 +1471,7 @@ export default function UserSetup({
           userId={selectedUser.id}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }

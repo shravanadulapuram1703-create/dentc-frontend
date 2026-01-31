@@ -64,6 +64,7 @@ import {
   Lightbulb,
   BookOpen,
   ClipboardCheck,
+  Loader2,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -72,6 +73,7 @@ import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAIChat } from "../contexts/AIChatContext.js";
+import api from "../services/api.js";
 
 export interface GlobalNavProps {
   onLogout: () => void;
@@ -163,23 +165,109 @@ export default function GlobalNav({
   // Get Auth Context for current organization
   const { currentOrganization, user, organizations } = useAuth();
 
-  // Get offices dynamically from API data (organizations from AuthContext)
-  const currentOrg = organizations.find((org) => org.id === currentOrganization);
-  const offices = currentOrg?.offices || [];
+  // State for offices fetched from backend API
+  const [offices, setOffices] = useState<Array<{
+    id: string;
+    name: string;
+    displayName?: string;
+    shortId?: string;
+    officeId?: number;
+  }>>([]);
+  const [loadingOffices, setLoadingOffices] = useState(false);
+  const [officesError, setOfficesError] = useState<string | null>(null);
+
+  // Fetch offices from backend API
+  useEffect(() => {
+    const fetchOffices = async () => {
+      try {
+        setLoadingOffices(true);
+        setOfficesError(null);
+        
+        // Fetch offices from backend API
+        const response = await api.get("/api/v1/offices");
+        
+        // Map API response to office format expected by GlobalNav
+        const mappedOffices = response.data.map((office: any) => {
+          // Handle both camelCase and snake_case from API
+          const officeId = office.officeId || office.office_id || office.id;
+          const officeName = office.officeName || office.office_name || office.name || "";
+          const shortId = office.shortId || office.short_id || "";
+          
+          // Create display name: "Office Name [ShortId]" or "Office Name [ID]"
+          const displayId = shortId || String(officeId);
+          const displayName = `${officeName} [${displayId}]`;
+          
+          // Store multiple ID formats for matching
+          const numericId = typeof officeId === 'number' ? officeId : parseInt(String(officeId), 10);
+          
+          return {
+            id: String(officeId), // Primary ID for matching
+            name: officeName, // Office name (user wants this displayed)
+            displayName: displayName,
+            shortId: shortId,
+            officeId: numericId,
+            // Additional ID formats for flexible matching
+            idFormats: [
+              String(officeId),
+              String(numericId),
+              `O-${numericId}`,
+              `OFF-${numericId}`,
+              shortId ? `OFF-${shortId}` : null,
+            ].filter(Boolean) as string[],
+          };
+        });
+        
+        setOffices(mappedOffices);
+      } catch (err: any) {
+        console.error("Error fetching offices:", err);
+        setOfficesError(err.response?.data?.detail || err.message || "Failed to load offices");
+        // Fallback to offices from AuthContext if API fails
+        const currentOrg = organizations.find((org) => org.id === currentOrganization);
+        setOffices(currentOrg?.offices || []);
+      } finally {
+        setLoadingOffices(false);
+      }
+    };
+
+    // Fetch offices when component mounts or organization changes
+    if (currentOrganization) {
+      fetchOffices();
+    }
+  }, [currentOrganization, organizations]);
   
   // Find current office object to display name and code (currentOffice is passed as prop)
-  const currentOfficeObj = offices.find((office) => office.id === currentOffice);
-  
-  // Format office display name with ID: "Office Name [ID]"
-  const formatOfficeDisplay = (office: typeof offices[0]) => {
-    if (office.displayName) return office.displayName;
-    // Use office ID instead of code
-    if (office.id) {
-      // Extract just the ID part if it's in format "O-123" or similar
-      const officeId = office.id.replace(/^O-/, '');
-      return `${office.name} [${officeId}]`;
+  // Match by id (which is officeId as string) or by officeId number, handling various formats
+  const currentOfficeObj = offices.find((office) => {
+    if (!currentOffice) return false;
+    
+    // Normalize currentOffice for comparison
+    const normalizedCurrent = String(currentOffice).trim();
+    
+    // Try exact match first
+    if (office.id === normalizedCurrent) return true;
+    
+    // Try matching officeId number
+    if (office.officeId && String(office.officeId) === normalizedCurrent) return true;
+    
+    // Try matching with various ID formats
+    if ((office as any).idFormats) {
+      return (office as any).idFormats.some((fmt: string) => fmt === normalizedCurrent);
     }
-    return office.name || office.id;
+    
+    // Try matching if currentOffice is in format "O-123", "OFF-1", etc.
+    const currentOfficeNum = normalizedCurrent.replace(/^(O-|OFF-)/i, '');
+    if (office.id === currentOfficeNum || String(office.officeId) === currentOfficeNum) return true;
+    
+    // Try matching shortId
+    if (office.shortId && office.shortId === normalizedCurrent) return true;
+    
+    return false;
+  });
+  
+  // Format office display name - show just the name, not the ID
+  const formatOfficeDisplay = (office: typeof offices[0]) => {
+    // Return just the office name (user wants name, not ID)
+    return office.name || office.displayName || office.id;
   };
 
   // PATIENT DROPDOWN MENU (Patient Context)
@@ -1604,7 +1692,7 @@ export default function GlobalNav({
                   Office
                 </span>
                 <span className="font-bold text-white text-sm">
-                  {currentOfficeObj ? formatOfficeDisplay(currentOfficeObj) : currentOffice || "Select Office"}
+                  {currentOfficeObj ? currentOfficeObj.name : (currentOffice || "Select Office")}
                 </span>
               </div>
               <ChevronDown
@@ -1613,9 +1701,18 @@ export default function GlobalNav({
               />
             </button>
             {showOfficeDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50">
+              <div className="absolute top-full right-0 mt-2 w-80 bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
                 <div className="py-1">
-                  {offices.length === 0 ? (
+                  {loadingOffices ? (
+                    <div className="px-4 py-4 text-center">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#3A6EA5]" />
+                      <p className="text-xs text-[#64748B] mt-2">Loading offices...</p>
+                    </div>
+                  ) : officesError ? (
+                    <div className="px-4 py-2 text-sm text-red-600">
+                      {officesError}
+                    </div>
+                  ) : offices.length === 0 ? (
                     <div className="px-4 py-2 text-sm text-[#64748B]">
                       No offices available
                     </div>

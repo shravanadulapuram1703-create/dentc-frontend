@@ -32,6 +32,10 @@ import {
   type ProcedureCategory,
   type TreatmentPlan,
 } from "../../services/schedulerApi";
+import {
+  createPatient,
+  type PatientCreateRequest,
+} from "../../services/patientApi";
 
 interface PatientSearchResult {
   patientId: string;
@@ -101,6 +105,23 @@ export default function AddEditAppointmentForm({
   // Find current organization and office details
   const currentOrg = organizations.find((org) => org.id === currentOrganization);
   const currentOfficeObj = currentOrg?.offices.find((office) => office.id === currentOfficeId);
+  
+  // Extract numeric tenant ID from organization ID (e.g., "ORG-1" -> 1, "1" -> 1)
+  const getTenantId = (): string => {
+    if (!currentOrganization) return "N/A";
+    // Extract numeric ID from formats like "ORG-1", "1", "001", etc.
+    const match = currentOrganization.match(/(\d+)$/);
+    if (match && match[1]) {
+      // Convert to number to remove leading zeros (e.g., "001" -> 1), then back to string
+      const numericId = parseInt(match[1], 10);
+      return isNaN(numericId) ? currentOrganization : String(numericId);
+    }
+    // If no numeric match, try to use the value directly (might already be numeric)
+    if (/^\d+$/.test(currentOrganization)) {
+      return currentOrganization;
+    }
+    return currentOrganization;
+  };
 
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showSMSModal, setShowSMSModal] = useState(false);
@@ -688,9 +709,6 @@ export default function AddEditAppointmentForm({
       if (patientId.startsWith("NEW-")) {
         console.log("Creating new patient before saving appointment...");
         
-        // Import createPatient function
-        const { createPatient } = await import("../../services/patientApi");
-        
         // Convert birthdate from MM/DD/YYYY to YYYY-MM-DD
         let dobFormatted: string | undefined;
         if (formData.birthdate) {
@@ -702,13 +720,41 @@ export default function AddEditAppointmentForm({
           }
         }
         
+        // Extract office ID from currentOffice string or use currentOfficeId from auth
+        const extractOfficeId = (officeStr: string | undefined): number | undefined => {
+          if (!officeStr) return undefined;
+          const trimmed = officeStr.trim();
+          if (/^\d+$/.test(trimmed)) {
+            return parseInt(trimmed, 10);
+          }
+          const bracketMatch = officeStr.match(/\[(\d+)\]/);
+          if (bracketMatch && bracketMatch[1]) {
+            return parseInt(bracketMatch[1], 10);
+          }
+          const offMatch = officeStr.match(/(?:OFF-|OFF\s*)(\d+)/i);
+          if (offMatch && offMatch[1]) {
+            return parseInt(offMatch[1], 10);
+          }
+          const trailingMatch = officeStr.match(/(\d+)$/);
+          if (trailingMatch && trailingMatch[1]) {
+            return parseInt(trailingMatch[1], 10);
+          }
+          return undefined;
+        };
+
+        // Validate required fields
+        if (!formData.firstName || !formData.lastName) {
+          throw new Error("First name and last name are required to create a patient");
+        }
+
         // Create patient
-        const patientData: any = {
+        const patientData: PatientCreateRequest = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           ...(dobFormatted && { dob: dobFormatted }),
           ...(formData.cellPhone && { phone: formData.cellPhone }),
           ...(formData.email && { email: formData.email }),
+          homeOfficeId: currentOfficeId ? parseInt(String(currentOfficeId), 10) : extractOfficeId(currentOffice),
         };
         
         // Only add gender if it's valid
@@ -891,7 +937,7 @@ export default function AddEditAppointmentForm({
                   PGID:
                 </span>
                 <span className="ml-2 font-semibold">
-                  {patient.patientId}
+                  {getTenantId()}
                 </span>
               </div>
               <div>

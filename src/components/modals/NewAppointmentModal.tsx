@@ -26,9 +26,10 @@ import {
 } from "../../services/schedulerApi";
 import {
   createPatient,
-  getPatients,
+  searchPatients,
   type PatientCreateRequest,
   type Patient,
+  type PatientSearchParams,
 } from "../../services/patientApi";
 
 interface NewAppointmentModalProps {
@@ -113,9 +114,11 @@ export default function NewAppointmentModal({
   } | null>(null);
   const [phoneError, setPhoneError] = useState<string>("");
 
-  // Patient Search State
+  // Patient Search State (consistent with Patient.tsx)
   const [searchBy, setSearchBy] = useState("lastName");
-  const [searchIn, setSearchIn] = useState("all");
+  const [searchIn, setSearchIn] = useState<"current" | "all" | "group">("all");
+  const [searchFor, setSearchFor] = useState<"patient" | "responsible">("patient");
+  const [patientType, setPatientType] = useState<"both" | "general" | "ortho">("both");
   const [includeInactive, setIncludeInactive] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<
@@ -342,6 +345,31 @@ export default function NewAppointmentModal({
     };
   };
 
+  // Helper to extract numeric office ID from currentOffice (e.g., "OFF-1" -> "1")
+  const extractOfficeIdNumber = (officeId?: string): string | undefined => {
+    if (!officeId) return undefined;
+    if (/^\d+$/.test(officeId)) return officeId;
+    const match = officeId.match(/(\d+)$/);
+    return match ? match[1] : officeId;
+  };
+
+  // Map searchBy values to API format
+  const mapSearchByToAPI = (searchBy: string): string => {
+    const mapping: Record<string, string> = {
+      "lastName": "lastName",
+      "firstName": "firstName",
+      "homePhone": "homePhone",
+      "workPhone": "workPhone",
+      "cellPhone": "cellPhone",
+      "ssn": "ssn",
+      "respId": "responsiblePartyId",
+      "patId": "patientId",
+      "chart": "chartNumber",
+      "birthdate": "birthDate",
+    };
+    return mapping[searchBy] || searchBy;
+  };
+
   const handlePatientSearch = async () => {
     if (!searchText.trim()) {
       alert("Please enter search criteria");
@@ -353,9 +381,24 @@ export default function NewAppointmentModal({
     setSearchResults([]);
 
     try {
-      // Call the Patients API with search term
-      // The API searches in: first name, last name, chart number, phone, email
-      const response = await getPatients(searchText.trim(), 100, 0);
+      // Extract numeric office ID if search scope is "current"
+      const officeIdNum = searchIn === "current" ? extractOfficeIdNumber(currentOffice) : undefined;
+      
+      // Map searchBy to API format
+      const apiSearchBy = mapSearchByToAPI(searchBy);
+      
+      // Call advanced search API (same as Patient.tsx)
+      const response = await searchPatients({
+        searchBy: apiSearchBy,
+        searchValue: searchText.trim(),
+        searchFor: searchFor,
+        patientType: patientType === "both" ? "both" : patientType || "both",
+        searchScope: searchIn, // Map searchIn to searchScope
+        includeInactive: includeInactive,
+        officeId: officeIdNum,
+        limit: 100,
+        offset: 0,
+      });
       
       // Convert API patients to PatientSearchResult format
       const results = response.patients.map(convertPatientToSearchResult);
@@ -502,6 +545,28 @@ export default function NewAppointmentModal({
           }
         }
 
+        // Extract office ID from currentOffice string
+        const extractOfficeId = (officeStr: string): number | undefined => {
+          if (!officeStr) return undefined;
+          const trimmed = officeStr.trim();
+          if (/^\d+$/.test(trimmed)) {
+            return parseInt(trimmed, 10);
+          }
+          const bracketMatch = officeStr.match(/\[(\d+)\]/);
+          if (bracketMatch && bracketMatch[1]) {
+            return parseInt(bracketMatch[1], 10);
+          }
+          const offMatch = officeStr.match(/(?:OFF-|OFF\s*)(\d+)/i);
+          if (offMatch && offMatch[1]) {
+            return parseInt(offMatch[1], 10);
+          }
+          const trailingMatch = officeStr.match(/(\d+)$/);
+          if (trailingMatch && trailingMatch[1]) {
+            return parseInt(trailingMatch[1], 10);
+          }
+          return undefined;
+        };
+
         // Create patient using Patient API
         const patientData: PatientCreateRequest = {
           firstName: formData.firstName,
@@ -510,7 +575,7 @@ export default function NewAppointmentModal({
           ...(formData.phoneNumber && { phone: formData.phoneNumber }),
           ...(formData.email && { email: formData.email }),
           ...(formData.gender && { gender: formData.gender as "M" | "F" | "O" }),
-          // Note: phone_type is not in Patient API, but phone is stored
+          homeOfficeId: extractOfficeId(currentOffice),
         };
 
         console.log("Patient data to create:", patientData);
@@ -724,7 +789,10 @@ export default function NewAppointmentModal({
                   Operatory:
                 </span>
                 <span className="ml-2 text-[#1E293B] font-semibold">
-                  {selectedSlot.operatory}
+                  {(() => {
+                    const operatory = operatories.find((op) => op.id === selectedSlot.operatory);
+                    return operatory?.name || selectedSlot.operatory;
+                  })()}
                 </span>
               </div>
             </div>
@@ -992,7 +1060,7 @@ export default function NewAppointmentModal({
                         value="current"
                         checked={searchIn === "current"}
                         onChange={(e) =>
-                          setSearchIn(e.target.value)
+                          setSearchIn(e.target.value as "current" | "all" | "group")
                         }
                         className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
                       />
@@ -1007,7 +1075,7 @@ export default function NewAppointmentModal({
                         value="all"
                         checked={searchIn === "all"}
                         onChange={(e) =>
-                          setSearchIn(e.target.value)
+                          setSearchIn(e.target.value as "current" | "all" | "group")
                         }
                         className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
                       />
@@ -1022,7 +1090,7 @@ export default function NewAppointmentModal({
                         value="group"
                         checked={searchIn === "group"}
                         onChange={(e) =>
-                          setSearchIn(e.target.value)
+                          setSearchIn(e.target.value as "current" | "all" | "group")
                         }
                         className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
                       />

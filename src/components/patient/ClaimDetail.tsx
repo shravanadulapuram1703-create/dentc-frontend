@@ -21,6 +21,7 @@ import {
 } from "../../utils/attachmentEvaluator";
 import { procedureCodes } from "../../data/procedureCodes";
 import { getClaim, type ClaimDetailResponse } from "../../services/ledgerApi";
+import { useAuth } from "../../contexts/AuthContext";
 
 // ✅ ONLY tooltip needed: Overpayment Disbursement (professional billing systems only explain what's truly complex)
 function OverpaymentInfo() {
@@ -82,9 +83,32 @@ interface OutletContext {
   patient: PatientData;
 }
 
+// Format claim ID to be shorter and more readable
+// If it's a UUID, show only first 8 characters with CLM- prefix
+// Otherwise, return as-is or use claim_number if available
+function formatClaimId(claimId: string): string {
+  if (!claimId) return "";
+  
+  // If it's a long UUID-like string (32+ characters without dashes, or 36 with dashes)
+  if (claimId.length >= 32) {
+    // Extract first 8 characters and format as CLM-XXXXXXXX
+    const shortId = claimId.replace(/-/g, '').substring(0, 8).toUpperCase();
+    return `CLM-${shortId}`;
+  }
+  
+  // If it already has CLM- prefix, return as-is
+  if (claimId.startsWith('CLM-')) {
+    return claimId;
+  }
+  
+  // For other formats, return as-is
+  return claimId;
+}
+
 export default function ClaimDetail() {
   const navigate = useNavigate();
   const { patientId, claimId } = useParams();
+  const { currentOrganization, currentOffice } = useAuth();
 
   // Make patient context optional
   let patient: PatientData | undefined;
@@ -94,6 +118,38 @@ export default function ClaimDetail() {
   } catch (e) {
     patient = undefined;
   }
+
+  // Extract numeric tenant ID from organization ID (e.g., "ORG-1" -> 1, "1" -> 1)
+  const getTenantId = (): string => {
+    if (!currentOrganization) return "N/A";
+    // Extract numeric ID from formats like "ORG-1", "1", "001", etc.
+    const match = currentOrganization.match(/(\d+)$/);
+    if (match && match[1]) {
+      // Convert to number to remove leading zeros (e.g., "001" -> 1), then back to string
+      const numericId = parseInt(match[1], 10);
+      return isNaN(numericId) ? currentOrganization : String(numericId);
+    }
+    // If no numeric match, try to use the value directly (might already be numeric)
+    if (/^\d+$/.test(currentOrganization)) {
+      return currentOrganization;
+    }
+    return currentOrganization;
+  };
+
+  // Extract numeric office ID from currentOffice (e.g., "OFF-1" -> 1, "1" -> 1)
+  const getOfficeId = (): string => {
+    if (!currentOffice) return "N/A";
+    // Extract numeric ID from formats like "OFF-1", "O-1", "1", etc.
+    const match = currentOffice.match(/(\d+)$/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    // If already numeric, return as-is
+    if (/^\d+$/.test(currentOffice)) {
+      return currentOffice;
+    }
+    return currentOffice;
+  };
 
   // Backend-driven claim data
   const [claim, setClaim] = useState<ClaimDetailResponse | null>(null);
@@ -280,7 +336,7 @@ export default function ClaimDetail() {
             Primary Dental Insurance Claim
           </h1>
           <div className="text-white text-sm font-bold">
-            PGID {claim.claim_number} / CID-CLM-{claim.claim_id}
+            PGID {getTenantId()} / OID {getOfficeId()}
           </div>
         </div>
 
@@ -558,7 +614,7 @@ export default function ClaimDetail() {
                     Claim ID
                   </span>
                   <span className="font-semibold text-slate-900">
-                    {claim.claim_id}
+                    {claim.claim_number || formatClaimId(claim.claim_id)}
                   </span>
                 </div>
 

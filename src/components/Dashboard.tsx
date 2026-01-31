@@ -17,8 +17,13 @@ import {
   CheckCircle2,
   Search,
   UserPlus,
+  Loader2,
+  Eye,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import api from "../services/api";
+import { searchPatients, type Patient as ApiPatient } from "../services/patientApi.js";
 
 interface User {
   id: string;
@@ -130,6 +135,48 @@ export default function Dashboard({
   const [searchText, setSearchText] = useState("");
   const [lastSearchQuery, setLastSearchQuery] = useState("");
 
+  // Search Results State
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [expandedPatientId, setExpandedPatientId] = useState<number | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  // Helper to extract numeric office ID from currentOffice (e.g., "OFF-1" -> "1")
+  const extractOfficeIdNumber = (officeId?: string): string | undefined => {
+    if (!officeId) return undefined;
+    if (/^\d+$/.test(officeId)) return officeId;
+    const match = officeId.match(/(\d+)$/);
+    return match ? match[1] : officeId;
+  };
+
+  // Convert API Patient to display format
+  const convertApiPatientToDisplay = (apiPatient: ApiPatient): any => {
+    // Format DOB from YYYY-MM-DD to MM/DD/YYYY
+    let dobFormatted = '';
+    if (apiPatient.dob) {
+      const dateParts = apiPatient.dob.split('-');
+      if (dateParts.length === 3) {
+        dobFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
+      }
+    }
+    
+    // Format name
+    const name = `${apiPatient.firstName} ${apiPatient.lastName}`;
+    
+    return {
+      id: apiPatient.id,
+      patientId: apiPatient.chartNo || `PT-${apiPatient.id.toString().padStart(6, '0')}`,
+      name: name,
+      firstName: apiPatient.firstName,
+      lastName: apiPatient.lastName,
+      dob: apiPatient.dob || dobFormatted,
+      phone: apiPatient.phone || '',
+      email: apiPatient.email || '',
+      chartNumber: apiPatient.chartNo || `CH-${apiPatient.id}`,
+    };
+  };
+
   const searchByOptions = [
     { value: "lastName", label: "Last Name" },
     { value: "firstName", label: "First Name" },
@@ -162,7 +209,7 @@ export default function Dashboard({
     return `Enter ${option?.label}...`;
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchText.trim()) {
       alert("Please enter search criteria");
       return;
@@ -171,17 +218,43 @@ export default function Dashboard({
     const query = `${searchBy}:${searchText}|scope:${searchScope}|type:${searchFor}`;
     setLastSearchQuery(query);
 
-    // TODO: Execute actual search logic
-    console.log("Search executed:", {
-      searchFor,
-      patientType,
-      searchBy,
-      searchText,
-      searchScope,
-      includeInactive,
-    });
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResults([]);
+    setHasSearched(false);
+    setExpandedPatientId(null);
 
-    alert("Search functionality will display results here");
+    try {
+      // Extract numeric office ID
+      const officeIdNum = searchScope === 'current' ? extractOfficeIdNumber(currentOffice) : undefined;
+      
+      // Call advanced search API (same as Patient.tsx)
+      const response = await searchPatients({
+        searchBy: searchBy,
+        searchValue: searchText.trim(),
+        searchFor: searchFor,
+        patientType: patientType === 'both' ? 'both' : patientType || 'both',
+        searchScope: searchScope,
+        includeInactive: includeInactive,
+        officeId: officeIdNum,
+        limit: 100,
+        offset: 0,
+      });
+
+      // Convert API patients to display format
+      const results = response.patients.map(convertApiPatientToDisplay);
+      
+      setSearchResults(results);
+      setHasSearched(true);
+    } catch (error: any) {
+      console.error('Error searching patients:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to search patients';
+      setSearchError(errorMessage);
+      setHasSearched(true);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleLastSearch = () => {
@@ -189,18 +262,25 @@ export default function Dashboard({
       alert("No previous search to reload");
       return;
     }
-    alert(`Reloading last search: ${lastSearchQuery}`);
+    handleSearch();
   };
 
   const handleAddNewPatient = () => {
-    // Navigate to patient creation (would need to create this route)
-    alert("Add New Patient workflow will open here");
+    navigate("/patient/new");
+  };
+
+  const handleViewPatient = (patient: any) => {
+    navigate(`/patient/${patient.id}/overview`);
+  };
+
+  const toggleExpand = (patientId: number) => {
+    setExpandedPatientId(expandedPatientId === patientId ? null : patientId);
   };
   const handleLogout = async () => {
     // Call onLogout immediately to show loading overlay
     // onLogout will handle the API call and state management
     await onLogout();
-    navigate("/login");
+      navigate("/login");
   };
 
   return (
@@ -625,6 +705,7 @@ export default function Dashboard({
               </div>
 
               {/* Search Help Text */}
+              {!hasSearched && (
               <div className="text-center">
                 <p className="text-sm text-[#64748B] font-medium">
                   💡 Use the search criteria above to find
@@ -632,6 +713,124 @@ export default function Dashboard({
                   appear below.
                 </p>
               </div>
+              )}
+
+              {/* Search Results */}
+              {hasSearched && (
+                <div className="mt-6">
+                  {isSearching ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-[#3A6EA5]" />
+                      <span className="ml-3 text-[#64748B] font-medium">Searching...</span>
+                    </div>
+                  ) : searchError ? (
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                      <p className="text-red-600 font-semibold">Error: {searchError}</p>
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 text-center">
+                      <p className="text-yellow-800 font-semibold">No patients found matching your search criteria.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-[#1F3A5F]">
+                          Search Results ({searchResults.length})
+                        </h3>
+                      </div>
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {searchResults.map((patient) => (
+                          <div
+                            key={patient.id}
+                            className="bg-white border-2 border-[#E2E8F0] rounded-lg p-4 hover:border-[#3A6EA5] transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
+                                <button
+                                  onClick={() => toggleExpand(patient.id)}
+                                  className="text-[#3A6EA5] hover:text-[#2f5a8c]"
+                                >
+                                  {expandedPatientId === patient.id ? (
+                                    <ChevronDown className="w-5 h-5" />
+                                  ) : (
+                                    <ChevronRight className="w-5 h-5" />
+                                  )}
+                                </button>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3">
+                                    <h4 className="font-bold text-[#1F3A5F] text-lg">
+                                      {patient.name}
+                                    </h4>
+                                    {patient.chartNumber && (
+                                      <span className="text-xs bg-[#3A6EA5] text-white px-2 py-1 rounded">
+                                        {patient.chartNumber}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-4 mt-1 text-sm text-[#64748B]">
+                                    {patient.dob && (
+                                      <span>DOB: {patient.dob}</span>
+                                    )}
+                                    {patient.phone && (
+                                      <span>Phone: {patient.phone}</span>
+                                    )}
+                                    {patient.email && (
+                                      <span>Email: {patient.email}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleViewPatient(patient)}
+                                className={components.buttonPrimary + " flex items-center gap-2 ml-4"}
+                              >
+                                <Eye className="w-4 h-4" />
+                                View
+                              </button>
+                            </div>
+                            {expandedPatientId === patient.id && (
+                              <div className="mt-4 pt-4 border-t border-[#E2E8F0] grid grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-xs font-bold text-[#64748B] uppercase">First Name:</span>
+                                  <p className="text-sm font-semibold text-[#1E293B]">{patient.firstName}</p>
+                                </div>
+                                <div>
+                                  <span className="text-xs font-bold text-[#64748B] uppercase">Last Name:</span>
+                                  <p className="text-sm font-semibold text-[#1E293B]">{patient.lastName}</p>
+                                </div>
+                                {patient.dob && (
+                                  <div>
+                                    <span className="text-xs font-bold text-[#64748B] uppercase">Date of Birth:</span>
+                                    <p className="text-sm font-semibold text-[#1E293B]">{patient.dob}</p>
+                                  </div>
+                                )}
+                                {patient.phone && (
+                                  <div>
+                                    <span className="text-xs font-bold text-[#64748B] uppercase">Phone:</span>
+                                    <p className="text-sm font-semibold text-[#1E293B]">{patient.phone}</p>
+                                  </div>
+                                )}
+                                {patient.email && (
+                                  <div>
+                                    <span className="text-xs font-bold text-[#64748B] uppercase">Email:</span>
+                                    <p className="text-sm font-semibold text-[#1E293B]">{patient.email}</p>
+                                  </div>
+                                )}
+                                {patient.chartNumber && (
+                                  <div>
+                                    <span className="text-xs font-bold text-[#64748B] uppercase">Chart Number:</span>
+                                    <p className="text-sm font-semibold text-[#1E293B]">{patient.chartNumber}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Building2, ChevronDown, Check, Settings, Plus } from 'lucide-react';
+import { Building2, ChevronDown, Check, Settings, Plus, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { components } from '../../styles/theme';
-// import { mockOrganizations} from '../../data/organizationData';
-// import type { Organization } from '../../data/organizationData';
-// import { fetchOrganizations } from '../../services/organizationApi';
+import api from '../../services/api';
 
 interface Office {
   id: string;
@@ -29,11 +27,93 @@ export default function OrganizationSwitcher() {
   const { user, organizations, currentOrganization, setCurrentOrganization } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // State for offices count per organization
+  const [officesCount, setOfficesCount] = useState<Record<string, number>>({});
+  const [loadingOffices, setLoadingOffices] = useState(false);
+
+  // Extract numeric tenant ID from organization ID (e.g., "ORG-1" -> 1, "1" -> 1)
+  const extractTenantIdFromOrg = (orgId: string): string | null => {
+    if (!orgId) return null;
+    // Extract numeric ID from formats like "ORG-1", "1", "001", etc.
+    const match = orgId.match(/(\d+)$/);
+    if (match && match[1]) {
+      // Convert to number to remove leading zeros (e.g., "001" -> 1), then back to string
+      const numericId = parseInt(match[1], 10);
+      return isNaN(numericId) ? orgId : String(numericId);
+    }
+    // If no numeric match, try to use the value directly (might already be numeric)
+    if (/^\d+$/.test(orgId)) {
+      return orgId;
+    }
+    return orgId;
+  };
+
+  // Fetch offices count for all organizations
+  useEffect(() => {
+    const fetchOfficesCount = async () => {
+      try {
+        setLoadingOffices(true);
+        const response = await api.get("/api/v1/offices");
+        
+        // Group offices by tenant/organization ID
+        // Map by both organization ID and extracted tenant ID for flexible matching
+        const countByTenant: Record<string, number> = {};
+        const countByOrgId: Record<string, number> = {};
+        
+        response.data.forEach((office: any) => {
+          const tenantId = office.tenantId || office.tenant_id;
+          if (tenantId) {
+            const tenantKey = String(tenantId);
+            countByTenant[tenantKey] = (countByTenant[tenantKey] || 0) + 1;
+          }
+        });
+        
+        // Map tenant IDs to organization IDs
+        organizations.forEach(org => {
+          const tenantId = extractTenantIdFromOrg(org.id);
+          if (tenantId && countByTenant[tenantId] !== undefined) {
+            countByOrgId[org.id] = countByTenant[tenantId];
+          } else {
+            // Fallback to organization's offices array length
+            countByOrgId[org.id] = org.offices?.length || 0;
+          }
+        });
+        
+        setOfficesCount(countByOrgId);
+      } catch (err: any) {
+        console.error("Error fetching offices count:", err);
+        // Fallback to count from organizations
+        const fallbackCount: Record<string, number> = {};
+        organizations.forEach(org => {
+          fallbackCount[org.id] = org.offices?.length || 0;
+        });
+        setOfficesCount(fallbackCount);
+      } finally {
+        setLoadingOffices(false);
+      }
+    };
+
+    if (organizations.length > 0) {
+      fetchOfficesCount();
+    }
+  }, [organizations]);
 
   // Get current organization object
   const activeOrg = organizations.find(org => 
     org.name === currentOrganization || org.code === currentOrganization || org.id === currentOrganization
     ) || organizations[0];
+  
+  // Get office count for current organization (from fetched offices or fallback to org.offices.length)
+  const getOfficeCount = (orgId: string): number => {
+    // Try to get from fetched offices count
+    if (officesCount[orgId] !== undefined) {
+      return officesCount[orgId];
+    }
+    // Fallback to organization's offices array length
+    const org = organizations.find(o => o.id === orgId);
+    return org?.offices?.length || 0;
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -139,7 +219,13 @@ export default function OrganizationSwitcher() {
                             {org.code}
                           </span>
                           <span className="text-xs text-[#64748B] font-medium">
-                            {org.offices.length} {org.offices.length === 1 ? 'Office' : 'Offices'}
+                            {loadingOffices ? (
+                              <Loader2 className="w-3 h-3 animate-spin inline" />
+                            ) : (
+                              <>
+                                {getOfficeCount(org.id)} {getOfficeCount(org.id) === 1 ? 'Office' : 'Offices'}
+                              </>
+                            )}
                           </span>
                         </div>
                       </div>

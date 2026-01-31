@@ -506,14 +506,38 @@ const handleSave = async () => {
 
   const payload = buildPutPayload(formData);
 
-  if (mode === "add") {
-    await api.post("/api/v1/offices", payload);
-  } else {
-    await api.put(`/api/v1/offices/${selectedOfficeId}`, payload);
-  }
+  try {
+    if (mode === "add") {
+      await api.post("/api/v1/offices", payload);
+    } else {
+      await api.put(`/api/v1/offices/${selectedOfficeId}`, payload);
+    }
 
-  alert("Office saved successfully");
-  setShowOfficeList(true);
+    // Refetch offices list and next office ID after successful save
+    const [officesRes, nextIdRes] = await Promise.all([
+      api.get("/api/v1/offices"),
+      api.get("/api/v1/offices/next-id")
+    ]);
+
+    // Map API response to Office interface, handling both camelCase and snake_case
+    const mappedOffices = officesRes.data.map((office: any) => ({
+      ...office,
+      // Map audit fields from snake_case to camelCase if needed
+      createdBy: office.createdBy || office.created_by || "System",
+      createdAt: office.createdAt || office.created_at || office.createdDate || office.created_date || "",
+      updatedBy: office.updatedBy || office.updated_by || office.modifiedBy || office.modified_by || "",
+      updatedAt: office.updatedAt || office.updated_at || office.modifiedDate || office.modified_date || "",
+    }));
+
+    setOffices(mappedOffices);
+    setNextOfficeId(nextIdRes.data.nextOfficeId);
+
+    alert("Office saved successfully");
+    setShowOfficeList(true);
+  } catch (error: any) {
+    console.error("Error saving office:", error);
+    alert(error.response?.data?.detail || error.message || "Failed to save office");
+  }
 };
 
 

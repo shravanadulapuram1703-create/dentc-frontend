@@ -9,6 +9,7 @@ import {
   Sparkles,
   Loader2
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export interface ChatMessage {
   id: string;
@@ -210,16 +211,90 @@ export default function AIChatPanel({
                         <Loader2 className="w-4 h-4 animate-spin text-[#3A6EA5]" />
                         <span className="text-sm text-[#64748B]">Thinking...</span>
                       </div>
+                    ) : message.role === 'assistant' ? (
+                      // Render markdown for assistant messages
+                      <div className="text-sm text-[#1E293B]">
+                        <ReactMarkdown
+                          components={{
+                            // Style headings
+                            h1: ({ node, ...props }) => (
+                              <h1 className="text-lg font-bold mb-2 mt-3 first:mt-0" {...props} />
+                            ),
+                            h2: ({ node, ...props }) => (
+                              <h2 className="text-base font-bold mb-2 mt-3 first:mt-0" {...props} />
+                            ),
+                            h3: ({ node, ...props }) => (
+                              <h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0" {...props} />
+                            ),
+                            // Style paragraphs
+                            p: ({ node, ...props }) => (
+                              <p className="mb-2 last:mb-0 break-words" {...props} />
+                            ),
+                            // Style lists
+                            ul: ({ node, ...props }) => (
+                              <ul className="list-disc list-inside mb-2 space-y-1" {...props} />
+                            ),
+                            ol: ({ node, ...props }) => (
+                              <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />
+                            ),
+                            li: ({ node, ...props }) => (
+                              <li className="ml-2" {...props} />
+                            ),
+                            // Style bold text
+                            strong: ({ node, ...props }) => (
+                              <strong className="font-bold" {...props} />
+                            ),
+                            // Style italic text
+                            em: ({ node, ...props }) => (
+                              <em className="italic" {...props} />
+                            ),
+                            // Style code blocks
+                            code: ({ node, inline, ...props }: any) => {
+                              if (inline) {
+                                return (
+                                  <code
+                                    className="bg-[#E2E8F0] px-1.5 py-0.5 rounded text-xs font-mono"
+                                    {...props}
+                                  />
+                                );
+                              }
+                              return (
+                                <code
+                                  className="block bg-[#E2E8F0] p-2 rounded text-xs font-mono overflow-x-auto mb-2"
+                                  {...props}
+                                />
+                              );
+                            },
+                            // Style links
+                            a: ({ node, ...props }) => (
+                              <a
+                                className="text-[#3A6EA5] hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                {...props}
+                              />
+                            ),
+                            // Style blockquotes
+                            blockquote: ({ node, ...props }) => (
+                              <blockquote
+                                className="border-l-4 border-[#3A6EA5] pl-3 italic my-2"
+                                {...props}
+                              />
+                            ),
+                            // Style horizontal rules
+                            hr: ({ node, ...props }) => (
+                              <hr className="my-3 border-[#E2E8F0]" {...props} />
+                            ),
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
-                      // <p className="text-sm whitespace-pre-wrap break-words text-white">
-                      <p
-                        className={`text-sm whitespace-pre-wrap break-words ${
-                          message.role === 'user' ? 'text-white' : 'text-[#1E293B]'
-                        }`}
-                      >
+                      // Plain text for user messages
+                      <p className="text-sm whitespace-pre-wrap break-words text-white">
                         {message.content}
                       </p>
-
                     )}
                     <span className="text-xs opacity-70 mt-1 block">
                       {message.timestamp.toLocaleTimeString([], {

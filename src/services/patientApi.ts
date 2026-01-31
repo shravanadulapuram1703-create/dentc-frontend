@@ -439,13 +439,152 @@ export interface PatientSearchParams {
 // ===== API FUNCTIONS =====
 
 /**
+ * Extract numeric office ID from office string or use directly if it's already an ID
+ * Handles formats like: "Office Name [108]" -> 108, "OFF-1" -> 1, "1" -> 1
+ */
+const extractOfficeId = (officeStr: string | number | undefined): number | undefined => {
+  if (!officeStr) return undefined;
+  
+  // If already a number, return as-is
+  if (typeof officeStr === 'number') {
+    return officeStr;
+  }
+  
+  const officeStrValue = String(officeStr).trim();
+  
+  // If already just a number, return as-is
+  if (/^\d+$/.test(officeStrValue)) {
+    return parseInt(officeStrValue, 10);
+  }
+  
+  // First, try to extract from brackets: "Office Name [108]" -> 108
+  const bracketMatch = officeStrValue.match(/\[(\d+)\]/);
+  if (bracketMatch && bracketMatch[1]) {
+    return parseInt(bracketMatch[1], 10);
+  }
+  
+  // Try to extract number from "OFF-{number}" format: "OFF-1" -> 1
+  const offMatch = officeStrValue.match(/(?:OFF-|OFF\s*)(\d+)/i);
+  if (offMatch && offMatch[1]) {
+    return parseInt(offMatch[1], 10);
+  }
+  
+  // Try to extract any trailing number: "Office Name 108" -> 108
+  const trailingMatch = officeStrValue.match(/(\d+)$/);
+  if (trailingMatch && trailingMatch[1]) {
+    return parseInt(trailingMatch[1], 10);
+  }
+  
+  return undefined;
+};
+
+/**
  * Create a new patient
  * Chart number is auto-generated if not provided
+ * Transforms flat structure to nested structure expected by backend
+ * Sends complete schema with null values for missing fields
  */
 export const createPatient = async (
   data: PatientCreateRequest
 ): Promise<Patient> => {
-  const response = await api.post<Patient>("/api/v1/patients", data);
+  // Transform flat structure to nested structure expected by backend
+  // Send complete schema structure even if values are null/undefined
+  const payload: any = {
+    identity: {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      preferred_name: null,
+      dob: data.dob || null,
+      gender: data.gender || null,
+      title: null,
+      pronouns: null,
+      marital_status: null,
+      ssn: null,
+      medi_id: null,
+    },
+    address: {
+      address_line_1: null,
+      address_line_2: null,
+      city: null,
+      state: null,
+      zip: null,
+      country: "USA",
+    },
+    contact: {
+      home_phone: null,
+      cell_phone: data.phone ? data.phone.replace(/\D/g, '') : null, // Remove non-digits
+      work_phone: null,
+      email: data.email || null,
+      preferred_contact: data.phone ? 'Cell' : null,
+    },
+    office: {
+      home_office_id: (() => {
+        if (!data.homeOfficeId) {
+          throw new Error("home_office_id is required to create a patient");
+        }
+        return typeof data.homeOfficeId === 'number' 
+          ? data.homeOfficeId 
+          : parseInt(String(data.homeOfficeId), 10);
+      })(),
+    },
+    provider: {
+      preferred_provider_id: null,
+      preferred_hygienist_id: null,
+    },
+    fee_schedule: {
+      fee_schedule_id: null,
+    },
+    patient_type: "General",
+    patient_flags: {
+      is_ortho: false,
+      is_child: false,
+      is_collection_problem: false,
+      is_employee_family: false,
+      is_short_notice: false,
+      is_senior: false,
+      is_spanish_speaking: false,
+      assign_benefits: true,
+      hipaa_agreement: false,
+      no_correspondence: false,
+      no_auto_email: false,
+      no_auto_sms: false,
+      add_to_quickfill: false,
+    },
+    responsible_party: {
+      _relationship: null,
+      responsible_party_id: null,
+    },
+    coverage: {
+      no_coverage: false,
+      primary_dental: false,
+      secondary_dental: false,
+      primary_medical: false,
+      secondary_medical: false,
+    },
+    referral: {
+      referral_type: null,
+      referred_by: null,
+      referred_to: null,
+      referral_to_date: null,
+    },
+    guardian: {
+      guardian_name: null,
+      guardian_phone: null,
+    },
+    notes: {
+      patient_notes: null,
+      hipaa_sharing: null,
+    },
+    starting_balances: {
+      current: "0.00",
+      over_30: "0.00",
+      over_60: "0.00",
+      over_90: "0.00",
+      over_120: "0.00",
+    },
+  };
+
+  const response = await api.post<Patient>("/api/v1/patients", payload);
   return response.data;
 };
 
