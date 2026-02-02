@@ -180,9 +180,8 @@ export default function PatientSecondaryNav({
       icon: ImageIcon,
       label: "Imaging",
       gradient: "from-cyan-600 to-blue-600",
-      onClick: () =>
-        alert("Launch Imaging System - Coming Soon"),
-      description: "Launch Imaging (XVW Web)",
+      onClick: () => handleNavigation("/xray-imaging"),
+      description: "X-Ray Imaging (Vatech)",
     },
     {
       icon: Globe,

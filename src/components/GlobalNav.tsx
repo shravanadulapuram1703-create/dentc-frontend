@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Calendar,
@@ -5,73 +6,72 @@ import {
   CreditCard,
   FileText,
   BarChart3,
+  Wrench,
   Settings,
   HelpCircle,
   User,
+  Clock,
   LogOut,
   ChevronDown,
+  Building2,
   Search,
   UserPlus,
-  Building2,
-  DollarSign,
-  Wrench,
-  Shield,
-  Stethoscope,
-  Pill,
-  Receipt,
-  Bell,
-  Activity,
-  ClipboardList,
-  FileSpreadsheet,
-  ListChecks,
-  FileCheck,
-  Repeat,
-  Database,
-  Clock,
   Link2,
   UserCheck,
   CalendarClock,
   Heart,
+  Pill,
+  Receipt,
+  Shield,
+  ClipboardList,
   AlertCircle,
+  Activity,
   Target,
   Ruler,
   Mail,
   UserX,
   MapPin,
   RotateCcw,
+  Repeat,
   MonitorPlay,
   Smartphone,
   Wallet,
+  FileSpreadsheet,
   Clipboard,
+  FileCheck,
   TrendingUp,
+  BarChart3 as BarChartIcon,
   Briefcase,
   Network,
+  Bell,
   FileBarChart,
-  Layers,
-  Lock,
-  FileEdit,
-  Tag,
+  ListChecks,
   Send,
+  Tag,
+  FileEdit,
   Star,
   SearchCheck,
   Archive,
   Package,
+  Database,
   UserCog,
+  DollarSign,
   Phone,
   Globe,
   Zap,
+  Layers,
+  Lock,
+  Stethoscope,
   Download,
   Lightbulb,
-  BookOpen,
   ClipboardCheck,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { SubmenuPortal } from "./navigation/SubmenuPortal";
-import { components } from "../styles/theme.js";
-import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
-import { getOfficesForOrganization } from "../data/organizationData.js";
-import { useAuth } from "../contexts/AuthContext.js";
+import { components } from "../styles/theme";
+import { getOfficesForOrganization } from "../data/organizationData";
+import { useAuth } from "../contexts/AuthContext";
+import OrganizationSwitcher from "./navigation/OrganizationSwitcher";
+import TodaysHoursPanel from "./timeclock/TodaysHoursPanel";
 
 interface GlobalNavProps {
   onLogout: () => void;
@@ -94,22 +94,32 @@ export default function GlobalNav({
 }: GlobalNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
+  const [showOfficeDropdown, setShowOfficeDropdown] =
+    useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const [showTodaysHoursPanel, setShowTodaysHoursPanel] =
+    useState(false);
+
   // CLICK-DRIVEN STATE MANAGEMENT
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [activeMenuPath, setActiveMenuPath] = useState<MenuPathNode[]>([]);
-  
+  const [activeDropdown, setActiveDropdown] = useState<
+    string | null
+  >(null);
+  const [activeMenuPath, setActiveMenuPath] = useState<
+    MenuPathNode[]
+  >([]);
+
   // Track which submenu items are currently showing their submenus
   const [openSubmenus, setOpenSubmenus] = useState<{
-    [key: string]: { items: any[]; position: { top: number; left: number } };
+    [key: string]: {
+      items: any[];
+      position: { top: number; left: number };
+    };
   }>({});
 
   const dropdownRefs = useRef<{
     [key: string]: HTMLDivElement | null;
   }>({});
-  
+
   // Track portal submenu refs for outside click detection
   const submenuRefs = useRef<{
     [key: string]: HTMLDivElement | null;
@@ -179,11 +189,11 @@ export default function GlobalNav({
       icon: Link2,
     },
     { type: "divider" },
-    // {
-    //   label: "Patient Overview",
-    //   path: "/patient/:patientId/overview",
-    //   icon: User,
-    // },
+    {
+      label: "Patient Overview",
+      path: "/patient/:patientId/overview",
+      icon: User,
+    },
     {
       label: "Patient Information",
       path: "/patient/:patientId/information",
@@ -427,7 +437,7 @@ export default function GlobalNav({
     {
       label: "Perio Chart (Old)",
       path: "/patient/:patientId/perio-old",
-      icon: BarChart3,
+      icon: BarChartIcon,
     },
   ];
 
@@ -684,7 +694,7 @@ export default function GlobalNav({
   // UTILITIES DROPDOWN MENU (Global Admin Context)
   const utilitiesMenuItems = [
     {
-      label: "Batch & Claims",
+      label: "Claims Processing",
       icon: Package,
       submenu: [
         {
@@ -715,7 +725,7 @@ export default function GlobalNav({
       ],
     },
     {
-      label: "Generate Contract Charges",
+      label: "Create Billing Charges",
       icon: Receipt,
       submenu: [
         {
@@ -733,7 +743,7 @@ export default function GlobalNav({
       ],
     },
     {
-      label: "Insurance / Procedure",
+      label: "Insurance & Procedures",
       icon: Shield,
       submenu: [
         {
@@ -759,7 +769,7 @@ export default function GlobalNav({
       ],
     },
     {
-      label: "Copy / Move / Change PGID Setup Data",
+      label: "Manage Setup Data",
       icon: Database,
       submenu: [
         {
@@ -781,7 +791,7 @@ export default function GlobalNav({
       ],
     },
     {
-      label: "Office Specific",
+      label: "Office Settings",
       icon: Building2,
       submenu: [
         {
@@ -854,7 +864,7 @@ export default function GlobalNav({
       ],
     },
     {
-      label: "User Functions",
+      label: "User Tools",
       icon: UserCog,
       submenu: [
         {
@@ -877,12 +887,12 @@ export default function GlobalNav({
       icon: DollarSign,
     },
     {
-      label: "Fee Schedule Excel Template",
+      label: "Pricing Template (Excel)",
       path: "/utilities/fee-schedule-excel",
       icon: FileSpreadsheet,
     },
     {
-      label: "Televox",
+      label: "Automated Messaging",
       icon: Phone,
       submenu: [
         {
@@ -892,7 +902,7 @@ export default function GlobalNav({
       ],
     },
     {
-      label: "Third-Party / Integrations",
+      label: "Connected Apps & Services",
       icon: Globe,
       submenu: [
         {
@@ -904,13 +914,13 @@ export default function GlobalNav({
           path: "/utilities/integrations/dps-insurance",
         },
         {
-          label: "Denticon Download",
-          path: "/utilities/integrations/denticon-download",
+          label: "PMS Download",
+          path: "/utilities/integrations/PMS-download",
         },
       ],
     },
     {
-      label: "Launch",
+      label: "Open Tools",
       icon: Zap,
       submenu: [
         {
@@ -949,7 +959,8 @@ export default function GlobalNav({
       icon: User,
     },
     // Tenant option (Super Admin Only) - conditionally rendered
-    ...(user?.role === "owner" || user?.email?.toLowerCase().includes("superadmin")
+    ...(user?.role === "owner" ||
+    user?.email?.toLowerCase().includes("superadmin")
       ? [
           {
             label: "Tenant",
@@ -1311,11 +1322,6 @@ export default function GlobalNav({
       icon: Lightbulb,
     },
     {
-      label: "Denticon Learning Center",
-      path: "/help/learning-center",
-      icon: BookOpen,
-    },
-    {
       label: "Release Notes",
       path: "/help/release-notes",
       icon: FileText,
@@ -1336,7 +1342,7 @@ export default function GlobalNav({
       icon: Receipt,
     },
     {
-      label: "About Denticon",
+      label: "About PMS",
       path: "/help/about",
       icon: Activity,
     },
@@ -1381,12 +1387,12 @@ export default function GlobalNav({
   const handleSubmenuClick = (
     e: React.MouseEvent,
     item: any,
-    submenuKey: string
+    submenuKey: string,
   ) => {
     e.stopPropagation();
-    
+
     const rect = e.currentTarget.getBoundingClientRect();
-    
+
     // If submenu is already open, close it
     if (openSubmenus[submenuKey]) {
       const newOpenSubmenus = { ...openSubmenus };
@@ -1406,12 +1412,16 @@ export default function GlobalNav({
     }
   };
 
-  const renderSubmenu = (items: any[], level: number = 0, parentKey: string = "") => {
+  const renderSubmenu = (
+    items: any[],
+    level: number = 0,
+    parentKey: string = "",
+  ) => {
     return (
       <div className={`${level === 0 ? "py-1" : ""}`}>
         {items.map((item, index) => {
           const submenuKey = `${parentKey}-${index}`;
-          
+
           if (item.type === "divider") {
             return (
               <div
@@ -1423,14 +1433,13 @@ export default function GlobalNav({
 
           if (item.submenu) {
             const isOpen = !!openSubmenus[submenuKey];
-            
+
             return (
-              <div
-                key={index}
-                className="relative"
-              >
+              <div key={index} className="relative">
                 <button
-                  onClick={(e) => handleSubmenuClick(e, item, submenuKey)}
+                  onClick={(e) =>
+                    handleSubmenuClick(e, item, submenuKey)
+                  }
                   className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
                     isOpen
                       ? "bg-blue-50 text-blue-700"
@@ -1636,7 +1645,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "patient" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["patient"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["patient"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "patient"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "patient"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(patientMenuItems)}
               </div>
@@ -1663,7 +1683,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "transactions" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["transactions"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["transactions"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "transactions"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "transactions"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(transactionsMenuItems)}
               </div>
@@ -1688,7 +1719,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "charting" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["charting"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["charting"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "charting"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "charting"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(chartingMenuItems)}
               </div>
@@ -1713,7 +1755,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "reports" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["reports"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["reports"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "reports"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "reports"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(reportsMenuItems)}
               </div>
@@ -1738,7 +1791,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "utilities" && (
-            <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["utilities"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["utilities"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "utilities"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "utilities"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(utilitiesMenuItems)}
               </div>
@@ -1763,7 +1827,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "setup" && (
-            <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["setup"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["setup"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "setup"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "setup"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(setupMenuItems)}
               </div>
@@ -1788,7 +1863,18 @@ export default function GlobalNav({
             />
           </button>
           {activeDropdown === "help" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["help"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["help"]?.getBoundingClientRect().left }}>
+            <div
+              className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden"
+              style={{
+                zIndex: 9999,
+                top: dropdownRefs.current[
+                  "help"
+                ]?.getBoundingClientRect().bottom,
+                left: dropdownRefs.current[
+                  "help"
+                ]?.getBoundingClientRect().left,
+              }}
+            >
               <div className="max-h-[80vh] overflow-y-auto">
                 {renderSubmenu(helpMenuItems)}
               </div>
@@ -1805,6 +1891,15 @@ export default function GlobalNav({
           My Page
         </button>
 
+        {/* Clock Icon - Today's Hours */}
+        <button
+          onClick={() => setShowTodaysHoursPanel(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white/90 hover:bg-white/10 hover:text-white font-semibold transition-all"
+          title="Today's Hours"
+        >
+          <Clock className="w-5 h-5" strokeWidth={2} />
+        </button>
+
         {/* Logout */}
         <button
           onClick={onLogout}
@@ -1814,7 +1909,18 @@ export default function GlobalNav({
           Logout
         </button>
       </div>
-      
+
+      {/* Today's Hours Panel */}
+      {showTodaysHoursPanel && (
+        <TodaysHoursPanel
+          onClose={() => setShowTodaysHoursPanel(false)}
+          currentUserId="USER-001"
+          currentUserName="Dr. Sarah Sharma"
+          currentOfficeId="OFF-101"
+          currentOfficeName={currentOffice}
+        />
+      )}
+
       {/* Render Portal Submenus */}
       {Object.entries(openSubmenus).map(([key, submenu]) => (
         <SubmenuPortal
@@ -1829,10 +1935,11 @@ export default function GlobalNav({
               // This is a nested submenu - handle its click
               const newKey = `${key}-${index}`;
               const buttonElement = document.querySelector(
-                `[data-submenu-key="${newKey}"]`
+                `[data-submenu-key="${newKey}"]`,
               ) as HTMLElement;
               if (buttonElement) {
-                const rect = buttonElement.getBoundingClientRect();
+                const rect =
+                  buttonElement.getBoundingClientRect();
                 setOpenSubmenus({
                   [newKey]: {
                     items: item.submenu,

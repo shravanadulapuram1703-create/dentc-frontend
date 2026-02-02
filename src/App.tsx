@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Toaster } from './components/ui/sonner';
 import Login from './components/Login';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -24,10 +25,13 @@ import AddEditPatientNote from './components/patient/AddEditPatientNote';
 import ProgressNotesListing from './components/patient/ProgressNotesListing';
 import AddEditProgressNote from './components/patient/AddEditProgressNote';
 import ClaimDetail from './components/patient/ClaimDetail';
+import XRayImaging from './components/patient/XRayImaging';
 import UserSetup from './components/pages/setup/UserSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AddNewPatient from './components/pages/AddNewPatient';
+import TimeClockEditor from './components/pages/TimeClockEditor';
+import TimeClockReport from './components/reports/TimeClockReport';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -151,6 +155,7 @@ function AppRoutes() {
         <Route path="progress-notes/edit/:noteId" element={<AddEditProgressNote mode="edit" />} />
         <Route path="progress-notes/view/:noteId" element={<AddEditProgressNote mode="view" />} />
         <Route path="claim/:claimId" element={<ClaimDetail />} />
+        <Route path="xray-imaging" element={<XRayImaging />} />
         <Route path="treatment" element={<PlaceholderPage title="Treatment Plan" />} />
         <Route path="prescriptions" element={<PlaceholderPage title="Prescriptions" />} />
         <Route path="documents" element={<PlaceholderPage title="Documents" />} />
@@ -175,6 +180,9 @@ function AppRoutes() {
         } 
       />
       
+      {/* Reports - Main Categories */}
+      <Route path="/reports/treatment-plan" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Treatment Plan Reports" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      
       {/* Reports - Lists */}
       <Route path="/reports/lists/patient-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Patient List" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/reports/lists/responsible-party-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Responsible Party List" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -185,6 +193,9 @@ function AppRoutes() {
       {/* Reports - Interactive */}
       <Route path="/reports/interactive/unsigned-progress-notes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Unsigned Progress Notes" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/reports/interactive/eligibility-verification" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Eligibility Verification" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      
+      {/* Reports - Management */}
+      <Route path="/reports/management/time-clock" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><TimeClockReport /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Reports - Office */}
       <Route path="/reports/office/abbey-dental" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Abbey Dental Reports" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -242,7 +253,7 @@ function AppRoutes() {
       {/* Utilities - User Functions */}
       <Route path="/utilities/user-functions/tickler" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Tickler" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/utilities/user-functions/timeclock" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Timeclock" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/user-functions/timeclock-editor" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Timeclock Editor" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/utilities/user-functions/timeclock-editor" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><TimeClockEditor /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Utilities - Launch */}
       <Route path="/utilities/launch/appointnow" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="AppointNow" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -351,6 +362,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <AppRoutes />
+        <Toaster />
       </Router>
     </AuthProvider>
   );
