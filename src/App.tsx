@@ -29,6 +29,7 @@ import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
+import AccountSetup from "./components/pages/setup/AccountSetup";
 import { Loader2 } from 'lucide-react';
 import AIChat from './components/ai-chat/AIChat';
 import AddNewPatient from './components/pages/AddNewPatient';
@@ -265,7 +266,24 @@ function AppRoutes() {
           <Navigate to="/login" />
         } 
       />
-      
+
+      {/* Setup - Account Info */}
+      <Route 
+        path="/setup/account-info" 
+        element={
+          isAuthenticated ? 
+          <AdminPageWrapper 
+            onLogout={logout} 
+            currentOffice={currentOffice} 
+            setCurrentOffice={setCurrentOffice}
+          >
+            <AccountSetup />
+          </AdminPageWrapper> : 
+          <Navigate to="/login" />
+        } 
+      />
+
+
       {/* Setup - Offices */}
       <Route path="/setup/offices/office-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><OfficeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/offices/office-assignment" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Office Assignment" /></AdminPageWrapper> : <Navigate to="/login" />} />
