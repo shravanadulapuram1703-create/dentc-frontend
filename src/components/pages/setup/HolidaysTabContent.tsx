@@ -1,17 +1,59 @@
-import { useState } from 'react';
-import { Calendar, Edit, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Calendar, Edit, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { components } from '../../../styles/theme';
+import type { LookupOption } from '../../../services/accountSetupTransform';
+import {
+  fetchHolidays,
+  createHoliday,
+  updateHoliday,
+  deleteHoliday,
+  bulkDeleteHolidays,
+  importFederalHolidays,
+  addHolidayRange,
+  type HolidayApiRow,
+} from '../../../services/accountSetupApi';
 
-export function HolidaysTabContent() {
-  const [holidays, setHolidays] = useState([
-    { id: '1', date: '2026-01-01', name: "New Year's Day", status: 'CLOSED', type: 'Federal', isRecurring: false },
-    { id: '2', date: '2026-05-25', name: 'Memorial Day', status: 'CLOSED', type: 'Federal', isRecurring: false },
-    { id: '3', date: '2026-07-04', name: 'Independence Day', status: 'CLOSED', type: 'Federal', isRecurring: false },
-    { id: '4', date: '2026-12-24', name: 'Christmas Eve', status: 'CLOSED', type: 'Custom', isRecurring: true },
-    { id: '5', date: '2026-12-25', name: 'Christmas Day', status: 'CLOSED', type: 'Federal', isRecurring: false },
-  ]);
-  
+export type UiHoliday = {
+  id: string;
+  date: string;
+  name: string;
+  status: string;
+  type: string;
+  isRecurring: boolean;
+};
+
+function mapRowToUi(row: HolidayApiRow): UiHoliday {
+  return {
+    id: row.id,
+    date: row.holiday_date,
+    name: row.holiday_name,
+    status: row.status,
+    type: row.holiday_type,
+    isRecurring: Boolean(row.is_recurring),
+  };
+}
+
+function statusBadgeLabel(status: string, statusOptions: LookupOption[]) {
+  const found = statusOptions.find((o) => o.value === status);
+  return found?.label ?? status.replace(/_/g, ' ');
+}
+
+type HolidaysTabContentProps = {
+  accountId: string;
+  holidayStatusOptions: LookupOption[];
+  holidayTypeOptions: LookupOption[];
+};
+
+export function HolidaysTabContent({
+  accountId,
+  holidayStatusOptions,
+  holidayTypeOptions,
+}: HolidaysTabContentProps) {
+  const [holidays, setHolidays] = useState<UiHoliday[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mutating, setMutating] = useState(false);
+
   const [selectedHolidays, setSelectedHolidays] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -19,122 +61,157 @@ export function HolidaysTabContent() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showFederalModal, setShowFederalModal] = useState(false);
   const [showRangeModal, setShowRangeModal] = useState(false);
-  const [currentHoliday, setCurrentHoliday] = useState<any>(null);
+  const [currentHoliday, setCurrentHoliday] = useState<UiHoliday | null>(null);
   const [federalYear, setFederalYear] = useState(new Date().getFullYear());
-  
-  // Form state for add/edit
+
   const [holidayName, setHolidayName] = useState('');
   const [holidayDate, setHolidayDate] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [addStatus, setAddStatus] = useState('CLOSED');
+  const [addType, setAddType] = useState('Custom');
+  const [editStatus, setEditStatus] = useState('CLOSED');
+  const [editType, setEditType] = useState('Custom');
+
+  const yearChoices = useMemo(() => {
+    const y = new Date().getFullYear();
+    return Array.from({ length: 12 }, (_, i) => y - 2 + i);
+  }, []);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const rows = await fetchHolidays(accountId);
+      setHolidays(rows.map(mapRowToUi).sort((a, b) => a.date.localeCompare(b.date)));
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Failed to load holidays";
+      toast.error("Could not load holidays", { description: msg });
+      setHolidays([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
 
   const handleSelectAll = () => {
     if (selectedHolidays.length === holidays.length) {
       setSelectedHolidays([]);
     } else {
-      setSelectedHolidays(holidays.map(h => h.id));
+      setSelectedHolidays(holidays.map((h) => h.id));
     }
   };
 
   const handleSelectHoliday = (id: string) => {
     if (selectedHolidays.includes(id)) {
-      setSelectedHolidays(selectedHolidays.filter(hid => hid !== id));
+      setSelectedHolidays(selectedHolidays.filter((hid) => hid !== id));
     } else {
       setSelectedHolidays([...selectedHolidays, id]);
     }
   };
 
-  const handleAddHoliday = () => {
+  const handleAddHoliday = async () => {
     if (!holidayName || !holidayDate) {
       toast.error('Holiday name and date are required');
       return;
     }
-
-    const newHoliday = {
-      id: Date.now().toString(),
-      date: holidayDate,
-      name: holidayName,
-      status: 'CLOSED' as const,
-      type: 'Custom' as const,
-      isRecurring,
-    };
-
-    setHolidays([...holidays, newHoliday].sort((a, b) => a.date.localeCompare(b.date)));
-    setShowAddModal(false);
-    setHolidayName('');
-    setHolidayDate('');
-    setIsRecurring(false);
-    toast.success('Holiday added successfully');
-  };
-
-  const handleEditHoliday = () => {
-    if (!currentHoliday) return;
-
-    const updatedHolidays = holidays.map(h =>
-      h.id === currentHoliday.id
-        ? { ...h, name: holidayName, date: holidayDate, isRecurring }
-        : h
-    );
-
-    setHolidays(updatedHolidays.sort((a, b) => a.date.localeCompare(b.date)));
-    setShowEditModal(false);
-    setCurrentHoliday(null);
-    toast.success('Holiday updated successfully');
-  };
-
-  const handleDeleteHoliday = (id: string) => {
-    if (confirm('Are you sure you want to delete this holiday?')) {
-      setHolidays(holidays.filter(h => h.id !== id));
-      toast.success('Holiday deleted successfully');
+    setMutating(true);
+    try {
+      await createHoliday(accountId, {
+        holiday_date: holidayDate,
+        holiday_name: holidayName,
+        status: addStatus,
+        holiday_type: addType,
+        is_recurring: isRecurring,
+      });
+      await reload();
+      setShowAddModal(false);
+      setHolidayName('');
+      setHolidayDate('');
+      setIsRecurring(false);
+      setAddStatus(holidayStatusOptions[0]?.value ?? 'CLOSED');
+      setAddType(holidayTypeOptions[0]?.value ?? 'Custom');
+      toast.success('Holiday added successfully');
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
+      toast.error("Add holiday failed", { description: msg });
+    } finally {
+      setMutating(false);
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleEditHoliday = async () => {
+    if (!currentHoliday) return;
+    setMutating(true);
+    try {
+      await updateHoliday(accountId, currentHoliday.id, {
+        holiday_name: holidayName,
+        holiday_date: currentHoliday.type?.toLowerCase() === 'federal' ? currentHoliday.date : holidayDate,
+        status: editStatus,
+        holiday_type: editType,
+        is_recurring: currentHoliday.type?.toLowerCase() === 'federal' ? currentHoliday.isRecurring : isRecurring,
+      });
+      await reload();
+      setShowEditModal(false);
+      setCurrentHoliday(null);
+      toast.success('Holiday updated successfully');
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
+      toast.error("Update failed", { description: msg });
+    } finally {
+      setMutating(false);
+    }
+  };
+
+  const handleDeleteHoliday = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this holiday?')) return;
+    setMutating(true);
+    try {
+      await deleteHoliday(accountId, id);
+      await reload();
+      toast.success('Holiday deleted successfully');
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
+      toast.error("Delete failed", { description: msg });
+    } finally {
+      setMutating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
     if (selectedHolidays.length === 0) {
       toast.error('Please select holidays to delete');
       return;
     }
-
-    if (confirm(`Are you sure you want to delete ${selectedHolidays.length} holiday(s)?`)) {
-      setHolidays(holidays.filter(h => !selectedHolidays.includes(h.id)));
+    if (!confirm(`Are you sure you want to delete ${selectedHolidays.length} holiday(s)?`)) return;
+    setMutating(true);
+    try {
+      await bulkDeleteHolidays(accountId, selectedHolidays);
+      await reload();
       setSelectedHolidays([]);
       toast.success(`${selectedHolidays.length} holiday(s) deleted successfully`);
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
+      toast.error("Bulk delete failed", { description: msg });
+    } finally {
+      setMutating(false);
     }
   };
 
-  const handleAddFederalHolidays = () => {
-    const federalHolidays = [
-      { date: `${federalYear}-01-01`, name: "New Year's Day" },
-      { date: `${federalYear}-01-20`, name: 'Martin Luther King Jr. Day' },
-      { date: `${federalYear}-02-17`, name: "Presidents' Day" },
-      { date: `${federalYear}-05-26`, name: 'Memorial Day' },
-      { date: `${federalYear}-07-04`, name: 'Independence Day' },
-      { date: `${federalYear}-09-01`, name: 'Labor Day' },
-      { date: `${federalYear}-10-13`, name: 'Columbus Day' },
-      { date: `${federalYear}-11-11`, name: 'Veterans Day' },
-      { date: `${federalYear}-11-27`, name: 'Thanksgiving Day' },
-      { date: `${federalYear}-12-25`, name: 'Christmas Day' },
-    ];
-
-    const existingDates = new Set(holidays.map(h => h.date));
-    const newHolidays = federalHolidays
-      .filter(fh => !existingDates.has(fh.date))
-      .map(fh => ({
-        id: Date.now().toString() + Math.random(),
-        date: fh.date,
-        name: fh.name,
-        status: 'CLOSED' as const,
-        type: 'Federal' as const,
-        isRecurring: false,
-      }));
-
-    if (newHolidays.length === 0) {
-      toast.info('All federal holidays for this year are already added');
-    } else {
-      setHolidays([...holidays, ...newHolidays].sort((a, b) => a.date.localeCompare(b.date)));
-      toast.success(`${newHolidays.length} federal holiday(s) added successfully`);
+  const handleAddFederalHolidays = async () => {
+    setMutating(true);
+    try {
+      await importFederalHolidays(accountId, federalYear);
+      await reload();
+      setShowFederalModal(false);
+      toast.success('Federal holidays imported');
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
+      toast.error("Import failed", { description: msg });
+    } finally {
+      setMutating(false);
     }
-
-    setShowFederalModal(false);
   };
 
   const handleRangeSelect = () => {
@@ -142,56 +219,68 @@ export function HolidaysTabContent() {
       toast.error('Please select both from and to dates');
       return;
     }
-
     const start = new Date(fromDate);
     const end = new Date(toDate);
-    
     if (start > end) {
       toast.error('From date must be before to date');
       return;
     }
-
     setShowRangeModal(true);
   };
 
-  const confirmRangeAdd = () => {
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
-    const dates = [];
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(new Date(d).toISOString().split('T')[0]);
+  const confirmRangeAdd = async () => {
+    setMutating(true);
+    try {
+      const rangeName = `Closure ${fromDate}–${toDate}`;
+      await addHolidayRange(accountId, { fromDate, toDate, name: rangeName });
+      await reload();
+      setShowRangeModal(false);
+      setFromDate('');
+      setToDate('');
+      toast.success('Date range holidays added');
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
+      toast.error("Range add failed", { description: msg });
+    } finally {
+      setMutating(false);
     }
-
-    const existingDates = new Set(holidays.map(h => h.date));
-    const newHolidays = dates
-      .filter(date => !existingDates.has(date))
-      .map(date => ({
-        id: Date.now().toString() + Math.random(),
-        date,
-        name: `Holiday - ${date}`,
-        status: 'CLOSED' as const,
-        type: 'Custom' as const,
-        isRecurring: false,
-      }));
-
-    setHolidays([...holidays, ...newHolidays].sort((a, b) => a.date.localeCompare(b.date)));
-    setShowRangeModal(false);
-    setFromDate('');
-    setToDate('');
-    toast.success(`${newHolidays.length} holiday(s) added from date range`);
   };
 
-  const openEditModal = (holiday: any) => {
+  const openEditModal = (holiday: UiHoliday) => {
     setCurrentHoliday(holiday);
     setHolidayName(holiday.name);
     setHolidayDate(holiday.date);
     setIsRecurring(holiday.isRecurring);
+    setEditStatus(holiday.status);
+    setEditType(holiday.type);
     setShowEditModal(true);
   };
 
+  const openAddModal = () => {
+    setHolidayName('');
+    setHolidayDate('');
+    setIsRecurring(false);
+    setAddStatus(holidayStatusOptions[0]?.value ?? 'CLOSED');
+    setAddType(holidayTypeOptions[0]?.value ?? 'Custom');
+    setShowAddModal(true);
+  };
+
+  if (loading && holidays.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#64748B]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#3A6EA5]" />
+        <span className="text-sm font-bold">Loading holidays…</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {mutating && (
+        <div className="absolute inset-0 bg-white/60 z-40 flex items-center justify-center rounded-lg">
+          <Loader2 className="w-8 h-8 animate-spin text-[#3A6EA5]" />
+        </div>
+      )}
       {/* Header Controls */}
       <div className="bg-[#F7F9FC] p-4 rounded-lg border-2 border-[#E2E8F0]">
         <div className="flex items-center justify-between gap-4">
@@ -288,18 +377,18 @@ export function HolidaysTabContent() {
                   </td>
                   <td className="px-4 py-3 text-sm text-[#1E293B]">
                     <span className="px-2 py-1 text-xs font-bold bg-red-100 text-red-700 rounded">
-                      Office Closed
+                      {statusBadgeLabel(holiday.status, holidayStatusOptions)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-[#1E293B]">
                     <span
                       className={`px-2 py-1 text-xs font-bold rounded ${
-                        holiday.type === 'Federal'
+                        holiday.type?.toLowerCase() === 'federal'
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-gray-100 text-gray-700'
                       }`}
                     >
-                      {holiday.type}
+                      {holidayTypeOptions.find((o) => o.value === holiday.type)?.label ?? holiday.type}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -312,7 +401,7 @@ export function HolidaysTabContent() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteHoliday(holiday.id)}
+                        onClick={() => void handleDeleteHoliday(holiday.id)}
                         className="p-1.5 text-[#DC2626] hover:bg-red-50 rounded transition-colors"
                         title="Delete"
                       >
@@ -337,20 +426,12 @@ export function HolidaysTabContent() {
       {/* Action Buttons */}
       <div className="flex justify-between items-center">
         <div className="flex gap-3">
-          <button
-            onClick={() => {
-              setHolidayName('');
-              setHolidayDate('');
-              setIsRecurring(false);
-              setShowAddModal(true);
-            }}
-            className={components.buttonPrimary + ' inline-flex items-center gap-2'}
-          >
+          <button onClick={openAddModal} className={components.buttonPrimary + ' inline-flex items-center gap-2'}>
             <Calendar className="w-4 h-4" />
             Add New Holiday
           </button>
           <button
-            onClick={handleBulkDelete}
+            onClick={() => void handleBulkDelete()}
             disabled={selectedHolidays.length === 0}
             className={`${components.buttonOutline} inline-flex items-center gap-2 ${
               selectedHolidays.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
@@ -397,6 +478,32 @@ export function HolidaysTabContent() {
                   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E293B] mb-2">Status</label>
+                  <select
+                    value={addStatus}
+                    onChange={(e) => setAddStatus(e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
+                  >
+                    {holidayStatusOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1E293B] mb-2">Type</label>
+                  <select
+                    value={addType}
+                    onChange={(e) => setAddType(e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
+                  >
+                    {holidayTypeOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -417,7 +524,7 @@ export function HolidaysTabContent() {
                 Cancel
               </button>
               <button
-                onClick={handleAddHoliday}
+                onClick={() => void handleAddHoliday()}
                 className={components.buttonPrimary}
               >
                 Add Holiday
@@ -435,7 +542,7 @@ export function HolidaysTabContent() {
               <h3 className="text-lg font-bold">Edit Holiday</h3>
             </div>
             <div className="p-6 space-y-4">
-              {currentHoliday.type === 'Federal' && (
+              {currentHoliday.type?.toLowerCase() === 'federal' && (
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
                   <p className="text-xs font-bold text-blue-800">
                     Federal Holiday - Date cannot be changed
@@ -469,7 +576,33 @@ export function HolidaysTabContent() {
                   }`}
                 />
               </div>
-              {currentHoliday.type !== 'Federal' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E293B] mb-2">Status</label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
+                  >
+                    {holidayStatusOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1E293B] mb-2">Type</label>
+                  <select
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
+                  >
+                    {holidayTypeOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {currentHoliday.type?.toLowerCase() !== 'federal' && (
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -494,7 +627,7 @@ export function HolidaysTabContent() {
                 Cancel
               </button>
               <button
-                onClick={handleEditHoliday}
+                onClick={() => void handleEditHoliday()}
                 className={components.buttonPrimary}
               >
                 Save Changes
@@ -518,10 +651,10 @@ export function HolidaysTabContent() {
                 </label>
                 <select
                   value={federalYear}
-                  onChange={(e) => setFederalYear(parseInt(e.target.value))}
+                  onChange={(e) => setFederalYear(parseInt(e.target.value, 10))}
                   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
                 >
-                  {[2026, 2027, 2028, 2029, 2030].map(year => (
+                  {yearChoices.map((year) => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
@@ -540,7 +673,7 @@ export function HolidaysTabContent() {
                 Cancel
               </button>
               <button
-                onClick={handleAddFederalHolidays}
+                onClick={() => void handleAddFederalHolidays()}
                 className={components.buttonPrimary}
               >
                 Add Holidays
@@ -571,7 +704,7 @@ export function HolidaysTabContent() {
                 Cancel
               </button>
               <button
-                onClick={confirmRangeAdd}
+                onClick={() => void confirmRangeAdd()}
                 className={components.buttonPrimary}
               >
                 Confirm

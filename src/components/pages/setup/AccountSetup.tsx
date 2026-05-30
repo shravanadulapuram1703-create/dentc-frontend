@@ -1,10 +1,25 @@
-import { useState } from 'react';
-import { Save, X, Edit, Upload, Building2, Mail, Phone, Globe, Calendar, User, Activity, Settings, AlertCircle, Network, CreditCard, Lock } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Save, X, Edit, Upload, Building2, Mail, Phone, Globe, Calendar, User, Activity, Settings, AlertCircle, Network, CreditCard, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { components } from '../../../styles/theme';
 import { HolidaysTabContent } from './HolidaysTabContent';
 import { CommunicationsTabContent } from './CommunicationsTabContent';
 import { OnlineRegistrationTabContent } from './OnlineRegistrationTabContent';
+import { useAuth } from '../../../contexts/AuthContext';
+import {
+  fetchAccount,
+  updateAccount,
+  fetchAdvancedSettings,
+  updateAdvancedSettings,
+  uploadAccountLogoDataUrl,
+  accountSetupLookups,
+} from '../../../services/accountSetupApi';
+import {
+  mapAccountApiToForm,
+  mapBasicFormToPutPayload,
+  mapAdvancedFormToPutPayload,
+  type LookupOption,
+} from '../../../services/accountSetupTransform';
 
 // ========================================
 // TYPES
@@ -40,53 +55,37 @@ interface AccountData {
 
 type TabName = 'basic' | 'advanced' | 'holidays' | 'communications' | 'online-registration';
 
-// ========================================
-// MOCK DATA
-// ========================================
+type AccountFormState = AccountData & Record<string, unknown>;
 
-const mockAccountData: AccountData = {
-  id: 'acc-001',
-  accountNumber: '100123',
-  accountName: 'Smile Bright Dental Group',
-  accountShortId: 'smilebright',
-  contactFirstName: 'Sarah',
-  contactLastName: 'Johnson',
-  corporateAddress: '1234 Main Street, Suite 100',
-  corporateCity: 'San Francisco',
-  corporateState: 'CA',
-  corporateZip: '94102',
-  statementAddress: '1234 Main Street, Suite 100',
-  statementCity: 'San Francisco',
-  statementState: 'CA',
-  statementZip: '94102',
-  email: 'billing@smilebright.com',
-  phone: '(415) 555-1234',
-  phone2: '(415) 555-5678',
-  cultureCode: 'en-US',
-  logoUrl: '',
-  custom1: '',
-  custom2: '',
-  pgid: 'PG-5001',
-  oid: 'OFF-101',
-  updatedAt: '2024-02-28 10:45:00',
-  updatedBy: 'admin@smilebright.com',
-};
-
-const US_STATES = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-];
-
-const CULTURE_OPTIONS = [
-  { code: 'en-US', label: 'English - United States' },
-  { code: 'en-GB', label: 'English - United Kingdom' },
-  { code: 'es-US', label: 'Spanish - United States' },
-  { code: 'fr-CA', label: 'French - Canada' },
-  { code: 'zh-CN', label: 'Chinese - Simplified' },
-];
+function emptyAccountForm(accountId: string): AccountFormState {
+  return {
+    id: accountId,
+    accountNumber: '',
+    accountName: '',
+    accountShortId: '',
+    contactFirstName: '',
+    contactLastName: '',
+    corporateAddress: '',
+    corporateCity: '',
+    corporateState: '',
+    corporateZip: '',
+    statementAddress: '',
+    statementCity: '',
+    statementState: '',
+    statementZip: '',
+    email: '',
+    phone: '',
+    phone2: '',
+    cultureCode: '',
+    logoUrl: '',
+    custom1: '',
+    custom2: '',
+    pgid: '',
+    oid: '',
+    updatedAt: '',
+    updatedBy: '',
+  };
+}
 
 // ========================================
 // BASIC TAB COMPONENT
@@ -95,11 +94,15 @@ const CULTURE_OPTIONS = [
 function BasicTab({ 
   formData, 
   updateFormData, 
-  isEditMode 
+  isEditMode,
+  usStateOptions,
+  cultureOptions,
 }: { 
   formData: AccountData; 
   updateFormData: (updates: Partial<AccountData>) => void;
   isEditMode: boolean;
+  usStateOptions: LookupOption[];
+  cultureOptions: LookupOption[];
 }) {
   const [logoPreview, setLogoPreview] = useState<string>(formData.logoUrl);
 
@@ -285,8 +288,8 @@ function BasicTab({
                   }`}
                 >
                   <option value="">State</option>
-                  {US_STATES.map((state) => (
-                    <option key={state} value={state}>{state}</option>
+                  {usStateOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </div>
@@ -379,8 +382,8 @@ function BasicTab({
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                {CULTURE_OPTIONS.map((culture) => (
-                  <option key={culture.code} value={culture.code}>
+                {cultureOptions.map((culture) => (
+                  <option key={culture.value} value={culture.value}>
                     {culture.label}
                   </option>
                 ))}
@@ -505,8 +508,8 @@ function BasicTab({
                   }`}
                 >
                   <option value="">State</option>
-                  {US_STATES.map((state) => (
-                    <option key={state} value={state}>{state}</option>
+                  {usStateOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </div>
@@ -589,42 +592,22 @@ function BasicTab({
 function AdvancedTab({ 
   formData, 
   updateFormData, 
-  isEditMode 
+  isEditMode,
+  ledgerColorOptions,
+  chartingOptionMetas,
+  chartingTabMetas,
+  ediVendorOptions,
+  postingOfficeOptions,
 }: { 
   formData: any; 
   updateFormData: (updates: any) => void;
   isEditMode: boolean;
+  ledgerColorOptions: LookupOption[];
+  chartingOptionMetas: LookupOption[];
+  chartingTabMetas: LookupOption[];
+  ediVendorOptions: LookupOption[];
+  postingOfficeOptions: LookupOption[];
 }) {
-  // Predefined color palette for ledger colors
-  const colorMaster = [
-    { name: 'Blue', hex: '#2563EB' },
-    { name: 'Black', hex: '#000000' },
-    { name: 'Aqua', hex: '#00FFFF' },
-    { name: 'CadetBlue', hex: '#5F9EA0' },
-    { name: 'Chartreuse', hex: '#7FFF00' },
-    { name: 'Chocolate', hex: '#D2691E' },
-    { name: 'Brown', hex: '#A52A2A' },
-    { name: 'OrangeRed', hex: '#FF4500' },
-    { name: 'DarkGray', hex: '#1F2937' },
-    { name: 'Teal', hex: '#0D9488' },
-    { name: 'Purple', hex: '#7C3AED' },
-    { name: 'Green', hex: '#16A34A' },
-    { name: 'Amber', hex: '#D97706' },
-    { name: 'LightGray', hex: '#9CA3AF' },
-    { name: 'Crimson', hex: '#DC143C' },
-    { name: 'DarkGreen', hex: '#006400' },
-    { name: 'DarkOrange', hex: '#FF8C00' },
-    { name: 'DeepPink', hex: '#FF1493' },
-    { name: 'DodgerBlue', hex: '#1E90FF' },
-    { name: 'Fuchsia', hex: '#FF00FF' },
-    { name: 'Gold', hex: '#FFD700' },
-    { name: 'Indigo', hex: '#4B0082' },
-    { name: 'Maroon', hex: '#800000' },
-    { name: 'Navy', hex: '#000080' },
-    { name: 'Olive', hex: '#808000' },
-    { name: 'Coral', hex: '#FF7F50' },
-  ];
-
   const ledgerColors = [
     { key: 'procedureColor', label: 'Procedures', default: 'DarkGray', description: 'Doctor posts treatment' },
     { key: 'insurancePaymentColor', label: 'Insurance Payments', default: 'Teal', description: 'Insurance EOB posted' },
@@ -635,23 +618,10 @@ function AdvancedTab({
     { key: 'notesLinesColor', label: 'Notes Lines', default: 'LightGray', description: 'Internal ledger notes' },
   ];
 
-  // Helper function to get hex color from color name
   const getColorHex = (colorName: string) => {
-    const color = colorMaster.find(c => c.name === colorName);
+    const color = ledgerColorOptions.find(c => c.value === colorName);
     return color?.hex || '#000000';
   };
-
-  const chartingOptions = [
-    { value: 'modal', label: 'Modal Style' },
-    { value: 'submenu', label: 'Submenu Style' },
-    { value: 'tabbed', label: 'Tabbed Style' },
-  ];
-
-  const chartingTabs = [
-    { value: 'pre-existing', label: 'Pre-Existing' },
-    { value: 'conditions', label: 'Conditions' },
-    { value: 'treatment', label: 'Treatment' },
-  ];
 
   return (
     <div className="space-y-6">
@@ -692,9 +662,9 @@ function AdvancedTab({
                           : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                       }`}
                     >
-                      {colorMaster.map((c) => (
-                        <option key={c.name} value={c.name}>
-                          {c.name}
+                      {ledgerColorOptions.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
                         </option>
                       ))}
                     </select>
@@ -906,7 +876,7 @@ function AdvancedTab({
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                {chartingOptions.map((option) => (
+                {chartingOptionMetas.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -929,7 +899,7 @@ function AdvancedTab({
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                {chartingTabs.map((tab) => (
+                {chartingTabMetas.map((tab) => (
                   <option key={tab.value} value={tab.value}>
                     {tab.label}
                   </option>
@@ -1090,10 +1060,9 @@ function AdvancedTab({
                 }`}
               >
                 <option value="">Select EDI Vendor</option>
-                <option value="nea">NEA</option>
-                <option value="dentrix">Dentrix Ascend</option>
-                <option value="healthicity">Healthicity</option>
-                <option value="waystar">Waystar</option>
+                {ediVendorOptions.map((v) => (
+                  <option key={v.value} value={v.value}>{v.label}</option>
+                ))}
               </select>
             </div>
 
@@ -1187,9 +1156,9 @@ function AdvancedTab({
               }`}
             >
               <option value="">Select Office</option>
-              <option value="main">Main Office</option>
-              <option value="branch1">Branch Office 1</option>
-              <option value="branch2">Branch Office 2</option>
+              {postingOfficeOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
             <p className="text-xs text-[#64748B] mt-1">
               Which office ledger receives online payments
@@ -1300,16 +1269,30 @@ function AdvancedTab({
   );
 }
 
-function HolidaysTab() {
-  return <HolidaysTabContent />;
+function HolidaysTab({
+  accountId,
+  holidayStatusOptions,
+  holidayTypeOptions,
+}: {
+  accountId: string;
+  holidayStatusOptions: LookupOption[];
+  holidayTypeOptions: LookupOption[];
+}) {
+  return (
+    <HolidaysTabContent
+      accountId={accountId}
+      holidayStatusOptions={holidayStatusOptions}
+      holidayTypeOptions={holidayTypeOptions}
+    />
+  );
 }
 
-function CommunicationsTab() {
-  return <CommunicationsTabContent />;
+function CommunicationsTab({ accountId }: { accountId: string }) {
+  return <CommunicationsTabContent accountId={accountId} />;
 }
 
-function OnlineRegistrationTab() {
-  return <OnlineRegistrationTabContent />;
+function OnlineRegistrationTab({ accountId }: { accountId: string }) {
+  return <OnlineRegistrationTabContent accountId={accountId} />;
 }
 
 // ========================================
@@ -1317,20 +1300,117 @@ function OnlineRegistrationTab() {
 // ========================================
 
 export default function AccountSetup() {
+  const { currentOrganization, user } = useAuth();
+  const accountId = currentOrganization;
+
   const [activeTab, setActiveTab] = useState<TabName>('basic');
   const [isEditMode, setIsEditMode] = useState(false);
-  const [formData, setFormData] = useState<AccountData>(mockAccountData);
-  const [originalData, setOriginalData] = useState<AccountData>(mockAccountData);
+  const [formData, setFormData] = useState<AccountFormState>(() => emptyAccountForm(accountId || ''));
+  const [originalData, setOriginalData] = useState<AccountFormState>(() => emptyAccountForm(accountId || ''));
+  const [pageLoading, setPageLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const tabs = [
-    { id: 'basic' as TabName, label: 'BASIC' },
-    { id: 'advanced' as TabName, label: 'ADVANCED' },
-    { id: 'holidays' as TabName, label: 'HOLIDAYS' },
-    { id: 'communications' as TabName, label: 'COMMUNICATIONS' },
-    { id: 'online-registration' as TabName, label: 'ONLINE REGISTRATION' },
-  ];
+  const [usStateOptions, setUsStateOptions] = useState<LookupOption[]>([]);
+  const [cultureOptions, setCultureOptions] = useState<LookupOption[]>([]);
+  const [ledgerColorOptions, setLedgerColorOptions] = useState<LookupOption[]>([]);
+  const [chartingOptionMetas, setChartingOptionMetas] = useState<LookupOption[]>([]);
+  const [chartingTabMetas, setChartingTabMetas] = useState<LookupOption[]>([]);
+  const [ediVendorOptions, setEdiVendorOptions] = useState<LookupOption[]>([]);
+  const [postingOfficeOptions, setPostingOfficeOptions] = useState<LookupOption[]>([]);
+  const [holidayStatusOptions, setHolidayStatusOptions] = useState<LookupOption[]>([]);
+  const [holidayTypeOptions, setHolidayTypeOptions] = useState<LookupOption[]>([]);
 
-  const updateFormData = (updates: Partial<AccountData>) => {
+  const loadAccountAndAdvanced = useCallback(async () => {
+    if (!accountId) {
+      setPageLoading(false);
+      return;
+    }
+    setPageLoading(true);
+    try {
+      const [basicRow, advRow] = await Promise.all([
+        fetchAccount(accountId),
+        fetchAdvancedSettings(accountId),
+      ]);
+      const merged = { ...basicRow, ...advRow };
+      const next = mapAccountApiToForm(merged) as AccountFormState;
+      setFormData(next);
+      setOriginalData(next);
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Failed to load account";
+      toast.error("Unable to load account", { description: msg });
+      const empty = emptyAccountForm(accountId);
+      setFormData(empty);
+      setOriginalData(empty);
+    } finally {
+      setPageLoading(false);
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    void loadAccountAndAdvanced();
+  }, [loadAccountAndAdvanced]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [
+        st,
+        cu,
+        colors,
+        chOpt,
+        chTab,
+        edi,
+        holSt,
+        holTy,
+      ] = await Promise.all([
+        accountSetupLookups.states(),
+        accountSetupLookups.cultures(),
+        accountSetupLookups.ledgerColors(),
+        accountSetupLookups.chartingOptions(),
+        accountSetupLookups.chartingTabs(),
+        accountSetupLookups.ediVendors(),
+        accountSetupLookups.holidayStatuses(),
+        accountSetupLookups.holidayTypes(),
+      ]);
+      if (cancelled) return;
+      setUsStateOptions(st);
+      setCultureOptions(cu);
+      setLedgerColorOptions(colors);
+      setChartingOptionMetas(chOpt);
+      setChartingTabMetas(chTab);
+      setEdiVendorOptions(edi);
+      setHolidayStatusOptions(holSt);
+      setHolidayTypeOptions(holTy);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!accountId) return;
+    let cancelled = false;
+    (async () => {
+      const offices = await accountSetupLookups.postingOffices(accountId);
+      if (!cancelled) setPostingOfficeOptions(offices);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId]);
+
+  const tabs = useMemo(
+    () => [
+      { id: 'basic' as TabName, label: 'BASIC' },
+      { id: 'advanced' as TabName, label: 'ADVANCED' },
+      { id: 'holidays' as TabName, label: 'HOLIDAYS' },
+      { id: 'communications' as TabName, label: 'COMMUNICATIONS' },
+      { id: 'online-registration' as TabName, label: 'ONLINE REGISTRATION' },
+    ],
+    []
+  );
+
+  const updateFormData = (updates: Partial<AccountFormState>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
@@ -1344,8 +1424,12 @@ export default function AccountSetup() {
     setIsEditMode(false);
   };
 
-  const handleSave = () => {
-    // Validation
+  const handleSave = async () => {
+    if (!accountId) {
+      toast.error("No organization selected");
+      return;
+    }
+
     const errors: string[] = [];
 
     if (!formData.accountName?.trim()) {
@@ -1371,25 +1455,54 @@ export default function AccountSetup() {
       return;
     }
 
-    // Update audit fields
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const updatedFormData = {
-      ...formData,
-      updatedAt: now,
-      updatedBy: 'admin@smilebright.com', // Replace with actual user
-    };
+    setSaving(true);
+    try {
+      let logoUrl = formData.logoUrl;
+      if (logoUrl && logoUrl.startsWith("data:image/")) {
+        const up = await uploadAccountLogoDataUrl(accountId, logoUrl);
+        const nextUrl =
+          up && typeof up === "object" && "logo_url" in up
+            ? String((up as { logo_url?: string }).logo_url ?? "")
+            : "";
+        if (nextUrl) logoUrl = nextUrl;
+      }
 
-    setFormData(updatedFormData);
-    setOriginalData(updatedFormData);
-    setIsEditMode(false);
+      const basicPayload = mapBasicFormToPutPayload({ ...formData, logoUrl });
+      const advPayload = mapAdvancedFormToPutPayload(formData as Record<string, unknown>);
 
-    console.log('Saving account data:', updatedFormData);
-    
-    toast.success('Account Updated Successfully', {
-      description: 'Account information has been saved',
-      duration: 3000,
-    });
+      await updateAccount(accountId, basicPayload);
+      await updateAdvancedSettings(accountId, advPayload);
+
+      const refreshed = await fetchAccount(accountId);
+      const adv = await fetchAdvancedSettings(accountId);
+      const merged = mapAccountApiToForm({ ...refreshed, ...adv }) as AccountFormState;
+      const displayBy = user?.email ?? merged.updatedBy;
+      const next = { ...merged, updatedBy: displayBy || merged.updatedBy };
+      setFormData(next);
+      setOriginalData(next);
+      setIsEditMode(false);
+      toast.success('Account Updated Successfully', {
+        description: 'Account information has been saved',
+        duration: 3000,
+      });
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? String((e as Error).message)
+          : "Save failed";
+      toast.error("Save failed", { description: msg });
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (!accountId) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
+        <p className="text-sm font-bold text-[#64748B]">Select an organization to manage account setup.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -1455,23 +1568,45 @@ export default function AccountSetup() {
 
           {/* Tab Content */}
           <div className="p-6">
-            {activeTab === 'basic' && (
-              <BasicTab 
-                formData={formData} 
-                updateFormData={updateFormData} 
-                isEditMode={isEditMode}
-              />
+            {pageLoading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#64748B]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3A6EA5]" />
+                <span className="text-sm font-bold">Loading account…</span>
+              </div>
+            ) : (
+              <>
+                {activeTab === 'basic' && (
+                  <BasicTab
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    isEditMode={isEditMode}
+                    usStateOptions={usStateOptions}
+                    cultureOptions={cultureOptions}
+                  />
+                )}
+                {activeTab === 'advanced' && (
+                  <AdvancedTab
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    isEditMode={isEditMode}
+                    ledgerColorOptions={ledgerColorOptions}
+                    chartingOptionMetas={chartingOptionMetas}
+                    chartingTabMetas={chartingTabMetas}
+                    ediVendorOptions={ediVendorOptions}
+                    postingOfficeOptions={postingOfficeOptions}
+                  />
+                )}
+                {activeTab === 'holidays' && (
+                  <HolidaysTab
+                    accountId={accountId}
+                    holidayStatusOptions={holidayStatusOptions}
+                    holidayTypeOptions={holidayTypeOptions}
+                  />
+                )}
+                {activeTab === 'communications' && <CommunicationsTab accountId={accountId} />}
+                {activeTab === 'online-registration' && <OnlineRegistrationTab accountId={accountId} />}
+              </>
             )}
-            {activeTab === 'advanced' && (
-              <AdvancedTab 
-                formData={formData} 
-                updateFormData={updateFormData} 
-                isEditMode={isEditMode}
-              />
-            )}
-            {activeTab === 'holidays' && <HolidaysTab />}
-            {activeTab === 'communications' && <CommunicationsTab />}
-            {activeTab === 'online-registration' && <OnlineRegistrationTab />}
           </div>
 
           {/* Footer Actions */}
@@ -1495,10 +1630,11 @@ export default function AccountSetup() {
                     Cancel
                   </button>
                   <button
-                    onClick={handleSave}
-                    className={components.buttonPrimary + " inline-flex items-center gap-2"}
+                    onClick={() => void handleSave()}
+                    disabled={saving || pageLoading}
+                    className={components.buttonPrimary + " inline-flex items-center gap-2 disabled:opacity-50"}
                   >
-                    <Save className="w-4 h-4" />
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Save
                   </button>
                 </>

@@ -1,6 +1,15 @@
-import { useState } from 'react';
-import { Building2, User, Phone, Globe, AlertCircle, ArrowRight, ArrowLeft, Shield, Save, Edit, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Building2, User, Phone, Globe, AlertCircle, ArrowRight, ArrowLeft, Shield, Save, Edit, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  fetchCommunications,
+  updateCommunications,
+  verifyTelecom,
+  fetchPhoneAssignments,
+  updatePhoneAssignments,
+  accountSetupLookups,
+} from '../../../services/accountSetupApi';
+import type { LookupOption } from '../../../services/accountSetupTransform';
 
 interface Office {
   id: string;
@@ -8,53 +17,271 @@ interface Office {
   isModel: boolean;
 }
 
-export function CommunicationsTabContent() {
+function mapCommRowToState(row: Record<string, unknown>) {
+  return {
+    businessName: String(row.business_name ?? ''),
+    regionOfOperations: String(row.region_of_operations ?? ''),
+    country: String(row.country ?? ''),
+    addressLine1: String(row.comm_address_line_1 ?? ''),
+    city: String(row.comm_city ?? ''),
+    state: String(row.comm_state ?? ''),
+    zip: String(row.comm_zip ?? ''),
+    ein: String(row.ein ?? ''),
+    website: String(row.website ?? ''),
+    contactFirstName: String(row.comm_contact_first_name ?? ''),
+    contactLastName: String(row.comm_contact_last_name ?? ''),
+    businessTitle: String(row.business_title ?? ''),
+    position: String(row.position ?? ''),
+    contactEmail: String(row.comm_contact_email ?? ''),
+    contactPhone: String(row.comm_contact_phone ?? ''),
+    businessType: String(row.business_type ?? ''),
+    companyStatus: String(row.company_status ?? ''),
+    stockSymbol: String(row.stock_symbol ?? ''),
+    stockExchange: String(row.stock_exchange ?? ''),
+    businessIdentity: String(row.business_identity ?? ''),
+    businessIndustry: String(row.business_industry ?? ''),
+    telecomStatus: String(row.telecom_status ?? 'pending') as 'approved' | 'pending' | 'rejected',
+  };
+}
+
+function stateToPutPayload(s: ReturnType<typeof mapCommRowToState>, einDirty: boolean, einValue: string) {
+  return {
+    business_name: s.businessName,
+    region_of_operations: s.regionOfOperations,
+    country: s.country,
+    comm_address_line_1: s.addressLine1,
+    comm_city: s.city,
+    comm_state: s.state,
+    comm_zip: s.zip,
+    ...(einDirty ? { ein: einValue } : {}),
+    website: s.website,
+    comm_contact_first_name: s.contactFirstName,
+    comm_contact_last_name: s.contactLastName,
+    business_title: s.businessTitle || null,
+    position: s.position || null,
+    comm_contact_email: s.contactEmail,
+    comm_contact_phone: s.contactPhone,
+    business_type: s.businessType || null,
+    company_status: s.companyStatus || null,
+    stock_symbol: s.stockSymbol || null,
+    stock_exchange: s.stockExchange || null,
+    business_identity: s.businessIdentity || null,
+    business_industry: s.businessIndustry || null,
+  };
+}
+
+type CommFormSnapshot = {
+  businessName: string;
+  regionOfOperations: string;
+  country: string;
+  addressLine1: string;
+  city: string;
+  state: string;
+  zip: string;
+  ein: string;
+  website: string;
+  contactFirstName: string;
+  contactLastName: string;
+  businessTitle: string;
+  position: string;
+  contactEmail: string;
+  contactPhone: string;
+  officeSpecific: Office[];
+  multiOfficeShared: Office[];
+  businessType: string;
+  companyStatus: string;
+  stockSymbol: string;
+  stockExchange: string;
+  businessIdentity: string;
+  businessIndustry: string;
+  telecomStatus: 'approved' | 'pending' | 'rejected';
+};
+
+function partitionAssignments(rows: { office_id: string; assignment_type: string; office_name?: string; is_model_office?: boolean }[]) {
+  const officeSpecific: Office[] = [];
+  const multiOfficeShared: Office[] = [];
+  for (const r of rows) {
+    const o: Office = {
+      id: r.office_id,
+      name: r.office_name ?? r.office_id,
+      isModel: Boolean(r.is_model_office),
+    };
+    if (r.assignment_type === 'OFFICE_SPECIFIC') officeSpecific.push(o);
+    else if (r.assignment_type === 'MULTI_OFFICE_SHARED') multiOfficeShared.push(o);
+  }
+  return { officeSpecific, multiOfficeShared };
+}
+
+type CommunicationsTabContentProps = {
+  accountId: string;
+};
+
+export function CommunicationsTabContent({ accountId }: CommunicationsTabContentProps) {
+  const [pageLoading, setPageLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  
-  // Business Information
-  const [businessName, setBusinessName] = useState('Smile Dental Group');
-  const [regionOfOperations, setRegionOfOperations] = useState('United States');
-  const [country, setCountry] = useState('United States');
-  const [addressLine1, setAddressLine1] = useState('123 Main Street, Suite 200');
-  const [city, setCity] = useState('Los Angeles');
-  const [state, setState] = useState('CA');
-  const [zip, setZip] = useState('90210');
-  const [ein, setEin] = useState('XX-XXX1234'); // Masked by default
-  const [website, setWebsite] = useState('https://www.smiledental.com');
-  
-  // Business Contact
-  const [contactFirstName, setContactFirstName] = useState('John');
-  const [contactLastName, setContactLastName] = useState('Smith');
-  const [businessTitle, setBusinessTitle] = useState('Practice Owner');
-  const [position, setPosition] = useState('DDS');
-  const [contactEmail, setContactEmail] = useState('john.smith@smiledental.com');
-  const [contactPhone, setContactPhone] = useState('+1 (310) 555-1234');
-  
-  // Phone Number Assignment
-  const [officeSpecific, setOfficeSpecific] = useState<Office[]>([
-    { id: '1', name: 'Main Office - Downtown LA', isModel: true },
-    { id: '2', name: 'Westside Branch', isModel: false },
-  ]);
-  
-  const [multiOfficeShared, setMultiOfficeShared] = useState<Office[]>([
-    { id: '3', name: 'Beverly Hills Office', isModel: false },
-    { id: '4', name: 'Santa Monica Office', isModel: false },
-    { id: '5', name: 'Pasadena Office', isModel: false },
-  ]);
-  
+
+  const [businessName, setBusinessName] = useState('');
+  const [regionOfOperations, setRegionOfOperations] = useState('');
+  const [country, setCountry] = useState('');
+  const [addressLine1, setAddressLine1] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zip, setZip] = useState('');
+  const [ein, setEin] = useState('');
+  const [einBaseline, setEinBaseline] = useState('');
+  const [website, setWebsite] = useState('');
+
+  const [contactFirstName, setContactFirstName] = useState('');
+  const [contactLastName, setContactLastName] = useState('');
+  const [businessTitle, setBusinessTitle] = useState('');
+  const [position, setPosition] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+
+  const [officeSpecific, setOfficeSpecific] = useState<Office[]>([]);
+  const [multiOfficeShared, setMultiOfficeShared] = useState<Office[]>([]);
+
   const [selectedOfficeSpecific, setSelectedOfficeSpecific] = useState<string[]>([]);
   const [selectedMultiOffice, setSelectedMultiOffice] = useState<string[]>([]);
-  
-  // Business Type
-  const [businessType, setBusinessType] = useState('Corporation');
-  const [companyStatus, setCompanyStatus] = useState('Privately Held');
+
+  const [businessType, setBusinessType] = useState('');
+  const [companyStatus, setCompanyStatus] = useState('');
   const [stockSymbol, setStockSymbol] = useState('');
   const [stockExchange, setStockExchange] = useState('');
-  const [businessIdentity, setBusinessIdentity] = useState('Healthcare Provider');
-  const [businessIndustry, setBusinessIndustry] = useState('Dental Practice');
-  
-  // Telecom Status
-  const [telecomStatus, setTelecomStatus] = useState<'approved' | 'pending' | 'rejected'>('approved');
+  const [businessIdentity, setBusinessIdentity] = useState('');
+  const [businessIndustry, setBusinessIndustry] = useState('');
+
+  const [telecomStatus, setTelecomStatus] = useState<'approved' | 'pending' | 'rejected'>('pending');
+
+  const [usStateOptions, setUsStateOptions] = useState<LookupOption[]>([]);
+  const [countryOptions, setCountryOptions] = useState<LookupOption[]>([]);
+  const [businessTypeOptions, setBusinessTypeOptions] = useState<LookupOption[]>([]);
+  const [companyStatusOptions, setCompanyStatusOptions] = useState<LookupOption[]>([]);
+  const [stockExchangeOptions, setStockExchangeOptions] = useState<LookupOption[]>([]);
+  const [businessIndustryOptions, setBusinessIndustryOptions] = useState<LookupOption[]>([]);
+
+  const [loadedSnapshot, setLoadedSnapshot] = useState<CommFormSnapshot | null>(null);
+
+  const applySnapshot = useCallback((snap: CommFormSnapshot) => {
+    setBusinessName(snap.businessName);
+    setRegionOfOperations(snap.regionOfOperations);
+    setCountry(snap.country);
+    setAddressLine1(snap.addressLine1);
+    setCity(snap.city);
+    setState(snap.state);
+    setZip(snap.zip);
+    setEin(snap.ein);
+    setEinBaseline(snap.ein);
+    setWebsite(snap.website);
+    setContactFirstName(snap.contactFirstName);
+    setContactLastName(snap.contactLastName);
+    setBusinessTitle(snap.businessTitle);
+    setPosition(snap.position);
+    setContactEmail(snap.contactEmail);
+    setContactPhone(snap.contactPhone);
+    setOfficeSpecific(snap.officeSpecific);
+    setMultiOfficeShared(snap.multiOfficeShared);
+    setBusinessType(snap.businessType);
+    setCompanyStatus(snap.companyStatus);
+    setStockSymbol(snap.stockSymbol);
+    setStockExchange(snap.stockExchange);
+    setBusinessIdentity(snap.businessIdentity);
+    setBusinessIndustry(snap.businessIndustry);
+    setTelecomStatus(snap.telecomStatus);
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    setPageLoading(true);
+    try {
+      const [st, countries, bt, cs, se, ind] = await Promise.all([
+        accountSetupLookups.states(),
+        accountSetupLookups.countries(),
+        accountSetupLookups.businessTypes(),
+        accountSetupLookups.companyStatuses(),
+        accountSetupLookups.stockExchanges(),
+        accountSetupLookups.businessIndustries(),
+      ]);
+      setUsStateOptions(st);
+      setCountryOptions(countries);
+      setBusinessTypeOptions(bt);
+      setCompanyStatusOptions(cs);
+      setStockExchangeOptions(se);
+      setBusinessIndustryOptions(ind);
+
+      const [comm, phones] = await Promise.all([
+        fetchCommunications(accountId),
+        fetchPhoneAssignments(accountId),
+      ]);
+
+      const m = mapCommRowToState(comm);
+      setBusinessName(m.businessName);
+      setRegionOfOperations(m.regionOfOperations);
+      setCountry(m.country);
+      setAddressLine1(m.addressLine1);
+      setCity(m.city);
+      setState(m.state);
+      setZip(m.zip);
+      setEin(m.ein);
+      setEinBaseline(m.ein);
+      setWebsite(m.website);
+      setContactFirstName(m.contactFirstName);
+      setContactLastName(m.contactLastName);
+      setBusinessTitle(m.businessTitle);
+      setPosition(m.position);
+      setContactEmail(m.contactEmail);
+      setContactPhone(m.contactPhone);
+      setBusinessType(m.businessType);
+      setCompanyStatus(m.companyStatus);
+      setStockSymbol(m.stockSymbol);
+      setStockExchange(m.stockExchange);
+      setBusinessIdentity(m.businessIdentity);
+      setBusinessIndustry(m.businessIndustry);
+      setTelecomStatus(m.telecomStatus);
+
+      const { officeSpecific: os, multiOfficeShared: ms } = partitionAssignments(
+        phones as Record<string, unknown>[]
+      );
+      setOfficeSpecific(os);
+      setMultiOfficeShared(ms);
+
+      setLoadedSnapshot({
+        businessName: m.businessName,
+        regionOfOperations: m.regionOfOperations,
+        country: m.country,
+        addressLine1: m.addressLine1,
+        city: m.city,
+        state: m.state,
+        zip: m.zip,
+        ein: m.ein,
+        website: m.website,
+        contactFirstName: m.contactFirstName,
+        contactLastName: m.contactLastName,
+        businessTitle: m.businessTitle,
+        position: m.position,
+        contactEmail: m.contactEmail,
+        contactPhone: m.contactPhone,
+        officeSpecific: os,
+        multiOfficeShared: ms,
+        businessType: m.businessType,
+        companyStatus: m.companyStatus,
+        stockSymbol: m.stockSymbol,
+        stockExchange: m.stockExchange,
+        businessIdentity: m.businessIdentity,
+        businessIndustry: m.businessIndustry,
+        telecomStatus: m.telecomStatus,
+      });
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Failed to load";
+      toast.error("Could not load communications", { description: msg });
+    } finally {
+      setPageLoading(false);
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
 
   const handleEdit = () => {
     setIsEditMode(true);
@@ -62,62 +289,119 @@ export function CommunicationsTabContent() {
 
   const handleCancel = () => {
     setIsEditMode(false);
-    // Reset form values would go here in production
+    if (loadedSnapshot) {
+      applySnapshot(loadedSnapshot);
+    }
     toast.info('Changes cancelled');
   };
 
-  const handleSave = () => {
-    // Validation
+  const handleSave = async () => {
     if (!businessName || !country || !addressLine1 || !city || !state || !zip || !website) {
       toast.error('Please fill in all required fields in Business Information');
       return;
     }
-    
+
     if (!contactFirstName || !contactLastName || !contactEmail || !contactPhone) {
       toast.error('Please fill in all required fields in Business Contact');
       return;
     }
-    
+
     if (officeSpecific.length > 5) {
       toast.error('Maximum 5 offices allowed for Office-Specific Number (Twilio toll-free limit)');
       return;
     }
-    
-    // In production: encrypt EIN, validate formats, trigger telecom sync
-    setIsEditMode(false);
-    toast.success('Communication settings saved successfully. Telecom provider sync initiated.');
+
+    const s = mapCommRowToState({
+      business_name: businessName,
+      region_of_operations: regionOfOperations,
+      country,
+      comm_address_line_1: addressLine1,
+      comm_city: city,
+      comm_state: state,
+      comm_zip: zip,
+      ein,
+      website,
+      comm_contact_first_name: contactFirstName,
+      comm_contact_last_name: contactLastName,
+      business_title: businessTitle,
+      position,
+      comm_contact_email: contactEmail,
+      comm_contact_phone: contactPhone,
+      business_type: businessType,
+      company_status: companyStatus,
+      stock_symbol: stockSymbol,
+      stock_exchange: stockExchange,
+      business_identity: businessIdentity,
+      business_industry: businessIndustry,
+      telecom_status: telecomStatus,
+    });
+
+    const einDirty = ein !== einBaseline;
+
+    setSaving(true);
+    try {
+      await updateCommunications(accountId, stateToPutPayload(s, einDirty, ein));
+
+      const assignments = [
+        ...officeSpecific.map((o) => ({
+          office_id: o.id,
+          assignment_type: 'OFFICE_SPECIFIC' as const,
+          is_model_office: o.isModel,
+        })),
+        ...multiOfficeShared.map((o) => ({
+          office_id: o.id,
+          assignment_type: 'MULTI_OFFICE_SHARED' as const,
+          is_model_office: o.isModel,
+        })),
+      ];
+      await updatePhoneAssignments(accountId, { assignments });
+
+      try {
+        await verifyTelecom(accountId);
+      } catch {
+        /* optional */
+      }
+
+      await loadAll();
+      setIsEditMode(false);
+      toast.success('Communication settings saved successfully. Telecom provider sync initiated.');
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Save failed";
+      toast.error("Save failed", { description: msg });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const moveToOfficeSpecific = () => {
-    const selected = multiOfficeShared.filter(o => selectedMultiOffice.includes(o.id));
-    
+    const selected = multiOfficeShared.filter((o) => selectedMultiOffice.includes(o.id));
+
     if (officeSpecific.length + selected.length > 5) {
       toast.error('Maximum 5 offices allowed for Office-Specific Number');
       return;
     }
-    
+
     setOfficeSpecific([...officeSpecific, ...selected]);
-    setMultiOfficeShared(multiOfficeShared.filter(o => !selectedMultiOffice.includes(o.id)));
+    setMultiOfficeShared(multiOfficeShared.filter((o) => !selectedMultiOffice.includes(o.id)));
     setSelectedMultiOffice([]);
   };
 
   const moveToMultiOfficeShared = () => {
-    const selected = officeSpecific.filter(o => selectedOfficeSpecific.includes(o.id));
-    
-    // Check if any selected office is the model office
-    if (selected.some(o => o.isModel)) {
+    const selected = officeSpecific.filter((o) => selectedOfficeSpecific.includes(o.id));
+
+    if (selected.some((o) => o.isModel)) {
       toast.error('Model office cannot be assigned to Multi-Office Shared Number');
       return;
     }
-    
+
     setMultiOfficeShared([...multiOfficeShared, ...selected]);
-    setOfficeSpecific(officeSpecific.filter(o => !selectedOfficeSpecific.includes(o.id)));
+    setOfficeSpecific(officeSpecific.filter((o) => !selectedOfficeSpecific.includes(o.id)));
     setSelectedOfficeSpecific([]);
   };
 
   const toggleOfficeSpecificSelection = (id: string) => {
     if (selectedOfficeSpecific.includes(id)) {
-      setSelectedOfficeSpecific(selectedOfficeSpecific.filter(sid => sid !== id));
+      setSelectedOfficeSpecific(selectedOfficeSpecific.filter((sid) => sid !== id));
     } else {
       setSelectedOfficeSpecific([...selectedOfficeSpecific, id]);
     }
@@ -125,11 +409,20 @@ export function CommunicationsTabContent() {
 
   const toggleMultiOfficeSelection = (id: string) => {
     if (selectedMultiOffice.includes(id)) {
-      setSelectedMultiOffice(selectedMultiOffice.filter(sid => sid !== id));
+      setSelectedMultiOffice(selectedMultiOffice.filter((sid) => sid !== id));
     } else {
       setSelectedMultiOffice([...selectedMultiOffice, id]);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#64748B]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#3A6EA5]" />
+        <span className="text-sm font-bold">Loading communications…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -223,9 +516,10 @@ export function CommunicationsTabContent() {
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                <option value="United States">United States</option>
-                <option value="Canada">Canada</option>
-                <option value="United Kingdom">United Kingdom</option>
+                <option value="">Select country</option>
+                {countryOptions.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -268,19 +562,21 @@ export function CommunicationsTabContent() {
               <label className="block text-xs font-bold text-[#1E293B] mb-2">
                 State <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 disabled={!isEditMode}
-                placeholder="CA"
-                maxLength={2}
                 className={`w-full px-3 py-2 border-2 rounded-lg text-sm uppercase ${
                   isEditMode
                     ? 'border-[#CBD5E1] focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
-              />
+              >
+                <option value="">State</option>
+                {usStateOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-[#1E293B] mb-2">
@@ -312,7 +608,7 @@ export function CommunicationsTabContent() {
                   value={ein}
                   onChange={(e) => setEin(e.target.value)}
                   disabled={!isEditMode}
-                  placeholder={businessType === 'Sole Proprietor' ? 'XXX-XX-XXXX (SSN)' : 'XX-XXXXXXX (EIN)'}
+                  placeholder={businessType === 'Sole Proprietorship' ? 'XXX-XX-XXXX (SSN)' : 'XX-XXXXXXX (EIN)'}
                   className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
                     isEditMode
                       ? 'border-[#CBD5E1] focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
@@ -481,13 +777,12 @@ export function CommunicationsTabContent() {
           </div>
 
           <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-start">
-            {/* Office Specific List */}
             <div>
               <h4 className="text-xs font-bold text-[#1E293B] mb-2">
                 Office Specific Number ({officeSpecific.length}/5)
               </h4>
               <div className="bg-white border-2 border-[#CBD5E1] rounded-lg p-3 min-h-[200px] space-y-2">
-                {officeSpecific.map(office => (
+                {officeSpecific.map((office) => (
                   <div
                     key={office.id}
                     onClick={() => isEditMode && toggleOfficeSpecificSelection(office.id)}
@@ -513,7 +808,6 @@ export function CommunicationsTabContent() {
               </div>
             </div>
 
-            {/* Arrow Buttons */}
             <div className="flex flex-col gap-2 items-center justify-center pt-8">
               <button
                 onClick={moveToOfficeSpecific}
@@ -541,11 +835,10 @@ export function CommunicationsTabContent() {
               </button>
             </div>
 
-            {/* Multi-Office Shared List */}
             <div>
               <h4 className="text-xs font-bold text-[#1E293B] mb-2">Multi-Office Shared Number</h4>
               <div className="bg-white border-2 border-[#CBD5E1] rounded-lg p-3 min-h-[200px] space-y-2">
-                {multiOfficeShared.map(office => (
+                {multiOfficeShared.map((office) => (
                   <div
                     key={office.id}
                     onClick={() => isEditMode && toggleMultiOfficeSelection(office.id)}
@@ -592,11 +885,10 @@ export function CommunicationsTabContent() {
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                <option value="Sole Proprietor">Sole Proprietor</option>
-                <option value="Corporation">Corporation</option>
-                <option value="LLC">LLC</option>
-                <option value="Partnership">Partnership</option>
-                <option value="Non-Profit">Non-Profit</option>
+                <option value="">Select…</option>
+                {businessTypeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -613,8 +905,10 @@ export function CommunicationsTabContent() {
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                <option value="Privately Held">Privately Held</option>
-                <option value="Publicly Traded">Publicly Traded</option>
+                <option value="">Select…</option>
+                {companyStatusOptions.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
             {companyStatus === 'Publicly Traded' && (
@@ -651,9 +945,9 @@ export function CommunicationsTabContent() {
                     }`}
                   >
                     <option value="">Select...</option>
-                    <option value="NYSE">NYSE</option>
-                    <option value="NASDAQ">NASDAQ</option>
-                    <option value="AMEX">AMEX</option>
+                    {stockExchangeOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
                   </select>
                 </div>
               </>
@@ -689,10 +983,10 @@ export function CommunicationsTabContent() {
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
               >
-                <option value="Dental Practice">Dental Practice</option>
-                <option value="Medical Practice">Medical Practice</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Other">Other</option>
+                <option value="">Select…</option>
+                {businessIndustryOptions.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -719,10 +1013,11 @@ export function CommunicationsTabContent() {
               Cancel
             </button>
             <button
-              onClick={handleSave}
-              className="px-6 py-2.5 bg-[#0D9488] text-white text-sm font-bold rounded-lg hover:bg-[#0F766E] transition-colors inline-flex items-center gap-2"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="px-6 py-2.5 bg-[#0D9488] text-white text-sm font-bold rounded-lg hover:bg-[#0F766E] transition-colors inline-flex items-center gap-2 disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save
             </button>
           </>

@@ -1,39 +1,59 @@
-import { useState, useRef } from 'react';
-import { Save, X, Edit, Shield, FileText, AlertCircle, Eye, Download } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Save, X, Edit, Shield, FileText, AlertCircle, Eye, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  fetchActiveConsent,
+  createConsentVersion,
+  getConsentPdfUrl,
+  getConsentPreviewUrl,
+} from '../../../services/accountSetupApi';
 
-export function OnlineRegistrationTabContent() {
+type OnlineRegistrationTabContentProps = {
+  accountId: string;
+};
+
+export function OnlineRegistrationTabContent({ accountId }: OnlineRegistrationTabContentProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  
-  // Form state
-  const [header, setHeader] = useState('Patient Consent and Authorization');
-  const [bodyHtml, setBodyHtml] = useState(`<p><strong>HIPAA Privacy Notice & Consent</strong></p>
-<p>I understand that, under the Health Insurance Portability & Accountability Act of 1996 (HIPAA), I have certain rights to privacy regarding my protected health information. I acknowledge that I have received a copy of your Notice of Privacy Practices.</p>
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-<p><strong>Financial Responsibility & Insurance Assignment</strong></p>
-<p>I understand that I am financially responsible for all charges whether or not paid by insurance. I hereby authorize payment of dental benefits to the dentist or dental group. I authorize the dentist to release all information necessary to secure the payment of benefits.</p>
+  const [consentId, setConsentId] = useState<string | null>(null);
+  const [header, setHeader] = useState('');
+  const [bodyHtml, setBodyHtml] = useState('');
+  const [currentVersion, setCurrentVersion] = useState(1);
+  const [effectiveDate, setEffectiveDate] = useState<string | null>(null);
 
-<p><strong>Treatment Consent</strong></p>
-<p>I consent to the diagnostic procedures and treatment by this office during this visit and for all future visits, including but not limited to:</p>
-<ul>
-  <li>Examinations and x-rays</li>
-  <li>Teeth cleaning and preventive care</li>
-  <li>Restorative treatment</li>
-  <li>Emergency dental care</li>
-</ul>
-
-<p><strong>Release of Information</strong></p>
-<p>I authorize the release of any medical or dental information necessary to process insurance claims. I also authorize the disclosure of my protected health information for the purpose of treatment, payment, and healthcare operations.</p>
-
-<p><strong>Electronic Signature Authorization</strong></p>
-<p>I understand that by providing my electronic signature below, I am agreeing to all terms and conditions outlined in this consent form. My electronic signature is legally binding and has the same legal effect as a handwritten signature.</p>
-
-<p><strong>Acknowledgment</strong></p>
-<p>By signing below, I acknowledge that I have read, understood, and agree to the terms outlined in this Patient Consent and Authorization form.</p>`);
-  
-  const [currentVersion, setCurrentVersion] = useState(3);
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const loadConsent = useCallback(async () => {
+    setLoading(true);
+    try {
+      const row = await fetchActiveConsent(accountId);
+      if (row) {
+        setConsentId(row.id);
+        setHeader(row.header ?? '');
+        setBodyHtml(row.body_html ?? '');
+        setCurrentVersion(Number(row.version_number ?? 1));
+        setEffectiveDate(row.effective_date ?? row.created_at ?? null);
+      } else {
+        setConsentId(null);
+        setHeader('');
+        setBodyHtml('');
+        setCurrentVersion(1);
+        setEffectiveDate(null);
+      }
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Failed to load";
+      toast.error("Could not load consent template", { description: msg });
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    void loadConsent();
+  }, [loadConsent]);
 
   const handleEdit = () => {
     setIsEditMode(true);
@@ -41,39 +61,47 @@ export function OnlineRegistrationTabContent() {
 
   const handleCancel = () => {
     setIsEditMode(false);
-    // In production, reset to saved values
+    void loadConsent();
     toast.info('Changes cancelled');
   };
 
-  const handleSave = () => {
-    // Validation
+  const handleSave = async () => {
     if (!header || header.trim().length === 0) {
       toast.error('Header is required');
       return;
     }
-    
+
     if (header.length > 150) {
       toast.error('Header must be 150 characters or less');
       return;
     }
-    
+
     if (!bodyHtml || bodyHtml.trim().length === 0) {
       toast.error('Consent body is required');
       return;
     }
 
-    // In production:
-    // - Sanitize HTML (prevent XSS)
-    // - Store as new version
-    // - Deactivate old version
-    // - Increment version number
-    
-    setCurrentVersion(currentVersion + 1);
-    setIsEditMode(false);
-    toast.success(
-      'New consent version saved successfully. This will apply to future registrations only.',
-      { duration: 5000 }
-    );
+    setSaving(true);
+    try {
+      const created = await createConsentVersion(accountId, {
+        header: header.trim(),
+        body_html: bodyHtml,
+      });
+      if (created?.id) setConsentId(created.id);
+      if (created?.version_number != null) setCurrentVersion(Number(created.version_number));
+      setEffectiveDate(created?.effective_date ?? new Date().toISOString());
+      setIsEditMode(false);
+      await loadConsent();
+      toast.success(
+        'New consent version saved successfully. This will apply to future registrations only.',
+        { duration: 5000 }
+      );
+    } catch (e: unknown) {
+      const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Save failed";
+      toast.error("Save failed", { description: msg });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const applyFormat = (command: string, value?: string) => {
@@ -82,8 +110,39 @@ export function OnlineRegistrationTabContent() {
   };
 
   const handleGeneratePDF = () => {
-    toast.success('Consent PDF generated and ready for download');
+    if (!consentId) {
+      toast.error('No saved consent version to export');
+      return;
+    }
+    const url = getConsentPdfUrl(accountId, consentId);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    toast.success('Opening PDF export…');
   };
+
+  const openPatientPreview = () => {
+    if (!consentId) {
+      setShowPreview(true);
+      return;
+    }
+    const url = getConsentPreviewUrl(accountId, consentId);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const lastUpdatedLabel = effectiveDate
+    ? new Date(effectiveDate).toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : '—';
+
+  if (loading && !header && !bodyHtml) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#64748B]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#3A6EA5]" />
+        <span className="text-sm font-bold">Loading consent template…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -110,13 +169,13 @@ export function OnlineRegistrationTabContent() {
                 Current Version: v{currentVersion}
               </p>
               <p className="text-xs text-[#64748B]">
-                Last updated: February 28, 2026 at 2:45 PM
+                Last updated: {lastUpdatedLabel}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowPreview(true)}
+              onClick={() => (consentId ? openPatientPreview() : setShowPreview(true))}
               className="px-4 py-2 border-2 border-[#CBD5E1] text-[#1E293B] text-sm font-bold rounded-lg hover:bg-[#F7F9FC] transition-colors inline-flex items-center gap-2"
             >
               <Eye className="w-4 h-4" />
@@ -184,8 +243,7 @@ export function OnlineRegistrationTabContent() {
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Body <span className="text-red-500">*</span>
             </label>
-            
-            {/* Toolbar */}
+
             {isEditMode && (
               <div className="bg-white border-2 border-[#CBD5E1] rounded-t-lg p-2 flex flex-wrap gap-1">
                 <button
@@ -249,7 +307,6 @@ export function OnlineRegistrationTabContent() {
               </div>
             )}
 
-            {/* Editor / Display Area */}
             {isEditMode ? (
               <div
                 ref={editorRef}
@@ -266,7 +323,7 @@ export function OnlineRegistrationTabContent() {
                 dangerouslySetInnerHTML={{ __html: bodyHtml }}
               />
             )}
-            
+
             <p className="text-xs text-[#64748B] mt-2">
               Supports bold, italic, underline, lists, and paragraphs • Sanitized for XSS protection
             </p>
@@ -308,10 +365,11 @@ export function OnlineRegistrationTabContent() {
               Cancel
             </button>
             <button
-              onClick={handleSave}
-              className="px-6 py-2.5 bg-[#0D9488] text-white text-sm font-bold rounded-lg hover:bg-[#0F766E] transition-colors inline-flex items-center gap-2"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="px-6 py-2.5 bg-[#0D9488] text-white text-sm font-bold rounded-lg hover:bg-[#0F766E] transition-colors inline-flex items-center gap-2 disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save New Version
             </button>
           </>
@@ -331,14 +389,13 @@ export function OnlineRegistrationTabContent() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 overflow-y-auto flex-1">
-              {/* Patient View Simulation */}
               <div className="max-w-2xl mx-auto">
                 <h2 className="text-2xl font-bold text-[#1E293B] mb-6 text-center">
                   {header}
                 </h2>
-                
+
                 <div
                   className="prose prose-sm max-w-none mb-6 text-[#1E293B]"
                   dangerouslySetInnerHTML={{ __html: bodyHtml }}
@@ -369,7 +426,7 @@ export function OnlineRegistrationTabContent() {
 
                   <div className="bg-[#F7F9FC] p-4 rounded-lg border-2 border-[#E2E8F0]">
                     <p className="text-xs text-[#64748B]">
-                      <strong>Electronic Signature Notice:</strong> By typing your name and clicking "I Agree", you are providing your electronic signature which is legally binding and has the same legal effect as a handwritten signature.
+                      <strong>Electronic Signature Notice:</strong> By typing your name and clicking &quot;I Agree&quot;, you are providing your electronic signature which is legally binding and has the same legal effect as a handwritten signature.
                     </p>
                   </div>
 
