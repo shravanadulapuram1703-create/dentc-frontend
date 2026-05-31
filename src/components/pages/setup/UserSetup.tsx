@@ -3,7 +3,7 @@ import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
 import api from "../../../services/api";
-import { mapApiUserToUI } from "../../../mappers/userMapper";
+import { useUsersGrid } from "@/features/users/useUsersGrid";
 import { mapApiTenantToUI, mapApiOfficeToUI } from "../../../mappers/tenantMapper";
 import { mapSetupApiToUserUI } from "../../../mappers/mapSetupApiToUserUI";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -536,48 +536,10 @@ export default function UserSetup({
   };
 
   
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const tenantId = getTenantId();
-      
-      // Try with tenant_id first if available
-      const config = tenantId 
-        ? { params: { tenant_id: tenantId } }
-        : {};
-      
-      const res = await api.get("/api/v1/users/list-with-home-office", config);
-      setUsers(res.data.map(mapApiUserToUI));
-      setError(null);
-    } catch (err: any) {
-      console.error("Failed to load users with params:", err.response?.data || err.message);
-      const tenantId = getTenantId();
-      
-      // Try without params as fallback
-      if (tenantId) {
-        try {
-          const res = await api.get("/api/v1/users/list-with-home-office");
-          setUsers(res.data.map(mapApiUserToUI));
-          setError(null);
-        } catch (fallbackErr: any) {
-          console.error("Failed to load users without params:", fallbackErr.response?.data || fallbackErr.message);
-          setError(fallbackErr.response?.data?.detail || err.response?.data?.detail || "Failed to load users");
-        }
-      } else {
-        setError(err.response?.data?.detail || "Failed to load users");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Server state composed from the canonical backend resources
+  // (/users + /user-offices + /offices + /tenants) via generated React Query
+  // hooks. Replaces the legacy /users/list-with-home-office imperative fetch.
+  const { users, refetch: fetchUsers } = useUsersGrid();
 
 
   console.log({currentOffice,userHomeOID: users[1]?.homeOffice,});
