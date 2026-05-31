@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, Outlet, useNavigate } from 'react-router-dom';
 import GlobalNav from './GlobalNav';
 import PatientSecondaryNav from './PatientSecondaryNav';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
-import { getPatientDetails, type PatientDetails as ApiPatientDetails } from '../services/patientApi';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { useGetPatientBalance } from '@/api/generated/endpoints/billing/billing';
+import { useListOffices } from '@/api/generated/endpoints/organization/organization';
+import type { PatientRead } from '@/api/generated/model';
 
 interface PatientShellLayoutProps {
   onLogout: () => void;
@@ -34,9 +37,12 @@ export default function PatientShellLayout({
 }: PatientShellLayoutProps) {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
-  const [patient, setPatient] = useState<PatientDisplayData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const numericId = patientId ? Number(patientId) : NaN;
+  const validId = !Number.isNaN(numericId);
+
+  const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
+  const balanceQuery = useGetPatientBalance(numericId, { query: { enabled: validId } });
+  const officesQuery = useListOffices({ size: 200 });
 
   // Helper function to calculate age from DOB
   const calculateAge = (dob: string | null | undefined): number => {
@@ -84,30 +90,28 @@ export default function PatientShellLayout({
   //   // Priority: cell_phone > home_phone > work_phone
   //   return formatPhone(contact.cell_phone || contact.home_phone || contact.work_phone);
   // };
-  const getPreferredPhone = (contact: ApiPatientDetails['contact']): string => {
-    if (!contact) return '—';
-  
-    const { preferred_contact, cell_phone, home_phone, work_phone } = contact;
-  
-    // helper – define what "valid" means for you
-    const isValidPhone = (phone?: string) =>
-      !!phone && phone.replace(/\D/g, '').length >= 1;
-  
-    // 1. Try preferred contact first
+  const getPreferredPhone = (p: PatientRead): string => {
+    const { preferred_contact, cell_phone, phone, work_phone, email } = p;
+
+    const isValidPhone = (ph?: string | null) =>
+      !!ph && ph.replace(/\D/g, "").length >= 1;
+
+    // 1. Try preferred contact first ("home_phone" maps to the `phone` column)
     if (preferred_contact) {
-      const preferred = preferred_contact === 'home_phone' ? home_phone
-        : preferred_contact === 'cell_phone' ? cell_phone
-        : preferred_contact === 'work_phone' ? work_phone
-        : preferred_contact === 'email' ? contact.email
+      const preferred =
+        preferred_contact === "home_phone" ? phone
+        : preferred_contact === "cell_phone" ? cell_phone
+        : preferred_contact === "work_phone" ? work_phone
+        : preferred_contact === "email" ? email
         : undefined;
       if (isValidPhone(preferred)) {
         return formatPhone(preferred);
       }
     }
-  
-    // 2. Fallback to existing priority
+
+    // 2. Fallback priority: cell → home → work
     return formatPhone(
-      [cell_phone, home_phone, work_phone].find(isValidPhone) || '—'
+      [cell_phone, phone, work_phone].find(isValidPhone) || "—",
     );
   };
   
@@ -123,63 +127,50 @@ export default function PatientShellLayout({
     return genderMap[gender] || gender;
   };
 
-  // Fetch patient data from API
+  // Redirect out if there's no patient id in the route.
   useEffect(() => {
-    const fetchPatientData = async () => {
-      if (!patientId) {
-        navigate('/patient');
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const apiPatient = await getPatientDetails(patientId);
-        
-        // Map API response to display format
-        const displayData: PatientDisplayData = {
-          id: apiPatient.id.toString(),
-          chartNo: apiPatient.chart_no || `CH-${apiPatient.id}`,
-          name: apiPatient.preferred_name 
-            ? `${apiPatient.last_name}, ${apiPatient.first_name} (${apiPatient.preferred_name})`
-            : `${apiPatient.last_name}, ${apiPatient.first_name}`,
-          age: calculateAge(apiPatient.dob),
-          gender: formatGender(apiPatient.gender),
-          dob: formatDate(apiPatient.dob),
-          phone: getPreferredPhone(apiPatient.contact),
-          email: apiPatient.contact?.email || '—',
-          office: apiPatient.office?.home_office_name || '—',
-          officeId: apiPatient.office?.home_office_id?.toString() || undefined,
-          balance: typeof apiPatient.balances?.account_balance === 'string' 
-            ? parseFloat(apiPatient.balances.account_balance) || 0
-            : apiPatient.balances?.account_balance || 0,
-          nextAppointment: apiPatient.appointments && apiPatient.appointments.length > 0
-            ? formatDate(apiPatient.appointments[0]?.date) + ' ' + (apiPatient.appointments[0]?.time || '')
-            : '—',
-          alerts: apiPatient.clinical?.medical_alerts?.map((alert: any) => 
-            typeof alert === 'string' ? alert : alert.alert || alert.message || 'Unknown alert'
-          ) || []
-        };
-
-        setPatient(displayData);
-      } catch (err: any) {
-        console.error('Error fetching patient data:', err);
-        const errorMessage = err.response?.data?.detail || err.message || 'Failed to load patient data';
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPatientData();
+    if (!patientId) navigate('/patient');
   }, [patientId, navigate]);
+
+  const loading = patientQuery.isLoading;
+  const error = patientQuery.isError ? 'Failed to load patient data' : null;
+
+  // Compose the display model from the canonical resources:
+  // identity (/patients/{id}) + balance (/patients/{id}/balance) + office name
+  // (/offices). nextAppointment and alerts are follow-ups (compose /appointments
+  // and /patient-alerts) and render as empty until then.
+  const patient = useMemo<PatientDisplayData | null>(() => {
+    const p = patientQuery.data;
+    if (!p) return null;
+
+    const officeName = officesQuery.data?.items.find(
+      (o) => o.id === p.home_office_id,
+    )?.name;
+    const bal = balanceQuery.data;
+
+    return {
+      id: String(p.id),
+      chartNo: p.chart_no || `CH-${p.id}`,
+      name: p.preferred_name
+        ? `${p.last_name}, ${p.first_name} (${p.preferred_name})`
+        : `${p.last_name}, ${p.first_name}`,
+      age: calculateAge(p.dob),
+      gender: formatGender(p.gender),
+      dob: formatDate(p.dob),
+      phone: getPreferredPhone(p),
+      email: p.email || '—',
+      office: officeName || '—',
+      officeId: p.home_office_id != null ? String(p.home_office_id) : undefined,
+      balance: bal?.account_balance ?? bal?.balance ?? 0,
+      nextAppointment: '—',
+      alerts: [],
+    };
+  }, [patientQuery.data, balanceQuery.data, officesQuery.data]);
 
   const handleClosePatient = () => {
     // Clear patient context
     sessionStorage.removeItem('activePatient');
-    setPatient(null);
-    // Return to patient search/list
+    // Return to patient search/list (query state clears on unmount)
     navigate('/patient');
   };
 
