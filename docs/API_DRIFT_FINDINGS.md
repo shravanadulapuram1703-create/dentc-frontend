@@ -1,5 +1,7 @@
 # FE ↔ BE Integration Findings (Investigation)
 
+> ⚠️ **Superseded by [`API_MIGRATION_ANALYSIS.md`](./API_MIGRATION_ANALYSIS.md).** This doc matched endpoints by exact path only and therefore over-counted "missing" routes. The migration analysis adds semantic (renamed-resource) mapping and shows ~94% of frontend needs already have a backend equivalent. Keep this only for the live 404-vs-401 verification detail.
+
 > Companion analysis to the auto-generated [`API_DRIFT_REPORT.md`](./API_DRIFT_REPORT.md).
 > Date of live verification: 2026-05-31, backend `DentC Backend v1.0.0` at `http://127.0.0.1:8000`.
 
