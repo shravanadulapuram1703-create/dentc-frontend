@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AIChatProvider, useAIChat } from './contexts/AIChatContext';
+import { AppProviders } from './app/providers';
 import Login from './components/Login';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -410,13 +411,15 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AIChatProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AIChatProvider>
-    </AuthProvider>
+    <AppProviders>
+      <AuthProvider>
+        <AIChatProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AIChatProvider>
+      </AuthProvider>
+    </AppProviders>
   );
 }
 
