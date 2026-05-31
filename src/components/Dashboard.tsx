@@ -23,7 +23,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import api from "../services/api";
-import { searchPatients, type Patient as ApiPatient } from "../services/patientApi.js";
+import { listPatients } from "@/api/generated/endpoints/patients/patients";
+import type { PatientRead, ListPatientsParams } from "@/api/generated/model";
 
 interface User {
   id: string;
@@ -151,29 +152,29 @@ export default function Dashboard({
   };
 
   // Convert API Patient to display format
-  const convertApiPatientToDisplay = (apiPatient: ApiPatient): any => {
+  const convertApiPatientToDisplay = (p: PatientRead): any => {
     // Format DOB from YYYY-MM-DD to MM/DD/YYYY
     let dobFormatted = '';
-    if (apiPatient.dob) {
-      const dateParts = apiPatient.dob.split('-');
+    if (p.dob) {
+      const dateParts = p.dob.split('-');
       if (dateParts.length === 3) {
         dobFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
       }
     }
-    
-    // Format name
-    const name = `${apiPatient.firstName} ${apiPatient.lastName}`;
-    
+
+    const firstName = p.first_name ?? '';
+    const lastName = p.last_name ?? '';
+
     return {
-      id: apiPatient.id,
-      patientId: apiPatient.chartNo || `PT-${apiPatient.id.toString().padStart(6, '0')}`,
-      name: name,
-      firstName: apiPatient.firstName,
-      lastName: apiPatient.lastName,
-      dob: apiPatient.dob || dobFormatted,
-      phone: apiPatient.phone || '',
-      email: apiPatient.email || '',
-      chartNumber: apiPatient.chartNo || `CH-${apiPatient.id}`,
+      id: p.id,
+      patientId: p.chart_no || `PT-${String(p.id).padStart(6, '0')}`,
+      name: `${firstName} ${lastName}`.trim(),
+      firstName,
+      lastName,
+      dob: dobFormatted || (p.dob ?? ''),
+      phone: p.cell_phone || p.phone || '',
+      email: p.email || '',
+      chartNumber: p.chart_no || `CH-${p.id}`,
     };
   };
 
@@ -225,24 +226,24 @@ export default function Dashboard({
     setExpandedPatientId(null);
 
     try {
-      // Extract numeric office ID
-      const officeIdNum = searchScope === 'current' ? extractOfficeIdNumber(currentOffice) : undefined;
-      
-      // Call advanced search API (same as Patient.tsx)
-      const response = await searchPatients({
-        searchBy: searchBy,
-        searchValue: searchText.trim(),
-        searchFor: searchFor,
-        patientType: patientType === 'both' ? 'both' : patientType || 'both',
-        searchScope: searchScope,
-        includeInactive: includeInactive,
-        officeId: officeIdNum,
-        limit: 100,
-        offset: 0,
-      });
+      // Map the search form to the backend /patients query params (see Patient.tsx):
+      // free-text `search`, exact `chart_no`, current-office scope -> home_office_id.
+      const params: ListPatientsParams = { page: 1, size: 100 };
+      if (searchBy === 'chartNumber') {
+        params.chart_no = searchText.trim();
+      } else {
+        params.search = searchText.trim();
+      }
+      if (searchScope === 'current') {
+        const officeIdNum = extractOfficeIdNumber(currentOffice);
+        if (officeIdNum) params.home_office_id = Number(officeIdNum);
+      }
+      if (!includeInactive) params.is_active = true;
 
-      // Convert API patients to display format
-      const results = response.patients.map(convertApiPatientToDisplay);
+      const response = await listPatients(params);
+
+      // Convert backend patients to display format
+      const results = response.items.map(convertApiPatientToDisplay);
       
       setSearchResults(results);
       setHasSearched(true);

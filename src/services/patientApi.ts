@@ -423,19 +423,6 @@ export interface PatientListResponse {
   total: number;
 }
 
-// Advanced search parameters
-export interface PatientSearchParams {
-  searchBy?: string; // Field to search in (e.g., 'lastName', 'firstName', 'chartNumber', etc.)
-  searchValue?: string; // The search term
-  searchFor?: 'patient' | 'responsible'; // Search for patient or responsible party
-  patientType?: 'both' | 'general' | 'ortho'; // Filter by patient type
-  searchScope?: 'current' | 'all' | 'group'; // Search scope (current office, all offices, office group)
-  includeInactive?: boolean; // Include inactive patients
-  officeId?: string; // Current office ID for scope filtering
-  limit?: number; // Pagination limit
-  offset?: number; // Pagination offset
-}
-
 // ===== API FUNCTIONS =====
 
 /**
@@ -615,58 +602,6 @@ export const getPatients = async (
 
   const response = await api.get<PatientListResponse>("/api/v1/patients", {
     params,
-  });
-  
-  return response.data;
-};
-
-/**
- * Advanced patient search with field-specific search and filters
- * @param params - Search parameters including searchBy, searchValue, filters, etc.
- */
-export const searchPatients = async (
-  params: PatientSearchParams
-): Promise<PatientListResponse> => {
-  const queryParams: Record<string, string> = {};
-  
-  // Add search parameters
-  if (params.searchBy && params.searchValue) {
-    queryParams.search_by = params.searchBy;
-    queryParams.search_value = params.searchValue;
-  }
-  
-  // Add filters
-  if (params.searchFor) {
-    queryParams.search_for = params.searchFor;
-  }
-  
-  if (params.patientType && params.patientType !== 'both') {
-    queryParams.patient_type = params.patientType;
-  }
-  
-  if (params.searchScope) {
-    queryParams.search_scope = params.searchScope;
-  }
-  
-  if (params.includeInactive !== undefined) {
-    queryParams.include_inactive = params.includeInactive.toString();
-  }
-  
-  if (params.officeId) {
-    queryParams.office_id = params.officeId;
-  }
-  
-  // Add pagination
-  if (params.limit !== undefined) {
-    queryParams.limit = params.limit.toString();
-  }
-  
-  if (params.offset !== undefined) {
-    queryParams.offset = params.offset.toString();
-  }
-
-  const response = await api.get<PatientListResponse>("/api/v1/patients/search", {
-    params: queryParams,
   });
   
   return response.data;

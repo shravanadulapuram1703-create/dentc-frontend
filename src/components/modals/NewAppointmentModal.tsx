@@ -26,11 +26,10 @@ import {
 } from "../../services/schedulerApi";
 import {
   createPatient,
-  searchPatients,
   type PatientCreateRequest,
-  type Patient,
-  type PatientSearchParams,
 } from "../../services/patientApi";
+import { listPatients } from "@/api/generated/endpoints/patients/patients";
+import type { PatientRead, ListPatientsParams } from "@/api/generated/model";
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -304,14 +303,14 @@ export default function NewAppointmentModal({
   };
 
   // Convert API Patient to PatientSearchResult format
-  const convertPatientToSearchResult = (patient: Patient): PatientSearchResult => {
+  const convertPatientToSearchResult = (p: PatientRead): PatientSearchResult => {
     // Format name as "LastName, FirstName"
-    const name = `${patient.lastName}, ${patient.firstName}`;
-    
+    const name = `${p.last_name ?? ""}, ${p.first_name ?? ""}`;
+
     // Calculate age from DOB if available
     let age = 0;
-    if (patient.dob) {
-      const birthDate = new Date(patient.dob);
+    if (p.dob) {
+      const birthDate = new Date(p.dob);
       const today = new Date();
       age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -319,29 +318,29 @@ export default function NewAppointmentModal({
         age--;
       }
     }
-    
+
     // Format birthdate from YYYY-MM-DD to MM/DD/YYYY if available
     let birthdateFormatted = "";
-    if (patient.dob) {
-      const dateParts = patient.dob.split("-");
+    if (p.dob) {
+      const dateParts = p.dob.split("-");
       if (dateParts.length === 3) {
         birthdateFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
       }
     }
-    
+
     return {
-      patientId: patient.chartNo || patient.id.toString(), // Use chartNo as primary ID, fallback to id
-      name: name,
-      gender: patient.gender || "U",
-      ssn: "***-**-****", // SSN not in Patient API, use placeholder
-      phone: patient.phone || "",
+      patientId: p.chart_no || p.id.toString(), // chart no as primary id, fallback to id
+      name,
+      gender: p.gender || "U",
+      ssn: p.ssn || "***-**-****",
+      phone: p.cell_phone || p.phone || "",
       birthdate: birthdateFormatted,
-      age: age,
-      respId: "R-001", // Not in Patient API, use placeholder
-      chartNumber: patient.chartNo || `CH-${patient.id}`,
-      patientType: "General", // Not in Patient API, use default
-      office: currentOffice, // Use current office
-      ...(patient.email && { email: patient.email }),
+      age,
+      respId: "R-001", // responsible party not on PatientRead — placeholder
+      chartNumber: p.chart_no || `CH-${p.id}`,
+      patientType: "General", // not on PatientRead — default
+      office: currentOffice,
+      ...(p.email && { email: p.email }),
     };
   };
 
@@ -381,27 +380,25 @@ export default function NewAppointmentModal({
     setSearchResults([]);
 
     try {
-      // Extract numeric office ID if search scope is "current"
-      const officeIdNum = searchIn === "current" ? extractOfficeIdNumber(currentOffice) : undefined;
-      
-      // Map searchBy to API format
+      // Map the search form to the backend /patients query params: exact
+      // chart_no for Chart # searches, otherwise free-text `search`.
       const apiSearchBy = mapSearchByToAPI(searchBy);
-      
-      // Call advanced search API (same as Patient.tsx)
-      const response = await searchPatients({
-        searchBy: apiSearchBy,
-        searchValue: searchText.trim(),
-        searchFor: searchFor,
-        patientType: patientType === "both" ? "both" : patientType || "both",
-        searchScope: searchIn, // Map searchIn to searchScope
-        includeInactive: includeInactive,
-        officeId: officeIdNum,
-        limit: 100,
-        offset: 0,
-      });
-      
-      // Convert API patients to PatientSearchResult format
-      const results = response.patients.map(convertPatientToSearchResult);
+      const params: ListPatientsParams = { page: 1, size: 100 };
+      if (apiSearchBy === "chartNumber") {
+        params.chart_no = searchText.trim();
+      } else {
+        params.search = searchText.trim();
+      }
+      if (searchIn === "current") {
+        const officeIdNum = extractOfficeIdNumber(currentOffice);
+        if (officeIdNum) params.home_office_id = Number(officeIdNum);
+      }
+      if (!includeInactive) params.is_active = true;
+
+      const response = await listPatients(params);
+
+      // Convert backend patients to PatientSearchResult format
+      const results = response.items.map(convertPatientToSearchResult);
       
       setSearchResults(results);
       setHasSearched(true);
