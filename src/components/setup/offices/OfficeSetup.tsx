@@ -1,7 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { Building2, Search, Plus, Save, X } from "lucide-react";
-import api from "../../../services/api";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
+import {
+  listOffices,
+  getOffice,
+  listOperatories,
+  createOffice,
+  updateOffice,
+} from "@/api/generated/endpoints/organization/organization";
 import type { Office, OfficeSetupApiResponse } from "../../../data/officeData"
 import InfoTab from "./tabs/InfoTab";
 import StatementTab from "./tabs/StatementTab";
@@ -229,7 +234,6 @@ export default function OfficeSetup() {
     "view",
   );
   const [showOfficeList, setShowOfficeList] = useState(true);
-  const [nextOfficeId, setNextOfficeId] = useState<number | null>(null);
   const [officeSetup, setOfficeSetup] = useState<OfficeSetupApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -248,7 +252,7 @@ export default function OfficeSetup() {
       }));
       setOffices(mappedOffices);
     });
-    api.get("/api/v1/offices/next-id").then((res) => setNextOfficeId(res.data.nextOfficeId));
+    // Office IDs are server-assigned on create — no /next-id prefetch.
   }, []);
 
   /* -------------------- FILTER -------------------- */
@@ -297,85 +301,72 @@ export default function OfficeSetup() {
   // };
 
   const handleSelectOffice = async (office: Office) => {
-    const res = await api.get(`/api/v1/offices/${office.officeId}/setup`);
-    const data = res.data;
+    // Core office record + operatories from the canonical resources.
+    // The legacy /offices/{id}/setup aggregate (statements, integrations,
+    // smartAssist, advanced, holidays, schedule grid) has no backend equivalent
+    // here — those tabs default to empty until the backend models them.
+    const oid = office.officeId as number;
+    const [o, opsRes] = await Promise.all([
+      getOffice(oid),
+      listOperatories({ office_id: oid, size: 200 }).catch(() => null),
+    ]);
 
     setFormData({
-      officeId: data.officeId,
-      officeName: data.officeName,
-      shortId: data.shortId,
+      officeId: o.id,
+      officeName: o.name,
+      shortId: o.short_id ?? "",
 
-      // 🔥 FLATTEN ADDRESS
-      address1: data.address?.address1 ?? "",
-      address2: data.address?.address2 ?? "",
-      city: data.address?.city ?? "",
-      state: data.address?.state ?? "",
-      zip: data.address?.zip ?? "",
-      timeZone: data.address?.timeZone ?? "",
+      // Address
+      address1: o.address_line1 ?? "",
+      address2: o.address_line2 ?? "",
+      city: o.city ?? "",
+      state: o.state ?? "",
+      zip: o.zip ?? "",
+      timeZone: o.timezone ?? "",
 
-      //  FLATTEN CONTACT
-      phone1: data.contact?.phone1 ?? "",
-      phone1Ext: data.contact?.phone1Ext ?? "",
-      phone2: data.contact?.phone2 ?? "",
-      email: data.contact?.email ?? "",
-
-      // Billing
-      ...data.billing,
+      // Contact
+      phone1: o.phone ?? "",
+      email: o.email ?? "",
 
       // Settings
-      schedulerTimeInterval: data.settings?.schedulerTimeInterval ?? null,
-      isActive: data.settings?.isActive ?? true,
+      schedulerTimeInterval: o.slot_interval_minutes ?? null,
+      isActive: o.is_active ?? true,
 
-      // Statements
-      statementMessages: data.statementMessages,
-      statementSettings: data.statementSettings,
-
-
-        // INTEGRATIONS (FULLY WIRED)
-        integrations: {
-          eClaims: data.integrations?.eClaims ?? {},
-          transworld: data.integrations?.transworld ?? {},
-          imaging: data.integrations?.imaging ?? {},
-          textMessaging: data.integrations?.textMessaging ?? {},
-          patientUrls: data.integrations?.patientUrls ?? {},
-          acceptedCards: data.integrations?.acceptedCards ?? [],
-        },
-
-
-      acceptedCards: data.acceptedCards ?? [],
-      operatories: (data.operatories ?? []).map((op: any, index: number) => ({
-        id: op.id ?? op.operatoryId ?? op.operatory_id ?? `op-${index + 1}`,
-        name: op.name ?? op.operatoryName ?? op.operatory_name ?? `Operatory ${index + 1}`,
-        order: op.order ?? index + 1,
-        is_active: op.is_active ?? op.isActive ?? true,
-        has_future_appointments:
-          op.has_future_appointments ?? op.hasFutureAppointments ?? false,
-        // Map any backend provider id/name into our defaultProvider fields
-        defaultProviderId:
-          op.defaultProviderId ??
-          op.default_provider_id ??
-          (op.provider_id != null ? String(op.provider_id) : undefined),
-        defaultProviderName:
-          op.defaultProviderName ??
-          op.default_provider_name ??
-          op.provider_name,
+      // Operatories (composed from /operatories)
+      operatories: (opsRes?.items ?? []).map((op, index) => ({
+        id: String(op.id),
+        name: op.name,
+        order: op.display_order ?? index + 1,
+        is_active: op.is_active ?? true,
+        has_future_appointments: false,
+        defaultProviderId: undefined,
+        defaultProviderName: undefined,
       })),
-      schedule: mapBackendSchedule(data.schedule),
-      holidays: data.holidays ?? [],
-      advanced: data.advanced ?? {},
-      smartAssist: data.smartAssist ?? {},
 
-      // 🔐 AUDIT FIELDS - Handle both camelCase and snake_case from API
-      createdBy: data.createdBy || data.created_by || "",
-      createdDate: data.createdDate || data.created_date || data.createdAt || data.created_at || "",
-      modifiedBy: data.modifiedBy || data.modified_by || data.updatedBy || data.updated_by || "",
-      modifiedDate: data.modifiedDate || data.modified_date || data.modified_at || data.updatedAt || data.updated_at || "",
+      // Tabs without a backend source (yet) — default empty.
+      schedule: mapBackendSchedule(undefined),
+      holidays: [],
+      advanced: {} as Office["advanced"],
+      smartAssist: {} as Office["smartAssist"],
+      statementMessages: undefined,
+      statementSettings: undefined,
+      integrations: {
+        eClaims: {},
+        transworld: {},
+        imaging: {},
+        textMessaging: {},
+        patientUrls: {},
+        acceptedCards: [],
+      },
+
+      // Audit
+      createdBy: o.created_by != null ? String(o.created_by) : "",
+      createdDate: o.created_at ?? "",
+      modifiedBy: "",
+      modifiedDate: o.updated_at ?? "",
     });
 
-    console.log("Mapped schedule", mapBackendSchedule(data.schedule));
-
-
-    setSelectedOfficeId(data.officeId);
+    setSelectedOfficeId(o.id);
     setMode("view");
     setActiveTab("info");
     setShowOfficeList(false);
@@ -385,14 +376,9 @@ export default function OfficeSetup() {
 
 
   /* -------------------- ADD OFFICE -------------------- */
-console.log("nextOfficeId----------->", nextOfficeId)
 const handleAddOffice = () => {
-  if (nextOfficeId != null) {
-    setFormData({ officeId: nextOfficeId });
-  } else {
-    setFormData({officeId: 999});
-  }
-
+  // Office ID is assigned by the backend on create.
+  setFormData({});
   setMode("add");
   setActiveTab("info");
   setShowOfficeList(false);
@@ -415,88 +401,24 @@ const handleAddOffice = () => {
 //   setShowOfficeList(true);
 // };
 
-const sanitizeScheduleForApi = (schedule: any) => {
-  if (!schedule) return {};
-
-  const cleaned: any = {};
-
-  Object.entries(schedule).forEach(([day, value]: any) => {
-    const v = value ?? {};
-
-    cleaned[day] = {
-      start: v.start || null,
-      end: v.end || null,
-      lunchStart: v.lunchStart || null,
-      lunchEnd: v.lunchEnd || null,
-      closed: !!v.closed,
-    };
-  });
-
-  return cleaned;
-};
 
 
-const buildPutPayload = (formData: any) => {
-  return {
-    officeId: formData.officeId,
-    officeName: formData.officeName,
-    shortId: formData.shortId,
-
-    address: {
-      address1: formData.address1,
-      address2: formData.address2,
-      city: formData.city,
-      state: formData.state,
-      zip: formData.zip,
-      timeZone: formData.timeZone,
-    },
-
-    contact: {
-      phone1: formData.phone1,
-      phone1Ext: formData.phone1Ext,
-      phone2: formData.phone2,
-      email: formData.email,
-    },
-
-    
-
-    billing: {
-      billingProviderId: formData.billingProviderId,
-      billingProviderName: formData.billingProviderName,
-      useBillingLicense: formData.useBillingLicense,
-      taxId: formData.taxId,
-      openingDate: formData.openingDate,
-      officeGroup: formData.officeGroup,
-      defaultUCRFeeSchedule: formData.defaultUCRFeeSchedule,
-      defaultFeeSchedule: formData.defaultFeeSchedule,
-    },
-
-    settings: {
-      schedulerTimeInterval: formData.schedulerTimeInterval,
-      isActive: formData.isActive,
-    },
-
-    // INTEGRATIONS SENT BACK EXACTLY AS UI
-    integrations: {
-      eClaims: formData.integrations?.eClaims ?? {},
-      transworld: formData.integrations?.transworld ?? {},
-      imaging: formData.integrations?.imaging ?? {},
-      textMessaging: formData.integrations?.textMessaging ?? {},
-      patientUrls: formData.integrations?.patientUrls ?? {},
-      acceptedCards: formData.integrations?.acceptedCards ?? [],
-    },
-
-    statementMessages: formData.statementMessages,
-    statementSettings: formData.statementSettings,
-    acceptedCards: formData.acceptedCards,
-    operatories: formData.operatories,
-    // schedule: formData.schedule,
-    schedule: sanitizeScheduleForApi(formData.schedule),
-    holidays: formData.holidays,
-    advanced: formData.advanced,
-    smartAssist: formData.smartAssist,
-  };
-};
+/** Map the form's core fields to the backend Office body (snake_case). */
+const buildOfficeBody = (formData: any) => ({
+  office_code: formData.shortId,
+  name: formData.officeName,
+  short_id: formData.shortId ?? null,
+  address_line1: formData.address1 ?? null,
+  address_line2: formData.address2 ?? null,
+  city: formData.city ?? null,
+  state: formData.state ?? null,
+  zip: formData.zip ?? null,
+  phone: formData.phone1 ?? null,
+  email: formData.email ?? null,
+  timezone: formData.timeZone ?? null,
+  slot_interval_minutes: formData.schedulerTimeInterval ?? null,
+  is_active: formData.isActive ?? true,
+});
 
 
 const handleSave = async () => {
@@ -505,23 +427,21 @@ const handleSave = async () => {
     return;
   }
 
-  const payload = buildPutPayload(formData);
+  const body = buildOfficeBody(formData);
 
   try {
     if (mode === "add") {
-      await api.post("/api/v1/offices", payload);
-    } else {
-      await api.put(`/api/v1/offices/${selectedOfficeId}`, payload);
+      await createOffice(body as any);
+    } else if (selectedOfficeId != null) {
+      // PATCH (backend update verb) via the generated client.
+      await updateOffice(selectedOfficeId, body as any);
     }
 
-    // Refetch offices list and next office ID after successful save
-    const [officesRes, nextIdRes] = await Promise.all([
-      api.get("/api/v1/offices"),
-      api.get("/api/v1/offices/next-id")
-    ]);
+    // Refetch offices list after successful save.
+    const officesRes = await listOffices({ size: 200 });
 
     // Map API response to Office interface, handling both camelCase and snake_case
-    const mappedOffices = officesRes.data.map((office: any) => ({
+    const mappedOffices = officesRes.items.map((office: any) => ({
       ...office,
       // Map audit fields from snake_case to camelCase if needed
       createdBy: office.createdBy || office.created_by || "System",
@@ -531,7 +451,6 @@ const handleSave = async () => {
     }));
 
     setOffices(mappedOffices);
-    setNextOfficeId(nextIdRes.data.nextOfficeId);
 
     alert("Office saved successfully");
     setShowOfficeList(true);
@@ -612,10 +531,10 @@ const tabs: { id: TabName; label: string }[] = [
                 />
               </div>
 
-              {/* Next Available ID */}
+              {/* Office ID is assigned by the backend on save */}
               <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-[#E8F4FD] border border-[#B8D4EA] rounded text-xs">
                 <span className="font-bold text-[#1F3A5F]">
-                  Next Available Office ID: {nextOfficeId}
+                  Office ID will be assigned automatically on save
                 </span>
               </div>
             </div>
