@@ -175,6 +175,32 @@ const addMinutes = (hhmm: string, minutes: number): string => {
   return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
 };
 
+/** Find a list item whose id OR name matches the given value (calendar forms
+ *  may carry either). */
+const findByIdOrName = <T extends { id: string | number; name?: string | null }>(
+  items: T[] | null | undefined,
+  value: string | null | undefined,
+): T | undefined => {
+  if (value == null || value === "") return undefined;
+  const v = String(value).trim();
+  const list = items ?? [];
+  return (
+    list.find((i) => String(i.id) === v) ??
+    list.find((i) => (i.name ?? "").trim().toLowerCase() === v.toLowerCase())
+  );
+};
+
+/** Resolve a provider/operatory id from an id-or-name value; falls back to the
+ *  raw value so the backend can still validate it. */
+const resolveByIdOrName = (
+  items: Array<{ id: string | number; name?: string | null }> | null | undefined,
+  value: string | null | undefined,
+): string | undefined => {
+  const hit = findByIdOrName(items, value);
+  if (hit) return String(hit.id);
+  return value != null && value !== "" ? String(value) : undefined;
+};
+
 const newAppointmentId = (): string => {
   const uuid =
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -274,15 +300,29 @@ export const createAppointment = async (
 ): Promise<Appointment> => {
   const startTime: string = data.start_time ?? data.startTime;
   const duration: number = Number(data.duration ?? 0);
-  // AppointmentCreate requires id/provider_id/office_id/end_time.
-  // NOTE: the calendar may pass `provider`/`operatory` as names — confirm these
-  // carry ids when wiring the create UI; otherwise resolve via the providers list.
+
+  // AppointmentCreate requires id/provider_id/office_id/end_time. The calendar
+  // may pass provider/operatory as ids OR names — resolve against the canonical
+  // lists, and derive office_id from the chosen operatory when not provided.
+  const [providersRes, operatoriesRes] = await Promise.all([
+    listProviders(PAGE).catch(() => null),
+    listOperatories(PAGE).catch(() => null),
+  ]);
+  const provider_id = resolveByIdOrName(
+    providersRes?.items,
+    data.provider_id ?? data.provider,
+  );
+  const op = findByIdOrName(operatoriesRes?.items, data.operatory_id ?? data.operatory);
+  const operatory_id = op ? String(op.id) : (data.operatory_id ?? data.operatory ?? null);
+  const office_id =
+    officeIdNum(data.office_id ?? data.officeId) ?? op?.office_id ?? undefined;
+
   const created = await createAppointmentApi({
     id: data.id ?? newAppointmentId(),
     patient_id: data.patient_id ?? data.patientId ?? null,
-    provider_id: data.provider_id ?? data.provider,
-    operatory_id: data.operatory_id ?? data.operatory ?? null,
-    office_id: officeIdNum(data.office_id ?? data.officeId) as number,
+    provider_id,
+    operatory_id,
+    office_id: office_id as number,
     date: data.date,
     start_time: startTime,
     end_time: data.end_time ?? addMinutes(startTime, duration),
@@ -308,10 +348,26 @@ export const updateAppointment = async (
   const startTime: string | undefined = data.start_time ?? data.startTime;
   const duration: number | undefined =
     data.duration != null ? Number(data.duration) : undefined;
+
+  // Resolve provider/operatory (id or name) only when the edit touches them.
+  let providerId = data.provider_id ?? data.provider;
+  let operatoryId = data.operatory_id ?? data.operatory;
+  if (providerId != null || operatoryId != null) {
+    const [pRes, oRes] = await Promise.all([
+      listProviders(PAGE).catch(() => null),
+      listOperatories(PAGE).catch(() => null),
+    ]);
+    if (providerId != null) providerId = resolveByIdOrName(pRes?.items, providerId);
+    if (operatoryId != null) {
+      const opMatch = findByIdOrName(oRes?.items, operatoryId);
+      operatoryId = opMatch ? String(opMatch.id) : operatoryId;
+    }
+  }
+
   const patch: Record<string, unknown> = {
     patient_id: data.patient_id ?? data.patientId,
-    provider_id: data.provider_id ?? data.provider,
-    operatory_id: data.operatory_id ?? data.operatory,
+    provider_id: providerId,
+    operatory_id: operatoryId,
     date: data.date,
     start_time: startTime,
     end_time:
