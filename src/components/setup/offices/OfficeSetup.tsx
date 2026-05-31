@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Building2, Search, Plus, Save, X } from "lucide-react";
 import api from "../../../services/api";
+import { listOffices } from "@/api/generated/endpoints/organization/organization";
 import type { Office, OfficeSetupApiResponse } from "../../../data/officeData"
 import InfoTab from "./tabs/InfoTab";
 import StatementTab from "./tabs/StatementTab";
@@ -235,9 +236,9 @@ export default function OfficeSetup() {
 
   /* -------------------- LOAD LIST -------------------- */
   useEffect(() => {
-    api.get("/api/v1/offices").then((res) => {
+    listOffices({ size: 200 }).then((res) => {
       // Map API response to Office interface, handling both camelCase and snake_case
-      const mappedOffices = res.data.map((office: any) => ({
+      const mappedOffices = res.items.map((office: any) => ({
         ...office,
         // Map audit fields from snake_case to camelCase if needed
         createdBy: office.createdBy || office.created_by || "System",

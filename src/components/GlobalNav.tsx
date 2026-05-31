@@ -74,6 +74,7 @@ import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth } from "../contexts/AuthContext.js";
 import { useAIChat } from "../contexts/AIChatContext.js";
 import api from "../services/api.js";
+import { listOffices } from "@/api/generated/endpoints/organization/organization";
 
 export interface GlobalNavProps {
   onLogout: () => void;
@@ -183,11 +184,11 @@ export default function GlobalNav({
         setLoadingOffices(true);
         setOfficesError(null);
         
-        // Fetch offices from backend API
-        const response = await api.get("/api/v1/offices");
-        
+        // Fetch offices from backend API (paginated: { items, meta })
+        const response = await listOffices({ size: 200 });
+
         // Map API response to office format expected by GlobalNav
-        const mappedOffices = response.data.map((office: any) => {
+        const mappedOffices = response.items.map((office: any) => {
           // Handle both camelCase and snake_case from API
           const officeId = office.officeId || office.office_id || office.id;
           const officeName = office.officeName || office.office_name || office.name || "";

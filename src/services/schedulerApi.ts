@@ -1,27 +1,52 @@
-import api from "./api";
-
 /**
- * Extract numeric office ID from office ID string
- * Examples: "OFF-1" -> "1", "1" -> "1", "OFF-123" -> "123"
+ * Scheduler service — anti-corruption layer.
+ *
+ * Preserves the public interface the (large) Scheduler.tsx consumer expects,
+ * but the legacy `/api/v1/scheduler/*` routes do not exist on this backend.
+ * Internals now call the canonical generated resources:
+ *   appointments  -> /appointments        operatories -> /operatories
+ *   providers     -> /providers           procedure   -> /procedure-codes
+ *   types/status  -> /definitions          plans       -> /treatment-plans
+ *   config        -> /offices/{id} (schedule hours / slot interval)
+ *
+ * AppointmentRead has no denormalized patient/provider/operatory names, so the
+ * read path enriches them from the providers/operatories/patients lists.
  */
-const extractOfficeIdNumber = (officeId?: string): string | undefined => {
+import {
+  listAppointments,
+  getAppointment as getAppointmentApi,
+  createAppointment as createAppointmentApi,
+  updateAppointment as updateAppointmentApi,
+  deleteAppointment as deleteAppointmentApi,
+} from "@/api/generated/endpoints/appointments/appointments";
+import {
+  listOperatories,
+  listProviders,
+  getOffice,
+} from "@/api/generated/endpoints/organization/organization";
+import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
+import { listTreatmentPlans } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
+import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
+import type { AppointmentRead } from "@/api/generated/model";
+
+const PAGE = { size: 500 } as const;
+
+/** "OFF-1" | "1" -> 1 (numeric office id the backend filters expect) */
+const officeIdNum = (officeId?: string): number | undefined => {
   if (!officeId) return undefined;
-  // If it's already just a number, return as-is
-  if (/^\d+$/.test(officeId)) return officeId;
-  // Extract number from "OFF-{number}" format
-  const match = officeId.match(/(\d+)$/);
-  return match ? match[1] : officeId;
+  const m = String(officeId).match(/(\d+)/);
+  return m ? Number(m[1]) : undefined;
 };
 
-// ===== TYPES =====
+// ===== TYPES (unchanged public surface) =====
 export interface Appointment {
   id: string;
   patientId: string;
   patientName: string;
-  date: string; // ISO format: YYYY-MM-DD
-  startTime: string; // Start time in "HH:MM" format
-  endTime: string; // End time in "HH:MM" format
-  duration: number; // Duration in minutes
+  date: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
   procedureType: string;
   status:
     | "Scheduled"
@@ -37,27 +62,17 @@ export interface Appointment {
   operatory: string;
   provider: string;
   notes?: string;
-  
-  // Lab information
   lab?: boolean;
   lab_dds?: string;
   lab_cost?: number;
-  lab_sent_on?: string; // YYYY-MM-DD
-  lab_due_on?: string; // YYYY-MM-DD
-  lab_recvd_on?: string; // YYYY-MM-DD
-  
-  // Flags
+  lab_sent_on?: string;
+  lab_due_on?: string;
+  lab_recvd_on?: string;
   missed?: boolean;
   cancelled?: boolean;
-  
-  // Additional fields
   campaign_id?: string;
-  
-  // Treatment plan linkage
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
-  
-  // Treatments/Procedures
   treatments?: AppointmentTreatment[];
 }
 
@@ -81,19 +96,19 @@ export interface ProcedureType {
 }
 
 export interface SchedulerConfig {
-  startHour: number; // e.g., 8 for 8:00 AM
-  endHour: number; // e.g., 17 for 5:00 PM
-  slotInterval: number; // e.g., 10 for 10-minute intervals
+  startHour: number;
+  endHour: number;
+  slotInterval: number;
 }
 
 export interface AppointmentTreatment {
   procedure_code: string;
-  status: string; // 'TP' (Treatment Planned), 'C' (Completed), etc.
+  status: string;
   tooth?: string;
   surface?: string;
   description: string;
-  bill_to?: string; // 'Patient', 'Insurance', etc.
-  duration: number; // minutes
+  bill_to?: string;
+  duration: number;
   provider: string;
   provider_units?: number;
   est_patient?: number;
@@ -102,36 +117,26 @@ export interface AppointmentTreatment {
 }
 
 export interface AppointmentCreateRequest {
-  patient_id: string; // Use patient_id for API (snake_case)
-  date: string; // YYYY-MM-DD
-  start_time: string; // HH:MM (24-hour format)
-  duration: number; // minutes
+  patient_id: string;
+  date: string;
+  start_time: string;
+  duration: number;
   procedure_type: string;
-  operatory: string; // operatory ID
-  provider: string; // provider name
+  operatory: string;
+  provider: string;
   status?: Appointment["status"];
   notes?: string;
-  
-  // Lab information
   lab?: boolean;
   lab_dds?: string;
   lab_cost?: number;
-  lab_sent_on?: string; // YYYY-MM-DD
-  lab_due_on?: string; // YYYY-MM-DD
-  lab_recvd_on?: string; // YYYY-MM-DD
-  
-  // Flags
+  lab_sent_on?: string;
+  lab_due_on?: string;
+  lab_recvd_on?: string;
   missed?: boolean;
   cancelled?: boolean;
-  
-  // Additional fields
   campaign_id?: string;
-  
-  // Treatment plan linkage
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
-  
-  // Treatments/Procedures (optional - can be saved separately)
   treatments?: AppointmentTreatment[];
 }
 
@@ -146,272 +151,257 @@ export interface AppointmentUpdateRequest {
   provider?: string;
   status?: Appointment["status"];
   notes?: string;
-  
-  // Lab information
   lab?: boolean;
   lab_dds?: string;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
   lab_recvd_on?: string;
-  
-  // Flags
   missed?: boolean;
   cancelled?: boolean;
-  
-  // Additional fields
   campaign_id?: string;
-  
-  // Treatment plan linkage
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
-  
-  // Treatments/Procedures
   treatments?: AppointmentTreatment[];
 }
 
-// ===== API FUNCTIONS =====
+// ===== HELPERS =====
 
-/**
- * Fetch appointments for a specific date range
- * @param startDate - Start date in YYYY-MM-DD format
- * @param endDate - End date in YYYY-MM-DD format (optional, defaults to startDate)
- * @param officeId - Optional office ID to filter by
- * @returns Array of appointments
- */
+const addMinutes = (hhmm: string, minutes: number): string => {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = (h || 0) * 60 + (m || 0) + (minutes || 0);
+  const hh = Math.floor((total % (24 * 60)) / 60);
+  const mm = total % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+};
+
+const newAppointmentId = (): string => {
+  const uuid =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  return `APPT-${uuid}`;
+};
+
+const mapAppointment = (
+  a: AppointmentRead,
+  names?: {
+    patients?: Map<number, string>;
+    providers?: Map<string, string>;
+    operatories?: Map<string, string>;
+  },
+): Appointment => ({
+  id: a.id,
+  patientId: a.patient_id != null ? String(a.patient_id) : "",
+  patientName:
+    (a.patient_id != null && names?.patients?.get(a.patient_id)) ||
+    (a.patient_id != null ? `Patient ${a.patient_id}` : ""),
+  date: a.date,
+  startTime: a.start_time,
+  endTime: a.end_time,
+  duration: a.duration,
+  procedureType: a.procedure_label ?? "",
+  status: (a.status as Appointment["status"]) ?? "Scheduled",
+  operatory:
+    (a.operatory_id != null &&
+      (names?.operatories?.get(String(a.operatory_id)) ??
+        String(a.operatory_id))) ||
+    "",
+  provider:
+    (a.provider_id != null &&
+      (names?.providers?.get(String(a.provider_id)) ??
+        String(a.provider_id))) ||
+    "",
+  notes: a.notes ?? undefined,
+  lab: a.has_lab ?? undefined,
+  lab_cost: a.lab_cost != null ? Number(a.lab_cost) : undefined,
+  lab_sent_on: a.lab_sent_on ?? undefined,
+  lab_due_on: a.lab_due_on ?? undefined,
+  lab_recvd_on: a.lab_received_on ?? undefined,
+  missed: a.is_missed ?? undefined,
+  cancelled: a.is_cancelled ?? undefined,
+  campaign_id: a.campaign_id ?? undefined,
+  treatment_plan_id: a.treatment_plan_id ?? undefined,
+});
+
+// ===== APPOINTMENTS =====
+
 export const fetchAppointments = async (
   startDate: string,
   endDate?: string,
-  officeId?: string
+  officeId?: string,
 ): Promise<Appointment[]> => {
-  const params: Record<string, string> = {
-    start_date: startDate,
-  };
-  
-  if (endDate) {
-    params.end_date = endDate;
-  }
-  
-  if (officeId) {
-    // params.office_id = extractOfficeIdNumber(officeId);
-    params.office_id = officeId;
-  }
+  const oid = officeIdNum(officeId);
+  const [appts, providersRes, operatoriesRes] = await Promise.all([
+    listAppointments({
+      date_from: startDate,
+      date_to: endDate ?? startDate,
+      ...(oid != null ? { office_id: oid } : {}),
+      ...PAGE,
+    }),
+    listProviders(PAGE).catch(() => null),
+    listOperatories(PAGE).catch(() => null),
+  ]);
 
-  const response = await api.get<{ appointments: Appointment[] }>("/api/v1/scheduler/appointments", {
-    params,
-  });
-  
-  return response.data.appointments;
-};
-
-/**
- * Fetch a single appointment by ID
- */
-export const fetchAppointment = async (id: string): Promise<Appointment> => {
-  const response = await api.get<{ appointment: Appointment }>(`/api/v1/scheduler/appointments/${id}`);
-  return response.data.appointment;
-};
-
-/**
- * Normalize status value to match SQL enum (title case)
- * Converts "MISSED" -> "Missed", "CANCELLED" -> "Cancelled"
- */
-const normalizeStatus = (status: string | undefined): string | undefined => {
-  if (!status) return status;
-  const normalized = status.trim();
-  if (normalized.toUpperCase() === "MISSED") return "Missed";
-  if (normalized.toUpperCase() === "CANCELLED") return "Cancelled";
-  return normalized;
-};
-
-/**
- * Create a new appointment
- * 
- * Accepts either:
- * 1. AppointmentCreateRequest (camelCase) - for backward compatibility
- * 2. New API format (snake_case) - matches APPOINTMENT_API_CONTRACTS.md
- *    - For existing patients: { patient_id, date, start_time, ... }
- *    - For new patients: { patient: {...}, appointment: {...} }
- */
-export const createAppointment = async (
-  data: AppointmentCreateRequest | any
-): Promise<Appointment> => {
-  // Normalize status to ensure it matches SQL enum (title case)
-  const payload = { ...data };
-  if (payload.status) {
-    payload.status = normalizeStatus(payload.status);
-  }
-  
-  // The API expects snake_case format as per APPOINTMENT_API_CONTRACTS.md
-  // If data is in camelCase (old format), transform it
-  // If data is already in snake_case or nested format (new format), send as-is
-  const response = await api.post<{ appointment: Appointment }>("/api/v1/scheduler/appointments", payload);
-  return response.data.appointment;
-};
-
-/**
- * Update an existing appointment with all details
- */
-export const updateAppointment = async (
-  data: AppointmentUpdateRequest | any
-): Promise<Appointment> => {
-  const { id, ...restData } = data;
-  
-  // Transform camelCase to snake_case if needed
-  const payload: any = { ...restData };
-  
-  // Normalize status to ensure it matches SQL enum (title case)
-  if (payload.status) {
-    payload.status = normalizeStatus(payload.status);
-  }
-  
-  // Transform fields (same as createAppointment)
-  if (payload.patientId && !payload.patient_id) {
-    payload.patient_id = payload.patientId;
-    delete payload.patientId;
-  }
-  if (payload.startTime && !payload.start_time) {
-    payload.start_time = payload.startTime;
-    delete payload.startTime;
-  }
-  if (payload.procedureType && !payload.procedure_type) {
-    payload.procedure_type = payload.procedureType;
-    delete payload.procedureType;
-  }
-  if (payload.campaignId && !payload.campaign_id) {
-    payload.campaign_id = payload.campaignId;
-    delete payload.campaignId;
-  }
-  if (payload.treatmentPlanId && !payload.treatment_plan_id) {
-    payload.treatment_plan_id = payload.treatmentPlanId;
-    delete payload.treatmentPlanId;
-  }
-  if (payload.treatmentPlanPhaseId && !payload.treatment_plan_phase_id) {
-    payload.treatment_plan_phase_id = payload.treatmentPlanPhaseId;
-    delete payload.treatmentPlanPhaseId;
-  }
-  if (payload.labDDS && !payload.lab_dds) {
-    payload.lab_dds = payload.labDDS;
-    delete payload.labDDS;
-  }
-  if (payload.labCost !== undefined && payload.lab_cost === undefined) {
-    payload.lab_cost = payload.labCost;
-    delete payload.labCost;
-  }
-  if (payload.labSentOn && !payload.lab_sent_on) {
-    payload.lab_sent_on = payload.labSentOn;
-    delete payload.labSentOn;
-  }
-  if (payload.labDueOn && !payload.lab_due_on) {
-    payload.lab_due_on = payload.labDueOn;
-    delete payload.labDueOn;
-  }
-  if (payload.labRecvdOn && !payload.lab_recvd_on) {
-    payload.lab_recvd_on = payload.labRecvdOn;
-    delete payload.labRecvdOn;
-  }
-  
-  // Transform treatments array if present
-  if (payload.treatments && Array.isArray(payload.treatments)) {
-    payload.treatments = payload.treatments.map((t: any) => ({
-      procedure_code: t.procedure_code || t.code,
-      status: t.status,
-      tooth: t.tooth || t.th,
-      surface: t.surface || t.surf,
-      description: t.description,
-      bill_to: t.bill_to || t.bill || 'Patient',
-      duration: t.duration,
-      provider: t.provider,
-      provider_units: t.provider_units || t.providerUnits || 1,
-      est_patient: t.est_patient || t.estPatient,
-      est_insurance: t.est_insurance || t.estInsurance,
-      fee: t.fee,
-    }));
-  }
-  
-  const response = await api.put<{ appointment: Appointment }>(
-    `/api/v1/scheduler/appointments/${id}`,
-    payload
+  const providerNames = new Map<string, string>(
+    (providersRes?.items ?? []).map((p): [string, string] => [
+      String(p.id),
+      p.name,
+    ]),
   );
-  return response.data.appointment;
+  const operatoryNames = new Map<string, string>(
+    (operatoriesRes?.items ?? []).map((o): [string, string] => [
+      String(o.id),
+      o.name,
+    ]),
+  );
+
+  return (appts.items ?? []).map((a) =>
+    mapAppointment(a, {
+      providers: providerNames,
+      operatories: operatoryNames,
+    }),
+  );
 };
 
-/**
- * Delete an appointment
- */
+export const fetchAppointment = async (id: string): Promise<Appointment> => {
+  const a = await getAppointmentApi(id);
+  return mapAppointment(a);
+};
+
+export const createAppointment = async (
+  data: AppointmentCreateRequest | any,
+): Promise<Appointment> => {
+  const startTime: string = data.start_time ?? data.startTime;
+  const duration: number = Number(data.duration ?? 0);
+  // AppointmentCreate requires id/provider_id/office_id/end_time.
+  // NOTE: the calendar may pass `provider`/`operatory` as names — confirm these
+  // carry ids when wiring the create UI; otherwise resolve via the providers list.
+  const created = await createAppointmentApi({
+    id: data.id ?? newAppointmentId(),
+    patient_id: data.patient_id ?? data.patientId ?? null,
+    provider_id: data.provider_id ?? data.provider,
+    operatory_id: data.operatory_id ?? data.operatory ?? null,
+    office_id: officeIdNum(data.office_id ?? data.officeId) as number,
+    date: data.date,
+    start_time: startTime,
+    end_time: data.end_time ?? addMinutes(startTime, duration),
+    duration,
+    status: data.status,
+    procedure_label: data.procedure_type ?? data.procedureType ?? null,
+    notes: data.notes ?? null,
+    has_lab: data.lab ?? undefined,
+    lab_cost: data.lab_cost ?? undefined,
+    lab_sent_on: data.lab_sent_on ?? undefined,
+    lab_due_on: data.lab_due_on ?? undefined,
+    lab_received_on: data.lab_recvd_on ?? undefined,
+    campaign_id: data.campaign_id ?? undefined,
+    treatment_plan_id: data.treatment_plan_id ?? undefined,
+  } as any);
+  return mapAppointment(created);
+};
+
+export const updateAppointment = async (
+  data: AppointmentUpdateRequest | any,
+): Promise<Appointment> => {
+  const { id } = data;
+  const startTime: string | undefined = data.start_time ?? data.startTime;
+  const duration: number | undefined =
+    data.duration != null ? Number(data.duration) : undefined;
+  const patch: Record<string, unknown> = {
+    patient_id: data.patient_id ?? data.patientId,
+    provider_id: data.provider_id ?? data.provider,
+    operatory_id: data.operatory_id ?? data.operatory,
+    date: data.date,
+    start_time: startTime,
+    end_time:
+      data.end_time ??
+      (startTime != null && duration != null
+        ? addMinutes(startTime, duration)
+        : undefined),
+    duration,
+    status: data.status,
+    procedure_label: data.procedure_type ?? data.procedureType,
+    notes: data.notes,
+    has_lab: data.lab,
+    lab_cost: data.lab_cost,
+    lab_sent_on: data.lab_sent_on,
+    lab_due_on: data.lab_due_on,
+    lab_received_on: data.lab_recvd_on,
+    is_missed: data.missed,
+    is_cancelled: data.cancelled,
+    campaign_id: data.campaign_id,
+    treatment_plan_id: data.treatment_plan_id,
+  };
+  // Drop undefined keys so PATCH only touches provided fields.
+  Object.keys(patch).forEach((k) => patch[k] === undefined && delete patch[k]);
+  const updated = await updateAppointmentApi(id, patch as any);
+  return mapAppointment(updated);
+};
+
 export const deleteAppointment = async (id: string): Promise<void> => {
-  await api.delete(`/api/v1/scheduler/appointments/${id}`);
+  await deleteAppointmentApi(id);
 };
 
-/**
- * Update appointment status
- */
 export const updateAppointmentStatus = async (
   id: string,
-  status: Appointment["status"]
+  status: Appointment["status"],
 ): Promise<Appointment> => {
-  // Normalize status to ensure it matches SQL enum (title case)
-  const normalizedStatus = normalizeStatus(status);
-  const response = await api.patch<{ appointment: Appointment }>(
-    `/api/v1/scheduler/appointments/${id}/status`,
-    { status: normalizedStatus }
-  );
-  return response.data.appointment;
+  const updated = await updateAppointmentApi(id, {
+    status,
+    is_missed: status === "Missed",
+    is_cancelled: status === "Cancelled",
+  } as any);
+  return mapAppointment(updated);
 };
 
-/**
- * Fetch all operatories for an office
- * @param officeId - Optional office ID to filter by
- */
-export const fetchOperatories = async (officeId?: string): Promise<Operatory[]> => {
-  const params = officeId ? { office_id: extractOfficeIdNumber(officeId) } : {};
-  const response = await api.get<{ operatories: Operatory[] }>("/api/v1/scheduler/operatories", {
-    params,
+// ===== REFERENCE DATA =====
+
+export const fetchOperatories = async (
+  officeId?: string,
+): Promise<Operatory[]> => {
+  const oid = officeIdNum(officeId);
+  const res = await listOperatories({
+    ...(oid != null ? { office_id: oid } : {}),
+    ...PAGE,
   });
-  return response.data.operatories;
+  return (res.items ?? []).map((o) => ({
+    id: String(o.id),
+    name: o.name,
+    provider: "",
+    office: o.office_id != null ? String(o.office_id) : "",
+  }));
 };
 
-/**
- * Fetch all providers
- * @param officeId - Optional office ID to filter by
- */
-export const fetchProviders = async (officeId?: string): Promise<Provider[]> => {
-  const params = officeId ? { office_id: extractOfficeIdNumber(officeId) } : {};
-  const response = await api.get<{ providers: Provider[] }>("/api/v1/scheduler/providers", {
-    params,
+export const fetchProviders = async (
+  officeId?: string,
+): Promise<Provider[]> => {
+  const oid = officeIdNum(officeId);
+  const res = await listProviders({
+    ...(oid != null ? { office_id: oid } : {}),
+    ...PAGE,
   });
-  return response.data.providers;
+  return (res.items ?? []).map((p) => ({
+    id: String(p.id),
+    name: p.name,
+    office: p.office_id != null ? String(p.office_id) : undefined,
+  }));
 };
 
-/**
- * Fetch all procedure types
- */
-export const fetchProcedureTypes = async (): Promise<ProcedureType[]> => {
-  const response = await api.get<{ procedure_types: ProcedureType[] }>(
-    "/api/v1/scheduler/procedure-types"
-  );
-  return response.data.procedure_types;
-};
-
-/**
- * Fetch scheduler configuration (time slots, etc.)
- */
-export const fetchSchedulerConfig = async (officeId?: string): Promise<SchedulerConfig> => {
-  const params = officeId ? { office_id: extractOfficeIdNumber(officeId) } : {};
-  const response = await api.get<{ config: any }>("/api/v1/scheduler/config", {
-    params,
-  });
-  const apiConfig = response.data.config;
-  
-  // Transform snake_case API response to camelCase
+export const fetchSchedulerConfig = async (
+  officeId?: string,
+): Promise<SchedulerConfig> => {
+  const oid = officeIdNum(officeId);
+  if (oid == null) return { startHour: 8, endHour: 17, slotInterval: 10 };
+  const office = await getOffice(oid);
   return {
-    startHour: apiConfig.start_hour ?? apiConfig.startHour,
-    endHour: apiConfig.end_hour ?? apiConfig.endHour,
-    slotInterval: apiConfig.slot_interval ?? apiConfig.slotInterval,
+    startHour: office.schedule_start_hour ?? 8,
+    endHour: office.schedule_end_hour ?? 17,
+    slotInterval: office.slot_interval_minutes ?? 10,
   };
 };
 
-// ===== ADDITIONAL METADATA TYPES =====
+// ===== METADATA =====
 
 export interface AppointmentStatus {
   id: string;
@@ -474,117 +464,98 @@ export interface TreatmentPlanProcedure {
   status: "Planned" | "Scheduled" | "Completed";
 }
 
-// ===== ADDITIONAL METADATA API FUNCTIONS =====
-
-/**
- * Fetch all appointment status types
- */
-export const fetchAppointmentStatuses = async (): Promise<AppointmentStatus[]> => {
-  const response = await api.get<{ statuses: AppointmentStatus[] }>(
-    "/api/v1/scheduler/appointment-statuses"
-  );
-  return response.data.statuses;
+/** Dropdown lookups now come from the shared `definitions` table. */
+const definitionsAsList = async (groupCode: string) => {
+  const res = await listDefinitions({
+    group_code: groupCode,
+    is_active: true,
+    ...PAGE,
+  }).catch(() => ({ items: [] }));
+  return res.items ?? [];
 };
 
-/**
- * Fetch all appointment types (if different from procedure types)
- */
+export const fetchProcedureTypes = async (): Promise<ProcedureType[]> => {
+  const defs = await definitionsAsList("procedure_type");
+  return defs.map((d) => ({ id: d.key1 ?? String(d.id), name: d.description }));
+};
+
+export const fetchAppointmentStatuses = async (): Promise<
+  AppointmentStatus[]
+> => {
+  const defs = await definitionsAsList("appt_status");
+  return defs.map((d) => ({
+    id: d.key1 ?? String(d.id),
+    name: d.key1 ?? d.description,
+    displayName: d.description,
+  }));
+};
+
 export const fetchAppointmentTypes = async (): Promise<AppointmentType[]> => {
-  const response = await api.get<{ appointment_types: AppointmentType[] }>(
-    "/api/v1/scheduler/appointment-types"
-  );
-  return response.data.appointment_types;
+  const defs = await definitionsAsList("appt_type");
+  return defs.map((d) => ({
+    id: d.key1 ?? String(d.id),
+    name: d.description,
+    description: d.description,
+  }));
 };
 
-/**
- * Fetch all procedure codes for Quick Add
- * @param category - Optional category filter
- * @param search - Optional search term (searches code, userCode, description)
- */
 export const fetchProcedureCodes = async (
   category?: string,
-  search?: string
+  search?: string,
 ): Promise<ProcedureCode[]> => {
-  const params: Record<string, string> = {};
-  if (category) params.category = category;
-  if (search) params.search = search;
-
-  const response = await api.get<{ procedure_codes?: ProcedureCode[]; procedureCodes?: any[] }>(
-    "/api/v1/procedures/codes",
-    { params }
-  );
-  
-  // Handle both snake_case and camelCase response formats
-  const rawCodes = response.data.procedure_codes || response.data.procedureCodes || [];
-  
-  // Transform snake_case API response to camelCase TypeScript interface
-  return rawCodes.map((code: any) => ({
-    code: code.code,
-    userCode: code.user_code || code.userCode || "",
-    description: code.description,
-    category: code.category,
+  const res = await listProcedureCodes({
+    ...(category ? { category } : {}),
+    ...(search ? { search } : {}),
+    ...PAGE,
+  });
+  return (res.items ?? []).map((c) => ({
+    code: c.code,
+    userCode: c.legacy_code ?? "",
+    description: c.description ?? "",
+    category: c.category ?? "",
     requirements: {
-      tooth: code.requirements?.tooth || false,
-      surface: code.requirements?.surface || false,
-      quadrant: code.requirements?.quadrant || false,
-      materials: code.requirements?.materials || false,
+      tooth: c.requires_tooth ?? false,
+      surface: c.requires_surface ?? false,
+      quadrant: c.requires_quadrant ?? false,
+      materials: false,
     },
-    defaultFee: code.default_fee || code.defaultFee || 0,
-    defaultDuration: code.default_duration || code.defaultDuration,
+    defaultFee: c.default_fee != null ? Number(c.default_fee) : 0,
+    defaultDuration: c.default_duration_minutes ?? undefined,
   }));
 };
 
-/**
- * Fetch all procedure categories
- */
-export const fetchProcedureCategories = async (): Promise<ProcedureCategory[]> => {
-  const response = await api.get<{ categories: any[] }>(
-    "/api/v1/procedures/categories"
-  );
-  
-  const rawCategories = response.data.categories || [];
-  
-  // Transform snake_case API response to camelCase TypeScript interface
-  return rawCategories.map((cat: any) => ({
-    id: cat.id,
-    name: cat.name,
-    displayName: cat.display_name || cat.displayName || cat.name,
-  }));
+export const fetchProcedureCategories = async (): Promise<
+  ProcedureCategory[]
+> => {
+  // Distinct categories from procedure codes (no dedicated categories endpoint).
+  const res = await listProcedureCodes(PAGE);
+  const seen = new Set<string>();
+  const cats: ProcedureCategory[] = [];
+  for (const c of res.items ?? []) {
+    const name = c.category;
+    if (name && !seen.has(name)) {
+      seen.add(name);
+      cats.push({ id: name, name, displayName: name });
+    }
+  }
+  return cats;
 };
 
-/**
- * Fetch treatment plans for a patient
- * @param patientId - Patient ID
- */
-export const fetchTreatmentPlans = async (patientId: string): Promise<TreatmentPlan[]> => {
-  const response = await api.get<{ treatment_plans?: TreatmentPlan[]; treatmentPlans?: any[] }>(
-    `/api/v1/patients/${patientId}/treatment-plans`
-  );
-  
-  // Handle both snake_case and camelCase response formats
-  const rawPlans = response.data.treatment_plans || response.data.treatmentPlans || [];
-  
-  // Transform API response (snake_case) to TypeScript interface (camelCase)
-  return rawPlans.map((plan: any) => ({
-    id: plan.id,
-    name: plan.name,
-    patientId: plan.patient_id || plan.patientId,
-    phases: (plan.phases || []).map((phase: any) => ({
-      id: phase.id,
-      name: phase.name,
-      procedures: (phase.procedures || []).map((proc: any) => ({
-        id: proc.id,
-        code: proc.code,
-        description: proc.description,
-        tooth: proc.tooth || "",
-        surface: proc.surface || "",
-        diagnosedProvider: proc.diagnosed_provider || proc.diagnosedProvider || "",
-        fee: proc.fee || 0,
-        insuranceEstimate: proc.insurance_estimate || proc.insuranceEstimate || 0,
-        status: proc.status || "Planned",
-      })),
-    })),
-    createdDate: plan.created_date || plan.createdDate || new Date().toISOString(),
-    status: plan.status || "Active",
+export const fetchTreatmentPlans = async (
+  patientId: string,
+): Promise<TreatmentPlan[]> => {
+  const pid = Number(String(patientId).match(/(\d+)/)?.[1]);
+  const res = await listTreatmentPlans({
+    ...(Number.isFinite(pid) ? { patient_id: pid } : {}),
+    ...PAGE,
+  });
+  // Phases/procedures live in /treatment-plan-items (compose as a follow-up).
+  return (res.items ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    patientId: String(p.patient_id),
+    phases: [],
+    createdDate: p.created_at ?? "",
+    status: (p.status as TreatmentPlan["status"]) ?? "Active",
   }));
 };

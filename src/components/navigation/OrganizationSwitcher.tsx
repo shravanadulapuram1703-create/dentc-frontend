@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Building2, ChevronDown, Check, Settings, Plus, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { components } from '../../styles/theme';
-import api from '../../services/api';
+import { listOffices } from '@/api/generated/endpoints/organization/organization';
 
 interface Office {
   id: string;
@@ -54,14 +54,14 @@ export default function OrganizationSwitcher() {
     const fetchOfficesCount = async () => {
       try {
         setLoadingOffices(true);
-        const response = await api.get("/api/v1/offices");
-        
+        const response = await listOffices({ size: 200 });
+
         // Group offices by tenant/organization ID
         // Map by both organization ID and extracted tenant ID for flexible matching
         const countByTenant: Record<string, number> = {};
         const countByOrgId: Record<string, number> = {};
-        
-        response.data.forEach((office: any) => {
+
+        response.items.forEach((office: any) => {
           const tenantId = office.tenantId || office.tenant_id;
           if (tenantId) {
             const tenantKey = String(tenantId);
