@@ -1,4 +1,11 @@
 import api from "./api";
+import {
+  createPatient as createPatientApi,
+  updatePatient as updatePatientApi,
+  getPatient,
+  listPatients,
+} from "@/api/generated/endpoints/patients/patients";
+import type { PatientCreate, PatientUpdate, PatientRead } from "@/api/generated/model";
 
 // ===== TYPES =====
 export interface Patient {
@@ -471,108 +478,144 @@ const extractOfficeId = (officeStr: string | number | undefined): number | undef
  * Transforms flat structure to nested structure expected by backend
  * Sends complete schema with null values for missing fields
  */
+/* =========================================================
+   Mappers between the backend's flat PatientRead/PatientCreate
+   and the UI's camelCase Patient / nested PatientDetails shapes.
+========================================================= */
+
+/** Flat backend PatientRead -> flat camelCase Patient. */
+const toPatient = (p: PatientRead): Patient => ({
+  id: p.id,
+  chartNo: p.chart_no ?? "",
+  firstName: p.first_name ?? "",
+  lastName: p.last_name ?? "",
+  dob: p.dob ?? undefined,
+  gender: (p.gender as Patient["gender"]) ?? undefined,
+  phone: p.cell_phone ?? p.phone ?? undefined,
+  email: p.email ?? undefined,
+  homeOfficeId: p.home_office_id ?? undefined,
+  createdAt: p.created_at ?? undefined,
+  updatedAt: p.updated_at ?? undefined,
+});
+
+/** Flat backend PatientRead -> the UI's nested PatientDetails (partial). */
+const toPatientDetails = (p: PatientRead): PatientDetails =>
+  ({
+    id: p.id,
+    chart_no: p.chart_no ?? "",
+    first_name: p.first_name ?? "",
+    last_name: p.last_name ?? "",
+    preferred_name: p.preferred_name ?? undefined,
+    dob: p.dob ?? undefined,
+    gender: p.gender as PatientDetails["gender"],
+    title: p.title ?? undefined,
+    marital_status: p.marital_status ?? undefined,
+    guardian_name: p.guardian_name ?? undefined,
+    guardian_phone: p.guardian_phone ?? undefined,
+    address: {
+      address_line_1: p.address_line1 ?? undefined,
+      address_line_2: p.address_line2 ?? undefined,
+      city: p.city ?? undefined,
+      state: p.state ?? undefined,
+      zip: p.zip ?? undefined,
+    },
+    contact: {
+      home_phone: p.phone ?? undefined,
+      cell_phone: p.cell_phone ?? undefined,
+      work_phone: p.work_phone ?? undefined,
+      email: p.email ?? undefined,
+      preferred_contact: p.preferred_contact ?? undefined,
+    },
+    office: { home_office_id: p.home_office_id ?? undefined },
+    provider: { preferred_provider_id: p.preferred_provider_id ?? undefined },
+    patient_flags: {
+      is_active: p.is_active,
+      hipaa_agreement: p.hipaa_agreement ?? undefined,
+      no_auto_email: p.no_auto_email ?? undefined,
+      no_auto_sms: p.no_auto_sms ?? undefined,
+    },
+    clinical: {
+      first_visit: p.first_visit ?? undefined,
+      last_visit: p.last_visit ?? undefined,
+      next_recall: p.next_recall ?? undefined,
+    },
+    // insurance / responsible_party / appointments / recalls / balances are
+    // separate resources — composed by their own screens, omitted here.
+  }) as PatientDetails;
+
+/**
+ * Flatten the UI's nested patient form payload (identity/address/contact/...)
+ * into the backend's flat PatientCreate/PatientUpdate. Tolerates already-flat
+ * payloads too.
+ */
+const flattenPatientPayload = (data: any): PatientCreate => {
+  const id = data.identity ?? {};
+  const addr = data.address ?? {};
+  const c = data.contact ?? {};
+  const off = data.office ?? {};
+  const prov = data.provider ?? {};
+  const ref = data.referral ?? {};
+  const g = data.guardian ?? {};
+  const notes = data.notes ?? {};
+  const flags = data.patient_flags ?? {};
+  const pick = (...vals: any[]) => vals.find((v) => v != null) ?? null;
+  return {
+    home_office_id: pick(off.home_office_id, data.home_office_id),
+    chart_no: pick(id.chart_no, data.chart_no),
+    first_name: pick(id.first_name, data.first_name),
+    last_name: pick(id.last_name, data.last_name),
+    preferred_name: pick(id.preferred_name, data.preferred_name),
+    title: pick(id.title, data.title),
+    middle_initial: pick(id.middle_initial, data.middle_initial),
+    dob: pick(id.dob, data.dob),
+    gender: pick(id.gender, data.gender),
+    ssn: pick(id.ssn, data.ssn),
+    marital_status: pick(id.marital_status, data.marital_status),
+    phone: pick(c.home_phone, data.phone),
+    cell_phone: pick(c.cell_phone, data.cell_phone),
+    work_phone: pick(c.work_phone, data.work_phone),
+    email: pick(c.email, data.email),
+    preferred_contact: pick(c.preferred_contact, data.preferred_contact),
+    address_line1: pick(addr.address_line_1, data.address_line1),
+    address_line2: pick(addr.address_line_2, data.address_line2),
+    city: pick(addr.city, data.city),
+    state: pick(addr.state, data.state),
+    zip: pick(addr.zip, data.zip),
+    preferred_provider_id: pick(prov.preferred_provider_id, data.preferred_provider_id),
+    referral_type: pick(ref.referral_type, data.referral_type),
+    referred_by: pick(ref.referred_by, data.referred_by),
+    guardian_name: pick(g.guardian_name, data.guardian_name),
+    guardian_phone: pick(g.guardian_phone, data.guardian_phone),
+    patient_notes: pick(notes.patient_notes, data.patient_notes),
+    hipaa_agreement: pick(flags.hipaa_agreement, data.hipaa_agreement),
+    no_auto_email: pick(flags.no_auto_email, data.no_auto_email),
+    no_auto_sms: pick(flags.no_auto_sms, data.no_auto_sms),
+    is_active: pick(flags.is_active, data.is_active),
+  } as PatientCreate;
+};
+
 export const createPatient = async (
   data: PatientCreateRequest
 ): Promise<Patient> => {
-  // Transform flat structure to nested structure expected by backend
-  // Send complete schema structure even if values are null/undefined
-  const payload: any = {
-    identity: {
-      first_name: data.firstName,
-      last_name: data.lastName,
-      preferred_name: null,
-      dob: data.dob || null,
-      gender: data.gender || null,
-      title: null,
-      pronouns: null,
-      marital_status: null,
-      ssn: null,
-      medi_id: null,
-    },
-    address: {
-      address_line_1: null,
-      address_line_2: null,
-      city: null,
-      state: null,
-      zip: null,
-      country: "USA",
-    },
-    contact: {
-      home_phone: null,
-      cell_phone: data.phone ? data.phone.replace(/\D/g, '') : null, // Remove non-digits
-      work_phone: null,
-      email: data.email || null,
-      preferred_contact: data.phone ? 'Cell' : null,
-    },
-    office: {
-      home_office_id: (() => {
-        if (!data.homeOfficeId) {
-          throw new Error("home_office_id is required to create a patient");
-        }
-        return typeof data.homeOfficeId === 'number' 
-          ? data.homeOfficeId 
-          : parseInt(String(data.homeOfficeId), 10);
-      })(),
-    },
-    provider: {
-      preferred_provider_id: null,
-      preferred_hygienist_id: null,
-    },
-    fee_schedule: {
-      fee_schedule_id: null,
-    },
-    patient_type: "General",
-    patient_flags: {
-      is_ortho: false,
-      is_child: false,
-      is_collection_problem: false,
-      is_employee_family: false,
-      is_short_notice: false,
-      is_senior: false,
-      is_spanish_speaking: false,
-      assign_benefits: true,
-      hipaa_agreement: false,
-      no_correspondence: false,
-      no_auto_email: false,
-      no_auto_sms: false,
-      add_to_quickfill: false,
-    },
-    responsible_party: {
-      _relationship: null,
-      responsible_party_id: null,
-    },
-    coverage: {
-      no_coverage: false,
-      primary_dental: false,
-      secondary_dental: false,
-      primary_medical: false,
-      secondary_medical: false,
-    },
-    referral: {
-      referral_type: null,
-      referred_by: null,
-      referred_to: null,
-      referral_to_date: null,
-    },
-    guardian: {
-      guardian_name: null,
-      guardian_phone: null,
-    },
-    notes: {
-      patient_notes: null,
-      hipaa_sharing: null,
-    },
-    starting_balances: {
-      current: "0.00",
-      over_30: "0.00",
-      over_60: "0.00",
-      over_90: "0.00",
-      over_120: "0.00",
-    },
-  };
-
-  const response = await api.post<Patient>("/api/v1/patients", payload);
-  return response.data;
+  if (!data.homeOfficeId) {
+    throw new Error("home_office_id is required to create a patient");
+  }
+  const body: PatientCreate = {
+    home_office_id:
+      typeof data.homeOfficeId === "number"
+        ? data.homeOfficeId
+        : parseInt(String(data.homeOfficeId), 10),
+    chart_no: data.chartNo ?? null,
+    first_name: data.firstName ?? null,
+    last_name: data.lastName ?? null,
+    dob: data.dob ?? null,
+    gender: data.gender ?? null,
+    cell_phone: data.phone ? data.phone.replace(/\D/g, "") : null,
+    email: data.email ?? null,
+    preferred_contact: data.phone ? "cell_phone" : null,
+  } as PatientCreate;
+  const created = await createPatientApi(body);
+  return toPatient(created);
 };
 
 /**
@@ -611,8 +654,7 @@ export const getPatients = async (
  * Get a single patient by ID
  */
 export const getPatientById = async (patientId: number): Promise<Patient> => {
-  const response = await api.get<Patient>(`/api/v1/patients/${patientId}`);
-  return response.data;
+  return toPatient(await getPatient(patientId));
 };
 
 /**
@@ -622,26 +664,17 @@ export const getPatientByChartNo = async (chartNo: string): Promise<Patient> => 
   // Normalize chart number - remove "CH" prefix and any dashes if present
   // e.g., "CH014" -> "014", "CH-014" -> "014"
   let normalizedChartNo = chartNo.trim();
-  if (normalizedChartNo.toUpperCase().startsWith('CH')) {
-    normalizedChartNo = normalizedChartNo.substring(2).replace(/^-/, '').trim();
+  if (normalizedChartNo.toUpperCase().startsWith("CH")) {
+    normalizedChartNo = normalizedChartNo.substring(2).replace(/^-/, "").trim();
   }
-  
-  // Try with normalized chart number first
-  try {
-    const response = await api.get<Patient>(`/api/v1/patients/chart/${normalizedChartNo}`);
-    return response.data;
-  } catch (err: any) {
-    // If normalized fails, try with original chart number
-    if (normalizedChartNo !== chartNo) {
-      try {
-        const response = await api.get<Patient>(`/api/v1/patients/chart/${chartNo}`);
-        return response.data;
-      } catch (err2: any) {
-        throw err; // Throw original error
-      }
-    }
-    throw err;
+
+  // Exact-match lookup via the canonical list endpoint's chart_no filter.
+  const res = await listPatients({ chart_no: normalizedChartNo, size: 1 });
+  const first = res.items[0];
+  if (!first) {
+    throw new Error(`Patient not found with chart number: ${chartNo}`);
   }
+  return toPatient(first);
 };
 
 /**
@@ -669,49 +702,59 @@ export const getPatientDetails = async (patientId: string | number): Promise<Pat
     }
   }
   
-  const response = await api.get<PatientDetails>(`/api/v1/patients/${numericId}`);
-  return response.data;
+  return toPatientDetails(await getPatient(numericId));
 };
 
 /**
- * Create a new patient with full details (for AddNewPatient form)
+ * Create a new patient with full details (for AddNewPatient form).
+ * Flattens the nested form payload to the backend's flat PatientCreate.
  */
 export const createPatientFull = async (
   data: PatientCreateRequestFull
 ): Promise<PatientDetails> => {
-  const response = await api.post<PatientDetails>("/api/v1/patients", data);
-  return response.data;
+  const created = await createPatientApi(flattenPatientPayload(data));
+  return toPatientDetails(created);
 };
 
 /**
- * Update an existing patient
+ * Update an existing patient (PATCH).
  */
 export const updatePatient = async (
   patientId: number,
   data: PatientUpdateRequest
 ): Promise<Patient> => {
-  const response = await api.put<Patient>(`/api/v1/patients/${patientId}`, data);
-  return response.data;
+  const body: PatientUpdate = {
+    chart_no: data.chartNo ?? undefined,
+    first_name: data.firstName ?? undefined,
+    last_name: data.lastName ?? undefined,
+    dob: data.dob ?? undefined,
+    gender: data.gender ?? undefined,
+    cell_phone: data.phone ? data.phone.replace(/\D/g, "") : undefined,
+    email: data.email ?? undefined,
+    home_office_id:
+      data.homeOfficeId != null ? Number(data.homeOfficeId) : undefined,
+  } as PatientUpdate;
+  const updated = await updatePatientApi(patientId, body);
+  return toPatient(updated);
 };
 
 /**
- * Update an existing patient with full details (for EditPatientModal)
- * @param patientId - Patient numeric ID
- * @param data - Full patient update request
+ * Update an existing patient with full details (for EditPatientModal).
+ * Flattens the nested form payload and PATCHes the canonical resource.
  */
 export const updatePatientFull = async (
   patientId: number | string,
   data: PatientUpdateRequestFull
 ): Promise<PatientDetails> => {
-  // Convert to number - API expects numeric ID
-  const numericId = typeof patientId === 'string' ? Number(patientId) : patientId;
-  
+  const numericId = typeof patientId === "string" ? Number(patientId) : patientId;
   if (isNaN(numericId)) {
     throw new Error(`Invalid patient ID: ${patientId}. Expected numeric ID.`);
   }
-  
-  const response = await api.put<PatientDetails>(`/api/v1/patients/${numericId}`, data);
-  return response.data;
+  const updated = await updatePatientApi(
+    numericId,
+    flattenPatientPayload(data) as PatientUpdate,
+  );
+  return toPatientDetails(updated);
 };
 
 /**
