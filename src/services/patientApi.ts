@@ -4,7 +4,9 @@ import {
   updatePatient as updatePatientApi,
   getPatient,
   listPatients,
+  listPatientInsurance,
 } from "@/api/generated/endpoints/patients/patients";
+import type { PatientInsuranceRead } from "@/api/generated/model";
 import type { PatientCreate, PatientUpdate, PatientRead } from "@/api/generated/model";
 
 // ===== TYPES =====
@@ -702,7 +704,36 @@ export const getPatientDetails = async (patientId: string | number): Promise<Pat
     }
   }
   
-  return toPatientDetails(await getPatient(numericId));
+  const [p, insRes] = await Promise.all([
+    getPatient(numericId),
+    listPatientInsurance({ patient_id: numericId, size: 50 }).catch(() => null),
+  ]);
+  const details = toPatientDetails(p);
+  details.insurance = mapInsurance(insRes?.items ?? []);
+  return details;
+};
+
+/**
+ * Group the patient's insurance records into the UI's
+ * { primary_dental, secondary_dental, primary_medical, secondary_medical } shape.
+ * No explicit primary/secondary flag exists on the record, so the first active
+ * record of each type is treated as primary, the second as secondary.
+ * (Responsible-party / guarantor has no backend resource — left undefined.)
+ */
+const mapInsurance = (
+  records: PatientInsuranceRead[],
+): PatientDetails["insurance"] => {
+  const active = records.filter((r) => r.is_active !== false);
+  const isDental = (t?: string | null) => /dent|^d$/i.test(t ?? "");
+  const isMedical = (t?: string | null) => /med|^m$/i.test(t ?? "");
+  const dental = active.filter((r) => isDental(r.insurance_type));
+  const medical = active.filter((r) => isMedical(r.insurance_type));
+  return {
+    primary_dental: dental[0] ?? null,
+    secondary_dental: dental[1] ?? null,
+    primary_medical: medical[0] ?? null,
+    secondary_medical: medical[1] ?? null,
+  };
 };
 
 /**
