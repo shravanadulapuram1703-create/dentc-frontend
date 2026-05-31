@@ -60,7 +60,7 @@ class AIChatWebSocket {
   private isConnected = false;
   private messageQueue: ClientMessage[] = [];
 
-  constructor(baseURL: string = 'http://127.0.0.1:8000') {
+  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000') {
     // Convert HTTP URL to WebSocket URL
     const wsProtocol = baseURL.startsWith('https') ? 'wss' : 'ws';
     const wsHost = baseURL.replace(/^https?:\/\//, '');
@@ -295,8 +295,8 @@ let wsInstance: AIChatWebSocket | null = null;
 
 export function getAIChatWebSocket(): AIChatWebSocket {
   if (!wsInstance) {
-    // Get base URL from api.ts configuration
-    const apiBaseURL = 'http://127.0.0.1:8000'; // Match api.ts default
+    // Get base URL from env (matches api.ts default)
+    const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
     wsInstance = new AIChatWebSocket(apiBaseURL);
   }
   return wsInstance;

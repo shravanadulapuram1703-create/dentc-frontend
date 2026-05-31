@@ -240,7 +240,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       setTelecomStatus(m.telecomStatus);
 
       const { officeSpecific: os, multiOfficeShared: ms } = partitionAssignments(
-        phones as Record<string, unknown>[]
+        phones as Parameters<typeof partitionAssignments>[0]
       );
       setOfficeSpecific(os);
       setMultiOfficeShared(ms);
@@ -615,8 +615,8 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
                       : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                   }`}
                 />
-                <div className="absolute right-3 top-2.5">
-                  <Shield className="w-4 h-4 text-[#64748B]" title="Encrypted at rest" />
+                <div className="absolute right-3 top-2.5" title="Encrypted at rest">
+                  <Shield className="w-4 h-4 text-[#64748B]" aria-label="Encrypted at rest" />
                 </div>
               </div>
               <p className="text-xs text-[#64748B] mt-1">
