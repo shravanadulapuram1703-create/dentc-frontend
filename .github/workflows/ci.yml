@@ -24,11 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Non-blocking until the flat ESLint config is fixed (it currently
-      # misparses .ts files); surfaces problems without failing the pipeline.
+      # Blocking: fails on errors (parse errors, undefined vars, hook misuse).
+      # Migration-era debt rules are warnings and do not fail the build.
       - name: Lint
         run: npm run lint
-        continue-on-error: true
 
       # Regenerate the API client from the committed openapi.json and fail if it
       # differs from what's checked in — i.e. someone edited generated code by
