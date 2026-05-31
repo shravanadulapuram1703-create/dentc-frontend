@@ -1,0 +1,5 @@
+# Keep the committed OpenAPI schema and generated API client at LF so the CI
+# codegen drift-check (which regenerates on Linux) compares apples to apples,
+# regardless of contributors' core.autocrlf settings.
+openapi.json text eol=lf
+src/api/generated/** text eol=lf
