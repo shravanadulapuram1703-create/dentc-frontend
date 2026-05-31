@@ -6,6 +6,8 @@ import {
   ReactNode,
 } from "react";
 import api from "../services/api";
+import { getMeFull, login as login_ } from "@/api/generated/endpoints/auth/auth";
+import type { MeFull } from "@/api/generated/model";
 
 /* -------------------- TYPES -------------------- */
 
@@ -76,6 +78,53 @@ interface AuthContextType {
   markFirstLoginComplete: () => void;
 }
 
+/* -------------------- MAPPING -------------------- */
+
+/**
+ * Build the auth UI state from the backend `MeFull` payload
+ * (`{ user, tenant, offices }`). Office/org IDs use the app's canonical
+ * `OFF-{id}` / `ORG-{id}` format so downstream consumers (OrganizationSwitcher,
+ * currentOffice comparisons, office-id extraction) keep working unchanged.
+ */
+function buildAuthState(me: MeFull): {
+  user: User;
+  organizations: Organization[];
+} {
+  const u = me.user;
+
+  const user: User = {
+    id: String(u.id),
+    email: u.email,
+    name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim(),
+    role: (u.role as UserRole) ?? "staff",
+    isFirstLogin: false,
+    isActive: u.is_active,
+    isOrgOwner: u.role === "owner",
+    organizationId: String(me.tenant?.id ?? u.tenant_id),
+  };
+
+  const organizations: Organization[] = me.tenant
+    ? [
+        {
+          id: `ORG-${me.tenant.id}`,
+          name: me.tenant.name,
+          code: `PG-${me.tenant.id}`,
+          is_current: true,
+          offices: (me.offices ?? []).map((o) => ({
+            id: `OFF-${o.office_id}`,
+            name: o.name ?? "",
+            code: String(o.office_id),
+            address: "",
+            displayName: `${o.name ?? "Office"} [${o.office_id}]`,
+            is_current: o.is_primary ?? false,
+          })),
+        },
+      ]
+    : [];
+
+  return { user, organizations };
+}
+
 /* -------------------- CONTEXT -------------------- */
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -139,24 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const [meRes, accessRes] = await Promise.all([
-          api.get("/api/v1/auth/me-full"),
-          api.get("/api/v1/users/me/access"),
-        ]);
-
-        const me = meRes.data;
-        const orgs: Organization[] = accessRes.data ?? [];
-
-        const restoredUser: User = {
-          id: String(me.user_id),
-          email: me.email,
-          name: `${me.first_name} ${me.last_name}`.trim(),
-          role: me.roles?.[0] ?? "staff",
-          isFirstLogin: false,
-          isActive: true,
-          isOrgOwner: me.is_super_admin ?? false,
-          organizationId: String(me.current_organization_id ?? ""),
-        };
+        const me = await getMeFull();
+        const { user: restoredUser, organizations: orgs } = buildAuthState(me);
 
         setUser(restoredUser);
         setOrganizations(orgs);
@@ -164,8 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("me_full", JSON.stringify(restoredUser));
         localStorage.setItem("access_ctx", JSON.stringify(orgs));
 
-        const activeOrg =
-          orgs.find((o) => o.is_current) ?? orgs[0];
+        const activeOrg = orgs.find((o) => o.is_current) ?? orgs[0];
 
         if (activeOrg) {
           setCurrentOrganization(activeOrg.id);
@@ -190,36 +222,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const loginRes = await api.post("/api/v1/auth/login", {
-        identifier: email,
-        password,
-      });
+      // Backend LoginRequest expects `username` (accepts username or email).
+      const tokens = await login_({ username: email, password });
 
-      const token = loginRes.data.access_token;
+      const token = tokens.access_token;
 
       localStorage.setItem("access_token", token);
-      localStorage.setItem("refresh_token", loginRes.data.refresh_token);
+      localStorage.setItem("refresh_token", tokens.refresh_token);
 
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      const [meRes, accessRes] = await Promise.all([
-        api.get("/api/v1/auth/me-full"),
-        api.get("/api/v1/users/me/access"),
-      ]);
-
-      const me = meRes.data;
-      const orgs: Organization[] = accessRes.data ?? [];
-
-      const newUser: User = {
-        id: String(me.user_id),
-        email: me.email,
-        name: `${me.first_name} ${me.last_name}`.trim(),
-        role: me.roles?.[0] ?? "staff",
-        isFirstLogin: false,
-        isActive: true,
-        isOrgOwner: me.is_super_admin ?? false,
-        organizationId: String(me.current_organization_id ?? ""),
-      };
+      const me = await getMeFull();
+      const { user: newUser, organizations: orgs } = buildAuthState(me);
 
       setUser(newUser);
       setOrganizations(orgs);
