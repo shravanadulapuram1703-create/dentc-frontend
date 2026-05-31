@@ -9,6 +9,33 @@ The frontend was built against an API contract (see [`docs/api-contracts/`](./ap
 
 Because Orval generates strictly from the schema, this matters: a route that works in the browser but is missing from the schema **cannot** get a generated client until the backend exposes it.
 
+## Backend action checklist (hand to backend team)
+
+**P1 — Expose already-working routes in OpenAPI** (`include_in_schema=True`, or mount the router into the documented app). These return `401` live but are absent from `openapi.json`, so Orval can't generate them yet:
+
+- [ ] `GET /api/v1/users/list-with-home-office`  ← unblocks the Users-grid pilot
+- [ ] `GET /api/v1/users/all-tenants`
+- [ ] `GET /api/v1/users/me`
+- [ ] `GET /api/v1/offices`
+- [ ] `GET /api/v1/patients/search`
+- [ ] `POST /api/v1/patients/check-duplicate`
+- [ ] `GET /api/v1/patients/metadata`
+
+**P2 — Align update verbs.** Decide `PUT` vs `PATCH` and make the schema authoritative:
+
+- [ ] `PATCH/PUT /api/v1/users/{id}` (frontend sends `PUT`, schema says `PATCH`)
+- [ ] `PATCH/PUT /api/v1/patients/{id}` (same)
+
+**P3 — Decide the fate of unimplemented features** (implement, or confirm the UI should be rebuilt onto the existing resource model such as `/insurance-claims`, `/appointments`):
+
+- [ ] Patient Ledger / Billing (`/patients/{id}/ledger|balances|claims|procedures|payments|adjustments`, `/metadata/*` code lists)
+- [ ] Scheduler (`/scheduler/*`, `/procedures/codes`, `/procedures/categories`)
+- [ ] Patient metadata dropdowns (`/patients/metadata/genders|titles|states|…`)
+- [ ] User sub-resources (`/users/{id}/groups|ip-rules|preferences|time-clock`)
+- [ ] Misc (`/users/me/access`, `/auth/signup`, `/patients/chart/{chartNo}`)
+
+**Verify after P1/P2:** `npm run api:sync && node scripts/api-drift-report.mjs` — the report should move the P1 rows from ❌ to ✅ and the P2 rows off METHOD-MISMATCH.
+
 ## Three categories (live-verified)
 
 Every endpoint the frontend calls falls into one of three buckets. HTTP status from an **unauthenticated** probe distinguishes them: `401` = route exists (auth required), `404` = route not registered.
