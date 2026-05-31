@@ -20,7 +20,8 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { components } from '../../styles/theme';
-import { searchPatients, type Patient as ApiPatient } from '../../services/patientApi';
+import { listPatients } from '@/api/generated/endpoints/patients/patients';
+import type { PatientRead, ListPatientsParams } from '@/api/generated/model';
 
 interface PatientProps {
   onLogout: () => void;
@@ -80,43 +81,43 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
     return match ? match[1] : officeId;
   };
   
-  // Convert API Patient to Patient interface for display
-  const convertApiPatientToDisplay = (apiPatient: ApiPatient): Patient => {
+  // Convert backend PatientRead to the display row shape.
+  const convertApiPatientToDisplay = (p: PatientRead): Patient => {
     // Format DOB from YYYY-MM-DD to MM/DD/YYYY
     let dobFormatted = '';
-    if (apiPatient.dob) {
-      const dateParts = apiPatient.dob.split('-');
+    if (p.dob) {
+      const dateParts = p.dob.split('-');
       if (dateParts.length === 3) {
         dobFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
       }
     }
-    
-    // Format name
-    const name = `${apiPatient.firstName} ${apiPatient.lastName}`;
-    
+
+    const firstName = p.first_name ?? '';
+    const lastName = p.last_name ?? '';
+
     return {
-      id: apiPatient.id,
-      patientId: apiPatient.chartNo || `PT-${apiPatient.id.toString().padStart(6, '0')}`,
-      name: name,
-      firstName: apiPatient.firstName,
-      lastName: apiPatient.lastName,
-      dob: apiPatient.dob || dobFormatted,
-      phone: apiPatient.phone || '',
-      email: apiPatient.email || '',
-      address: (apiPatient as any).address ||'', // Not in basic Patient API - will need extended API
-      city: (apiPatient as any).city || '', // Not in basic Patient API
-      state: (apiPatient as any).state || '', // Not in basic Patient API
-      zip: (apiPatient as any).zip || '', // Not in basic Patient API
-      insurance: (apiPatient as any).insurance || '', // Not in basic Patient API
-      lastVisit: (apiPatient as any).lastVisit || '', // Not in basic Patient API
-      nextAppointment: (apiPatient as any).nextAppointment || '', // Not in basic Patient API
-      balance: (apiPatient as any).balance || '', // Not in basic Patient API
-      officeId: (apiPatient as any).officeId?.toString() || '',
-      officeName: (apiPatient as any).officeName || '', // Will need to fetch from offices API
-      chartNumber: apiPatient.chartNo || `CH-${apiPatient.id}`,
-      ssn: (apiPatient as any).ssn || '***-**-****', // Not in basic Patient API
-      emergencyContact: (apiPatient as any).emergencyContact || '', // Not in basic Patient API
-      emergencyPhone: (apiPatient as any).emergencyPhone ||'', // Not in basic Patient API
+      id: p.id,
+      patientId: p.chart_no || `PT-${String(p.id).padStart(6, '0')}`,
+      name: `${firstName} ${lastName}`.trim(),
+      firstName,
+      lastName,
+      dob: dobFormatted || (p.dob ?? ''),
+      phone: p.cell_phone || p.phone || '',
+      email: p.email || '',
+      address: p.address_line1 || '',
+      city: p.city || '',
+      state: p.state || '',
+      zip: p.zip || '',
+      insurance: '', // composed from /patient-insurance — follow-up
+      lastVisit: p.last_visit || '',
+      nextAppointment: '', // composed from /appointments — follow-up
+      balance: '', // composed from /patients/{id}/balance — follow-up
+      officeId: p.home_office_id != null ? String(p.home_office_id) : '',
+      officeName: '', // resolve via /offices — follow-up
+      chartNumber: p.chart_no || `CH-${p.id}`,
+      ssn: p.ssn || '***-**-****',
+      emergencyContact: p.guardian_name || '',
+      emergencyPhone: p.guardian_phone || '',
     };
   };
 
@@ -161,25 +162,31 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
     setExpandedPatientId(null);
 
     try {
-      // Extract numeric office ID
-      const officeIdNum = searchScope === 'current' ? extractOfficeIdNumber(currentOffice) : undefined;
-      
-      // Call advanced search API
-      const response = await searchPatients({
-        searchBy: searchBy,
-        searchValue: searchText.trim(),
-        searchFor: searchFor,
-        patientType: patientType === 'both' ? 'both' : patientType || 'both',
-        searchScope: searchScope,
-        includeInactive: includeInactive,
-        officeId: officeIdNum,
-        limit: 100,
-        offset: 0,
-      });
+      // Map the legacy search form to the backend's /patients query params.
+      // The backend supports a free-text `search` (ILIKE over name/chart_no/
+      // email/phone) plus exact `chart_no`; field-specific "search by" choices
+      // collapse to `search` except Chart # which uses the exact filter.
+      const params: ListPatientsParams = { page: 1, size: 100 };
 
-      // Convert API patients to display format
-      const results = response.patients.map(convertApiPatientToDisplay);
-      
+      if (searchBy === 'chartNumber') {
+        params.chart_no = searchText.trim();
+      } else {
+        params.search = searchText.trim();
+      }
+
+      if (searchScope === 'current') {
+        const officeIdNum = extractOfficeIdNumber(currentOffice);
+        if (officeIdNum) params.home_office_id = Number(officeIdNum);
+      }
+
+      // Exclude inactive unless explicitly requested.
+      if (!includeInactive) params.is_active = true;
+
+      const response = await listPatients(params);
+
+      // Convert backend patients to display format
+      const results = response.items.map(convertApiPatientToDisplay);
+
       setSearchResults(results);
       setHasSearched(true);
     } catch (error: any) {
