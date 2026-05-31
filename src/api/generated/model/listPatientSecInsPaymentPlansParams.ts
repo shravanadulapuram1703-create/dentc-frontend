@@ -9,6 +9,14 @@ import type { ListPatientSecInsPaymentPlansOrder } from './listPatientSecInsPaym
 
 export type ListPatientSecInsPaymentPlansParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by is_billed
+ */
+is_billed?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

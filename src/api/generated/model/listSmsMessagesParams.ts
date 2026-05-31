@@ -9,6 +9,22 @@ import type { ListSmsMessagesOrder } from './listSmsMessagesOrder';
 
 export type ListSmsMessagesParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by appointment_id
+ */
+appointment_id?: string | null;
+/**
+ * Filter by message_type
+ */
+message_type?: string | null;
+/**
+ * Filter by is_read
+ */
+is_read?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

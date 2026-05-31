@@ -9,6 +9,10 @@ import type { ListQuestionnaireHeadersOrder } from './listQuestionnaireHeadersOr
 
 export type ListQuestionnaireHeadersParams = {
 /**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

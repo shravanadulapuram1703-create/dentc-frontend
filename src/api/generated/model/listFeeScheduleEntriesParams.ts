@@ -9,6 +9,14 @@ import type { ListFeeScheduleEntriesOrder } from './listFeeScheduleEntriesOrder'
 
 export type ListFeeScheduleEntriesParams = {
 /**
+ * Filter by fee_schedule_id
+ */
+fee_schedule_id?: number | null;
+/**
+ * Filter by procedure_code
+ */
+procedure_code?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

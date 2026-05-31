@@ -9,6 +9,14 @@ import type { ListProvidersOrder } from './listProvidersOrder';
 
 export type ListProvidersParams = {
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

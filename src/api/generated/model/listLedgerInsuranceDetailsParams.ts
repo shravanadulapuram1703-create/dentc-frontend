@@ -9,6 +9,18 @@ import type { ListLedgerInsuranceDetailsOrder } from './listLedgerInsuranceDetai
 
 export type ListLedgerInsuranceDetailsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by claim_id
+ */
+claim_id?: string | null;
+/**
+ * Filter by procedure_id
+ */
+procedure_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

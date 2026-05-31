@@ -9,6 +9,14 @@ import type { ListPerioExamDetailsOrder } from './listPerioExamDetailsOrder';
 
 export type ListPerioExamDetailsParams = {
 /**
+ * Filter by exam_id
+ */
+exam_id?: number | null;
+/**
+ * Filter by tooth_no
+ */
+tooth_no?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

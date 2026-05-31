@@ -9,6 +9,10 @@ import type { ListMedicalHistoryDetailsOrder } from './listMedicalHistoryDetails
 
 export type ListMedicalHistoryDetailsParams = {
 /**
+ * Filter by history_id
+ */
+history_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

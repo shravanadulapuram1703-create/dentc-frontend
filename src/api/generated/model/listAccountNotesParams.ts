@@ -9,6 +9,10 @@ import type { ListAccountNotesOrder } from './listAccountNotesOrder';
 
 export type ListAccountNotesParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

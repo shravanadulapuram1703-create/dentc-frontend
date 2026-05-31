@@ -9,6 +9,10 @@ import type { ListTenantsOrder } from './listTenantsOrder';
 
 export type ListTenantsParams = {
 /**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

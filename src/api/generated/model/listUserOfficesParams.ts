@@ -9,6 +9,14 @@ import type { ListUserOfficesOrder } from './listUserOfficesOrder';
 
 export type ListUserOfficesParams = {
 /**
+ * Filter by user_id
+ */
+user_id?: number | null;
+/**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

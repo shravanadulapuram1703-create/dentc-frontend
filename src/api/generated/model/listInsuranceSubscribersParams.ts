@@ -9,6 +9,18 @@ import type { ListInsuranceSubscribersOrder } from './listInsuranceSubscribersOr
 
 export type ListInsuranceSubscribersParams = {
 /**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
+ * Filter by subscriber_patient_id
+ */
+subscriber_patient_id?: number | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

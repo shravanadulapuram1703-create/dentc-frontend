@@ -9,6 +9,22 @@ import type { ListFeeScheduleAssignmentsOrder } from './listFeeScheduleAssignmen
 
 export type ListFeeScheduleAssignmentsParams = {
 /**
+ * Filter by fee_schedule_id
+ */
+fee_schedule_id?: number | null;
+/**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

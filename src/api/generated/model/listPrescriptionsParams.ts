@@ -9,6 +9,18 @@ import type { ListPrescriptionsOrder } from './listPrescriptionsOrder';
 
 export type ListPrescriptionsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

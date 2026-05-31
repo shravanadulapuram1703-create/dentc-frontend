@@ -29,9 +29,17 @@ import type {
   ListProviderInsuranceIdsParams,
   ListProviderRouteSlipsParams,
   ListTimeClockEntriesParams,
+  ListUserGroupMembershipsParams,
+  ListUserGroupsParams,
+  ListUserIpRulesParams,
+  ListUserPreferencesParams,
   PaginatedResponseProviderInsuranceIdRead,
   PaginatedResponseProviderRouteSlipRead,
   PaginatedResponseTimeClockEntryRead,
+  PaginatedResponseUserGroupMembershipRead,
+  PaginatedResponseUserGroupRead,
+  PaginatedResponseUserIpRuleRead,
+  PaginatedResponseUserPreferenceRead,
   ProviderInsuranceIdCreate,
   ProviderInsuranceIdRead,
   ProviderInsuranceIdUpdate,
@@ -40,7 +48,19 @@ import type {
   ProviderRouteSlipUpdate,
   TimeClockEntryCreate,
   TimeClockEntryRead,
-  TimeClockEntryUpdate
+  TimeClockEntryUpdate,
+  UserGroupCreate,
+  UserGroupMembershipCreate,
+  UserGroupMembershipRead,
+  UserGroupMembershipUpdate,
+  UserGroupRead,
+  UserGroupUpdate,
+  UserIpRuleCreate,
+  UserIpRuleRead,
+  UserIpRuleUpdate,
+  UserPreferenceCreate,
+  UserPreferenceRead,
+  UserPreferenceUpdate
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -1169,4 +1189,1496 @@ export const useDeleteProviderRouteSlip = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteProviderRouteSlipMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List user preferences
+ */
+export const listUserPreferences = (
+    params?: ListUserPreferencesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseUserPreferenceRead>(
+      {url: `/api/v1/user-preferences`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListUserPreferencesQueryKey = (params?: ListUserPreferencesParams,) => {
+    return [
+    `/api/v1/user-preferences`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListUserPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof listUserPreferences>>, TError = ErrorType<ErrorResponse>>(params?: ListUserPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserPreferences>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListUserPreferencesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserPreferences>>> = ({ signal }) => listUserPreferences(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserPreferences>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListUserPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof listUserPreferences>>>
+export type ListUserPreferencesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListUserPreferences<TData = Awaited<ReturnType<typeof listUserPreferences>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListUserPreferencesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserPreferences>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof listUserPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserPreferences<TData = Awaited<ReturnType<typeof listUserPreferences>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserPreferences>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof listUserPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserPreferences<TData = Awaited<ReturnType<typeof listUserPreferences>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserPreferences>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List user preferences
+ */
+
+export function useListUserPreferences<TData = Awaited<ReturnType<typeof listUserPreferences>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserPreferencesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserPreferences>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListUserPreferencesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create user preference
+ */
+export const createUserPreference = (
+    userPreferenceCreate: BodyType<UserPreferenceCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserPreferenceRead>(
+      {url: `/api/v1/user-preferences`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: userPreferenceCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateUserPreferenceMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserPreference>>, TError,{data: BodyType<UserPreferenceCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUserPreference>>, TError,{data: BodyType<UserPreferenceCreate>}, TContext> => {
+
+const mutationKey = ['createUserPreference'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUserPreference>>, {data: BodyType<UserPreferenceCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createUserPreference(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateUserPreferenceMutationResult = NonNullable<Awaited<ReturnType<typeof createUserPreference>>>
+    export type CreateUserPreferenceMutationBody = BodyType<UserPreferenceCreate>
+    export type CreateUserPreferenceMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create user preference
+ */
+export const useCreateUserPreference = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserPreference>>, TError,{data: BodyType<UserPreferenceCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createUserPreference>>,
+        TError,
+        {data: BodyType<UserPreferenceCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateUserPreferenceMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get user preference by id
+ */
+export const getUserPreference = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserPreferenceRead>(
+      {url: `/api/v1/user-preferences/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetUserPreferenceQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/user-preferences/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetUserPreferenceQueryOptions = <TData = Awaited<ReturnType<typeof getUserPreference>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserPreference>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserPreferenceQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserPreference>>> = ({ signal }) => getUserPreference(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserPreference>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserPreferenceQueryResult = NonNullable<Awaited<ReturnType<typeof getUserPreference>>>
+export type GetUserPreferenceQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetUserPreference<TData = Awaited<ReturnType<typeof getUserPreference>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserPreference>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserPreference>>,
+          TError,
+          Awaited<ReturnType<typeof getUserPreference>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserPreference<TData = Awaited<ReturnType<typeof getUserPreference>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserPreference>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserPreference>>,
+          TError,
+          Awaited<ReturnType<typeof getUserPreference>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserPreference<TData = Awaited<ReturnType<typeof getUserPreference>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserPreference>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user preference by id
+ */
+
+export function useGetUserPreference<TData = Awaited<ReturnType<typeof getUserPreference>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserPreference>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserPreferenceQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update user preference
+ */
+export const updateUserPreference = (
+    itemId: number,
+    userPreferenceUpdate: BodyType<UserPreferenceUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserPreferenceRead>(
+      {url: `/api/v1/user-preferences/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: userPreferenceUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateUserPreferenceMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserPreference>>, TError,{itemId: number;data: BodyType<UserPreferenceUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserPreference>>, TError,{itemId: number;data: BodyType<UserPreferenceUpdate>}, TContext> => {
+
+const mutationKey = ['updateUserPreference'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserPreference>>, {itemId: number;data: BodyType<UserPreferenceUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateUserPreference(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserPreferenceMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserPreference>>>
+    export type UpdateUserPreferenceMutationBody = BodyType<UserPreferenceUpdate>
+    export type UpdateUserPreferenceMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update user preference
+ */
+export const useUpdateUserPreference = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserPreference>>, TError,{itemId: number;data: BodyType<UserPreferenceUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateUserPreference>>,
+        TError,
+        {itemId: number;data: BodyType<UserPreferenceUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateUserPreferenceMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete user preference
+ */
+export const deleteUserPreference = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/user-preferences/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteUserPreferenceMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserPreference>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUserPreference>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteUserPreference'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUserPreference>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteUserPreference(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserPreferenceMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUserPreference>>>
+
+    export type DeleteUserPreferenceMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete user preference
+ */
+export const useDeleteUserPreference = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserPreference>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUserPreference>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteUserPreferenceMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List user groups
+ */
+export const listUserGroups = (
+    params?: ListUserGroupsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseUserGroupRead>(
+      {url: `/api/v1/user-groups`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListUserGroupsQueryKey = (params?: ListUserGroupsParams,) => {
+    return [
+    `/api/v1/user-groups`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListUserGroupsQueryOptions = <TData = Awaited<ReturnType<typeof listUserGroups>>, TError = ErrorType<ErrorResponse>>(params?: ListUserGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroups>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListUserGroupsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserGroups>>> = ({ signal }) => listUserGroups(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserGroups>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListUserGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof listUserGroups>>>
+export type ListUserGroupsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListUserGroups<TData = Awaited<ReturnType<typeof listUserGroups>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListUserGroupsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroups>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserGroups>>,
+          TError,
+          Awaited<ReturnType<typeof listUserGroups>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserGroups<TData = Awaited<ReturnType<typeof listUserGroups>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroups>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserGroups>>,
+          TError,
+          Awaited<ReturnType<typeof listUserGroups>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserGroups<TData = Awaited<ReturnType<typeof listUserGroups>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroups>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List user groups
+ */
+
+export function useListUserGroups<TData = Awaited<ReturnType<typeof listUserGroups>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroups>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListUserGroupsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create user group
+ */
+export const createUserGroup = (
+    userGroupCreate: BodyType<UserGroupCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserGroupRead>(
+      {url: `/api/v1/user-groups`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: userGroupCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateUserGroupMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserGroup>>, TError,{data: BodyType<UserGroupCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUserGroup>>, TError,{data: BodyType<UserGroupCreate>}, TContext> => {
+
+const mutationKey = ['createUserGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUserGroup>>, {data: BodyType<UserGroupCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createUserGroup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateUserGroupMutationResult = NonNullable<Awaited<ReturnType<typeof createUserGroup>>>
+    export type CreateUserGroupMutationBody = BodyType<UserGroupCreate>
+    export type CreateUserGroupMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create user group
+ */
+export const useCreateUserGroup = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserGroup>>, TError,{data: BodyType<UserGroupCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createUserGroup>>,
+        TError,
+        {data: BodyType<UserGroupCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateUserGroupMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get user group by id
+ */
+export const getUserGroup = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserGroupRead>(
+      {url: `/api/v1/user-groups/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetUserGroupQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/user-groups/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetUserGroupQueryOptions = <TData = Awaited<ReturnType<typeof getUserGroup>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserGroupQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserGroup>>> = ({ signal }) => getUserGroup(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserGroup>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserGroupQueryResult = NonNullable<Awaited<ReturnType<typeof getUserGroup>>>
+export type GetUserGroupQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetUserGroup<TData = Awaited<ReturnType<typeof getUserGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroup>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserGroup>>,
+          TError,
+          Awaited<ReturnType<typeof getUserGroup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserGroup<TData = Awaited<ReturnType<typeof getUserGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroup>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserGroup>>,
+          TError,
+          Awaited<ReturnType<typeof getUserGroup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserGroup<TData = Awaited<ReturnType<typeof getUserGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user group by id
+ */
+
+export function useGetUserGroup<TData = Awaited<ReturnType<typeof getUserGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserGroupQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update user group
+ */
+export const updateUserGroup = (
+    itemId: number,
+    userGroupUpdate: BodyType<UserGroupUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserGroupRead>(
+      {url: `/api/v1/user-groups/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: userGroupUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateUserGroupMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserGroup>>, TError,{itemId: number;data: BodyType<UserGroupUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserGroup>>, TError,{itemId: number;data: BodyType<UserGroupUpdate>}, TContext> => {
+
+const mutationKey = ['updateUserGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserGroup>>, {itemId: number;data: BodyType<UserGroupUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateUserGroup(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserGroupMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserGroup>>>
+    export type UpdateUserGroupMutationBody = BodyType<UserGroupUpdate>
+    export type UpdateUserGroupMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update user group
+ */
+export const useUpdateUserGroup = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserGroup>>, TError,{itemId: number;data: BodyType<UserGroupUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateUserGroup>>,
+        TError,
+        {itemId: number;data: BodyType<UserGroupUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateUserGroupMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete user group
+ */
+export const deleteUserGroup = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/user-groups/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteUserGroupMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserGroup>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUserGroup>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteUserGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUserGroup>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteUserGroup(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserGroupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUserGroup>>>
+
+    export type DeleteUserGroupMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete user group
+ */
+export const useDeleteUserGroup = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserGroup>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUserGroup>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteUserGroupMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List user group memberships
+ */
+export const listUserGroupMemberships = (
+    params?: ListUserGroupMembershipsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseUserGroupMembershipRead>(
+      {url: `/api/v1/user-group-memberships`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListUserGroupMembershipsQueryKey = (params?: ListUserGroupMembershipsParams,) => {
+    return [
+    `/api/v1/user-group-memberships`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListUserGroupMembershipsQueryOptions = <TData = Awaited<ReturnType<typeof listUserGroupMemberships>>, TError = ErrorType<ErrorResponse>>(params?: ListUserGroupMembershipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroupMemberships>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListUserGroupMembershipsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserGroupMemberships>>> = ({ signal }) => listUserGroupMemberships(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserGroupMemberships>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListUserGroupMembershipsQueryResult = NonNullable<Awaited<ReturnType<typeof listUserGroupMemberships>>>
+export type ListUserGroupMembershipsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListUserGroupMemberships<TData = Awaited<ReturnType<typeof listUserGroupMemberships>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListUserGroupMembershipsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroupMemberships>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserGroupMemberships>>,
+          TError,
+          Awaited<ReturnType<typeof listUserGroupMemberships>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserGroupMemberships<TData = Awaited<ReturnType<typeof listUserGroupMemberships>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserGroupMembershipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroupMemberships>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserGroupMemberships>>,
+          TError,
+          Awaited<ReturnType<typeof listUserGroupMemberships>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserGroupMemberships<TData = Awaited<ReturnType<typeof listUserGroupMemberships>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserGroupMembershipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroupMemberships>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List user group memberships
+ */
+
+export function useListUserGroupMemberships<TData = Awaited<ReturnType<typeof listUserGroupMemberships>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserGroupMembershipsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserGroupMemberships>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListUserGroupMembershipsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create user group membership
+ */
+export const createUserGroupMembership = (
+    userGroupMembershipCreate: BodyType<UserGroupMembershipCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserGroupMembershipRead>(
+      {url: `/api/v1/user-group-memberships`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: userGroupMembershipCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateUserGroupMembershipMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserGroupMembership>>, TError,{data: BodyType<UserGroupMembershipCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUserGroupMembership>>, TError,{data: BodyType<UserGroupMembershipCreate>}, TContext> => {
+
+const mutationKey = ['createUserGroupMembership'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUserGroupMembership>>, {data: BodyType<UserGroupMembershipCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createUserGroupMembership(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateUserGroupMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof createUserGroupMembership>>>
+    export type CreateUserGroupMembershipMutationBody = BodyType<UserGroupMembershipCreate>
+    export type CreateUserGroupMembershipMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create user group membership
+ */
+export const useCreateUserGroupMembership = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserGroupMembership>>, TError,{data: BodyType<UserGroupMembershipCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createUserGroupMembership>>,
+        TError,
+        {data: BodyType<UserGroupMembershipCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateUserGroupMembershipMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get user group membership by id
+ */
+export const getUserGroupMembership = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserGroupMembershipRead>(
+      {url: `/api/v1/user-group-memberships/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetUserGroupMembershipQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/user-group-memberships/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetUserGroupMembershipQueryOptions = <TData = Awaited<ReturnType<typeof getUserGroupMembership>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupMembership>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserGroupMembershipQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserGroupMembership>>> = ({ signal }) => getUserGroupMembership(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserGroupMembership>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserGroupMembershipQueryResult = NonNullable<Awaited<ReturnType<typeof getUserGroupMembership>>>
+export type GetUserGroupMembershipQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetUserGroupMembership<TData = Awaited<ReturnType<typeof getUserGroupMembership>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupMembership>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserGroupMembership>>,
+          TError,
+          Awaited<ReturnType<typeof getUserGroupMembership>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserGroupMembership<TData = Awaited<ReturnType<typeof getUserGroupMembership>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupMembership>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserGroupMembership>>,
+          TError,
+          Awaited<ReturnType<typeof getUserGroupMembership>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserGroupMembership<TData = Awaited<ReturnType<typeof getUserGroupMembership>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupMembership>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user group membership by id
+ */
+
+export function useGetUserGroupMembership<TData = Awaited<ReturnType<typeof getUserGroupMembership>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupMembership>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserGroupMembershipQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update user group membership
+ */
+export const updateUserGroupMembership = (
+    itemId: number,
+    userGroupMembershipUpdate: BodyType<UserGroupMembershipUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserGroupMembershipRead>(
+      {url: `/api/v1/user-group-memberships/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: userGroupMembershipUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateUserGroupMembershipMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserGroupMembership>>, TError,{itemId: number;data: BodyType<UserGroupMembershipUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserGroupMembership>>, TError,{itemId: number;data: BodyType<UserGroupMembershipUpdate>}, TContext> => {
+
+const mutationKey = ['updateUserGroupMembership'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserGroupMembership>>, {itemId: number;data: BodyType<UserGroupMembershipUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateUserGroupMembership(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserGroupMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserGroupMembership>>>
+    export type UpdateUserGroupMembershipMutationBody = BodyType<UserGroupMembershipUpdate>
+    export type UpdateUserGroupMembershipMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update user group membership
+ */
+export const useUpdateUserGroupMembership = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserGroupMembership>>, TError,{itemId: number;data: BodyType<UserGroupMembershipUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateUserGroupMembership>>,
+        TError,
+        {itemId: number;data: BodyType<UserGroupMembershipUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateUserGroupMembershipMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete user group membership
+ */
+export const deleteUserGroupMembership = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/user-group-memberships/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteUserGroupMembershipMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserGroupMembership>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUserGroupMembership>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteUserGroupMembership'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUserGroupMembership>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteUserGroupMembership(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserGroupMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUserGroupMembership>>>
+
+    export type DeleteUserGroupMembershipMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete user group membership
+ */
+export const useDeleteUserGroupMembership = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserGroupMembership>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUserGroupMembership>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteUserGroupMembershipMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List user ip rules
+ */
+export const listUserIpRules = (
+    params?: ListUserIpRulesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseUserIpRuleRead>(
+      {url: `/api/v1/user-ip-rules`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListUserIpRulesQueryKey = (params?: ListUserIpRulesParams,) => {
+    return [
+    `/api/v1/user-ip-rules`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListUserIpRulesQueryOptions = <TData = Awaited<ReturnType<typeof listUserIpRules>>, TError = ErrorType<ErrorResponse>>(params?: ListUserIpRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserIpRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListUserIpRulesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserIpRules>>> = ({ signal }) => listUserIpRules(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserIpRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListUserIpRulesQueryResult = NonNullable<Awaited<ReturnType<typeof listUserIpRules>>>
+export type ListUserIpRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListUserIpRules<TData = Awaited<ReturnType<typeof listUserIpRules>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListUserIpRulesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserIpRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserIpRules>>,
+          TError,
+          Awaited<ReturnType<typeof listUserIpRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserIpRules<TData = Awaited<ReturnType<typeof listUserIpRules>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserIpRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserIpRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUserIpRules>>,
+          TError,
+          Awaited<ReturnType<typeof listUserIpRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListUserIpRules<TData = Awaited<ReturnType<typeof listUserIpRules>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserIpRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserIpRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List user ip rules
+ */
+
+export function useListUserIpRules<TData = Awaited<ReturnType<typeof listUserIpRules>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListUserIpRulesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserIpRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListUserIpRulesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create user ip rule
+ */
+export const createUserIpRule = (
+    userIpRuleCreate: BodyType<UserIpRuleCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserIpRuleRead>(
+      {url: `/api/v1/user-ip-rules`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: userIpRuleCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateUserIpRuleMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserIpRule>>, TError,{data: BodyType<UserIpRuleCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createUserIpRule>>, TError,{data: BodyType<UserIpRuleCreate>}, TContext> => {
+
+const mutationKey = ['createUserIpRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUserIpRule>>, {data: BodyType<UserIpRuleCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createUserIpRule(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateUserIpRuleMutationResult = NonNullable<Awaited<ReturnType<typeof createUserIpRule>>>
+    export type CreateUserIpRuleMutationBody = BodyType<UserIpRuleCreate>
+    export type CreateUserIpRuleMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create user ip rule
+ */
+export const useCreateUserIpRule = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUserIpRule>>, TError,{data: BodyType<UserIpRuleCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createUserIpRule>>,
+        TError,
+        {data: BodyType<UserIpRuleCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateUserIpRuleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get user ip rule by id
+ */
+export const getUserIpRule = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserIpRuleRead>(
+      {url: `/api/v1/user-ip-rules/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetUserIpRuleQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/user-ip-rules/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetUserIpRuleQueryOptions = <TData = Awaited<ReturnType<typeof getUserIpRule>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserIpRule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserIpRuleQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserIpRule>>> = ({ signal }) => getUserIpRule(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserIpRule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserIpRuleQueryResult = NonNullable<Awaited<ReturnType<typeof getUserIpRule>>>
+export type GetUserIpRuleQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetUserIpRule<TData = Awaited<ReturnType<typeof getUserIpRule>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserIpRule>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserIpRule>>,
+          TError,
+          Awaited<ReturnType<typeof getUserIpRule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserIpRule<TData = Awaited<ReturnType<typeof getUserIpRule>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserIpRule>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserIpRule>>,
+          TError,
+          Awaited<ReturnType<typeof getUserIpRule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserIpRule<TData = Awaited<ReturnType<typeof getUserIpRule>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserIpRule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user ip rule by id
+ */
+
+export function useGetUserIpRule<TData = Awaited<ReturnType<typeof getUserIpRule>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserIpRule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserIpRuleQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update user ip rule
+ */
+export const updateUserIpRule = (
+    itemId: number,
+    userIpRuleUpdate: BodyType<UserIpRuleUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserIpRuleRead>(
+      {url: `/api/v1/user-ip-rules/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: userIpRuleUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateUserIpRuleMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserIpRule>>, TError,{itemId: number;data: BodyType<UserIpRuleUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserIpRule>>, TError,{itemId: number;data: BodyType<UserIpRuleUpdate>}, TContext> => {
+
+const mutationKey = ['updateUserIpRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserIpRule>>, {itemId: number;data: BodyType<UserIpRuleUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateUserIpRule(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserIpRuleMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserIpRule>>>
+    export type UpdateUserIpRuleMutationBody = BodyType<UserIpRuleUpdate>
+    export type UpdateUserIpRuleMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update user ip rule
+ */
+export const useUpdateUserIpRule = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserIpRule>>, TError,{itemId: number;data: BodyType<UserIpRuleUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateUserIpRule>>,
+        TError,
+        {itemId: number;data: BodyType<UserIpRuleUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateUserIpRuleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete user ip rule
+ */
+export const deleteUserIpRule = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/user-ip-rules/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteUserIpRuleMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserIpRule>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUserIpRule>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteUserIpRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUserIpRule>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteUserIpRule(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserIpRuleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUserIpRule>>>
+
+    export type DeleteUserIpRuleMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete user ip rule
+ */
+export const useDeleteUserIpRule = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserIpRule>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUserIpRule>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteUserIpRuleMutationOptions(options), queryClient);
     }

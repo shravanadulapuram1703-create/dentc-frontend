@@ -9,6 +9,10 @@ import type { ListPerioChartSettingsOrder } from './listPerioChartSettingsOrder'
 
 export type ListPerioChartSettingsParams = {
 /**
+ * Filter by user_id
+ */
+user_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

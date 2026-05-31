@@ -9,6 +9,30 @@ import type { ListPatientPaymentsOrder } from './listPatientPaymentsOrder';
 
 export type ListPatientPaymentsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by payment_type
+ */
+payment_type?: string | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by is_void
+ */
+is_void?: boolean | null;
+/**
+ * payment_date >= (inclusive lower bound)
+ */
+payment_date_from?: string | null;
+/**
+ * payment_date <= (inclusive upper bound)
+ */
+payment_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -9,6 +9,18 @@ import type { ListProviderInsuranceIdsOrder } from './listProviderInsuranceIdsOr
 
 export type ListProviderInsuranceIdsParams = {
 /**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by carrier_id
+ */
+carrier_id?: number | null;
+/**
+ * Filter by in_network
+ */
+in_network?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

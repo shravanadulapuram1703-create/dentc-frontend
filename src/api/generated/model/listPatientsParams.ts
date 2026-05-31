@@ -9,6 +9,22 @@ import type { ListPatientsOrder } from './listPatientsOrder';
 
 export type ListPatientsParams = {
 /**
+ * Filter by home_office_id
+ */
+home_office_id?: number | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
+ * Filter by preferred_provider_id
+ */
+preferred_provider_id?: string | null;
+/**
+ * Filter by chart_no
+ */
+chart_no?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

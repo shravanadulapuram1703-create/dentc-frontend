@@ -9,6 +9,10 @@ import type { ListInsuranceCoverageRulesOrder } from './listInsuranceCoverageRul
 
 export type ListInsuranceCoverageRulesParams = {
 /**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

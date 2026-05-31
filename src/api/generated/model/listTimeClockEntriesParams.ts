@@ -9,6 +9,14 @@ import type { ListTimeClockEntriesOrder } from './listTimeClockEntriesOrder';
 
 export type ListTimeClockEntriesParams = {
 /**
+ * Filter by user_id
+ */
+user_id?: number | null;
+/**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

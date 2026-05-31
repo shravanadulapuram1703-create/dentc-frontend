@@ -9,6 +9,18 @@ import type { ListProcedureCodesOrder } from './listProcedureCodesOrder';
 
 export type ListProcedureCodesParams = {
 /**
+ * Filter by category
+ */
+category?: string | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
+ * Filter by is_ortho
+ */
+is_ortho?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

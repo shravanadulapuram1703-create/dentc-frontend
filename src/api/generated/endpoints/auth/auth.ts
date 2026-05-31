@@ -29,7 +29,9 @@ import type {
   ErrorResponse,
   HTTPValidationError,
   LoginRequest,
+  MeFull,
   RefreshRequest,
+  SignupRequest,
   TokenResponse,
   UserRead
 } from '../../model';
@@ -43,6 +45,69 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Self-register a new practice (tenant) and its admin user
+ */
+export const signup = (
+    signupRequest: BodyType<SignupRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TokenResponse>(
+      {url: `/api/v1/auth/signup`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: signupRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getSignupMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: BodyType<SignupRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: BodyType<SignupRequest>}, TContext> => {
+
+const mutationKey = ['signup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signup>>, {data: BodyType<SignupRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  signup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignupMutationResult = NonNullable<Awaited<ReturnType<typeof signup>>>
+    export type SignupMutationBody = BodyType<SignupRequest>
+    export type SignupMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Self-register a new practice (tenant) and its admin user
+ */
+export const useSignup = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signup>>, TError,{data: BodyType<SignupRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof signup>>,
+        TError,
+        {data: BodyType<SignupRequest>},
+        TContext
+      > => {
+      return useMutation(getSignupMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Authenticate and obtain an access/refresh token pair
  */
 export const login = (
@@ -312,6 +377,98 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Err
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMeQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Return the authenticated user with tenant and assigned offices
+ */
+export const getMeFull = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MeFull>(
+      {url: `/api/v1/auth/me-full`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMeFullQueryKey = () => {
+    return [
+    `/api/v1/auth/me-full`
+    ] as const;
+    }
+
+
+export const getGetMeFullQueryOptions = <TData = Awaited<ReturnType<typeof getMeFull>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeFull>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMeFullQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeFull>>> = ({ signal }) => getMeFull(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMeFull>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMeFullQueryResult = NonNullable<Awaited<ReturnType<typeof getMeFull>>>
+export type GetMeFullQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetMeFull<TData = Awaited<ReturnType<typeof getMeFull>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeFull>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMeFull>>,
+          TError,
+          Awaited<ReturnType<typeof getMeFull>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMeFull<TData = Awaited<ReturnType<typeof getMeFull>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeFull>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMeFull>>,
+          TError,
+          Awaited<ReturnType<typeof getMeFull>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMeFull<TData = Awaited<ReturnType<typeof getMeFull>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeFull>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Return the authenticated user with tenant and assigned offices
+ */
+
+export function useGetMeFull<TData = Awaited<ReturnType<typeof getMeFull>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeFull>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMeFullQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

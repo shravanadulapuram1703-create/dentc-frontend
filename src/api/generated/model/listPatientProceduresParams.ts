@@ -9,6 +9,42 @@ import type { ListPatientProceduresOrder } from './listPatientProceduresOrder';
 
 export type ListPatientProceduresParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by appointment_id
+ */
+appointment_id?: string | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by procedure_code
+ */
+procedure_code?: string | null;
+/**
+ * Filter by claim_id
+ */
+claim_id?: string | null;
+/**
+ * Filter by billing_status
+ */
+billing_status?: string | null;
+/**
+ * Filter by is_void
+ */
+is_void?: boolean | null;
+/**
+ * date_of_service >= (inclusive lower bound)
+ */
+date_of_service_from?: string | null;
+/**
+ * date_of_service <= (inclusive upper bound)
+ */
+date_of_service_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

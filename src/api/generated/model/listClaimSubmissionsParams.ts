@@ -9,6 +9,14 @@ import type { ListClaimSubmissionsOrder } from './listClaimSubmissionsOrder';
 
 export type ListClaimSubmissionsParams = {
 /**
+ * Filter by claim_id
+ */
+claim_id?: string | null;
+/**
+ * Filter by batch_id
+ */
+batch_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

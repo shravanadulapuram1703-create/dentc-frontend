@@ -9,6 +9,10 @@ import type { ListPerioChartActivityOrder } from './listPerioChartActivityOrder'
 
 export type ListPerioChartActivityParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

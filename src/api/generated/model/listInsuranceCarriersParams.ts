@@ -9,6 +9,10 @@ import type { ListInsuranceCarriersOrder } from './listInsuranceCarriersOrder';
 
 export type ListInsuranceCarriersParams = {
 /**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

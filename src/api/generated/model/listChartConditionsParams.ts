@@ -9,6 +9,18 @@ import type { ListChartConditionsOrder } from './listChartConditionsOrder';
 
 export type ListChartConditionsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by tooth
+ */
+tooth?: string | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

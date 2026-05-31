@@ -9,6 +9,18 @@ import type { ListFeeSchedulesOrder } from './listFeeSchedulesOrder';
 
 export type ListFeeSchedulesParams = {
 /**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

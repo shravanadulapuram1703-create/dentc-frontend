@@ -9,6 +9,30 @@ import type { ListInsuranceClaimsOrder } from './listInsuranceClaimsOrder';
 
 export type ListInsuranceClaimsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by status
+ */
+status?: string | null;
+/**
+ * Filter by claim_type
+ */
+claim_type?: string | null;
+/**
+ * Filter by carrier_id
+ */
+carrier_id?: number | null;
+/**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -9,6 +9,18 @@ import type { ListAppointmentProceduresOrder } from './listAppointmentProcedures
 
 export type ListAppointmentProceduresParams = {
 /**
+ * Filter by appointment_id
+ */
+appointment_id?: string | null;
+/**
+ * Filter by procedure_code
+ */
+procedure_code?: string | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

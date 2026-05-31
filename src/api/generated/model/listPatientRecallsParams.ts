@@ -9,6 +9,18 @@ import type { ListPatientRecallsOrder } from './listPatientRecallsOrder';
 
 export type ListPatientRecallsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by status
+ */
+status?: string | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

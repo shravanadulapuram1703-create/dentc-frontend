@@ -9,6 +9,14 @@ import type { ListCariesRiskAssessmentsOrder } from './listCariesRiskAssessments
 
 export type ListCariesRiskAssessmentsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by risk_level
+ */
+risk_level?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

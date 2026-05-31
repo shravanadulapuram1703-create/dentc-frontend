@@ -9,6 +9,14 @@ import type { ListLetterTemplatesOrder } from './listLetterTemplatesOrder';
 
 export type ListLetterTemplatesParams = {
 /**
+ * Filter by letter_type
+ */
+letter_type?: string | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

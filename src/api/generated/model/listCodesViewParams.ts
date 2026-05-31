@@ -9,6 +9,14 @@ import type { ListCodesViewOrder } from './listCodesViewOrder';
 
 export type ListCodesViewParams = {
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by code
+ */
+code?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

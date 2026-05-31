@@ -9,6 +9,38 @@ import type { ListAppointmentsOrder } from './listAppointmentsOrder';
 
 export type ListAppointmentsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by operatory_id
+ */
+operatory_id?: string | null;
+/**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by date
+ */
+date?: string | null;
+/**
+ * Filter by status
+ */
+status?: string | null;
+/**
+ * date >= (inclusive lower bound)
+ */
+date_from?: string | null;
+/**
+ * date <= (inclusive upper bound)
+ */
+date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -9,6 +9,10 @@ import type { ListProviderRouteSlipsOrder } from './listProviderRouteSlipsOrder'
 
 export type ListProviderRouteSlipsParams = {
 /**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

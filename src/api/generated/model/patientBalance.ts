@@ -5,15 +5,28 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { BalanceAging } from './balanceAging';
+import type { BalanceRecentActivity } from './balanceRecentActivity';
 
 /**
  * Computed account balance (charges − payments). Phase 3 cached aggregate.
+ *
+ * The first three fields are the original contract; the rest are additive C-3
+ * enrichments and are always present.
  */
 export interface PatientBalance {
   patient_id: number;
   total_charged: number;
   total_paid: number;
   balance: number;
+  /** Alias of balance for the FE */
+  account_balance: number;
+  estimated_insurance?: number;
+  estimated_patient?: number;
+  /** Charges − payments − estimated insurance */
+  patient_balance?: number;
+  aging?: BalanceAging;
+  recent_activity?: BalanceRecentActivity;
   /** UTC timestamp the balance was computed */
   as_of: string;
 }

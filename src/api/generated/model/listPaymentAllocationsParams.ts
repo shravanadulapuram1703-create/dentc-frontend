@@ -9,6 +9,22 @@ import type { ListPaymentAllocationsOrder } from './listPaymentAllocationsOrder'
 
 export type ListPaymentAllocationsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by payment_id
+ */
+payment_id?: string | null;
+/**
+ * Filter by procedure_id
+ */
+procedure_id?: string | null;
+/**
+ * Filter by claim_id
+ */
+claim_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -32,6 +32,7 @@ import type {
   ClaimSubmissionRead,
   ClaimSubmissionUpdate,
   ErrorResponse,
+  GetPatientLedgerParams,
   HTTPValidationError,
   InsuranceClaimCreate,
   InsuranceClaimRead,
@@ -39,6 +40,7 @@ import type {
   LedgerInsuranceDetailCreate,
   LedgerInsuranceDetailRead,
   LedgerInsuranceDetailUpdate,
+  LedgerResponse,
   ListClaimSubmissionsParams,
   ListInsuranceClaimsParams,
   ListLedgerInsuranceDetailsParams,
@@ -297,6 +299,106 @@ export function useGetPatientBalance<TData = Awaited<ReturnType<typeof getPatien
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPatientBalanceQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get a patient's ledger feed with running balance
+ */
+export const getPatientLedger = (
+    patientId: number,
+    params?: GetPatientLedgerParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LedgerResponse>(
+      {url: `/api/v1/patients/${patientId}/ledger`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientLedgerQueryKey = (patientId: number,
+    params?: GetPatientLedgerParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/ledger`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientLedgerQueryOptions = <TData = Awaited<ReturnType<typeof getPatientLedger>>, TError = ErrorType<HTTPValidationError>>(patientId: number,
+    params?: GetPatientLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedger>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientLedgerQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientLedger>>> = ({ signal }) => getPatientLedger(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientLedger>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientLedgerQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientLedger>>>
+export type GetPatientLedgerQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPatientLedger<TData = Awaited<ReturnType<typeof getPatientLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientLedgerParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedger>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientLedger>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientLedger>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientLedger<TData = Awaited<ReturnType<typeof getPatientLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedger>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientLedger>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientLedger>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientLedger<TData = Awaited<ReturnType<typeof getPatientLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedger>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get a patient's ledger feed with running balance
+ */
+
+export function useGetPatientLedger<TData = Awaited<ReturnType<typeof getPatientLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedger>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientLedgerQueryOptions(patientId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

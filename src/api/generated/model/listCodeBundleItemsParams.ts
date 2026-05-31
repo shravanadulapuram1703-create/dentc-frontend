@@ -9,6 +9,10 @@ import type { ListCodeBundleItemsOrder } from './listCodeBundleItemsOrder';
 
 export type ListCodeBundleItemsParams = {
 /**
+ * Filter by bundle_id
+ */
+bundle_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

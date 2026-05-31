@@ -9,6 +9,10 @@ import type { ListImagingTemplatesOrder } from './listImagingTemplatesOrder';
 
 export type ListImagingTemplatesParams = {
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

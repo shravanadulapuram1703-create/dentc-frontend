@@ -9,6 +9,14 @@ import type { ListTreatmentPlanInsuranceDetailsOrder } from './listTreatmentPlan
 
 export type ListTreatmentPlanInsuranceDetailsParams = {
 /**
+ * Filter by plan_item_id
+ */
+plan_item_id?: string | null;
+/**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

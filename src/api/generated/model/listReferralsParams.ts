@@ -9,6 +9,14 @@ import type { ListReferralsOrder } from './listReferralsOrder';
 
 export type ListReferralsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -9,6 +9,10 @@ import type { ListImageDetailsOrder } from './listImageDetailsOrder';
 
 export type ListImageDetailsParams = {
 /**
+ * Filter by image_group_id
+ */
+image_group_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

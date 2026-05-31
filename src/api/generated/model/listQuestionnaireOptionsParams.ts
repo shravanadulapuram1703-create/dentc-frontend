@@ -9,6 +9,14 @@ import type { ListQuestionnaireOptionsOrder } from './listQuestionnaireOptionsOr
 
 export type ListQuestionnaireOptionsParams = {
 /**
+ * Filter by questionnaire_id
+ */
+questionnaire_id?: number | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

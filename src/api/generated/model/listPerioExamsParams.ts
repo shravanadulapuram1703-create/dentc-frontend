@@ -9,6 +9,10 @@ import type { ListPerioExamsOrder } from './listPerioExamsOrder';
 
 export type ListPerioExamsParams = {
 /**
+ * Filter by patient_id
+ */
+patient_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

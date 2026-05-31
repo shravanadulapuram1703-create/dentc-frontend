@@ -9,6 +9,14 @@ import type { ListReferralDemogDetailsOrder } from './listReferralDemogDetailsOr
 
 export type ListReferralDemogDetailsParams = {
 /**
+ * Filter by referral_id
+ */
+referral_id?: number | null;
+/**
+ * Filter by demog_header_id
+ */
+demog_header_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;
