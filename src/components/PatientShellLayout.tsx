@@ -3,7 +3,8 @@ import { useParams, Outlet, useNavigate } from 'react-router-dom';
 import GlobalNav from './GlobalNav';
 import PatientSecondaryNav from './PatientSecondaryNav';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
-import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { useGetPatient, useListPatientAlerts } from '@/api/generated/endpoints/patients/patients';
+import { useListAppointments } from '@/api/generated/endpoints/appointments/appointments';
 import { useGetPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { PatientRead } from '@/api/generated/model';
@@ -40,9 +41,19 @@ export default function PatientShellLayout({
   const numericId = patientId ? Number(patientId) : NaN;
   const validId = !Number.isNaN(numericId);
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
   const balanceQuery = useGetPatientBalance(numericId, { query: { enabled: validId } });
   const officesQuery = useListOffices({ size: 200 });
+  const appointmentsQuery = useListAppointments(
+    { patient_id: numericId, date_from: today, size: 50 },
+    { query: { enabled: validId } },
+  );
+  const alertsQuery = useListPatientAlerts(
+    { patient_id: numericId, is_active: true, size: 50 },
+    { query: { enabled: validId } },
+  );
 
   // Helper function to calculate age from DOB
   const calculateAge = (dob: string | null | undefined): number => {
@@ -137,8 +148,8 @@ export default function PatientShellLayout({
 
   // Compose the display model from the canonical resources:
   // identity (/patients/{id}) + balance (/patients/{id}/balance) + office name
-  // (/offices). nextAppointment and alerts are follow-ups (compose /appointments
-  // and /patient-alerts) and render as empty until then.
+  // (/offices) + next upcoming appointment (/appointments) + active alerts
+  // (/patient-alerts).
   const patient = useMemo<PatientDisplayData | null>(() => {
     const p = patientQuery.data;
     if (!p) return null;
@@ -147,6 +158,19 @@ export default function PatientShellLayout({
       (o) => o.id === p.home_office_id,
     )?.name;
     const bal = balanceQuery.data;
+
+    // Earliest upcoming appointment (already filtered to date_from = today).
+    const upcoming = (appointmentsQuery.data?.items ?? [])
+      .slice()
+      .sort((a, b) =>
+        `${a.date}T${a.start_time ?? ''}`.localeCompare(
+          `${b.date}T${b.start_time ?? ''}`,
+        ),
+      )[0];
+
+    const alerts = (alertsQuery.data?.items ?? [])
+      .map((a) => a.alert)
+      .filter((a): a is string => Boolean(a));
 
     return {
       id: String(p.id),
@@ -162,10 +186,18 @@ export default function PatientShellLayout({
       office: officeName || '—',
       officeId: p.home_office_id != null ? String(p.home_office_id) : undefined,
       balance: bal?.account_balance ?? bal?.balance ?? 0,
-      nextAppointment: '—',
-      alerts: [],
+      nextAppointment: upcoming
+        ? `${formatDate(upcoming.date)} ${upcoming.start_time ?? ''}`.trim()
+        : '—',
+      alerts,
     };
-  }, [patientQuery.data, balanceQuery.data, officesQuery.data]);
+  }, [
+    patientQuery.data,
+    balanceQuery.data,
+    officesQuery.data,
+    appointmentsQuery.data,
+    alertsQuery.data,
+  ]);
 
   const handleClosePatient = () => {
     // Clear patient context
