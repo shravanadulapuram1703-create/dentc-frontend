@@ -1,118 +1,64 @@
 /**
  * Patient Service
- * 
- * Centralized API logic for patient-related operations.
- * This separates backend API calls from UI components for cleaner architecture.
- * 
- * API Contract Documentation:
- * ===========================
- * 
- * 1. Check Duplicate Patient
- * ---------------------------
- * Endpoint: POST /api/v1/patients/check-duplicate
- * 
- * Request Body:
- * {
- *   "birthdate": "2016-03-02",      // Format: YYYY-MM-DD
- *   "firstName": "Dinesh",
- *   "lastName": "Gupta",
- *   "office": "OFF-001"             // Office Short ID
- * }
- * 
- * Success Response (200 OK):
- * - If duplicates found:
- *   [
- *     {
- *       "birthdate": "2016-03-02",
- *       "name": "Gupta, Dinesh",
- *       "officeShortId": "OFF-001",
- *       "patientId": "P-12345",
- *       "email": "existing@email.com",
- *       "provider": "Dr. Jinna",
- *       "status": "Active",
- *       "source": "Direct"
- *     }
- *   ]
- * 
- * - If no duplicates:
- *   []
- * 
- * Error Response (4xx/5xx):
- * {
- *   "error": "Error message",
- *   "detail": "Detailed error information"
- * }
+ *
+ * Centralized, backend-driven patient helpers that wrap the generated Orval
+ * client (no raw axios).
+ *
+ * Duplicate detection
+ * -------------------
+ * The backend exposes **no** dedicated `/patients/check-duplicate` endpoint
+ * (POST returns 405; the path is swallowed by `/patients/{item_id}`). See
+ * docs/patients/patients_backend_devreport.md. We therefore detect likely
+ * duplicates client-side by searching the canonical list endpoint
+ * (`listPatients`) and matching on last/first name + date of birth.
  */
 
-import api from './api';
+import { listPatients } from '@/api/generated/endpoints/patients/patients';
+import type { PatientRead } from '@/api/generated/model';
 import { DuplicatePatient, CheckDuplicatePayload } from '../types/patient';
 
-/**
- * Check Duplicate Patient API Response Structure (from backend)
- */
-interface CheckDuplicateApiResponse {
-  has_duplicates: boolean;
-  duplicates: Array<{
-    id: number;
-    chart_no: string;
-    name: string;
-    dob: string;
-    phone: string | null;
-    match_score: number;
-    match_reasons: string[];
-  }>;
-}
+const norm = (value?: string | null): string => (value ?? '').trim().toLowerCase();
 
 /**
- * Check for duplicate patients based on identity information
- * 
- * @param payload - Patient identity information (birthdate, firstName, lastName, office)
- * @returns Promise<DuplicatePatient[]> - Array of matching patients (empty if no duplicates)
- * @throws Error if API request fails
+ * Find likely-duplicate patients for the identity being registered.
+ *
+ * Strategy: free-text search by the most selective name token, then narrow
+ * client-side by exact last/first name and (when provided) date of birth.
+ * Cross-office by design — duplicates should surface regardless of home office.
+ *
+ * @returns matching patients (empty array if none)
+ * @throws Error if the search request fails
  */
 export async function checkDuplicatePatient(
-  payload: CheckDuplicatePayload
+  payload: CheckDuplicatePayload,
 ): Promise<DuplicatePatient[]> {
+  const { firstName, lastName, birthdate } = payload;
+
+  const searchTerm = (lastName || firstName || '').trim();
+  if (!searchTerm) return [];
+
   try {
-    const response = await api.post<CheckDuplicateApiResponse>(
-      '/api/v1/patients/check-duplicate',
-      payload
-    );
+    const res = await listPatients({ search: searchTerm, size: 50 });
 
-    // Handle new response structure with has_duplicates and duplicates array
-    if (response.data.has_duplicates && response.data.duplicates && response.data.duplicates.length > 0) {
-      // Map API response to DuplicatePatient interface
-      return response.data.duplicates.map(dup => ({
-        birthdate: dup.dob,
-        name: dup.name,
-        officeShortId: '', // Not in API response, will be empty
-        patientId: String(dup.id || dup.chart_no || ''),
-        email: '', // Not in API response, will be empty
-        provider: '', // Not in API response, will be empty
-        status: 'Active', // Default, not in API response
-        source: dup.match_reasons.join(', '), // Use match reasons as source
-      }));
-    }
-    
-    return [];
-  } catch (error: any) {
-    // Log error for debugging
+    const matches = res.items.filter((p: PatientRead) => {
+      const lastOk = lastName ? norm(p.last_name) === norm(lastName) : true;
+      const firstOk = firstName ? norm(p.first_name) === norm(firstName) : true;
+      const dobOk = birthdate ? p.dob === birthdate : true;
+      return lastOk && firstOk && dobOk;
+    });
+
+    return matches.map((p: PatientRead) => ({
+      birthdate: p.dob ?? '',
+      name: [p.last_name, p.first_name].filter(Boolean).join(', '),
+      officeShortId: p.home_office_id != null ? String(p.home_office_id) : '',
+      patientId: p.chart_no || String(p.id),
+      email: p.email ?? '',
+      provider: p.preferred_provider_id ?? '',
+      status: p.is_active ? 'Active' : 'Inactive',
+      source: birthdate && p.dob === birthdate ? 'Name + DOB match' : 'Name match',
+    }));
+  } catch (error) {
     console.error('Duplicate patient check failed:', error);
-
-    // Re-throw with user-friendly message
-    throw new Error(
-      error.response?.data?.error || 
-      'Unable to check for duplicate patients. Please try again.'
-    );
+    throw new Error('Unable to check for duplicate patients. Please try again.');
   }
 }
-
-/**
- * Additional patient service functions can be added here:
- * 
- * - createPatient(data: PatientFormData): Promise<Patient>
- * - updatePatient(id: string, data: Partial<PatientFormData>): Promise<Patient>
- * - getPatient(id: string): Promise<Patient>
- * - searchPatients(query: string): Promise<Patient[]>
- * etc.
- */

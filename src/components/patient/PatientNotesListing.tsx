@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Edit,
   Trash2,
@@ -11,27 +12,26 @@ import {
   ChevronsRight,
   FileText,
   AlertCircle,
-  File,
-  Paperclip,
   DollarSign,
   Calendar,
   User,
   UserCheck,
-  Upload,
-  Scan
+  Loader2
 } from 'lucide-react';
 import { components } from '../../styles/theme';
+import {
+  useListPatientNotes,
+  useDeletePatientNote,
+} from '@/api/generated/endpoints/patients/patients';
+import type { PatientNoteRead } from '@/api/generated/model';
 
+// Display shape used by the table, mapped from the backend PatientNoteRead.
 interface PatientNote {
-  id: string;
-  type: 'Patient Notes' | 'Responsible Party Notes' | 'Financial Notes' | 'Appointment Notes' | 'System Notes' | 'Document (Upload)' | 'Document (Scan)';
+  id: number;
+  type: string;
   content: string;
-  documentName?: string;
-  documentType?: string;
   createdDate: string;
   createdBy: string;
-  isSystemGenerated: boolean;
-  hasAttachment: boolean;
 }
 
 interface PatientData {
@@ -39,167 +39,107 @@ interface PatientData {
   name: string;
   dob: string;
   age: number;
-  gender: string;
-  phone: string;
-  email: string;
-  address: string;
+  gender?: string;
+  officeId?: string;
 }
 
 interface OutletContext {
   patient: PatientData;
 }
 
-// Mock data
-const mockPatientNotes: PatientNote[] = [
-  {
-    id: 'PN001',
-    type: 'Patient Notes',
-    content: 'Patient called to confirm appointment for next week. Reminded about financial policy.',
-    createdDate: '12/20/2024',
-    createdBy: 'NICOLASM',
-    isSystemGenerated: false,
-    hasAttachment: false
-  },
-  {
-    id: 'PN002',
-    type: 'Document (Upload)',
-    content: 'Eligibility verification PDF from Delta Dental',
-    documentName: 'eligibility_verification_12202024.pdf',
-    documentType: 'Insurance Document',
-    createdDate: '12/20/2024',
-    createdBy: 'FRONTDESK',
-    isSystemGenerated: false,
-    hasAttachment: true
-  },
-  {
-    id: 'PN003',
-    type: 'Financial Notes',
-    content: 'Payment plan approved. Patient will pay $150/month for 6 months starting January 2025.',
-    createdDate: '12/15/2024',
-    createdBy: 'BILLING_DEPT',
-    isSystemGenerated: false,
-    hasAttachment: false
-  },
-  {
-    id: 'PN004',
-    type: 'System Notes',
-    content: 'Appointment confirmation sent via SMS on 12/18/2024 at 3:45 PM. Patient confirmed.',
-    createdDate: '12/18/2024',
-    createdBy: '_DenticonEngage',
-    isSystemGenerated: true,
-    hasAttachment: false
-  },
-  {
-    id: 'PN005',
-    type: 'Document (Scan)',
-    content: 'Signed consent form for crown procedure',
-    documentName: 'consent_form_crown_scan.pdf',
-    documentType: 'Consent Form (CF)',
-    createdDate: '12/15/2024',
-    createdBy: 'ASSISTANTM',
-    isSystemGenerated: false,
-    hasAttachment: true
-  },
-  {
-    id: 'PN006',
-    type: 'Responsible Party Notes',
-    content: 'RP called regarding payment options. Explained CareCredit financing. RP will apply online.',
-    createdDate: '12/10/2024',
-    createdBy: 'NICOLASM',
-    isSystemGenerated: false,
-    hasAttachment: false
-  },
-  {
-    id: 'PN007',
-    type: 'Appointment Notes',
-    content: 'Patient arrived 15 minutes late. Rescheduled cleaning appointment to next month.',
-    createdDate: '12/08/2024',
-    createdBy: 'FRONTDESK',
-    isSystemGenerated: false,
-    hasAttachment: false
-  },
-  {
-    id: 'PN008',
-    type: 'System Notes',
-    content: 'Insurance eligibility check completed successfully. Benefits verified.',
-    createdDate: '12/05/2024',
-    createdBy: '_DenticonEngage',
-    isSystemGenerated: true,
-    hasAttachment: false
-  },
-  {
-    id: 'PN009',
-    type: 'Document (Upload)',
-    content: 'X-ray images received from external provider',
-    documentName: 'external_xrays_120124.jpg',
-    documentType: 'Diagnostic Report',
-    createdDate: '12/01/2024',
-    createdBy: 'DR_JOHNSON',
-    isSystemGenerated: false,
-    hasAttachment: true
-  }
-];
-
-function toProperCase(text: string): string {
-  return text
-    .replace(/[^a-zA-Z\s]/g, " ")   // remove unwanted characters
-    .replace(/\s+/g, " ")           // collapse multiple spaces
-    .trim()
-    .toLowerCase()
-    .replace(/\b\w/g, char => char.toUpperCase()); // Proper case
+// Format an ISO timestamp (created_at) to MM/DD/YYYY for display.
+function formatNoteDate(iso?: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
+// Map a backend note to the table row shape. `created_by` is a numeric user id;
+// a display name is not yet exposed by the API (see patients_backend_devreport.md).
+function mapNote(note: PatientNoteRead): PatientNote {
+  return {
+    id: note.id,
+    type: note.note_type || 'Patient Notes',
+    content: note.notes,
+    createdDate: formatNoteDate(note.created_at),
+    createdBy: note.created_by != null ? `User #${note.created_by}` : '—',
+  };
+}
 
 export default function PatientNotesListing() {
   const navigate = useNavigate();
   const { patientId } = useParams();
   const { patient } = useOutletContext<OutletContext>();
+  const queryClient = useQueryClient();
+
+  const numericPatientId = Number(patientId);
+  const validPatientId = Number.isFinite(numericPatientId);
 
   const [filterType, setFilterType] = useState<string>('Show All');
-  const [excludeSystemNotes, setExcludeSystemNotes] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAll, setShowAll] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
 
   const itemsPerPage = 10;
 
-  // Filter patient notes
-  const filteredNotes = mockPatientNotes.filter(note => {
-    // Apply type filter
-    if (filterType !== 'Show All' && note.type !== filterType) {
-      return false;
-    }
-    // Apply exclude system notes filter
-    if (excludeSystemNotes && note.isSystemGenerated) {
-      return false;
-    }
-    return true;
+  // Load this patient's notes. `size` maxes at 200 on list endpoints; a single
+  // patient is unlikely to exceed that, so filtering/paging stays client-side.
+  const notesQuery = useListPatientNotes(
+    { patient_id: numericPatientId, size: 200 },
+    { query: { enabled: validPatientId } },
+  );
+
+  const deleteMutation = useDeletePatientNote({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['/api/v1/patient-notes'] });
+      },
+    },
   });
+
+  // The list endpoint returns soft-deleted notes (DELETE sets is_deleted=true)
+  // and has no is_deleted filter param, so exclude them here.
+  const allNotes: PatientNote[] = (notesQuery.data?.items ?? [])
+    .filter((note) => !note.is_deleted)
+    .map(mapNote);
+
+  // Filter patient notes by type (client-side over the loaded page).
+  const filteredNotes = allNotes.filter(
+    (note) => filterType === 'Show All' || note.type === filterType,
+  );
 
   // Pagination
   const totalPages = Math.ceil(filteredNotes.length / itemsPerPage);
-  const paginatedNotes = showAll 
-    ? filteredNotes 
+  const paginatedNotes = showAll
+    ? filteredNotes
     : filteredNotes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleDeleteClick = (noteId: string) => {
+  const handleDeleteClick = (noteId: number) => {
     setSelectedNoteId(noteId);
     setDeleteModalOpen(true);
   };
 
   const confirmDelete = () => {
-    // Handle delete logic here
-    console.log('Deleting note:', selectedNoteId);
-    setDeleteModalOpen(false);
-    setSelectedNoteId(null);
+    if (selectedNoteId == null) return;
+    deleteMutation.mutate(
+      { itemId: selectedNoteId },
+      {
+        onSettled: () => {
+          setDeleteModalOpen(false);
+          setSelectedNoteId(null);
+        },
+      },
+    );
   };
 
-  const handleEditNote = (noteId: string) => {
+  const handleEditNote = (noteId: number) => {
     navigate(`/patient/${patientId}/notes/edit/${noteId}`);
   };
 
-  const handleViewNote = (noteId: string) => {
+  const handleViewNote = (noteId: number) => {
     navigate(`/patient/${patientId}/notes/view/${noteId}`);
   };
 
@@ -238,12 +178,6 @@ export default function PatientNotesListing() {
         return DollarSign;
       case 'Appointment Notes':
         return Calendar;
-      case 'System Notes':
-        return FileText;
-      case 'Document (Upload)':
-        return Upload;
-      case 'Document (Scan)':
-        return Scan;
       default:
         return FileText;
     }
@@ -274,7 +208,7 @@ export default function PatientNotesListing() {
           </div>
 
           {/* Patient Summary */}
-          <div className="grid grid-cols-4 gap-4 pt-4 border-t-2 border-slate-200">
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t-2 border-slate-200">
             <div>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 Patient
@@ -288,18 +222,6 @@ export default function PatientNotesListing() {
               <div className="font-semibold text-slate-900">
                 {patient.dob} ({patient.age}y)
               </div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                Responsible Party
-              </div>
-              <div className="font-semibold text-slate-900">Self</div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                Insurance
-              </div>
-              <div className="font-semibold text-slate-900">Delta Dental PPO</div>
             </div>
           </div>
         </div>
@@ -323,25 +245,8 @@ export default function PatientNotesListing() {
                 <option>Responsible Party Notes</option>
                 <option>Financial Notes</option>
                 <option>Appointment Notes</option>
-                <option>System Notes</option>
-                <option>Document (Upload)</option>
-                <option>Document (Scan)</option>
               </select>
             </div>
-
-            {/* Exclude System Notes Checkbox */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={excludeSystemNotes}
-                onChange={(e) => {
-                  setExcludeSystemNotes(e.target.checked);
-                  setCurrentPage(1);
-                }}
-                className="w-5 h-5 rounded border-2 border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-sm font-semibold text-slate-700">Exclude System Notes</span>
-            </label>
 
             {/* Results Count */}
             <div className="ml-auto text-sm font-semibold text-slate-600">
@@ -374,9 +279,37 @@ export default function PatientNotesListing() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {paginatedNotes.length === 0 ? (
+                {notesQuery.isLoading ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center">
+                    <td colSpan={5} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" strokeWidth={2} />
+                        <p className="text-sm text-slate-600">Loading patient notes…</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : notesQuery.isError ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="p-4 bg-red-100 rounded-full">
+                          <AlertCircle className="w-8 h-8 text-red-600" strokeWidth={2} />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 mb-1">Failed to load notes</p>
+                          <button
+                            onClick={() => notesQuery.refetch()}
+                            className="text-sm font-semibold text-blue-600 hover:underline"
+                          >
+                            Try again
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginatedNotes.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <div className="p-4 bg-slate-100 rounded-full">
                           <FileText className="w-8 h-8 text-slate-400" strokeWidth={2} />
@@ -384,7 +317,7 @@ export default function PatientNotesListing() {
                         <div>
                           <p className="font-semibold text-slate-900 mb-1">No Patient Notes Found</p>
                           <p className="text-sm text-slate-600">
-                            {excludeSystemNotes || filterType !== 'Show All'
+                            {filterType !== 'Show All'
                               ? 'Try adjusting your filters'
                               : 'Click "Add Patient Note" to create the first note'}
                           </p>
@@ -400,33 +333,20 @@ export default function PatientNotesListing() {
                         {/* Actions Column */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            {/* View Icon / Attachment */}
+                            {/* View Icon */}
                             <button
                               onClick={() => handleViewNote(note.id)}
                               className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                              title={note.hasAttachment ? 'View Document' : 'View Note'}
+                              title="View Note"
                             >
-                              {note.hasAttachment ? (
-                                <Paperclip className="w-4 h-4" strokeWidth={2} />
-                              ) : (
-                                <Eye className="w-4 h-4" strokeWidth={2} />
-                              )}
+                              <Eye className="w-4 h-4" strokeWidth={2} />
                             </button>
 
                             {/* Edit Icon */}
                             <button
                               onClick={() => handleEditNote(note.id)}
-                              disabled={note.isSystemGenerated}
-                              className={`p-2 rounded-lg transition-colors ${
-                                note.isSystemGenerated
-                                  ? 'text-slate-300 cursor-not-allowed'
-                                  : 'text-green-600 hover:bg-green-100'
-                              }`}
-                              title={
-                                note.isSystemGenerated
-                                  ? 'System notes cannot be edited'
-                                  : 'Edit Note'
-                              }
+                              className="p-2 rounded-lg transition-colors text-green-600 hover:bg-green-100"
+                              title="Edit Note"
                             >
                               <Edit className="w-4 h-4" strokeWidth={2} />
                             </button>
@@ -434,17 +354,8 @@ export default function PatientNotesListing() {
                             {/* Delete Icon */}
                             <button
                               onClick={() => handleDeleteClick(note.id)}
-                              disabled={note.isSystemGenerated}
-                              className={`p-2 rounded-lg transition-colors ${
-                                note.isSystemGenerated
-                                  ? 'text-slate-300 cursor-not-allowed'
-                                  : 'text-red-600 hover:bg-red-100'
-                              }`}
-                              title={
-                                note.isSystemGenerated
-                                  ? 'System notes cannot be deleted'
-                                  : 'Delete Note'
-                              }
+                              className="p-2 rounded-lg transition-colors text-red-600 hover:bg-red-100"
+                              title="Delete Note"
                             >
                               <Trash2 className="w-4 h-4" strokeWidth={2} />
                             </button>
@@ -462,15 +373,7 @@ export default function PatientNotesListing() {
                               <TypeIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
                               {note.type}
                             </span>
-                            {note.hasAttachment && (
-                              <File className="w-4 h-4 text-slate-500" strokeWidth={2} />
-                            )}
                           </div>
-                          {note.documentName && (
-                            <div className="text-xs text-slate-500 mt-1 font-medium">
-                              {note.documentName}
-                            </div>
-                          )}
                         </td>
 
                         {/* Notes Content Column */}
@@ -486,10 +389,10 @@ export default function PatientNotesListing() {
                             {note.createdDate}
                           </div>
                         </td>
-                        {/* Created createdBy Column */}
+                        {/* Created By Column */}
                         <td className="px-4 py-3">
                           <div className="text-sm font-medium text-slate-900">
-                            <span className="font-bold">{toProperCase(note.createdBy)}</span>
+                            <span className="font-bold">{note.createdBy}</span>
                           </div>
                         </td>
                       </tr>
@@ -629,15 +532,18 @@ export default function PatientNotesListing() {
                   setDeleteModalOpen(false);
                   setSelectedNoteId(null);
                 }}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-semibold transition-colors"
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-semibold transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                disabled={deleteMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Delete Note
+                {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />}
+                {deleteMutation.isPending ? 'Deleting…' : 'Delete Note'}
               </button>
             </div>
           </div>

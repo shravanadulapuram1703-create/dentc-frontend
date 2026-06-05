@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useOutletContext, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   Edit2,
   Archive,
@@ -27,14 +27,54 @@ import {
   mapResponsibleParty,
 } from "./utils";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useListPatientRecalls } from "@/api/generated/endpoints/patients/patients";
+import { useGetPatientBalance } from "@/api/generated/endpoints/billing/billing";
+import { useListAppointments } from "@/api/generated/endpoints/appointments/appointments";
+import { useListOffices } from "@/api/generated/endpoints/organization/organization";
+import type { PatientBalance, AppointmentRead, PatientRecallRead } from "@/api/generated/model";
+
+// MM/DD/YYYY or em dash.
+const fmtDate = (value?: string | null): string => {
+  if (!value) return "—";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+};
+
+// Format a signed currency amount; negatives shown as ($X.XX).
+const money = (value?: number | null): string => {
+  if (value == null || Number.isNaN(value)) return "—";
+  const abs = Math.abs(value).toFixed(2);
+  return value < 0 ? `($${abs})` : `$${abs}`;
+};
 
 type TabType = "summary" | "balances" | "contracts";
 
 export default function PatientOverview() {
   const { patientId } = useParams<{ patientId: string }>();
-  const outlet = useOutletContext<{ patient?: any }>();
   const { currentOffice } = useAuth();
-  
+
+  const numericId = patientId ? Number(patientId) : NaN;
+  const validId = Number.isFinite(numericId);
+
+  // Real account/clinical data composed from canonical resources. These share
+  // React Query cache keys with PatientShellLayout, so no duplicate requests.
+  const balanceQuery = useGetPatientBalance(numericId, { query: { enabled: validId } });
+  const appointmentsQuery = useListAppointments(
+    { patient_id: numericId, size: 50 },
+    { query: { enabled: validId } },
+  );
+  const recallsQuery = useListPatientRecalls(
+    { patient_id: numericId, size: 50 },
+    { query: { enabled: validId } },
+  );
+  const officesQuery = useListOffices({ size: 200 });
+  const officeName = (id?: number | null): string => {
+    if (id == null) return "—";
+    return officesQuery.data?.items.find((o) => o.id === id)?.name ?? `Office ${id}`;
+  };
+
   const [patientDetails, setPatientDetails] = useState<ApiPatientDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +120,10 @@ export default function PatientOverview() {
     try {
       const details = await getPatientDetails(patientId);
       setPatientDetails(details);
+      // Refresh the composed account/clinical data alongside demographics.
+      balanceQuery.refetch();
+      appointmentsQuery.refetch();
+      recallsQuery.refetch();
     } catch (err: any) {
       console.error("Error refreshing patient details:", err);
       const errorMessage = err.response?.data?.detail || err.message || "Failed to refresh patient details";
@@ -89,10 +133,9 @@ export default function PatientOverview() {
     }
   };
 
-  const handleSavePatient = (data: any) => {
-    console.log("Saving patient data:", data);
-    // TODO: Call update patient API
-    // After successful update, refresh patient details
+  // EditPatientModal persists the update itself (updatePatientFull); on save we
+  // just reload the overview's data.
+  const handleSavePatient = () => {
     handleRefresh();
   };
 
@@ -198,51 +241,52 @@ export default function PatientOverview() {
     active: member.is_active ? "Yes" : "No",
   })) || [];
   
-  const appointments = patientDetails.appointments?.map(apt => ({
-    date: new Date(apt.date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-    time: apt.time,
-    office: apt.office,
-    operator: apt.procedure,
-    provider: apt.provider,
-    duration: apt.duration.toString(),
-    status: apt.status,
-    lastUpdated: apt.last_updated,
-    member: apt.member,
-    current: "$0.00", // Not in API response
-    over30: "$0.00",
-    over60: "$0.00",
-    over90: "$0.00",
-    over120: "$0.00",
-    balance: "$0.00",
-    estPat: "$0.00",
-    estIns: "$0.00",
-  })) || [];
-  
-  const recalls = patientDetails.recalls?.map(recall => ({
-    code: recall.code,
-    age: recall.age_range,
-    nextDate: new Date(recall.next_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
-    freq: recall.frequency,
-  })) || [];
+  // Appointments from /appointments (real). Per-appointment aging has no backend
+  // source (aging is account-level), so those columns show em dashes, not $0.00.
+  const appointments = (appointmentsQuery.data?.items ?? [])
+    .slice()
+    .sort((a: AppointmentRead, b: AppointmentRead) => b.date.localeCompare(a.date))
+    .map((apt: AppointmentRead) => ({
+      date: fmtDate(apt.date),
+      time: apt.start_time ?? "—",
+      office: officeName(apt.office_id),
+      operator: apt.procedure_label || "—",
+      provider: apt.provider_id || "—",
+      duration: String(apt.duration ?? ""),
+      status: apt.status,
+      lastUpdated: fmtDate(apt.updated_at),
+      member: patientData.name,
+      current: "—",
+      over30: "—",
+      over60: "—",
+      over90: "—",
+      over120: "—",
+      balance: "—",
+      estPat: "—",
+      estIns: "—",
+    }));
 
-  const balanceData = patientDetails.balances ? {
-    accountBalance: `$${safeToFixed(patientDetails.balances.account_balance)}`,
-    todayCharges: `$${safeToFixed(patientDetails.balances.today_charges)}`,
-    todayEstInsurance: `$${safeToFixed(patientDetails.balances.today_est_insurance)}`,
-    todayEstPatient: `$${safeToFixed(patientDetails.balances.today_est_patient)}`,
-    lastInsPayment: `$${safeToFixed(patientDetails.balances.last_insurance_payment)}`,
-    lastInsPaymentDate: patientDetails.balances.last_insurance_payment_date ? new Date(patientDetails.balances.last_insurance_payment_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : "",
-    lastPatPayment: `$${safeToFixed(patientDetails.balances.last_patient_payment)}`,
-    lastPatPaymentDate: patientDetails.balances.last_patient_payment_date ? new Date(patientDetails.balances.last_patient_payment_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : "",
-  } : {
-    accountBalance: "$0.00",
-    todayCharges: "$0.00",
-    todayEstInsurance: "$0.00",
-    todayEstPatient: "$0.00",
-    lastInsPayment: "$0.00",
-    lastInsPaymentDate: "",
-    lastPatPayment: "$0.00",
-    lastPatPaymentDate: "",
+  // Recalls from /patient-recalls (real).
+  const recalls = (recallsQuery.data?.items ?? []).map((recall: PatientRecallRead) => ({
+    code: recall.procedure_code || recall.recall_type || "—",
+    age: recall.interval_months != null ? `${recall.interval_months} mo` : "—",
+    nextDate: fmtDate(recall.due_date),
+    freq: recall.recall_type || "—",
+  }));
+
+  // Balance from /patients/{id}/balance (real). PatientBalance has no per-day
+  // charges or payment amounts (only recent-activity dates), so those show em
+  // dashes — see docs/patients/patients_backend_devreport.md.
+  const bal: PatientBalance | undefined = balanceQuery.data;
+  const balanceData = {
+    accountBalance: money(bal?.account_balance ?? bal?.balance),
+    todayCharges: "—",
+    todayEstInsurance: money(bal?.estimated_insurance),
+    todayEstPatient: money(bal?.estimated_patient),
+    lastInsPayment: "—",
+    lastInsPaymentDate: fmtDate(bal?.recent_activity?.last_ins),
+    lastPatPayment: "—",
+    lastPatPaymentDate: fmtDate(bal?.recent_activity?.last_pat),
   };
 
   return (

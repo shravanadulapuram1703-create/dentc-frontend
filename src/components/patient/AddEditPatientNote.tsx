@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Save,
   X,
@@ -9,16 +10,23 @@ import {
   Upload,
   Scan,
   File,
-  Paperclip,
-  AlertCircle
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
+import {
+  useGetPatientNote,
+  useCreatePatientNote,
+  useUpdatePatientNote,
+} from '@/api/generated/endpoints/patients/patients';
+import type { PatientNoteCreate, PatientNoteUpdate } from '@/api/generated/model';
 
 interface PatientData {
   id: string;
   name: string;
   dob: string;
   age: number;
-  gender: string;
+  gender?: string;
+  officeId?: string;
 }
 
 interface OutletContext {
@@ -29,17 +37,53 @@ interface AddEditPatientNoteProps {
   mode?: 'add' | 'edit' | 'view';
 }
 
+// Format an ISO timestamp for the audit panel.
+function formatTimestamp(iso?: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+}
+
 export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteProps) {
   const navigate = useNavigate();
-  const { patientId } = useParams();
+  const { patientId, noteId } = useParams();
   const { patient } = useOutletContext<OutletContext>();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const numericPatientId = Number(patientId);
+  const numericNoteId = Number(noteId);
+  const numericOfficeId = patient.officeId ? Number(patient.officeId) : undefined;
+  const isExistingNote = (mode === 'edit' || mode === 'view') && Number.isFinite(numericNoteId);
 
   const [noteType, setNoteType] = useState<string>('Patient Notes');
   const [noteContent, setNoteContent] = useState<string>('');
   const [documentType, setDocumentType] = useState<string>('Show All');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // Load the existing note for edit/view and hydrate the form once it arrives.
+  const noteQuery = useGetPatientNote(numericNoteId, {
+    query: { enabled: isExistingNote },
+  });
+
+  useEffect(() => {
+    const note = noteQuery.data;
+    if (!note) return;
+    setNoteType(note.note_type || 'Patient Notes');
+    setNoteContent(note.notes ?? '');
+  }, [noteQuery.data]);
+
+  const createMutation = useCreatePatientNote();
+  const updateMutation = useUpdatePatientNote();
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   // Common note macros
   const noteMacros = [
@@ -124,30 +168,41 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
       return;
     }
 
-    // For document types, validate that either file is selected or content explains why
-    if ((noteType === 'Document (Upload)' || noteType === 'Document (Scan)') && !selectedFile) {
-      if (!window.confirm('No file attached. Continue saving note without document?')) {
-        return;
-      }
+    if (!Number.isFinite(numericPatientId)) {
+      alert('Missing patient context. Please reopen this patient and try again.');
+      return;
     }
 
-    setIsSaving(true);
-
-    // Simulate save operation
-    setTimeout(() => {
-      console.log('Saving patient note:', {
-        patientId,
-        noteType,
-        noteContent,
-        documentType: noteType.includes('Document') ? documentType : undefined,
-        file: selectedFile?.name,
-        createdDate: new Date().toISOString(),
-        createdBy: 'NICOLASM' // Get from auth context
-      });
-
-      setIsSaving(false);
+    const goBackToList = () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/patient-notes'] });
       navigate(`/patient/${patientId}/notes`);
-    }, 800);
+    };
+
+    const onError = (err: unknown) => {
+      const detail =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      alert(detail || 'Failed to save the note. Please try again.');
+    };
+
+    if (mode === 'edit' && isExistingNote) {
+      const body: PatientNoteUpdate = {
+        note_type: noteType,
+        notes: noteContent.trim(),
+      };
+      updateMutation.mutate(
+        { itemId: numericNoteId, data: body },
+        { onSuccess: goBackToList, onError },
+      );
+    } else {
+      const body: PatientNoteCreate = {
+        patient_id: numericPatientId,
+        office_id: numericOfficeId,
+        note_type: noteType,
+        notes: noteContent.trim(),
+        note_date: new Date().toISOString().slice(0, 10),
+      };
+      createMutation.mutate({ data: body }, { onSuccess: goBackToList, onError });
+    }
   };
 
   const handleCancel = () => {
@@ -159,6 +214,35 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
 
   const isReadOnly = mode === 'view';
   const isDocumentType = noteType === 'Document (Upload)' || noteType === 'Document (Scan)';
+
+  if (isExistingNote && noteQuery.isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-slate-600 font-medium">Loading note…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isExistingNote && noteQuery.isError) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-[400px]">
+        <div className="text-center bg-white rounded-lg shadow-md border-2 border-red-200 p-6 max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-red-600 mb-2">Error Loading Note</h3>
+          <p className="text-slate-600 mb-4">This note could not be loaded.</p>
+          <button
+            onClick={() => navigate(`/patient/${patientId}/notes`)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+          >
+            Back to Notes
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-auto bg-slate-50">
@@ -249,6 +333,19 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
               <option value="Document (Scan)">Document (Scan)</option>
             </select>
           </div>
+
+          {/* Document storage is not yet backed by an endpoint (see
+              patients_backend_devreport.md). The note text and type are saved;
+              the file and document sub-type are not persisted yet. */}
+          {isDocumentType && !isReadOnly && (
+            <div className="mb-6 flex items-start gap-2 rounded-lg border-2 border-amber-200 bg-amber-50 p-3">
+              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" strokeWidth={2} />
+              <p className="text-xs font-medium text-amber-800">
+                Document storage is pending backend support. The note text and type will be saved,
+                but the attached file and document sub-type are not persisted yet.
+              </p>
+            </div>
+          )}
 
           {/* Document Type Dropdown (only for document types) */}
           {isDocumentType && (
@@ -428,30 +525,26 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                 <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
                   Created By
                 </div>
-                <div className="text-sm font-medium text-blue-900">NICOLASM</div>
+                <div className="text-sm font-medium text-blue-900">
+                  {noteQuery.data?.created_by != null ? `User #${noteQuery.data.created_by}` : '—'}
+                </div>
               </div>
               <div>
                 <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
                   Created Date
                 </div>
-                <div className="text-sm font-medium text-blue-900">12/20/2024 10:30 AM</div>
+                <div className="text-sm font-medium text-blue-900">
+                  {formatTimestamp(noteQuery.data?.created_at)}
+                </div>
               </div>
-              {mode === 'edit' && (
-                <>
-                  <div>
-                    <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
-                      Last Modified By
-                    </div>
-                    <div className="text-sm font-medium text-blue-900">FRONTDESK</div>
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
-                      Last Modified Date
-                    </div>
-                    <div className="text-sm font-medium text-blue-900">12/20/2024 02:15 PM</div>
-                  </div>
-                </>
-              )}
+              <div>
+                <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                  Last Modified Date
+                </div>
+                <div className="text-sm font-medium text-blue-900">
+                  {formatTimestamp(noteQuery.data?.updated_at)}
+                </div>
+              </div>
               <div>
                 <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
                   Patient ID

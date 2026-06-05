@@ -32,10 +32,8 @@ import {
   type ProcedureCategory,
   type TreatmentPlan,
 } from "../../services/schedulerApi";
-import {
-  createPatient,
-  type PatientCreateRequest,
-} from "../../services/patientApi";
+import { createPatient as createPatientApi } from "@/api/generated/endpoints/patients/patients";
+import type { PatientCreate } from "@/api/generated/model";
 
 interface PatientSearchResult {
   patientId: string;
@@ -759,21 +757,24 @@ export default function AddEditAppointmentForm({
         }
 
         // Create patient
-        const patientData: PatientCreateRequest = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+        const patientData: PatientCreate = {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           ...(dobFormatted && { dob: dobFormatted }),
-          ...(formData.cellPhone && { phone: formData.cellPhone }),
+          ...(formData.cellPhone && {
+            cell_phone: formData.cellPhone.replace(/\D/g, ""),
+            preferred_contact: "cell_phone",
+          }),
           ...(formData.email && { email: formData.email }),
-          homeOfficeId: currentOfficeId ? parseInt(String(currentOfficeId), 10) : extractOfficeId(currentOffice),
+          home_office_id: currentOfficeId ? parseInt(String(currentOfficeId), 10) : extractOfficeId(currentOffice),
         };
-        
+
         // Only add gender if it's valid
         if (patient.gender && (patient.gender === "M" || patient.gender === "F" || patient.gender === "O")) {
           patientData.gender = patient.gender;
         }
-        
-        const newPatient = await createPatient(patientData);
+
+        const newPatient = await createPatientApi(patientData);
         patientIdNum = newPatient.id;
         console.log("Patient created with numeric ID:", patientIdNum);
       }

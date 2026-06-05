@@ -24,13 +24,9 @@ import {
   type ProcedureType,
   type SchedulerConfig,
 } from "../../services/schedulerApi";
-import {
-  createPatient,
-  type PatientCreateRequest,
-} from "../../services/patientApi";
 import { procedureTypeColorClasses } from "../../utils/procedureTypeColor";
-import { listPatients } from "@/api/generated/endpoints/patients/patients";
-import type { PatientRead, ListPatientsParams } from "@/api/generated/model";
+import { listPatients, createPatient as createPatientApi } from "@/api/generated/endpoints/patients/patients";
+import type { PatientRead, ListPatientsParams, PatientCreate } from "@/api/generated/model";
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -575,18 +571,21 @@ export default function NewAppointmentModal({
         };
 
         // Create patient using Patient API
-        const patientData: PatientCreateRequest = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+        const patientData: PatientCreate = {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           ...(dobFormatted && { dob: dobFormatted }),
-          ...(formData.phoneNumber && { phone: formData.phoneNumber }),
+          ...(formData.phoneNumber && {
+            cell_phone: formData.phoneNumber.replace(/\D/g, ""),
+            preferred_contact: "cell_phone",
+          }),
           ...(formData.email && { email: formData.email }),
-          ...(formData.gender && { gender: formData.gender as "M" | "F" | "O" }),
-          homeOfficeId: extractOfficeId(currentOffice),
+          ...(formData.gender && { gender: formData.gender }),
+          home_office_id: extractOfficeId(currentOffice),
         };
 
         console.log("Patient data to create:", patientData);
-        const newPatient = await createPatient(patientData);
+        const newPatient = await createPatientApi(patientData);
         console.log("Patient created successfully:", newPatient);
 
         // The appointment API requires a numeric patient_id.

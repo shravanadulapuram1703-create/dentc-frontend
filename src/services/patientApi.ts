@@ -1,4 +1,3 @@
-import api from "./api";
 import {
   createPatient as createPatientApi,
   updatePatient as updatePatientApi,
@@ -10,42 +9,6 @@ import type { PatientInsuranceRead } from "@/api/generated/model";
 import type { PatientCreate, PatientUpdate, PatientRead } from "@/api/generated/model";
 
 // ===== TYPES =====
-export interface Patient {
-  id: number;
-  chartNo: string;
-  firstName: string;
-  lastName: string;
-  dob?: string; // YYYY-MM-DD format
-  gender?: "M" | "F" | "O";
-  phone?: string;
-  email?: string;
-  homeOfficeId?: number;
-  createdAt?: string; // ISO 8601 format
-  updatedAt?: string | null; // ISO 8601 format or null
-}
-
-export interface PatientCreateRequest {
-  firstName: string;
-  lastName: string;
-  chartNo?: string; // Optional - auto-generated if not provided
-  dob?: string; // YYYY-MM-DD format
-  gender?: "M" | "F" | "O";
-  phone?: string;
-  email?: string;
-  homeOfficeId?: number;
-}
-
-export interface PatientUpdateRequest {
-  firstName?: string;
-  lastName?: string;
-  chartNo?: string;
-  dob?: string;
-  gender?: "M" | "F" | "O";
-  phone?: string;
-  email?: string;
-  homeOfficeId?: number;
-}
-
 // Comprehensive patient details interface (for Patient Overview)
 export interface PatientDetails {
   id: number;
@@ -427,52 +390,7 @@ export interface PatientUpdateRequestFull {
   patient_types?: string[]; // Array of patient type codes (e.g., ["CH", "OR"])
 }
 
-export interface PatientListResponse {
-  patients: Patient[];
-  total: number;
-}
-
 // ===== API FUNCTIONS =====
-
-/**
- * Extract numeric office ID from office string or use directly if it's already an ID
- * Handles formats like: "Office Name [108]" -> 108, "OFF-1" -> 1, "1" -> 1
- */
-const extractOfficeId = (officeStr: string | number | undefined): number | undefined => {
-  if (!officeStr) return undefined;
-  
-  // If already a number, return as-is
-  if (typeof officeStr === 'number') {
-    return officeStr;
-  }
-  
-  const officeStrValue = String(officeStr).trim();
-  
-  // If already just a number, return as-is
-  if (/^\d+$/.test(officeStrValue)) {
-    return parseInt(officeStrValue, 10);
-  }
-  
-  // First, try to extract from brackets: "Office Name [108]" -> 108
-  const bracketMatch = officeStrValue.match(/\[(\d+)\]/);
-  if (bracketMatch && bracketMatch[1]) {
-    return parseInt(bracketMatch[1], 10);
-  }
-  
-  // Try to extract number from "OFF-{number}" format: "OFF-1" -> 1
-  const offMatch = officeStrValue.match(/(?:OFF-|OFF\s*)(\d+)/i);
-  if (offMatch && offMatch[1]) {
-    return parseInt(offMatch[1], 10);
-  }
-  
-  // Try to extract any trailing number: "Office Name 108" -> 108
-  const trailingMatch = officeStrValue.match(/(\d+)$/);
-  if (trailingMatch && trailingMatch[1]) {
-    return parseInt(trailingMatch[1], 10);
-  }
-  
-  return undefined;
-};
 
 /**
  * Create a new patient
@@ -486,20 +404,6 @@ const extractOfficeId = (officeStr: string | number | undefined): number | undef
 ========================================================= */
 
 /** Flat backend PatientRead -> flat camelCase Patient. */
-const toPatient = (p: PatientRead): Patient => ({
-  id: p.id,
-  chartNo: p.chart_no ?? "",
-  firstName: p.first_name ?? "",
-  lastName: p.last_name ?? "",
-  dob: p.dob ?? undefined,
-  gender: (p.gender as Patient["gender"]) ?? undefined,
-  phone: p.cell_phone ?? p.phone ?? undefined,
-  email: p.email ?? undefined,
-  homeOfficeId: p.home_office_id ?? undefined,
-  createdAt: p.created_at ?? undefined,
-  updatedAt: p.updated_at ?? undefined,
-});
-
 /** Flat backend PatientRead -> the UI's nested PatientDetails (partial). */
 const toPatientDetails = (p: PatientRead): PatientDetails =>
   ({
@@ -596,73 +500,10 @@ const flattenPatientPayload = (data: any): PatientCreate => {
   } as PatientCreate;
 };
 
-export const createPatient = async (
-  data: PatientCreateRequest
-): Promise<Patient> => {
-  if (!data.homeOfficeId) {
-    throw new Error("home_office_id is required to create a patient");
-  }
-  const body: PatientCreate = {
-    home_office_id:
-      typeof data.homeOfficeId === "number"
-        ? data.homeOfficeId
-        : parseInt(String(data.homeOfficeId), 10),
-    chart_no: data.chartNo ?? null,
-    first_name: data.firstName ?? null,
-    last_name: data.lastName ?? null,
-    dob: data.dob ?? null,
-    gender: data.gender ?? null,
-    cell_phone: data.phone ? data.phone.replace(/\D/g, "") : null,
-    email: data.email ?? null,
-    preferred_contact: data.phone ? "cell_phone" : null,
-  } as PatientCreate;
-  const created = await createPatientApi(body);
-  return toPatient(created);
-};
-
-/**
- * Get a list of patients with optional search and pagination
- * @param search - Optional search term (searches in first name, last name, chart number, phone, email)
- * @param limit - Maximum number of results (1-1000, default: 100)
- * @param offset - Number of results to skip for pagination (default: 0)
- */
-export const getPatients = async (
-  search?: string,
-  limit?: number,
-  offset?: number
-): Promise<PatientListResponse> => {
-  const params: Record<string, string> = {};
-  
-  if (search) {
-    params.search = search;
-  }
-  
-  if (limit !== undefined) {
-    params.limit = limit.toString();
-  }
-  
-  if (offset !== undefined) {
-    params.offset = offset.toString();
-  }
-
-  const response = await api.get<PatientListResponse>("/api/v1/patients", {
-    params,
-  });
-  
-  return response.data;
-};
-
-/**
- * Get a single patient by ID
- */
-export const getPatientById = async (patientId: number): Promise<Patient> => {
-  return toPatient(await getPatient(patientId));
-};
-
 /**
  * Get a patient by chart number
  */
-export const getPatientByChartNo = async (chartNo: string): Promise<Patient> => {
+export const getPatientByChartNo = async (chartNo: string): Promise<PatientRead> => {
   // Normalize chart number - remove "CH" prefix and any dashes if present
   // e.g., "CH014" -> "014", "CH-014" -> "014"
   let normalizedChartNo = chartNo.trim();
@@ -676,7 +517,7 @@ export const getPatientByChartNo = async (chartNo: string): Promise<Patient> => 
   if (!first) {
     throw new Error(`Patient not found with chart number: ${chartNo}`);
   }
-  return toPatient(first);
+  return first;
 };
 
 /**
@@ -692,7 +533,7 @@ export const getPatientDetails = async (patientId: string | number): Promise<Pat
     try {
       const patient = await getPatientByChartNo(patientId);
       numericId = patient.id;
-    } catch (err: any) {
+    } catch {
       throw new Error(`Patient not found with chart number: ${patientId}. Please use the numeric patient ID.`);
     }
   } else {
@@ -748,28 +589,6 @@ export const createPatientFull = async (
 };
 
 /**
- * Update an existing patient (PATCH).
- */
-export const updatePatient = async (
-  patientId: number,
-  data: PatientUpdateRequest
-): Promise<Patient> => {
-  const body: PatientUpdate = {
-    chart_no: data.chartNo ?? undefined,
-    first_name: data.firstName ?? undefined,
-    last_name: data.lastName ?? undefined,
-    dob: data.dob ?? undefined,
-    gender: data.gender ?? undefined,
-    cell_phone: data.phone ? data.phone.replace(/\D/g, "") : undefined,
-    email: data.email ?? undefined,
-    home_office_id:
-      data.homeOfficeId != null ? Number(data.homeOfficeId) : undefined,
-  } as PatientUpdate;
-  const updated = await updatePatientApi(patientId, body);
-  return toPatient(updated);
-};
-
-/**
  * Update an existing patient with full details (for EditPatientModal).
  * Flattens the nested form payload and PATCHes the canonical resource.
  */
@@ -786,11 +605,4 @@ export const updatePatientFull = async (
     flattenPatientPayload(data) as PatientUpdate,
   );
   return toPatientDetails(updated);
-};
-
-/**
- * Delete a patient
- */
-export const deletePatient = async (patientId: number): Promise<void> => {
-  await api.delete(`/api/v1/patients/${patientId}`);
 };

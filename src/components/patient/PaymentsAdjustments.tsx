@@ -1,6 +1,15 @@
 import { useState } from 'react';
-import { X, Search, DollarSign, Plus } from 'lucide-react';
+import { X, Search, DollarSign, Plus, Loader2 } from 'lucide-react';
 import { components } from '../../styles/theme';
+import { createPatientPayment } from '@/api/generated/endpoints/billing/billing';
+
+// MM/DD/YYYY (or any parseable string) -> YYYY-MM-DD for the API.
+const toIsoDate = (s: string): string => {
+  const d = new Date(s);
+  return Number.isNaN(d.getTime())
+    ? new Date().toISOString().slice(0, 10)
+    : d.toISOString().slice(0, 10);
+};
 
 interface OutstandingProcedure {
   id: string;
@@ -35,11 +44,16 @@ interface Props {
   onClose: () => void;
   patientName: string;
   patientId: string;
+  /** Office id (e.g. "OFF-3" or "3") the payment is recorded at. */
+  office?: string;
+  /** Called after a payment is successfully recorded, so the ledger can refresh. */
+  onApplied?: () => void;
 }
 
-export default function PaymentsAdjustments({ isOpen, onClose, patientName, patientId }: Props) {
+export default function PaymentsAdjustments({ isOpen, onClose, patientName, patientId, office, onApplied }: Props) {
   const [activeTab, setActiveTab] = useState<'add-procedures' | 'payments' | 'adjustments'>('payments');
   const [transactionDate, setTransactionDate] = useState(new Date().toLocaleDateString('en-US'));
+  const [saving, setSaving] = useState(false);
   
   // Payment fields
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -77,51 +91,11 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
     { code: 'ADJ04', description: 'ADJ OFF - Administrative Adjustment' }
   ];
 
-  // Outstanding procedures
-  const [procedures, setProcedures] = useState<OutstandingProcedure[]>([
-    {
-      id: '1',
-      selected: false,
-      dos: '12/26/2016',
-      patient: 'Nicolas',
-      office: 'WEXFOR',
-      code: 'D2750',
-      tooth: '22',
-      surface: '',
-      description: 'Crown Porcelain Fused High Noble',
-      provider: 'Dr. Jinna',
-      providerId: '7407',
-      bill: 'P',
-      duration: '90',
-      estPat: 300.00,
-      estIns: 650.00,
-      patPaid: 44.00,
-      patAdj: 93.88,
-      remaining: 800.12,
-      newAmount: 0
-    },
-    {
-      id: '2',
-      selected: false,
-      dos: '12/19/2025',
-      patient: 'Nicolas',
-      office: 'WEXFOR',
-      code: 'D3330',
-      tooth: '31',
-      surface: '',
-      description: 'Endodontic Therapy, Molar Tooth',
-      provider: 'Dr. Smith',
-      providerId: '7103',
-      bill: 'P',
-      duration: '120',
-      estPat: 433.36,
-      estIns: 629.20,
-      patPaid: 0.00,
-      patAdj: 0.00,
-      remaining: 185.84,
-      newAmount: 0
-    }
-  ]);
+  // Outstanding procedures. There is no backend endpoint for per-procedure
+  // payment allocation yet (the patient-payments resource records a flat payment
+  // and exposes a separate /allocate route), so this starts empty rather than
+  // showing mock rows. See docs/patients/patients_backend_devreport.md.
+  const [procedures, setProcedures] = useState<OutstandingProcedure[]>([]);
 
   // Provider list (derived from procedures)
   const providers = Array.from(new Set(procedures.map(p => ({
@@ -153,8 +127,9 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
   const selectedProcedures = procedures.filter(p => p.selected);
   const totalRemaining = selectedProcedures.reduce((sum, p) => sum + p.remaining, 0);
 
-  const handleApplyPayment = () => {
-    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+  const handleApplyPayment = async () => {
+    const amount = parseFloat(paymentAmount);
+    if (!paymentAmount || Number.isNaN(amount) || amount <= 0) {
       alert('Please enter a valid payment amount');
       return;
     }
@@ -162,47 +137,51 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
       alert('Please select a payment method');
       return;
     }
-    if (!selectedProvider && selectedProcedures.length > 0) {
-      alert('Please select a provider for this payment');
-      return;
-    }
-    if (selectedProcedures.length === 0) {
-      alert('Please select at least one procedure to apply payment');
+    const pid = Number(patientId);
+    if (!Number.isFinite(pid)) {
+      alert('Missing patient context. Please reopen the patient and try again.');
       return;
     }
 
-    // Create payment entry
-    alert(`Payment Applied:\nAmount: $${paymentAmount}\nApply To: ${applyTo}\nProvider: ${selectedProvider}\nMethod: ${paymentMethod}\nProcedures: ${selectedProcedures.length}`);
-    
-    // Reset form
-    setPaymentAmount('');
-    setPaymentMethod('');
-    setCheckNumber('');
-    setBankNumber('');
-    setNotes('');
-    setProcedures(procedures.map(p => ({ ...p, selected: false })));
+    const officeNum = office ? Number(String(office).replace(/\D/g, '')) : undefined;
+
+    setSaving(true);
+    try {
+      await createPatientPayment({
+        id: crypto.randomUUID(),
+        patient_id: pid,
+        office_id: officeNum && Number.isFinite(officeNum) ? officeNum : null,
+        payment_date: toIsoDate(transactionDate),
+        amount: amount.toFixed(2),
+        payment_type: 'patient',
+        payment_method: paymentMethod,
+        ...(checkNumber ? { check_number: checkNumber } : {}),
+        ...(notes ? { notes } : {}),
+      });
+
+      // Reset form
+      setPaymentAmount('');
+      setPaymentMethod('');
+      setCheckNumber('');
+      setBankNumber('');
+      setNotes('');
+      onApplied?.();
+      onClose();
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      alert(detail || 'Failed to record payment. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleApplyAdjustment = () => {
-    if (!adjustmentAmount || parseFloat(adjustmentAmount) <= 0) {
-      alert('Please enter a valid adjustment amount');
-      return;
-    }
-    if (!adjustmentReason) {
-      alert('Please select an adjustment reason');
-      return;
-    }
-    if (selectedProcedures.length === 0) {
-      alert('Please select at least one procedure to apply adjustment');
-      return;
-    }
-
-    alert(`Adjustment Applied:\nAmount: $${adjustmentAmount}\nReason: ${adjustmentReason}\nProcedures: ${selectedProcedures.length}`);
-    
-    // Reset form
-    setAdjustmentAmount('');
-    setAdjustmentReason('');
-    setProcedures(procedures.map(p => ({ ...p, selected: false })));
+    // No backend: neither /patients/{id}/adjustments nor /patient-adjustments
+    // exist (both 404). See docs/patients/patients_backend_devreport.md.
+    alert(
+      'Adjustments are not yet available — the backend has no adjustments endpoint. ' +
+        'This is tracked as a backend gap.',
+    );
   };
 
   if (!isOpen) return null;
@@ -620,10 +599,15 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
             {activeTab === 'payments' && (
               <button
                 onClick={handleApplyPayment}
-                className={components.buttonPrimary + " flex items-center gap-2"}
+                disabled={saving}
+                className={components.buttonPrimary + " flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"}
               >
-                <DollarSign className="w-4 h-4" strokeWidth={2} />
-                APPLY
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                ) : (
+                  <DollarSign className="w-4 h-4" strokeWidth={2} />
+                )}
+                {saving ? 'APPLYING…' : 'APPLY'}
               </button>
             )}
             {activeTab === 'adjustments' && (

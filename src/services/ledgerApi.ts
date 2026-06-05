@@ -1,4 +1,5 @@
 import api from "./api";
+import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
 
 // ===== TYPES =====
 
@@ -50,7 +51,6 @@ export interface LedgerResponse {
 export interface BalancesResponse {
   account_balance: number;
   patient_balance: number;
-  insurance_balance: number;
   estimated_insurance: number;
   estimated_patient: number;
   aging: {
@@ -61,15 +61,11 @@ export interface BalancesResponse {
     age_120: number;
   };
   recent_activity: {
-    today_charges: number;
-    last_insurance_payment: {
-      amount: number;
-      date: string;
-    } | null;
-    last_patient_payment: {
-      amount: number;
-      date: string;
-    } | null;
+    // Today's non-void payments (backend `recent_activity.today`).
+    today: number;
+    // The backend exposes only the dates of the most recent payments, not amounts.
+    last_insurance_payment_date: string | null;
+    last_patient_payment_date: string | null;
   };
 }
 
@@ -494,15 +490,35 @@ export const getPatientLedger = async (
 };
 
 /**
- * Get account balances and aging information
+ * Get account balances and aging information.
+ *
+ * Wraps the canonical generated `getPatientBalance` (GET /patients/{id}/balance)
+ * and adapts `PatientBalance` to the ledger UI's `BalancesResponse`. The legacy
+ * `/patients/{id}/balances` (plural) path does not exist (404) — see
+ * docs/patients/patients_backend_devreport.md.
  */
 export const getPatientBalances = async (
   patientId: string
 ): Promise<BalancesResponse> => {
-  const response = await api.get<BalancesResponse>(
-    `/api/v1/patients/${patientId}/balances`
-  );
-  return response.data;
+  const b = await getPatientBalance(Number(patientId));
+  return {
+    account_balance: b.account_balance ?? b.balance ?? 0,
+    patient_balance: b.patient_balance ?? 0,
+    estimated_insurance: b.estimated_insurance ?? 0,
+    estimated_patient: b.estimated_patient ?? 0,
+    aging: {
+      current: b.aging?.current ?? 0,
+      age_30: b.aging?.b30 ?? 0,
+      age_60: b.aging?.b60 ?? 0,
+      age_90: b.aging?.b90 ?? 0,
+      age_120: b.aging?.b120 ?? 0,
+    },
+    recent_activity: {
+      today: b.recent_activity?.today ?? 0,
+      last_insurance_payment_date: b.recent_activity?.last_ins ?? null,
+      last_patient_payment_date: b.recent_activity?.last_pat ?? null,
+    },
+  };
 };
 
 /**

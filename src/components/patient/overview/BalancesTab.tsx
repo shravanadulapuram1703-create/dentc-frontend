@@ -64,12 +64,12 @@ export default function BalancesTab({ balanceData, accountMembers }: BalancesTab
               {accountMembers.map((member, index) => (
                 <tr key={index} className="hover:bg-[#F7F9FC] transition-colors">
                   <td className="px-3 py-2 text-[#1E293B]">{member.name}</td>
-                  <td className="px-3 py-2 text-[#1E293B]">($177.73)</td>
-                  <td className="px-3 py-2 text-[#1E293B]">$0.00</td>
-                  <td className="px-3 py-2 text-[#1E293B]">$0.00</td>
-                  <td className="px-3 py-2 text-[#1E293B]">$0.00</td>
-                  <td className="px-3 py-2 text-[#1E293B]">$0.00</td>
-                  <td className="px-3 py-2 text-[#1E293B]">($177.73)</td>
+                  <td className="px-3 py-2 text-[#1E293B]">—</td>
+                  <td className="px-3 py-2 text-[#1E293B]">—</td>
+                  <td className="px-3 py-2 text-[#1E293B]">—</td>
+                  <td className="px-3 py-2 text-[#1E293B]">—</td>
+                  <td className="px-3 py-2 text-[#1E293B]">—</td>
+                  <td className="px-3 py-2 text-[#1E293B]">—</td>
                 </tr>
               ))}
             </tbody>

@@ -1,27 +1,28 @@
 import GlobalNav from '../GlobalNav';
-import { 
-  Users, 
-  Search, 
-  UserPlus, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import {
+  Users,
+  Search,
+  UserPlus,
+  Phone,
+  Mail,
+  MapPin,
   Calendar,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   Eye,
-  Edit,
-  Printer,
   Building2,
-  CreditCard,
-  FileText,
-  Loader2
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { components } from '../../styles/theme';
-import { listPatients } from '@/api/generated/endpoints/patients/patients';
-import type { PatientRead, ListPatientsParams } from '@/api/generated/model';
+import { useListPatients } from '@/api/generated/endpoints/patients/patients';
+import { useListOffices } from '@/api/generated/endpoints/organization/organization';
+import type { ListPatientsParams, PatientRead } from '@/api/generated/model';
 
 interface PatientProps {
   onLogout: () => void;
@@ -29,214 +30,167 @@ interface PatientProps {
   setCurrentOffice: (office: string) => void;
 }
 
-interface Patient {
-  id: number;
-  patientId: string;
-  name: string;
-  firstName: string;
-  lastName: string;
-  dob: string;
-  phone: string;
-  email: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  insurance: string;
-  lastVisit: string;
-  nextAppointment: string;
-  balance: string;
-  officeId: string;
-  officeName: string;
-  chartNumber: string;
-  ssn: string;
-  emergencyContact: string;
-  emergencyPhone: string;
+const PAGE_SIZE = 25;
+
+// Backend-supported search modes. Free-text `search` does an ILIKE over
+// name/chart_no/email/phone; `chart_no` is an exact match. Field-specific exact
+// lookups (SSN, Medicaid, DOB, …) have no backend filter yet — see
+// docs/patients/patients_backend_devreport.md.
+const searchByOptions = [
+  { value: 'any', label: 'Name / Email / Phone' },
+  { value: 'chart_no', label: 'Chart # (exact)' },
+] as const;
+
+type SearchBy = (typeof searchByOptions)[number]['value'];
+type SearchScope = 'current' | 'all';
+type SortOrder = 'asc' | 'desc';
+
+interface SearchSnapshot {
+  searchText: string;
+  searchBy: SearchBy;
+  scope: SearchScope;
+  includeInactive: boolean;
+  order: SortOrder;
+}
+
+// Extract a numeric office id from the app's "OFF-3" display id.
+function extractOfficeIdNumber(officeId?: string): number | undefined {
+  if (!officeId) return undefined;
+  const match = officeId.match(/(\d+)/);
+  return match ? Number(match[1]) : undefined;
+}
+
+// YYYY-MM-DD -> MM/DD/YYYY for display.
+function formatDob(dob?: string | null): string {
+  if (!dob) return '—';
+  const parts = dob.split('-');
+  return parts.length === 3 ? `${parts[1]}/${parts[2]}/${parts[0]}` : dob;
+}
+
+function formatDate(value?: string | null): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+}
+
+// Show only the last 4 of the SSN; never render it in full.
+function maskSsn(ssn?: string | null): string {
+  if (!ssn) return '—';
+  const digits = ssn.replace(/\D/g, '');
+  return digits.length >= 4 ? `***-**-${digits.slice(-4)}` : '***-**-****';
+}
+
+function patientName(p: PatientRead): string {
+  const last = p.last_name ?? '';
+  const first = p.first_name ?? '';
+  const base = [last, first].filter(Boolean).join(', ') || `Patient #${p.id}`;
+  return p.preferred_name ? `${base} (${p.preferred_name})` : base;
+}
+
+function preferredPhone(p: PatientRead): string {
+  return p.cell_phone || p.phone || p.work_phone || '—';
+}
+
+function buildParams(snap: SearchSnapshot, currentOffice: string, page: number): ListPatientsParams {
+  const params: ListPatientsParams = {
+    page,
+    size: PAGE_SIZE,
+    sort: 'last_name',
+    order: snap.order,
+  };
+
+  const text = snap.searchText.trim();
+  if (snap.searchBy === 'chart_no') {
+    if (text) params.chart_no = text;
+  } else if (text) {
+    params.search = text;
+  }
+
+  if (snap.scope === 'current') {
+    const officeId = extractOfficeIdNumber(currentOffice);
+    if (officeId) params.home_office_id = officeId;
+  }
+
+  // Exclude inactive unless explicitly requested.
+  if (!snap.includeInactive) params.is_active = true;
+
+  return params;
 }
 
 export default function Patient({ onLogout, currentOffice, setCurrentOffice }: PatientProps) {
   const navigate = useNavigate();
 
-  // Search State (copied from Dashboard.tsx)
-  const [searchFor, setSearchFor] = useState<'patient' | 'responsible'>('patient');
-  const [patientType, setPatientType] = useState<'both' | 'general' | 'ortho'>('both');
-  const [searchBy, setSearchBy] = useState('lastName');
-  const [searchScope, setSearchScope] = useState<'current' | 'all' | 'group'>('all');
-  const [includeInactive, setIncludeInactive] = useState(false);
+  // Form state (uncommitted until SEARCH is pressed).
   const [searchText, setSearchText] = useState('');
-  const [lastSearchQuery, setLastSearchQuery] = useState('');
+  const [searchBy, setSearchBy] = useState<SearchBy>('any');
+  const [scope, setScope] = useState<SearchScope>('all');
+  const [includeInactive, setIncludeInactive] = useState(false);
+  const [order, setOrder] = useState<SortOrder>('asc');
 
-  // Results State
-  const [searchResults, setSearchResults] = useState<Patient[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [expandedPatientId, setExpandedPatientId] = useState<number | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  
-  // Helper to extract numeric office ID from currentOffice (e.g., "OFF-1" -> "1")
-  const extractOfficeIdNumber = (officeId?: string): string | undefined => {
-    if (!officeId) return undefined;
-    if (/^\d+$/.test(officeId)) return officeId;
-    const match = officeId.match(/(\d+)$/);
-    return match ? match[1] : officeId;
-  };
-  
-  // Convert backend PatientRead to the display row shape.
-  const convertApiPatientToDisplay = (p: PatientRead): Patient => {
-    // Format DOB from YYYY-MM-DD to MM/DD/YYYY
-    let dobFormatted = '';
-    if (p.dob) {
-      const dateParts = p.dob.split('-');
-      if (dateParts.length === 3) {
-        dobFormatted = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`;
-      }
-    }
+  // Committed search (drives the query) + the snapshot LAST SEARCH restores.
+  const [committed, setCommitted] = useState<SearchSnapshot | null>(null);
+  const [lastSnapshot, setLastSnapshot] = useState<SearchSnapshot | null>(null);
+  const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
-    const firstName = p.first_name ?? '';
-    const lastName = p.last_name ?? '';
+  const params = committed ? buildParams(committed, currentOffice, page) : undefined;
 
-    return {
-      id: p.id,
-      patientId: p.chart_no || `PT-${String(p.id).padStart(6, '0')}`,
-      name: `${firstName} ${lastName}`.trim(),
-      firstName,
-      lastName,
-      dob: dobFormatted || (p.dob ?? ''),
-      phone: p.cell_phone || p.phone || '',
-      email: p.email || '',
-      address: p.address_line1 || '',
-      city: p.city || '',
-      state: p.state || '',
-      zip: p.zip || '',
-      insurance: '', // composed from /patient-insurance — follow-up
-      lastVisit: p.last_visit || '',
-      nextAppointment: '', // composed from /appointments — follow-up
-      balance: '', // composed from /patients/{id}/balance — follow-up
-      officeId: p.home_office_id != null ? String(p.home_office_id) : '',
-      officeName: '', // resolve via /offices — follow-up
-      chartNumber: p.chart_no || `CH-${p.id}`,
-      ssn: p.ssn || '***-**-****',
-      emergencyContact: p.guardian_name || '',
-      emergencyPhone: p.guardian_phone || '',
-    };
+  const patientsQuery = useListPatients(params, {
+    query: { enabled: committed != null },
+  });
+
+  // Resolve home_office_id -> office name without per-row calls.
+  const officesQuery = useListOffices({ size: 200 });
+  const officeName = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const o of officesQuery.data?.items ?? []) map.set(o.id, o.name);
+    return (id?: number | null) => (id != null ? map.get(id) ?? '—' : '—');
+  }, [officesQuery.data]);
+
+  const items = patientsQuery.data?.items ?? [];
+  const meta = patientsQuery.data?.meta;
+  const totalPages = meta?.pages ?? 0;
+
+  const runSearch = (snap: SearchSnapshot) => {
+    setCommitted(snap);
+    setLastSnapshot(snap);
+    setPage(1);
+    setExpandedId(null);
   };
 
-  const searchByOptions = [
-    { value: 'lastName', label: 'Last Name' },
-    { value: 'firstName', label: 'First Name' },
-    { value: 'preferredName', label: 'Preferred Name' },
-    { value: 'patientType', label: 'Patient Type' },
-    { value: 'medicaidId', label: 'Medicaid ID' },
-    { value: 'chartNumber', label: 'Chart #' },
-    { value: 'ssn', label: 'SSN' },
-    { value: 'email', label: 'Email' },
-    { value: 'birthDate', label: 'Birth Date' },
-    { value: 'homePhone', label: 'Home Phone' },
-    { value: 'cellPhone', label: 'Cell Phone' },
-    { value: 'workPhone', label: 'Work Phone' },
-    { value: 'patientId', label: 'Patient ID' },
-    { value: 'responsiblePartyId', label: 'Responsible Party ID' },
-    { value: 'responsiblePartyType', label: 'Responsible Party Type' },
-    { value: 'subscriberId', label: 'Subscriber ID' },
-  ];
-
-
-  const getPlaceholder = () => {
-    const option = searchByOptions.find((o) => o.value === searchBy);
-    return `Enter ${option?.label}...`;
-  };
-
-  const handleSearch = async () => {
-    if (!searchText.trim()) {
-      alert('Please enter search criteria');
-      return;
-    }
-
-    const query = `${searchBy}:${searchText}|scope:${searchScope}|type:${searchFor}`;
-    setLastSearchQuery(query);
-
-    setIsSearching(true);
-    setSearchError(null);
-    setSearchResults([]);
-    setHasSearched(false);
-    setExpandedPatientId(null);
-
-    try {
-      // Map the legacy search form to the backend's /patients query params.
-      // The backend supports a free-text `search` (ILIKE over name/chart_no/
-      // email/phone) plus exact `chart_no`; field-specific "search by" choices
-      // collapse to `search` except Chart # which uses the exact filter.
-      const params: ListPatientsParams = { page: 1, size: 100 };
-
-      if (searchBy === 'chartNumber') {
-        params.chart_no = searchText.trim();
-      } else {
-        params.search = searchText.trim();
-      }
-
-      if (searchScope === 'current') {
-        const officeIdNum = extractOfficeIdNumber(currentOffice);
-        if (officeIdNum) params.home_office_id = Number(officeIdNum);
-      }
-
-      // Exclude inactive unless explicitly requested.
-      if (!includeInactive) params.is_active = true;
-
-      const response = await listPatients(params);
-
-      // Convert backend patients to display format
-      const results = response.items.map(convertApiPatientToDisplay);
-
-      setSearchResults(results);
-      setHasSearched(true);
-    } catch (error: any) {
-      console.error('Error searching patients:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to search patients';
-      setSearchError(errorMessage);
-      setHasSearched(true);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+  const handleSearch = () => {
+    runSearch({ searchText, searchBy, scope, includeInactive, order });
   };
 
   const handleLastSearch = () => {
-    if (!lastSearchQuery) {
-      alert('No previous search to reload');
-      return;
-    }
-    handleSearch();
+    if (!lastSnapshot) return;
+    // Restore the form to the last executed search and re-run it.
+    setSearchText(lastSnapshot.searchText);
+    setSearchBy(lastSnapshot.searchBy);
+    setScope(lastSnapshot.scope);
+    setIncludeInactive(lastSnapshot.includeInactive);
+    setOrder(lastSnapshot.order);
+    runSearch(lastSnapshot);
   };
 
-  const handleAddNewPatient = () => {
-    alert('Add New Patient workflow will open here');
+  const goToPage = (next: number) => {
+    setPage(Math.min(Math.max(1, next), Math.max(1, totalPages)));
+    setExpandedId(null);
   };
 
-  const toggleExpand = (patientId: number) => {
-    setExpandedPatientId(expandedPatientId === patientId ? null : patientId);
-  };
+  const handleAddNewPatient = () => navigate('/patient/new');
+  const handleViewOverview = (p: PatientRead) => navigate(`/patient/${p.id}/overview`);
+  const toggleExpand = (id: number) => setExpandedId(expandedId === id ? null : id);
 
-  const handleViewOverview = (patient: Patient) => {
-    // Navigate to patient overview using numeric ID (API expects numeric ID, not chart number)
-    navigate(`/patient/${patient.id}/overview`);
-  };
-
-  const handleEdit = (patient: Patient) => {
-    alert(`Edit patient: ${patient.name}`);
-  };
-
-  const handlePrint = (patient: Patient) => {
-    alert(`Print patient details: ${patient.name}`);
-  };
+  const placeholder =
+    searchBy === 'chart_no' ? 'Enter exact chart number…' : 'Search name, email, or phone…';
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav 
-        onLogout={onLogout} 
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-      
+      <GlobalNav onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
+
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Page Header */}
         <div className="bg-white rounded-xl shadow-md border-2 border-[#E2E8F0] overflow-hidden">
@@ -250,10 +204,10 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
                 <p className="text-white/80 text-sm font-medium">Search and manage patient records</p>
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={handleAddNewPatient}
-              className={components.buttonSuccess + " flex items-center gap-2"}
+              className={components.buttonSuccess + ' flex items-center gap-2'}
             >
               <UserPlus className="w-5 h-5" strokeWidth={2} />
               ADD NEW PATIENT
@@ -263,252 +217,179 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
 
         {/* Search Panel */}
         <div className="bg-white rounded-xl shadow-md border-2 border-[#E2E8F0]">
-          {/* Search Input & Action Buttons Bar (replacing header) */}
+          {/* Search Input & Action Buttons */}
           <div className="bg-[#F7F9FC] border-b-2 border-[#E2E8F0] p-4">
             <div className="flex items-center gap-3">
-              {/* Search Text Input */}
               <div className="flex-1">
                 <input
                   type="text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  placeholder={getPlaceholder()}
+                  placeholder={placeholder}
                   className="w-full px-4 py-2.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] transition-all"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch();
-                    }
+                    if (e.key === 'Enter') handleSearch();
                   }}
                 />
               </div>
 
-              {/* Action Buttons */}
               <button
                 onClick={handleSearch}
-                disabled={isSearching}
+                disabled={patientsQuery.isFetching}
                 className="px-5 py-2.5 bg-[#3A6EA5] text-white text-sm font-bold rounded-lg hover:bg-[#2d5080] transition-colors shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSearching ? (
+                {patientsQuery.isFetching ? (
                   <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
                 ) : (
                   <Search className="w-4 h-4" strokeWidth={2} />
                 )}
-                {isSearching ? 'SEARCHING...' : 'SEARCH'}
+                {patientsQuery.isFetching ? 'SEARCHING...' : 'SEARCH'}
               </button>
 
               <button
                 onClick={handleLastSearch}
-                className="px-5 py-2.5 bg-[#475569] text-white text-sm font-bold rounded-lg hover:bg-[#1E293B] transition-colors shadow-md"
+                disabled={!lastSnapshot}
+                className="px-5 py-2.5 bg-[#475569] text-white text-sm font-bold rounded-lg hover:bg-[#1E293B] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 LAST SEARCH
               </button>
-
-              {/* <button
-                onClick={handleAddNewPatient}
-                className="px-5 py-2.5 bg-[#2FB9A7] text-white text-sm font-bold rounded-lg hover:bg-[#28a896] transition-colors shadow-md flex items-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" strokeWidth={2} />
-                ADD NEW PATIENT
-              </button> */}
             </div>
           </div>
 
-          <div className="p-4 space-y-3">
-            {/* Row 1: Search Scope Selection - Compact */}
-            <div className="grid grid-cols-3 gap-4">
-              {/* Left Block: Search For */}
-              <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
-                <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">
-                  Search For
-                </h3>
-                <div className="space-y-1">
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
+          {/* Search Options */}
+          <div className="p-4 grid grid-cols-3 gap-4">
+            {/* Search By */}
+            <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
+              <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">Search By</h3>
+              <div className="space-y-1">
+                {searchByOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors"
+                  >
                     <input
                       type="radio"
-                      name="searchFor"
-                      value="patient"
-                      checked={searchFor === 'patient'}
-                      onChange={(e) => setSearchFor(e.target.value as 'patient')}
+                      name="searchBy"
+                      value={option.value}
+                      checked={searchBy === option.value}
+                      onChange={() => setSearchBy(option.value)}
                       className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
                     />
-                    <span className="text-sm font-medium text-[#1E293B]">Patient</span>
+                    <span className="text-sm font-medium text-[#1E293B]">{option.label}</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                    <input
-                      type="radio"
-                      name="searchFor"
-                      value="responsible"
-                      checked={searchFor === 'responsible'}
-                      onChange={(e) => setSearchFor(e.target.value as 'responsible')}
-                      className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                    />
-                    <span className="text-sm font-medium text-[#1E293B]">Responsible Party</span>
-                  </label>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
-                  <h4 className="text-xs font-bold text-[#475569] uppercase mb-2 tracking-wide">
-                    General / Ortho Patient
-                  </h4>
-                  <div className="space-y-1">
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                      <input
-                        type="radio"
-                        name="patientType"
-                        value="both"
-                        checked={patientType === 'both'}
-                        onChange={(e) => setPatientType(e.target.value as 'both')}
-                        className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-sm font-medium text-[#1E293B]">Both</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                      <input
-                        type="radio"
-                        name="patientType"
-                        value="general"
-                        checked={patientType === 'general'}
-                        onChange={(e) => setPatientType(e.target.value as 'general')}
-                        className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-sm font-medium text-[#1E293B]">General Patient</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                      <input
-                        type="radio"
-                        name="patientType"
-                        value="ortho"
-                        checked={patientType === 'ortho'}
-                        onChange={(e) => setPatientType(e.target.value as 'ortho')}
-                        className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-sm font-medium text-[#1E293B]">Ortho Patient</span>
-                    </label>
-                  </div>
-                </div>
+                ))}
               </div>
+            </div>
 
-              {/* Center Block: Search By */}
-              <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
-                <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">
-                  Search By
-                </h3>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 max-h-64 overflow-y-auto">
-                  {searchByOptions.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-0.5 rounded transition-colors"
-                    >
-                      <input
-                        type="radio"
-                        name="searchBy"
-                        value={option.value}
-                        checked={searchBy === option.value}
-                        onChange={(e) => setSearchBy(e.target.value)}
-                        className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-sm font-medium text-[#1E293B]">
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+            {/* Search In */}
+            <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
+              <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">Search In</h3>
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="current"
+                    checked={scope === 'current'}
+                    onChange={() => setScope('current')}
+                    className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
+                  />
+                  <span className="text-sm font-medium text-[#1E293B]">Current Office</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="all"
+                    checked={scope === 'all'}
+                    onChange={() => setScope('all')}
+                    className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
+                  />
+                  <span className="text-sm font-medium text-[#1E293B]">All Offices</span>
+                </label>
               </div>
+            </div>
 
-              {/* Right Block: Search In */}
-              <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
-                <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">
-                  Search In
-                </h3>
-                <div className="space-y-1">
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                    <input
-                      type="radio"
-                      name="searchScope"
-                      value="current"
-                      checked={searchScope === 'current'}
-                      onChange={(e) => setSearchScope(e.target.value as 'current')}
-                      className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                    />
-                    <span className="text-sm font-medium text-[#1E293B]">Current Office</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                    <input
-                      type="radio"
-                      name="searchScope"
-                      value="all"
-                      checked={searchScope === 'all'}
-                      onChange={(e) => setSearchScope(e.target.value as 'all')}
-                      className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                    />
-                    <span className="text-sm font-medium text-[#1E293B]">All Offices</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                    <input
-                      type="radio"
-                      name="searchScope"
-                      value="group"
-                      checked={searchScope === 'group'}
-                      onChange={(e) => setSearchScope(e.target.value as 'group')}
-                      className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                    />
-                    <span className="text-sm font-medium text-[#1E293B]">Search in Office Group</span>
-                  </label>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
-                  <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={includeInactive}
-                      onChange={(e) => setIncludeInactive(e.target.checked)}
-                      className="w-4 h-4 rounded border-[#CBD5E1] text-[#3A6EA5] focus:ring-[#3A6EA5]"
-                    />
-                    <span className="text-sm font-medium text-[#1E293B]">Include Inactive</span>
-                  </label>
-                </div>
+            {/* Options */}
+            <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
+              <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">Options</h3>
+              <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
+                <input
+                  type="checkbox"
+                  checked={includeInactive}
+                  onChange={(e) => setIncludeInactive(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#CBD5E1] text-[#3A6EA5] focus:ring-[#3A6EA5]"
+                />
+                <span className="text-sm font-medium text-[#1E293B]">Include Inactive</span>
+              </label>
+              <div className="mt-2 pt-2 border-t border-[#E2E8F0]">
+                <label className="block text-xs font-bold text-[#475569] uppercase mb-1 tracking-wide">
+                  Sort (Last Name)
+                </label>
+                <select
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value as SortOrder)}
+                  className="w-full px-3 py-1.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]"
+                >
+                  <option value="asc">A → Z</option>
+                  <option value="desc">Z → A</option>
+                </select>
               </div>
             </div>
           </div>
         </div>
 
         {/* Search Results */}
-        {hasSearched && (
+        {committed && (
           <div className="bg-white rounded-xl shadow-md border-2 border-[#E2E8F0]">
             {/* Results Header */}
             <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-white uppercase tracking-wide">
-                  Search Results
-                </h2>
+                <h2 className="text-xl font-bold text-white uppercase tracking-wide">Search Results</h2>
                 <p className="text-white/80 text-sm font-medium">
-                  {searchError ? (
-                    <span className="text-red-200">Error: {searchError}</span>
+                  {patientsQuery.isError ? (
+                    <span className="text-red-200">Failed to load patients</span>
+                  ) : meta ? (
+                    `${meta.total} patient(s) found`
                   ) : (
-                    `Found ${searchResults.length} patient(s)`
+                    'Searching…'
                   )}
                 </p>
               </div>
             </div>
 
-            {/* Results List */}
-            <div className="divide-y-2 divide-[#E2E8F0]">
-              {searchResults.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Users className="w-16 h-16 text-[#CBD5E1] mx-auto mb-4" strokeWidth={1.5} />
-                  <h3 className="font-bold text-[#64748B] mb-2">No Patients Found</h3>
-                  <p className="text-[#94A3B8]">Try adjusting your search criteria</p>
-                </div>
-              ) : (
-                searchResults.map((patient) => {
-                  const isExpanded = expandedPatientId === patient.id;
-                  
+            {/* Results body */}
+            {patientsQuery.isLoading ? (
+              <div className="p-12 text-center">
+                <Loader2 className="w-12 h-12 text-[#3A6EA5] animate-spin mx-auto mb-4" />
+                <p className="text-[#64748B] font-medium">Loading patients…</p>
+              </div>
+            ) : patientsQuery.isError ? (
+              <div className="p-12 text-center">
+                <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" strokeWidth={1.5} />
+                <h3 className="font-bold text-[#64748B] mb-2">Couldn't load patients</h3>
+                <button
+                  onClick={() => patientsQuery.refetch()}
+                  className="text-sm font-bold text-[#3A6EA5] hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="p-12 text-center">
+                <Users className="w-16 h-16 text-[#CBD5E1] mx-auto mb-4" strokeWidth={1.5} />
+                <h3 className="font-bold text-[#64748B] mb-2">No Patients Found</h3>
+                <p className="text-[#94A3B8]">Try adjusting your search criteria</p>
+              </div>
+            ) : (
+              <div className="divide-y-2 divide-[#E2E8F0]">
+                {items.map((patient) => {
+                  const isExpanded = expandedId === patient.id;
                   return (
                     <div key={patient.id} className="bg-white hover:bg-[#F7F9FC] transition-colors">
-                      {/* Collapsed Row - Basic Info */}
+                      {/* Collapsed Row */}
                       <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
-                          {/* Expand Button */}
                           <button
                             onClick={() => toggleExpand(patient.id)}
                             className="p-2 hover:bg-[#E8EFF7] rounded-lg transition-colors"
@@ -520,22 +401,19 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
                             )}
                           </button>
 
-                          {/* Basic Patient Info */}
-                          <div className="grid grid-cols-3 gap-6 flex-1">
+                          <div className="grid grid-cols-4 gap-6 flex-1">
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
                                 Patient Name
                               </div>
-                              <div className="font-bold text-[#1E293B]">
-                                {patient.name}
-                              </div>
+                              <div className="font-bold text-[#1E293B]">{patientName(patient)}</div>
                             </div>
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                Patient ID
+                                Chart #
                               </div>
                               <div className="font-semibold text-[#3A6EA5]">
-                                {patient.patientId}
+                                {patient.chart_no || `PT-${patient.id}`}
                               </div>
                             </div>
                             <div>
@@ -543,220 +421,212 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
                                 Office
                               </div>
                               <div className="font-semibold text-[#1E293B]">
-                                {patient.officeName} [{patient.officeId}]
+                                {officeName(patient.home_office_id)}
                               </div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
+                                Status
+                              </div>
+                              <span
+                                className={
+                                  'inline-block px-2 py-0.5 rounded text-xs font-bold ' +
+                                  (patient.is_active
+                                    ? 'bg-[#DCFCE7] text-[#15803D]'
+                                    : 'bg-[#FEE2E2] text-[#B91C1C]')
+                                }
+                              >
+                                {patient.is_active ? 'Active' : 'Inactive'}
+                              </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Quick Action Buttons (always visible) */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleViewOverview(patient)}
-                            className={components.buttonPrimary + " flex items-center gap-2 text-sm"}
-                            title="View Overview"
-                          >
-                            <Eye className="w-4 h-4" strokeWidth={2} />
-                            OVERVIEW
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleViewOverview(patient)}
+                          className={components.buttonPrimary + ' flex items-center gap-2 text-sm'}
+                          title="Open Patient"
+                        >
+                          <Eye className="w-4 h-4" strokeWidth={2} />
+                          OVERVIEW
+                        </button>
                       </div>
 
-                      {/* Expanded Section - Additional Details */}
+                      {/* Expanded Section — real PatientRead fields only */}
                       {isExpanded && (
-                        <div className="border-t-2 border-[#E2E8F0] bg-[#F7F9FC] p-6">
-                          <div className="space-y-6">
-                            {/* Demographic Information */}
-                            <div>
-                              <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
-                                <Users className="w-4 h-4" strokeWidth={2.5} />
-                                Demographic Information
-                              </h3>
-                              <div className="grid grid-cols-4 gap-4">
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                    Date of Birth
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.dob}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                    Chart Number
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.chartNumber}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                    SSN
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.ssn}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                    Insurance
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B] truncate">{patient.insurance}</div>
-                                </div>
-                              </div>
+                        <div className="border-t-2 border-[#E2E8F0] bg-[#F7F9FC] p-6 space-y-6">
+                          {/* Demographics */}
+                          <div>
+                            <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
+                              <Users className="w-4 h-4" strokeWidth={2.5} />
+                              Demographics
+                            </h3>
+                            <div className="grid grid-cols-4 gap-4">
+                              <DetailCard label="Date of Birth" value={formatDob(patient.dob)} />
+                              <DetailCard label="SSN" value={maskSsn(patient.ssn)} />
+                              <DetailCard label="Gender" value={patient.gender || '—'} />
+                              <DetailCard label="Marital Status" value={patient.marital_status || '—'} />
                             </div>
+                          </div>
 
-                            {/* Contact Information */}
+                          {/* Contact */}
+                          <div>
+                            <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
+                              <Phone className="w-4 h-4" strokeWidth={2.5} />
+                              Contact Information
+                            </h3>
+                            <div className="grid grid-cols-3 gap-4">
+                              <DetailCard icon={Phone} label="Phone" value={preferredPhone(patient)} />
+                              <DetailCard icon={Mail} label="Email" value={patient.email || '—'} />
+                              <DetailCard
+                                icon={MapPin}
+                                label="Address"
+                                value={
+                                  [
+                                    patient.address_line1,
+                                    patient.city,
+                                    [patient.state, patient.zip].filter(Boolean).join(' '),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(', ') || '—'
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          {/* Record */}
+                          <div>
+                            <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" strokeWidth={2.5} />
+                              Record
+                            </h3>
+                            <div className="grid grid-cols-4 gap-4">
+                              <DetailCard icon={Calendar} label="Last Visit" value={formatDate(patient.last_visit)} />
+                              <DetailCard icon={Calendar} label="Next Recall" value={formatDate(patient.next_recall)} />
+                              <DetailCard label="Patient Type" value={patient.patient_type || '—'} />
+                              <DetailCard
+                                icon={Building2}
+                                label="Office"
+                                value={`${officeName(patient.home_office_id)}${
+                                  patient.home_office_id != null ? ` [${patient.home_office_id}]` : ''
+                                }`}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Guardian / Emergency */}
+                          {(patient.guardian_name || patient.guardian_phone) && (
                             <div>
                               <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
                                 <Phone className="w-4 h-4" strokeWidth={2.5} />
-                                Contact Information
-                              </h3>
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Phone className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Phone
-                                    </div>
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.phone}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Mail className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Email
-                                    </div>
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B] truncate">{patient.email}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <MapPin className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Address
-                                    </div>
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B] text-sm">
-                                    {patient.address}, {patient.city}, {patient.state} {patient.zip}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Clinical & Financial Info */}
-                            <div>
-                              <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
-                                <Calendar className="w-4 h-4" strokeWidth={2.5} />
-                                Clinical & Financial Information
-                              </h3>
-                              <div className="grid grid-cols-4 gap-4">
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Calendar className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Last Visit
-                                    </div>
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.lastVisit}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Calendar className="w-4 h-4 text-[#2FB9A7]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Next Appointment
-                                    </div>
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.nextAppointment}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <CreditCard className="w-4 h-4 text-[#F59E0B]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Balance
-                                    </div>
-                                  </div>
-                                  <div className={`font-bold ${
-                                    patient.balance === '$0.00' ? 'text-[#2FB9A7]' : 'text-[#F59E0B]'
-                                  }`}>
-                                    {patient.balance}
-                                  </div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Building2 className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />
-                                    <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
-                                      Office ID
-                                    </div>
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.officeId}</div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Emergency Contact */}
-                            <div>
-                              <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm mb-4 flex items-center gap-2">
-                                <Phone className="w-4 h-4" strokeWidth={2.5} />
-                                Emergency Contact
+                                Guardian / Emergency Contact
                               </h3>
                               <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                    Name
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.emergencyContact}</div>
-                                </div>
-                                <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
-                                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
-                                    Phone
-                                  </div>
-                                  <div className="font-semibold text-[#1E293B]">{patient.emergencyPhone}</div>
-                                </div>
+                                <DetailCard label="Name" value={patient.guardian_name || '—'} />
+                                <DetailCard label="Phone" value={patient.guardian_phone || '—'} />
                               </div>
                             </div>
+                          )}
 
-                            {/* Action Buttons */}
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t-2 border-[#E2E8F0]">
-                              <button
-                                onClick={() => handleViewOverview(patient)}
-                                className={components.buttonPrimary + " flex items-center gap-2"}
-                              >
-                                <Eye className="w-5 h-5" strokeWidth={2} />
-                                VIEW OVERVIEW
-                              </button>
-                              <button
-                                onClick={() => handleEdit(patient)}
-                                className={components.buttonSecondary + " flex items-center gap-2"}
-                              >
-                                <Edit className="w-5 h-5" strokeWidth={2} />
-                                EDIT
-                              </button>
-                              <button
-                                onClick={() => handlePrint(patient)}
-                                className={components.buttonSecondary + " flex items-center gap-2"}
-                              >
-                                <Printer className="w-5 h-5" strokeWidth={2} />
-                                PRINT
-                              </button>
-                            </div>
+                          <div className="flex items-center justify-end gap-3 pt-4 border-t-2 border-[#E2E8F0]">
+                            <button
+                              onClick={() => handleViewOverview(patient)}
+                              className={components.buttonPrimary + ' flex items-center gap-2'}
+                            >
+                              <Eye className="w-5 h-5" strokeWidth={2} />
+                              OPEN OVERVIEW
+                            </button>
                           </div>
                         </div>
                       )}
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {!patientsQuery.isError && items.length > 0 && totalPages > 1 && (
+              <div className="border-t-2 border-[#E2E8F0] px-4 py-3 bg-[#F7F9FC] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PagerButton onClick={() => goToPage(1)} disabled={page === 1} title="First">
+                    <ChevronsLeft className="w-4 h-4" strokeWidth={2} />
+                  </PagerButton>
+                  <PagerButton onClick={() => goToPage(page - 1)} disabled={page === 1} title="Previous">
+                    <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                  </PagerButton>
+                  <PagerButton onClick={() => goToPage(page + 1)} disabled={page >= totalPages} title="Next">
+                    <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                  </PagerButton>
+                  <PagerButton onClick={() => goToPage(totalPages)} disabled={page >= totalPages} title="Last">
+                    <ChevronsRight className="w-4 h-4" strokeWidth={2} />
+                  </PagerButton>
+                </div>
+                <span className="text-sm font-bold text-[#1F3A5F]">
+                  Page {page} of {totalPages}
+                  {patientsQuery.isFetching && (
+                    <Loader2 className="inline w-4 h-4 ml-2 animate-spin text-[#3A6EA5]" />
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Initial State - No Search Yet */}
-        {!hasSearched && (
+        {/* Initial State */}
+        {!committed && (
           <div className="bg-white rounded-xl shadow-md border-2 border-[#E2E8F0] p-12 text-center">
             <Search className="w-16 h-16 text-[#CBD5E1] mx-auto mb-4" strokeWidth={1.5} />
             <h3 className="font-bold text-[#64748B] mb-2">Ready to Search</h3>
-            <p className="text-[#94A3B8]">
-              Enter your search criteria above and click SEARCH to find patients
-            </p>
+            <p className="text-[#94A3B8]">Enter your search criteria above and click SEARCH to find patients</p>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function DetailCard({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+}) {
+  return (
+    <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-3">
+      <div className="flex items-center gap-2 mb-1">
+        {Icon && <Icon className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />}
+        <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide">{label}</div>
+      </div>
+      <div className="font-semibold text-[#1E293B] text-sm truncate" title={value}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function PagerButton({
+  onClick,
+  disabled,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="p-2 rounded-lg border-2 border-[#CBD5E1] text-[#1F3A5F] hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+    >
+      {children}
+    </button>
   );
 }

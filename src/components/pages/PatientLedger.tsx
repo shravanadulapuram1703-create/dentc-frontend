@@ -972,32 +972,20 @@ export default function PatientLedger() {
                 <h3 className="text-gray-900 mb-4">Recent Activity</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700">Today's Charges:</span>
-                      <span className="text-gray-900">${balanceData.recent_activity.today_charges.toFixed(2)}</span>
+                    <span className="text-gray-700">Today's Payments:</span>
+                      <span className="text-gray-900">${balanceData.recent_activity.today.toFixed(2)}</span>
                   </div>
-                    {balanceData.recent_activity.last_insurance_payment && (
-                      <>
+                    {balanceData.recent_activity.last_insurance_payment_date && (
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-700">Last Insurance Payment:</span>
-                          <span className="text-blue-700">${balanceData.recent_activity.last_insurance_payment.amount.toFixed(2)}</span>
+                          <span className="text-gray-600 text-xs">{formatDateTime(balanceData.recent_activity.last_insurance_payment_date)}</span>
                   </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700 text-xs">Date:</span>
-                          <span className="text-gray-600 text-xs">{formatDateTime(balanceData.recent_activity.last_insurance_payment.date)}</span>
-                  </div>
-                      </>
                     )}
-                    {balanceData.recent_activity.last_patient_payment && (
-                      <>
+                    {balanceData.recent_activity.last_patient_payment_date && (
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-700">Last Patient Payment:</span>
-                          <span className="text-green-700">${balanceData.recent_activity.last_patient_payment.amount.toFixed(2)}</span>
+                          <span className="text-gray-600 text-xs">{formatDateTime(balanceData.recent_activity.last_patient_payment_date)}</span>
                   </div>
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-700 text-xs">Date:</span>
-                          <span className="text-gray-600 text-xs">{formatDateTime(balanceData.recent_activity.last_patient_payment.date)}</span>
-                  </div>
-                      </>
                     )}
                 </div>
               </div>
@@ -1014,6 +1002,11 @@ export default function PatientLedger() {
           onClose={() => setShowPaymentsAdjustments(false)}
           patientName={patientName}
           patientId={patientId}
+          office={patient?.officeId || patient?.office || ''}
+          onApplied={() => {
+            fetchLedgerEntries();
+            fetchBalances();
+          }}
         />
       )}
 
