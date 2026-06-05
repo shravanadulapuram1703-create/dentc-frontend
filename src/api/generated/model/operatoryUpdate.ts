@@ -10,5 +10,6 @@ export interface OperatoryUpdate {
   office_id?: number | null;
   name?: string | null;
   display_order?: number | null;
+  provider_id?: string | null;
   is_active?: boolean | null;
 }

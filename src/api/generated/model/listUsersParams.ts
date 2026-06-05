@@ -9,6 +9,12 @@ import type { ListUsersOrder } from './listUsersOrder';
 
 export type ListUsersParams = {
 /**
+ * Filter by assigned office
+ */
+office_id?: number | null;
+role?: string | null;
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -13,6 +13,8 @@ export interface DefinitionRead {
   key1: string;
   key2?: string | null;
   description: string;
+  color?: string | null;
+  sort_order?: number | null;
   is_active: boolean;
   is_flash_alert: boolean;
   blocks_charges: boolean;

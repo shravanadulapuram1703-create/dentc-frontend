@@ -1,5 +1,4 @@
 import api from "./api";
-// import type { Organization } from '../data/organizationData_old';
 type Organization = any;
 
 export async function fetchOrganizations(): Promise<Organization[]> {

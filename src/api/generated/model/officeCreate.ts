@@ -23,4 +23,13 @@ export interface OfficeCreate {
   schedule_start_hour?: number | null;
   schedule_end_hour?: number | null;
   is_active?: boolean | null;
+  phone_2?: string | null;
+  phone_ext?: string | null;
+  tax_id?: string | null;
+  billing_provider_id?: string | null;
+  use_billing_license?: boolean | null;
+  office_group_id?: number | null;
+  opening_date?: string | null;
+  default_fee_schedule_id?: number | null;
+  default_ucr_fee_schedule_id?: number | null;
 }

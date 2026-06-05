@@ -69,6 +69,15 @@ interface AuthContextType {
   currentOrganization: string;
   setCurrentOrganization: (orgId: string) => void;
 
+  /**
+   * The numeric tenant primary key for the active organization, derived from
+   * `currentOrganization` (`ORG-<id>`) / the user's `organizationId`. Use THIS
+   * for any `/api/v1/tenants/{id}/...` path param — never `Number(currentOrganization)`,
+   * which is `NaN` because `currentOrganization` is the display id `ORG-<id>`.
+   * `null` when no valid tenant is resolvable.
+   */
+  tenantId: number | null;
+
   currentOffice: string;
   setCurrentOffice: (officeId: string) => void;
 
@@ -161,6 +170,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  /* ---------- DERIVED: numeric tenant id ---------- */
+  // currentOrganization is the display id "ORG-<tenantPk>"; the user's
+  // organizationId is the bare numeric PK. Prefer the active org, fall back to
+  // the user, and expose a clean number (or null) for /tenants/{id} consumers.
+  const tenantId = ((): number | null => {
+    const raw = (currentOrganization || "").replace(/^ORG-/i, "") || user?.organizationId || "";
+    const n = Number(raw);
+    return raw !== "" && Number.isFinite(n) ? n : null;
+  })();
 
   /* ---------- PERSIST SELECTIONS ---------- */
 
@@ -329,6 +348,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizations,
         currentOrganization,
         setCurrentOrganization,
+        tenantId,
         currentOffice,
         setCurrentOffice,
         activePatient,

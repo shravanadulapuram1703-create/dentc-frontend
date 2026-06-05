@@ -25,6 +25,15 @@ export interface OfficeRead {
   schedule_start_hour: number;
   schedule_end_hour: number;
   is_active: boolean;
+  phone_2?: string | null;
+  phone_ext?: string | null;
+  tax_id?: string | null;
+  billing_provider_id?: string | null;
+  use_billing_license: boolean;
+  office_group_id?: number | null;
+  opening_date?: string | null;
+  default_fee_schedule_id?: number | null;
+  default_ucr_fee_schedule_id?: number | null;
   created_by?: number | null;
   id: number;
   created_at: string;

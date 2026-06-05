@@ -6,32 +6,88 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Search,
-  Printer,
   Loader2,
 } from "lucide-react";
 import GlobalNav from "../GlobalNav";
+import WeekView from "../scheduler/WeekView";
+import MonthView from "../scheduler/MonthView";
 import NewAppointmentModal from "../modals/NewAppointmentModal";
 import DatePickerCalendar from "../modals/DatePickerCalendar";
 import CalendarPicker from "../CalendarPicker";
 import { components } from "../../styles/theme";
+import { procedureTypeColorClasses } from "../../utils/procedureTypeColor";
 import {
   fetchAppointments,
   fetchOperatories,
+  fetchProviders,
   fetchSchedulerConfig,
   fetchProcedureTypes,
+  fetchAppointmentStatuses,
   createAppointment,
   updateAppointment,
   deleteAppointment,
   updateAppointmentStatus,
   type Appointment,
+  type AppointmentStatus,
   type Operatory,
+  type Provider,
   type SchedulerConfig,
   type ProcedureType,
   type AppointmentCreateRequest,
   type AppointmentUpdateRequest,
 } from "../../services/schedulerApi";
-import { getPatientByChartNo } from "../../services/patientApi";
+import { getPatientContext } from "@/api/generated/endpoints/patients/patients";
+import type { SchedulerPatientRead } from "@/api/generated/model";
+
+/** Fallback status options used only if the backend `definitions` fetch fails
+ *  or returns nothing — the live list comes from fetchAppointmentStatuses. */
+const DEFAULT_STATUS_NAMES = [
+  "Scheduled",
+  "Confirmed",
+  "Unconfirmed",
+  "Left Message",
+  "In Reception",
+  "Available",
+  "In Operatory",
+  "Checked Out",
+  "Missed",
+  "Cancelled",
+] as const;
+
+type ViewMode = "daily" | "weekly" | "monthly";
+
+const fmtYMD = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+
+/** Inclusive [start, end] date range (YYYY-MM-DD) to fetch for a given view:
+ *  the single day (daily), the Sun–Sat week (weekly), or the whole month
+ *  (monthly). Drives the appointments fetch so week/month show real data. */
+const getDateRange = (date: Date, mode: ViewMode): { start: string; end: string } => {
+  if (mode === "weekly") {
+    const start = new Date(date);
+    start.setDate(date.getDate() - date.getDay()); // back to Sunday
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { start: fmtYMD(start), end: fmtYMD(end) };
+  }
+  if (mode === "monthly") {
+    const start = new Date(date.getFullYear(), date.getMonth(), 1);
+    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return { start: fmtYMD(start), end: fmtYMD(end) };
+  }
+  return { start: fmtYMD(date), end: fmtYMD(date) };
+};
+
+/** Coerce any patient identifier to the numeric patient_id the backend
+ *  contract requires (number | null). Non-numeric sentinels ("NEW") or a
+ *  chart_no resolve to null rather than a contract-violating string. */
+const numericPatientIdOrNull = (value: unknown): number | null => {
+  if (value == null || value === "" || value === "NEW") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
 
 interface SchedulerProps {
   onLogout: () => void;
@@ -58,9 +114,7 @@ export default function Scheduler({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showCalendarPicker, setShowCalendarPicker] =
     useState(false);
-  const [viewMode, setViewMode] = useState<
-    "daily" | "weekly" | "monthly"
-  >("daily");
+  const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [contextMenu, setContextMenu] =
     useState<ContextMenuState>({
       visible: false,
@@ -69,7 +123,7 @@ export default function Scheduler({
       type: "empty",
     });
   const [activeSubmenu, setActiveSubmenu] = useState<{
-    type: "goto" | "status" | "print" | null;
+    type: "goto" | "status" | null;
     anchorRect: DOMRect | null;
   }>({
     type: null,
@@ -89,7 +143,7 @@ export default function Scheduler({
   // STEP 2: Submenu open / close helpers
   // ===============================
   const openSubmenu = (
-    type: "goto" | "status" | "print",
+    type: "goto" | "status",
     target: HTMLElement,
   ) => {
     setActiveSubmenu((prev) => {
@@ -173,6 +227,13 @@ export default function Scheduler({
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [operatories, setOperatories] = useState<Operatory[]>([]);
   const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
+  const [appointmentStatuses, setAppointmentStatuses] = useState<AppointmentStatus[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+
+  // Calendar filters (backend-driven via listAppointments params).
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterProvider, setFilterProvider] = useState("");
+  const [filterOperatory, setFilterOperatory] = useState("");
   const [schedulerConfig, setSchedulerConfig] = useState<SchedulerConfig>(defaultConfig);
   const [timeSlots, setTimeSlots] = useState<string[]>(() => generateTimeSlots(defaultConfig));
 
@@ -195,9 +256,15 @@ export default function Scheduler({
       setIsLoadingOperatories(true);
       setError(null);
       try {
-        // TODO: Map currentOffice to officeId if needed
-        const data = await fetchOperatories();
-        setOperatories(data);
+        // Scope operatories and providers to the selected office (service
+        // extracts the numeric office_id from "OFF-1"). Providers feed the
+        // provider filter dropdown.
+        const [ops, provs] = await Promise.all([
+          fetchOperatories(currentOffice),
+          fetchProviders(currentOffice).catch(() => []),
+        ]);
+        setOperatories(ops);
+        setProviders(provs);
       } catch (err: any) {
         setError(`Failed to load operatories: ${err.message}`);
         console.error("Error loading operatories:", err);
@@ -213,7 +280,8 @@ export default function Scheduler({
   useEffect(() => {
     const loadProcedureTypes = async () => {
       try {
-        // TODO: Map currentOffice to officeId if needed
+        // Procedure types come from the tenant-wide `definitions` table and
+        // are not office-scoped on the backend.
         const data = await fetchProcedureTypes();
         setProcedureTypes(data);
       } catch (err: any) {
@@ -224,6 +292,35 @@ export default function Scheduler({
 
     loadProcedureTypes();
   }, [currentOffice]);
+
+  // Fetch appointment statuses from the backend `definitions` table so the
+  // Set Status menu stays in sync with the backend instead of a hardcoded list.
+  useEffect(() => {
+    const loadStatuses = async () => {
+      try {
+        const data = await fetchAppointmentStatuses();
+        setAppointmentStatuses(data);
+      } catch (err: any) {
+        console.error("Error loading appointment statuses:", err);
+        // Non-critical: the Set Status menu falls back to a default list.
+      }
+    };
+
+    loadStatuses();
+  }, []);
+
+  // Status options for the Set Status menu: backend-driven, with a static
+  // fallback only when the definitions fetch yields nothing.
+  const statusMenuItems = useMemo(
+    () =>
+      appointmentStatuses.length > 0
+        ? appointmentStatuses.map((s) => ({
+            value: s.name,
+            label: s.displayName || s.name,
+          }))
+        : DEFAULT_STATUS_NAMES.map((name) => ({ value: name, label: name })),
+    [appointmentStatuses],
+  );
 
   // Validate config to ensure it has valid values
   const isValidConfig = (config: any): config is SchedulerConfig => {
@@ -245,8 +342,8 @@ export default function Scheduler({
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        // TODO: Map currentOffice to officeId if needed
-        const config = await fetchSchedulerConfig();
+        // Scope schedule hours / slot interval to the selected office.
+        const config = await fetchSchedulerConfig(currentOffice);
         // Validate config before using it
         if (isValidConfig(config)) {
           setSchedulerConfig(config);
@@ -269,16 +366,25 @@ export default function Scheduler({
     [operatories],
   );
 
+  // provider_id -> name, for resolving operatory.provider_id in column headers.
+  const providerNameById = useMemo(
+    () => new Map(providers.map((p) => [p.id, p.name])),
+    [providers],
+  );
+
   // ✅ FIX: Filter appointments to only include those with valid operatories
   const validAppointments = useMemo(
     () =>
-      appointments.filter((appt) =>
-        activeOperatoryIds.has(appt.operatory),
+      appointments.filter(
+        (appt) =>
+          appt.operatory_id != null &&
+          activeOperatoryIds.has(appt.operatory_id),
       ),
     [appointments, activeOperatoryIds],
   );
 
-  // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date
+  // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date.
+  // Keyed by operatory_id so it matches the column lookup (operatory.id).
   const appointmentsByOperatory = useMemo(() => {
     const currentDate = formatDateYYYYMMDD(selectedDate);
     const map = new Map<string, Appointment[]>();
@@ -286,10 +392,12 @@ export default function Scheduler({
     validAppointments
       .filter((appt) => appt.date === currentDate)
       .forEach((appt) => {
-        if (!map.has(appt.operatory)) {
-          map.set(appt.operatory, []);
+        const opId = appt.operatory_id;
+        if (opId == null) return;
+        if (!map.has(opId)) {
+          map.set(opId, []);
         }
-        map.get(appt.operatory)!.push(appt);
+        map.get(opId)!.push(appt);
       });
 
     return map;
@@ -301,10 +409,14 @@ export default function Scheduler({
       setIsLoadingAppointments(true);
       setError(null);
       try {
-        const currentDate = formatDateYYYYMMDD(selectedDate);
-        // Fetch appointments for the selected date
-        // Optionally fetch a range (e.g., ±7 days) for better performance
-        const data = await fetchAppointments(currentDate, currentDate);
+        // Fetch the range the current view needs (day / week / month),
+        // scoped to the office and any active filters.
+        const { start, end } = getDateRange(selectedDate, viewMode);
+        const data = await fetchAppointments(start, end, currentOffice, {
+          status: filterStatus || undefined,
+          provider_id: filterProvider || undefined,
+          operatory_id: filterOperatory || undefined,
+        });
         setAppointments(data);
       } catch (err: any) {
         setError(`Failed to load appointments: ${err.message}`);
@@ -315,7 +427,7 @@ export default function Scheduler({
     };
 
     loadAppointments();
-  }, [selectedDate, currentOffice]);
+  }, [selectedDate, currentOffice, viewMode, filterStatus, filterProvider, filterOperatory]);
 
   // Update time slots when config changes - only if config is valid
   useEffect(() => {
@@ -366,8 +478,8 @@ export default function Scheduler({
       timeRangesOverlap(
         slotTime,
         slotEndTime,
-        appt.startTime,
-        appt.endTime,
+        appt.start_time,
+        appt.end_time,
       ),
     );
   };
@@ -386,8 +498,8 @@ export default function Scheduler({
         timeRangesOverlap(
           slotTime,
           slotEndTime,
-          appt.startTime,
-          appt.endTime,
+          appt.start_time,
+          appt.end_time,
         ),
       ) || null
     );
@@ -395,86 +507,17 @@ export default function Scheduler({
 
   // ===== END TIME BLOCKING LOGIC =====
 
-  // Get procedure type color
+  // Get procedure type color (centralized in utils/procedureTypeColor)
   const getProcedureTypeColor = (procedureTypeName: string): string => {
     const procedureType = procedureTypes.find(
       (pt) => pt.name === procedureTypeName
     );
-    
-    if (procedureType?.color) {
-      const color = procedureType.color.trim();
-      
-      // If it's already a full class string with border and text, use it directly
-      if (color.includes("border-") && color.includes("text-")) {
-        return color;
-      }
-      
-      // If it's just a background color, map it to a complete color set
-      // Map common Tailwind background colors to full class sets
-      const colorMap: Record<string, string> = {
-        "bg-red-100": "bg-red-100 border-red-400 text-red-900",
-        "bg-blue-100": "bg-blue-100 border-blue-400 text-blue-900",
-        "bg-green-100": "bg-green-100 border-green-400 text-green-900",
-        "bg-yellow-100": "bg-yellow-100 border-yellow-400 text-yellow-900",
-        "bg-purple-100": "bg-purple-100 border-purple-400 text-purple-900",
-        "bg-pink-100": "bg-pink-100 border-pink-400 text-pink-900",
-        "bg-indigo-100": "bg-indigo-100 border-indigo-400 text-indigo-900",
-        "bg-cyan-100": "bg-cyan-100 border-cyan-400 text-cyan-900",
-        "bg-teal-100": "bg-teal-100 border-teal-400 text-teal-900",
-        "bg-orange-100": "bg-orange-100 border-orange-400 text-orange-900",
-        "bg-emerald-100": "bg-emerald-100 border-emerald-400 text-emerald-900",
-        "bg-gray-100": "bg-gray-100 border-gray-400 text-gray-900",
-        "bg-slate-100": "bg-slate-100 border-slate-400 text-slate-900",
-      };
-      
-      // Check if we have a mapping for this color
-      if (colorMap[color]) {
-        return colorMap[color];
-      }
-      
-      // Try to extract color name and create a mapping
-      const bgMatch = color.match(/bg-(\w+)-(\d+)/);
-      if (bgMatch) {
-        const colorName = bgMatch[1];
-        // Return a complete color set using the extracted color name
-        return `bg-${colorName}-100 border-${colorName}-400 text-${colorName}-900`;
-      }
-      
-      // If we can't parse it, use as-is (might be a custom class)
-      return color;
-    }
-    
-    // Default fallback color
-    return "bg-gray-100 border-gray-400 text-gray-900";
-  };
-
-  // Status colors (kept for potential future use, but appointments now use procedure type colors)
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      Scheduled: "bg-blue-100 border-blue-400 text-blue-900",
-      Confirmed: "bg-green-100 border-green-400 text-green-900",
-      Unconfirmed:
-        "bg-yellow-100 border-yellow-400 text-yellow-900",
-      "Left Message":
-        "bg-purple-100 border-purple-400 text-purple-900",
-      "In Reception":
-        "bg-cyan-100 border-cyan-400 text-cyan-900",
-      Available: "bg-gray-100 border-gray-400 text-gray-900",
-      "In Operatory": "bg-red-100 border-red-400 text-red-900",
-      "Checked Out":
-        "bg-emerald-100 border-emerald-400 text-emerald-900",
-      Missed: "bg-orange-100 border-orange-400 text-orange-900",
-      Cancelled: "bg-slate-100 border-slate-400 text-slate-900",
-    };
-    return (
-      colors[status] ||
-      "bg-gray-100 border-gray-400 text-gray-900"
-    );
+    return procedureTypeColorClasses(procedureType?.color);
   };
 
   // Calculate appointment position
   const getAppointmentPosition = (appointment: Appointment) => {
-    const parts = appointment.startTime.split(":").map(Number);
+    const parts = appointment.start_time.split(":").map(Number);
     const hours = parts[0] ?? 0;
     const minutes = parts[1] ?? 0;
     const startMinutes = (hours - 8) * 60 + minutes;
@@ -665,11 +708,21 @@ export default function Scheduler({
     });
   };
 
-  // Navigate to previous/next day
-  const changeDate = (days: number) => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + days);
-    setSelectedDate(newDate);
+  // Step the selected date by one unit of the current view (day/week/month).
+  const stepDate = (dir: number) => {
+    const d = new Date(selectedDate);
+    if (viewMode === "weekly") d.setDate(d.getDate() + dir * 7);
+    else if (viewMode === "monthly") d.setMonth(d.getMonth() + dir);
+    else d.setDate(d.getDate() + dir);
+    setSelectedDate(d);
+  };
+
+  const goToToday = () => setSelectedDate(new Date());
+
+  // From week/month views: open the day view for the clicked date.
+  const handleSelectDay = (date: Date) => {
+    setSelectedDate(date);
+    setViewMode("daily");
   };
 
   // STEP 4: Extract handler for CalendarPicker (single source of truth)
@@ -701,8 +754,8 @@ export default function Scheduler({
   const handleEditAppointment = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setSelectedSlot({
-      time: appointment.startTime,
-      operatory: appointment.operatory,
+      time: appointment.start_time,
+      operatory: appointment.operatory_id ?? "",
     });
     setShowNewAppointment(true);
     setContextMenu({
@@ -722,10 +775,14 @@ export default function Scheduler({
     // so we just need to refresh the appointments list
     if (appointmentData._alreadySaved) {
       console.log("✅ Appointment already saved by AddEditAppointmentForm, refreshing appointments list...");
-      // Just refresh the appointments list
+      // Just refresh the appointments list for the current view range/filters
       try {
-        const currentDateStr = formatDateYYYYMMDD(selectedDate);
-        const data = await fetchAppointments(currentDateStr, currentDateStr);
+        const { start, end } = getDateRange(selectedDate, viewMode);
+        const data = await fetchAppointments(start, end, currentOffice, {
+          status: filterStatus || undefined,
+          provider_id: filterProvider || undefined,
+          operatory_id: filterOperatory || undefined,
+        });
         setAppointments(data);
         setEditingAppointment(null);
       } catch (err: any) {
@@ -736,23 +793,49 @@ export default function Scheduler({
     }
     
     try {
+      // Both modals now emit a flat, snake_case payload with a numeric
+      // patient_id (they create the patient first when needed). We read
+      // snake_case-first with a camelCase fallback for safety; the service
+      // also coerces patient_id to number | null as a backstop.
+      const a = appointmentData.appointment ?? appointmentData;
+      const patientId: number | null = numericPatientIdOrNull(
+        a.patient_id ?? a.patientId ?? editingAppointment?.patient_id,
+      );
+
       if (editingAppointment) {
         // Update existing appointment
-        // Handle both old format (flat) and new format (nested)
-        const appointment = appointmentData.appointment || appointmentData;
-        
         const updateData: AppointmentUpdateRequest = {
           id: editingAppointment.id,
-          patient_id: appointment.patientId || editingAppointment.patientId || appointment.patient_id,
-          date: appointment.date || editingAppointment.date,
-          start_time: appointment.startTime || appointment.time || editingAppointment.startTime,
-          duration: appointment.duration || editingAppointment.duration,
-          procedure_type: appointment.procedureType || editingAppointment.procedureType || appointment.procedure_type,
-          status: appointment.status || editingAppointment.status,
-          operatory: appointment.operatory || editingAppointment.operatory,
-          provider: appointment.provider || editingAppointment.provider,
-          notes: appointment.notes || "",
+          patient_id: patientId,
+          date: a.date ?? editingAppointment.date,
+          start_time: a.start_time ?? a.startTime ?? a.time ?? editingAppointment.start_time,
+          duration: a.duration ?? editingAppointment.duration,
+          procedure_type: a.procedure_type ?? a.procedureType ?? editingAppointment.procedure_label,
+          status: a.status ?? editingAppointment.status,
+          operatory: a.operatory ?? editingAppointment.operatory_id ?? undefined,
+          provider: a.provider ?? editingAppointment.provider_id ?? undefined,
+          notes: a.notes ?? "",
         };
+
+        // Block double-booking (excluding this appointment itself).
+        if (
+          updateData.operatory &&
+          updateData.date &&
+          updateData.start_time &&
+          updateData.duration &&
+          hasSlotConflict(
+            updateData.operatory,
+            updateData.date,
+            updateData.start_time,
+            calculateEndTime(updateData.start_time, updateData.duration),
+            editingAppointment.id,
+          )
+        ) {
+          alert(
+            "This time slot conflicts with an existing appointment in that operatory. Please choose a different time or operatory.",
+          );
+          return;
+        }
 
         const updatedAppointment = await updateAppointment(updateData);
         setAppointments(
@@ -763,55 +846,17 @@ export default function Scheduler({
         setEditingAppointment(null);
       } else {
         // Create new appointment
-        // Handle both formats:
-        // 1. New format from modal: { patient: {...}, appointment: {...} } or flat { patient_id, ... }
-        // 2. Old format: flat object with camelCase fields
-        
-        let createData: AppointmentCreateRequest;
-        
-        // Check if this is the new API format (has patient object or snake_case fields)
-        if (appointmentData.patient && appointmentData.appointment) {
-          // New patient format: extract appointment data and let backend handle patient creation
-          const appointment = appointmentData.appointment;
-          createData = {
-            patient_id: "NEW", // Backend will create patient and use the generated ID
-            date: appointment.date || appointment.start_date || formatDateYYYYMMDD(selectedDate),
-            start_time: appointment.start_time || appointment.startTime || selectedSlot?.time || "09:00",
-            duration: appointment.duration || 30,
-            procedure_type: appointment.procedure_type || appointment.procedureType,
-            status: appointment.status || "Scheduled",
-            operatory: appointment.operatory || selectedSlot?.operatory || "",
-            provider: appointment.provider || "",
-            notes: appointment.notes || "",
-          };
-          // Note: Backend should handle patient creation from appointmentData.patient
-        } else if (appointmentData.patient_id || appointmentData.patientId) {
-          // Existing patient format (snake_case or camelCase)
-          createData = {
-            patient_id: appointmentData.patient_id || appointmentData.patientId || "NEW",
-            date: appointmentData.date || formatDateYYYYMMDD(selectedDate),
-            start_time: appointmentData.start_time || appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
-            duration: appointmentData.duration || 30,
-            procedure_type: appointmentData.procedure_type || appointmentData.procedureType,
-            status: appointmentData.status || "Scheduled",
-            operatory: appointmentData.operatory || selectedSlot?.operatory || "",
-            provider: appointmentData.provider || "",
-            notes: appointmentData.notes || "",
-          };
-        } else {
-          // Old format fallback (camelCase, flat structure)
-          createData = {
-            patient_id: appointmentData.patientId || "NEW",
-            date: appointmentData.date || formatDateYYYYMMDD(selectedDate),
-            start_time: appointmentData.startTime || appointmentData.time || selectedSlot?.time || "09:00",
-            duration: appointmentData.duration || 30,
-            procedure_type: appointmentData.procedureType || appointmentData.procedure_type,
-            status: appointmentData.status || "Scheduled",
-            operatory: appointmentData.operatory || selectedSlot?.operatory || "",
-            provider: appointmentData.provider || "",
-            notes: appointmentData.notes || "",
-          };
-        }
+        const createData: AppointmentCreateRequest = {
+          patient_id: patientId,
+          date: a.date ?? formatDateYYYYMMDD(selectedDate),
+          start_time: a.start_time ?? a.startTime ?? a.time ?? selectedSlot?.time ?? "09:00",
+          duration: a.duration ?? 30,
+          procedure_type: a.procedure_type ?? a.procedureType,
+          status: a.status ?? "Scheduled",
+          operatory: a.operatory ?? selectedSlot?.operatory ?? "",
+          provider: a.provider ?? "",
+          notes: a.notes ?? "",
+        };
 
         // Validate required fields
         if (!createData.operatory || !createData.provider || !createData.procedure_type) {
@@ -819,11 +864,21 @@ export default function Scheduler({
           return;
         }
 
-        // TODO: For new patient flow, we need to send both patient and appointment data
-        // This requires updating the createAppointment API function to handle the nested format
-        // For now, we'll send the appointment data and let the backend handle patient creation
-        // if appointmentData.patient exists, it should be sent separately or the API should accept it
-        
+        // Block double-booking the operatory.
+        if (
+          hasSlotConflict(
+            createData.operatory,
+            createData.date,
+            createData.start_time,
+            calculateEndTime(createData.start_time, createData.duration),
+          )
+        ) {
+          alert(
+            "This time slot conflicts with an existing appointment in that operatory. Please choose a different time or operatory.",
+          );
+          return;
+        }
+
         const newAppointment = await createAppointment(createData);
         setAppointments([...appointments, newAppointment]);
       }
@@ -848,6 +903,26 @@ export default function Scheduler({
     return `${endHours.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`;
   };
 
+  // Double-booking check: does another (non-cancelled) appointment in the same
+  // operatory on the same date overlap this time range? Matches on operatory_id
+  // (the form and the read-model both carry the raw id).
+  const hasSlotConflict = (
+    operatoryId: string,
+    date: string,
+    startTime: string,
+    endTime: string,
+    excludeId?: string,
+  ): boolean => {
+    return appointments.some(
+      (a) =>
+        a.id !== excludeId &&
+        a.date === date &&
+        !a.cancelled &&
+        a.operatory_id === operatoryId &&
+        timeRangesOverlap(startTime, endTime, a.start_time, a.end_time),
+    );
+  };
+
   // Navigate to patient module
   const handleGoToPatient = async (
     module: string,
@@ -860,52 +935,47 @@ export default function Scheduler({
       type: "empty",
     });
 
-    // Helper to get numeric patient ID
-    // Check if patientId is a chart number (contains non-numeric characters)
-    let numericPatientId = appointment.patientId;
-    
-    // If patientId looks like a chart number (e.g., "CH014", "CH-014"), look up the numeric ID
-    if (appointment.patientId && !/^\d+$/.test(appointment.patientId)) {
-      // It's a chart number - look up the patient to get the numeric ID
-      try {
-        const patient = await getPatientByChartNo(appointment.patientId);
-        numericPatientId = patient.id.toString();
-      } catch (err: any) {
-        // If lookup fails, try to extract numeric part as fallback
-        // (e.g., "CH014" -> "14" - this might work if chart numbers are "CH" + ID)
-        const numericMatch = appointment.patientId.match(/(\d+)$/);
-        if (numericMatch && numericMatch[1]) {
-          numericPatientId = numericMatch[1];
-        } else {
-          // If we can't extract, use the chart number and let PatientShellLayout handle it
-          // The getPatientDetails function should handle chart numbers
-          numericPatientId = appointment.patientId;
-        }
+    // Resolve the real patient via the backend context aggregate
+    // (GET /patients/{id}/context) so we navigate with the numeric id and store
+    // a real, minimal patient context — no fabricated demographics/balances.
+    // The patient pages fetch their own data by id; only id/name are consumed
+    // downstream (GlobalNav, ActivePatient).
+    let numericPatientId =
+      appointment.patient_id != null ? String(appointment.patient_id) : "";
+    let patient: SchedulerPatientRead | null = null;
+    try {
+      if (appointment.patient_id != null) {
+        const ctx = await getPatientContext(appointment.patient_id);
+        patient = ctx.patient;
+        numericPatientId = String(ctx.patient.id);
       }
+    } catch (err: any) {
+      console.error("Failed to resolve patient for navigation:", err);
     }
 
-    // Set patient context in sessionStorage
-    const patientContext = {
-      id: numericPatientId,
-      name: appointment.patientName,
-      age: 34, // Mock data
-      gender: "M",
-      dob: "03/15/1990",
-      responsibleParty: "Self",
-      homeOffice: currentOffice,
-      primaryInsurance: "Delta Dental PPO",
-      secondaryInsurance: "",
-      accountBalance: 1245.0,
-      estInsurance: 850.0,
-      estPatient: 395.0,
-      firstVisit: "01/15/2018",
-      lastVisit: "11/20/2024",
-      nextVisit: "01/15/2025",
-      nextRecall: "05/20/2025",
+    const ageFromDob = (dob?: string | null): number => {
+      if (!dob) return 0;
+      const birth = new Date(dob);
+      if (Number.isNaN(birth.getTime())) return 0;
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+      return age >= 0 ? age : 0;
     };
+
+    const resolvedName = patient
+      ? `${patient.last_name ?? ""}, ${patient.first_name ?? ""}`.replace(/^,\s*|,\s*$/g, "").trim()
+      : "";
     sessionStorage.setItem(
       "activePatient",
-      JSON.stringify(patientContext),
+      JSON.stringify({
+        id: numericPatientId,
+        name: resolvedName || appointment.patient_name,
+        age: ageFromDob(patient?.dob),
+        gender: patient?.gender ?? "",
+        dob: patient?.dob ?? "",
+      }),
     );
 
     switch (module) {
@@ -960,7 +1030,7 @@ export default function Scheduler({
   ) => {
     if (
       window.confirm(
-        `Delete appointment for ${appointment.patientName}?`,
+        `Delete appointment for ${appointment.patient_name}?`,
       )
     ) {
       try {
@@ -1032,54 +1102,48 @@ export default function Scheduler({
                 })}
               </button>
 
-              {/* Day Navigation */}
+              {/* View-aware navigation (steps by day / week / month) */}
               <button
-                onClick={() => changeDate(-1)}
+                onClick={() => stepDate(-1)}
                 className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
-                aria-label="Previous day"
+                aria-label="Previous"
               >
-                <ChevronLeft
-                  className="w-3.5 h-3.5"
-                  strokeWidth={2}
-                />
-                Prev Day
+                <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
+                Prev
               </button>
               <button
-                onClick={() => changeDate(1)}
-                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
-                aria-label="Next day"
+                onClick={goToToday}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex-shrink-0"
+                aria-label="Go to today"
               >
-                Next Day
-                <ChevronRight
-                  className="w-3.5 h-3.5"
-                  strokeWidth={2}
-                />
+                Today
+              </button>
+              <button
+                onClick={() => stepDate(1)}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                aria-label="Next"
+              >
+                Next
+                <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
               </button>
 
-
-              {/* Month Navigation */}
-              <button
-                onClick={() => changeDate(-30)}
-                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
-                aria-label="Previous month"
-              >
-                <ChevronLeft
-                  className="w-3.5 h-3.5"
-                  strokeWidth={2}
-                />
-                Prev Month
-              </button>
-              <button
-                onClick={() => changeDate(30)}
-                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
-                aria-label="Next month"
-              >
-                Next Month
-                <ChevronRight
-                  className="w-3.5 h-3.5"
-                  strokeWidth={2}
-                />
-              </button>
+              {/* View toggle: Day / Week / Month */}
+              <div className="flex items-center bg-white/10 border border-white/30 rounded-md overflow-hidden flex-shrink-0 ml-1">
+                {(["daily", "weekly", "monthly"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      viewMode === mode
+                        ? "bg-white text-[#1F3A5F]"
+                        : "text-white hover:bg-white/20"
+                    }`}
+                    aria-pressed={viewMode === mode}
+                  >
+                    {mode === "daily" ? "Day" : mode === "weekly" ? "Week" : "Month"}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* ✅ FIX: Right Action Buttons with overflow control */}
@@ -1092,27 +1156,68 @@ export default function Scheduler({
                 <Plus className="w-4 h-4" strokeWidth={2.5} />
                 NEW APPOINTMENT
               </button>
-              <button
-                className="px-3 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
-                aria-label="Quick fill appointments"
-              >
-                <Search className="w-4 h-4" strokeWidth={2.5} />
-                QUICK FILL
-              </button>
-              <button
-                className="px-3 py-1.5 bg-[#64748B] hover:bg-[#475569] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
-                aria-label="Print schedule"
-              >
-                <Printer
-                  className="w-4 h-4"
-                  strokeWidth={2.5}
-                />
-                PRINT
-              </button>
             </div>
           </div>
+
+          {/* Filter bar — backend-driven status/provider/operatory filters */}
+          <div className="bg-white border-t border-[#E2E8F0] px-6 py-2 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+              Filters:
+            </span>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-2 py-1 border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:outline-none focus:border-[#3A6EA5]"
+              aria-label="Filter by status"
+            >
+              <option value="">All statuses</option>
+              {statusMenuItems.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterProvider}
+              onChange={(e) => setFilterProvider(e.target.value)}
+              className="px-2 py-1 border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:outline-none focus:border-[#3A6EA5]"
+              aria-label="Filter by provider"
+            >
+              <option value="">All providers</option>
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterOperatory}
+              onChange={(e) => setFilterOperatory(e.target.value)}
+              className="px-2 py-1 border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:outline-none focus:border-[#3A6EA5]"
+              aria-label="Filter by operatory"
+            >
+              <option value="">All operatories</option>
+              {operatories.map((op) => (
+                <option key={op.id} value={op.id}>
+                  {op.name}
+                </option>
+              ))}
+            </select>
+            {(filterStatus || filterProvider || filterOperatory) && (
+              <button
+                onClick={() => {
+                  setFilterStatus("");
+                  setFilterProvider("");
+                  setFilterOperatory("");
+                }}
+                className="text-xs font-semibold text-[#3A6EA5] hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
-        
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mt-4">
@@ -1155,7 +1260,8 @@ export default function Scheduler({
           aria-rowcount={timeSlots.length + 1}
           aria-colcount={operatories.length + 1}
         >
-          {/* Time + Operatory Columns */}
+          {/* Daily view — operatory columns × time slots */}
+          {viewMode === "daily" && (
           <div className="flex min-w-full">
             {/* Time Column */}
             <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md flex-shrink-0 w-20">
@@ -1185,9 +1291,11 @@ export default function Scheduler({
                   <div className="text-sm font-bold">
                     {operatory.name}
                   </div>
-                  <div className="text-xs opacity-90">
-                    {operatory.provider}
-                  </div>
+                  {operatory.provider_id && (
+                    <div className="text-xs opacity-90 truncate">
+                      {providerNameById.get(operatory.provider_id) ?? ""}
+                    </div>
+                  )}
                 </div>
 
                 {/* Time Slots */}
@@ -1224,7 +1332,7 @@ export default function Scheduler({
                         }}
                         title={
                           slotBlocked && occupyingAppt
-                            ? `Time unavailable - occupied by ${occupyingAppt.patientName} (${occupyingAppt.startTime}-${occupyingAppt.endTime})`
+                            ? `Time unavailable - occupied by ${occupyingAppt.patient_name} (${occupyingAppt.start_time}-${occupyingAppt.end_time})`
                             : ""
                         }
                         role="gridcell"
@@ -1244,7 +1352,7 @@ export default function Scheduler({
                     return (
                       <div
                         key={appointment.id}
-                        className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getProcedureTypeColor(appointment.procedureType)}`}
+                        className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getProcedureTypeColor(appointment.procedure_label)}`}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -1256,17 +1364,17 @@ export default function Scheduler({
                           )
                         }
                         role="button"
-                        aria-label={`${appointment.patientName} - ${appointment.procedureType} at ${appointment.startTime}`}
+                        aria-label={`${appointment.patient_name} - ${appointment.procedure_label} at ${appointment.start_time}`}
                         tabIndex={0}
                       >
                         <div className="text-xs truncate">
                           <strong>
-                            {appointment.startTime}
+                            {appointment.start_time}
                           </strong>{" "}
-                          {appointment.patientName}
+                          {appointment.patient_name}
                         </div>
                         <div className="text-xs truncate">
-                          {appointment.procedureType}
+                          {appointment.procedure_label}
                         </div>
                         {appointment.duration >= 30 && (
                           <div className="text-xs opacity-75">
@@ -1280,6 +1388,26 @@ export default function Scheduler({
               </div>
             ))}
           </div>
+          )}
+
+          {viewMode === "weekly" && (
+            <WeekView
+              selectedDate={selectedDate}
+              appointments={validAppointments}
+              onSelectDay={handleSelectDay}
+              onEditAppointment={handleEditAppointment}
+              getColor={getProcedureTypeColor}
+            />
+          )}
+
+          {viewMode === "monthly" && (
+            <MonthView
+              selectedDate={selectedDate}
+              appointments={validAppointments}
+              onSelectDay={handleSelectDay}
+              getColor={getProcedureTypeColor}
+            />
+          )}
         </div>
 
         {/* Context Menu */}
@@ -1308,18 +1436,6 @@ export default function Scheduler({
                 >
                   Add New Appointment
                 </button>
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
-                  role="menuitem"
-                >
-                  Search Quick-Fill
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-left hover:bg-[#F7F9FC] text-[#1E293B] font-medium text-sm"
-                  role="menuitem"
-                >
-                  Paste
-                </button>
               </>
             ) : contextMenu.appointment ? (
               <>
@@ -1335,20 +1451,12 @@ export default function Scheduler({
                   Edit
                 </button>
                 <button
+                  onClick={() =>
+                    handleEditAppointment(contextMenu.appointment!)
+                  }
                   className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
                   role="menuitem"
-                >
-                  Cut
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
-                  role="menuitem"
-                >
-                  Copy
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-left text-sm leading-tight text-[#1E293B] hover:bg-[#F7F9FC]"
-                  role="menuitem"
+                  title="Open the appointment to change its date/time"
                 >
                   Reschedule
                 </button>
@@ -1394,22 +1502,6 @@ export default function Scheduler({
                   aria-haspopup="true"
                 >
                   Set Status
-                  <span>›</span>
-                </button>
-
-                {/* ✅ STEP 4: Print - Click-based trigger */}
-                <button
-                  onClick={(e) =>
-                    openSubmenu("print", e.currentTarget)
-                  }
-                  className="w-full px-3 py-1.5 text-left
-             hover:bg-[#F7F9FC]
-             text-[#1E293B] font-medium text-sm
-             flex items-center justify-between"
-                  role="menuitem"
-                  aria-haspopup="true"
-                >
-                  Print
                   <span>›</span>
                 </button>
               </>
@@ -1584,47 +1676,24 @@ export default function Scheduler({
                     </>
                   )}
 
-                  {/* ✅ STEP 6: Set Status Submenu */}
+                  {/* ✅ STEP 6: Set Status Submenu (backend-driven via definitions) */}
                   {activeSubmenu.type === "status" && (
                     <>
-                      {[
-                        "Scheduled",
-                        "Confirmed",
-                        "Unconfirmed",
-                        "Left Message",
-                        "In Reception",
-                        "Available",
-                        "In Operatory",
-                        "Checked Out",
-                        "Missed",
-                        "Cancelled",
-                      ].map((status) => (
+                      {statusMenuItems.map((status) => (
                         <button
-                          key={status}
+                          key={status.value}
                           onClick={() => {
                             handleSetStatus(
                               submenuAppointment!,
-                              status as Appointment["status"],
+                              status.value as Appointment["status"],
                             );
                             closeSubmenu();
                           }}
                           className={menuItemClass}
                         >
-                          {status}
+                          {status.label}
                         </button>
                       ))}
-                    </>
-                  )}
-
-                  {/* ✅ STEP 6: Print Submenu */}
-                  {activeSubmenu.type === "print" && (
-                    <>
-                      <button className={menuItemClass}>
-                        Routing Slip
-                      </button>
-                      <button className={menuItemClass}>
-                        Walkout Report
-                      </button>
                     </>
                   )}
                 </div>

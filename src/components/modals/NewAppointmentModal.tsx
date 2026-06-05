@@ -28,6 +28,7 @@ import {
   createPatient,
   type PatientCreateRequest,
 } from "../../services/patientApi";
+import { procedureTypeColorClasses } from "../../utils/procedureTypeColor";
 import { listPatients } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead, ListPatientsParams } from "@/api/generated/model";
 
@@ -43,6 +44,10 @@ interface NewAppointmentModalProps {
 
 interface PatientSearchResult {
   patientId: string;
+  /** Numeric backend patient id (PatientRead.id) — used as the appointment
+   *  patient_id, which the backend contract requires as number | null.
+   *  patientId above is the human chart_no used only for display. */
+  numericId?: number;
   name: string;
   gender: string;
   ssn: string;
@@ -78,13 +83,16 @@ export default function NewAppointmentModal({
     useState(false);
   const [selectedPatient, setSelectedPatient] =
     useState<PatientSearchResult | null>(() => {
-      // If editing, convert appointment to patient format
+      // If editing, seed the patient shell from the appointment's snake_case
+      // read-model fields (real demographics load in the edit form).
       if (editingAppointment) {
-        const [lastName, firstName] =
-          editingAppointment.patientName.split(", ");
         return {
-          patientId: editingAppointment.patientId,
-          name: editingAppointment.patientName,
+          patientId:
+            editingAppointment.patient_id != null
+              ? String(editingAppointment.patient_id)
+              : "",
+          numericId: editingAppointment.patient_id ?? undefined,
+          name: editingAppointment.patient_name ?? "",
           gender: "U",
           ssn: "***-**-****",
           phone: "(555) 000-0000",
@@ -193,12 +201,13 @@ export default function NewAppointmentModal({
       setIsLoadingMetadata(true);
       setMetadataError(null);
       try {
-        // Fetch all metadata in parallel
+        // Fetch all metadata in parallel, scoped to the current office.
+        // The service helpers extract the numeric office_id from "OFF-1".
         const [providersData, operatoriesData, procedureTypesData, configData] = await Promise.all([
-          fetchProviders(),
-          fetchOperatories(),
+          fetchProviders(currentOffice),
+          fetchOperatories(currentOffice),
           fetchProcedureTypes(),
-          fetchSchedulerConfig(),
+          fetchSchedulerConfig(currentOffice),
         ]);
 
         setProviders(providersData);
@@ -252,26 +261,23 @@ export default function NewAppointmentModal({
     };
 
     loadMetadata();
-  }, [isOpen, selectedSlot]);
+  }, [isOpen, selectedSlot, currentOffice]);
 
   // Update form defaults when selectedSlot or selectedDate changes
   useEffect(() => {
     if (selectedSlot) {
       // When slot is selected, update time and operatory (view-only mode)
+      // Auto-fill the provider from the operatory's provider_id (backend Gap 1).
+      const op = operatories.find((o) => o.id === selectedSlot.operatory);
+      const providerName = op?.provider_id
+        ? providers.find((p) => p.id === op.provider_id)?.name
+        : undefined;
       setFormData((prev) => ({
         ...prev,
         time: selectedSlot.time,
         operatory: selectedSlot.operatory,
+        ...(providerName ? { provider: providerName } : {}),
       }));
-
-      // Auto-select provider based on operatory
-      const operatory = operatories.find((op) => op.id === selectedSlot.operatory);
-      if (operatory && operatory.provider) {
-        setFormData((prev) => ({
-          ...prev,
-          provider: operatory.provider,
-        }));
-      }
     } else if (selectedDate) {
       // When no slot selected but date is provided, update date (editable mode)
       setFormData((prev) => ({
@@ -279,14 +285,14 @@ export default function NewAppointmentModal({
         date: formatDateYYYYMMDD(selectedDate),
       }));
     }
-  }, [selectedSlot, selectedDate, operatories]);
+  }, [selectedSlot, selectedDate, operatories, providers]);
 
   // Note: Patient search now uses the Patients API via handlePatientSearch
 
-  // Helper to get procedure type color (fallback if not provided by API)
+  // Helper to get procedure type color (centralized in utils/procedureTypeColor)
   const getProcedureTypeColor = (procedureName: string): string => {
     const procedure = procedureTypes.find((pt) => pt.name === procedureName);
-    return procedure?.color || "bg-gray-100";
+    return procedureTypeColorClasses(procedure?.color);
   };
 
   const handleTypeSelection = (
@@ -329,16 +335,18 @@ export default function NewAppointmentModal({
     }
 
     return {
-      patientId: p.chart_no || p.id.toString(), // chart no as primary id, fallback to id
+      patientId: p.chart_no || p.id.toString(), // chart no for display
+      numericId: p.id, // numeric backend id for the appointment patient_id
       name,
       gender: p.gender || "U",
-      ssn: p.ssn || "***-**-****",
+      ssn: p.ssn || "", // blank when the backend has no SSN — never a fake mask
       phone: p.cell_phone || p.phone || "",
       birthdate: birthdateFormatted,
       age,
-      respId: "R-001", // responsible party not on PatientRead — placeholder
-      chartNumber: p.chart_no || `CH-${p.id}`,
-      patientType: "General", // not on PatientRead — default
+      // Real backend fields (PatientRead.responsible_party_id / patient_type).
+      respId: p.responsible_party_id ?? "",
+      chartNumber: p.chart_no || "",
+      patientType: p.patient_type ?? "",
       office: currentOffice,
       ...(p.email && { email: p.email }),
     };
@@ -507,7 +515,9 @@ export default function NewAppointmentModal({
     setIsSaving(true);
 
     try {
-      let patientId: string;
+      // Numeric backend patient id — the appointment patient_id contract is
+      // number | null, so we never forward a chart_no string here.
+      let patientIdNum: number | null;
 
       // Step 1: Create patient first (if new patient)
       // Determine if we need to create a new patient
@@ -578,15 +588,24 @@ export default function NewAppointmentModal({
         console.log("Patient data to create:", patientData);
         const newPatient = await createPatient(patientData);
         console.log("Patient created successfully:", newPatient);
-        
-        // Use chartNo as patientId (or use id if chartNo is preferred)
-        // The appointment API expects patientId as string, so we'll use chartNo
-        patientId = newPatient.chartNo || newPatient.id.toString();
-        console.log("Using patientId:", patientId);
+
+        // The appointment API requires a numeric patient_id.
+        patientIdNum = newPatient.id;
+        console.log("Using numeric patientId:", patientIdNum);
       } else {
         console.log("Using existing patient:", selectedPatient?.patientId);
-        // Existing patient: use their patient ID
-        patientId = selectedPatient.patientId;
+        // Existing patient: use their numeric backend id (fallback to a numeric
+        // chart id only if it parses) — never forward a chart_no string.
+        patientIdNum =
+          selectedPatient.numericId ??
+          (Number.isFinite(Number(selectedPatient.patientId))
+            ? Number(selectedPatient.patientId)
+            : null);
+        if (patientIdNum == null) {
+          throw new Error(
+            "Selected patient has no numeric id; cannot create appointment.",
+          );
+        }
       }
 
       // Step 2: Create appointment with the patient ID
@@ -599,7 +618,7 @@ export default function NewAppointmentModal({
       }
 
       const appointmentPayload = {
-        patient_id: patientId,
+        patient_id: patientIdNum,
         date: formData.date,
         start_time: appointmentTime,
         duration: formData.duration,
@@ -1571,14 +1590,15 @@ export default function NewAppointmentModal({
                     <select
                       value={formData.operatory}
                       onChange={(e) => {
-                        const selectedOperatory = operatories.find(
-                          (op) => op.id === e.target.value
-                        );
+                        const op = operatories.find((o) => o.id === e.target.value);
+                        const providerName = op?.provider_id
+                          ? providers.find((p) => p.id === op.provider_id)?.name
+                          : undefined;
                         setFormData({
                           ...formData,
                           operatory: e.target.value,
-                          // Auto-update provider based on operatory
-                          provider: selectedOperatory?.provider || formData.provider,
+                          // Auto-fill provider from operatory.provider_id (Gap 1).
+                          ...(providerName ? { provider: providerName } : {}),
                         });
                       }}
                       disabled={isLoadingMetadata || operatories.length === 0}

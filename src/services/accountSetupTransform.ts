@@ -1,5 +1,15 @@
 /**
- * Maps API (snake_case, ACCOUNT_SETUP_DATA_DEFINITION.md) ↔ UI form (camelCase).
+ * Maps the real backend models (snake_case — `TenantRead` + `AccountSettingsRead`,
+ * `account-info` tag) ↔ the Account Setup UI form (camelCase).
+ *
+ * The screen merges `fetchAccount` (tenant) + `fetchAdvancedSettings`
+ * (account-settings) into one row before calling `mapAccountApiToForm`.
+ *
+ * A few current UI fields don't line up 1:1 with the new backend shape; these are
+ * mapped best-effort and documented in ACCOUNT_INFO_BACKEND_MAPPING_v2.md:
+ *   - Required-field toggles (bool) ↔ *_required_mode (enum) — derived.
+ *   - xvwebEnabled / cloud9Enabled (bool) ↔ xvweb_url / cloud9_url (string) — read-only derive; not written.
+ *   - patientAddressRequired / responsiblePartyRequired — no backend column (not persisted).
  */
 
 export type LookupOption = { value: string; label: string; hex?: string; description?: string };
@@ -21,20 +31,27 @@ export function parseLookupOptions(payload: unknown): LookupOption[] {
     });
 }
 
-/** GET /api/accounts/:id — merged basic + optional advanced fields */
+const modeToBool = (v: unknown) => {
+  const s = String(v ?? "").toLowerCase();
+  return s === "required" || s === "true" || s === "yes";
+};
+const boolToMode = (b: unknown) => (b ? "Required" : "Not Required");
+
+/** Merged TenantRead + AccountSettingsRead → UI form (camelCase). */
 export function mapAccountApiToForm(row: Record<string, unknown>) {
   return {
     id: String(row.id ?? ""),
-    accountNumber: String(row.account_number ?? ""),
-    accountName: String(row.account_name ?? ""),
-    accountShortId: String(row.account_short_id ?? ""),
+    // "Denticon Account #" — the external/legacy account code (read-only).
+    accountNumber: String(row.legacy_id ?? row.code ?? ""),
+    accountName: String(row.name ?? ""),
+    accountShortId: String(row.code ?? ""),
     contactFirstName: String(row.contact_first_name ?? ""),
     contactLastName: String(row.contact_last_name ?? ""),
-    corporateAddress: String(row.corporate_address ?? ""),
+    corporateAddress: String(row.corporate_address_1 ?? ""),
     corporateCity: String(row.corporate_city ?? ""),
     corporateState: String(row.corporate_state ?? ""),
     corporateZip: String(row.corporate_zip ?? ""),
-    statementAddress: String(row.statement_address ?? ""),
+    statementAddress: String(row.statement_address_1 ?? ""),
     statementCity: String(row.statement_city ?? ""),
     statementState: String(row.statement_state ?? ""),
     statementZip: String(row.statement_zip ?? ""),
@@ -47,23 +64,28 @@ export function mapAccountApiToForm(row: Record<string, unknown>) {
     custom2: String(row.custom_2 ?? ""),
     pgid: String(row.pgid ?? ""),
     oid: String(row.oid ?? ""),
+    createdAt: formatDisplayTimestamp(row.created_at),
+    createdBy: row.created_by != null ? String(row.created_by) : "",
     updatedAt: formatDisplayTimestamp(row.updated_at),
-    updatedBy: String(row.updated_by ?? ""),
+    updatedBy: row.updated_by != null ? String(row.updated_by) : "",
     ...mapAdvancedSnakeToCamel(row),
   };
 }
 
+/** Basic-tab payload → tenant identity (name/code) + account-settings basic fields. */
 export function mapBasicFormToPutPayload(form: Record<string, unknown>) {
-  const out: Record<string, unknown> = {
-    account_name: form.accountName,
-    account_short_id: form.accountShortId,
+  return {
+    // tenant identity (routed to PATCH /tenants/{id} by the service)
+    name: form.accountName,
+    code: form.accountShortId,
+    // account-settings (routed to PATCH …/account-settings by the service)
     contact_first_name: form.contactFirstName,
     contact_last_name: form.contactLastName,
-    corporate_address: form.corporateAddress,
+    corporate_address_1: form.corporateAddress,
     corporate_city: form.corporateCity,
     corporate_state: form.corporateState || null,
     corporate_zip: form.corporateZip,
-    statement_address: form.statementAddress,
+    statement_address_1: form.statementAddress,
     statement_city: form.statementCity,
     statement_state: form.statementState || null,
     statement_zip: form.statementZip,
@@ -75,7 +97,6 @@ export function mapBasicFormToPutPayload(form: Record<string, unknown>) {
     custom_1: form.custom1 || null,
     custom_2: form.custom2 || null,
   };
-  return out;
 }
 
 function mapAdvancedSnakeToCamel(row: Record<string, unknown>) {
@@ -93,28 +114,33 @@ function mapAdvancedSnakeToCamel(row: Record<string, unknown>) {
     statementCloseOutIndividual: Boolean(row.statement_close_out_individual),
     autoPostPeriodicCharges: Boolean(row.auto_post_periodic_charges),
     showFlashAlertsInsurance: Boolean(row.show_flash_alerts_insurance),
-    pronounFieldVisible: Boolean(row.pronoun_field_visible),
+    // Backend stores a string ("YES"/"NO"); the UI control is a boolean toggle.
+    pronounFieldVisible: String(row.pronoun_field_visible ?? "").toUpperCase() === "YES",
     chartingOption: String(row.charting_option ?? "modal"),
     defaultChartingTab: String(row.default_charting_tab ?? "treatment"),
     passwordExpirationDays: Number(row.password_expiration_days ?? 90),
     schedulerShowNonWorkingDays: Boolean(row.scheduler_show_non_working_days),
     defaultFeeIncreaseCode: row.default_fee_increase_code != null ? String(row.default_fee_increase_code) : "",
     defaultWriteOffCode: row.default_write_off_code != null ? String(row.default_write_off_code) : "",
-    patientDobRequired: Boolean(row.patient_dob_required),
-    patientSsnRequired: Boolean(row.patient_ssn_required),
-    patientEmailRequired: Boolean(row.patient_email_required),
-    patientPhoneRequired: Boolean(row.patient_phone_required),
-    patientAddressRequired: Boolean(row.patient_address_required),
-    responsiblePartyRequired: Boolean(row.responsible_party_required),
+    // Required-field toggles: backend uses enum modes (+ email_required bool).
+    patientDobRequired: modeToBool(row.dob_required_mode),
+    patientSsnRequired: modeToBool(row.ssn_required_mode),
+    patientEmailRequired: Boolean(row.email_required),
+    patientPhoneRequired: modeToBool(row.phone_required_mode),
+    // No backend column — display only (not persisted).
+    patientAddressRequired: false,
+    responsiblePartyRequired: false,
     ediVendor: row.edi_vendor != null ? String(row.edi_vendor) : "",
-    transworldEnabled: Boolean(row.transworld_enabled),
-    xvwebEnabled: Boolean(row.xvweb_enabled),
-    cloud9Enabled: Boolean(row.cloud9_enabled),
-    paymentPortalPostingOffice: row.payment_portal_posting_office != null ? String(row.payment_portal_posting_office) : "",
-    postPaymentToResponsibleParty: Boolean(row.post_payment_to_responsible_party),
+    // bool ↔ url shape mismatch — derive presence for display (not written back).
+    transworldEnabled: Boolean(row.transworld_all_offices),
+    xvwebEnabled: Boolean(row.xvweb_url),
+    cloud9Enabled: Boolean(row.cloud9_url),
+    paymentPortalPostingOffice:
+      row.payment_portal_posting_office != null ? String(row.payment_portal_posting_office) : "",
+    postPaymentToResponsibleParty: Boolean(row.payment_portal_post_to_rp),
     aiAssistOrgId: row.ai_assist_org_id != null ? String(row.ai_assist_org_id) : "",
     aiAssistClientId: row.ai_assist_client_id != null ? String(row.ai_assist_client_id) : "",
-    aiAssistClientSecret: "",
+    aiAssistClientSecret: "", // never returned; write-only
   };
 }
 
@@ -129,33 +155,36 @@ export function mapAdvancedFormToPutPayload(form: Record<string, unknown>) {
     statement_lines_color: form.statementLinesColor,
     notes_lines_color: form.notesLinesColor,
     enable_full_screen: form.enableFullScreen,
-    max_treatment_plan_discount: form.maxTreatmentPlanDiscount,
+    // Backend types this as a string (decimal serialized) — send as string, not number.
+    max_treatment_plan_discount:
+      form.maxTreatmentPlanDiscount != null ? String(form.maxTreatmentPlanDiscount) : null,
     only_show_office_items: form.onlyShowOfficeItems,
     statement_close_out_individual: form.statementCloseOutIndividual,
     auto_post_periodic_charges: form.autoPostPeriodicCharges,
     show_flash_alerts_insurance: form.showFlashAlertsInsurance,
-    pronoun_field_visible: form.pronounFieldVisible,
+    // Backend expects a string, not a boolean.
+    pronoun_field_visible: form.pronounFieldVisible ? "YES" : "NO",
     charting_option: form.chartingOption,
     default_charting_tab: form.defaultChartingTab,
     password_expiration_days: form.passwordExpirationDays,
     scheduler_show_non_working_days: form.schedulerShowNonWorkingDays,
     default_fee_increase_code: form.defaultFeeIncreaseCode || null,
     default_write_off_code: form.defaultWriteOffCode || null,
-    patient_dob_required: form.patientDobRequired,
-    patient_ssn_required: form.patientSsnRequired,
-    patient_email_required: form.patientEmailRequired,
-    patient_phone_required: form.patientPhoneRequired,
-    patient_address_required: form.patientAddressRequired,
-    responsible_party_required: form.responsiblePartyRequired,
+    // Required-field toggles → enum modes (loses the "Any" option — see v2).
+    dob_required_mode: boolToMode(form.patientDobRequired),
+    ssn_required_mode: boolToMode(form.patientSsnRequired),
+    phone_required_mode: boolToMode(form.patientPhoneRequired),
+    email_required: form.patientEmailRequired,
     edi_vendor: form.ediVendor || null,
-    transworld_enabled: form.transworldEnabled,
-    xvweb_enabled: form.xvwebEnabled,
-    cloud9_enabled: form.cloud9Enabled,
+    transworld_all_offices: form.transworldEnabled,
     payment_portal_posting_office: form.paymentPortalPostingOffice || null,
-    post_payment_to_responsible_party: form.postPaymentToResponsibleParty,
+    payment_portal_post_to_rp: form.postPaymentToResponsibleParty,
     ai_assist_org_id: form.aiAssistOrgId || null,
     ai_assist_client_id: form.aiAssistClientId || null,
   };
+  // xvweb_url / cloud9_url intentionally NOT written from boolean toggles (shape
+  // mismatch — see v2); patientAddressRequired / responsiblePartyRequired have no
+  // backend column.
   if (typeof secret === "string" && secret.trim().length > 0) {
     base.ai_assist_client_secret = secret;
   }
@@ -176,15 +205,4 @@ function formatDisplayTimestamp(v: unknown): string {
     }
   }
   return s;
-}
-
-export function extractResponseData<T>(res: unknown): T {
-  if (res && typeof res === "object" && "data" in (res as object)) {
-    const d = (res as { data: unknown }).data;
-    if (d && typeof d === "object" && "data" in (d as object)) {
-      return (d as { data: T }).data;
-    }
-    return d as T;
-  }
-  return res as T;
 }

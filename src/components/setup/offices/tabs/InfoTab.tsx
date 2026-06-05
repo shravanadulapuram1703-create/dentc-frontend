@@ -1,34 +1,73 @@
 import { useEffect, useState } from "react";
 import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X, Info } from "lucide-react";
-import api from "../../../../services/api";
-import { type Office } from "../../../../data/officeData";
+import {
+  listProviders,
+  listOfficeGroups,
+} from "@/api/generated/endpoints/organization/organization";
+import {
+  listFeeSchedules,
+  createFeeSchedule,
+} from "@/api/generated/endpoints/procedures/procedures";
+import { type OfficeForm } from "../../../../data/officeData";
+
+/** Static IANA time zones — `getOfficeMetadata` also returns time_zones; this is a stable fallback. */
+const TIME_ZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Phoenix",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+];
 
 interface InfoTabProps {
-  formData: Partial<Office>;
-  updateFormData: (updates: Partial<Office>) => void;
+  formData: Partial<OfficeForm>;
+  updateFormData: (updates: Partial<OfficeForm>) => void;
   mode?: "view" | "add" | "edit";
 }
 
 interface Provider {
   id: string;
   name: string;
-  npi?: string;
-  license?: string;
 }
 
-interface FeeSchedule {
-  id: string;
+interface FeeScheduleOption {
+  id: number;
   name: string;
-  type: "STANDARD" | "UCR";
 }
 
+interface OfficeGroupOption {
+  id: number;
+  name: string;
+}
 
+const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+];
 
+function fmtDateTime(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
 export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps) {
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [feeSchedules, setFeeSchedules] = useState<FeeSchedule[]>([]);
   const [timeZones, setTimeZones] = useState<string[]>([]);
+  const [officeGroups, setOfficeGroups] = useState<OfficeGroupOption[]>([]);
 
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [showAddFeeSchedule, setShowAddFeeSchedule] = useState(false);
@@ -38,259 +77,76 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
   const [newFeeSchedule, setNewFeeSchedule] = useState("");
   const [newUCRFeeSchedule, setNewUCRFeeSchedule] = useState("");
 
-  const [standardFeeSchedules, setStandardFeeSchedules] = useState<any[]>([]);
-  const [ucrFeeSchedules, setUcrFeeSchedules] = useState<any[]>([]);
+  const [standardFeeSchedules, setStandardFeeSchedules] = useState<FeeScheduleOption[]>([]);
+  const [ucrFeeSchedules, setUcrFeeSchedules] = useState<FeeScheduleOption[]>([]);
 
-
-  const defaultFeeScheduleName = formData.defaultFeeSchedule;
-
-  const defaultUCRFeeScheduleName = formData.defaultUCRFeeSchedule;
-
-  console.log("defaultFeeScheduleId",defaultFeeScheduleName)
-
-  console.log("defaultUCRFeeScheduleId",defaultUCRFeeScheduleName)
-
-  /* -------------------- LOAD METADATA -------------------- */
+  /* -------------------- LOAD METADATA (real generated endpoints) -------------------- */
   useEffect(() => {
-    api.get("/api/v1/offices/metadata").then((res) => {
-      setProviders(res.data.billing_providers);
-      // setFeeSchedules(res.data.fee_schedules);
-      setTimeZones(res.data.time_zones);
+    listFeeSchedules({ size: 200 })
+      .then((res) => {
+        const all = res.items ?? [];
+        const isUcr = (fs: { fee_type?: string | null }) => (fs.fee_type ?? "").toUpperCase() === "UCR";
+        const toOpt = (fs: { id: number; name: string }): FeeScheduleOption => ({ id: fs.id, name: fs.name });
+        setStandardFeeSchedules(all.filter((fs) => !isUcr(fs)).map(toOpt));
+        setUcrFeeSchedules(all.filter(isUcr).map(toOpt));
+      })
+      .catch(() => {
+        setStandardFeeSchedules([]);
+        setUcrFeeSchedules([]);
+      });
 
-      const allFeeSchedules = res.data.fee_schedules || [];
+    listProviders({ size: 200 })
+      .then((res) => setProviders((res.items ?? []).map((p) => ({ id: String(p.id), name: p.name }))))
+      .catch(() => setProviders([]));
 
-      setStandardFeeSchedules(
-        allFeeSchedules.filter((fs: any) => fs.type === "STANDARD")
-      );
+    listOfficeGroups({ size: 200 })
+      .then((res) => setOfficeGroups((res.items ?? []).map((g) => ({ id: g.id, name: g.name }))))
+      .catch(() => setOfficeGroups([]));
 
-      setUcrFeeSchedules(
-        allFeeSchedules.filter((fs: any) => fs.type === "UCR")
-      );
-
-
-
-    });
+    setTimeZones(TIME_ZONES);
   }, []);
 
-  useEffect(() => {
-    if (!feeSchedules.length) return;
-
-    // Map DEFAULT Fee Schedule
-    if (formData.defaultFeeSchedule) {
-      const standard = feeSchedules.find(
-        (fs) => fs.name === formData.defaultFeeSchedule
-      );
-
-      if (standard && standard.id !== formData.defaultFeeSchedule) {
-        updateFormData({ defaultFeeSchedule: standard.id });
-      }
-    }
-
-    // Map UCR Fee Schedule
-    if (formData.defaultUCRFeeSchedule) {
-      const ucr = feeSchedules.find(
-        (fs) => fs.name === formData.defaultUCRFeeSchedule
-      );
-
-      if (ucr && ucr.id !== formData.defaultUCRFeeSchedule) {
-        updateFormData({ defaultUCRFeeSchedule: ucr.id });
-      }
-    }
-  }, [feeSchedules]);
-
-  console.log("SELECT VALUE", formData.defaultFeeSchedule);
-  console.log("OPTION IDS", feeSchedules.map(f => f.id));
-
   /* -------------------- ADD PROVIDER -------------------- */
-  const handleAddProvider = async () => {
-    if (!newProvider.name.trim()) {
-      alert("Provider name is required");
-      return;
-    }
-
-    const res = await api.post("/api/v1/offices/billing-providers", newProvider);
-    setProviders((p) => [...p, res.data]);
-    
-
-    updateFormData({
-      billingProviderId: res.data.id,
-      billingProviderName: res.data.name,
-    });
-
+  const handleAddProvider = () => {
+    alert("Add new providers in Setup → Providers, then select them here.");
     setShowAddProvider(false);
     setNewProvider({ name: "", npi: "", license: "" });
   };
 
-  /* -------------------- ADD FEE SCHEDULE -------------------- */
-  // const createFeeSchedule = async (name: string, type: "STANDARD" | "UCR") => {
-  //   const res = await api.post("/api/v1/fee-schedules", { name, type });
-  //   setFeeSchedules((f) => [...f, res.data]);
-  //   setStandardFeeSchedules((prev) => [...prev, res.data]);
-
-
-  //   if (type === "UCR") {
-  //     updateFormData({ defaultUCRFeeSchedule: res.data.name });
-  //     setUcrFeeSchedules((prev) => [...prev, res.data]);
-
-
-  //   } else {
-  //     updateFormData({ defaultFeeSchedule: res.data.name });
-  //     setStandardFeeSchedules((prev) => [...prev, res.data]);
-
-  //   }
-  // };
-
-
-
-  const createFeeSchedule = async (
-    name: string,
-    type: "STANDARD" | "UCR"
-  ) => {
-    const res = await api.post("/api/v1/fee-schedules", { name, type });
-    const newSchedule = res.data;
-
-    if (type === "UCR") {
-      setUcrFeeSchedules((prev) =>
-        prev.some((fs) => fs.id === newSchedule.id)
-          ? prev
-          : [...prev, newSchedule]
-      );
-
-      updateFormData({
-        defaultUCRFeeSchedule: newSchedule.id,
-      });
-    } else {
-      setStandardFeeSchedules((prev) =>
-        prev.some((fs) => fs.id === newSchedule.id)
-          ? prev
-          : [...prev, newSchedule]
-      );
-
-      updateFormData({
-        defaultFeeSchedule: newSchedule.id,
-      });
-    }
-  };
-
-  const US_STATES = [
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
-  ];
-
-  // const TIME_ZONES = [
-  //   "America/New_York",
-  //   "America/Chicago",
-  //   "America/Denver",
-  //   "America/Phoenix",
-  //   "America/Los_Angeles",
-  //   "America/Anchorage",
-  //   "Pacific/Honolulu",
-  // ];
-
-  /* -------------------- JSX BELOW (UNCHANGED UI) -------------------- */
-
-  // ⬇️ All JSX from your original component remains the same
-  // Only replace:
-  // - mockProviders → providers
-  // - mockFeeSchedules → feeSchedules
-  // - TIME_ZONES → timeZones
-
-  // const mockFeeSchedules = [
-  //   "Standard Fee Schedule",
-  //   "UCR California 2024",
-  //   "PPO Network A",
-  //   "Medicaid Schedule",
-  //   "Pediatric Fee Schedule",
-  // ];
-  
-
-
-  console.log("feeSchedules item:", feeSchedules);
-  
-  // const handleAddFeeSchedule = () => {
-  //   if (!newFeeSchedule.trim()) {
-  //     alert("Fee Schedule name is required");
-  //     return;
-  //   }
-    
-  //   updateFormData({ defaultFeeSchedule: newFeeSchedule });
-  //   alert(`Fee Schedule "${newFeeSchedule}" added successfully!`);
-  //   setShowAddFeeSchedule(false);
-  //   setNewFeeSchedule("");
-  // };
-
-
-
+  /* -------------------- ADD FEE SCHEDULES (real /api/v1/fee-schedules) -------------------- */
   const handleAddFeeSchedule = async () => {
     if (!newFeeSchedule.trim()) {
       alert("Fee Schedule name is required");
       return;
     }
-
     try {
-      const res = await api.post("/api/v1/offices/fee-schedules", {
-        name: newFeeSchedule,
-        type: "STANDARD"
-      });
-
-      setStandardFeeSchedules((prev) => [...prev, res.data]);
-
-      updateFormData({
-        defaultFeeSchedule: res.data.id
-      });
-
-      alert(`Fee Schedule "${res.data.name}" added successfully`);
+      const created = await createFeeSchedule({ name: newFeeSchedule, fee_type: "STANDARD" });
+      setStandardFeeSchedules((prev) => [...prev, { id: created.id, name: created.name }]);
+      updateFormData({ default_fee_schedule_id: created.id });
+      alert(`Fee Schedule "${created.name}" added successfully`);
       setShowAddFeeSchedule(false);
       setNewFeeSchedule("");
-    } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to add fee schedule");
+    } catch (err: unknown) {
+      alert(extractError(err) || "Failed to add fee schedule");
     }
   };
-
-  // const handleAddUCRFeeSchedule = () => {
-  //   if (!newUCRFeeSchedule.trim()) {
-  //     alert("UCR Fee Schedule name is required");
-  //     return;
-  //   }
-    
-  //   updateFormData({ defaultUCRFeeSchedule: newUCRFeeSchedule });
-  //   alert(`UCR Fee Schedule "${newUCRFeeSchedule}" added successfully!`);
-  //   setShowAddUCRFeeSchedule(false);
-  //   setNewUCRFeeSchedule("");
-  // };
 
   const handleAddUCRFeeSchedule = async () => {
     if (!newUCRFeeSchedule.trim()) {
       alert("UCR Fee Schedule name is required");
       return;
     }
-
     try {
-      const res = await api.post("/api/v1/offices/fee-schedules", {
-        name: newUCRFeeSchedule,
-        type: "UCR"
-      });
-
-      setUcrFeeSchedules((prev) => [...prev, res.data]);
-
-      updateFormData({
-        defaultUCRFeeSchedule: res.data.id
-      });
-
-      alert(`UCR Fee Schedule "${res.data.name}" added successfully`);
+      const created = await createFeeSchedule({ name: newUCRFeeSchedule, fee_type: "UCR" });
+      setUcrFeeSchedules((prev) => [...prev, { id: created.id, name: created.name }]);
+      updateFormData({ default_ucr_fee_schedule_id: created.id });
+      alert(`UCR Fee Schedule "${created.name}" added successfully`);
       setShowAddUCRFeeSchedule(false);
       setNewUCRFeeSchedule("");
-    } catch (err: any) {
-      alert(err.response?.data?.detail || "Failed to add UCR fee schedule");
+    } catch (err: unknown) {
+      alert(extractError(err) || "Failed to add UCR fee schedule");
     }
   };
-
-  console.log("Mode item:", mode);
-  console.log("Form Data item:", formData);
-
 
   return (
     <div className="space-y-6">
@@ -309,13 +165,11 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             </label>
             <input
               type="text"
-              value={formData.officeId || ""}
+              value={formData.id ?? ""}
               disabled
               className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg bg-[#F7F9FC] text-[#64748B] cursor-not-allowed text-sm"
             />
-            <p className="text-xs text-[#64748B] mt-1">
-              Auto-generated, read-only
-            </p>
+            <p className="text-xs text-[#64748B] mt-1">Auto-generated, read-only</p>
           </div>
 
           {/* Office Name */}
@@ -325,8 +179,8 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             </label>
             <input
               type="text"
-              value={formData.officeName || ""}
-              onChange={(e) => updateFormData({ officeName: e.target.value })}
+              value={formData.name ?? ""}
+              onChange={(e) => updateFormData({ name: e.target.value })}
               placeholder="e.g., Main Street Dental"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
@@ -339,28 +193,22 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             </label>
             <input
               type="text"
-              value={formData.shortId || ""}
-              onChange={(e) =>
-                updateFormData({ shortId: e.target.value.toUpperCase() })
-              }
+              value={formData.short_id ?? ""}
+              onChange={(e) => updateFormData({ short_id: e.target.value.toUpperCase() })}
               placeholder="e.g., MSD"
               maxLength={6}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 uppercase text-sm"
             />
-            <p className="text-xs text-[#64748B] mt-1">
-              Used in UI, scheduler, reports (max 6 chars)
-            </p>
+            <p className="text-xs text-[#64748B] mt-1">Used in UI, scheduler, reports (max 6 chars)</p>
           </div>
 
           {/* Opening Date */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Opening Date
-            </label>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Opening Date</label>
             <input
               type="date"
-              value={formData.openingDate || ""}
-              onChange={(e) => updateFormData({ openingDate: e.target.value })}
+              value={formData.opening_date ?? ""}
+              onChange={(e) => updateFormData({ opening_date: e.target.value })}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
@@ -375,75 +223,66 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
         </h3>
 
         <div className="grid grid-cols-2 gap-4">
-          {/* Address Line 1 */}
           <div className="col-span-2">
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Address Line 1 <span className="text-[#DC2626]">*</span>
             </label>
             <input
               type="text"
-              value={formData.address1 || ""}
-              onChange={(e) => updateFormData({ address1: e.target.value })}
+              value={formData.address_line1 ?? ""}
+              onChange={(e) => updateFormData({ address_line1: e.target.value })}
               placeholder="Street address"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
 
-          {/* Address Line 2 */}
           <div className="col-span-2">
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Address Line 2
-            </label>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Address Line 2</label>
             <input
               type="text"
-              value={formData.address2 || ""}
-              onChange={(e) => updateFormData({ address2: e.target.value })}
+              value={formData.address_line2 ?? ""}
+              onChange={(e) => updateFormData({ address_line2: e.target.value })}
               placeholder="Suite, Unit, Building, etc."
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
 
-          {/* City */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               City <span className="text-[#DC2626]">*</span>
             </label>
             <input
               type="text"
-              value={formData.city || ""}
+              value={formData.city ?? ""}
               onChange={(e) => updateFormData({ city: e.target.value })}
               placeholder="City"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
 
-          {/* State */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               State <span className="text-[#DC2626]">*</span>
             </label>
             <select
-              value={formData.state || ""}
+              value={formData.state ?? ""}
               onChange={(e) => updateFormData({ state: e.target.value })}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             >
               <option value="">Select State</option>
               {US_STATES.map((state) => (
-                <option key={state} value={state}>
-                  {state}
-                </option>
+                <option key={state} value={state}>{state}</option>
               ))}
             </select>
           </div>
 
-          {/* ZIP Code */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               ZIP Code <span className="text-[#DC2626]">*</span>
             </label>
             <input
               type="text"
-              value={formData.zip || ""}
+              value={formData.zip ?? ""}
               onChange={(e) => updateFormData({ zip: e.target.value })}
               placeholder="12345"
               maxLength={10}
@@ -451,25 +290,21 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             />
           </div>
 
-          {/* Time Zone */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Time Zone <span className="text-[#DC2626]">*</span>
             </label>
             <select
-              value={formData.timeZone || ""}
-              onChange={(e) => updateFormData({ timeZone: e.target.value })}
+              value={formData.timezone ?? ""}
+              onChange={(e) => updateFormData({ timezone: e.target.value })}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             >
+              <option value="">Select Time Zone</option>
               {timeZones.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
+                <option key={tz} value={tz}>{tz}</option>
               ))}
             </select>
-            <p className="text-xs text-[#64748B] mt-1">
-              Drives scheduling & timestamps
-            </p>
+            <p className="text-xs text-[#64748B] mt-1">Drives scheduling &amp; timestamps</p>
           </div>
         </div>
       </div>
@@ -482,58 +317,61 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
         </h3>
 
         <div className="grid grid-cols-2 gap-4">
-          {/* Phone 1 */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Phone 1 <span className="text-[#DC2626]">*</span>
             </label>
             <input
               type="tel"
-              value={formData.phone1 || ""}
-              onChange={(e) => updateFormData({ phone1: e.target.value })}
+              value={formData.phone ?? ""}
+              onChange={(e) => updateFormData({ phone: e.target.value })}
               placeholder="(555) 123-4567"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
 
-          {/* Phone 1 Extension */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Extension
-            </label>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Extension</label>
             <input
               type="text"
-              value={formData.phone1Ext || ""}
-              onChange={(e) => updateFormData({ phone1Ext: e.target.value })}
+              value={formData.phone_ext ?? ""}
+              onChange={(e) => updateFormData({ phone_ext: e.target.value })}
               placeholder="100"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
 
-          {/* Phone 2 */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Phone 2
-            </label>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Phone 2</label>
             <input
               type="tel"
-              value={formData.phone2 || ""}
-              onChange={(e) => updateFormData({ phone2: e.target.value })}
+              value={formData.phone_2 ?? ""}
+              onChange={(e) => updateFormData({ phone_2: e.target.value })}
               placeholder="(555) 123-4568"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Email <span className="text-[#DC2626]">*</span>
             </label>
             <input
               type="email"
-              value={formData.email || ""}
+              value={formData.email ?? ""}
               onChange={(e) => updateFormData({ email: e.target.value })}
               placeholder="contact@example.com"
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Fax</label>
+            <input
+              type="tel"
+              value={formData.fax ?? ""}
+              onChange={(e) => updateFormData({ fax: e.target.value })}
+              placeholder="(555) 123-4569"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
           </div>
@@ -553,45 +391,30 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Insurance Billing Provider <span className="text-[#DC2626]">*</span>
             </label>
-            
+
             {!showAddProvider ? (
-              <div className="flex gap-2">
-                <select
-                  value={formData.billingProviderId || ""}
-                  onChange={(e) => {
-                    if (e.target.value === "__ADD_NEW__") {
-                      setShowAddProvider(true);
-                    } else {
-                      const selectedProvider = providers.find(
-                        (p) => p.id === e.target.value
-                      );
-                      updateFormData({
-                        billingProviderId: e.target.value,
-                        billingProviderName: selectedProvider?.name || "",
-                      });
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-                >
-                  <option value="">Select Provider</option>
-                  {providers.map((provider) => (
-                    <option key={provider.id} value={provider.id}>
-                      {provider.name}
-                    </option>
-                  ))}
-                  <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
-                    + Add New Provider
-                  </option>
-                </select>
-              </div>
+              <select
+                value={formData.billing_provider_id ?? ""}
+                onChange={(e) => {
+                  if (e.target.value === "__ADD_NEW__") {
+                    setShowAddProvider(true);
+                  } else {
+                    updateFormData({ billing_provider_id: e.target.value || null });
+                  }
+                }}
+                className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              >
+                <option value="">Select Provider</option>
+                {providers.map((provider) => (
+                  <option key={provider.id} value={provider.id}>{provider.name}</option>
+                ))}
+                <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">+ Add New Provider</option>
+              </select>
             ) : (
               <div className="p-4 bg-[#E8F4FD] border-2 border-[#B8D4EA] rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-bold text-[#1F3A5F]">Add New Provider</h4>
-                  <button
-                    onClick={() => setShowAddProvider(false)}
-                    className="p-1 hover:bg-[#D4E3F3] rounded transition-colors"
-                  >
+                  <button onClick={() => setShowAddProvider(false)} className="p-1 hover:bg-[#D4E3F3] rounded transition-colors">
                     <X className="w-4 h-4 text-[#64748B]" />
                   </button>
                 </div>
@@ -609,9 +432,7 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1">
-                      NPI Number
-                    </label>
+                    <label className="block text-xs font-bold text-[#1E293B] mb-1">NPI Number</label>
                     <input
                       type="text"
                       value={newProvider.npi}
@@ -621,9 +442,7 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1">
-                      License Number
-                    </label>
+                    <label className="block text-xs font-bold text-[#1E293B] mb-1">License Number</label>
                     <input
                       type="text"
                       value={newProvider.license}
@@ -634,10 +453,7 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                   </div>
                 </div>
                 <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={handleAddProvider}
-                    className="flex items-center gap-2 px-3 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-sm"
-                  >
+                  <button onClick={handleAddProvider} className="flex items-center gap-2 px-3 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-sm">
                     <Plus className="w-4 h-4" />
                     Add Provider
                   </button>
@@ -653,10 +469,8 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                 </div>
               </div>
             )}
-            
-            <p className="text-xs text-[#64748B] mt-1">
-              Provider used for insurance claims
-            </p>
+
+            <p className="text-xs text-[#64748B] mt-1">Provider used for insurance claims</p>
           </div>
 
           {/* Use Billing License */}
@@ -664,15 +478,11 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={formData.useBillingLicense || false}
-                onChange={(e) =>
-                  updateFormData({ useBillingLicense: e.target.checked })
-                }
+                checked={formData.use_billing_license ?? false}
+                onChange={(e) => updateFormData({ use_billing_license: e.target.checked })}
                 className="w-4 h-4 text-[#3A6EA5] border-2 border-[#CBD5E1] rounded focus:ring-2 focus:ring-[#3A6EA5]/20"
               />
-              <span className="text-sm font-bold text-[#1E293B]">
-                Use provider license in claims
-              </span>
+              <span className="text-sm font-bold text-[#1E293B]">Use provider license in claims</span>
             </label>
           </div>
 
@@ -683,8 +493,8 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             </label>
             <input
               type="text"
-              value={formData.taxId || ""}
-              onChange={(e) => updateFormData({ taxId: e.target.value })}
+              value={formData.tax_id ?? ""}
+              onChange={(e) => updateFormData({ tax_id: e.target.value })}
               placeholder="12-3456789"
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             />
@@ -692,19 +502,18 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
 
           {/* Office Group */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Office Group
-            </label>
-            <input
-              type="text"
-              value={formData.officeGroup || ""}
-              onChange={(e) => updateFormData({ officeGroup: e.target.value })}
-              placeholder="e.g., Bay Area Group"
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Office Group</label>
+            <select
+              value={formData.office_group_id != null ? String(formData.office_group_id) : ""}
+              onChange={(e) => updateFormData({ office_group_id: e.target.value ? Number(e.target.value) : null })}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-            />
-            <p className="text-xs text-[#64748B] mt-1">
-              Optional grouping for enterprise reporting
-            </p>
+            >
+              <option value="">None</option>
+              {officeGroups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-[#64748B] mt-1">Optional grouping for enterprise reporting</p>
           </div>
         </div>
       </div>
@@ -719,67 +528,31 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
         <div className="grid grid-cols-2 gap-4">
           {/* Default UCR Fee Schedule */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Default UCR Fee Schedule
-            </label>
-            
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Default UCR Fee Schedule</label>
+
             {!showAddUCRFeeSchedule ? (
-              // <select
-              //   value={formData.defaultUCRFeeSchedule || ""}
-              //   onChange={(e) => {
-              //     if (e.target.value === "__ADD_NEW__") {
-              //       setShowAddUCRFeeSchedule(true);
-              //     } else {
-              //       updateFormData({ defaultUCRFeeSchedule: e.target.value });
-              //     }
-              //   }}
-              //   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-              // >
-              //   <option value="">Select UCR Fee Schedule</option>
-                
-              //   {feeSchedules.map((schedule) => (
-                  
-              //     <option key={schedule.id} value={schedule.id}>
-              //       {schedule.name}
-              //       {/* {defaultFeeScheduleName} */}
-                    
-              //     </option>
-              //   ))}
-              //   <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
-              //     + Add New Fee Schedule
-              //   </option>
-              // </select>
               <select
-                value={formData.defaultUCRFeeSchedule || ""}
-                onChange={(e) =>{
+                value={formData.default_ucr_fee_schedule_id != null ? String(formData.default_ucr_fee_schedule_id) : ""}
+                onChange={(e) => {
                   if (e.target.value === "__ADD_NEW__") {
                     setShowAddUCRFeeSchedule(true);
                   } else {
-                  updateFormData({ defaultUCRFeeSchedule: e.target.value })
+                    updateFormData({ default_ucr_fee_schedule_id: e.target.value ? Number(e.target.value) : null });
                   }
                 }}
                 className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
               >
                 <option value="">Select UCR Fee Schedule</option>
-
                 {ucrFeeSchedules.map((fs) => (
-                  <option key={fs.id} value={fs.id}>
-                    {fs.name}
-                  </option>
+                  <option key={fs.id} value={fs.id}>{fs.name}</option>
                 ))}
-
-                <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
-                  + Add New UCR Fee Schedule
-                </option>
+                <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">+ Add New UCR Fee Schedule</option>
               </select>
             ) : (
               <div className="p-3 bg-[#E8F4FD] border-2 border-[#B8D4EA] rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-bold text-[#1F3A5F]">Add UCR Fee Schedule</h4>
-                  <button
-                    onClick={() => setShowAddUCRFeeSchedule(false)}
-                    className="p-1 hover:bg-[#D4E3F3] rounded transition-colors"
-                  >
+                  <button onClick={() => setShowAddUCRFeeSchedule(false)} className="p-1 hover:bg-[#D4E3F3] rounded transition-colors">
                     <X className="w-3 h-3 text-[#64748B]" />
                   </button>
                 </div>
@@ -791,10 +564,7 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white mb-2"
                 />
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleAddUCRFeeSchedule}
-                    className="flex items-center gap-1 px-2 py-1.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-xs"
-                  >
+                  <button onClick={handleAddUCRFeeSchedule} className="flex items-center gap-1 px-2 py-1.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-xs">
                     <Plus className="w-3 h-3" />
                     Add
                   </button>
@@ -817,62 +587,30 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
               Default Fee Schedule <span className="text-[#DC2626]">*</span>
             </label>
-            
+
             {!showAddFeeSchedule ? (
-              // <select
-              //   value={formData.defaultFeeSchedule || ""}
-              //   onChange={(e) => {
-              //     if (e.target.value === "__ADD_NEW__") {
-              //       setShowAddFeeSchedule(true);
-              //     } else {
-              //       updateFormData({ defaultFeeSchedule: e.target.value });
-              //     }
-              //   }}
-              //   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-              // >
-              //   <option value="">Select Fee Schedule</option>
-              //   {feeSchedules.map((schedule) => (
-              //     <option key={schedule.id} value={schedule.id}>
-              //       {schedule.name}
-              //       {/* {defaultUCRFeeScheduleName} */}
-              //     </option>
-              //   ))}
-              //   <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
-              //     + Add New Fee Schedule
-              //   </option>
-              // </select>
               <select
-                value={formData.defaultFeeSchedule || ""}
-                onChange={(e) =>{
+                value={formData.default_fee_schedule_id != null ? String(formData.default_fee_schedule_id) : ""}
+                onChange={(e) => {
                   if (e.target.value === "__ADD_NEW__") {
                     setShowAddFeeSchedule(true);
-                    
                   } else {
-                  updateFormData({ defaultFeeSchedule: e.target.value })
-                }
-              }}
+                    updateFormData({ default_fee_schedule_id: e.target.value ? Number(e.target.value) : null });
+                  }
+                }}
                 className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
               >
                 <option value="">Select Standard Fee Schedule</option>
-
                 {standardFeeSchedules.map((fs) => (
-                  <option key={fs.id} value={fs.id}>
-                    {fs.name}
-                  </option>
+                  <option key={fs.id} value={fs.id}>{fs.name}</option>
                 ))}
-
-                <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">
-                  + Add New Fee Schedule
-                </option>
+                <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">+ Add New Fee Schedule</option>
               </select>
             ) : (
               <div className="p-3 bg-[#E8F4FD] border-2 border-[#B8D4EA] rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-bold text-[#1F3A5F]">Add Fee Schedule</h4>
-                  <button
-                    onClick={() => setShowAddFeeSchedule(false)}
-                    className="p-1 hover:bg-[#D4E3F3] rounded transition-colors"
-                  >
+                  <button onClick={() => setShowAddFeeSchedule(false)} className="p-1 hover:bg-[#D4E3F3] rounded transition-colors">
                     <X className="w-3 h-3 text-[#64748B]" />
                   </button>
                 </div>
@@ -884,10 +622,7 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                   className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white mb-2"
                 />
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleAddFeeSchedule}
-                    className="flex items-center gap-1 px-2 py-1.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-xs"
-                  >
+                  <button onClick={handleAddFeeSchedule} className="flex items-center gap-1 px-2 py-1.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-xs">
                     <Plus className="w-3 h-3" />
                     Add
                   </button>
@@ -903,10 +638,8 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
                 </div>
               </div>
             )}
-            
-            <p className="text-xs text-[#64748B] mt-1">
-              Used for new patients, ledger posting, clinical estimates
-            </p>
+
+            <p className="text-xs text-[#64748B] mt-1">Used for new patients, ledger posting, clinical estimates</p>
           </div>
         </div>
       </div>
@@ -919,19 +652,13 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
         </h3>
 
         <div className="grid grid-cols-2 gap-4">
-          {/* Scheduler Time Interval */}
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Scheduler Time Interval (minutes){" "}
-              <span className="text-[#DC2626]">*</span>
+              Scheduler Time Interval (minutes) <span className="text-[#DC2626]">*</span>
             </label>
             <select
-              value={formData.schedulerTimeInterval || 10}
-              onChange={(e) =>
-                updateFormData({
-                  schedulerTimeInterval: parseInt(e.target.value),
-                })
-              }
+              value={formData.slot_interval_minutes ?? 10}
+              onChange={(e) => updateFormData({ slot_interval_minutes: parseInt(e.target.value, 10) })}
               className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
             >
               <option value={5}>5 minutes</option>
@@ -940,15 +667,45 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
               <option value={20}>20 minutes</option>
               <option value={30}>30 minutes</option>
             </select>
-            <p className="text-xs text-[#64748B] mt-1">
-              Defines appointment grid resolution
-            </p>
+            <p className="text-xs text-[#64748B] mt-1">Defines appointment grid resolution</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Schedule Start Hour</label>
+            <input
+              type="number"
+              min={0}
+              max={23}
+              value={formData.schedule_start_hour ?? ""}
+              onChange={(e) =>
+                updateFormData({ schedule_start_hour: e.target.value === "" ? null : parseInt(e.target.value, 10) })
+              }
+              placeholder="8"
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            />
+            <p className="text-xs text-[#64748B] mt-1">First bookable hour (0–23)</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Schedule End Hour</label>
+            <input
+              type="number"
+              min={0}
+              max={23}
+              value={formData.schedule_end_hour ?? ""}
+              onChange={(e) =>
+                updateFormData({ schedule_end_hour: e.target.value === "" ? null : parseInt(e.target.value, 10) })
+              }
+              placeholder="18"
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            />
+            <p className="text-xs text-[#64748B] mt-1">Last bookable hour (0–23)</p>
           </div>
         </div>
       </div>
 
-      {/* 🔐 Audit Information Section */}
-      {mode === "view" && (formData.createdBy || formData.createdDate || formData.modifiedBy || formData.modifiedDate) && (
+      {/* Audit Information Section */}
+      {mode === "view" && (formData.created_by != null || formData.created_at || formData.updated_at) && (
         <div className="bg-[#F8FAFC] border-2 border-[#E2E8F0] rounded-lg p-4">
           <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-3 pb-2 border-b-2 border-[#E2E8F0]">
             <Info className="w-4 h-4 text-[#3A6EA5]" />
@@ -956,84 +713,44 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
           </h3>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Created By */}
             <div>
-              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
-                CREATED BY
-              </label>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">CREATED BY</label>
               <p className="text-sm text-[#1E293B] font-medium">
-                {formData.createdBy || "System"}
+                {formData.created_by != null ? String(formData.created_by) : "System"}
               </p>
             </div>
 
-            {/* Created Date */}
             <div>
-              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
-                CREATED ON
-              </label>
-              <p className="text-sm text-[#1E293B] font-medium">
-                {formData.createdDate
-                  ? new Date(formData.createdDate).toLocaleString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })
-                  : "—"}
-              </p>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">CREATED ON</label>
+              <p className="text-sm text-[#1E293B] font-medium">{fmtDateTime(formData.created_at)}</p>
             </div>
 
-            {/* Last Modified By */}
             <div>
-              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
-                LAST UPDATED BY
-              </label>
-              <p className="text-sm text-[#1E293B] font-medium">
-                {formData.modifiedBy || "—"}
-              </p>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">LAST UPDATED BY</label>
+              {/* OfficeRead has no `updated_by` (backend gap #22) */}
+              <p className="text-sm text-[#1E293B] font-medium">—</p>
             </div>
 
-            {/* Last Modified Date */}
             <div>
-              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">
-                LAST UPDATED ON
-              </label>
-              <p className="text-sm text-[#1E293B] font-medium">
-                {formData.modifiedDate
-                  ? new Date(formData.modifiedDate).toLocaleString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })
-                  : "—"}
-              </p>
+              <label className="block text-xs font-bold text-[#64748B] mb-1 uppercase tracking-wide">LAST UPDATED ON</label>
+              <p className="text-sm text-[#1E293B] font-medium">{fmtDateTime(formData.updated_at)}</p>
             </div>
           </div>
 
-          {/* Additional Info */}
           <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#64748B] uppercase">
-                  OFFICE STATUS:
-                </span>
+                <span className="text-xs font-bold text-[#64748B] uppercase">OFFICE STATUS:</span>
                 <span
                   className={`px-2 py-0.5 text-xs font-bold rounded ${
-                    formData.isActive
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                    formData.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {formData.isActive ? "ACTIVE" : "INACTIVE"}
+                  {formData.is_active ? "ACTIVE" : "INACTIVE"}
                 </span>
               </div>
               <div className="text-xs text-[#64748B]">
-                Office ID: <span className="font-bold text-[#1E293B]">{formData.officeId}</span>
+                Office ID: <span className="font-bold text-[#1E293B]">{formData.id}</span>
               </div>
             </div>
           </div>
@@ -1041,4 +758,12 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
       )}
     </div>
   );
+}
+
+function extractError(err: unknown): string | undefined {
+  if (err && typeof err === "object") {
+    const e = err as { response?: { data?: { detail?: string } }; message?: string };
+    return e.response?.data?.detail || e.message;
+  }
+  return undefined;
 }

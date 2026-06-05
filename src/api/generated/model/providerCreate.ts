@@ -19,4 +19,6 @@ export interface ProviderCreate {
   dea_id?: string | null;
   specialty?: string | null;
   is_active?: boolean | null;
+  first_name?: string | null;
+  last_name?: string | null;
 }

@@ -1,4 +1,6 @@
 // src/types/backendUser.ts
+import type { LoginRestrictions } from "../api/generated/model/loginRestrictions";
+
 export interface BackendUser {
   user_id: number;
   username: string;
@@ -9,20 +11,24 @@ export interface BackendUser {
 
   is_active: boolean;
 
+  patient_access_level?: string | null;
+
   home_office_id: number | null;
   assigned_offices: number[];
 
   roles: string[];
-  security_groups: string[];
   group_memberships?: string[];
 
   permitted_ips: string[];
 
+  login_restrictions?: LoginRestrictions | null;
+
   time_clock?: {
-    pay_rate?: number | null;
+    pay_rate?: number | string | null;
     overtime_method?: string | null;
-    overtime_rate?: number | null;
+    overtime_rate?: number | string | null;
+    clock_in_required?: boolean;
   };
 
-  preferences?: Record<string, any>;
+  preferences?: Record<string, string | null>;
 }

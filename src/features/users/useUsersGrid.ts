@@ -11,6 +11,13 @@ import { mapUsersGrid, type UserGridRow } from "./mapUsersGrid";
 // handling is a follow-up; size 200 covers current data comfortably.
 const LIST_PARAMS = { size: 200 } as const;
 
+export interface UsersGridFilters {
+  /** Server-side filter: only users assigned to this office. */
+  office_id?: number;
+  /** Server-side filter: only users with this role. */
+  role?: string;
+}
+
 export interface UseUsersGridResult {
   users: UserGridRow[];
   isLoading: boolean;
@@ -20,12 +27,19 @@ export interface UseUsersGridResult {
 
 /**
  * Server state for the UserSetup grid, composed from the canonical backend
- * resources via the generated React Query hooks. Replaces the legacy
- * imperative fetch of `/users/list-with-home-office` (which this backend does
- * not implement) with a client-side join — no backend change required.
+ * resources via the generated React Query hooks. The user list is filtered
+ * server-side by `office_id`/`role` (GET /users supports both); the office /
+ * tenant / user-office resources are fetched in full to resolve the
+ * home-office, assigned-office and PGID columns client-side.
  */
-export function useUsersGrid(): UseUsersGridResult {
-  const usersQ = useListUsers(LIST_PARAMS);
+export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult {
+  const usersParams = {
+    ...LIST_PARAMS,
+    ...(filters.office_id != null ? { office_id: filters.office_id } : {}),
+    ...(filters.role ? { role: filters.role } : {}),
+  };
+
+  const usersQ = useListUsers(usersParams);
   const userOfficesQ = useListUserOffices(LIST_PARAMS);
   const officesQ = useListOffices(LIST_PARAMS);
   const tenantsQ = useListTenants(LIST_PARAMS);

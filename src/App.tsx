@@ -29,6 +29,11 @@ import AddEditProgressNote from './components/patient/AddEditProgressNote';
 import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
+import OfficeAssignment from './components/setup/offices/OfficeAssignment';
+import OfficeGroupsSetup from './components/setup/office-groups/OfficeGroupsSetup';
+import MySettings from './components/setup/security/MySettings';
+import ChangeMyPassword from './components/setup/security/ChangeMyPassword';
+import ProviderSetup from './components/setup/providers/ProviderSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
 import { Loader2 } from 'lucide-react';
@@ -287,22 +292,28 @@ function AppRoutes() {
 
       {/* Setup - Offices */}
       <Route path="/setup/offices/office-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><OfficeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/offices/office-assignment" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Office Assignment" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/offices/office-assignment" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><OfficeAssignment /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/offices/vendor-api-settings-legacy" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Vendor API Settings (Legacy)" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/offices/vendor-api-settings-new" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Vendor API Settings (New)" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
+
+      {/* Setup - Office Groups */}
+      <Route path="/setup/office-groups/manage" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><OfficeGroupsSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      {/* Office↔group membership has no backend model yet — see backend_devreport.md #18 */}
+      <Route path="/setup/office-groups/assign" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Assign Offices to Groups" description="Pending backend: no office↔group membership endpoint yet (backend_devreport.md #18)." /></AdminPageWrapper> : <Navigate to="/login" />} />
+
       {/* Setup - Tenant (Super Admin Only) */}
       <Route path="/setup/tenant" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><TenantSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Security */}
       <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><UserSetup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Group Management" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Change My Password" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/security/my-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="My Settings" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ChangeMyPassword /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/security/my-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><MySettings /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Providers */}
-      <Route path="/setup/providers/provider-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider Setup" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/providers/per-office-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider Per Office Settings" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/providers/provider-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ProviderSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      {/* Provider has a single office_id; no per-office settings model — see backend_devreport.md #20 */}
+      <Route path="/setup/providers/per-office-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider Per Office Settings" description="Pending backend: providers have a single office_id; no per-office settings model exists yet (backend_devreport.md #20)." /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Insurance */}
       <Route path="/setup/insurance/insurance-plans" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Insurance Plans" /></AdminPageWrapper> : <Navigate to="/login" />} />

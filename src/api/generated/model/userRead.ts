@@ -15,8 +15,10 @@ export interface UserRead {
   last_name?: string | null;
   phone?: string | null;
   role: string;
+  patient_access_level?: string | null;
   is_active: boolean;
   must_change_password: boolean;
   last_login_at?: string | null;
   created_at: string;
+  created_by?: number | null;
 }

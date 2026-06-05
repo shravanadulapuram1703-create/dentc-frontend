@@ -13,10 +13,11 @@
  * read path enriches them from the providers/operatories/patients lists.
  */
 import {
-  listAppointments,
+  listSchedulerAppointments,
   getAppointment as getAppointmentApi,
   createAppointment as createAppointmentApi,
   updateAppointment as updateAppointmentApi,
+  updateAppointmentStatus as updateAppointmentStatusApi,
   deleteAppointment as deleteAppointmentApi,
 } from "@/api/generated/endpoints/appointments/appointments";
 import {
@@ -27,40 +28,70 @@ import {
 import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
 import { listTreatmentPlans } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
-import type { AppointmentRead } from "@/api/generated/model";
+import { getPatient } from "@/api/generated/endpoints/patients/patients";
+import type { AppointmentRead, AppointmentSchedulerRead } from "@/api/generated/model";
 
-const PAGE = { size: 500 } as const;
+// The backend caps `size` at 200 on every list endpoint (see Orval param models,
+// e.g. ListProvidersParams `@maximum 200`). Sending more — `size: 500` was the
+// cause of intermittent `GET /api/v1/providers -> 422` — fails validation.
+const PAGE = { size: 200 } as const;
 
-/** "OFF-1" | "1" -> 1 (numeric office id the backend filters expect) */
-const officeIdNum = (officeId?: string): number | undefined => {
-  if (!officeId) return undefined;
+/** "OFF-1" | "1" -> 1 (numeric office id the backend filters expect).
+ *  Exported so screens can scope their reference-data fetches to the
+ *  selected office instead of loading every office's data. */
+export const officeIdNum = (officeId?: string | number | null): number | undefined => {
+  if (officeId == null || officeId === "") return undefined;
   const m = String(officeId).match(/(\d+)/);
   return m ? Number(m[1]) : undefined;
 };
 
-// ===== TYPES (unchanged public surface) =====
+/** Coerce any patient identifier the calendar may carry to the numeric
+ *  patient_id the backend contract requires (number | null). Non-numeric
+ *  sentinels like "NEW" or a chart_no ("CH-001") resolve to null rather than
+ *  being forwarded as an invalid string that the API would 422 on — callers
+ *  are responsible for passing the real numeric id (or creating the patient
+ *  first and passing the returned id). */
+const toPatientId = (value: unknown): number | null => {
+  if (value == null || value === "" || value === "NEW") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+// ===== TYPES =====
+export type AppointmentStatusName =
+  | "Scheduled"
+  | "Confirmed"
+  | "Unconfirmed"
+  | "Left Message"
+  | "In Reception"
+  | "Available"
+  | "In Operatory"
+  | "Checked Out"
+  | "Missed"
+  | "Cancelled";
+
+/**
+ * Scheduler read-model. Field names are snake_case to stay identical to the
+ * backend (AppointmentRead), and the raw foreign-key ids are carried directly
+ * (`patient_id`, `operatory_id`, `provider_id`) — binding to the ids, not
+ * resolved names, is what lets the calendar columns/blocks match correctly.
+ * The `*_name` fields are display-only enrichments (AppointmentRead has no
+ * denormalized names) resolved from the providers/operatories/patients lists.
+ */
 export interface Appointment {
   id: string;
-  patientId: string;
-  patientName: string;
+  patient_id: number | null;
+  patient_name: string; // derived display name
   date: string;
-  startTime: string;
-  endTime: string;
+  start_time: string;
+  end_time: string;
   duration: number;
-  procedureType: string;
-  status:
-    | "Scheduled"
-    | "Confirmed"
-    | "Unconfirmed"
-    | "Left Message"
-    | "In Reception"
-    | "Available"
-    | "In Operatory"
-    | "Checked Out"
-    | "Missed"
-    | "Cancelled";
-  operatory: string;
-  provider: string;
+  procedure_label: string; // backend free-text procedure label
+  status: AppointmentStatusName;
+  operatory_id: string | null;
+  operatory_name: string; // derived display name
+  provider_id: string | null;
+  provider_name: string; // derived display name
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
@@ -79,8 +110,10 @@ export interface Appointment {
 export interface Operatory {
   id: string;
   name: string;
-  provider: string;
   office: string;
+  /** FK to providers (backend OperatoryRead.provider_id). Drives the
+   *  operatory→provider auto-fill on the appointment forms. */
+  provider_id: string | null;
 }
 
 export interface Provider {
@@ -117,7 +150,10 @@ export interface AppointmentTreatment {
 }
 
 export interface AppointmentCreateRequest {
-  patient_id: string;
+  /** Numeric patient_id per the backend contract (AppointmentCreate.patient_id
+   *  is number | null). null is only valid for a not-yet-created patient — the
+   *  caller must create the patient first and pass the returned numeric id. */
+  patient_id: number | null;
   date: string;
   start_time: string;
   duration: number;
@@ -142,7 +178,7 @@ export interface AppointmentCreateRequest {
 
 export interface AppointmentUpdateRequest {
   id: string;
-  patient_id?: string;
+  patient_id?: number | null;
   date?: string;
   start_time?: string;
   duration?: number;
@@ -218,22 +254,24 @@ const mapAppointment = (
   },
 ): Appointment => ({
   id: a.id,
-  patientId: a.patient_id != null ? String(a.patient_id) : "",
-  patientName:
+  patient_id: a.patient_id ?? null,
+  patient_name:
     (a.patient_id != null && names?.patients?.get(a.patient_id)) ||
     (a.patient_id != null ? `Patient ${a.patient_id}` : ""),
   date: a.date,
-  startTime: a.start_time,
-  endTime: a.end_time,
+  start_time: a.start_time,
+  end_time: a.end_time,
   duration: a.duration,
-  procedureType: a.procedure_label ?? "",
-  status: (a.status as Appointment["status"]) ?? "Scheduled",
-  operatory:
+  procedure_label: a.procedure_label ?? "",
+  status: (a.status as AppointmentStatusName) ?? "Scheduled",
+  operatory_id: a.operatory_id != null ? String(a.operatory_id) : null,
+  operatory_name:
     (a.operatory_id != null &&
       (names?.operatories?.get(String(a.operatory_id)) ??
         String(a.operatory_id))) ||
     "",
-  provider:
+  provider_id: a.provider_id != null ? String(a.provider_id) : null,
+  provider_name:
     (a.provider_id != null &&
       (names?.providers?.get(String(a.provider_id)) ??
         String(a.provider_id))) ||
@@ -252,47 +290,111 @@ const mapAppointment = (
 
 // ===== APPOINTMENTS =====
 
+/** Resolve display names ("Last, First") for a set of patient ids. The backend
+ *  does not denormalize the patient name onto AppointmentRead and offers no
+ *  batch patient lookup, so this fans out getPatient per distinct id. Tracked
+ *  as a backend gap (denormalized names / batch endpoint) in
+ *  scheduler_backend_devreport.md. Failures degrade to "Patient <id>". */
+const resolvePatientNames = async (
+  ids: Array<number | null | undefined>,
+): Promise<Map<number, string>> => {
+  const unique = [
+    ...new Set(ids.filter((n): n is number => typeof n === "number" && Number.isFinite(n))),
+  ];
+  const entries = await Promise.all(
+    unique.map(async (id): Promise<[number, string]> => {
+      try {
+        const p = await getPatient(id);
+        const name = `${p.last_name ?? ""}, ${p.first_name ?? ""}`
+          .replace(/^,\s*|,\s*$/g, "")
+          .trim();
+        return [id, name || `Patient ${id}`];
+      } catch {
+        return [id, `Patient ${id}`];
+      }
+    }),
+  );
+  return new Map(entries);
+};
+
+/** id -> name map from a list endpoint result. */
+const namesMap = (
+  items: Array<{ id: string | number; name: string }> | null | undefined,
+): Map<string, string> =>
+  new Map((items ?? []).map((i): [string, string] => [String(i.id), i.name]));
+
+export interface AppointmentFilters {
+  status?: string;
+  provider_id?: string;
+  operatory_id?: string;
+}
+
+/** Map the denormalized scheduler feed row (names resolved server-side) to the
+ *  view-model. No client-side name resolution needed → no N+1. */
+const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
+  id: a.id,
+  patient_id: a.patient_id ?? null,
+  patient_name:
+    a.patient_name ?? (a.patient_id != null ? `Patient ${a.patient_id}` : ""),
+  date: a.date,
+  start_time: a.start_time,
+  end_time: a.end_time,
+  duration: a.duration,
+  procedure_label: a.procedure_label ?? "",
+  status: (a.status as AppointmentStatusName) ?? "Scheduled",
+  operatory_id: a.operatory_id != null ? String(a.operatory_id) : null,
+  operatory_name: a.operatory_name ?? "",
+  provider_id: a.provider_id != null ? String(a.provider_id) : null,
+  provider_name: a.provider_name ?? "",
+  missed: a.is_missed ?? undefined,
+  cancelled: a.is_cancelled ?? undefined,
+});
+
 export const fetchAppointments = async (
   startDate: string,
   endDate?: string,
   officeId?: string,
+  filters?: AppointmentFilters,
 ): Promise<Appointment[]> => {
   const oid = officeIdNum(officeId);
-  const [appts, providersRes, operatoriesRes] = await Promise.all([
-    listAppointments({
-      date_from: startDate,
-      date_to: endDate ?? startDate,
-      ...(oid != null ? { office_id: oid } : {}),
-      ...PAGE,
-    }),
+  // Use the denormalized calendar feed: names resolved server-side (no N+1),
+  // uncapped range (works for day/week/month). It only filters by date/office,
+  // so status/provider/operatory filters are applied client-side below.
+  const rows = await listSchedulerAppointments({
+    date_from: startDate,
+    date_to: endDate ?? startDate,
+    ...(oid != null ? { office_id: oid } : {}),
+  });
+
+  let mapped = (rows ?? []).map(mapSchedulerAppointment);
+  if (filters?.status)
+    mapped = mapped.filter((a) => a.status === filters.status);
+  if (filters?.provider_id)
+    mapped = mapped.filter((a) => a.provider_id === filters.provider_id);
+  if (filters?.operatory_id)
+    mapped = mapped.filter((a) => a.operatory_id === filters.operatory_id);
+  return mapped;
+};
+
+/** Map a single AppointmentRead to the view-model with real provider/operatory/
+ *  patient names resolved (AppointmentRead carries only ids). Used by every
+ *  single-appointment return so create/update/status results never leak ids
+ *  or "Patient <id>" into the calendar/edit form. */
+const enrichOne = async (a: AppointmentRead): Promise<Appointment> => {
+  const [providersRes, operatoriesRes, patientNames] = await Promise.all([
     listProviders(PAGE).catch(() => null),
     listOperatories(PAGE).catch(() => null),
+    resolvePatientNames([a.patient_id]),
   ]);
-
-  const providerNames = new Map<string, string>(
-    (providersRes?.items ?? []).map((p): [string, string] => [
-      String(p.id),
-      p.name,
-    ]),
-  );
-  const operatoryNames = new Map<string, string>(
-    (operatoriesRes?.items ?? []).map((o): [string, string] => [
-      String(o.id),
-      o.name,
-    ]),
-  );
-
-  return (appts.items ?? []).map((a) =>
-    mapAppointment(a, {
-      providers: providerNames,
-      operatories: operatoryNames,
-    }),
-  );
+  return mapAppointment(a, {
+    patients: patientNames,
+    providers: namesMap(providersRes?.items),
+    operatories: namesMap(operatoriesRes?.items),
+  });
 };
 
 export const fetchAppointment = async (id: string): Promise<Appointment> => {
-  const a = await getAppointmentApi(id);
-  return mapAppointment(a);
+  return enrichOne(await getAppointmentApi(id));
 };
 
 export const createAppointment = async (
@@ -319,7 +421,7 @@ export const createAppointment = async (
 
   const created = await createAppointmentApi({
     id: data.id ?? newAppointmentId(),
-    patient_id: data.patient_id ?? data.patientId ?? null,
+    patient_id: toPatientId(data.patient_id ?? data.patientId),
     provider_id,
     operatory_id,
     office_id: office_id as number,
@@ -338,7 +440,7 @@ export const createAppointment = async (
     campaign_id: data.campaign_id ?? undefined,
     treatment_plan_id: data.treatment_plan_id ?? undefined,
   } as any);
-  return mapAppointment(created);
+  return enrichOne(created);
 };
 
 export const updateAppointment = async (
@@ -364,8 +466,9 @@ export const updateAppointment = async (
     }
   }
 
+  const rawPatientId = data.patient_id ?? data.patientId;
   const patch: Record<string, unknown> = {
-    patient_id: data.patient_id ?? data.patientId,
+    patient_id: rawPatientId != null ? toPatientId(rawPatientId) : undefined,
     provider_id: providerId,
     operatory_id: operatoryId,
     date: data.date,
@@ -392,7 +495,7 @@ export const updateAppointment = async (
   // Drop undefined keys so PATCH only touches provided fields.
   Object.keys(patch).forEach((k) => patch[k] === undefined && delete patch[k]);
   const updated = await updateAppointmentApi(id, patch as any);
-  return mapAppointment(updated);
+  return enrichOne(updated);
 };
 
 export const deleteAppointment = async (id: string): Promise<void> => {
@@ -403,12 +506,12 @@ export const updateAppointmentStatus = async (
   id: string,
   status: Appointment["status"],
 ): Promise<Appointment> => {
-  const updated = await updateAppointmentApi(id, {
-    status,
-    is_missed: status === "Missed",
-    is_cancelled: status === "Cancelled",
-  } as any);
-  return mapAppointment(updated);
+  // Status transitions are server-owned: PATCH /appointments/{id}/status stamps
+  // confirmed_on/checked_in_on/checked_out_on and sets is_missed/is_cancelled,
+  // and returns the denormalized row (names resolved). The client only sends the
+  // status name (server normalizes it) — never timestamps.
+  const updated = await updateAppointmentStatusApi(id, { status });
+  return mapSchedulerAppointment(updated);
 };
 
 // ===== REFERENCE DATA =====
@@ -424,8 +527,8 @@ export const fetchOperatories = async (
   return (res.items ?? []).map((o) => ({
     id: String(o.id),
     name: o.name,
-    provider: "",
     office: o.office_id != null ? String(o.office_id) : "",
+    provider_id: o.provider_id ?? null,
   }));
 };
 
@@ -464,6 +567,7 @@ export interface AppointmentStatus {
   name: string;
   displayName: string;
   color?: string;
+  sortOrder?: number;
 }
 
 export interface AppointmentType {
@@ -539,11 +643,15 @@ export const fetchAppointmentStatuses = async (): Promise<
   AppointmentStatus[]
 > => {
   const defs = await definitionsAsList("appt_status");
-  return defs.map((d) => ({
-    id: d.key1 ?? String(d.id),
-    name: d.key1 ?? d.description,
-    displayName: d.description,
-  }));
+  return defs
+    .map((d) => ({
+      id: d.key1 ?? String(d.id),
+      name: d.key1 ?? d.description,
+      displayName: d.description,
+      color: d.color ?? undefined,
+      sortOrder: d.sort_order ?? undefined,
+    }))
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 };
 
 export const fetchAppointmentTypes = async (): Promise<AppointmentType[]> => {

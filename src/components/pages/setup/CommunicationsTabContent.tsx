@@ -21,8 +21,8 @@ function mapCommRowToState(row: Record<string, unknown>) {
   return {
     businessName: String(row.business_name ?? ''),
     regionOfOperations: String(row.region_of_operations ?? ''),
-    country: String(row.country ?? ''),
-    addressLine1: String(row.comm_address_line_1 ?? ''),
+    country: String(row.comm_country ?? 'US'),
+    addressLine1: String(row.comm_address_1 ?? ''),
     city: String(row.comm_city ?? ''),
     state: String(row.comm_state ?? ''),
     zip: String(row.comm_zip ?? ''),
@@ -48,8 +48,8 @@ function stateToPutPayload(s: ReturnType<typeof mapCommRowToState>, einDirty: bo
   return {
     business_name: s.businessName,
     region_of_operations: s.regionOfOperations,
-    country: s.country,
-    comm_address_line_1: s.addressLine1,
+    comm_country: s.country,
+    comm_address_1: s.addressLine1,
     comm_city: s.city,
     comm_state: s.state,
     comm_zip: s.zip,
@@ -120,6 +120,10 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
   const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Temporarily hidden blocks (flip to true to restore).
+  const SHOW_PHONE_ASSIGNMENT = false;
+  const SHOW_BUSINESS_TYPE = false;
 
   const [businessName, setBusinessName] = useState('');
   const [regionOfOperations, setRegionOfOperations] = useState('');
@@ -342,19 +346,23 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
     try {
       await updateCommunications(accountId, stateToPutPayload(s, einDirty, ein));
 
-      const assignments = [
-        ...officeSpecific.map((o) => ({
-          office_id: o.id,
-          assignment_type: 'OFFICE_SPECIFIC' as const,
-          is_model_office: o.isModel,
-        })),
-        ...multiOfficeShared.map((o) => ({
-          office_id: o.id,
-          assignment_type: 'MULTI_OFFICE_SHARED' as const,
-          is_model_office: o.isModel,
-        })),
-      ];
-      await updatePhoneAssignments(accountId, { assignments });
+      // Phone Number Assignment block is temporarily hidden — skip persisting it
+      // so an empty/untouched state can't wipe existing assignments.
+      if (SHOW_PHONE_ASSIGNMENT) {
+        const assignments = [
+          ...officeSpecific.map((o) => ({
+            office_id: o.id,
+            assignment_type: 'OFFICE_SPECIFIC' as const,
+            is_model_office: o.isModel,
+          })),
+          ...multiOfficeShared.map((o) => ({
+            office_id: o.id,
+            assignment_type: 'MULTI_OFFICE_SHARED' as const,
+            is_model_office: o.isModel,
+          })),
+        ];
+        await updatePhoneAssignments(accountId, { assignments });
+      }
 
       try {
         await verifyTelecom(accountId);
@@ -760,7 +768,8 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
         </div>
       </div>
 
-      {/* PHONE NUMBER SECTION */}
+      {/* PHONE NUMBER SECTION (temporarily hidden) */}
+      {SHOW_PHONE_ASSIGNMENT && (
       <div>
         <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-4 pb-2 border-b-2 border-[#E2E8F0]">
           <Phone className="w-4 h-4 text-[#3A6EA5]" />
@@ -859,8 +868,10 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
           </div>
         </div>
       </div>
+      )}
 
-      {/* BUSINESS TYPE SECTION */}
+      {/* BUSINESS TYPE SECTION (temporarily hidden) */}
+      {SHOW_BUSINESS_TYPE && (
       <div>
         <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-4 pb-2 border-b-2 border-[#E2E8F0]">
           <Globe className="w-4 h-4 text-[#3A6EA5]" />
@@ -992,6 +1003,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
           </div>
         </div>
       </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 pt-4 border-t-2 border-[#E2E8F0]">

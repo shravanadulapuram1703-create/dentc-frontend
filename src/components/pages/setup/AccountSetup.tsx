@@ -49,6 +49,8 @@ interface AccountData {
   custom2: string;
   pgid: string;
   oid: string;
+  createdAt: string;
+  createdBy: string;
   updatedAt: string;
   updatedBy: string;
 }
@@ -82,6 +84,8 @@ function emptyAccountForm(accountId: string): AccountFormState {
     custom2: '',
     pgid: '',
     oid: '',
+    createdAt: '',
+    createdBy: '',
     updatedAt: '',
     updatedBy: '',
   };
@@ -596,16 +600,14 @@ function AdvancedTab({
   ledgerColorOptions,
   chartingOptionMetas,
   chartingTabMetas,
-  ediVendorOptions,
   postingOfficeOptions,
-}: { 
-  formData: any; 
+}: {
+  formData: any;
   updateFormData: (updates: any) => void;
   isEditMode: boolean;
   ledgerColorOptions: LookupOption[];
   chartingOptionMetas: LookupOption[];
   chartingTabMetas: LookupOption[];
-  ediVendorOptions: LookupOption[];
   postingOfficeOptions: LookupOption[];
 }) {
   const ledgerColors = [
@@ -1049,21 +1051,18 @@ function AdvancedTab({
               <label className="block text-xs font-bold text-[#1E293B] mb-2">
                 EDI Vendor
               </label>
-              <select
+              <input
+                type="text"
                 value={formData.ediVendor || ''}
                 onChange={(e) => updateFormData({ ediVendor: e.target.value })}
                 disabled={!isEditMode}
+                placeholder="e.g., EHG"
                 className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
                   isEditMode
                     ? 'border-[#CBD5E1] focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
                     : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                 }`}
-              >
-                <option value="">Select EDI Vendor</option>
-                {ediVendorOptions.map((v) => (
-                  <option key={v.value} value={v.value}>{v.label}</option>
-                ))}
-              </select>
+              />
             </div>
 
             {/* Transworld */}
@@ -1300,8 +1299,12 @@ function OnlineRegistrationTab({ accountId }: { accountId: string }) {
 // ========================================
 
 export default function AccountSetup() {
-  const { currentOrganization, user } = useAuth();
+  const { currentOrganization, currentOffice, tenantId, user } = useAuth();
   const accountId = currentOrganization;
+
+  // Header identifiers: PGID = tenant id, OID = currently selected office (top switcher).
+  const pgidDisplay = tenantId != null ? String(tenantId) : (currentOrganization || '').replace(/^ORG-/i, '') || '—';
+  const oidDisplay = (currentOffice || '').replace(/^OFF-/i, '') || '—';
 
   const [activeTab, setActiveTab] = useState<TabName>('basic');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -1315,7 +1318,6 @@ export default function AccountSetup() {
   const [ledgerColorOptions, setLedgerColorOptions] = useState<LookupOption[]>([]);
   const [chartingOptionMetas, setChartingOptionMetas] = useState<LookupOption[]>([]);
   const [chartingTabMetas, setChartingTabMetas] = useState<LookupOption[]>([]);
-  const [ediVendorOptions, setEdiVendorOptions] = useState<LookupOption[]>([]);
   const [postingOfficeOptions, setPostingOfficeOptions] = useState<LookupOption[]>([]);
   const [holidayStatusOptions, setHolidayStatusOptions] = useState<LookupOption[]>([]);
   const [holidayTypeOptions, setHolidayTypeOptions] = useState<LookupOption[]>([]);
@@ -1359,7 +1361,6 @@ export default function AccountSetup() {
         colors,
         chOpt,
         chTab,
-        edi,
         holSt,
         holTy,
       ] = await Promise.all([
@@ -1368,7 +1369,6 @@ export default function AccountSetup() {
         accountSetupLookups.ledgerColors(),
         accountSetupLookups.chartingOptions(),
         accountSetupLookups.chartingTabs(),
-        accountSetupLookups.ediVendors(),
         accountSetupLookups.holidayStatuses(),
         accountSetupLookups.holidayTypes(),
       ]);
@@ -1378,7 +1378,6 @@ export default function AccountSetup() {
       setLedgerColorOptions(colors);
       setChartingOptionMetas(chOpt);
       setChartingTabMetas(chTab);
-      setEdiVendorOptions(edi);
       setHolidayStatusOptions(holSt);
       setHolidayTypeOptions(holTy);
     })();
@@ -1525,25 +1524,42 @@ export default function AccountSetup() {
                 </div>
               </div>
 
-              {/* Audit Info */}
-              <div className="flex items-center gap-6 text-xs">
-                <div>
-                  <span className="font-bold text-[#64748B]">PGID:</span>{' '}
-                  <span className="font-bold text-[#1E293B]">{formData.pgid}</span>
+              {/* Identifiers + Audit */}
+              <div className="flex items-stretch gap-3 text-xs">
+                {/* Identifiers: PGID (tenant) / OID (selected office) */}
+                <div className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border-2 border-[#E2E8F0]">
+                  <div className="text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">PGID</div>
+                    <div className="font-bold text-[#1F3A5F]">{pgidDisplay}</div>
+                  </div>
+                  <div className="w-px h-9 bg-[#E2E8F0]" />
+                  <div className="text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">OID</div>
+                    <div className="font-bold text-[#1F3A5F]">{oidDisplay}</div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-bold text-[#64748B]">OID:</span>{' '}
-                  <span className="font-bold text-[#1E293B]">{formData.oid}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-[#64748B]" />
-                  <span className="font-bold text-[#64748B]">Modified On:</span>{' '}
-                  <span className="font-bold text-[#1E293B]">{formData.updatedAt}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <User className="w-3 h-3 text-[#64748B]" />
-                  <span className="font-bold text-[#64748B]">Modified By:</span>{' '}
-                  <span className="font-bold text-[#1E293B]">{formData.updatedBy}</span>
+
+                {/* Audit: Created / Modified (On + By) */}
+                <div className="flex items-center gap-4 px-3 py-2 bg-white rounded-lg border-2 border-[#E2E8F0]">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">
+                      <Calendar className="w-3 h-3" /> Created
+                    </div>
+                    <div className="font-bold text-[#1E293B]">{formData.createdAt || '—'}</div>
+                    <div className="flex items-center gap-1 text-[#64748B]">
+                      <User className="w-3 h-3" /> {formData.createdBy || '—'}
+                    </div>
+                  </div>
+                  <div className="w-px h-12 bg-[#E2E8F0]" />
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">
+                      <Calendar className="w-3 h-3" /> Modified
+                    </div>
+                    <div className="font-bold text-[#1E293B]">{formData.updatedAt || '—'}</div>
+                    <div className="flex items-center gap-1 text-[#64748B]">
+                      <User className="w-3 h-3" /> {formData.updatedBy || '—'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1592,7 +1608,6 @@ export default function AccountSetup() {
                     ledgerColorOptions={ledgerColorOptions}
                     chartingOptionMetas={chartingOptionMetas}
                     chartingTabMetas={chartingTabMetas}
-                    ediVendorOptions={ediVendorOptions}
                     postingOfficeOptions={postingOfficeOptions}
                   />
                 )}
@@ -1609,7 +1624,9 @@ export default function AccountSetup() {
             )}
           </div>
 
-          {/* Footer Actions */}
+          {/* Footer Actions — only for the tabs this footer controls. Holidays,
+              Communications and Online Registration have their own Edit/Save. */}
+          {(activeTab === 'basic' || activeTab === 'advanced') && (
           <div className="border-t-2 border-[#E2E8F0] p-4 bg-[#F7F9FC]">
             <div className="flex justify-end gap-3">
               {!isEditMode ? (
@@ -1641,6 +1658,7 @@ export default function AccountSetup() {
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

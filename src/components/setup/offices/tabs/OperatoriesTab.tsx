@@ -1,21 +1,11 @@
 import { Plus, Edit2, Trash2, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
-import { type Office } from "../../../../data/officeData";
+import { type OfficeForm, type OperatoryUi } from "../../../../data/officeData";
 import { fetchProviders, type Provider } from "../../../../services/schedulerApi";
 
-interface Operatory {
-  id: string;
-  name: string;
-  order: number;
-  is_active: boolean;
-  has_future_appointments?: boolean;
-  defaultProviderId?: string;
-  defaultProviderName?: string;
-}
-
 interface OperatoriesTabProps {
-  formData: Partial<Office>;
-  updateFormData: (updates: Partial<Office>) => void;
+  formData: Partial<OfficeForm>;
+  updateFormData: (updates: Partial<OfficeForm>) => void;
 }
 
 export default function OperatoriesTab({
@@ -27,46 +17,51 @@ export default function OperatoriesTab({
   const [editOpName, setEditOpName] = useState("");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [providersError, setProvidersError] = useState<string | null>(null);
+  const [providersLoading, setProvidersLoading] = useState(false);
 
-  // Load providers for this office (if officeId is present)
+  // Load this office's providers from the backend (/api/v1/providers, scoped by
+  // office id) so the "Default provider" dropdown is backend-driven.
   useEffect(() => {
+    if (formData.id == null) {
+      setProviders([]);
+      setProvidersError(null);
+      return;
+    }
+    let cancelled = false;
     const loadProviders = async () => {
+      setProvidersLoading(true);
+      setProvidersError(null);
       try {
-        setProvidersError(null);
-        const officeId =
-          formData.officeId !== undefined
-            ? String(formData.officeId)
-            : undefined;
-        const data = await fetchProviders(officeId);
-        setProviders(data);
+        const data = await fetchProviders(String(formData.id));
+        if (!cancelled) setProviders(data);
       } catch (error) {
         console.error("Error loading providers for operatories:", error);
-        setProvidersError("Unable to load providers for this office.");
+        if (!cancelled) setProvidersError("Unable to load providers for this office.");
+      } finally {
+        if (!cancelled) setProvidersLoading(false);
       }
     };
+    void loadProviders();
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.id]);
 
-    loadProviders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.officeId]);
-
-  const operatories: Operatory[] =
-    [...(formData.operatories || [])].sort((a, b) => a.order - b.order);
+  const operatories: OperatoryUi[] =
+    [...(formData.operatories ?? [])].sort((a, b) => a.display_order - b.display_order);
 
   /* -------------------- ADD -------------------- */
   const handleAddOperatory = () => {
     if (!newOpName.trim()) return;
 
-    const tempOp: Operatory = {
+    const tempOp: OperatoryUi = {
       id: `temp-${Date.now()}`, // replaced by backend on save
       name: newOpName.trim(),
-      order: operatories.length + 1,
+      display_order: operatories.length + 1,
       is_active: true,
     };
 
-    updateFormData({
-      operatories: [...operatories, tempOp],
-    });
-
+    updateFormData({ operatories: [...operatories, tempOp] });
     setNewOpName("");
   };
 
@@ -74,20 +69,17 @@ export default function OperatoriesTab({
   const handleEditOperatory = (opId: string) => {
     const op = operatories.find((o) => o.id === opId);
     if (!op) return;
-
     setEditingOpId(opId);
     setEditOpName(op.name);
   };
 
   const handleSaveEdit = () => {
     if (!editOpName.trim() || !editingOpId) return;
-
     updateFormData({
       operatories: operatories.map((op) =>
         op.id === editingOpId ? { ...op, name: editOpName.trim() } : op
       ),
     });
-
     setEditingOpId(null);
     setEditOpName("");
   };
@@ -98,31 +90,26 @@ export default function OperatoriesTab({
     if (!op) return;
 
     if (op.has_future_appointments) {
-      alert(
-        "This operatory has future appointments and cannot be deleted."
-      );
+      alert("This operatory has future appointments and cannot be deleted.");
       return;
     }
 
     if (!confirm("Are you sure you want to delete this operatory?")) return;
 
     const updated = operatories
-      .map((o) =>
-        o.id === opId ? { ...o, is_active: false } : o
-      )
+      .map((o) => (o.id === opId ? { ...o, is_active: false } : o))
       .filter((o) => o.is_active)
-      .map((o, index) => ({ ...o, order: index + 1 }));
+      .map((o, index) => ({ ...o, display_order: index + 1 }));
 
     updateFormData({ operatories: updated });
   };
 
   /* -------------------- REORDER -------------------- */
-  const updateOrder = (updated: Operatory[]) => {
-    // Normalize order to 1..N and push to parent
+  const updateOrder = (updated: OperatoryUi[]) => {
     const normalized = updated
       .slice()
-      .sort((a, b) => a.order - b.order)
-      .map((op, index) => ({ ...op, order: index + 1 }));
+      .sort((a, b) => a.display_order - b.display_order)
+      .map((op, index) => ({ ...op, display_order: index + 1 }));
     updateFormData({ operatories: normalized });
   };
 
@@ -133,12 +120,11 @@ export default function OperatoriesTab({
     const updated = [...operatories];
     const prevOp = updated[index - 1];
     const currentOp = updated[index];
-    
     if (!prevOp || !currentOp) return;
-    
-    const tempOrder = prevOp.order;
-    updated[index - 1] = { ...prevOp, order: currentOp.order };
-    updated[index] = { ...currentOp, order: tempOrder };
+
+    const tempOrder = prevOp.display_order;
+    updated[index - 1] = { ...prevOp, display_order: currentOp.display_order };
+    updated[index] = { ...currentOp, display_order: tempOrder };
 
     updateOrder(updated);
   };
@@ -150,18 +136,14 @@ export default function OperatoriesTab({
     const updated = [...operatories];
     const nextOp = updated[index + 1];
     const currentOp = updated[index];
-    
     if (!nextOp || !currentOp) return;
-    
-    const tempOrder = nextOp.order;
-    updated[index + 1] = { ...nextOp, order: currentOp.order };
-    updated[index] = { ...currentOp, order: tempOrder };
+
+    const tempOrder = nextOp.display_order;
+    updated[index + 1] = { ...nextOp, display_order: currentOp.display_order };
+    updated[index] = { ...currentOp, display_order: tempOrder };
 
     updateOrder(updated);
   };
-
-  /* -------------------- JSX (UNCHANGED) -------------------- */
-  // ⬅️ Your JSX remains EXACTLY the same
 
   return (
     <div className="space-y-6">
@@ -174,6 +156,11 @@ export default function OperatoriesTab({
             <li>They auto-map to Scheduler columns (OP1, OP2, etc.)</li>
             <li>Cannot delete operatories with future appointments</li>
             <li>Scheduler updates dynamically when operatories change</li>
+            <li>
+              Default provider is populated from this office's providers, but the
+              choice is not yet saved (the operatory API has no provider field —
+              backend gap #23)
+            </li>
           </ul>
         </div>
       </div>
@@ -211,9 +198,7 @@ export default function OperatoriesTab({
           <div className="p-8 text-center bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
             <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-600 font-medium">No operatories defined</p>
-            <p className="text-sm text-slate-500 mt-1">
-              Add operatories to configure scheduler columns
-            </p>
+            <p className="text-sm text-slate-500 mt-1">Add operatories to configure scheduler columns</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -223,7 +208,7 @@ export default function OperatoriesTab({
                 className="flex items-center gap-3 p-4 bg-white border-2 border-slate-200 rounded-lg hover:border-blue-300 transition-colors"
               >
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-                  {op.order}
+                  {op.display_order}
                 </div>
 
                 {editingOpId === op.id ? (
@@ -238,41 +223,52 @@ export default function OperatoriesTab({
                   />
                 ) : (
                   <div className="flex-1 space-y-1">
+                    {/* Screenshot columns: Operatory Name (bold) + Operatory ID */}
                     <p className="font-bold text-slate-900">{op.name}</p>
                     <p className="text-xs text-slate-500">
-                      Order: {op.order} • ID: {op.id}
+                      Operatory ID: <span className="font-semibold">{op.id}</span>
+                      <span className="mx-1">•</span>
+                      Order: {op.display_order}
                     </p>
 
-                    {/* Default provider selector */}
+                    {/* Default provider selector (backend-driven, /api/v1/providers) */}
                     <div className="flex items-center gap-2 text-xs">
                       <span className="text-slate-600">Default provider:</span>
-                      <select
-                        className="border border-slate-300 rounded px-2 py-1 text-xs bg-white"
-                        value={op.defaultProviderId ?? ""}
-                        onChange={(e) => {
-                          const providerId = e.target.value || undefined;
-                          const provider = providers.find(
-                            (p) => String(p.id) === providerId
-                          );
-                          const updated = operatories.map((o) =>
-                            o.id === op.id
-                              ? {
-                                  ...o,
-                                  defaultProviderId: providerId,
-                                  defaultProviderName: provider?.name ?? undefined,
-                                }
-                              : o
-                          );
-                          updateFormData({ operatories: updated });
-                        }}
-                      >
-                        <option value="">None</option>
-                        {providers.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
+                      {providersLoading ? (
+                        <span className="text-slate-400 italic">Loading providers…</span>
+                      ) : providersError ? (
+                        <span className="text-red-600">{providersError}</span>
+                      ) : (
+                        <>
+                          <select
+                            className="border border-slate-300 rounded px-2 py-1 text-xs bg-white disabled:bg-slate-100"
+                            value={op.default_provider_id ?? ""}
+                            disabled={providers.length === 0}
+                            onChange={(e) => {
+                              const providerId = e.target.value || undefined;
+                              const provider = providers.find((p) => String(p.id) === providerId);
+                              const updated = operatories.map((o) =>
+                                o.id === op.id
+                                  ? {
+                                      ...o,
+                                      default_provider_id: providerId,
+                                      default_provider_name: provider?.name ?? undefined,
+                                    }
+                                  : o
+                              );
+                              updateFormData({ operatories: updated });
+                            }}
+                          >
+                            <option value="">None</option>
+                            {providers.map((p) => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                          </select>
+                          {providers.length === 0 && (
+                            <span className="text-slate-400 italic">No providers configured for this office</span>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -301,10 +297,7 @@ export default function OperatoriesTab({
                   </div>
 
                   {editingOpId === op.id ? (
-                    <button
-                      onClick={handleSaveEdit}
-                      className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
+                    <button onClick={handleSaveEdit} className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                       Save
                     </button>
                   ) : (
@@ -335,9 +328,7 @@ export default function OperatoriesTab({
       {/* Scheduler Mapping Preview */}
       {operatories.length > 0 && (
         <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-          <h4 className="font-bold text-blue-900 mb-2">
-            Scheduler Column Mapping Preview
-          </h4>
+          <h4 className="font-bold text-blue-900 mb-2">Scheduler Column Mapping Preview</h4>
           <div className="flex flex-wrap gap-2">
             {operatories.map((op) => (
               <div
@@ -348,9 +339,7 @@ export default function OperatoriesTab({
               </div>
             ))}
           </div>
-          <p className="text-xs text-blue-700 mt-2">
-            These operatories will appear as columns in the Scheduler
-          </p>
+          <p className="text-xs text-blue-700 mt-2">These operatories will appear as columns in the Scheduler</p>
         </div>
       )}
     </div>

@@ -39,6 +39,19 @@ function statusBadgeLabel(status: string, statusOptions: LookupOption[]) {
   return found?.label ?? status.replace(/_/g, ' ');
 }
 
+/** Status badge colors: Open = green, Half Day = light green, Closed = red. */
+function statusBadgeClass(status: string) {
+  switch (String(status).toUpperCase()) {
+    case 'OPEN':
+      return 'bg-green-100 text-green-700';
+    case 'HALF_DAY':
+      return 'bg-green-50 text-green-600';
+    case 'CLOSED':
+    default:
+      return 'bg-red-100 text-red-700';
+  }
+}
+
 type HolidaysTabContentProps = {
   accountId: string;
   holidayStatusOptions: LookupOption[];
@@ -376,7 +389,7 @@ export function HolidaysTabContent({
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-[#1E293B]">
-                    <span className="px-2 py-1 text-xs font-bold bg-red-100 text-red-700 rounded">
+                    <span className={`px-2 py-1 text-xs font-bold rounded ${statusBadgeClass(holiday.status)}`}>
                       {statusBadgeLabel(holiday.status, holidayStatusOptions)}
                     </span>
                   </td>

@@ -2,12 +2,20 @@ import { useEffect, useState, useMemo } from "react";
 import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
-import api from "../../../services/api";
 import { useUsersGrid } from "@/features/users/useUsersGrid";
-import { mapApiTenantToUI, mapApiOfficeToUI } from "../../../mappers/tenantMapper";
-import { mapSetupApiToUserUI } from "../../../mappers/mapSetupApiToUserUI";
-import { useAuth } from "../../../contexts/AuthContext";
-// import type { BackendUser } from "../../modals/AddEditUserModal";
+import {
+  useListTenants,
+  useListOffices,
+} from "../../../api/generated/endpoints/organization/organization";
+import { useListRoles } from "../../../api/generated/endpoints/security/security";
+import type { TenantRead } from "../../../api/generated/model/tenantRead";
+import type { OfficeRead } from "../../../api/generated/model/officeRead";
+import type { Option } from "../../../api/generated/model/option";
+import { fetchUserForEdit } from "../../../services/userApi";
+import {
+  createUserComplete,
+  updateUserComplete,
+} from "../../../api/generated/endpoints/users/users";
 import type { BackendUser } from "../../../types/backendUser";
 
 interface PermittedIP {
@@ -22,14 +30,6 @@ interface GroupMembership {
   groupName: string;
   description: string;
   joinedDate: string;
-}
-
-interface TimeClockEntry {
-  date: string;
-  clockIn: string;
-  clockOut: string;
-  totalHours: string;
-  notes?: string;
 }
 
 // interface User {
@@ -124,57 +124,11 @@ interface UserSetupProps {
   setCurrentOffice: (office: string) => void;
 }
 
-interface Tenant {
-  id: number;
-  name: string;
-  code: string;
-
-  status: string;
-  isActive: boolean;
-  isLocked: boolean;
-
-  createdAt: string;
-  updatedAt: string;
-
-  createdBy?: {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-  } | null;
-}
-
-interface Office {
-  id: number;
-
-  officeCode: string;
-  officeName: string;
-
-  phone1?: string;
-  phone2?: string;
-  fax?: string;
-  email?: string;
-
-  addressLine1?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-
-  tenantId: number;
-  timezone?: string;
-
-  isActive: boolean;
-
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function UserSetup({
   onLogout,
   currentOffice,
   setCurrentOffice,
 }: UserSetupProps) {
-  const { currentOrganization } = useAuth();
   const [searchText, setSearchText] = useState("");
   const [searchScope, setSearchScope] = useState<"all" | "home">("all");
   const [sortBy, setSortBy] = useState<"name" | "username">("name");
@@ -184,177 +138,14 @@ export default function UserSetup({
   const [editingUser, setEditingUser] = useState<BackendUser | null>(null);
   const [filterPGID, setFilterPGID] = useState<string>("all");
   const [filterOID, setFilterOID] = useState<string>("all");
+  const [filterRole, setFilterRole] = useState<string>("all");
   const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
 
-  // Extract numeric organization/tenant ID from currentOrganization (e.g., "ORG-1" -> 1, "001" -> 1)
-  const getTenantId = (): number | null => {
-    if (!currentOrganization) {
-      console.warn("currentOrganization not available, API calls may fail");
-      return null;
-    }
-    // Extract numeric ID from formats like "ORG-1", "1", "001", etc.
-    const match = currentOrganization.match(/(\d+)$/);
-    if (match && match[1]) {
-      // Convert to number to remove leading zeros (e.g., "001" -> 1)
-      const numericId = parseInt(match[1], 10);
-      return isNaN(numericId) ? null : numericId;
-    }
-    // If no numeric match, try to use the value directly (might already be numeric)
-    if (/^\d+$/.test(currentOrganization)) {
-      const numericId = parseInt(currentOrganization, 10);
-      return isNaN(numericId) ? null : numericId;
-    }
-    console.warn(`Could not extract tenant_id from currentOrganization: ${currentOrganization}`);
-    return null;
-  };
-
-  // const fetchFullUserDetails = async (user: User) => {
-  //   try {
-  //     setLoadingUserDetails(true);
-
-  //     const id = normalizeUID(user.id); // or replace("U-", "")
-  //     const pgid = normalizePGID(user.pgid);
-
-  //     const [
-  //       userRes,
-  //       ipRes,
-  //       groupRes,
-  //     ] = await Promise.all([
-  //       api.get(`/api/v1/users/${id}`),          // full user
-  //       api.get(`/api/v1/users/${pgid}/${id}/ip-rules`),
-  //       api.get(`/api/v1/users/${id}/groups`),
-  //     ]);
-
-  //     const fullUser: User = {
-  //       ...mapApiUserToUI(userRes.data),
-  //       permittedIPs: ipRes.data,
-  //       groupMemberships: groupRes.data,
-  //     };
-
-  //     setSelectedUser(fullUser);
-  //     return fullUser;
-  //   } catch (err) {
-  //     console.error("Failed to load user details", err);
-  //     return null;
-  //   } finally {
-  //     setLoadingUserDetails(false);
-  //   }
-  // };
-
-
-
-  // // Available PGIDs and OIDs for filtering
-  // const availablePGIDs = [
-  //   { id: "P-001", name: "Cranberry Dental Arts Corp" },
-  //   { id: "P-002", name: "Pittsburgh Dental Group" },
-  // ];
-  // const [availablePGIDs, setAvailablePGIDs] = useState([]);
-
-  // useEffect(() => {
-  //   api.get("/pgids").then(res => {
-  //     setAvailablePGIDs(
-  //       res.data.map((p: any) => ({
-  //         id: `P-${p.id}`,
-  //         name: p.name,
-  //       }))
-  //     );
-  //   });
-  // }, []);
-
-  // const fetchFullUserDetails = async (user: User) => {
-  //   try {
-  //     setLoadingUserDetails(true);
-
-  //     const id = normalizeUID(user.id);     // e.g. "U-61" → 61
-  //     const pgid = normalizePGID(user.pgid); // e.g. "ORG-1" → 1
-
-  //     // ✅ Single aggregation API
-  //     const res = await api.get(
-  //       `/api/v1/users/setup`
-  //     );
-
-  //     const data = res.data;
-
-  //     console.log("SETUP API RAW:", data);
-      
-
-
-  //     // const fullUser: User = {
-  //     //   ...mapApiUserToUI(data.user),
-
-  //     //   // 👇 coming from setup API
-  //     //   // offices: data.offices,
-  //     //   permittedIPs: data.ip_rules,
-  //     //   groupMemberships: data.groups,
-  //     //   // timeClock: data.time_clock,
-  //     //   // preferences: data.preferences,
-  //     //   // // map to existing fields
-  //     //   // permittedIPs: data.ip_rules ?? [],
-  //     //   // groupMemberships: data.groups ?? [],
-        
-  //     // };
-
-
-
-  //     const fullUser = mapSetupApiToUserUI(
-  //       data,
-  //       officeNameById // pass your memoized map
-  //     );
-
-  //     setSelectedUser(fullUser);
-  //     return fullUser;
-
-      
-      
-  //     console.log("FULL USER UI:", fullUser);
-
-  //     setSelectedUser(fullUser);
-  //     return fullUser;
-  //   } catch (err) {
-  //     console.error("Failed to load user details", err);
-  //     return null;
-  //   } finally {
-  //     setLoadingUserDetails(false);
-  //   }
-  // };
-
-  // const fetchFullUserDetails = async (user: User) => {
-  //   try {
-  //     setLoadingUserDetails(true);
-
-  //     const id = normalizeUID(user.id);
-
-  //     const res = await api.get(`/api/v1/users/setup`);
-
-  //     const backendUser: BackendUser = res.data.user;
-
-  //     return backendUser; // 👈 backend-shaped
-  //   } catch (err) {
-  //     console.error("Failed to load user details", err);
-  //     return null;
-  //   } finally {
-  //     setLoadingUserDetails(false);
-  //   }
-  // };
-
-
-  const fetchFullUserDetails = async (user: User) => {
+  // Loads a user (core record + offices/groups/IP/preferences composed from the
+  // flat resources) in BackendUser shape for the Add/Edit modal.
+  const fetchFullUserDetails = async (user: User): Promise<BackendUser | null> => {
     try {
-      const id = normalizeUID(user.id);
-
-      // Fetch complete user data - same endpoint as ViewUserDetailsModal uses
-      // This returns a BackendUser with user_id and all editable fields
-      const userRes = await api.get<BackendUser>(
-        `/api/v1/users/${id}`
-      );
-
-      // Ensure user_id is present (it should be from the API response)
-      if (!userRes.data.user_id) {
-        console.warn("API response missing user_id, using extracted ID");
-        userRes.data.user_id = parseInt(id, 10);
-      }
-
-      return userRes.data; // BackendUser with user_id and all fields
+      return await fetchUserForEdit(user.id);
     } catch (err) {
       console.error("Failed to load user details:", err);
       return null;
@@ -363,97 +154,35 @@ export default function UserSetup({
 
 
   
-  const [availablePGIDs, setAvailablePGIDs] = useState<Tenant[]>([]);
+  // PGID filter options — tenants via the generated client (snake_case
+  // TenantRead). Replaces the legacy, nonexistent /api/v1/users/all-tenants.
+  const tenantsQ = useListTenants({ size: 200 });
+  const availablePGIDs: TenantRead[] = useMemo(
+    () => tenantsQ.data?.items ?? [],
+    [tenantsQ.data]
+  );
 
-  useEffect(() => {
-    const tenantId = getTenantId();
-    
-    // Try with tenant_id first if available, then without
-    const makeRequest = (withParams: boolean) => {
-      const config = withParams && tenantId 
-        ? { params: { tenant_id: tenantId } }
-        : {};
-      
-      return api.get("/api/v1/users/all-tenants", config);
-    };
-    
-    makeRequest(true)
-      .then((res) => {
-        setAvailablePGIDs(res.data.map(mapApiTenantToUI));
-      })
-      .catch((err) => {
-        console.error("Failed to load tenants with params:", err.response?.data || err.message);
-        // Try without params as fallback
-        if (tenantId) {
-          makeRequest(false)
-            .then((res) => {
-              setAvailablePGIDs(res.data.map(mapApiTenantToUI));
-            })
-            .catch((fallbackErr) => {
-              console.error("Failed to load tenants without params:", fallbackErr.response?.data || fallbackErr.message);
-            });
-        }
-      });
-  }, [currentOrganization]);
+  // Office (OID) filter options — offices via the generated client (OfficeRead).
+  const officesQ = useListOffices({ size: 200 });
+  const availableOIDs: OfficeRead[] = useMemo(
+    () => officesQ.data?.items ?? [],
+    [officesQ.data]
+  );
 
-
-
-  const [availableOIDs, setAvailableOIDs] = useState<Office[]>([]);
-
-  useEffect(() => {
-    const fetchOffices = async () => {
-      try {
-        // Use the same endpoint as GlobalNav for consistency
-        const response = await api.get("/api/v1/offices");
-        
-        // Map API response to Office format, handling both camelCase and snake_case
-        const mappedOffices = response.data.map((office: any) => {
-          // Extract office name from various possible fields
-          const officeName = office.officeName || office.office_name || office.name || "";
-          const officeId = office.officeId || office.office_id || office.id;
-          const officeCode = office.officeCode || office.office_code || "";
-          
-          return {
-            id: officeId,
-            officeCode: officeCode,
-            officeName: officeName || `Office ${officeId}`, // Fallback if name is missing
-            tenantId: office.tenantId || office.tenant_id || null,
-            isActive: office.isActive !== undefined ? office.isActive : (office.is_active !== undefined ? office.is_active : true),
-            phone1: office.phone1 || "",
-            phone2: office.phone2 || "",
-            fax: office.fax || "",
-            email: office.email || "",
-            addressLine1: office.addressLine1 || office.address_line1 || "",
-            city: office.city || "",
-            state: office.state || "",
-            zip: office.zip || "",
-            timezone: office.timezone || "",
-            createdAt: office.createdAt || office.created_at || "",
-            updatedAt: office.updatedAt || office.updated_at || "",
-          };
-        });
-        
-        setAvailableOIDs(mappedOffices);
-      } catch (err: any) {
-        console.error("Failed to load offices:", err.response?.data || err.message);
-        setAvailableOIDs([]);
-      }
-    };
-    
-    fetchOffices();
-  }, [currentOrganization]);
+  // Role filter options — GET /api/v1/roles (Option[] { value, label }).
+  const rolesQ = useListRoles();
+  const availableRoles: Option[] = useMemo(() => rolesQ.data ?? [], [rolesQ.data]);
 
   useEffect(() => {
     if (searchScope === "home") {
       setFilterPGID("all");
       setFilterOID("all");
+      setFilterRole("all");
     }
   }, [searchScope]);
 
   const normalizeOID = (v: string | number) =>
     String(v).replace(/^O-/, "");
-  const normalizeUID = (v: string | number) =>
-    String(v).replace(/^U-/, "");
 
   const normalizePGID = (v: string | number) =>
     String(v).replace(/^P-/, "");
@@ -487,19 +216,8 @@ export default function UserSetup({
     
     return availableOIDs.filter((o) => {
       // Compare tenant IDs - both should be numbers
-      const officeTenantId = o.tenantId ? Number(o.tenantId) : null;
-      const matches = officeTenantId !== null && officeTenantId === filterTenantId;
-      
-      // Debug logging (can be removed later)
-      if (matches) {
-        console.log("Office matches tenant:", {
-          officeName: o.officeName,
-          officeTenantId,
-          filterTenantId
-        });
-      }
-      
-      return matches;
+      const officeTenantId = o.tenant_id ? Number(o.tenant_id) : null;
+      return officeTenantId !== null && officeTenantId === filterTenantId;
     });
   }, [availableOIDs, filterPGID, searchScope, currentOffice]);
 
@@ -520,26 +238,13 @@ export default function UserSetup({
   //   );
   // };
 
-  const loadUserDetails = async (userId: string) => {
-    const id = userId.replace("U-", "");
-
-    const [ips, groups] = await Promise.all([
-      api.get(`/api/v1/users/${id}/ip-rules`),
-      api.get(`/api/v1/users/${id}/groups`)
-    ]);
-
-    setSelectedUser(prev => ({
-      ...prev!,
-      permittedIPs: ips.data,
-      groupMemberships: groups.data,
-    }));
-  };
-
-  
   // Server state composed from the canonical backend resources
   // (/users + /user-offices + /offices + /tenants) via generated React Query
   // hooks. Replaces the legacy /users/list-with-home-office imperative fetch.
-  const { users, refetch: fetchUsers } = useUsersGrid();
+  const { users, refetch: fetchUsers } = useUsersGrid({
+    office_id: filterOID !== "all" ? Number(filterOID) : undefined,
+    role: filterRole !== "all" ? filterRole : undefined,
+  });
 
 
   console.log({currentOffice,userHomeOID: users[1]?.homeOffice,});
@@ -616,38 +321,17 @@ export default function UserSetup({
 
   
   const filteredUsers = useMemo(() => {
-    console.log("---- FILTERING USERS ----");
-    console.log("Scope:", searchScope);
-    console.log("PGID:", filterPGID);
-    console.log("OID (office name):", filterOID);
-    console.log("Current Office:", currentOffice);
-
+    // Office (OID) and role filters are applied server-side in useUsersGrid; the
+    // remaining filters — home-office scope, PGID, and text search — run here,
+    // then sort.
     return users
       .filter((user) => {
-        /* ----------------------------------
-        1️⃣ Home Office scope
-        ---------------------------------- */
+        // Home Office scope
         if (searchScope === "home") {
-          const match = user.homeOffice === currentOffice;
-
-          console.log("HOME CHECK:", {
-            user: user.username,
-            userHomeOffice: user.homeOffice,
-            currentOffice,
-            match,
-          });
-
-          return match;
+          return user.homeOffice === currentOffice;
         }
 
-        console.log("PGID CHECK:", {
-            user_pgid:String(normalizePGID(user.pgid)),
-            filterPGID: String(filterPGID),
-          });
-
-        /* ----------------------------------
-        2️⃣ PGID filter
-        ---------------------------------- */
+        // PGID filter (no server param — tenant-scoped client-side)
         if (
           filterPGID !== "all" &&
           String(normalizePGID(user.pgid)) !== String(filterPGID)
@@ -655,36 +339,7 @@ export default function UserSetup({
           return false;
         }
 
-        // console.log("office CHECK:", {
-        //     user_offices:String(user.assignedOfficeOIDs ?? normalizeOID([])),
-        //     filterOID: String(filterOID),
-        //   });
-
-        /* ----------------------------------
-        3️⃣ Office (OID) filter — NAME based
-        ---------------------------------- */
-        if (filterOID !== "all") {
-          const normalizedAssignedOIDs = (user.assignedOfficeOIDs ?? []).map(
-            normalizeOID
-          );
-
-          const normalizedFilterOID = normalizeOID(filterOID);
-
-          const match = normalizedAssignedOIDs.includes(normalizedFilterOID);
-
-          console.log("OID MATCH RESULT:", {
-            user: user.username,
-            normalizedAssignedOIDs,
-            normalizedFilterOID,
-            match,
-          });
-
-          if (!match) return false;
-        }
-
-        /* ----------------------------------
-        4️⃣ Text search
-        ---------------------------------- */
+        // Text search
         if (searchText.trim()) {
           const s = searchText.toLowerCase();
           return (
@@ -704,18 +359,7 @@ export default function UserSetup({
         }
         return a.username.localeCompare(b.username);
       });
-  }, [
-    users,
-    searchScope,
-    filterPGID,
-    filterOID,
-    searchText,
-    sortBy,
-    currentOffice,
-  ]);
-
-  
-  console.log("filteredUsers----> ",filteredUsers)
+  }, [users, searchScope, filterPGID, searchText, sortBy, currentOffice]);
 
 
 
@@ -823,14 +467,16 @@ export default function UserSetup({
   // };
 
   const handleSaveUser = async (payload: any) => {
+    // The modal builds the compound payload; persist it atomically across users +
+    // offices + groups + IP rules + preferences + time-clock + login restrictions.
     try {
-      if (editingUser) {
-        await api.put(
-          `/api/v1/users/${editingUser.user_id}`,
-          payload
-        );
+      if (editingUser?.user_id) {
+        await updateUserComplete(editingUser.user_id, payload);
       } else {
-        await api.post("/api/v1/users", payload);
+        // is_active is not part of UserCompleteCreate (new users are active).
+        const createBody = { ...payload };
+        delete createBody.is_active;
+        await createUserComplete(createBody);
       }
 
       await fetchUsers(); // refresh list
@@ -867,13 +513,13 @@ export default function UserSetup({
       // Handle both number and string IDs, normalize to string without "O-" prefix
       const normalizedId = String(o.id).replace(/^O-/, "");
       // Store with normalized ID (without "O-" prefix) as key
-      map.set(normalizedId, o.officeName);
+      map.set(normalizedId, o.name);
       // Also store with "O-" prefix for direct lookup
-      map.set(`O-${normalizedId}`, o.officeName);
-      // Also store with officeCode if available
-      if (o.officeCode) {
-        map.set(normalizeOID(o.officeCode), o.officeName);
-        map.set(o.officeCode, o.officeName);
+      map.set(`O-${normalizedId}`, o.name);
+      // Also store with office_code if available
+      if (o.office_code) {
+        map.set(normalizeOID(o.office_code), o.name);
+        map.set(o.office_code, o.name);
       }
     });
     return map;
@@ -1027,10 +673,10 @@ export default function UserSetup({
                     </option>
                     {filteredOIDs.map((oid) => {
                       // Ensure we have a proper office name
-                      const displayName = oid.officeName && oid.officeName.trim() !== "" 
-                        ? oid.officeName 
+                      const displayName = oid.name && oid.name.trim() !== ""
+                        ? oid.name
                         : `Office ${normalizeOID(oid.id)}`;
-                      
+
                       return (
                         <option
                           key={oid.id}
@@ -1043,6 +689,26 @@ export default function UserSetup({
                     })}
                   </select>
                 </div>
+              </div>
+
+              {/* Role Filter (server-side: GET /users?role=) */}
+              <div className="mt-2">
+                <label className="block text-xs font-bold text-[#1F3A5F] mb-1">
+                  Role:
+                </label>
+                <select
+                  value={filterRole}
+                  disabled={searchScope === "home"}
+                  onChange={(e) => setFilterRole(e.target.value)}
+                  className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] text-xs"
+                >
+                  <option value="all">All Roles</option>
+                  {availableRoles.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

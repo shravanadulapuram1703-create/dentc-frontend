@@ -39,6 +39,9 @@ import {
 
 interface PatientSearchResult {
   patientId: string;
+  /** Numeric backend patient id; the appointment patient_id contract is
+   *  number | null. patientId is the chart_no used for display only. */
+  numericId?: number;
   name: string;
   gender: string;
   ssn: string;
@@ -214,11 +217,11 @@ export default function AddEditAppointmentForm({
           ...prev,
           // Scheduling
           appointmentDate: convertDateToMMDDYYYY(fullAppointment.date),
-          startsAt: convertTimeTo12Hour(fullAppointment.startTime),
+          startsAt: convertTimeTo12Hour(fullAppointment.start_time),
           duration: fullAppointment.duration,
-          procedureType: fullAppointment.procedureType || prev.procedureType,
-          operatory: fullAppointment.operatory || prev.operatory,
-          provider: fullAppointment.provider || prev.provider,
+          procedureType: fullAppointment.procedure_label || prev.procedureType,
+          operatory: fullAppointment.operatory_id || prev.operatory,
+          provider: fullAppointment.provider_name || prev.provider,
           status: fullAppointment.status || prev.status,
           
           // Lab information - handle both camelCase (labDds, labCost, labSentOn) and snake_case (lab_dds, lab_cost, lab_sent_on)
@@ -369,22 +372,19 @@ export default function AddEditAppointmentForm({
           updates.procedureType = procedureTypes[0]?.name || "";
         }
 
-        // Update provider when operatories load
+        // Set a default operatory/provider when none is chosen yet. The
+        // provider is resolved from the operatory's provider_id (backend Gap 1),
+        // falling back to the first provider.
         if (operatories.length > 0) {
-          if (prev.operatory) {
-            const operatory = operatories.find((op) => op.id === prev.operatory);
-            if (operatory?.provider && prev.provider !== operatory.provider) {
-              updates.provider = operatory.provider;
-            } else if (!prev.provider && providers.length > 0) {
-              updates.provider = providers[0]?.name || "";
-            }
-          } else {
-            // If no operatory is selected, set default operatory and provider
-            const defaultOperatory = operatories[0];
-            if (defaultOperatory) {
-              updates.operatory = defaultOperatory.id;
-              updates.provider = defaultOperatory.provider || (providers.length > 0 ? providers[0]?.name || "" : "");
-            }
+          const opId = prev.operatory || operatories[0]?.id || "";
+          if (!prev.operatory) updates.operatory = opId;
+          if (!prev.provider) {
+            const op = operatories.find((o) => o.id === opId);
+            const byOp = op?.provider_id
+              ? providers.find((p) => p.id === op.provider_id)?.name
+              : undefined;
+            const fallback = providers.length > 0 ? providers[0]?.name || "" : "";
+            if (byOp || fallback) updates.provider = byOp || fallback;
           }
         }
 
@@ -399,10 +399,14 @@ export default function AddEditAppointmentForm({
     return `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}/${today.getFullYear()}`;
   };
 
-  // Get default provider based on operatory (from API data)
+  // Default provider — resolve the operatory's assigned provider via its
+  // provider_id (backend Gap 1), falling back to the first provider.
   const getDefaultProvider = (operatoryId: string) => {
-    const operatory = operatories.find((op) => op.id === operatoryId);
-    return operatory?.provider || (providers.length > 0 ? providers[0]?.name || "" : "");
+    const op = operatories.find((o) => o.id === operatoryId);
+    const byOp = op?.provider_id
+      ? providers.find((p) => p.id === op.provider_id)?.name
+      : undefined;
+    return byOp || (providers.length > 0 ? providers[0]?.name || "" : "");
   };
 
   // Available providers list (for simple selects) - from API
@@ -455,13 +459,13 @@ export default function AddEditAppointmentForm({
     campaignId: "",
   });
 
-  // Handle operatory change - update provider automatically (from API data)
+  // Handle operatory change — auto-fill the provider from the operatory's
+  // assigned provider (backend Gap 1).
   const handleOperatoryChange = (newOperatoryId: string) => {
-    const newProvider = getDefaultProvider(newOperatoryId);
     setFormData({
       ...formData,
       operatory: newOperatoryId,
-      provider: newProvider,
+      provider: getDefaultProvider(newOperatoryId),
     });
   };
 
@@ -704,9 +708,16 @@ export default function AddEditAppointmentForm({
         };
       });
 
-      // For new patients (patientId starts with "NEW-"), create patient first
-      let patientId = patient.patientId || (patient as any).id?.toString() || "";
-      if (patientId.startsWith("NEW-")) {
+      // For new patients (patientId starts with "NEW-"), create patient first.
+      // The appointment patient_id contract is numeric, so we resolve to a
+      // number here and never forward a chart_no/"NEW-" string.
+      const isNewPatient = (patient.patientId ?? "").startsWith("NEW-");
+      let patientIdNum: number | null =
+        patient.numericId ??
+        (Number.isFinite(Number(patient.patientId))
+          ? Number(patient.patientId)
+          : null);
+      if (isNewPatient) {
         console.log("Creating new patient before saving appointment...");
         
         // Convert birthdate from MM/DD/YYYY to YYYY-MM-DD
@@ -763,8 +774,14 @@ export default function AddEditAppointmentForm({
         }
         
         const newPatient = await createPatient(patientData);
-        patientId = newPatient.chartNo || newPatient.id.toString();
-        console.log("Patient created with ID:", patientId);
+        patientIdNum = newPatient.id;
+        console.log("Patient created with numeric ID:", patientIdNum);
+      }
+
+      if (patientIdNum == null) {
+        throw new Error(
+          "Patient has no numeric id; cannot save appointment.",
+        );
       }
 
       // Normalize status to ensure it matches SQL enum (title case)
@@ -781,7 +798,7 @@ export default function AddEditAppointmentForm({
 
       // Build appointment payload
       const appointmentPayload: any = {
-        patient_id: patientId,
+        patient_id: patientIdNum,
         date: convertDateToYYYYMMDD(formData.appointmentDate),
         start_time: convertTimeTo24Hour(formData.startsAt),
         duration: formData.duration,

@@ -12,6 +12,7 @@ export interface OperatoryRead {
   legacy_id?: string | null;
   name: string;
   display_order: number;
+  provider_id?: string | null;
   is_active: boolean;
   created_at: string;
 }

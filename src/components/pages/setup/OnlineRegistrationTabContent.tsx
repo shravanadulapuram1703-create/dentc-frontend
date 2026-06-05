@@ -4,8 +4,6 @@ import { toast } from 'sonner';
 import {
   fetchActiveConsent,
   createConsentVersion,
-  getConsentPdfUrl,
-  getConsentPreviewUrl,
 } from '../../../services/accountSetupApi';
 
 type OnlineRegistrationTabContentProps = {
@@ -109,23 +107,29 @@ export function OnlineRegistrationTabContent({ accountId }: OnlineRegistrationTa
     editorRef.current?.focus();
   };
 
+  // Render the consent in a print window (browser "Save as PDF"). No backend PDF
+  // endpoint exists yet, and the token can't be passed via window.open URL, so we
+  // build the document client-side from the current header/body.
   const handleGeneratePDF = () => {
-    if (!consentId) {
-      toast.error('No saved consent version to export');
+    const title = header.trim() || 'Patient Consent';
+    const win = window.open('', '_blank', 'noopener,noreferrer');
+    if (!win) {
+      toast.error('Popup blocked', { description: 'Allow popups to export the template as PDF.' });
       return;
     }
-    const url = getConsentPdfUrl(accountId, consentId);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    toast.success('Opening PDF export…');
+    win.document.write(
+      `<!doctype html><html><head><meta charset="utf-8" /><title>${title}</title>` +
+        `<style>body{font-family:Arial,Helvetica,sans-serif;color:#1E293B;max-width:800px;margin:32px auto;padding:0 24px;line-height:1.6}` +
+        `h1{font-size:20px;color:#1F3A5F;margin-bottom:16px}</style></head>` +
+        `<body><h1>${title}</h1>${bodyHtml || ''}` +
+        `<scr` + `ipt>window.onload=function(){window.focus();window.print();}</scr` + `ipt></body></html>`
+    );
+    win.document.close();
   };
 
+  // Patient view is rendered locally in the in-app modal (auth-safe; no URL token).
   const openPatientPreview = () => {
-    if (!consentId) {
-      setShowPreview(true);
-      return;
-    }
-    const url = getConsentPreviewUrl(accountId, consentId);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    setShowPreview(true);
   };
 
   const lastUpdatedLabel = effectiveDate

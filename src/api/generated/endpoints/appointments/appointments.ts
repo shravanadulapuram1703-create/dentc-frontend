@@ -30,10 +30,14 @@ import type {
   AppointmentProcedureRead,
   AppointmentProcedureUpdate,
   AppointmentRead,
+  AppointmentSchedulerRead,
+  AppointmentStatusUpdate,
   AppointmentUpdate,
   ErrorResponse,
+  HTTPValidationError,
   ListAppointmentProceduresParams,
   ListAppointmentsParams,
+  ListSchedulerAppointmentsParams,
   PaginatedResponseAppointmentProcedureRead,
   PaginatedResponseAppointmentRead
 } from '../../model';
@@ -47,6 +51,163 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Denormalized appointment feed (names resolved) for the calendar
+ */
+export const listSchedulerAppointments = (
+    params?: ListSchedulerAppointmentsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AppointmentSchedulerRead[]>(
+      {url: `/api/v1/appointments/scheduler`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListSchedulerAppointmentsQueryKey = (params?: ListSchedulerAppointmentsParams,) => {
+    return [
+    `/api/v1/appointments/scheduler`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSchedulerAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof listSchedulerAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: ListSchedulerAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedulerAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSchedulerAppointmentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSchedulerAppointments>>> = ({ signal }) => listSchedulerAppointments(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSchedulerAppointments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSchedulerAppointmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listSchedulerAppointments>>>
+export type ListSchedulerAppointmentsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListSchedulerAppointments<TData = Awaited<ReturnType<typeof listSchedulerAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  ListSchedulerAppointmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedulerAppointments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSchedulerAppointments>>,
+          TError,
+          Awaited<ReturnType<typeof listSchedulerAppointments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSchedulerAppointments<TData = Awaited<ReturnType<typeof listSchedulerAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListSchedulerAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedulerAppointments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSchedulerAppointments>>,
+          TError,
+          Awaited<ReturnType<typeof listSchedulerAppointments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSchedulerAppointments<TData = Awaited<ReturnType<typeof listSchedulerAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListSchedulerAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedulerAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Denormalized appointment feed (names resolved) for the calendar
+ */
+
+export function useListSchedulerAppointments<TData = Awaited<ReturnType<typeof listSchedulerAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListSchedulerAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedulerAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSchedulerAppointmentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Change appointment status; the server stamps the transition time
+ */
+export const updateAppointmentStatus = (
+    appointmentId: string,
+    appointmentStatusUpdate: BodyType<AppointmentStatusUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AppointmentSchedulerRead>(
+      {url: `/api/v1/appointments/${appointmentId}/status`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: appointmentStatusUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateAppointmentStatusMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAppointmentStatus>>, TError,{appointmentId: string;data: BodyType<AppointmentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAppointmentStatus>>, TError,{appointmentId: string;data: BodyType<AppointmentStatusUpdate>}, TContext> => {
+
+const mutationKey = ['updateAppointmentStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAppointmentStatus>>, {appointmentId: string;data: BodyType<AppointmentStatusUpdate>}> = (props) => {
+          const {appointmentId,data} = props ?? {};
+
+          return  updateAppointmentStatus(appointmentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAppointmentStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateAppointmentStatus>>>
+    export type UpdateAppointmentStatusMutationBody = BodyType<AppointmentStatusUpdate>
+    export type UpdateAppointmentStatusMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Change appointment status; the server stamps the transition time
+ */
+export const useUpdateAppointmentStatus = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAppointmentStatus>>, TError,{appointmentId: string;data: BodyType<AppointmentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateAppointmentStatus>>,
+        TError,
+        {appointmentId: string;data: BodyType<AppointmentStatusUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAppointmentStatusMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List appointments
  */
 export const listAppointments = (

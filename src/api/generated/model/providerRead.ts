@@ -21,5 +21,8 @@ export interface ProviderRead {
   dea_id?: string | null;
   specialty?: string | null;
   is_active: boolean;
+  first_name?: string | null;
+  last_name?: string | null;
+  created_by?: number | null;
   created_at: string;
 }

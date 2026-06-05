@@ -11,6 +11,8 @@ export interface DefinitionCreate {
   key1: string;
   key2?: string | null;
   description: string;
+  color?: string | null;
+  sort_order?: number | null;
   is_active?: boolean | null;
   is_flash_alert?: boolean | null;
   blocks_charges?: boolean | null;

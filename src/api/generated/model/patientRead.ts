@@ -47,6 +47,8 @@ export interface PatientRead {
   referral_type?: string | null;
   referred_by?: string | null;
   patient_notes?: string | null;
+  responsible_party_id?: string | null;
+  patient_type?: string | null;
   is_active: boolean;
   created_by?: number | null;
   id: number;

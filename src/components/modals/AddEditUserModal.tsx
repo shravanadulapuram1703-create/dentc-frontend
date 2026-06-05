@@ -12,9 +12,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import api from "../../services/api";
-import type { UserSetupResponse } from "../../types/userSetup";
 import { fetchUserForEdit } from "../../services/userApi";
+import { getUserSetupMetadata } from "../../api/generated/endpoints/users/users";
+import { listUserGroups } from "../../api/generated/endpoints/staff/staff";
+import { useListOffices } from "../../api/generated/endpoints/organization/organization";
+import type { UserSetupMetadata } from "../../api/generated/model/userSetupMetadata";
 import type { BackendUser } from "../../types/backendUser";
 
 // Re-export BackendUser for backward compatibility
@@ -40,7 +42,7 @@ export default function AddEditUserModal({
   currentOffice,
 }: AddEditUserModalProps) {
   const [activeTab, setActiveTab] = useState(0);
-  const [setup, setSetup] = useState<UserSetupResponse | null>(null);
+  const [setup, setSetup] = useState<UserSetupMetadata | null>(null);
   const [setupLoading, setSetupLoading] = useState(false);
   const [groupMembershipsMetadata, setGroupMembershipsMetadata] = useState<
     Array<{ code: string; name: string; description?: string }>
@@ -68,33 +70,41 @@ export default function AddEditUserModal({
 
   // Form Data State
   
-  // Fetch setup data (offices, roles, groups, etc.)
+  // Offices for the assignment picker (generated client, OfficeRead).
+  const officesQ = useListOffices({ size: 200 }, { query: { enabled: isOpen } });
+  const availableOffices = officesQ.data?.items ?? [];
+
+  // Dropdown metadata (roles, patient access levels, overtime methods, prefs
+  // schema) from GET /api/v1/users/setup-metadata.
   useEffect(() => {
     if (!isOpen) return;
 
     setSetupLoading(true);
-    api
-      .get<UserSetupResponse>("/api/v1/users/setup")
-      .then(res => setSetup(res.data))
+    getUserSetupMetadata()
+      .then(data => setSetup(data))
       .catch(err => {
-        console.error("Failed to load setup data:", err);
+        console.error("Failed to load setup metadata:", err);
       })
       .finally(() => setSetupLoading(false));
   }, [isOpen]);
 
-  // Fetch available user group memberships metadata (dynamic from backend)
+  // Available user groups (catalog) via the generated client. The membership
+  // "code" is the group id (matches fetchUserForEdit's group_memberships shape).
   useEffect(() => {
     if (!isOpen) return;
 
-    api
-      .get<{ groups: Array<{ code: string; name: string; description?: string }> }>(
-        "/api/v1/users/groups-metadata"
-      )
+    listUserGroups({ is_active: true, size: 200 })
       .then(res => {
-        setGroupMembershipsMetadata(res.data?.groups || []);
+        setGroupMembershipsMetadata(
+          (res.items ?? []).map(g => ({
+            code: String(g.id),
+            name: g.name,
+            description: g.description ?? undefined,
+          }))
+        );
       })
       .catch(err => {
-        console.error("Failed to load group memberships metadata:", err);
+        console.error("Failed to load user groups:", err);
         setGroupMembershipsMetadata([]);
       });
   }, [isOpen]);
@@ -199,16 +209,15 @@ export default function AddEditUserModal({
 
     // Security
     roles: [] as string[],
-    securityGroups: [] as string[],
 
-    // Group Memberships (separate from security groups)
+    // Group Memberships
     groupMemberships: [] as string[],
 
     // Network
     permittedIPs: [] as string[],
 
-    // Patient access
-    patientAccessLevel: "all", // all | assigned
+    // Patient access (value from setup-metadata.patient_access_levels)
+    patientAccessLevel: "",
 
     // Login restrictions
     use24x7Access: true,
@@ -226,8 +235,9 @@ export default function AddEditUserModal({
 
     // Time clock
     timeClockPayRate: "",
-    overtimeMethod: "daily",
+    overtimeMethod: "",
     overtimeRate: "1.5",
+    clockInRequired: false,
 
     // Preferences
     startupScreen: "Dashboard",
@@ -344,10 +354,9 @@ export default function AddEditUserModal({
         homeOffice: "",
         assignedOffices: [],
         roles: [],
-        securityGroups: [],
         groupMemberships: [],
         permittedIPs: [],
-        patientAccessLevel: "all",
+        patientAccessLevel: "",
         use24x7Access: true,
         allowedDays: {
           Mon: true,
@@ -361,8 +370,9 @@ export default function AddEditUserModal({
         allowedFrom: "08:00",
         allowedUntil: "18:00",
         timeClockPayRate: "",
-        overtimeMethod: "daily",
+        overtimeMethod: "",
         overtimeRate: "1.5",
+        clockInRequired: false,
         startupScreen: "Dashboard",
         defaultPerioScreen: "Standard",
         defaultNavigationSearch: "Patient",
@@ -386,6 +396,13 @@ export default function AddEditUserModal({
 
     // In edit mode, populate from loaded user data
     if (mode === "edit" && loadedUserData) {
+      const lr = loadedUserData.login_restrictions;
+      const days = (lr?.allowed_days ?? "").split(",").map(s => s.trim());
+      const prefs = loadedUserData.preferences ?? {};
+      const prefStr = (k: string, dflt: string) => prefs[k] || dflt;
+      const prefBool = (k: string, dflt: boolean) =>
+        prefs[k] == null ? dflt : prefs[k] === "true";
+
       setFormData(prev => ({
         ...prev,
         username: loadedUserData.username ?? "",
@@ -398,50 +415,38 @@ export default function AddEditUserModal({
         homeOffice: loadedUserData.home_office_id?.toString() ?? "",
         assignedOffices: loadedUserData.assigned_offices?.map(String) ?? [],
         roles: loadedUserData.roles ?? [],
-        securityGroups: loadedUserData.security_groups ?? [],
-        groupMemberships: (loadedUserData as any).group_memberships?.map((g: any) => 
-          typeof g === 'string' ? g : (g.group_id || g.groupId || g.group_name || g.groupName || g)
-        ) ?? [],
+        groupMemberships: loadedUserData.group_memberships ?? [],
         permittedIPs: loadedUserData.permitted_ips ?? [],
-        patientAccessLevel: (loadedUserData as any).patient_access_level || "all",
-        use24x7Access: (loadedUserData as any).login_restrictions?.use_24x7_access !== false,
-        allowedDays: (loadedUserData as any).login_restrictions?.allowed_days 
-          ? {
-              Mon: (loadedUserData as any).login_restrictions.allowed_days.includes("Mon"),
-              Tue: (loadedUserData as any).login_restrictions.allowed_days.includes("Tue"),
-              Wed: (loadedUserData as any).login_restrictions.allowed_days.includes("Wed"),
-              Thu: (loadedUserData as any).login_restrictions.allowed_days.includes("Thu"),
-              Fri: (loadedUserData as any).login_restrictions.allowed_days.includes("Fri"),
-              Sat: (loadedUserData as any).login_restrictions.allowed_days.includes("Sat"),
-              Sun: (loadedUserData as any).login_restrictions.allowed_days.includes("Sun"),
-            }
-          : {
-              Mon: true,
-              Tue: true,
-              Wed: true,
-              Thu: true,
-              Fri: true,
-              Sat: false,
-              Sun: false,
-            },
-        allowedFrom: (loadedUserData as any).login_restrictions?.allowed_from || "08:00",
-        allowedUntil: (loadedUserData as any).login_restrictions?.allowed_until || "18:00",
+        patientAccessLevel: loadedUserData.patient_access_level ?? "",
+        use24x7Access: lr?.is_24_7 ?? true,
+        allowedDays: {
+          Mon: days.includes("Mon"),
+          Tue: days.includes("Tue"),
+          Wed: days.includes("Wed"),
+          Thu: days.includes("Thu"),
+          Fri: days.includes("Fri"),
+          Sat: days.includes("Sat"),
+          Sun: days.includes("Sun"),
+        },
+        allowedFrom: (lr?.start_time ?? "08:00").slice(0, 5),
+        allowedUntil: (lr?.end_time ?? "18:00").slice(0, 5),
         timeClockPayRate: loadedUserData.time_clock?.pay_rate?.toString() ?? "",
-        overtimeMethod: loadedUserData.time_clock?.overtime_method ?? "daily",
+        overtimeMethod: loadedUserData.time_clock?.overtime_method ?? "",
         overtimeRate: loadedUserData.time_clock?.overtime_rate?.toString() ?? "1.5",
-        // Preferences
-        startupScreen: loadedUserData.preferences?.startup_screen ?? "Dashboard",
-        defaultPerioScreen: loadedUserData.preferences?.default_perio_screen ?? "Standard",
-        defaultNavigationSearch: loadedUserData.preferences?.default_navigation_search ?? "Patient",
-        defaultSearchBy: loadedUserData.preferences?.default_search_by ?? "lastName",
-        defaultReferralView: loadedUserData.preferences?.default_referral_view ?? "All",
-        showProductionView: loadedUserData.preferences?.show_production_view ?? true,
-        hideProviderTime: loadedUserData.preferences?.hide_provider_time ?? false,
-        printLabelsForAppointments: loadedUserData.preferences?.print_labels ?? false,
-        promptForEntryDate: loadedUserData.preferences?.prompt_entry_date ?? false,
-        includeInactivePatientsInSearch: loadedUserData.preferences?.include_inactive_patients ?? false,
-        hipaaCompliantScheduler: loadedUserData.preferences?.hipaa_compliant_scheduler ?? false,
-        isOrthoAssistant: loadedUserData.preferences?.is_ortho_assistant ?? false,
+        clockInRequired: loadedUserData.time_clock?.clock_in_required ?? false,
+        // Preferences (stored as key/value strings)
+        startupScreen: prefStr("startup_screen", "Dashboard"),
+        defaultPerioScreen: prefStr("default_perio_screen", "Standard"),
+        defaultNavigationSearch: prefStr("default_navigation_search", "Patient"),
+        defaultSearchBy: prefStr("default_search_by", "lastName"),
+        defaultReferralView: prefStr("default_referral_view", "All"),
+        showProductionView: prefBool("show_production_view", true),
+        hideProviderTime: prefBool("hide_provider_time", false),
+        printLabelsForAppointments: prefBool("print_labels", false),
+        promptForEntryDate: prefBool("prompt_entry_date", false),
+        includeInactivePatientsInSearch: prefBool("include_inactive_patients", false),
+        hipaaCompliantScheduler: prefBool("hipaa_compliant_scheduler", false),
+        isOrthoAssistant: prefBool("is_ortho_assistant", false),
       }));
     }
   }, [isOpen, mode, loadedUserData]);
@@ -454,12 +459,11 @@ export default function AddEditUserModal({
     "email",
     "homeOffice",
     "roles",
-    "securityGroups",
   ];
 
   const missingFields = REQUIRED_FIELDS.filter((field) => {
     const value = formData[field as keyof typeof formData];
-    if (field === "roles" || field === "securityGroups") {
+    if (field === "roles") {
       return !Array.isArray(value) || value.length === 0;
     }
     return !value;
@@ -475,28 +479,11 @@ export default function AddEditUserModal({
 
   const [newIP, setNewIP] = useState("");
 
-  const organization = setup?.organization;
-
-  // const availableOffices = setup?.offices ?? [];
-  // const securityGroups = setup?.security_groups ?? [];
-  // const userRoles = setup?.roles ?? [];
-
-  const availableOffices = setup?.offices ?? [];
-
-  const securityGroups =
-    setup?.security_groups?.map(g => g.code) ?? [];
-
-  // Available user group memberships (driven by /api/v1/users/groups-metadata)
+  // Backend-driven dropdown options (Option = { value, label }).
   const availableGroupMetadata = groupMembershipsMetadata || [];
-
-  const userRoles =
-    setup?.roles?.map(r => r.code) ?? [];
-
-
+  const userRoles = setup?.roles ?? [];
   const patientAccessLevels = setup?.patient_access_levels ?? [];
-
-  const overtimeMethods = setup?.time_clock.overtime_methods ?? [];
-  const overtimeRates = setup?.time_clock.overtime_rates ?? [];
+  const overtimeMethods = setup?.overtime_methods ?? [];
 
 
 
@@ -524,8 +511,8 @@ export default function AddEditUserModal({
       return;
     }
 
-    if (formData.securityGroups.length === 0) {
-      alert("Please select at least one Primary Security Group");
+    if (mode === "add" && formData.password.length < 8) {
+      alert("Password (at least 8 characters) is required for a new user");
       return;
     }
 
@@ -534,9 +521,12 @@ export default function AddEditUserModal({
       return;
     }
 
+    const enabledDays = Object.entries(formData.allowedDays)
+      .filter(([, enabled]) => enabled)
+      .map(([day]) => day);
+
     // Validate login restrictions
     if (!formData.use24x7Access) {
-      const enabledDays = Object.entries(formData.allowedDays).filter(([_, enabled]) => enabled);
       if (enabledDays.length === 0) {
         alert("Please select at least one allowed day for login restrictions");
         return;
@@ -551,49 +541,46 @@ export default function AddEditUserModal({
       }
     }
 
-    // Build payload
+    // Build the compound payload (UserCompleteCreate / UserCompleteUpdate). The
+    // parent (UserSetup) routes it to POST /users/complete or PUT
+    // /users/{id}/complete in one transaction. Preferences are key/value strings.
     const payload = {
+      email: formData.email,
       username: formData.username,
-      // Only include password if provided (for add mode) or if user wants to change it (edit mode)
-      ...(mode === "add" || formData.password ? { password: formData.password || undefined } : {}),
+      ...(formData.password ? { password: formData.password } : {}),
 
       first_name: formData.firstName,
       last_name: formData.lastName,
-      email: formData.email,
       phone: formData.phone || null,
 
+      role: formData.roles[0],
       is_active: formData.active,
+      patient_access_level: formData.patientAccessLevel || null,
 
-      home_office_id: Number(formData.homeOffice),
+      home_office_id: formData.homeOffice ? Number(formData.homeOffice) : null,
       assigned_offices: formData.assignedOffices.map(Number),
 
-      roles: formData.roles.length > 0 ? formData.roles : [],
-      security_groups: formData.securityGroups.length > 0 ? formData.securityGroups : [],
+      group_ids: formData.groupMemberships
+        .map(Number)
+        .filter((n) => !Number.isNaN(n)),
 
-      // Group Memberships (array of group IDs or group codes)
-      group_memberships: formData.groupMemberships.length > 0 ? formData.groupMemberships : [],
+      ip_rules: formData.permittedIPs.map((ip) => ({
+        ip_address: ip,
+        rule_type: "allow",
+      })),
 
-      permitted_ips: formData.permittedIPs,
-
-      // Patient Access Level
-      patient_access_level: formData.patientAccessLevel || "all",
-
-      // Login Time Restrictions
       login_restrictions: {
-        use_24x7_access: formData.use24x7Access,
-        allowed_days: formData.use24x7Access ? null : Object.entries(formData.allowedDays)
-          .filter(([_, enabled]) => enabled)
-          .map(([day, _]) => day),
-        allowed_from: formData.use24x7Access ? null : formData.allowedFrom,
-        allowed_until: formData.use24x7Access ? null : formData.allowedUntil,
+        is_24_7: formData.use24x7Access,
+        allowed_days: formData.use24x7Access ? null : enabledDays.join(","),
+        start_time: formData.use24x7Access ? null : formData.allowedFrom,
+        end_time: formData.use24x7Access ? null : formData.allowedUntil,
       },
 
       time_clock: {
-        pay_rate: formData.timeClockPayRate
-          ? Number(formData.timeClockPayRate)
-          : null,
+        pay_rate: formData.timeClockPayRate ? Number(formData.timeClockPayRate) : null,
         overtime_method: formData.overtimeMethod || null,
         overtime_rate: formData.overtimeRate ? Number(formData.overtimeRate) : null,
+        clock_in_required: formData.clockInRequired,
       },
 
       preferences: {
@@ -602,14 +589,13 @@ export default function AddEditUserModal({
         default_navigation_search: formData.defaultNavigationSearch,
         default_search_by: formData.defaultSearchBy,
         default_referral_view: formData.defaultReferralView,
-
-        show_production_view: formData.showProductionView,
-        hide_provider_time: formData.hideProviderTime,
-        print_labels: formData.printLabelsForAppointments,
-        prompt_entry_date: formData.promptForEntryDate,
-        include_inactive_patients: formData.includeInactivePatientsInSearch,
-        hipaa_compliant_scheduler: formData.hipaaCompliantScheduler,
-        is_ortho_assistant: formData.isOrthoAssistant,
+        show_production_view: String(formData.showProductionView),
+        hide_provider_time: String(formData.hideProviderTime),
+        print_labels: String(formData.printLabelsForAppointments),
+        prompt_entry_date: String(formData.promptForEntryDate),
+        include_inactive_patients: String(formData.includeInactivePatientsInSearch),
+        hipaa_compliant_scheduler: String(formData.hipaaCompliantScheduler),
+        is_ortho_assistant: String(formData.isOrthoAssistant),
       },
     };
 
@@ -651,9 +637,7 @@ export default function AddEditUserModal({
   const moveAllOfficesToAssigned = () => {
     setFormData({
       ...formData,
-      assignedOffices: availableOffices.map(o =>
-        String(o.office_id)
-      ),
+      assignedOffices: availableOffices.map(o => String(o.id)),
     });
   };
 
@@ -829,13 +813,10 @@ export default function AddEditUserModal({
                       <label className="block text-xs font-bold text-[#1E3A8A] mb-1">
                         PRACTICE GROUP ID (PGID)
                       </label>
-                      <p className="font-bold text-[#1E293B] mb-1">
-                        {/* {systemPGID} - {systemPGIDName} */}
-                        {organization?.pgid} - {organization?.pgid_name}
-                      </p>
                       <p className="text-sm text-[#64748B]">
-                        This user will inherit data access permissions based on PGID {organization?.pgid}. 
-                        All users in this practice group share the same organizational boundary.
+                        This user inherits data access permissions from the current
+                        practice group. All users in the group share the same
+                        organizational boundary.
                       </p>
                     </div>
                   </div>
@@ -994,98 +975,42 @@ export default function AddEditUserModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
-                      Primary Security Group{" "}
-                      <span className="text-[#EF4444]">*</span>
+                      User Role / Type <span className="text-[#EF4444]">*</span>
                     </label>
                     <select
-                      value={formData.securityGroups[0] ?? ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          securityGroups: e.target.value ? [e.target.value] : [],
-                        })
+                      value={formData.roles[0] ?? ""}
+                      onChange={e =>
+                        setFormData({ ...formData, roles: e.target.value ? [e.target.value] : [] })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
+                      className={`w-full px-3 py-2 border-2 rounded-lg ${fieldError("roles")} focus:outline-none focus:border-[#3A6EA5]`}
                     >
-                      <option value="">Select Security Group</option>
-                      {securityGroups.map((group) => (
-                        <option key={group} value={group}>
-                          {group}
+                      <option value="">Select Role</option>
+                      {userRoles.map(role => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
-                      User Role / Type <span className="text-[#EF4444]">*</span>
+                      Patient Access Level
                     </label>
-                    {/* <select
-                      value={formData.userRole}
-                      onChange={(e) =>
-                        setFormData({ ...formData, userRole: e.target.value })
+                    <select
+                      value={formData.patientAccessLevel}
+                      onChange={e =>
+                        setFormData({ ...formData, patientAccessLevel: e.target.value })
                       }
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
                     >
-                      {userRoles.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
+                      <option value="">Select Access Level</option>
+                      {patientAccessLevels.map(lvl => (
+                        <option key={lvl.value} value={lvl.value}>
+                          {lvl.label}
                         </option>
                       ))}
-                    </select> */}
-                    <select
-                      value={formData.roles[0] ?? ""}
-                      onChange={e =>
-                        setFormData({ ...formData, roles: [e.target.value] })
-                      }
-                    >
-                      {userRoles.map(role => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>                  
+                    </select>
                   </div>
-                </div>
-              </div>
-
-              {/* Patient Access Level */}
-              <div>
-                <h3 className="font-bold text-[#1F3A5F] mb-4 uppercase tracking-wide border-b-2 border-[#E2E8F0] pb-2">
-                  Patient Access Level
-                </h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={formData.patientAccessLevel === "all"}
-                      onChange={() =>
-                        setFormData({
-                          ...formData,
-                          patientAccessLevel: "all",
-                        })
-                      }
-                      className="w-4 h-4 text-[#3A6EA5]"
-                    />
-                    <span className="text-[#1E293B]">
-                      Search patients in all offices
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={formData.patientAccessLevel === "assigned"}
-                      onChange={() =>
-                        setFormData({
-                          ...formData,
-                          patientAccessLevel: "assigned",
-                        })
-                      }
-                      className="w-4 h-4 text-[#3A6EA5]"
-                    />
-                    <span className="text-[#1E293B]">
-                      Search patients in assigned offices only
-                    </span>
-                  </label>
                 </div>
               </div>
 
@@ -1243,19 +1168,20 @@ export default function AddEditUserModal({
                           </div>
                         ))} */}
                         {availableOffices
-                          .filter(o => !formData.assignedOffices.includes(String(o.office_id)))
+                          .filter(o => !formData.assignedOffices.includes(String(o.id)))
                           .map(o => (
                             <div
-                              key={o.office_id}
+                              key={o.id}
                               onClick={() =>
                                 setFormData({
                                   ...formData,
-                                  assignedOffices: [...formData.assignedOffices, String(o.office_id)]
+                                  assignedOffices: [...formData.assignedOffices, String(o.id)]
                                 })
                               }
+                              className="px-3 py-2 hover:bg-white rounded cursor-pointer text-sm border border-transparent hover:border-[#3A6EA5] mb-1"
                             >
-                              <div>{o.office_name}</div>
-                              <div className="text-xs">OID: {o.office_oid}</div>
+                              <div className="font-bold text-[#1E293B]">{o.name}</div>
+                              <div className="text-xs text-[#64748B]">OID: {o.office_code}</div>
                             </div>
                         ))}
                     </div>
@@ -1299,12 +1225,12 @@ export default function AddEditUserModal({
                             className="px-3 py-2 bg-[#E8EFF7] hover:bg-[#F7F9FC] rounded cursor-pointer text-sm border border-[#3A6EA5] mb-1"
                           >
                             {(() => {
-                              const officeData = availableOffices.find(o => String(o.office_id) === office);
+                              const officeData = availableOffices.find(o => String(o.id) === office);
                               return (
                                 <>
-                                  <div className="font-bold text-[#1E293B]">{officeData?.office_name || office}</div>
+                                  <div className="font-bold text-[#1E293B]">{officeData?.name || office}</div>
                                   <div className="text-xs text-[#3A6EA5] font-bold">
-                                    OID: {officeData?.office_oid || "—"}
+                                    OID: {officeData?.office_code || "—"}
                                   </div>
                                 </>
                               );
@@ -1341,10 +1267,10 @@ export default function AddEditUserModal({
                     }
                   >
                     {availableOffices
-                      .filter(o => formData.assignedOffices.includes(String(o.office_id)))
+                      .filter(o => formData.assignedOffices.includes(String(o.id)))
                       .map(o => (
-                        <option key={o.office_id} value={o.office_id}>
-                          {o.office_name} (OID: {o.office_oid})
+                        <option key={o.id} value={o.id}>
+                          {o.name} (OID: {o.office_code})
                         </option>
                       ))}
                   </select>
@@ -1568,9 +1494,12 @@ export default function AddEditUserModal({
                       }
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
                     >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="none">None</option>
+                      <option value="">Select Method</option>
+                      {overtimeMethods.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -1593,6 +1522,18 @@ export default function AddEditUserModal({
                     </select>
                   </div>
                 </div>
+
+                <label className="flex items-center gap-2 cursor-pointer mt-4">
+                  <input
+                    type="checkbox"
+                    checked={formData.clockInRequired}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clockInRequired: e.target.checked })
+                    }
+                    className="w-4 h-4 rounded border-[#E2E8F0] text-[#3A6EA5]"
+                  />
+                  <span className="text-[#1E293B] font-bold">Clock-in required</span>
+                </label>
               </div>
             </div>
           )}

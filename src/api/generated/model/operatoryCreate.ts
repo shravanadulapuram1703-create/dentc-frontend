@@ -11,5 +11,6 @@ export interface OperatoryCreate {
   office_id: number;
   name: string;
   display_order?: number | null;
+  provider_id?: string | null;
   is_active?: boolean | null;
 }

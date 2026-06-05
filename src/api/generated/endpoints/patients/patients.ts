@@ -29,6 +29,7 @@ import type {
   AccountNoteRead,
   AccountNoteUpdate,
   ErrorResponse,
+  HTTPValidationError,
   ListAccountNotesParams,
   ListMedicalHistoryDetailsParams,
   ListMedicalHistoryRecordsParams,
@@ -58,6 +59,7 @@ import type {
   PatientAlertCreate,
   PatientAlertRead,
   PatientAlertUpdate,
+  PatientContext,
   PatientCreate,
   PatientInsuranceCreate,
   PatientInsuranceRead,
@@ -83,6 +85,98 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary Aggregated patient context for cross-module navigation
+ */
+export const getPatientContext = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientContext>(
+      {url: `/api/v1/patients/${patientId}/context`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientContextQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/context`
+    ] as const;
+    }
+
+
+export const getGetPatientContextQueryOptions = <TData = Awaited<ReturnType<typeof getPatientContext>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientContext>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientContextQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientContext>>> = ({ signal }) => getPatientContext(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientContext>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientContextQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientContext>>>
+export type GetPatientContextQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientContext<TData = Awaited<ReturnType<typeof getPatientContext>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientContext>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientContext>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientContext>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientContext<TData = Awaited<ReturnType<typeof getPatientContext>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientContext>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientContext>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientContext>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientContext<TData = Awaited<ReturnType<typeof getPatientContext>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientContext>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Aggregated patient context for cross-module navigation
+ */
+
+export function useGetPatientContext<TData = Awaited<ReturnType<typeof getPatientContext>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientContext>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientContextQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 
