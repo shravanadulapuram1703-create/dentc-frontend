@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { X, Search, DollarSign, Plus, Loader2 } from 'lucide-react';
 import { components } from '../../styles/theme';
-import { createPatientPayment } from '@/api/generated/endpoints/billing/billing';
+import { createPatientPayment, createPatientAdjustment } from '@/api/generated/endpoints/billing/billing';
+import { useDefinitions } from '../../hooks/useDefinitions';
 
 // MM/DD/YYYY (or any parseable string) -> YYYY-MM-DD for the API.
 const toIsoDate = (s: string): string => {
@@ -31,12 +32,6 @@ interface OutstandingProcedure {
   patAdj: number;
   remaining: number;
   newAmount: number;
-}
-
-interface PaymentCode {
-  code: string;
-  description: string;
-  type: 'Cash' | 'Check' | 'Credit Card' | 'Debit Card' | 'E-Check' | 'Third-Party';
 }
 
 interface Props {
@@ -70,26 +65,18 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
 
-  // Payment codes
-  const paymentCodes: PaymentCode[] = [
-    { code: 'H0006', description: 'PMT DST-American Express', type: 'Credit Card' },
-    { code: 'PF001', description: 'PMT DST-Care Credit', type: 'Third-Party' },
-    { code: '01005', description: 'PMT DST-Cash', type: 'Cash' },
-    { code: 'H0007', description: 'PMT DST-Check', type: 'Check' },
-    { code: 'H0008', description: 'PMT DST-Visa', type: 'Credit Card' },
-    { code: 'H0009', description: 'PMT DST-MasterCard', type: 'Credit Card' },
-    { code: 'H0010', description: 'PMT DST-Discover', type: 'Credit Card' },
-    { code: 'H0011', description: 'PMT DST-Debit Card', type: 'Debit Card' },
-    { code: 'H0012', description: 'PMT DST-E-Check', type: 'E-Check' }
-  ];
-
-  // Adjustment codes
-  const adjustmentCodes = [
-    { code: 'ADJ01', description: 'ADJ OFF - Courtesy Discount' },
-    { code: 'ADJ02', description: 'ADJ OFF - Write-Off' },
-    { code: 'ADJ03', description: 'ADJ OFF - Professional Adjustment' },
-    { code: 'ADJ04', description: 'ADJ OFF - Administrative Adjustment' }
-  ];
+  // Seeded lookups from /definitions (key1 = code/value, description = label).
+  const { definitions: paymentDefs } = useDefinitions('payment_method');
+  const { definitions: adjustmentDefs } = useDefinitions('adjustment');
+  const paymentCodes = paymentDefs.map((d) => ({
+    code: d.key1,
+    description: d.description,
+    type: d.key2 ?? '',
+  }));
+  const adjustmentCodes = adjustmentDefs.map((d) => ({
+    code: d.key1,
+    description: d.description,
+  }));
 
   // Outstanding procedures. There is no backend endpoint for per-procedure
   // payment allocation yet (the patient-payments resource records a flat payment
@@ -175,13 +162,45 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
     }
   };
 
-  const handleApplyAdjustment = () => {
-    // No backend: neither /patients/{id}/adjustments nor /patient-adjustments
-    // exist (both 404). See docs/patients/patients_backend_devreport.md.
-    alert(
-      'Adjustments are not yet available — the backend has no adjustments endpoint. ' +
-        'This is tracked as a backend gap.',
-    );
+  const handleApplyAdjustment = async () => {
+    const amount = parseFloat(adjustmentAmount);
+    if (!adjustmentAmount || Number.isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid adjustment amount');
+      return;
+    }
+    if (!adjustmentReason) {
+      alert('Please select an adjustment reason');
+      return;
+    }
+    const pid = Number(patientId);
+    if (!Number.isFinite(pid)) {
+      alert('Missing patient context. Please reopen the patient and try again.');
+      return;
+    }
+
+    const officeNum = office ? Number(String(office).replace(/\D/g, '')) : undefined;
+
+    setSaving(true);
+    try {
+      await createPatientAdjustment({
+        patient_id: pid,
+        office_id: officeNum && Number.isFinite(officeNum) ? officeNum : null,
+        adjustment_date: toIsoDate(transactionDate),
+        amount: amount.toFixed(2),
+        adjustment_type: adjustmentReason,
+        ...(notes ? { notes } : {}),
+      });
+
+      setAdjustmentAmount('');
+      setAdjustmentReason('');
+      onApplied?.();
+      onClose();
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      alert(detail || 'Failed to record adjustment. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -613,10 +632,15 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
             {activeTab === 'adjustments' && (
               <button
                 onClick={handleApplyAdjustment}
-                className={components.buttonPrimary + " flex items-center gap-2"}
+                disabled={saving}
+                className={components.buttonPrimary + " flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"}
               >
-                <DollarSign className="w-4 h-4" strokeWidth={2} />
-                APPLY
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                ) : (
+                  <DollarSign className="w-4 h-4" strokeWidth={2} />
+                )}
+                {saving ? 'APPLYING…' : 'APPLY'}
               </button>
             )}
             <button
