@@ -13,14 +13,18 @@ import {
   Search,
   X,
   Link2,
-  Circle
+  Circle,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { components } from '../../styles/theme';
+import { useListProgressNotes } from '@/api/generated/endpoints/clinical/clinical';
+import type { ProgressNoteRead } from '@/api/generated/model';
 
+// Display shape mapped from the backend ProgressNoteRead.
 interface ProgressNote {
-  id: string;
-  dos: string; // Date of Service
-  category: string;
+  id: number;
+  dos: string; // note_date
   toothNumbers: string[];
   surface?: string;
   region?: string;
@@ -32,9 +36,6 @@ interface ProgressNote {
   createdDate: string;
   createdBy: string;
   createdTime: string;
-  modifiedDate?: string;
-  modifiedBy?: string;
-  modifiedTime?: string;
   signedBy?: string;
 }
 
@@ -43,80 +44,66 @@ interface PatientData {
   name: string;
   dob: string;
   age: number;
-  gender: string;
-  phone: string;
-  email: string;
-  address: string;
 }
 
 interface OutletContext {
   patient: PatientData;
 }
 
-// Mock data
-const mockProgressNotes: ProgressNote[] = [
-  {
-    id: 'PRN001',
-    dos: '10/26/2023',
-    category: 'Preventive',
-    toothNumbers: [],
-    content: 'Completed prophy',
-    hasAttachments: false,
-    hasLinkedProcedures: true,
-    isSigned: true,
-    isStruckOff: false,
-    createdDate: '10/26/2023',
-    createdBy: 'ELIZABETHC',
-    createdTime: '11:50:12 AM (PST)',
-    signedBy: 'WEXFOR'
-  },
-  {
-    id: 'PRN002',
-    dos: '07/14/2023',
-    category: 'Restorative',
-    toothNumbers: ['18'],
-    surface: 'O',
-    content: '#18 core and crown prep. Pt reports with #18 onlay broken. Advised crown and post. Anes with 1 carp 2% lido w 1:100k epi. Removed old onlay and placed fiber glass post. Placed core and prep for crown. Temp crown placed. NV. #18 crown dist.',
-    hasAttachments: false,
-    hasLinkedProcedures: true,
-    isSigned: true,
-    isStruckOff: false,
-    createdDate: '07/14/2023',
-    createdBy: 'CARON3',
-    createdTime: '10:55:16 AM (PST)',
-    signedBy: 'WEXFOR'
-  },
-  {
-    id: 'PRN003',
-    dos: '04/06/2023',
-    category: 'Periodontics',
-    toothNumbers: [],
-    content: 'Pt reports with bleeding.\nRemoved temp. Deep lingual margin.\nNoted lingual margin short with affected dentin.\nGiven deep lingual margin and sufficient gingival coverage, affected dentin should remineralize. Renovate or affected dentin would result in loss of tooth due to invasion of biological width.\nWill monitor gingival health as indicator of decay arrest. Long term poor prognosis.\nNV. recall.',
+function fmtDate(value?: string | null): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? '—'
+    : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+}
+
+// signed_by is a numeric user id; a display name isn't exposed on the record.
+function mapProgressNote(n: ProgressNoteRead): ProgressNote {
+  const created = n.created_at ? new Date(n.created_at) : null;
+  return {
+    id: n.id,
+    dos: fmtDate(n.note_date),
+    toothNumbers: n.tooth ? n.tooth.split(/[\s,]+/).filter(Boolean) : [],
+    surface: n.surface ?? undefined,
+    region: n.region ?? undefined,
+    content: n.notes ?? '',
     hasAttachments: false,
     hasLinkedProcedures: false,
-    isSigned: false,
-    isStruckOff: false,
-    createdDate: '04/06/2023',
-    createdBy: 'CARON3',
-    createdTime: '07:41:17 AM (PST)',
-    modifiedDate: '04/06/2023',
-    modifiedBy: 'CARON3',
-    modifiedTime: '07:47:58 AM (PST)'
-  }
-];
+    isSigned: n.signed_by != null || n.signed_at != null,
+    isStruckOff: n.is_struck_off,
+    createdDate: created ? fmtDate(n.created_at) : '—',
+    createdTime: created && !Number.isNaN(created.getTime()) ? created.toLocaleTimeString('en-US') : '',
+    createdBy: n.created_by != null ? `User #${n.created_by}` : '—',
+    signedBy: n.signed_by != null ? `User #${n.signed_by}` : undefined,
+  };
+}
 
 export default function ProgressNotesListing() {
   const navigate = useNavigate();
   const { patientId } = useParams();
   const { patient } = useOutletContext<OutletContext>();
 
-  console.log('=== PROGRESS NOTES COMPONENT LOADED ===');
-  console.log('Patient:', patient);
-  console.log('PatientId:', patientId);
+  const numericPatientId = Number(patientId);
+  const validPatientId = Number.isFinite(numericPatientId);
 
-  // Safety check
+  const [filterType, setFilterType] = useState<string>('Show All (No Search Filter)');
+  const [filteringCriteria, setFilteringCriteria] = useState<string>('');
+  const [signatureFilter, setSignatureFilter] = useState(false);
+  const [hideStruckOff, setHideStruckOff] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
+
+  const itemsPerPage = 10;
+
+  // Load this patient's progress notes (size maxes at 200).
+  const notesQuery = useListProgressNotes(
+    { patient_id: numericPatientId, size: 200 },
+    { query: { enabled: validPatientId } },
+  );
+
+  // Safety check (hooks above run unconditionally first).
   if (!patient) {
-    console.log('ERROR: No patient data!');
     return (
       <div className="flex-1 overflow-auto bg-slate-50">
         <div className="max-w-[98%] mx-auto p-6">
@@ -129,41 +116,21 @@ export default function ProgressNotesListing() {
     );
   }
 
-  console.log('Patient data OK, rendering component...');
+  // Exclude soft-deleted notes; map to the display shape.
+  const allNotes: ProgressNote[] = (notesQuery.data?.items ?? [])
+    .filter((n) => !n.is_deleted)
+    .map(mapProgressNote);
 
-  const [filterType, setFilterType] = useState<string>('Show All (No Search Filter)');
-  const [filteringCriteria, setFilteringCriteria] = useState<string>('');
-  const [signatureFilter, setSignatureFilter] = useState(false);
-  const [hideStruckOff, setHideStruckOff] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAll, setShowAll] = useState(false);
-
-  const itemsPerPage = 10;
-
-  // Filter progress notes
-  const filteredNotes = mockProgressNotes.filter(note => {
-    // Apply signature filter
-    if (signatureFilter && !note.isSigned) {
-      return false;
-    }
-    // Apply hide struck-off filter
-    if (hideStruckOff && note.isStruckOff) {
-      return false;
-    }
-    // Apply text search filter
+  // Filter progress notes (client-side over the loaded page).
+  const filteredNotes = allNotes.filter((note) => {
+    if (signatureFilter && !note.isSigned) return false;
+    if (hideStruckOff && note.isStruckOff) return false;
     if (filteringCriteria.trim()) {
       const searchTerm = filteringCriteria.toLowerCase();
-      const searchableContent = [
-        note.content,
-        note.createdBy,
-        note.modifiedBy,
-        note.category,
-        note.toothNumbers.join(' ')
-      ].join(' ').toLowerCase();
-      
-      if (!searchableContent.includes(searchTerm)) {
-        return false;
-      }
+      const searchableContent = [note.content, note.createdBy, note.toothNumbers.join(' ')]
+        .join(' ')
+        .toLowerCase();
+      if (!searchableContent.includes(searchTerm)) return false;
     }
     return true;
   });
@@ -174,7 +141,7 @@ export default function ProgressNotesListing() {
     ? filteredNotes 
     : filteredNotes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleEditNote = (noteId: string, isSigned: boolean) => {
+  const handleEditNote = (noteId: number, isSigned: boolean) => {
     if (isSigned) {
       alert('Cannot edit signed progress notes');
       return;
@@ -222,7 +189,7 @@ export default function ProgressNotesListing() {
           </div>
 
           {/* Patient Summary */}
-          <div className="grid grid-cols-4 gap-4 pt-4 border-t-2 border-slate-200">
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t-2 border-slate-200">
             <div>
               <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 Patient
@@ -236,18 +203,6 @@ export default function ProgressNotesListing() {
               <div className="font-semibold text-slate-900">
                 {patient.dob} ({patient.age}y)
               </div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                Last Visit
-              </div>
-              <div className="font-semibold text-slate-900">10/26/2023</div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                Active Treatment
-              </div>
-              <div className="font-semibold text-green-700">Crown Prep #18</div>
             </div>
           </div>
         </div>
@@ -363,7 +318,25 @@ export default function ProgressNotesListing() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {paginatedNotes.length === 0 ? (
+                {notesQuery.isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center">
+                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" strokeWidth={2} />
+                    </td>
+                  </tr>
+                ) : notesQuery.isError ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center">
+                      <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" strokeWidth={2} />
+                      <button
+                        onClick={() => notesQuery.refetch()}
+                        className="text-sm font-semibold text-blue-600 hover:underline"
+                      >
+                        Try again
+                      </button>
+                    </td>
+                  </tr>
+                ) : paginatedNotes.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-3">
@@ -461,21 +434,10 @@ export default function ProgressNotesListing() {
                             {note.signedBy && (
                               <div className="text-green-700 font-semibold flex items-center gap-1 mt-1">
                                 <CheckCircle className="w-3 h-3" strokeWidth={2.5} />
-                                ({note.signedBy})
+                                Signed ({note.signedBy})
                               </div>
                             )}
                           </div>
-                          {note.modifiedDate && (
-                            <div className="pt-2 border-t border-slate-200">
-                              <span className="font-bold text-slate-700">Modified</span>
-                              <div className="text-slate-900 font-medium">
-                                {note.modifiedDate} {note.modifiedTime}
-                              </div>
-                              <div className="text-blue-700 font-semibold">
-                                {note.modifiedBy}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </td>
                     </tr>

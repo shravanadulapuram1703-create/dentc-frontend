@@ -1,26 +1,34 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  Save,
   X,
-  FileText,
   Upload,
   Scan,
   File,
   CheckCircle,
   Info,
   Plus,
-  Eye,
-  Calendar
+  Loader2,
 } from 'lucide-react';
+import {
+  createProgressNote,
+  updateProgressNote,
+  signProgressNote,
+  useGetProgressNote,
+} from '@/api/generated/endpoints/clinical/clinical';
+import { useListNoteMacros } from '@/api/generated/endpoints/procedures/procedures';
 
 interface PatientData {
   id: string;
   name: string;
   dob: string;
   age: number;
-  gender: string;
+  officeId?: string;
 }
+
+const errMsg = (err: unknown): string | undefined =>
+  (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
 
 interface OutletContext {
   patient: PatientData;
@@ -51,32 +59,22 @@ const clinicalCategories = [
   'Appointment Notes'
 ];
 
-const mockMacros: Macro[] = [
-  { id: 'M001', name: 'abutment and crown', category: 'Restorative', content: 'Abutment and crown placed. Patient tolerated procedure well. Post-op instructions provided.' },
-  { id: 'M002', name: 'bone graft', category: 'Oral & Maxillofacial Surgery', content: 'Bone graft procedure completed on tooth @@insert tooth number@@. Graft material placed successfully. Healing expected in 4-6 months.' },
-  { id: 'M003', name: 'Cold Sensitivity', category: 'Diagnostic', content: 'Patient reports cold sensitivity on tooth @@insert tooth number@@. Clinical exam reveals @@insert findings@@.' },
-  { id: 'M004', name: 'Comp exam for Periodontal', category: 'Periodontics', content: 'Comprehensive periodontal examination completed. Probing depths recorded. Mobility assessed. Treatment plan: @@insert treatment option@@.' },
-  { id: 'M005', name: 'Comprehensive Evalua', category: 'Diagnostic', content: 'Comprehensive evaluation completed. Full mouth examination. Radiographs reviewed. Diagnosis: @@insert diagnosis@@.' },
-  { id: 'M006', name: 'Consultation', category: 'Diagnostic', content: 'Consultation completed. Treatment options discussed with patient including risks, benefits, and alternatives. Patient questions answered.' },
-  { id: 'M007', name: 'crown prep', category: 'Restorative', content: 'Crown preparation completed on tooth @@insert tooth number@@. Impressions taken. Temporary crown placed. Patient tolerated procedure well.' },
-  { id: 'M008', name: 'crown prep - old crown', category: 'Restorative', content: 'Old crown removed from tooth @@insert tooth number@@. New crown preparation completed. Temporary crown placed.' },
-  { id: 'M009', name: 'crown seat *', category: 'Restorative', content: 'Crown seated on tooth @@insert tooth number@@. Occlusion checked and adjusted. Patient satisfied with fit and appearance.' },
-  { id: 'M010', name: 'DR. YUN EXAM TEMPLATE', category: 'Diagnostic', content: 'Clinical examination completed by Dr. Yun. Findings documented. Treatment plan reviewed with patient.' },
-  { id: 'M011', name: 'Endodontic Referral', category: 'Endodontics', content: 'Patient referred to endodontist for evaluation of tooth @@insert tooth number@@. Referral slip provided.' },
-  { id: 'M012', name: 'Ext and bone graft GTR', category: 'Oral & Maxillofacial Surgery', content: 'Extraction of tooth @@insert tooth number@@ completed. Bone graft and GTR membrane placed. Post-op instructions given.' },
-  { id: 'M013', name: 'Ext and bridge', category: 'Prosthodontics', content: 'Tooth @@insert tooth number@@ extracted. Bridge preparation initiated. Healing time required before final prosthesis.' }
-];
-
 interface AddEditProgressNoteProps {
   mode?: 'add' | 'edit' | 'view';
 }
 
 export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNoteProps) {
   const navigate = useNavigate();
-  const { patientId } = useParams();
+  const { patientId, noteId } = useParams();
   const { patient } = useOutletContext<OutletContext>();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const numericPatientId = Number(patientId);
+  const numericNoteId = Number(noteId);
+  const isExisting = (mode === 'edit' || mode === 'view') && Number.isFinite(numericNoteId);
+  const officeId = patient?.officeId ? Number(patient.officeId) : undefined;
 
   const [category, setCategory] = useState<string>('');
   const [macroSearch, setMacroSearch] = useState<string>('');
@@ -97,12 +95,32 @@ export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNot
   const [signaturePassword, setSignaturePassword] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Filter macros by category and search
-  const filteredMacros = mockMacros.filter(macro => {
-    if (category && macro.category !== category) return false;
-    if (macroSearch && !macro.name.toLowerCase().includes(macroSearch.toLowerCase())) return false;
-    return true;
-  });
+  // Note macros from /note-macros (category filtered client-side).
+  const { data: macrosData } = useListNoteMacros({ size: 200 });
+  const macros: Macro[] = (macrosData?.items ?? []).map((m) => ({
+    id: String(m.id),
+    name: m.name,
+    content: m.content,
+    category: m.category ?? '',
+  }));
+  // Backend macro `category` is a numeric code that doesn't match the UI's
+  // clinical-category names, so filter macros by name search only.
+  const filteredMacros = macros.filter(
+    (macro) => !macroSearch || macro.name.toLowerCase().includes(macroSearch.toLowerCase()),
+  );
+
+  // Load existing note for edit/view and hydrate the form.
+  const noteQuery = useGetProgressNote(numericNoteId, { query: { enabled: isExisting } });
+  useEffect(() => {
+    const n = noteQuery.data;
+    if (!n) return;
+    setToothNumbers(n.tooth ? n.tooth.split(/[\s,]+/).filter(Boolean) : []);
+    setSurface(n.surface ?? '');
+    setRegion(n.region ?? '');
+    setDos(n.note_date ? n.note_date.slice(0, 10) : '');
+    setClinicalNotes(n.notes ?? '');
+    setIsSigned(n.signed_by != null || n.signed_at != null);
+  }, [noteQuery.data]);
 
   const handleAddToothNumber = () => {
     if (toothInput.trim() && !toothNumbers.includes(toothInput.trim())) {
@@ -155,14 +173,23 @@ export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNot
     alert('Scanner interface would open here. This feature requires hardware integration.');
   };
 
-  const handleSign = () => {
-    if (!signatureUser || !signaturePassword) {
-      alert('Please enter username and password to sign');
+  const handleSign = async () => {
+    if (!isExisting) {
+      alert('Save the progress note before signing it.');
       return;
     }
-    // In production, verify credentials
-    setIsSigned(true);
-    alert('Progress note signed successfully');
+    setIsSaving(true);
+    try {
+      // The backend stamps the current authenticated user + time.
+      await signProgressNote(numericNoteId);
+      setIsSigned(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/progress-notes'] });
+      alert('Progress note signed.');
+    } catch (err) {
+      alert(errMsg(err) || 'Failed to sign the progress note.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClearSignature = () => {
@@ -178,10 +205,6 @@ export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNot
   };
 
   const handleSave = async () => {
-    if (!category) {
-      alert('Please select a category');
-      return;
-    }
     if (!dos) {
       alert('Please enter Date of Service');
       return;
@@ -190,28 +213,37 @@ export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNot
       alert('Please enter clinical notes');
       return;
     }
+    if (!Number.isFinite(numericPatientId)) {
+      alert('Missing patient context. Please reopen the patient and try again.');
+      return;
+    }
+
+    const body = {
+      note_date: dos,
+      notes: clinicalNotes.trim(),
+      tooth: toothNumbers.length ? toothNumbers.join(', ') : null,
+      surface: surface || null,
+      region: region || null,
+    };
 
     setIsSaving(true);
-
-    setTimeout(() => {
-      console.log('Saving progress note:', {
-        patientId,
-        category,
-        toothNumbers,
-        surface,
-        region,
-        dos,
-        clinicalNotes,
-        file: selectedFile?.name,
-        isSigned,
-        signedBy: isSigned ? signatureUser : undefined,
-        createdDate: new Date().toISOString(),
-        createdBy: 'CURRENT_USER'
-      });
-
-      setIsSaving(false);
+    try {
+      if (mode === 'edit' && isExisting) {
+        await updateProgressNote(numericNoteId, body);
+      } else {
+        await createProgressNote({
+          patient_id: numericPatientId,
+          office_id: officeId ?? null,
+          ...body,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/progress-notes'] });
       navigate(`/patient/${patientId}/progress-notes`);
-    }, 800);
+    } catch (err) {
+      alert(errMsg(err) || 'Failed to save the progress note. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -283,7 +315,7 @@ export default function AddEditProgressNote({ mode = 'add' }: AddEditProgressNot
               <div className="space-y-1 max-h-96 overflow-y-auto">
                 {filteredMacros.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-4">
-                    {category ? 'No macros found' : 'Select a category first'}
+                    {macroSearch ? 'No macros found' : 'Loading macros…'}
                   </p>
                 ) : (
                   filteredMacros.map((macro) => (
@@ -591,10 +623,14 @@ Clinical notes should include:
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={isSaving || !category || !dos || !clinicalNotes.trim()}
+                  disabled={isSaving || !dos || !clinicalNotes.trim()}
                   className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
-                  <CheckCircle className="w-5 h-5" strokeWidth={2} />
+                  {isSaving ? (
+                    <Loader2 className="w-5 h-5 animate-spin" strokeWidth={2} />
+                  ) : (
+                    <CheckCircle className="w-5 h-5" strokeWidth={2} />
+                  )}
                   {isSaving ? 'SAVING...' : 'SAVE'}
                 </button>
               </div>
