@@ -54,7 +54,11 @@ Genuine backend gaps are catalogued in [`patients_backend_devreport.md`](./patie
 > field-specific `searchBy` options) — `ListPatientsParams` only supports `search`, `chart_no`,
 > `home_office_id`, `is_active`, `preferred_provider_id`, `sort`/`order`. Search is now honest:
 > free-text (name/email/phone) or exact Chart #, office scope (current/all), include-inactive, and
-> A→Z/Z→A sort. Dropped the empty composed columns (insurance/next-appt/balance) — those live on the
+> A→Z/Z→A sort. **Advanced search restored (2026-06-06):** Search By now maps to typed exact filters
+> (Chart #/SSN/Medicaid ID/Email/Phone/Birth Date) plus an Advanced Filters row — Gender (from
+> /definitions; value is the label since patient.gender stores "Male" not "M"), registration date range
+> (created_at_from/to), and DOB range (dob_from/to) — all combinable + carried in Last Search.
+> Dropped the empty composed columns (insurance/next-appt/balance) — those live on the
 > profile. **Last Search** restores + re-runs the previous committed search. All params live-verified
 > against the backend. Edit-from-list and Print were removed (edit lives on the profile; print has no
 > backend) — see devreport.
