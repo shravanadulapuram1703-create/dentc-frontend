@@ -1,5 +1,22 @@
 # Patients — Backend Dev Report (gaps & contract mismatches)
 
+> **UPDATE 2026-06-06 — most gaps RESOLVED.** The backend shipped the fixes (see
+> [`PATIENTS_BACKEND_NOTES.md`](./PATIENTS_BACKEND_NOTES.md)); Orval was regenerated (228 paths).
+> **Frontend wired so far:** duplicate-check (`checkPatientDuplicate`), patient-notes `is_deleted`
+> filter + `updated_by`, enriched balance (insurance_balance / today_charges / last-payment amounts),
+> adjustments (`createPatientAdjustment`) + definitions-driven payment/adjustment codes
+> (`useDefinitions`).
+> **Still to wire frontend-side (endpoints now exist):** patient **documents**, **emergency contacts**,
+> **claim detail** (`/insurance-claims/{id}/detail`) + status/attachments, **progress-notes**
+> (sign/surface/region), **advanced patient search** filters, and replacing the legacy
+> `patientMetadataApi` (`/patients/metadata*`) with `useDefinitions(group_code)` in
+> AddNewPatient/EditPatientModal.
+> **Still backend-blocked (by design):** claim clearinghouse ops (validate/submit/refresh — Phase-4 EDI),
+> print/PDF export, and search by insurance carrier/plan or office-group.
+
+---
+
+
 Gaps found during the Patients modernization audit where the frontend cannot be completed with the
 existing `openapi.json` / generated Orval client. Format per project convention.
 
