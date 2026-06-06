@@ -180,8 +180,13 @@ Files: `patient/PatientNotesListing.tsx`, `AddEditPatientNote.tsx`, `ProgressNot
 > pending backend" notice (file/sub-type not persisted). **Live-verified** end-to-end against the
 > running backend (list→create→edit→delete); discovered the soft-delete list behavior (now filtered
 > client-side, logged in the devreport).
-> **Progress Notes remain pending** — blocked on backend (signature, tooth/surface, macros,
-> attachments); see devreport.
+> **✅ Progress Notes DONE (2026-06-06).** Backend shipped `/progress-notes` (+ `surface`/`region`/
+> `signed_by`/`signed_at`/`is_struck_off`) and `/progress-notes/{id}/sign`. Both screens are now wired:
+> list via `useListProgressNotes`; create/update via `create/updateProgressNote`; **sign** via
+> `signProgressNote` (backend stamps the current user + time); macros from `useListNoteMacros` (filtered
+> by name — backend macro `category` is a numeric code, not the UI clinical-category names). Live-verified
+> create→sign→list→delete. Caveat: progress-note **attachments** have no backend field (the file picker
+> isn't persisted).
 
 **Status: no backend integration at all — despite full backend CRUD existing.**
 
