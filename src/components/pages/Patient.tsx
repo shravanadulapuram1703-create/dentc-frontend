@@ -23,6 +23,7 @@ import { components } from '../../styles/theme';
 import { useListPatients } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ListPatientsParams, PatientRead } from '@/api/generated/model';
+import { useDefinitions } from '../../hooks/useDefinitions';
 
 interface PatientProps {
   onLogout: () => void;
@@ -32,18 +33,31 @@ interface PatientProps {
 
 const PAGE_SIZE = 25;
 
-// Backend-supported search modes. Free-text `search` does an ILIKE over
-// name/chart_no/email/phone; `chart_no` is an exact match. Field-specific exact
-// lookups (SSN, Medicaid, DOB, …) have no backend filter yet — see
-// docs/patients/patients_backend_devreport.md.
+// Search modes. `any` is free-text `search` (ILIKE over name/chart_no/email/
+// phone); the rest map to typed exact filters on listPatients.
 const searchByOptions = [
-  { value: 'any', label: 'Name / Email / Phone' },
-  { value: 'chart_no', label: 'Chart # (exact)' },
+  { value: 'any', label: 'Name / Any', placeholder: 'Search name, email, or phone…' },
+  { value: 'chart_no', label: 'Chart #', placeholder: 'Enter exact chart number…' },
+  { value: 'ssn', label: 'SSN', placeholder: 'Enter SSN…' },
+  { value: 'medicaid_id', label: 'Medicaid ID', placeholder: 'Enter Medicaid ID…' },
+  { value: 'email', label: 'Email', placeholder: 'Enter email…' },
+  { value: 'phone', label: 'Phone', placeholder: 'Enter phone…' },
+  { value: 'dob', label: 'Birth Date', placeholder: 'YYYY-MM-DD' },
 ] as const;
 
 type SearchBy = (typeof searchByOptions)[number]['value'];
 type SearchScope = 'current' | 'all';
 type SortOrder = 'asc' | 'desc';
+
+// Maps a non-'any' searchBy to its ListPatientsParams key.
+const SEARCH_FIELD_PARAM: Record<Exclude<SearchBy, 'any'>, keyof ListPatientsParams> = {
+  chart_no: 'chart_no',
+  ssn: 'ssn',
+  medicaid_id: 'medicaid_id',
+  email: 'email',
+  phone: 'phone',
+  dob: 'dob',
+};
 
 interface SearchSnapshot {
   searchText: string;
@@ -51,6 +65,11 @@ interface SearchSnapshot {
   scope: SearchScope;
   includeInactive: boolean;
   order: SortOrder;
+  gender: string;
+  regFrom: string;
+  regTo: string;
+  dobFrom: string;
+  dobTo: string;
 }
 
 // Extract a numeric office id from the app's "OFF-3" display id.
@@ -102,10 +121,12 @@ function buildParams(snap: SearchSnapshot, currentOffice: string, page: number):
   };
 
   const text = snap.searchText.trim();
-  if (snap.searchBy === 'chart_no') {
-    if (text) params.chart_no = text;
-  } else if (text) {
-    params.search = text;
+  if (text) {
+    if (snap.searchBy === 'any') {
+      params.search = text;
+    } else {
+      (params as Record<string, string | undefined>)[SEARCH_FIELD_PARAM[snap.searchBy]] = text;
+    }
   }
 
   if (snap.scope === 'current') {
@@ -115,6 +136,13 @@ function buildParams(snap: SearchSnapshot, currentOffice: string, page: number):
 
   // Exclude inactive unless explicitly requested.
   if (!snap.includeInactive) params.is_active = true;
+
+  // Advanced filters (combinable).
+  if (snap.gender) params.gender = snap.gender;
+  if (snap.regFrom) params.created_at_from = snap.regFrom;
+  if (snap.regTo) params.created_at_to = snap.regTo;
+  if (snap.dobFrom) params.dob_from = snap.dobFrom;
+  if (snap.dobTo) params.dob_to = snap.dobTo;
 
   return params;
 }
@@ -128,6 +156,16 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
   const [scope, setScope] = useState<SearchScope>('all');
   const [includeInactive, setIncludeInactive] = useState(false);
   const [order, setOrder] = useState<SortOrder>('asc');
+  // Advanced filters.
+  const [gender, setGender] = useState('');
+  const [regFrom, setRegFrom] = useState('');
+  const [regTo, setRegTo] = useState('');
+  const [dobFrom, setDobFrom] = useState('');
+  const [dobTo, setDobTo] = useState('');
+
+  // Gender values are stored as the label ("Male"), so use the definition's
+  // description (not key1) as the filter value.
+  const { definitions: genderDefs } = useDefinitions('gender');
 
   // Committed search (drives the query) + the snapshot LAST SEARCH restores.
   const [committed, setCommitted] = useState<SearchSnapshot | null>(null);
@@ -161,7 +199,7 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
   };
 
   const handleSearch = () => {
-    runSearch({ searchText, searchBy, scope, includeInactive, order });
+    runSearch({ searchText, searchBy, scope, includeInactive, order, gender, regFrom, regTo, dobFrom, dobTo });
   };
 
   const handleLastSearch = () => {
@@ -172,6 +210,11 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
     setScope(lastSnapshot.scope);
     setIncludeInactive(lastSnapshot.includeInactive);
     setOrder(lastSnapshot.order);
+    setGender(lastSnapshot.gender);
+    setRegFrom(lastSnapshot.regFrom);
+    setRegTo(lastSnapshot.regTo);
+    setDobFrom(lastSnapshot.dobFrom);
+    setDobTo(lastSnapshot.dobTo);
     runSearch(lastSnapshot);
   };
 
@@ -185,7 +228,7 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
   const toggleExpand = (id: number) => setExpandedId(expandedId === id ? null : id);
 
   const placeholder =
-    searchBy === 'chart_no' ? 'Enter exact chart number…' : 'Search name, email, or phone…';
+    searchByOptions.find((o) => o.value === searchBy)?.placeholder ?? 'Search…';
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
@@ -334,6 +377,78 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
                   <option value="asc">A → Z</option>
                   <option value="desc">Z → A</option>
                 </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Filters */}
+          <div className="px-4 pb-4">
+            <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
+              <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">
+                Advanced Filters
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] uppercase mb-1 tracking-wide">
+                    Gender
+                  </label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]"
+                  >
+                    <option value="">Any</option>
+                    {genderDefs.map((d) => (
+                      <option key={d.id} value={d.description}>
+                        {d.description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] uppercase mb-1 tracking-wide">
+                    Registered From
+                  </label>
+                  <input
+                    type="date"
+                    value={regFrom}
+                    onChange={(e) => setRegFrom(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] uppercase mb-1 tracking-wide">
+                    Registered To
+                  </label>
+                  <input
+                    type="date"
+                    value={regTo}
+                    onChange={(e) => setRegTo(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] uppercase mb-1 tracking-wide">
+                    DOB From
+                  </label>
+                  <input
+                    type="date"
+                    value={dobFrom}
+                    onChange={(e) => setDobFrom(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#475569] uppercase mb-1 tracking-wide">
+                    DOB To
+                  </label>
+                  <input
+                    type="date"
+                    value={dobTo}
+                    onChange={(e) => setDobTo(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]"
+                  />
+                </div>
               </div>
             </div>
           </div>
