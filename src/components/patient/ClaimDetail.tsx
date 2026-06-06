@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   useNavigate,
   useParams,
@@ -14,13 +14,19 @@ import {
   RefreshCw,
   Plus,
 } from "lucide-react";
-import { components } from "../../styles/theme";
 import {
   evaluateClaimAttachments,
   ClaimProcedureData,
 } from "../../utils/attachmentEvaluator";
 import { procedureCodes } from "../../data/procedureCodes";
-import { getClaim, type ClaimDetailResponse } from "../../services/ledgerApi";
+import {
+  getClaimDetail,
+  setClaimStatus,
+  updateInsuranceClaim,
+  deleteInsuranceClaim,
+} from "@/api/generated/endpoints/billing/billing";
+import { getInsuranceCarrier } from "@/api/generated/endpoints/insurance/insurance";
+import type { ClaimDetailResponse } from "@/api/generated/model";
 import { useAuth } from "../../contexts/AuthContext";
 
 // ✅ ONLY tooltip needed: Overpayment Disbursement (professional billing systems only explain what's truly complex)
@@ -115,7 +121,7 @@ export default function ClaimDetail() {
   try {
     const context = useOutletContext<OutletContext>();
     patient = context?.patient;
-  } catch (e) {
+  } catch {
     patient = undefined;
   }
 
@@ -151,83 +157,161 @@ export default function ClaimDetail() {
     return currentOffice;
   };
 
-  // Backend-driven claim data
-  const [claim, setClaim] = useState<ClaimDetailResponse | null>(null);
+  // Backend-driven claim data (composed: claim + procedures + payments + coverage)
+  const [data, setData] = useState<ClaimDetailResponse | null>(null);
+  const [carrierName, setCarrierName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   // ✅ Notes state management
   const [claimNotes, setClaimNotes] = useState<string>("");
   const [notesDirty, setNotesDirty] = useState(false);
 
-  // Load claim details from backend
-  useEffect(() => {
-    const fetchClaim = async () => {
-      if (!patientId || !claimId) {
-        setError("Patient ID and Claim ID are required");
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await getClaim(patientId, claimId);
-        setClaim(data);
-        setClaimNotes(data.notes || "");
-        setNotesDirty(false);
-      } catch (err: any) {
-        console.error("Error fetching claim details:", err);
-        setError(
-          err.response?.data?.error?.message ||
-            err.message ||
-            "Failed to load claim details",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchClaim();
-  }, [patientId, claimId]);
-
-  // Derive procedures array from claim
-  const procedures: ClaimProcedure[] = useMemo(() => {
-    if (!claim) return [];
-    return claim.procedures.map((p) => ({
-      id: p.procedure_id,
-      dos: p.dos,
-      code: p.code,
-      tooth: p.tooth || "",
-      surface: p.surface || "-",
-      description: p.description,
-      bref: p.bref,
-      submitted: p.submitted,
-      fee: p.fee,
-      estIns: p.est_ins,
-      insPayD: p.ins_paid,
-      insOverD: p.ins_overpayment,
-      insAllocat: p.ins_allocated,
-      overDtc: p.overpayment_disbursement,
-      writeOff1: p.write_off_1,
-      writeOff2: p.write_off_2,
-      writeOff3: p.write_off_3,
-      otherIns: p.other_insurance,
-      reasonCo: p.reason_code || "-",
-    }));
-  }, [claim]);
-
-  const totalRow = {
-    submitted: procedures.reduce((sum, p) => sum + p.submitted, 0),
-    fee: procedures.reduce((sum, p) => sum + p.fee, 0),
-    estIns: procedures.reduce((sum, p) => sum + p.estIns, 0),
-    insPayD: procedures.reduce((sum, p) => sum + p.insPayD, 0),
-    insOverD: procedures.reduce((sum, p) => sum + p.insOverD, 0),
-    insAllocat: procedures.reduce((sum, p) => sum + p.insAllocat, 0),
-    overDtc: procedures.reduce((sum, p) => sum + p.overDtc, 0),
-    writeOff1: procedures.reduce((sum, p) => sum + p.writeOff1, 0),
-    writeOff2: procedures.reduce((sum, p) => sum + p.writeOff2, 0),
-    writeOff3: procedures.reduce((sum, p) => sum + p.writeOff3, 0),
-    otherIns: procedures.reduce((sum, p) => sum + p.otherIns, 0),
+  const num = (s?: string | number | null): number => {
+    if (s == null) return 0;
+    const n = typeof s === "number" ? s : parseFloat(s);
+    return Number.isNaN(n) ? 0 : n;
   };
+  const fmtDate = (s?: string | null): string => {
+    if (!s) return "-";
+    const d = new Date(s);
+    return Number.isNaN(d.getTime())
+      ? s
+      : d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+  };
+  const errMsg = (err: unknown): string | undefined =>
+    (err as { response?: { data?: { detail?: string; error?: { message?: string } } } })?.response
+      ?.data?.detail ||
+    (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+      ?.message;
+
+  // Load composed claim detail from /insurance-claims/{id}/detail.
+  const loadClaim = useCallback(async () => {
+    if (!claimId) {
+      setError("Claim ID is required");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getClaimDetail(claimId);
+      setData(res);
+      setClaimNotes(res.claim.notes || "");
+      setNotesDirty(false);
+      if (res.claim.carrier_id != null) {
+        getInsuranceCarrier(res.claim.carrier_id)
+          .then((c) => setCarrierName(c.name))
+          .catch(() => setCarrierName(""));
+      } else {
+        setCarrierName("");
+      }
+    } catch (err) {
+      console.error("Error fetching claim details:", err);
+      setError(errMsg(err) || "Failed to load claim details");
+    } finally {
+      setLoading(false);
+    }
+  }, [claimId]);
+
+  useEffect(() => {
+    loadClaim();
+  }, [loadClaim]);
+
+  // Adapt the composed response into the shape this screen renders. Fields the
+  // backend doesn't expose (subscriber, employer, ICD-10, check/bank/EOB) show "-".
+  const claim = useMemo(() => {
+    if (!data) return null;
+    const c = data.claim;
+    const billed = num(c.total_billed);
+    const estIns = num(c.est_insurance);
+    const paid = num(c.total_paid);
+    return {
+      claim_id: c.id,
+      claim_number: c.claim_number,
+      billing_order: c.billing_order || "-",
+      date_of_service_from: [
+        fmtDate(c.date_of_service_from),
+        c.date_of_service_to ? fmtDate(c.date_of_service_to) : null,
+      ]
+        .filter(Boolean)
+        .join(" – "),
+      created_by: c.created_by != null ? `User #${c.created_by}` : "-",
+      created_date: fmtDate(c.created_at),
+      created_time: "",
+      last_status_update_date: fmtDate(c.submitted_date),
+      icd10_codes: "-",
+      status: c.status,
+      claim_type: c.claim_type,
+      claim_sent_date: fmtDate(c.submitted_date),
+      claim_close_date: fmtDate(c.close_date),
+      claim_closed_by: "-",
+      dxc_attachment_id: "-",
+      notes: c.notes || "",
+      patient_info: {
+        patient_name: patient?.name || "-",
+        patient_id: patientId || String(c.patient_id),
+        patient_dob: patient?.dob || "-",
+        subscriber_name: "-",
+        subscriber_id: "-",
+        subscriber_dob: "-",
+      },
+      coverage_info: {
+        insurance_carrier:
+          carrierName || (c.carrier_id != null ? `Carrier #${c.carrier_id}` : "-"),
+        group_plan: c.ins_plan_id != null ? `Plan #${c.ins_plan_id}` : "-",
+        employer_name: "-",
+        benefits_used: "-",
+      },
+      amounts: {
+        total_submitted_fees: billed,
+        total_fee: billed,
+        total_est_insurance: estIns,
+        total_insurance_paid: paid,
+        variance: estIns - paid,
+      },
+      payment_info: {
+        check_number: null as string | null,
+        bank_number: null as string | null,
+        eob_number: null as string | null,
+      },
+    };
+  }, [data, patient, patientId, carrierName]);
+
+  // Derive procedures from the composed response, joining coverage by procedure_id.
+  const procedures: ClaimProcedure[] = useMemo(() => {
+    if (!data) return [];
+    const covByProc = new Map(
+      data.coverage.filter((cv) => cv.procedure_id).map((cv) => [cv.procedure_id as string, cv]),
+    );
+    return data.procedures.map((p) => {
+      const cov = covByProc.get(p.id);
+      const description =
+        procedureCodes.find((pc) => pc.code === p.procedure_code)?.description ?? p.procedure_code;
+      return {
+        id: p.id,
+        dos: fmtDate(p.date_of_service),
+        code: p.procedure_code,
+        tooth: p.tooth || "",
+        surface: p.surface || "-",
+        description,
+        bref: p.billing_order || "-",
+        submitted: num(p.fee),
+        fee: num(p.fee),
+        estIns: num(p.insurance_estimate),
+        insPayD: num(cov?.prim_ins_paid),
+        insOverD: 0,
+        insAllocat: num(cov?.prim_ins_paid) + num(cov?.sec_ins_paid),
+        overDtc: 0,
+        writeOff1: num(cov?.prim_ins_adjust),
+        writeOff2: num(cov?.sec_ins_adjust),
+        writeOff3: 0,
+        otherIns: num(cov?.sec_ins_paid),
+        reasonCo: "-",
+      };
+    });
+  }, [data]);
 
   // ✅ Evaluate attachment requirements dynamically
   const attachmentEvaluation = useMemo(() => {
@@ -248,58 +332,79 @@ export default function ClaimDetail() {
   const hasBlockingError =
     attachmentEvaluation.validationSeverity === "error";
 
-  // ✅ Handle save (placeholder - wire to backend when available)
-
-  const handleValidateClaim = () => {
-    alert("Validating claim with clearinghouse...");
-  };
-
-  const handleClaimAttachments = () => {
-    alert("Opening Claim Attachment Manager...");
-  };
-
-  const handleClaimFillOut = () => {
-    alert("Opening Claim Fill-Out Information...");
-  };
-
-  const handleInsurancePayment = () => {
-    alert("Opening Insurance Payment Entry...");
-  };
-
-  const handleDeleteClaim = () => {
-    if (
-      confirm("Are you sure you want to delete this claim?")
-    ) {
-      alert("Claim deleted");
-      navigate(`/patient/${patientId}/ledger`);
+  // Save editable claim notes via PATCH /insurance-claims/{id}.
+  const handleSave = async () => {
+    if (!claimId) return;
+    setBusy(true);
+    try {
+      await updateInsuranceClaim(claimId, { notes: claimNotes });
+      setNotesDirty(false);
+      await loadClaim();
+    } catch (err) {
+      alert(errMsg(err) || "Failed to save claim notes. Please try again.");
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleDirectPrint = () => {
-    alert("Printing ADA Dental Claim Form...");
-  };
-
-  const handleCloseClaim = () => {
-    if (confirm("Are you sure you want to close this claim?")) {
-      alert("Claim closed");
+  // Manual status transitions via POST /insurance-claims/{id}/status (the backend
+  // sets submitted/paid/close dates and closes the claim on "closed").
+  const handleCloseClaim = async () => {
+    if (!claimId || !confirm("Are you sure you want to close this claim?")) return;
+    setBusy(true);
+    try {
+      await setClaimStatus(claimId, { status: "closed" });
       navigate(`/patient/${patientId}/ledger`);
+    } catch (err) {
+      alert(errMsg(err) || "Failed to close claim.");
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleEClaim = () => {
-    alert("Adding claim to E-Claim batch queue...");
+  const handleUpdateStatus = async () => {
+    if (!claimId) return;
+    const next = window.prompt(
+      "Set claim status (e.g. submitted, paid, denied, closed):",
+      claim?.status || "",
+    );
+    if (!next || !next.trim()) return;
+    setBusy(true);
+    try {
+      await setClaimStatus(claimId, { status: next.trim() });
+      await loadClaim();
+    } catch (err) {
+      alert(errMsg(err) || "Failed to update claim status.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleUpdateStatus = () => {
-    alert("Updating claim status from clearinghouse...");
+  const handleDeleteClaim = async () => {
+    if (!claimId || !confirm("Are you sure you want to delete this claim?")) return;
+    setBusy(true);
+    try {
+      await deleteInsuranceClaim(claimId);
+      navigate(`/patient/${patientId}/ledger`);
+    } catch (err) {
+      alert(errMsg(err) || "Failed to delete claim.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSave = () => {
-    // ✅ Save notes along with other claim data
-    // In production, this would call updateClaim(patientId, claimId, { notes: claimNotes })
-    setNotesDirty(false);
-    alert("Claim saved");
-  };
+  // Not yet available (clearinghouse = Phase-4 EDI; print = no report service;
+  // attachment manager / fill-out / payment entry are separate builds).
+  const handleValidateClaim = () =>
+    alert("Clearinghouse validation is not available yet (Phase-4 EDI).");
+  const handleEClaim = () =>
+    alert("E-claim submission is not available yet (Phase-4 EDI). Use UPDATE STATUS for manual status changes.");
+  const handleClaimAttachments = () => alert("Claim attachment manager is not built yet.");
+  const handleClaimFillOut = () => alert("Claim fill-out is not available yet.");
+  const handleInsurancePayment = () =>
+    alert("Insurance payment entry from the claim screen is not available yet.");
+  const handleDirectPrint = () =>
+    alert("Claim form printing is not available yet (no report service).");
 
   const handleCancel = () => {
     navigate(`/patient/${patientId}/ledger`);
@@ -911,10 +1016,11 @@ export default function ClaimDetail() {
               </button>
               <button
                 onClick={handleSave}
-                className="px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide flex items-center gap-1"
+                disabled={busy}
+                className="px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-3 h-3" strokeWidth={2} />
-                SAVE
+                {busy ? "SAVING…" : "SAVE"}
               </button>
               <button
                 onClick={handleCancel}
