@@ -53,7 +53,7 @@ export interface InsurancePlan {
 }
 
 export interface DentalInsurance {
-  primary: InsurancePlan;
+  primary: InsurancePlan | null;
   secondary: InsurancePlan | null;
 }
 

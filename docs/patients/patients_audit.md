@@ -109,10 +109,20 @@ Files: `PatientShellLayout.tsx`, `patient/overview/*`, `PatientContextHeader.tsx
 >   insurance, so it can't replace the overview's per-resource composition. Wiring the real endpoints (as
 >   above) is the correct backend-driven approach. `getPatientByChartNo` **is** defined — the audit's
 >   "ReferenceError" was a false positive.
+> - **Insurance card now shows real data (2026-06-05):** the overview `InsuranceCard` was showing "—"
+>   for carrier/group/phone/subscriber because those live on the plan/carrier/subscriber, not the
+>   patient-insurance link record. `PatientOverview` now loads `listPatientInsurance` and resolves each
+>   record by id — `getInsurancePlan(ins_plan_id)` → `getInsuranceCarrier(plan.carrier_id)` and
+>   `getInsuranceSubscriber(subscriber_id)` — to fill carrier name/phone, group, subscriber, and the
+>   remaining amounts (which are on the record). **Resolution is by-id, not a size-200 list**, because the
+>   reference tables are large (e.g. plan id 11667). `InsuranceCard` was rewritten to render dental
+>   primary/secondary + real **medical** consistently via a shared plan renderer. Category =
+>   `legacy_plan_type` ("D"/"M"); order = `insurance_type` ("primary"/"secondary"). Live-verified.
 > - **Remaining:** the demographic mapper (`mapPatientToViewModel`) still expects a nested
 >   `PatientDetails` shape and uses camelCase view types (`overview/types.ts`); account-members has no
 >   backend endpoint (gap); the responsible-party edit affordance is inert; `PatientOverview` still calls
->   the imperative `getPatientDetails` for identity+insurance (not React-Query-deduped with the shell).
+>   the imperative `getPatientDetails` for identity+insurance (not React-Query-deduped with the shell);
+>   insurance is read-only here (add/update/remove + eligibility verification not yet built).
 
 **Status (original): functional but architecturally redundant.**
 

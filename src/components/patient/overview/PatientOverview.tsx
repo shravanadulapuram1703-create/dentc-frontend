@@ -27,11 +27,32 @@ import {
   mapResponsibleParty,
 } from "./utils";
 import { useAuth } from "../../../contexts/AuthContext";
-import { useListPatientRecalls } from "@/api/generated/endpoints/patients/patients";
+import { useListPatientRecalls, useListPatientInsurance } from "@/api/generated/endpoints/patients/patients";
 import { useGetPatientBalance } from "@/api/generated/endpoints/billing/billing";
 import { useListAppointments } from "@/api/generated/endpoints/appointments/appointments";
 import { useListOffices } from "@/api/generated/endpoints/organization/organization";
-import type { PatientBalance, AppointmentRead, PatientRecallRead } from "@/api/generated/model";
+import {
+  getInsurancePlan,
+  getInsuranceCarrier,
+  getInsuranceSubscriber,
+} from "@/api/generated/endpoints/insurance/insurance";
+import type {
+  PatientBalance,
+  AppointmentRead,
+  PatientRecallRead,
+  PatientInsuranceRead,
+  InsurancePlanRead,
+  InsuranceCarrierRead,
+  InsuranceSubscriberRead,
+} from "@/api/generated/model";
+import type { DentalInsurance, InsurancePlan } from "./types";
+
+// Format a money string (e.g. "1500.0000") for display.
+const fmtMoney = (s?: string | null): string => {
+  if (s == null) return "—";
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? "—" : `$${n.toFixed(2)}`;
+};
 
 // MM/DD/YYYY or em dash.
 const fmtDate = (value?: string | null): string => {
@@ -70,6 +91,59 @@ export default function PatientOverview() {
     { query: { enabled: validId } },
   );
   const officesQuery = useListOffices({ size: 200 });
+
+  // Patient insurance is a thin link record; resolve plan -> carrier and the
+  // subscriber to display carrier/group/phone/subscriber. Plans/carriers/
+  // subscribers are reference tables fetched once and mapped by id (size 200 cap).
+  const insuranceQuery = useListPatientInsurance(
+    { patient_id: numericId, size: 50 },
+    { query: { enabled: validId } },
+  );
+
+  // Resolve plan/carrier/subscriber by id. The reference tables are large, so a
+  // size-capped list won't contain the needed ids — fetch each by id when the
+  // patient's (few) insurance records load.
+  const [insMaps, setInsMaps] = useState<{
+    plans: Record<number, InsurancePlanRead>;
+    carriers: Record<number, InsuranceCarrierRead>;
+    subscribers: Record<number, InsuranceSubscriberRead>;
+  }>({ plans: {}, carriers: {}, subscribers: {} });
+
+  useEffect(() => {
+    const recs = insuranceQuery.data?.items ?? [];
+    if (recs.length === 0) {
+      setInsMaps({ plans: {}, carriers: {}, subscribers: {} });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const planIds = [...new Set(recs.map((r) => r.ins_plan_id).filter((x): x is number => x != null))];
+      const subIds = [...new Set(recs.map((r) => r.subscriber_id).filter((x): x is number => x != null))];
+
+      const plans: Record<number, InsurancePlanRead> = {};
+      (await Promise.all(planIds.map((id) => getInsurancePlan(id).catch(() => null)))).forEach((p) => {
+        if (p) plans[p.id] = p;
+      });
+
+      const carrierIds = [
+        ...new Set(Object.values(plans).map((p) => p.carrier_id).filter((x): x is number => x != null)),
+      ];
+      const carriers: Record<number, InsuranceCarrierRead> = {};
+      (await Promise.all(carrierIds.map((id) => getInsuranceCarrier(id).catch(() => null)))).forEach((c) => {
+        if (c) carriers[c.id] = c;
+      });
+
+      const subscribers: Record<number, InsuranceSubscriberRead> = {};
+      (await Promise.all(subIds.map((id) => getInsuranceSubscriber(id).catch(() => null)))).forEach((s) => {
+        if (s) subscribers[s.id] = s;
+      });
+
+      if (!cancelled) setInsMaps({ plans, carriers, subscribers });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [insuranceQuery.data]);
   const officeName = (id?: number | null): string => {
     if (id == null) return "—";
     return officesQuery.data?.items.find((o) => o.id === id)?.name ?? `Office ${id}`;
@@ -191,44 +265,51 @@ export default function PatientOverview() {
     );
   }
 
-  // Helper function to safely convert balance values (handles both string and number)
-  const safeToFixed = (value: string | number | null | undefined, decimals: number = 2): string => {
-    if (value === null || value === undefined) return "0.00";
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? "0.00" : num.toFixed(decimals);
-  };
-
   // Map API response to view model format
   const patientData = mapPatientToViewModel(patientDetails);
   const responsibleParty = mapResponsibleParty(patientDetails);
   
-  // Extract data from API response
-  const defaultInsurancePlan = {
-    carrierName: "",
-    groupNumber: "",
-    carrierPhone: "",
-    subscriber: "",
-    indMaxRemain: "$0.00",
-    indDedRemain: "$0.00",
+  // Resolve patient insurance link records -> plan -> carrier (+ subscriber).
+  // Remaining amounts live on the link record; carrier/group/phone/subscriber
+  // are resolved from the plan/carrier/subscriber reference tables by id.
+  const buildInsurancePlan = (rec: PatientInsuranceRead): InsurancePlan => {
+    const plan = rec.ins_plan_id != null ? insMaps.plans[rec.ins_plan_id] : undefined;
+    const carrier = plan?.carrier_id != null ? insMaps.carriers[plan.carrier_id] : undefined;
+    const sub = rec.subscriber_id != null ? insMaps.subscribers[rec.subscriber_id] : undefined;
+    return {
+      carrierName: carrier?.name ?? "",
+      groupNumber: plan?.group_number ?? sub?.group_number ?? "",
+      carrierPhone: carrier?.phone ?? "",
+      subscriber: sub ? [sub.sub_last_name, sub.sub_first_name].filter(Boolean).join(", ") : "",
+      indMaxRemain: fmtMoney(rec.max_remaining),
+      indDedRemain: fmtMoney(rec.deductible_remaining),
+    };
   };
-  
-  const dentalInsurance = {
-    primary: patientDetails.insurance?.primary_dental ? {
-      carrierName: patientDetails.insurance.primary_dental.carrier_name || "",
-      groupNumber: patientDetails.insurance.primary_dental.group_number || "",
-      carrierPhone: patientDetails.insurance.primary_dental.carrier_phone || "",
-      subscriber: patientDetails.insurance.primary_dental.subscriber_name || "",
-      indMaxRemain: `$${safeToFixed(patientDetails.insurance.primary_dental.individual_max_remaining)}`,
-      indDedRemain: `$${safeToFixed(patientDetails.insurance.primary_dental.individual_deductible_remaining)}`,
-    } : defaultInsurancePlan,
-    secondary: patientDetails.insurance?.secondary_dental ? {
-      carrierName: patientDetails.insurance.secondary_dental.carrier_name || "",
-      groupNumber: patientDetails.insurance.secondary_dental.group_number || "",
-      carrierPhone: patientDetails.insurance.secondary_dental.carrier_phone || "",
-      subscriber: patientDetails.insurance.secondary_dental.subscriber_name || "",
-      indMaxRemain: `$${safeToFixed(patientDetails.insurance.secondary_dental.individual_max_remaining)}`,
-      indDedRemain: `$${safeToFixed(patientDetails.insurance.secondary_dental.individual_deductible_remaining)}`,
-    } : null,
+
+  // Category (dental/medical) is `legacy_plan_type` ("D"/"M"); the order
+  // (primary/secondary) is the `insurance_type` field.
+  const activeInsurance = (insuranceQuery.data?.items ?? []).filter((r) => r.is_active);
+  const category = (r: PatientInsuranceRead) => (r.legacy_plan_type ?? "").trim().toUpperCase();
+  const dentalRecs = activeInsurance.filter((r) => category(r).startsWith("D"));
+  const medicalRecs = activeInsurance.filter((r) => category(r).startsWith("M"));
+
+  const orderOf = (r: PatientInsuranceRead) => (r.insurance_type ?? "").trim().toLowerCase();
+  const planFor = (
+    recs: PatientInsuranceRead[],
+    order: string,
+    fallbackIdx: number,
+  ): InsurancePlan | null => {
+    const rec = recs.find((r) => orderOf(r) === order) ?? recs[fallbackIdx];
+    return rec ? buildInsurancePlan(rec) : null;
+  };
+
+  const dentalInsurance: DentalInsurance = {
+    primary: planFor(dentalRecs, "primary", 0),
+    secondary: planFor(dentalRecs, "secondary", 1),
+  };
+  const medicalInsurance: DentalInsurance = {
+    primary: planFor(medicalRecs, "primary", 0),
+    secondary: planFor(medicalRecs, "secondary", 1),
   };
   
   const accountMembers = patientDetails.account_members?.map(member => ({
@@ -332,6 +413,7 @@ export default function PatientOverview() {
           />
           <InsuranceCard
             dentalInsurance={dentalInsurance}
+            medicalInsurance={medicalInsurance}
             showMedical={true}
             onInsuranceStatusClick={handleInsuranceStatusClick}
           />
