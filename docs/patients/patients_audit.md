@@ -219,9 +219,14 @@ Files: `pages/PatientLedger.tsx`, `patient/ClaimDetail.tsx`, `patient/PaymentsAd
 > **Backend-blocked (documented):** Add Adjustment (no `/adjustments` nor `patient-adjustments`),
 > payment/adjustment **code** lookups (`/metadata/*-codes` 404), and per-procedure payment allocation —
 > the adjustments "Apply" now shows an honest "no backend" message.
-> **Claims:** `insurance-claims` exists but is a **flat** record (no `procedures[]`/`coverage`/`payment`/
-> `attachments`), so `ClaimDetail`'s rich view can't be backed without a composed claim-detail endpoint
-> — left as a documented gap (see devreport).
+> **Claims:** ✅ **DONE (2026-06-06).** The backend added the composed `GET /insurance-claims/{id}/detail`
+> (`{claim, procedures, payments, coverage}`). `ClaimDetail` now loads it (was a phantom 404), adapts it
+> to the screen (joins coverage by procedure_id, resolves carrier, patient from shell ctx), and wires
+> real **SAVE** (`updateInsuranceClaim`), **CLOSE/UPDATE STATUS** (`setClaimStatus`), **DELETE**
+> (`deleteInsuranceClaim`). Clearinghouse validate/e-claim, print, and attachment-manager remain honest
+> "not available" (Phase-4 EDI / no report service / separate build). The PatientLedger "create claim
+> from procedures" flow still uses the dead `ledgerApi` phantom route → should move to
+> `createInsuranceClaim` (separate cleanup).
 
 **Status (original): ledger reads work; claims/payments are stubbed; insurance unwired.**
 
