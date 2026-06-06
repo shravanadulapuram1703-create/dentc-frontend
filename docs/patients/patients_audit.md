@@ -300,7 +300,7 @@ Files: `services/patient.service.ts`, `patientApi.ts`, `patientMetadataApi.ts`, 
 - [ ] **Updates**: demographic/contact/insurance/status persist via `updatePatient`/insurance endpoints
 - [x] **Notes**: list/create/edit/delete via `*PatientNote` endpoints; real author/audit fields _(Patient Notes done; Progress Notes pending backend)_
 - [ ] **Insurance**: add/update/remove via `*PatientInsurance`; primary/secondary panels live
-- [x] **Ledger/Balances**: balances tab now uses real `getPatientBalance` _(payments/adjustments/claims remain; adjustments + codes backend-blocked)_
+- [x] **Ledger/Balances**: real `getPatientBalance`; Add Payment (`patient-payments`), Add Adjustment (`patient-adjustments` + `/definitions` codes), Claim Detail (`/insurance-claims/{id}/detail` + status/attachments), and create-claim-from-procedures (`createInsuranceClaim` + `updatePatientProcedure`) all wired _(clearinghouse e-claim/validate + print remain backend-blocked — Phase-4 EDI / no report service)_
 - [ ] **Documents**: pending backend (see devreport)
 - [ ] **Scheduler integration**: appointments shown from appointments API; schedule/reschedule links
 - [ ] **No camelCase on API data**; **no mock/hardcoded business data**
