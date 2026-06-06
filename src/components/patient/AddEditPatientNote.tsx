@@ -539,6 +539,14 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
               </div>
               <div>
                 <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                  Last Modified By
+                </div>
+                <div className="text-sm font-medium text-blue-900">
+                  {noteQuery.data?.updated_by != null ? `User #${noteQuery.data.updated_by}` : '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
                   Last Modified Date
                 </div>
                 <div className="text-sm font-medium text-blue-900">

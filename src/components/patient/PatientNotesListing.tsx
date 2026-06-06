@@ -85,10 +85,11 @@ export default function PatientNotesListing() {
 
   const itemsPerPage = 10;
 
-  // Load this patient's notes. `size` maxes at 200 on list endpoints; a single
-  // patient is unlikely to exceed that, so filtering/paging stays client-side.
+  // Load this patient's active notes. `size` maxes at 200 on list endpoints; a
+  // single patient is unlikely to exceed that, so type filtering/paging stays
+  // client-side. Soft-deleted notes are excluded server-side via is_deleted.
   const notesQuery = useListPatientNotes(
-    { patient_id: numericPatientId, size: 200 },
+    { patient_id: numericPatientId, size: 200, is_deleted: false },
     { query: { enabled: validPatientId } },
   );
 
@@ -100,11 +101,7 @@ export default function PatientNotesListing() {
     },
   });
 
-  // The list endpoint returns soft-deleted notes (DELETE sets is_deleted=true)
-  // and has no is_deleted filter param, so exclude them here.
-  const allNotes: PatientNote[] = (notesQuery.data?.items ?? [])
-    .filter((note) => !note.is_deleted)
-    .map(mapNote);
+  const allNotes: PatientNote[] = (notesQuery.data?.items ?? []).map(mapNote);
 
   // Filter patient notes by type (client-side over the loaded page).
   const filteredNotes = allNotes.filter(

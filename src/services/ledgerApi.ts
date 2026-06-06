@@ -51,6 +51,7 @@ export interface LedgerResponse {
 export interface BalancesResponse {
   account_balance: number;
   patient_balance: number;
+  insurance_balance: number;
   estimated_insurance: number;
   estimated_patient: number;
   aging: {
@@ -61,11 +62,10 @@ export interface BalancesResponse {
     age_120: number;
   };
   recent_activity: {
-    // Today's non-void payments (backend `recent_activity.today`).
-    today: number;
-    // The backend exposes only the dates of the most recent payments, not amounts.
-    last_insurance_payment_date: string | null;
-    last_patient_payment_date: string | null;
+    today_charges: number;
+    today_payments: number;
+    last_insurance_payment: { amount: number; date: string } | null;
+    last_patient_payment: { amount: number; date: string } | null;
   };
 }
 
@@ -492,18 +492,19 @@ export const getPatientLedger = async (
 /**
  * Get account balances and aging information.
  *
- * Wraps the canonical generated `getPatientBalance` (GET /patients/{id}/balance)
- * and adapts `PatientBalance` to the ledger UI's `BalancesResponse`. The legacy
- * `/patients/{id}/balances` (plural) path does not exist (404) — see
- * docs/patients/patients_backend_devreport.md.
+ * Wraps the canonical generated `getPatientBalance` (GET /patients/{id}/balance,
+ * singular) and adapts the enriched `PatientBalance` to the ledger UI's
+ * `BalancesResponse`.
  */
 export const getPatientBalances = async (
   patientId: string
 ): Promise<BalancesResponse> => {
   const b = await getPatientBalance(Number(patientId));
+  const ra = b.recent_activity;
   return {
     account_balance: b.account_balance ?? b.balance ?? 0,
     patient_balance: b.patient_balance ?? 0,
+    insurance_balance: b.insurance_balance ?? 0,
     estimated_insurance: b.estimated_insurance ?? 0,
     estimated_patient: b.estimated_patient ?? 0,
     aging: {
@@ -514,9 +515,14 @@ export const getPatientBalances = async (
       age_120: b.aging?.b120 ?? 0,
     },
     recent_activity: {
-      today: b.recent_activity?.today ?? 0,
-      last_insurance_payment_date: b.recent_activity?.last_ins ?? null,
-      last_patient_payment_date: b.recent_activity?.last_pat ?? null,
+      today_charges: b.today_charges ?? 0,
+      today_payments: ra?.today ?? 0,
+      last_insurance_payment: ra?.last_ins
+        ? { amount: ra.last_ins_amount ?? 0, date: ra.last_ins }
+        : null,
+      last_patient_payment: ra?.last_pat
+        ? { amount: ra.last_pat_amount ?? 0, date: ra.last_pat }
+        : null,
     },
   };
 };
