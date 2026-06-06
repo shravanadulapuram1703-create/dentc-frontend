@@ -28,12 +28,17 @@ import type {
   AccountNoteCreate,
   AccountNoteRead,
   AccountNoteUpdate,
+  BodyUploadPatientDocument,
+  DuplicateCheckRequest,
+  DuplicateCheckResponse,
   ErrorResponse,
   HTTPValidationError,
   ListAccountNotesParams,
   ListMedicalHistoryDetailsParams,
   ListMedicalHistoryRecordsParams,
   ListPatientAlertsParams,
+  ListPatientDocumentsParams,
+  ListPatientEmergencyContactsParams,
   ListPatientInsuranceParams,
   ListPatientNotesParams,
   ListPatientRecallsParams,
@@ -50,6 +55,7 @@ import type {
   PaginatedResponseMedicalHistoryDetailRead,
   PaginatedResponseMedicalHistoryRecordRead,
   PaginatedResponsePatientAlertRead,
+  PaginatedResponsePatientEmergencyContactRead,
   PaginatedResponsePatientInsuranceRead,
   PaginatedResponsePatientNoteRead,
   PaginatedResponsePatientRead,
@@ -61,6 +67,10 @@ import type {
   PatientAlertUpdate,
   PatientContext,
   PatientCreate,
+  PatientDocumentRead,
+  PatientEmergencyContactCreate,
+  PatientEmergencyContactRead,
+  PatientEmergencyContactUpdate,
   PatientInsuranceCreate,
   PatientInsuranceRead,
   PatientInsuranceUpdate,
@@ -181,6 +191,390 @@ export function useGetPatientContext<TData = Awaited<ReturnType<typeof getPatien
 
 
 /**
+ * @summary List Documents
+ */
+export const listPatientDocuments = (
+    params: ListPatientDocumentsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientDocumentRead[]>(
+      {url: `/api/v1/patient-documents`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientDocumentsQueryKey = (params?: ListPatientDocumentsParams,) => {
+    return [
+    `/api/v1/patient-documents`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientDocumentsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientDocuments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: ListPatientDocumentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientDocuments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientDocumentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientDocuments>>> = ({ signal }) => listPatientDocuments(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientDocuments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientDocumentsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientDocuments>>>
+export type ListPatientDocumentsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPatientDocuments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPatientDocumentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientDocuments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientDocuments>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientDocuments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPatientDocuments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPatientDocumentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientDocuments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientDocuments>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientDocuments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPatientDocuments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPatientDocumentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientDocuments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Documents
+ */
+
+export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPatientDocuments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPatientDocumentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientDocuments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientDocumentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Upload Document
+ */
+export const uploadPatientDocument = (
+    bodyUploadPatientDocument: BodyType<BodyUploadPatientDocument>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`file`, bodyUploadPatientDocument.file);
+formData.append(`patient_id`, bodyUploadPatientDocument.patient_id.toString())
+if(bodyUploadPatientDocument.office_id !== undefined && bodyUploadPatientDocument.office_id !== null) {
+ formData.append(`office_id`, bodyUploadPatientDocument.office_id.toString())
+ }
+if(bodyUploadPatientDocument.document_type !== undefined && bodyUploadPatientDocument.document_type !== null) {
+ formData.append(`document_type`, bodyUploadPatientDocument.document_type);
+ }
+if(bodyUploadPatientDocument.description !== undefined && bodyUploadPatientDocument.description !== null) {
+ formData.append(`description`, bodyUploadPatientDocument.description);
+ }
+
+      return customInstance<PatientDocumentRead>(
+      {url: `/api/v1/patient-documents`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getUploadPatientDocumentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPatientDocument>>, TError,{data: BodyType<BodyUploadPatientDocument>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadPatientDocument>>, TError,{data: BodyType<BodyUploadPatientDocument>}, TContext> => {
+
+const mutationKey = ['uploadPatientDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadPatientDocument>>, {data: BodyType<BodyUploadPatientDocument>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadPatientDocument(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadPatientDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadPatientDocument>>>
+    export type UploadPatientDocumentMutationBody = BodyType<BodyUploadPatientDocument>
+    export type UploadPatientDocumentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Upload Document
+ */
+export const useUploadPatientDocument = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPatientDocument>>, TError,{data: BodyType<BodyUploadPatientDocument>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadPatientDocument>>,
+        TError,
+        {data: BodyType<BodyUploadPatientDocument>},
+        TContext
+      > => {
+      return useMutation(getUploadPatientDocumentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get Document
+ */
+export const getPatientDocument = (
+    documentId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientDocumentRead>(
+      {url: `/api/v1/patient-documents/${documentId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientDocumentQueryKey = (documentId: number,) => {
+    return [
+    `/api/v1/patient-documents/${documentId}`
+    ] as const;
+    }
+
+
+export const getGetPatientDocumentQueryOptions = <TData = Awaited<ReturnType<typeof getPatientDocument>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocument>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientDocumentQueryKey(documentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientDocument>>> = ({ signal }) => getPatientDocument(documentId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: documentId !== null && documentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientDocument>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientDocumentQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientDocument>>>
+export type GetPatientDocumentQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientDocument<TData = Awaited<ReturnType<typeof getPatientDocument>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ documentId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocument>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientDocument>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientDocument>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientDocument<TData = Awaited<ReturnType<typeof getPatientDocument>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocument>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientDocument>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientDocument>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientDocument<TData = Awaited<ReturnType<typeof getPatientDocument>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocument>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Document
+ */
+
+export function useGetPatientDocument<TData = Awaited<ReturnType<typeof getPatientDocument>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ documentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocument>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientDocumentQueryOptions(documentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Delete Document
+ */
+export const deletePatientDocument = (
+    documentId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/patient-documents/${documentId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePatientDocumentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientDocument>>, TError,{documentId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePatientDocument>>, TError,{documentId: number}, TContext> => {
+
+const mutationKey = ['deletePatientDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePatientDocument>>, {documentId: number}> = (props) => {
+          const {documentId} = props ?? {};
+
+          return  deletePatientDocument(documentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePatientDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof deletePatientDocument>>>
+
+    export type DeletePatientDocumentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Delete Document
+ */
+export const useDeletePatientDocument = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientDocument>>, TError,{documentId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePatientDocument>>,
+        TError,
+        {documentId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePatientDocumentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Check Duplicate
+ */
+export const checkPatientDuplicate = (
+    duplicateCheckRequest: BodyType<DuplicateCheckRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<DuplicateCheckResponse>(
+      {url: `/api/v1/patients/check-duplicate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: duplicateCheckRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getCheckPatientDuplicateMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkPatientDuplicate>>, TError,{data: BodyType<DuplicateCheckRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkPatientDuplicate>>, TError,{data: BodyType<DuplicateCheckRequest>}, TContext> => {
+
+const mutationKey = ['checkPatientDuplicate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkPatientDuplicate>>, {data: BodyType<DuplicateCheckRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  checkPatientDuplicate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckPatientDuplicateMutationResult = NonNullable<Awaited<ReturnType<typeof checkPatientDuplicate>>>
+    export type CheckPatientDuplicateMutationBody = BodyType<DuplicateCheckRequest>
+    export type CheckPatientDuplicateMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Check Duplicate
+ */
+export const useCheckPatientDuplicate = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkPatientDuplicate>>, TError,{data: BodyType<DuplicateCheckRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkPatientDuplicate>>,
+        TError,
+        {data: BodyType<DuplicateCheckRequest>},
+        TContext
+      > => {
+      return useMutation(getCheckPatientDuplicateMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List patients
  */
 export const listPatients = (
@@ -3536,6 +3930,379 @@ export const useDeletePatientRecall = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeletePatientRecallMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List patient emergency contacts
+ */
+export const listPatientEmergencyContacts = (
+    params?: ListPatientEmergencyContactsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePatientEmergencyContactRead>(
+      {url: `/api/v1/patient-emergency-contacts`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientEmergencyContactsQueryKey = (params?: ListPatientEmergencyContactsParams,) => {
+    return [
+    `/api/v1/patient-emergency-contacts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientEmergencyContactsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError = ErrorType<ErrorResponse>>(params?: ListPatientEmergencyContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientEmergencyContactsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientEmergencyContacts>>> = ({ signal }) => listPatientEmergencyContacts(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientEmergencyContactsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientEmergencyContacts>>>
+export type ListPatientEmergencyContactsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientEmergencyContacts<TData = Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPatientEmergencyContactsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientEmergencyContacts>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientEmergencyContacts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientEmergencyContacts<TData = Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientEmergencyContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientEmergencyContacts>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientEmergencyContacts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientEmergencyContacts<TData = Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientEmergencyContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List patient emergency contacts
+ */
+
+export function useListPatientEmergencyContacts<TData = Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientEmergencyContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientEmergencyContacts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientEmergencyContactsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create patient emergency contact
+ */
+export const createPatientEmergencyContact = (
+    patientEmergencyContactCreate: BodyType<PatientEmergencyContactCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientEmergencyContactRead>(
+      {url: `/api/v1/patient-emergency-contacts`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: patientEmergencyContactCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePatientEmergencyContactMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientEmergencyContact>>, TError,{data: BodyType<PatientEmergencyContactCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPatientEmergencyContact>>, TError,{data: BodyType<PatientEmergencyContactCreate>}, TContext> => {
+
+const mutationKey = ['createPatientEmergencyContact'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPatientEmergencyContact>>, {data: BodyType<PatientEmergencyContactCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPatientEmergencyContact(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePatientEmergencyContactMutationResult = NonNullable<Awaited<ReturnType<typeof createPatientEmergencyContact>>>
+    export type CreatePatientEmergencyContactMutationBody = BodyType<PatientEmergencyContactCreate>
+    export type CreatePatientEmergencyContactMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create patient emergency contact
+ */
+export const useCreatePatientEmergencyContact = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientEmergencyContact>>, TError,{data: BodyType<PatientEmergencyContactCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPatientEmergencyContact>>,
+        TError,
+        {data: BodyType<PatientEmergencyContactCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePatientEmergencyContactMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get patient emergency contact by id
+ */
+export const getPatientEmergencyContact = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientEmergencyContactRead>(
+      {url: `/api/v1/patient-emergency-contacts/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientEmergencyContactQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/patient-emergency-contacts/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPatientEmergencyContactQueryOptions = <TData = Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientEmergencyContactQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientEmergencyContact>>> = ({ signal }) => getPatientEmergencyContact(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientEmergencyContactQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientEmergencyContact>>>
+export type GetPatientEmergencyContactQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientEmergencyContact<TData = Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientEmergencyContact>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientEmergencyContact>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientEmergencyContact<TData = Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientEmergencyContact>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientEmergencyContact>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientEmergencyContact<TData = Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get patient emergency contact by id
+ */
+
+export function useGetPatientEmergencyContact<TData = Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientEmergencyContact>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientEmergencyContactQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update patient emergency contact
+ */
+export const updatePatientEmergencyContact = (
+    itemId: number,
+    patientEmergencyContactUpdate: BodyType<PatientEmergencyContactUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientEmergencyContactRead>(
+      {url: `/api/v1/patient-emergency-contacts/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patientEmergencyContactUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePatientEmergencyContactMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientEmergencyContact>>, TError,{itemId: number;data: BodyType<PatientEmergencyContactUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePatientEmergencyContact>>, TError,{itemId: number;data: BodyType<PatientEmergencyContactUpdate>}, TContext> => {
+
+const mutationKey = ['updatePatientEmergencyContact'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePatientEmergencyContact>>, {itemId: number;data: BodyType<PatientEmergencyContactUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePatientEmergencyContact(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePatientEmergencyContactMutationResult = NonNullable<Awaited<ReturnType<typeof updatePatientEmergencyContact>>>
+    export type UpdatePatientEmergencyContactMutationBody = BodyType<PatientEmergencyContactUpdate>
+    export type UpdatePatientEmergencyContactMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update patient emergency contact
+ */
+export const useUpdatePatientEmergencyContact = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientEmergencyContact>>, TError,{itemId: number;data: BodyType<PatientEmergencyContactUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePatientEmergencyContact>>,
+        TError,
+        {itemId: number;data: BodyType<PatientEmergencyContactUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePatientEmergencyContactMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete patient emergency contact
+ */
+export const deletePatientEmergencyContact = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/patient-emergency-contacts/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePatientEmergencyContactMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientEmergencyContact>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePatientEmergencyContact>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePatientEmergencyContact'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePatientEmergencyContact>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePatientEmergencyContact(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePatientEmergencyContactMutationResult = NonNullable<Awaited<ReturnType<typeof deletePatientEmergencyContact>>>
+
+    export type DeletePatientEmergencyContactMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete patient emergency contact
+ */
+export const useDeletePatientEmergencyContact = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientEmergencyContact>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePatientEmergencyContact>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePatientEmergencyContactMutationOptions(options), queryClient);
     }
     /**
  * @summary List medical history details

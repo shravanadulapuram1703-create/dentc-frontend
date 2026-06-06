@@ -13,4 +13,8 @@ export interface BalanceRecentActivity {
   last_ins?: string | null;
   /** Date of most recent patient payment */
   last_pat?: string | null;
+  /** Amount of the most recent insurance payment */
+  last_ins_amount?: number;
+  /** Amount of the most recent patient payment */
+  last_pat_amount?: number;
 }

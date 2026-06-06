@@ -13,5 +13,10 @@ export interface ProgressNoteCreate {
   notes?: string | null;
   notes_html?: string | null;
   tooth?: string | null;
+  surface?: string | null;
+  region?: string | null;
+  signed_by?: number | null;
+  signed_at?: string | null;
+  is_struck_off?: boolean | null;
   is_deleted?: boolean | null;
 }

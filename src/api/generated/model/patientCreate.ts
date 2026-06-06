@@ -17,6 +17,7 @@ export interface PatientCreate {
   dob?: string | null;
   gender?: string | null;
   ssn?: string | null;
+  medicaid_id?: string | null;
   marital_status?: string | null;
   phone?: string | null;
   cell_phone?: string | null;

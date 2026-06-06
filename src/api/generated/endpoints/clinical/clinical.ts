@@ -32,6 +32,7 @@ import type {
   ChartConditionRead,
   ChartConditionUpdate,
   ErrorResponse,
+  HTTPValidationError,
   ListCariesRiskAssessmentsParams,
   ListChartConditionsParams,
   ListPatientProceduresParams,
@@ -82,6 +83,67 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Sign Progress Note
+ */
+export const signProgressNote = (
+    noteId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/progress-notes/${noteId}/sign`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getSignProgressNoteMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number}, TContext> => {
+
+const mutationKey = ['signProgressNote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signProgressNote>>, {noteId: number}> = (props) => {
+          const {noteId} = props ?? {};
+
+          return  signProgressNote(noteId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignProgressNoteMutationResult = NonNullable<Awaited<ReturnType<typeof signProgressNote>>>
+
+    export type SignProgressNoteMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Sign Progress Note
+ */
+export const useSignProgressNote = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof signProgressNote>>,
+        TError,
+        {noteId: number},
+        TContext
+      > => {
+      return useMutation(getSignProgressNoteMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List patient procedures
  */
 export const listPatientProcedures = (

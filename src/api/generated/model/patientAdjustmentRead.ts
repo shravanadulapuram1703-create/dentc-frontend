@@ -6,20 +6,18 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProgressNoteRead {
+export interface PatientAdjustmentRead {
+  tenant_id: number;
   patient_id: number;
   office_id?: number | null;
-  legacy_id?: string | null;
-  note_date?: string | null;
+  provider_id?: string | null;
+  procedure_id?: string | null;
+  adjustment_date: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  amount: string;
+  adjustment_type?: string | null;
   notes?: string | null;
-  notes_html?: string | null;
-  tooth?: string | null;
-  surface?: string | null;
-  region?: string | null;
-  signed_by?: number | null;
-  signed_at?: string | null;
-  is_struck_off: boolean;
-  is_deleted: boolean;
+  is_void: boolean;
   created_by?: number | null;
   id: number;
   created_at: string;

@@ -6,19 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface ProgressNoteRead {
+export interface PatientDocumentRead {
+  tenant_id: number;
   patient_id: number;
   office_id?: number | null;
-  legacy_id?: string | null;
-  note_date?: string | null;
-  notes?: string | null;
-  notes_html?: string | null;
-  tooth?: string | null;
-  surface?: string | null;
-  region?: string | null;
-  signed_by?: number | null;
-  signed_at?: string | null;
-  is_struck_off: boolean;
+  document_type?: string | null;
+  file_name: string;
+  content_type?: string | null;
+  file_size?: number | null;
+  file_url: string;
+  description?: string | null;
   is_deleted: boolean;
   created_by?: number | null;
   id: number;

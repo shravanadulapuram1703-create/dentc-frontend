@@ -5,25 +5,17 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { ListPatientNotesOrder } from './listPatientNotesOrder';
+import type { ListPatientEmergencyContactsOrder } from './listPatientEmergencyContactsOrder';
 
-export type ListPatientNotesParams = {
+export type ListPatientEmergencyContactsParams = {
 /**
  * Filter by patient_id
  */
 patient_id?: number | null;
 /**
- * Filter by note_type
+ * Filter by is_active
  */
-note_type?: string | null;
-/**
- * Filter by is_deleted
- */
-is_deleted?: boolean | null;
-/**
- * Filter by is_archived
- */
-is_archived?: boolean | null;
+is_active?: boolean | null;
 /**
  * @minimum 1
  */
@@ -37,7 +29,7 @@ size?: number;
  * Column to sort by
  */
 sort?: string | null;
-order?: ListPatientNotesOrder;
+order?: ListPatientEmergencyContactsOrder;
 /**
  * Free-text search
  */

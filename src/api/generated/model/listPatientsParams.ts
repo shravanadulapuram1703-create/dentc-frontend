@@ -25,6 +25,54 @@ preferred_provider_id?: string | null;
  */
 chart_no?: string | null;
 /**
+ * Filter by dob
+ */
+dob?: string | null;
+/**
+ * Filter by ssn
+ */
+ssn?: string | null;
+/**
+ * Filter by medicaid_id
+ */
+medicaid_id?: string | null;
+/**
+ * Filter by email
+ */
+email?: string | null;
+/**
+ * Filter by phone
+ */
+phone?: string | null;
+/**
+ * Filter by gender
+ */
+gender?: string | null;
+/**
+ * Filter by patient_type
+ */
+patient_type?: string | null;
+/**
+ * Filter by responsible_party_id
+ */
+responsible_party_id?: string | null;
+/**
+ * created_at >= (inclusive lower bound)
+ */
+created_at_from?: string | null;
+/**
+ * created_at <= (inclusive upper bound)
+ */
+created_at_to?: string | null;
+/**
+ * dob >= (inclusive lower bound)
+ */
+dob_from?: string | null;
+/**
+ * dob <= (inclusive upper bound)
+ */
+dob_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

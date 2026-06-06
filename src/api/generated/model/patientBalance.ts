@@ -25,6 +25,10 @@ export interface PatientBalance {
   estimated_patient?: number;
   /** Charges − payments − estimated insurance */
   patient_balance?: number;
+  /** Outstanding expected-insurance portion */
+  insurance_balance?: number;
+  /** Sum of today's non-void procedure charges */
+  today_charges?: number;
   aging?: BalanceAging;
   recent_activity?: BalanceRecentActivity;
   /** UTC timestamp the balance was computed */

@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface PatientNoteUpdate {
+export interface PatientAdjustmentUpdate {
   patient_id?: number | null;
   office_id?: number | null;
-  note_date?: string | null;
-  note_type?: string | null;
+  provider_id?: string | null;
+  procedure_id?: string | null;
+  adjustment_date?: string | null;
+  amount?: number | string | null;
+  adjustment_type?: string | null;
   notes?: string | null;
-  notes_html?: string | null;
-  is_archived?: boolean | null;
-  is_deleted?: boolean | null;
-  updated_by?: number | null;
+  is_void?: boolean | null;
 }

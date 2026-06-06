@@ -6,14 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface PatientNoteCreate {
+export interface BodyUploadPatientDocument {
+  file: Blob;
   patient_id: number;
   office_id?: number | null;
-  note_date?: string | null;
-  note_type?: string | null;
-  notes: string;
-  notes_html?: string | null;
-  is_archived?: boolean | null;
-  is_deleted?: boolean | null;
-  updated_by?: number | null;
+  document_type?: string | null;
+  description?: string | null;
 }

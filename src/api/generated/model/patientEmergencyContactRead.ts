@@ -6,18 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface PatientNoteRead {
+export interface PatientEmergencyContactRead {
+  tenant_id: number;
   patient_id: number;
-  office_id?: number | null;
-  legacy_id?: string | null;
-  note_date?: string | null;
-  note_type?: string | null;
-  notes: string;
-  notes_html?: string | null;
-  is_archived: boolean;
-  is_deleted: boolean;
+  name: string;
+  relationship?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  is_active: boolean;
   created_by?: number | null;
-  updated_by?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;
