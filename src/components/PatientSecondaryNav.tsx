@@ -24,6 +24,7 @@ import {
   History,
   Search,
   UserSearch,
+  Phone,
 } from "lucide-react";
 
 interface PatientSecondaryNavProps {
@@ -147,6 +148,13 @@ export default function PatientSecondaryNav({
       gradient: "from-slate-600 to-gray-600",
       onClick: () => handleNavigation("/documents"),
       description: "Document Management",
+    },
+    {
+      icon: Phone,
+      label: "Emergency",
+      gradient: "from-rose-600 to-red-600",
+      onClick: () => handleNavigation("/emergency-contacts"),
+      description: "Emergency Contacts",
     },
     {
       icon: Mail,

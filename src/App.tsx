@@ -23,6 +23,8 @@ import MyPage from './components/pages/MyPage';
 import PlaceholderPage from './components/PlaceholderPage';
 import GlobalNav from './components/GlobalNav';
 import PatientNotesListing from './components/patient/PatientNotesListing';
+import PatientDocuments from './components/patient/PatientDocuments';
+import EmergencyContacts from './components/patient/EmergencyContacts';
 import AddEditPatientNote from './components/patient/AddEditPatientNote';
 import ProgressNotesListing from './components/patient/ProgressNotesListing';
 import AddEditProgressNote from './components/patient/AddEditProgressNote';
@@ -164,7 +166,8 @@ function AppRoutes() {
         <Route path="claim/:claimId" element={<ClaimDetail />} />
         <Route path="treatment" element={<PlaceholderPage title="Treatment Plan" />} />
         <Route path="prescriptions" element={<PlaceholderPage title="Prescriptions" />} />
-        <Route path="documents" element={<PlaceholderPage title="Documents" />} />
+        <Route path="documents" element={<PatientDocuments />} />
+        <Route path="emergency-contacts" element={<EmergencyContacts />} />
         
         {/* Default - Redirect to Overview */}
         <Route index element={<Navigate to="overview" replace />} />
