@@ -8,10 +8,11 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import {
   getPatientLedger,
   getPatientBalances,
-  createClaim,
   type LedgerEntry,
   type BalancesResponse,
 } from '../../services/ledgerApi';
+import { createInsuranceClaim } from '@/api/generated/endpoints/billing/billing';
+import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 
 interface LedgerTransaction {
   id: string;
@@ -390,19 +391,37 @@ export default function PatientLedger() {
       const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
       const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
 
-      const claimData = {
-        procedure_ids: procedureIds,
-        claim_type: 'dental' as const,
+      // Create the claim, then link the selected procedures to it (the generated
+      // insurance-claims create doesn't take procedure_ids; procedures carry a
+      // claim_id). The /patients/{id}/claims route is phantom — see devreport.
+      const officeIdNum = patient?.officeId
+        ? Number(String(patient.officeId).replace(/\D/g, ''))
+        : undefined;
+      const totalBilled = selectedProcedures.reduce((s, t) => s + (t.amount || 0), 0);
+      const totalEstIns = selectedProcedures.reduce((s, t) => s + (t.estIns || 0), 0);
+      const newClaimId = crypto.randomUUID();
+
+      await createInsuranceClaim({
+        id: newClaimId,
+        patient_id: Number(patientId),
+        office_id: officeIdNum && Number.isFinite(officeIdNum) ? officeIdNum : null,
+        claim_number: String(Date.now()),
+        claim_type: 'dental',
         billing_order: 'primary',
         date_of_service_from: minDate.toISOString().split('T')[0],
         date_of_service_to: maxDate.toISOString().split('T')[0],
-        notes: null,
-      };
+        total_billed: totalBilled.toFixed(2),
+        est_insurance: totalEstIns.toFixed(2),
+      });
 
-      const claim = await createClaim(patientId, claimData);
-      
+      await Promise.all(
+        procedureIds.map((pid) =>
+          updatePatientProcedure(pid, { claim_id: newClaimId }).catch(() => null),
+        ),
+      );
+
       // Navigate to Claim Detail screen
-      navigate(`/patient/${patientId}/claim/${claim.claim_id}`);
+      navigate(`/patient/${patientId}/claim/${newClaimId}`);
     } catch (err: any) {
       console.error('Error creating claim:', err);
       alert(err.response?.data?.error?.message || err.message || 'Failed to create claim');

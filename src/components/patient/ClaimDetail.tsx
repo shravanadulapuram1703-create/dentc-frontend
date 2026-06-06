@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   useNavigate,
   useParams,
@@ -13,7 +13,12 @@ import {
   Trash2,
   RefreshCw,
   Plus,
+  Upload,
+  Paperclip,
+  Eye,
+  Loader2,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   evaluateClaimAttachments,
   ClaimProcedureData,
@@ -24,10 +29,17 @@ import {
   setClaimStatus,
   updateInsuranceClaim,
   deleteInsuranceClaim,
+  useListClaimAttachments,
+  uploadClaimAttachment,
+  deleteClaimAttachment,
 } from "@/api/generated/endpoints/billing/billing";
 import { getInsuranceCarrier } from "@/api/generated/endpoints/insurance/insurance";
 import type { ClaimDetailResponse } from "@/api/generated/model";
+import { env } from "@/shared/config/env";
 import { useAuth } from "../../contexts/AuthContext";
+
+const fileHref = (url: string): string =>
+  /^https?:\/\//i.test(url) ? url : `${env.apiBaseUrl}${url}`;
 
 // ✅ ONLY tooltip needed: Overpayment Disbursement (professional billing systems only explain what's truly complex)
 function OverpaymentInfo() {
@@ -124,6 +136,19 @@ export default function ClaimDetail() {
   } catch {
     patient = undefined;
   }
+
+  const queryClient = useQueryClient();
+  const attachFileRef = useRef<HTMLInputElement>(null);
+  const [showAttachments, setShowAttachments] = useState(false);
+  const [attType, setAttType] = useState("");
+  const [attFile, setAttFile] = useState<File | null>(null);
+  const [uploadingAtt, setUploadingAtt] = useState(false);
+  const [deletingAttId, setDeletingAttId] = useState<number | null>(null);
+
+  const attachmentsQuery = useListClaimAttachments(claimId ?? "", {
+    query: { enabled: showAttachments && !!claimId },
+  });
+  const attachments = (attachmentsQuery.data ?? []).filter((a) => !a.is_deleted);
 
   // Extract numeric tenant ID from organization ID (e.g., "ORG-1" -> 1, "1" -> 1)
   const getTenantId = (): string => {
@@ -399,7 +424,50 @@ export default function ClaimDetail() {
     alert("Clearinghouse validation is not available yet (Phase-4 EDI).");
   const handleEClaim = () =>
     alert("E-claim submission is not available yet (Phase-4 EDI). Use UPDATE STATUS for manual status changes.");
-  const handleClaimAttachments = () => alert("Claim attachment manager is not built yet.");
+  const handleClaimAttachments = () => setShowAttachments((s) => !s);
+
+  const handleUploadAttachment = async () => {
+    if (!claimId || !attFile) {
+      alert("Choose a file to attach.");
+      return;
+    }
+    if (attFile.size > 10 * 1024 * 1024) {
+      alert("File must be 10 MB or smaller.");
+      return;
+    }
+    setUploadingAtt(true);
+    try {
+      await uploadClaimAttachment(claimId, {
+        file: attFile,
+        attachment_type: attType || null,
+      });
+      setAttFile(null);
+      setAttType("");
+      if (attachFileRef.current) attachFileRef.current.value = "";
+      queryClient.invalidateQueries({
+        queryKey: [`/api/v1/insurance-claims/${claimId}/attachments`],
+      });
+    } catch (err) {
+      alert(errMsg(err) || "Attachment upload failed.");
+    } finally {
+      setUploadingAtt(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: number) => {
+    if (!claimId || !confirm("Delete this attachment?")) return;
+    setDeletingAttId(attachmentId);
+    try {
+      await deleteClaimAttachment(claimId, attachmentId);
+      queryClient.invalidateQueries({
+        queryKey: [`/api/v1/insurance-claims/${claimId}/attachments`],
+      });
+    } catch (err) {
+      alert(errMsg(err) || "Attachment delete failed.");
+    } finally {
+      setDeletingAttId(null);
+    }
+  };
   const handleClaimFillOut = () => alert("Claim fill-out is not available yet.");
   const handleInsurancePayment = () =>
     alert("Insurance payment entry from the claim screen is not available yet.");
@@ -503,6 +571,97 @@ export default function ClaimDetail() {
               INSURANCE PAYMENT
             </button>
           </div>
+
+          {/* Claim Attachments panel (toggled by CLAIM ATTACHMENTS) */}
+          {showAttachments && (
+            <div className="bg-white border-2 border-[#E2E8F0] rounded">
+              <div className="bg-[#E8EFF7] px-3 py-1.5 border-b-2 border-[#E2E8F0] flex items-center justify-between">
+                <h2 className="text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+                  Claim Attachments
+                </h2>
+                <button
+                  onClick={() => setShowAttachments(false)}
+                  className="p-1 text-slate-600 hover:bg-slate-200 rounded"
+                  title="Close"
+                >
+                  <X className="w-3.5 h-3.5" strokeWidth={2} />
+                </button>
+              </div>
+              <div className="p-3 space-y-3">
+                {/* Upload row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={attType}
+                    onChange={(e) => setAttType(e.target.value)}
+                    placeholder="Type (e.g. X-Ray, EOB)"
+                    className="px-2 py-1 text-xs border-2 border-slate-300 rounded w-40"
+                  />
+                  <input
+                    ref={attachFileRef}
+                    type="file"
+                    onChange={(e) => setAttFile(e.target.files?.[0] ?? null)}
+                    className="text-xs"
+                  />
+                  <button
+                    onClick={handleUploadAttachment}
+                    disabled={uploadingAtt || !attFile}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {uploadingAtt ? (
+                      <Loader2 className="w-3 h-3 animate-spin" strokeWidth={2} />
+                    ) : (
+                      <Upload className="w-3 h-3" strokeWidth={2} />
+                    )}
+                    {uploadingAtt ? "Uploading…" : "Upload"}
+                  </button>
+                  <span className="text-xs text-slate-500">Max 10 MB.</span>
+                </div>
+
+                {/* List */}
+                {attachmentsQuery.isLoading ? (
+                  <div className="py-4 text-center">
+                    <Loader2 className="w-5 h-5 text-[#1F3A5F] animate-spin mx-auto" strokeWidth={2} />
+                  </div>
+                ) : attachments.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-2">No attachments yet.</p>
+                ) : (
+                  <div className="divide-y divide-slate-200 border border-slate-200 rounded">
+                    {attachments.map((a) => (
+                      <div key={a.id} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                        <Paperclip className="w-3.5 h-3.5 text-slate-500 shrink-0" strokeWidth={2} />
+                        <span className="font-semibold text-slate-900 truncate">{a.file_name}</span>
+                        {a.attachment_type && (
+                          <span className="text-slate-500">({a.attachment_type})</span>
+                        )}
+                        <a
+                          href={fileHref(a.file_url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="ml-auto p-1 text-blue-600 hover:bg-blue-100 rounded"
+                          title="View / Download"
+                        >
+                          <Eye className="w-3.5 h-3.5" strokeWidth={2} />
+                        </a>
+                        <button
+                          onClick={() => handleDeleteAttachment(a.id)}
+                          disabled={deletingAttId === a.id}
+                          className="p-1 text-red-600 hover:bg-red-100 rounded disabled:opacity-50"
+                          title="Delete"
+                        >
+                          {deletingAttId === a.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 4️⃣ PATIENT / COVERAGE SUMMARY ROW (2 COLUMNS) */}
           <div className="grid grid-cols-2 gap-3">
