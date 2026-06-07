@@ -25,7 +25,9 @@ export default defineConfig({
 
   server: {
     host: true,
-    port: 5173,
+    // Honor an externally-assigned PORT (e.g. preview harness) so a second
+    // instance can run alongside one already bound to 5173.
+    port: Number(process.env.PORT) || 5173,
     strictPort: true,
     hmr: { overlay: true },
   },
@@ -53,8 +55,24 @@ export default defineConfig({
         // Split vendor code into cacheable chunks. Function form so we never
         // reference a package that isn't installed.
         manualChunks(id) {
+          // Rollup's shared CommonJS interop helper lives in a virtual module
+          // (no "node_modules" in its id). Pin it to the foundational react-vendor
+          // chunk; otherwise Rollup parks it in chart-vendor and react-vendor
+          // imports it back, creating a react-vendor <-> chart-vendor cycle that
+          // leaves React undefined ("Cannot read properties of undefined
+          // (reading 'forwardRef')").
+          if (id.includes('commonjsHelpers')) return 'react-vendor';
           if (!id.includes('node_modules')) return undefined;
-          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) {
+          // Keep React AND every React-internal shared dep together. If a shared
+          // dep (scheduler, react-is, …) leaks into another vendor chunk, that
+          // chunk and react-vendor end up importing each other — a circular chunk
+          // dependency that makes React undefined at eval time ("Cannot read
+          // properties of undefined (reading 'forwardRef')").
+          if (
+            /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|react-is|prop-types|use-sync-external-store|object-assign)[\\/]/.test(
+              id
+            )
+          ) {
             return 'react-vendor';
           }
           if (id.includes('@radix-ui')) return 'ui-vendor';

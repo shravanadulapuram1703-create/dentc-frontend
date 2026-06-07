@@ -2,14 +2,51 @@ import { useState, useEffect } from "react";
 import { X, Search, Loader2 } from "lucide-react";
 import ToothSurfaceEnforcement from "./ToothSurfaceEnforcement";
 import { components } from "../../styles/theme";
-import {
-  getProcedureCodes,
-  addProcedure,
-  type ProcedureCode as BackendProcedureCode,
-  type ProcedureCodesResponse,
-  type ProcedureCreateRequest,
-} from "../../services/ledgerApi";
+import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
+import { createPatientProcedure } from "@/api/generated/endpoints/clinical/clinical";
+import type { ProcedureCodeRead, PatientProcedureCreate } from "@/api/generated/model";
 import { fetchProcedureCategories, fetchProviders, type Provider as SchedulerProvider } from "../../services/schedulerApi";
+
+// UI-facing procedure-code shape. The backend ProcedureCodeRead exposes only flat
+// requires_* booleans + default_fee; the structured anatomy/surface/material rules
+// are fabricated client-side (backend gap CHG-2 — see docs/transactions) and kept
+// optional here.
+interface UiProcedureCode {
+  code: string;
+  user_code: string | null;
+  description: string;
+  category: string;
+  requirements: { tooth: boolean; surface: boolean; quadrant: boolean; materials: boolean };
+  default_fee: number;
+  default_duration?: number | null;
+  is_active: boolean;
+  anatomyRules?: {
+    mode: "TOOTH" | "QUADRANT" | "ARCH" | "FULL_MOUTH" | "NONE";
+    allowedToothSet: "PERMANENT_ONLY" | "PRIMARY_ONLY" | "BOTH" | "NONE";
+    allowedQuadrants?: ("UR" | "UL" | "LR" | "LL" | "UA" | "LA" | "FM")[];
+    allowMultipleTeeth: boolean;
+  };
+  surfaceRules?: { enabled: boolean; min?: number; max?: number; allowedSurfaces?: string[] };
+  materialsRules?: { enabled: boolean; options?: string[]; min?: number; max?: number };
+}
+
+// Adapt the generated ProcedureCodeRead to the UI shape. user_code <- legacy_code;
+// requirements.materials maps to requires_lab (closest backend signal).
+const fromProcedureCodeRead = (r: ProcedureCodeRead): UiProcedureCode => ({
+  code: r.code,
+  user_code: r.legacy_code ?? null,
+  description: r.description,
+  category: r.category,
+  requirements: {
+    tooth: r.requires_tooth,
+    surface: r.requires_surface,
+    quadrant: r.requires_quadrant,
+    materials: r.requires_lab,
+  },
+  default_fee: Number(r.default_fee) || 0,
+  default_duration: r.default_duration_minutes ?? undefined,
+  is_active: r.is_active,
+});
 
 // Frontend procedure code type (matches what ToothSurfaceEnforcement expects)
 interface FrontendProcedureCode {
@@ -65,13 +102,15 @@ export default function AddProcedure({
   // 🔹 NEW: Handle initialProcedure (preselect from Quick Add / Tx Plans)
   useEffect(() => {
     if (initialProcedure && isOpen) {
-      // Convert FrontendProcedureCode to BackendProcedureCode format for handleProcedureSelect
-      const backendProc: BackendProcedureCode = {
+      // Convert FrontendProcedureCode to UiProcedureCode format for handleProcedureSelect
+      const backendProc: UiProcedureCode = {
         code: initialProcedure.code,
         user_code: initialProcedure.userCode,
         description: initialProcedure.description,
         category: initialProcedure.category,
         requirements: initialProcedure.requirements,
+        default_fee: initialProcedure.defaultFee,
+        default_duration: initialProcedure.defaultDuration,
         is_active: true,
       };
       handleProcedureSelect(backendProc);
@@ -106,9 +145,9 @@ export default function AddProcedure({
   // Backend-driven state
   const [categories, setCategories] = useState<string[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [procedureCodes, setProcedureCodes] = useState<BackendProcedureCode[]>([]);
+  const [procedureCodes, setProcedureCodes] = useState<UiProcedureCode[]>([]);
   const [selectedProcedure, setSelectedProcedure] = useState<FrontendProcedureCode | null>(null);
-  const [allProcedureCodes, setAllProcedureCodes] = useState<BackendProcedureCode[]>([]); // Store all fetched procedure codes for lookup
+  const [allProcedureCodes, setAllProcedureCodes] = useState<UiProcedureCode[]>([]); // Store all fetched procedure codes for lookup
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [loadingProcedures, setLoadingProcedures] = useState(true);
@@ -214,11 +253,13 @@ export default function AddProcedure({
       try {
         setLoadingProcedures(true);
         const searchTerm = searchCode || searchDescription || undefined;
-        const response: ProcedureCodesResponse = await getProcedureCodes({
+        const response = await listProcedureCodes({
           category: selectedCategory,
           search: searchTerm,
+          is_active: true,
+          size: 200,
         });
-        const activeProcedures = response.procedure_codes.filter(p => p.is_active);
+        const activeProcedures = (response.items ?? []).map(fromProcedureCodeRead);
         setProcedureCodes(activeProcedures);
         // Store all procedure codes for lookup in ToothSurfaceEnforcement (merge with existing to avoid duplicates)
         setAllProcedureCodes(prev => {
@@ -259,7 +300,7 @@ export default function AddProcedure({
     return matchesCode && matchesUserCode && matchesDescription;
   });
 
-  const handleProcedureSelect = (procedure: BackendProcedureCode) => {
+  const handleProcedureSelect = (procedure: UiProcedureCode) => {
     // Map backend ProcedureCode to frontend format
     const frontendProcedure: FrontendProcedureCode = {
       code: procedure.code,
@@ -268,7 +309,7 @@ export default function AddProcedure({
       category: procedure.category,
       requirements: procedure.requirements,
       defaultFee: procedure.default_fee || 0, // Get from API response
-      defaultDuration: procedure.default_duration, // Get from API response
+      defaultDuration: procedure.default_duration ?? undefined, // Get from API response
     };
     setSelectedProcedure(frontendProcedure);
     
@@ -368,37 +409,36 @@ export default function AddProcedure({
       return;
     }
 
-    const procedureData: ProcedureCreateRequest = {
+    const procedureData: PatientProcedureCreate = {
+      id: crypto.randomUUID(),
+      patient_id: Number(patientId),
       procedure_code: selectedProcedure.code,
       date_of_service: formatDateForAPI(transactionDate),
       provider_id: selectedProvider,
-      office_id: officeId,
+      office_id: Number(officeId),
       tooth: toothNumber || null,
       surface: surfaces.length > 0 ? surfaces.join("") : null,
       quadrant: quadrant || null,
-      materials: materials.length > 0 ? materials : null,
-      duration_minutes: duration ? parseInt(duration, 10) : undefined,
       fee: fee,
-      est_patient: fee, // Will be calculated by backend based on insurance
-      est_insurance: 0, // Will be calculated by backend
-      notes: notes || null,
+      // patient/insurance estimates are client-supplied until the backend derives
+      // them from coverage + fee schedule (backend gap CHG-1 — see docs/transactions).
+      patient_estimate: fee,
+      insurance_estimate: 0,
       apply_to: "P", // Default to Patient
+      notes: notes || null,
     };
+    // NOTE: duration_minutes and free-text materials[] have no PatientProcedureCreate
+    // field (material_id is numeric); they are captured in the UI but not persisted.
 
     try {
       setSaving(true);
       setError(null);
 
-      // Call backend API
-      const response = await addProcedure(patientId, procedureData);
+      // Call backend API (POST /api/v1/patient-procedures)
+      const response = await createPatientProcedure(procedureData);
 
       // Call onSave callback to refresh ledger
-      onSave({
-        id: response.procedure_id,
-        ledger_entry_id: response.ledger_entry_id,
-        transaction_id: response.transaction_id,
-        ...procedureData,
-      });
+      onSave({ ...procedureData, id: response.id });
 
       // Reset form
       setSelectedProcedure(null);
@@ -896,7 +936,7 @@ export default function AddProcedure({
       {showEnforcement && selectedProcedure && (() => {
         // Look up the full procedure from backend procedure codes to get anatomyRules, surfaceRules, materialsRules
         // First check in allProcedureCodes, then in current procedureCodes list
-        let fullProcedure = allProcedureCodes.find(pc => pc.code === selectedProcedure.code) ||
+        const fullProcedure = allProcedureCodes.find(pc => pc.code === selectedProcedure.code) ||
                            procedureCodes.find(pc => pc.code === selectedProcedure.code);
         
         if (!fullProcedure) {
@@ -908,10 +948,10 @@ export default function AddProcedure({
         
         // Validate that the procedure has the required structure
         // If backend doesn't provide these, create defaults based on requirements
-        const procedureWithRules: BackendProcedureCode & {
-          anatomyRules: NonNullable<BackendProcedureCode['anatomyRules']>;
-          surfaceRules: NonNullable<BackendProcedureCode['surfaceRules']>;
-          materialsRules: NonNullable<BackendProcedureCode['materialsRules']>;
+        const procedureWithRules: UiProcedureCode & {
+          anatomyRules: NonNullable<UiProcedureCode['anatomyRules']>;
+          surfaceRules: NonNullable<UiProcedureCode['surfaceRules']>;
+          materialsRules: NonNullable<UiProcedureCode['materialsRules']>;
         } = {
           ...fullProcedure,
           // If backend doesn't provide anatomyRules, create defaults from requirements

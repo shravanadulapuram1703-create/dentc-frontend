@@ -35,6 +35,7 @@ import {
 } from "@/api/generated/endpoints/billing/billing";
 import { getInsuranceCarrier } from "@/api/generated/endpoints/insurance/insurance";
 import type { ClaimDetailResponse } from "@/api/generated/model";
+import InsurancePaymentModal from "./InsurancePaymentModal";
 import { env } from "@/shared/config/env";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -188,6 +189,7 @@ export default function ClaimDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showInsPayment, setShowInsPayment] = useState(false);
 
   // ✅ Notes state management
   const [claimNotes, setClaimNotes] = useState<string>("");
@@ -469,8 +471,10 @@ export default function ClaimDetail() {
     }
   };
   const handleClaimFillOut = () => alert("Claim fill-out is not available yet.");
-  const handleInsurancePayment = () =>
-    alert("Insurance payment entry from the claim screen is not available yet.");
+  const handleInsurancePayment = () => {
+    if (!data) return;
+    setShowInsPayment(true);
+  };
   const handleDirectPrint = () =>
     alert("Claim form printing is not available yet (no report service).");
 
@@ -1192,6 +1196,16 @@ export default function ClaimDetail() {
           </div>
         </div>
       </div>
+
+      {showInsPayment && data && (
+        <InsurancePaymentModal
+          isOpen={showInsPayment}
+          onClose={() => setShowInsPayment(false)}
+          claim={data.claim}
+          procedures={data.procedures}
+          onPosted={loadClaim}
+        />
+      )}
     </div>
   );
 }

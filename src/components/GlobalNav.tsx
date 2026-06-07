@@ -71,7 +71,7 @@ import { createPortal } from "react-dom";
 import { SubmenuPortal } from "./navigation/SubmenuPortal";
 import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
-import { useAuth } from "../contexts/AuthContext.js";
+import { useAuth, type Office } from "../contexts/AuthContext.js";
 import { useAIChat } from "../contexts/AIChatContext.js";
 import api from "../services/api.js";
 import { listOffices } from "@/api/generated/endpoints/organization/organization";
@@ -166,14 +166,11 @@ export default function GlobalNav({
   // Get Auth Context for current organization
   const { currentOrganization, user, organizations } = useAuth();
 
-  // State for offices fetched from backend API
-  const [offices, setOffices] = useState<Array<{
-    id: string;
-    name: string;
-    displayName?: string;
-    shortId?: string;
-    officeId?: number;
-  }>>([]);
+  // State for offices fetched from backend API.
+  // Bound to the AuthContext `Office` shape (snake_case API fields, `OFF-{id}`
+  // ids) so dropdown selection matches `currentOffice` app-wide and the
+  // AuthContext fallback below assigns without any mapping.
+  const [offices, setOffices] = useState<Office[]>([]);
   const [loadingOffices, setLoadingOffices] = useState(false);
   const [officesError, setOfficesError] = useState<string | null>(null);
 
@@ -187,37 +184,18 @@ export default function GlobalNav({
         // Fetch offices from backend API (paginated: { items, meta })
         const response = await listOffices({ size: 200 });
 
-        // Map API response to office format expected by GlobalNav
-        const mappedOffices = response.items.map((office: any) => {
-          // Handle both camelCase and snake_case from API
-          const officeId = office.officeId || office.office_id || office.id;
-          const officeName = office.officeName || office.office_name || office.name || "";
-          const shortId = office.shortId || office.short_id || "";
-          
-          // Create display name: "Office Name [ShortId]" or "Office Name [ID]"
-          const displayId = shortId || String(officeId);
-          const displayName = `${officeName} [${displayId}]`;
-          
-          // Store multiple ID formats for matching
-          const numericId = typeof officeId === 'number' ? officeId : parseInt(String(officeId), 10);
-          
-          return {
-            id: String(officeId), // Primary ID for matching
-            name: officeName, // Office name (user wants this displayed)
-            displayName: displayName,
-            shortId: shortId,
-            officeId: numericId,
-            // Additional ID formats for flexible matching
-            idFormats: [
-              String(officeId),
-              String(numericId),
-              `O-${numericId}`,
-              `OFF-${numericId}`,
-              shortId ? `OFF-${shortId}` : null,
-            ].filter(Boolean) as string[],
-          };
-        });
-        
+        // Map OfficeRead (snake_case) to the AuthContext `Office` shape.
+        // Use the app's canonical `OFF-{id}` id so selection here matches the
+        // `currentOffice` that AuthContext seeds and downstream consumers parse.
+        const mappedOffices: Office[] = response.items.map((office) => ({
+          id: `OFF-${office.id}`,
+          name: office.name,
+          code: office.office_code,
+          address: "",
+          displayName: `${office.name} [${office.short_id ?? office.id}]`,
+          is_current: false,
+        }));
+
         setOffices(mappedOffices);
       } catch (err: any) {
         console.error("Error fetching offices:", err);
@@ -236,37 +214,12 @@ export default function GlobalNav({
     }
   }, [currentOrganization, organizations]);
   
-  // Find current office object to display name and code (currentOffice is passed as prop)
-  // Match by id (which is officeId as string) or by officeId number, handling various formats
-  const currentOfficeObj = offices.find((office) => {
-    if (!currentOffice) return false;
-    
-    // Normalize currentOffice for comparison
-    const normalizedCurrent = String(currentOffice).trim();
-    
-    // Try exact match first
-    if (office.id === normalizedCurrent) return true;
-    
-    // Try matching officeId number
-    if (office.officeId && String(office.officeId) === normalizedCurrent) return true;
-    
-    // Try matching with various ID formats
-    if ((office as any).idFormats) {
-      return (office as any).idFormats.some((fmt: string) => fmt === normalizedCurrent);
-    }
-    
-    // Try matching if currentOffice is in format "O-123", "OFF-1", etc.
-    const currentOfficeNum = normalizedCurrent.replace(/^(O-|OFF-)/i, '');
-    if (office.id === currentOfficeNum || String(office.officeId) === currentOfficeNum) return true;
-    
-    // Try matching shortId
-    if (office.shortId && office.shortId === normalizedCurrent) return true;
-    
-    return false;
-  });
-  
+  // Current office for header display. Both the office ids and `currentOffice`
+  // use the canonical `OFF-{id}` format, so this is a direct id match.
+  const currentOfficeObj = offices.find((office) => office.id === currentOffice);
+
   // Format office display name - show just the name, not the ID
-  const formatOfficeDisplay = (office: typeof offices[0]) => {
+  const formatOfficeDisplay = (office: Office) => {
     // Return just the office name (user wants name, not ID)
     return office.name || office.displayName || office.id;
   };

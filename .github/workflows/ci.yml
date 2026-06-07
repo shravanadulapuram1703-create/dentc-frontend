@@ -2,8 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches:
+      - feature/phase_data_migration
+
   pull_request:
+    branches:
+      - feature/phase_data_migration
 
 # Cancel superseded runs on the same ref.
 concurrency:

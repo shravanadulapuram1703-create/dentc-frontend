@@ -1,0 +1,36 @@
+# Cloud Build config for the DentC frontend.
+#
+# Why this file exists: VITE_* env vars are baked into the bundle at BUILD time.
+# Cloud Run's "continuously deploy from repository" cannot pass --build-arg, so we
+# build here and inject the backend URL as a build arg.
+#
+# Run:
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_API_BASE_URL=https://dentc-backend-477406612596.us-central1.run.app
+#
+# Override _API_BASE_URL per environment. _REGION/_REPO default to the values below.
+
+substitutions:
+  _API_BASE_URL: "https://dentc-backend-477406612596.us-central1.run.app"
+  _REGION: "us-central1"
+  _REPO: "dentc"
+  _IMAGE: "dentc-frontend"
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - VITE_API_BASE_URL=${_API_BASE_URL}
+      - --build-arg
+      - VITE_APP_ENV=production
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest

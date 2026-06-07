@@ -11,7 +11,7 @@ import type { MeFull } from "@/api/generated/model";
 
 /* -------------------- TYPES -------------------- */
 
-interface Office {
+export interface Office {
   id: string;
   name: string;
   code: string;

@@ -1,8 +1,15 @@
-import { useState } from 'react';
-import { X, Search, DollarSign, Plus, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, DollarSign, Loader2 } from 'lucide-react';
 import { components } from '../../styles/theme';
-import { createPatientPayment, createPatientAdjustment } from '@/api/generated/endpoints/billing/billing';
+import {
+  createPatientPayment,
+  createPatientAdjustment,
+  allocatePayment,
+} from '@/api/generated/endpoints/billing/billing';
+import { listPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
+import type { PatientProcedureRead, AllocationLine } from '@/api/generated/model';
 import { useDefinitions } from '../../hooks/useDefinitions';
+import { fetchProviders, type Provider } from '../../services/schedulerApi';
 
 // MM/DD/YYYY (or any parseable string) -> YYYY-MM-DD for the API.
 const toIsoDate = (s: string): string => {
@@ -12,27 +19,7 @@ const toIsoDate = (s: string): string => {
     : d.toISOString().slice(0, 10);
 };
 
-interface OutstandingProcedure {
-  id: string;
-  selected: boolean;
-  dos: string;
-  patient: string;
-  office: string;
-  code: string;
-  tooth: string;
-  surface: string;
-  description: string;
-  provider: string;
-  providerId: string;
-  bill: string;
-  duration: string;
-  estPat: number;
-  estIns: number;
-  patPaid: number;
-  patAdj: number;
-  remaining: number;
-  newAmount: number;
-}
+const money = (value: number): string => `$${value.toFixed(2)}`;
 
 interface Props {
   isOpen: boolean;
@@ -46,73 +33,75 @@ interface Props {
 }
 
 export default function PaymentsAdjustments({ isOpen, onClose, patientName, patientId, office, onApplied }: Props) {
-  const [activeTab, setActiveTab] = useState<'add-procedures' | 'payments' | 'adjustments'>('payments');
+  const [activeTab, setActiveTab] = useState<'payments' | 'adjustments'>('payments');
   const [transactionDate, setTransactionDate] = useState(new Date().toLocaleDateString('en-US'));
   const [saving, setSaving] = useState(false);
-  
+
   // Payment fields
   const [paymentAmount, setPaymentAmount] = useState('');
-  const [applyTo, setApplyTo] = useState<'Patient' | 'Responsible Party'>('Patient');
-  const [selectedProvider, setSelectedProvider] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [selectedProviderId, setSelectedProviderId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(''); // stores the definition value (key1)
   const [checkNumber, setCheckNumber] = useState('');
-  const [bankNumber, setBankNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [searchCode, setSearchCode] = useState('');
   const [searchDescription, setSearchDescription] = useState('');
 
   // Adjustment fields
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
-  const [adjustmentReason, setAdjustmentReason] = useState('');
+  const [adjustmentReason, setAdjustmentReason] = useState(''); // stores the definition value (key1)
 
   // Seeded lookups from /definitions (key1 = code/value, description = label).
   const { definitions: paymentDefs } = useDefinitions('payment_method');
   const { definitions: adjustmentDefs } = useDefinitions('adjustment');
-  const paymentCodes = paymentDefs.map((d) => ({
-    code: d.key1,
-    description: d.description,
-    type: d.key2 ?? '',
-  }));
-  const adjustmentCodes = adjustmentDefs.map((d) => ({
-    code: d.key1,
-    description: d.description,
-  }));
+  const paymentCodes = paymentDefs.map((d) => ({ code: d.key1, description: d.description, type: d.key2 ?? '' }));
+  const adjustmentCodes = adjustmentDefs.map((d) => ({ code: d.key1, description: d.description }));
 
-  // Outstanding procedures. There is no backend endpoint for per-procedure
-  // payment allocation yet (the patient-payments resource records a flat payment
-  // and exposes a separate /allocate route), so this starts empty rather than
-  // showing mock rows. See docs/patients/patients_backend_devreport.md.
-  const [procedures, setProcedures] = useState<OutstandingProcedure[]>([]);
+  // Providers for attribution (real office provider list, not derived from rows).
+  const [providers, setProviders] = useState<Provider[]>([]);
 
-  // Provider list (derived from procedures)
-  const providers = Array.from(new Set(procedures.map(p => ({
-    id: p.providerId,
-    name: p.provider
-  }))));
+  // Outstanding procedures for per-procedure payment allocation. The New Amt a
+  // user enters per row is distributed via POST /patient-payments/{id}/allocate
+  // (which guards over-allocation server-side) after the payment is created.
+  const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
+  const [allocAmounts, setAllocAmounts] = useState<Record<string, string>>({});
 
-  const filteredPaymentCodes = paymentCodes.filter(code => 
-    (searchCode === '' || code.code.toLowerCase().includes(searchCode.toLowerCase())) &&
-    (searchDescription === '' || code.description.toLowerCase().includes(searchDescription.toLowerCase()))
+  const loadProviders = useCallback(async () => {
+    try {
+      setProviders(await fetchProviders(office));
+    } catch {
+      setProviders([]);
+    }
+  }, [office]);
+
+  const loadOutstanding = useCallback(async () => {
+    if (!patientId) return;
+    try {
+      const res = await listPatientProcedures({ patient_id: Number(patientId), is_void: false, size: 200 });
+      setOutstanding(res.items ?? []);
+    } catch {
+      setOutstanding([]);
+    }
+  }, [patientId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadProviders();
+    loadOutstanding();
+  }, [isOpen, loadProviders, loadOutstanding]);
+
+  const filteredPaymentCodes = paymentCodes.filter(
+    (code) =>
+      (searchCode === '' || code.code.toLowerCase().includes(searchCode.toLowerCase())) &&
+      (searchDescription === '' || code.description.toLowerCase().includes(searchDescription.toLowerCase())),
   );
 
-  const filteredAdjustmentCodes = adjustmentCodes.filter(code => 
-    (searchCode === '' || code.code.toLowerCase().includes(searchCode.toLowerCase())) &&
-    (searchDescription === '' || code.description.toLowerCase().includes(searchDescription.toLowerCase()))
+  const filteredAdjustmentCodes = adjustmentCodes.filter(
+    (code) =>
+      (searchCode === '' || code.code.toLowerCase().includes(searchCode.toLowerCase())) &&
+      (searchDescription === '' || code.description.toLowerCase().includes(searchDescription.toLowerCase())),
   );
 
-  const handleSelectProcedure = (id: string) => {
-    setProcedures(procedures.map(p => 
-      p.id === id ? { ...p, selected: !p.selected } : p
-    ));
-  };
-
-  const handleSelectAll = () => {
-    const allSelected = procedures.every(p => p.selected);
-    setProcedures(procedures.map(p => ({ ...p, selected: !allSelected })));
-  };
-
-  const selectedProcedures = procedures.filter(p => p.selected);
-  const totalRemaining = selectedProcedures.reduce((sum, p) => sum + p.remaining, 0);
+  const totalAllocated = Object.values(allocAmounts).reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
 
   const handleApplyPayment = async () => {
     const amount = parseFloat(paymentAmount);
@@ -129,12 +118,17 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
       alert('Missing patient context. Please reopen the patient and try again.');
       return;
     }
+    // Client-side over-allocation guard (the backend allocate route also guards).
+    if (totalAllocated > amount + 0.001) {
+      alert(`Allocated total (${money(totalAllocated)}) exceeds the payment amount (${money(amount)}).`);
+      return;
+    }
 
     const officeNum = office ? Number(String(office).replace(/\D/g, '')) : undefined;
 
     setSaving(true);
     try {
-      await createPatientPayment({
+      const payment = await createPatientPayment({
         id: crypto.randomUUID(),
         patient_id: pid,
         office_id: officeNum && Number.isFinite(officeNum) ? officeNum : null,
@@ -142,16 +136,32 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
         amount: amount.toFixed(2),
         payment_type: 'patient',
         payment_method: paymentMethod,
+        ...(selectedProviderId ? { provider_id: selectedProviderId } : {}),
         ...(checkNumber ? { check_number: checkNumber } : {}),
         ...(notes ? { notes } : {}),
       });
+
+      // Distribute the per-procedure amounts the user entered.
+      const allocations: AllocationLine[] = outstanding
+        .map((p) => ({ id: p.id, amount: parseFloat(allocAmounts[p.id] || '0') }))
+        .filter((a) => a.amount > 0)
+        .map((a) => ({
+          procedure_id: a.id,
+          amount: a.amount.toFixed(2),
+          alloc_date: toIsoDate(transactionDate),
+          ...(selectedProviderId ? { provider_id: selectedProviderId } : {}),
+        }));
+      if (allocations.length > 0) {
+        await allocatePayment(payment.id, { allocations });
+      }
 
       // Reset form
       setPaymentAmount('');
       setPaymentMethod('');
       setCheckNumber('');
-      setBankNumber('');
       setNotes('');
+      setSelectedProviderId('');
+      setAllocAmounts({});
       onApplied?.();
       onClose();
     } catch (err) {
@@ -193,6 +203,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
 
       setAdjustmentAmount('');
       setAdjustmentReason('');
+      setNotes('');
       onApplied?.();
       onClose();
     } catch (err) {
@@ -212,7 +223,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
           {/* Header - Medical Slate */}
           <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between rounded-t-lg border-b-2 border-[#16293B]">
             <div>
-              <h2 className="text-xl font-bold text-white uppercase tracking-wide">Payments & Adjustments</h2>
+              <h2 className="text-xl font-bold text-white uppercase tracking-wide">Payments &amp; Adjustments</h2>
               <p className="text-sm text-white/80">
                 Patient: {patientName} | ID: {patientId}
               </p>
@@ -225,7 +236,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
             </button>
           </div>
 
-          {/* Transaction Date & Filter */}
+          {/* Transaction Date */}
           <div className="px-6 py-3 bg-[#F7F9FC] border-b-2 border-[#E2E8F0] flex items-center gap-4">
             <div className="flex items-center gap-2">
               <label className={components.label}>Transaction Date:</label>
@@ -236,33 +247,14 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                 className={components.input}
               />
             </div>
-            <button className={components.buttonPrimary}>
-              GO
-            </button>
-            <div className="flex-1"></div>
-            <button className={components.buttonSecondary}>
-              Show All
-            </button>
           </div>
 
           {/* Tabs */}
           <div className={components.tabList}>
             <button
-              onClick={() => setActiveTab('add-procedures')}
-              className={`${components.tabButton} ${
-                activeTab === 'add-procedures'
-                  ? components.tabActive
-                  : components.tabInactive
-              }`}
-            >
-              ADD PROCEDURES
-            </button>
-            <button
               onClick={() => setActiveTab('payments')}
               className={`${components.tabButton} ${
-                activeTab === 'payments'
-                  ? components.tabActive
-                  : components.tabInactive
+                activeTab === 'payments' ? components.tabActive : components.tabInactive
               }`}
             >
               PAYMENTS
@@ -270,9 +262,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
             <button
               onClick={() => setActiveTab('adjustments')}
               className={`${components.tabButton} ${
-                activeTab === 'adjustments'
-                  ? components.tabActive
-                  : components.tabInactive
+                activeTab === 'adjustments' ? components.tabActive : components.tabInactive
               }`}
             >
               ADJUSTMENTS
@@ -286,7 +276,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
               <div className="space-y-4">
                 {/* Payment Code Search */}
                 <div className="bg-white border-2 border-slate-300 rounded-lg p-4">
-                  <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Search code</label>
                       <input
@@ -296,15 +286,6 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                         className="w-full px-3 py-2 border-2 border-blue-400 rounded text-sm"
                         placeholder="Enter code"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">All</label>
-                      <select className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm">
-                        <option>All</option>
-                        <option>Cash</option>
-                        <option>Check</option>
-                        <option>Credit Card</option>
-                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Search Description</label>
@@ -323,9 +304,9 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                     {filteredPaymentCodes.map((code) => (
                       <div
                         key={code.code}
-                        onClick={() => setPaymentMethod(code.description)}
+                        onClick={() => setPaymentMethod(code.code)}
                         className={`px-3 py-2 border-b cursor-pointer hover:bg-blue-50 transition-colors ${
-                          paymentMethod === code.description ? 'bg-blue-100' : ''
+                          paymentMethod === code.code ? 'bg-blue-100' : ''
                         }`}
                       >
                         <div className="grid grid-cols-3 text-sm">
@@ -362,59 +343,102 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Bank #</label>
-                      <input
-                        type="text"
-                        value={bankNumber}
-                        onChange={(e) => setBankNumber(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Apply To*</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Apply To Provider</label>
                       <select
-                        value={applyTo}
-                        onChange={(e) => setApplyTo(e.target.value as 'Patient' | 'Responsible Party')}
+                        value={selectedProviderId}
+                        onChange={(e) => setSelectedProviderId(e.target.value)}
                         className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm"
-                      >
-                        <option>Patient</option>
-                        <option>Responsible Party</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Provider Selection - NEW REQUIREMENT */}
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Apply Payment To Provider* (NEW)
-                      </label>
-                      <select
-                        value={selectedProvider}
-                        onChange={(e) => setSelectedProvider(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-blue-500 rounded text-sm bg-yellow-50"
                       >
                         <option value="">-- Select Provider --</option>
                         {providers.map((provider) => (
-                          <option key={provider.id} value={provider.name}>
+                          <option key={provider.id} value={provider.id}>
                             {provider.name} (ID: {provider.id})
                           </option>
                         ))}
                       </select>
-                      <p className="text-xs text-blue-600 mt-1 font-semibold">
-                        ✨ NEW: Provider-based payment attribution ensures accurate collections
-                      </p>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Notes</label>
-                      <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm"
-                        rows={3}
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Payment Method</label>
+                      <input
+                        type="text"
+                        value={paymentMethod}
+                        readOnly
+                        placeholder="Select from list above"
+                        className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm bg-slate-50"
                       />
                     </div>
                   </div>
+                  <div className="mt-4">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Notes</label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                {/* Procedures To Post (per-procedure allocation) */}
+                <div className="bg-white border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
+                  <div className="bg-[#E8EFF7] px-4 py-2 flex items-center justify-between border-b-2 border-[#E2E8F0]">
+                    <h3 className="text-sm font-bold text-[#1F3A5F] uppercase tracking-wide">Allocate To Procedures</h3>
+                    <span className="text-sm font-semibold text-[#1E293B]">
+                      Allocated: {money(totalAllocated)} of {money(parseFloat(paymentAmount) || 0)}
+                    </span>
+                  </div>
+
+                  {outstanding.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-sm text-slate-500">
+                      No procedures to allocate against.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white">
+                          <tr>
+                            <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">DOS</th>
+                            <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Code</th>
+                            <th className="px-2 py-3 text-center font-bold uppercase tracking-wide">Th</th>
+                            <th className="px-2 py-3 text-center font-bold uppercase tracking-wide">Surf</th>
+                            <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Fee</th>
+                            <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Est Pat</th>
+                            <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">New Amt</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E8F0]">
+                          {outstanding.map((proc) => (
+                            <tr key={proc.id} className="hover:bg-[#F7F9FC] transition-colors">
+                              <td className="px-2 py-2 text-slate-900 font-mono">{proc.date_of_service}</td>
+                              <td className="px-2 py-2">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded font-semibold">
+                                  {proc.procedure_code}
+                                </span>
+                              </td>
+                              <td className="px-2 py-2 text-slate-900 text-center">{proc.tooth || '-'}</td>
+                              <td className="px-2 py-2 text-slate-900 text-center">{proc.surface || '-'}</td>
+                              <td className="px-2 py-2 text-right text-slate-900">{money(Number(proc.fee) || 0)}</td>
+                              <td className="px-2 py-2 text-right text-slate-900">
+                                {money(Number(proc.patient_estimate) || 0)}
+                              </td>
+                              <td className="px-2 py-2 text-right">
+                                <input
+                                  type="number"
+                                  value={allocAmounts[proc.id] ?? ''}
+                                  onChange={(e) =>
+                                    setAllocAmounts((prev) => ({ ...prev, [proc.id]: e.target.value }))
+                                  }
+                                  className="w-20 px-2 py-1 border border-slate-300 rounded text-right"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -424,7 +448,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
               <div className="space-y-4">
                 {/* Adjustment Code Search */}
                 <div className="bg-white border-2 border-slate-300 rounded-lg p-4">
-                  <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Search code</label>
                       <input
@@ -434,12 +458,6 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                         className="w-full px-3 py-2 border-2 border-blue-400 rounded text-sm"
                         placeholder="Enter code"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">All</label>
-                      <select className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm">
-                        <option>All</option>
-                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Search Description</label>
@@ -458,9 +476,9 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                     {filteredAdjustmentCodes.map((code) => (
                       <div
                         key={code.code}
-                        onClick={() => setAdjustmentReason(code.description)}
+                        onClick={() => setAdjustmentReason(code.code)}
                         className={`px-3 py-2 border-b cursor-pointer hover:bg-blue-50 transition-colors ${
-                          adjustmentReason === code.description ? 'bg-blue-100' : ''
+                          adjustmentReason === code.code ? 'bg-blue-100' : ''
                         }`}
                       >
                         <div className="grid grid-cols-2 text-sm">
@@ -487,15 +505,14 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Apply To</label>
-                      <select
-                        value={applyTo}
-                        onChange={(e) => setApplyTo(e.target.value as 'Patient' | 'Responsible Party')}
-                        className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm"
-                      >
-                        <option>Patient</option>
-                        <option>Responsible Party</option>
-                      </select>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Reason</label>
+                      <input
+                        type="text"
+                        value={adjustmentReason}
+                        readOnly
+                        placeholder="Select from list above"
+                        className="w-full px-3 py-2 border-2 border-slate-300 rounded text-sm bg-slate-50"
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Notes</label>
@@ -510,107 +527,6 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                 </div>
               </div>
             )}
-
-            {/* ADD PROCEDURES TAB */}
-            {activeTab === 'add-procedures' && (
-              <div className="bg-white border-2 border-slate-300 rounded-lg p-8 text-center">
-                <Plus className="w-16 h-16 text-slate-400 mx-auto mb-4" strokeWidth={1.5} />
-                <p className="text-slate-600">Add Procedures functionality would be implemented here</p>
-              </div>
-            )}
-
-            {/* PROCEDURES TO POST - Common to all tabs */}
-            <div className="bg-white border-2 border-[#E2E8F0] rounded-lg overflow-hidden mt-6">
-              <div className="bg-[#E8EFF7] px-4 py-2 flex items-center justify-between border-b-2 border-[#E2E8F0]">
-                <h3 className="text-sm font-bold text-[#1F3A5F] uppercase tracking-wide">Procedures To Post</h3>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-semibold text-[#1E293B]">
-                    Selected: {selectedProcedures.length} | Total Remaining: ${totalRemaining.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white">
-                    <tr>
-                      <th className="px-2 py-3">
-                        <input
-                          type="checkbox"
-                          checked={procedures.length > 0 && procedures.every(p => p.selected)}
-                          onChange={handleSelectAll}
-                          className="w-4 h-4"
-                        />
-                      </th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">DOS</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Patient</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Office</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Code</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Th</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Surf</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Description</th>
-                      <th className="px-2 py-3 text-left font-bold uppercase tracking-wide">Provider</th>
-                      <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Est Pat</th>
-                      <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Est Ins</th>
-                      <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Pat Paid</th>
-                      <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Pat Adj</th>
-                      <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">Remaining</th>
-                      <th className="px-2 py-3 text-right font-bold uppercase tracking-wide">New Amt</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E2E8F0]">
-                    {procedures.map((proc) => (
-                      <tr
-                        key={proc.id}
-                        className={`hover:bg-[#F7F9FC] transition-colors ${
-                          proc.selected ? 'bg-[#F7F9FC]' : ''
-                        }`}
-                      >
-                        <td className="px-2 py-2 text-center">
-                          <input
-                            type="checkbox"
-                            checked={proc.selected}
-                            onChange={() => handleSelectProcedure(proc.id)}
-                            className="w-4 h-4"
-                          />
-                        </td>
-                        <td className="px-2 py-2 text-slate-900">{proc.dos}</td>
-                        <td className="px-2 py-2 text-slate-900">{proc.patient}</td>
-                        <td className="px-2 py-2 text-slate-900">{proc.office}</td>
-                        <td className="px-2 py-2">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded font-semibold">
-                            {proc.code}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-slate-900 text-center">{proc.tooth || '-'}</td>
-                        <td className="px-2 py-2 text-slate-900">{proc.surface || '-'}</td>
-                        <td className="px-2 py-2 text-slate-900">{proc.description}</td>
-                        <td className="px-2 py-2 text-slate-900 font-semibold">{proc.providerId}</td>
-                        <td className="px-2 py-2 text-right text-slate-900">${proc.estPat.toFixed(2)}</td>
-                        <td className="px-2 py-2 text-right text-slate-900">${proc.estIns.toFixed(2)}</td>
-                        <td className="px-2 py-2 text-right text-slate-900">${proc.patPaid.toFixed(2)}</td>
-                        <td className="px-2 py-2 text-right text-slate-900">${proc.patAdj.toFixed(2)}</td>
-                        <td className="px-2 py-2 text-right text-green-700 font-bold">${proc.remaining.toFixed(2)}</td>
-                        <td className="px-2 py-2 text-right">
-                          <input
-                            type="number"
-                            value={proc.newAmount}
-                            onChange={(e) => {
-                              const newVal = parseFloat(e.target.value) || 0;
-                              setProcedures(procedures.map(p => 
-                                p.id === proc.id ? { ...p, newAmount: newVal } : p
-                              ));
-                            }}
-                            className="w-20 px-2 py-1 border border-slate-300 rounded text-right"
-                            step="0.01"
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
 
           {/* Footer Actions */}
@@ -619,7 +535,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
               <button
                 onClick={handleApplyPayment}
                 disabled={saving}
-                className={components.buttonPrimary + " flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"}
+                className={components.buttonPrimary + ' flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'}
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
@@ -633,7 +549,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
               <button
                 onClick={handleApplyAdjustment}
                 disabled={saving}
-                className={components.buttonPrimary + " flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"}
+                className={components.buttonPrimary + ' flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'}
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
@@ -643,10 +559,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
                 {saving ? 'APPLYING…' : 'APPLY'}
               </button>
             )}
-            <button
-              onClick={onClose}
-              className={components.buttonSecondary}
-            >
+            <button onClick={onClose} className={components.buttonSecondary}>
               CANCEL
             </button>
           </div>

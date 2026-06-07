@@ -1,0 +1,14 @@
+node_modules/
+dist/
+# Stale incremental tsc state would make `tsc -b` skip files (or fail flakily)
+# in the clean Docker build; always type-check from scratch.
+tsconfig.tsbuildinfo
+.git/
+.gitignore
+.env
+.env.*
+*.log
+.vscode/
+.idea/
+.DS_Store
+stats.html
