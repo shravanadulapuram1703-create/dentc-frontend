@@ -1,11 +1,10 @@
 name: Deploy frontend to Cloud Run
 
-# Fires when a PR is merged into (or any push lands on) `dev`.
 on:
   push:
-    branches: [feature/phase_data_migration]
+    branches:
+      - feature/phase_data_migration
 
-# Required for keyless auth (Workload Identity Federation).
 permissions:
   contents: read
   id-token: write
@@ -15,14 +14,33 @@ env:
   REGION: us-central1
   REPO: dentc
   SERVICE: dentc-frontend
-  # Baked into the bundle at BUILD time. Change here if the backend URL changes.
   API_BASE_URL: https://dentc-backend-477406612596.us-central1.run.app
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Debug GitHub Context
+        run: |
+          echo "===================================="
+          echo "GitHub Context"
+          echo "===================================="
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository Owner: ${{ github.repository_owner }}"
+          echo "Branch Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "===================================="
+
+          echo "Secrets Check"
+          echo "===================================="
+          echo "WIF_PROVIDER configured: ${{ secrets.WIF_PROVIDER != '' }}"
+          echo "WIF_SERVICE_ACCOUNT configured: ${{ secrets.WIF_SERVICE_ACCOUNT != '' }}"
+          echo "===================================="
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -30,27 +48,45 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Set up gcloud
+      - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: reckon-dental
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Verify Authentication
+        run: |
+          gcloud auth list
+          gcloud config list
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
+        run: |
+          gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
-      - name: Build & push image (bakes VITE_API_BASE_URL)
+      - name: Build and Push Docker Image
         run: |
           IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE:${{ github.sha }}"
+
+          echo "Building image:"
+          echo "$IMAGE"
+
           docker build \
             --build-arg VITE_API_BASE_URL="$API_BASE_URL" \
             --build-arg VITE_APP_ENV=production \
             -t "$IMAGE" .
+
           docker push "$IMAGE"
+
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE \
             --image "$IMAGE" \
-            --region $REGION \
-            --project $PROJECT_ID
+            --region "$REGION" \
+            --project "$PROJECT_ID"
+
+      - name: Show Service URL
+        run: |
+          gcloud run services describe $SERVICE \
+            --region "$REGION" \
+            --format="value(status.url)"
