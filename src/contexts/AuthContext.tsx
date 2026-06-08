@@ -5,11 +5,22 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { toast } from "sonner";
 import api from "../services/api";
 import { getMeFull, login as login_ } from "@/api/generated/endpoints/auth/auth";
 import type { MeFull } from "@/api/generated/model";
+import { mapAuthError, type AuthError } from "@/features/auth/utils/authErrors";
 
 /* -------------------- TYPES -------------------- */
+
+/**
+ * Discriminated result of a login attempt so the UI can show a specific
+ * message (invalid credentials vs disabled/locked/rate-limited/network) and
+ * react to the forced first-login password change.
+ */
+export type LoginResult =
+  | { ok: true; must_change_password: boolean }
+  | { ok: false; error: AuthError };
 
 export interface Office {
   id: string;
@@ -61,7 +72,7 @@ interface AuthContextType {
   user: User | null;
   isLoggingOut: boolean;
 
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
 
   organizations: Organization[];
@@ -239,10 +250,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /* ---------- LOGIN ---------- */
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    identifier: string,
+    password: string,
+  ): Promise<LoginResult> => {
     try {
       // Backend LoginRequest expects `username` (accepts username or email).
-      const tokens = await login_({ username: email, password });
+      const tokens = await login_({ username: identifier, password });
 
       const token = tokens.access_token;
 
@@ -274,10 +288,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setIsAuthenticated(true);
-      return true;
+      return {
+        ok: true,
+        must_change_password: me.user.must_change_password ?? false,
+      };
     } catch (err) {
       console.error("Login failed", err);
-      return false;
+      return { ok: false, error: mapAuthError(err) };
     }
   };
 
@@ -322,11 +339,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleUnauthorized = async (event: Event) => {
       const customEvent = event as CustomEvent<{ message?: string }>;
       const message = customEvent.detail?.message || "Your session has expired. Please log in again.";
-      
-      // Show alert to user
-      alert(message);
-      
-      // Call logout to clean up state
+
+      // Modern, non-blocking notice. The axios response interceptor
+      // (src/services/api.ts) performs the actual redirect to /login.
+      toast.error(message);
+
+      // Call logout to clean up state.
       await logout();
     };
 

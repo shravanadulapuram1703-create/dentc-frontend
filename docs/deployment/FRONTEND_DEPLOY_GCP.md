@@ -142,6 +142,8 @@ gcloud run deploy dentc-frontend `
 - `--allow-unauthenticated` makes the website publicly reachable (this is a public web app).
 - On success, gcloud prints the **Service URL**: `https://dentc-frontend-xxxxxxxx-uc.a.run.app`.
 
+<!-- https://dentc-frontend-477406612596.us-central1.run.app -->
+
 ---
 
 ## 6. Wire CORS on the backend
@@ -284,3 +286,139 @@ Artifact Registry repo     = dentc
 Backend URL                = https://dentc-backend-477406612596.us-central1.run.app
 Frontend URL (after deploy)= ____________________
 ```
+
+
+
+######################################################################################
+
+You do **not need Docker running locally**.
+
+That's exactly what **Cloud Build** is for.
+
+Your `cloudbuild.yaml` is already set up correctly. Cloud Build will:
+
+1. Upload your source code to GCP
+2. Build the Docker image in Google Cloud
+3. Push it to Artifact Registry
+4. Then you deploy that image to Cloud Run
+
+---
+
+## Step 1: Verify Frontend Repo Has Dockerfile
+
+From:
+
+```powershell
+C:\Users\Sravan\Desktop\dentc-frontend
+```
+
+Run:
+
+```powershell
+Get-ChildItem
+```
+
+I want to confirm:
+
+```text
+Dockerfile
+cloudbuild.yaml
+package.json
+```
+
+exist.
+
+---
+
+## Step 2: Build in Cloud Build
+
+From the frontend folder:
+
+```powershell
+gcloud builds submit `
+  --config cloudbuild.yaml `
+  --substitutions=_API_BASE_URL=https://dentc-backend-477406612596.us-central1.run.app
+```
+
+Cloud Build will use your `cloudbuild.yaml`.
+
+You do **not** need:
+
+```text
+docker build
+docker push
+```
+
+locally.
+
+---
+
+## Step 3: Verify Image
+
+After build succeeds:
+
+```powershell
+gcloud artifacts docker images list `
+  us-central1-docker.pkg.dev/reckon-dental/dentc
+```
+
+You should see:
+
+```text
+dentc-frontend
+```
+
+---
+
+## Step 4: Deploy Frontend to Cloud Run
+
+```powershell
+gcloud run deploy dentc-frontend `
+  --image us-central1-docker.pkg.dev/reckon-dental/dentc/dentc-frontend:latest `
+  --region us-central1 `
+  --port 80 `
+  --allow-unauthenticated `
+  --cpu 1 `
+  --memory 512Mi `
+  --min-instances 1 `
+  --max-instances 5
+```
+
+---
+
+## Possible Issue
+
+Because you're an **Editor**, you'll probably get the same warning:
+
+```text
+Setting IAM policy failed
+```
+
+If that happens:
+
+* Deployment succeeds
+* Frontend works
+* But nobody can access it publicly
+
+The admin will need to grant:
+
+```text
+allUsers
+Cloud Run Invoker
+```
+
+for `dentc-frontend` exactly like they must for `dentc-backend`.
+
+---
+
+## Before Running Build
+
+Run:
+
+```powershell
+Get-ChildItem
+```
+
+from `dentc-frontend` and paste the output.
+
+I want to verify the Dockerfile path and ensure Cloud Build will succeed on the first attempt.

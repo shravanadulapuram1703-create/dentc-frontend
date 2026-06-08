@@ -42,26 +42,26 @@ Git Bash or Cloud Shell — the `for` loops are bash.)
 
 ```bash
 PROJECT_ID=reckon-dental
-PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
+PROJECT_NUMBER=$(gcloud projects describe "reckon-dental" --format='value(projectNumber)')
 
-# Your GitHub owner (org or username) and the two repo names:
-GH_OWNER=<your-github-org-or-username>
+# PROJECT_NUMBER==477406612596
+
+# Your GitHub owner (org or username) and the two repo names: <your-github-org-or-username>
+GH_OWNER=shravanadulapuram1703-create
 BACKEND_REPO=dentc-backend
 FRONTEND_REPO=dentc-frontend
 
 # 0. Enable the APIs WIF needs
 gcloud services enable iamcredentials.googleapis.com sts.googleapis.com
+# Operation "operations/acat.p2-477406612596-e346c31b-1e35-46e7-9236-d8047e315616" finished successfully.
 
 # 1. Create the deployer service account
-gcloud iam service-accounts create github-deployer \
-  --display-name="GitHub Actions deployer"
-SA="github-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
+gcloud iam service-accounts create github-deployer --display-name="GitHub Actions deployer" 
+
+# SA="github-deployer@reckon-dental.iam.gserviceaccount.com"
 
 # 2. Grant it what it needs to build, push and deploy
-for ROLE in roles/run.admin roles/artifactregistry.writer roles/iam.serviceAccountUser; do
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:${SA}" --role="$ROLE"
-done
+for ROLE in roles/run.admin roles/artifactregistry.writer roles/iam.serviceAccountUser; do gcloud projects add-iam-policy-binding "reckon-dental" --member="serviceAccount:${SA}" --role="$ROLE" done
 
 # 3. Create the Workload Identity pool + GitHub OIDC provider
 gcloud iam workload-identity-pools create github-pool \

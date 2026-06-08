@@ -3,9 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AIChatProvider, useAIChat } from './contexts/AIChatContext';
 import { AppProviders } from './app/providers';
-import Login from './components/Login';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
+import LegacyActivationPage from './features/auth/pages/LegacyActivationPage';
 import SignUpPage from './pages/SignUpPage';
 import Dashboard from './components/Dashboard';
 import Scheduler from './components/pages/Scheduler';
@@ -69,15 +70,16 @@ function AdminPageWrapper({
 }
 
 function AppRoutes() {
-  const { isAuthenticated, user, logout, currentOffice, setCurrentOffice, login, isLoggingOut } = useAuth();
+  const { isAuthenticated, user, logout, currentOffice, setCurrentOffice } = useAuth();
 
   return (
     <Routes>
       {/* Authentication Pages */}
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/dashboard" /> : <ResetPasswordPage />} />
+      <Route path="/activate-legacy" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LegacyActivationPage />} />
       <Route path="/signup" element={<SignUpPage />} />
-      <Route path="/login-old" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login onLogin={login} />} />
       
       {/* Dashboard */}
       <Route 
