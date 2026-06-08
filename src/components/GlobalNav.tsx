@@ -1610,7 +1610,7 @@ export default function GlobalNav({
               className="cursor-pointer select-none"
             >
               <h1 className="text-lg font-bold text-white hover:underline">
-                DentalPMS
+                Reckon Dental
               </h1>
               <p className="text-xs text-white/70 hover:text-white">
                 Practice Management System

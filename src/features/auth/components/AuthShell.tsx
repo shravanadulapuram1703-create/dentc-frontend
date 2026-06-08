@@ -58,7 +58,7 @@ export default function AuthShell({
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-[#64748B] text-sm font-medium">
-            DentC Practice Management Platform · Secure &amp; HIPAA Compliant
+            Reckon Dental PMS · Secure &amp; HIPAA Compliant
           </p>
         </div>
       </div>

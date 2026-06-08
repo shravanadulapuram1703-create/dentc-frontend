@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="DentC Practice Management Platform"
+      title="Reckon Dental PMS"
       subtitle="Sign in to your account"
     >
       <form onSubmit={handleLogin} className="space-y-6" noValidate>
