@@ -8,14 +8,33 @@
 
 export interface InsuranceCarrierCreate {
   name: string;
+  carrier_type?: string | null;
   payer_id?: string | null;
+  national_id?: string | null;
+  claim_type?: string | null;
+  fee_id?: string | null;
   phone?: string | null;
   phone2?: string | null;
+  fax?: string | null;
+  email?: string | null;
   address?: string | null;
+  address2?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;
   website?: string | null;
+  contact?: string | null;
   notes?: string | null;
+  ref_num?: string | null;
+  vbs_id?: string | null;
+  vbs_pgid?: string | null;
+  cda_carrier_transaction_counter?: string | null;
+  supports_realtime_eligibility?: boolean | null;
+  supports_claim_status?: boolean | null;
+  supports_dxc_attachment?: boolean | null;
+  insurance_type?: string | null;
+  created_on?: string | null;
+  modified_on?: string | null;
+  modified_by?: string | null;
   is_active?: boolean | null;
 }

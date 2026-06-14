@@ -29,6 +29,10 @@ procedure_code?: string | null;
  */
 claim_id?: string | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * Filter by billing_status
  */
 billing_status?: string | null;

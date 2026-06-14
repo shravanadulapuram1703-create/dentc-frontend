@@ -29,6 +29,10 @@ carrier_id?: number | null;
  */
 ins_plan_id?: number | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * Filter by is_active
  */
 is_active?: boolean | null;

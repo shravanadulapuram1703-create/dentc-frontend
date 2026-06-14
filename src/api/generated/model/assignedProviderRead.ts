@@ -24,5 +24,18 @@ export interface AssignedProviderRead {
   first_name?: string | null;
   last_name?: string | null;
   created_by?: number | null;
+  user_id?: number | null;
+  scheduler_color?: string | null;
+  is_ortho_provider: boolean;
+  visible_in_appointnow: boolean;
+  default_provider_time?: number | null;
+  is_billing_provider: boolean;
+  dosespot_user_id?: string | null;
+  updox_direct_address?: string | null;
+  denticon_user_id?: string | null;
+  print_separate_claim_form: boolean;
+  ortho_questionnaire_template?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
   created_at: string;
 }

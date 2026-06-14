@@ -27,10 +27,18 @@ import type {
 import type {
   BodyLogout,
   ErrorResponse,
+  ForgotPasswordRequest,
   HTTPValidationError,
+  LegacyCreatePasswordRequest,
+  LegacyVerifyRequest,
+  LegacyVerifyResponse,
   LoginRequest,
   MeFull,
+  MessageResponse,
   RefreshRequest,
+  ResetPasswordRequest,
+  ResetTokenValidateRequest,
+  ResetTokenValidateResponse,
   SignupRequest,
   TokenResponse,
   UserRead
@@ -480,3 +488,318 @@ export function useGetMeFull<TData = Awaited<ReturnType<typeof getMeFull>>, TErr
 
 
 
+/**
+ * @summary Request a password-reset email (always 200, never reveals existence)
+ */
+export const forgotPassword = (
+    forgotPasswordRequest: BodyType<ForgotPasswordRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MessageResponse>(
+      {url: `/api/v1/auth/forgot-password`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: forgotPasswordRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getForgotPasswordMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forgotPassword>>, TError,{data: BodyType<ForgotPasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof forgotPassword>>, TError,{data: BodyType<ForgotPasswordRequest>}, TContext> => {
+
+const mutationKey = ['forgotPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof forgotPassword>>, {data: BodyType<ForgotPasswordRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  forgotPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ForgotPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof forgotPassword>>>
+    export type ForgotPasswordMutationBody = BodyType<ForgotPasswordRequest>
+    export type ForgotPasswordMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Request a password-reset email (always 200, never reveals existence)
+ */
+export const useForgotPassword = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof forgotPassword>>, TError,{data: BodyType<ForgotPasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof forgotPassword>>,
+        TError,
+        {data: BodyType<ForgotPasswordRequest>},
+        TContext
+      > => {
+      return useMutation(getForgotPasswordMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Check whether a password-reset token is still valid
+ */
+export const validateResetToken = (
+    resetTokenValidateRequest: BodyType<ResetTokenValidateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ResetTokenValidateResponse>(
+      {url: `/api/v1/auth/reset-password/validate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: resetTokenValidateRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getValidateResetTokenMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateResetToken>>, TError,{data: BodyType<ResetTokenValidateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof validateResetToken>>, TError,{data: BodyType<ResetTokenValidateRequest>}, TContext> => {
+
+const mutationKey = ['validateResetToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof validateResetToken>>, {data: BodyType<ResetTokenValidateRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  validateResetToken(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ValidateResetTokenMutationResult = NonNullable<Awaited<ReturnType<typeof validateResetToken>>>
+    export type ValidateResetTokenMutationBody = BodyType<ResetTokenValidateRequest>
+    export type ValidateResetTokenMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Check whether a password-reset token is still valid
+ */
+export const useValidateResetToken = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateResetToken>>, TError,{data: BodyType<ResetTokenValidateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof validateResetToken>>,
+        TError,
+        {data: BodyType<ResetTokenValidateRequest>},
+        TContext
+      > => {
+      return useMutation(getValidateResetTokenMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Set a new password using a valid reset token
+ */
+export const resetPassword = (
+    resetPasswordRequest: BodyType<ResetPasswordRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MessageResponse>(
+      {url: `/api/v1/auth/reset-password`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: resetPasswordRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getResetPasswordMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: BodyType<ResetPasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: BodyType<ResetPasswordRequest>}, TContext> => {
+
+const mutationKey = ['resetPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetPassword>>, {data: BodyType<ResetPasswordRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  resetPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetPassword>>>
+    export type ResetPasswordMutationBody = BodyType<ResetPasswordRequest>
+    export type ResetPasswordMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Set a new password using a valid reset token
+ */
+export const useResetPassword = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPassword>>, TError,{data: BodyType<ResetPasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resetPassword>>,
+        TError,
+        {data: BodyType<ResetPasswordRequest>},
+        TContext
+      > => {
+      return useMutation(getResetPasswordMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Verify a legacy user is eligible to activate and start the challenge
+ */
+export const legacyUserVerify = (
+    legacyVerifyRequest: BodyType<LegacyVerifyRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LegacyVerifyResponse>(
+      {url: `/api/v1/auth/legacy-user/verify`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: legacyVerifyRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getLegacyUserVerifyMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof legacyUserVerify>>, TError,{data: BodyType<LegacyVerifyRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof legacyUserVerify>>, TError,{data: BodyType<LegacyVerifyRequest>}, TContext> => {
+
+const mutationKey = ['legacyUserVerify'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof legacyUserVerify>>, {data: BodyType<LegacyVerifyRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  legacyUserVerify(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LegacyUserVerifyMutationResult = NonNullable<Awaited<ReturnType<typeof legacyUserVerify>>>
+    export type LegacyUserVerifyMutationBody = BodyType<LegacyVerifyRequest>
+    export type LegacyUserVerifyMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Verify a legacy user is eligible to activate and start the challenge
+ */
+export const useLegacyUserVerify = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof legacyUserVerify>>, TError,{data: BodyType<LegacyVerifyRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof legacyUserVerify>>,
+        TError,
+        {data: BodyType<LegacyVerifyRequest>},
+        TContext
+      > => {
+      return useMutation(getLegacyUserVerifyMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Set the new-platform password for a verified legacy user (one-time)
+ */
+export const legacyUserCreatePassword = (
+    legacyCreatePasswordRequest: BodyType<LegacyCreatePasswordRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MessageResponse>(
+      {url: `/api/v1/auth/legacy-user/create-password`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: legacyCreatePasswordRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getLegacyUserCreatePasswordMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof legacyUserCreatePassword>>, TError,{data: BodyType<LegacyCreatePasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof legacyUserCreatePassword>>, TError,{data: BodyType<LegacyCreatePasswordRequest>}, TContext> => {
+
+const mutationKey = ['legacyUserCreatePassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof legacyUserCreatePassword>>, {data: BodyType<LegacyCreatePasswordRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  legacyUserCreatePassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LegacyUserCreatePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof legacyUserCreatePassword>>>
+    export type LegacyUserCreatePasswordMutationBody = BodyType<LegacyCreatePasswordRequest>
+    export type LegacyUserCreatePasswordMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Set the new-platform password for a verified legacy user (one-time)
+ */
+export const useLegacyUserCreatePassword = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof legacyUserCreatePassword>>, TError,{data: BodyType<LegacyCreatePasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof legacyUserCreatePassword>>,
+        TError,
+        {data: BodyType<LegacyCreatePasswordRequest>},
+        TContext
+      > => {
+      return useMutation(getLegacyUserCreatePasswordMutationOptions(options), queryClient);
+    }

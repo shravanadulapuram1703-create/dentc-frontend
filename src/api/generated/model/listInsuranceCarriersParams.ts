@@ -13,6 +13,14 @@ export type ListInsuranceCarriersParams = {
  */
 is_active?: boolean | null;
 /**
+ * Filter by carrier_type
+ */
+carrier_type?: string | null;
+/**
+ * Filter by insurance_type
+ */
+insurance_type?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

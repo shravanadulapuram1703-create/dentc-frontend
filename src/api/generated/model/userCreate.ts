@@ -20,4 +20,9 @@ export interface UserCreate {
   phone?: string | null;
   role?: string;
   must_change_password?: boolean;
+  short_id?: string | null;
+  report_access_provider_id?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
+  signature_data?: string | null;
 }

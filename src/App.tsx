@@ -25,18 +25,25 @@ import PlaceholderPage from './components/PlaceholderPage';
 import GlobalNav from './components/GlobalNav';
 import PatientNotesListing from './components/patient/PatientNotesListing';
 import PatientDocuments from './components/patient/PatientDocuments';
+import { ImagingWorkspace } from './features/imaging';
 import EmergencyContacts from './components/patient/EmergencyContacts';
 import AddEditPatientNote from './components/patient/AddEditPatientNote';
 import ProgressNotesListing from './components/patient/ProgressNotesListing';
 import AddEditProgressNote from './components/patient/AddEditProgressNote';
 import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
+import GroupSetup from './components/setup/security/groups/GroupSetup';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import OfficeAssignment from './components/setup/offices/OfficeAssignment';
 import OfficeGroupsSetup from './components/setup/office-groups/OfficeGroupsSetup';
-import MySettings from './components/setup/security/MySettings';
 import ChangeMyPassword from './components/setup/security/ChangeMyPassword';
 import ProviderSetup from './components/setup/providers/ProviderSetup';
+import CarrierSetup from './components/setup/insurance/CarrierSetup';
+import EmployerSetup from './components/setup/insurance/EmployerSetup';
+import InsurancePlanSetup from './components/setup/insurance/InsurancePlanSetup';
+import CustomCoverageSetup from './components/setup/insurance/CustomCoverageSetup';
+import FeeScheduleSetup from './components/setup/insurance/FeeScheduleSetup';
+import FeeScheduleAssignments from './components/setup/insurance/FeeScheduleAssignments';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
 import { Loader2 } from 'lucide-react';
@@ -169,6 +176,7 @@ function AppRoutes() {
         <Route path="treatment" element={<PlaceholderPage title="Treatment Plan" />} />
         <Route path="prescriptions" element={<PlaceholderPage title="Prescriptions" />} />
         <Route path="documents" element={<PatientDocuments />} />
+        <Route path="imaging" element={<ImagingWorkspace />} />
         <Route path="emergency-contacts" element={<EmergencyContacts />} />
         
         {/* Default - Redirect to Overview */}
@@ -311,9 +319,8 @@ function AppRoutes() {
       
       {/* Setup - Security */}
       <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><UserSetup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Group Management" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><GroupSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ChangeMyPassword /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/security/my-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><MySettings /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Providers */}
       <Route path="/setup/providers/provider-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ProviderSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -321,12 +328,12 @@ function AppRoutes() {
       <Route path="/setup/providers/per-office-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider Per Office Settings" description="Pending backend: providers have a single office_id; no per-office settings model exists yet (backend_devreport.md #20)." /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Insurance */}
-      <Route path="/setup/insurance/insurance-plans" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Insurance Plans" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/insurance/custom-coverage" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Custom Coverage" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/insurance/dental-carriers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Dental Carriers" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/insurance/medical-carriers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Medical Carriers" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/insurance/insurance-plans" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><InsurancePlanSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/insurance/custom-coverage" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CustomCoverageSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/insurance/dental-carriers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CarrierSetup key="carrier-dental" variant="dental" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/insurance/medical-carriers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CarrierSetup key="carrier-medical" variant="medical" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/insurance/employees" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Employees" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/insurance/employers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Employers" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/insurance/employers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><EmployerSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Referrals */}
       <Route path="/setup/referrals/referral-sources" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Referral Sources" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -344,8 +351,8 @@ function AppRoutes() {
       <Route path="/setup/procedure-codes/cdt-to-icd" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="CDT to ICD Mapping" /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Fee Schedules */}
-      <Route path="/setup/fee-schedules/fee-schedule-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Fee Schedule Setup" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/fee-schedules/fee-schedule-assignments" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Fee Schedule Assignments" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/fee-schedules/fee-schedule-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><FeeScheduleSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/fee-schedules/fee-schedule-assignments" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><FeeScheduleAssignments /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Charting */}
       <Route path="/setup/charting/colors" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Charting Colors" /></AdminPageWrapper> : <Navigate to="/login" />} />

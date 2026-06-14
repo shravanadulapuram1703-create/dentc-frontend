@@ -15,5 +15,4 @@ export interface PatientNoteCreate {
   notes_html?: string | null;
   is_archived?: boolean | null;
   is_deleted?: boolean | null;
-  updated_by?: number | null;
 }

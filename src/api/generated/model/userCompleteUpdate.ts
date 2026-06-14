@@ -21,6 +21,11 @@ export interface UserCompleteUpdate {
   is_active?: boolean | null;
   must_change_password?: boolean | null;
   patient_access_level?: string | null;
+  short_id?: string | null;
+  report_access_provider_id?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
+  signature_data?: string | null;
   home_office_id?: number | null;
   assigned_offices?: number[] | null;
   group_ids?: number[] | null;

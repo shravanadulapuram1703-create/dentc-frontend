@@ -15,6 +15,11 @@ export interface EmployerRead {
   state?: string | null;
   zip?: string | null;
   phone?: string | null;
+  salesrep?: string | null;
+  contact_person?: string | null;
+  created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

@@ -21,4 +21,5 @@ export interface ChartColorRead {
   created_by?: string | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

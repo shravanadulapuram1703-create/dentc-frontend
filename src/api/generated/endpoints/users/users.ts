@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BodyUploadUserImage,
   ChangePasswordRequest,
   ErrorResponse,
   HTTPValidationError,
@@ -37,6 +38,7 @@ import type {
   UserCompleteCreate,
   UserCompleteUpdate,
   UserCreate,
+  UserImageResult,
   UserRead,
   UserSetupMetadata,
   UserUpdate
@@ -643,6 +645,133 @@ export const useSetUserSecuritySettings = <TError = ErrorType<ErrorResponse | HT
         TContext
       > => {
       return useMutation(getSetUserSecuritySettingsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Upload a user avatar image
+ */
+export const uploadUserImage = (
+    userId: number,
+    bodyUploadUserImage: BodyType<BodyUploadUserImage>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`file`, bodyUploadUserImage.file);
+
+      return customInstance<UserImageResult>(
+      {url: `/api/v1/users/${userId}/image`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getUploadUserImageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadUserImage>>, TError,{userId: number;data: BodyType<BodyUploadUserImage>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadUserImage>>, TError,{userId: number;data: BodyType<BodyUploadUserImage>}, TContext> => {
+
+const mutationKey = ['uploadUserImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadUserImage>>, {userId: number;data: BodyType<BodyUploadUserImage>}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  uploadUserImage(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadUserImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadUserImage>>>
+    export type UploadUserImageMutationBody = BodyType<BodyUploadUserImage>
+    export type UploadUserImageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Upload a user avatar image
+ */
+export const useUploadUserImage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadUserImage>>, TError,{userId: number;data: BodyType<BodyUploadUserImage>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadUserImage>>,
+        TError,
+        {userId: number;data: BodyType<BodyUploadUserImage>},
+        TContext
+      > => {
+      return useMutation(getUploadUserImageMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Remove a user avatar image
+ */
+export const deleteUserImage = (
+    userId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/users/${userId}/image`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteUserImageMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserImage>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUserImage>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['deleteUserImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUserImage>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  deleteUserImage(userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserImageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUserImage>>>
+
+    export type DeleteUserImageMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Remove a user avatar image
+ */
+export const useDeleteUserImage = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserImage>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteUserImage>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteUserImageMutationOptions(options), queryClient);
     }
     /**
  * @summary List users

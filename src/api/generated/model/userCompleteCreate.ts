@@ -25,6 +25,11 @@ export interface UserCompleteCreate {
   role?: string;
   must_change_password?: boolean;
   patient_access_level?: string | null;
+  short_id?: string | null;
+  report_access_provider_id?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
+  signature_data?: string | null;
   home_office_id?: number | null;
   assigned_offices?: number[];
   group_ids?: number[];

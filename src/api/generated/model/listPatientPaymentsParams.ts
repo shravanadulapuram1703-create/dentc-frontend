@@ -21,6 +21,10 @@ payment_type?: string | null;
  */
 provider_id?: string | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * Filter by is_void
  */
 is_void?: boolean | null;

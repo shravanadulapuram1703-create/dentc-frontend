@@ -14,4 +14,9 @@ export interface UserUpdate {
   role?: string | null;
   is_active?: boolean | null;
   password?: string | null;
+  short_id?: string | null;
+  report_access_provider_id?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
+  signature_data?: string | null;
 }

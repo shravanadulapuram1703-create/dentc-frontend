@@ -6,27 +6,35 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  ErrorResponse,
+  GroupRead,
+  GroupRightsSet,
   HTTPValidationError,
-  Option
+  Option,
+  PermissionRead
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
-import type { ErrorType } from '../../../mutator/axiosInstance';
+import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -125,3 +133,312 @@ export function useListRoles<TData = Awaited<ReturnType<typeof listRoles>>, TErr
 
 
 
+/**
+ * @summary List the assignable rights catalog
+ */
+export const listPermissions = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PermissionRead[]>(
+      {url: `/api/v1/permissions`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPermissionsQueryKey = () => {
+    return [
+    `/api/v1/permissions`
+    ] as const;
+    }
+
+
+export const getListPermissionsQueryOptions = <TData = Awaited<ReturnType<typeof listPermissions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPermissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPermissionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPermissions>>> = ({ signal }) => listPermissions(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPermissions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPermissionsQueryResult = NonNullable<Awaited<ReturnType<typeof listPermissions>>>
+export type ListPermissionsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPermissions<TData = Awaited<ReturnType<typeof listPermissions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPermissions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPermissions>>,
+          TError,
+          Awaited<ReturnType<typeof listPermissions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPermissions<TData = Awaited<ReturnType<typeof listPermissions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPermissions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPermissions>>,
+          TError,
+          Awaited<ReturnType<typeof listPermissions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPermissions<TData = Awaited<ReturnType<typeof listPermissions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPermissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the assignable rights catalog
+ */
+
+export function useListPermissions<TData = Awaited<ReturnType<typeof listPermissions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPermissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPermissionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List a group's assigned right codes
+ */
+export const getUserGroupRights = (
+    groupId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<string[]>(
+      {url: `/api/v1/user-groups/${groupId}/rights`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetUserGroupRightsQueryKey = (groupId: number,) => {
+    return [
+    `/api/v1/user-groups/${groupId}/rights`
+    ] as const;
+    }
+
+
+export const getGetUserGroupRightsQueryOptions = <TData = Awaited<ReturnType<typeof getUserGroupRights>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(groupId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupRights>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserGroupRightsQueryKey(groupId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserGroupRights>>> = ({ signal }) => getUserGroupRights(groupId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: groupId !== null && groupId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserGroupRights>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserGroupRightsQueryResult = NonNullable<Awaited<ReturnType<typeof getUserGroupRights>>>
+export type GetUserGroupRightsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetUserGroupRights<TData = Awaited<ReturnType<typeof getUserGroupRights>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ groupId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupRights>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserGroupRights>>,
+          TError,
+          Awaited<ReturnType<typeof getUserGroupRights>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserGroupRights<TData = Awaited<ReturnType<typeof getUserGroupRights>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ groupId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupRights>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserGroupRights>>,
+          TError,
+          Awaited<ReturnType<typeof getUserGroupRights>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserGroupRights<TData = Awaited<ReturnType<typeof getUserGroupRights>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ groupId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupRights>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List a group's assigned right codes
+ */
+
+export function useGetUserGroupRights<TData = Awaited<ReturnType<typeof getUserGroupRights>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ groupId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGroupRights>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserGroupRightsQueryOptions(groupId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Replace a group's assigned rights (full set)
+ */
+export const setUserGroupRights = (
+    groupId: number,
+    groupRightsSet: BodyType<GroupRightsSet>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<string[]>(
+      {url: `/api/v1/user-groups/${groupId}/rights`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: groupRightsSet, signal
+    },
+      options);
+    }
+
+
+
+export const getSetUserGroupRightsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setUserGroupRights>>, TError,{groupId: number;data: BodyType<GroupRightsSet>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setUserGroupRights>>, TError,{groupId: number;data: BodyType<GroupRightsSet>}, TContext> => {
+
+const mutationKey = ['setUserGroupRights'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setUserGroupRights>>, {groupId: number;data: BodyType<GroupRightsSet>}> = (props) => {
+          const {groupId,data} = props ?? {};
+
+          return  setUserGroupRights(groupId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetUserGroupRightsMutationResult = NonNullable<Awaited<ReturnType<typeof setUserGroupRights>>>
+    export type SetUserGroupRightsMutationBody = BodyType<GroupRightsSet>
+    export type SetUserGroupRightsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Replace a group's assigned rights (full set)
+ */
+export const useSetUserGroupRights = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setUserGroupRights>>, TError,{groupId: number;data: BodyType<GroupRightsSet>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setUserGroupRights>>,
+        TError,
+        {groupId: number;data: BodyType<GroupRightsSet>},
+        TContext
+      > => {
+      return useMutation(getSetUserGroupRightsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Duplicate a group together with its rights
+ */
+export const copyUserGroup = (
+    groupId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GroupRead>(
+      {url: `/api/v1/user-groups/${groupId}/copy`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getCopyUserGroupMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyUserGroup>>, TError,{groupId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof copyUserGroup>>, TError,{groupId: number}, TContext> => {
+
+const mutationKey = ['copyUserGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof copyUserGroup>>, {groupId: number}> = (props) => {
+          const {groupId} = props ?? {};
+
+          return  copyUserGroup(groupId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CopyUserGroupMutationResult = NonNullable<Awaited<ReturnType<typeof copyUserGroup>>>
+
+    export type CopyUserGroupMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Duplicate a group together with its rights
+ */
+export const useCopyUserGroup = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyUserGroup>>, TError,{groupId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof copyUserGroup>>,
+        TError,
+        {groupId: number},
+        TContext
+      > => {
+      return useMutation(getCopyUserGroupMutationOptions(options), queryClient);
+    }

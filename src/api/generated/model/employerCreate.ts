@@ -13,4 +13,6 @@ export interface EmployerCreate {
   state?: string | null;
   zip?: string | null;
   phone?: string | null;
+  salesrep?: string | null;
+  contact_person?: string | null;
 }

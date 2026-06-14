@@ -19,6 +19,19 @@ export interface UserRead {
   is_active: boolean;
   must_change_password: boolean;
   last_login_at?: string | null;
+  is_legacy_user?: boolean;
+  legacy_activation_completed?: boolean;
+  password_created_at?: string | null;
+  short_id?: string | null;
+  report_access_provider_id?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
+  signature_data?: string | null;
+  image_url?: string | null;
   created_at: string;
   created_by?: number | null;
+  updated_at?: string | null;
+  updated_by?: number | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
 }
