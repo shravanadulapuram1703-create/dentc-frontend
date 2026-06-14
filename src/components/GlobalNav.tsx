@@ -1034,30 +1034,30 @@ export default function GlobalNav({
           label: "Office Assignment",
           path: "/setup/offices/office-assignment",
         },
-        {
-          label: "Vendor API Settings (Legacy)",
-          path: "/setup/offices/vendor-api-settings-legacy",
-        },
-        {
-          label: "Vendor API Settings (New)",
-          path: "/setup/offices/vendor-api-settings-new",
-        },
+        // {
+        //   label: "Vendor API Settings (Legacy)",
+        //   path: "/setup/offices/vendor-api-settings-legacy",
+        // },
+        // {
+        //   label: "Vendor API Settings (New)",
+        //   path: "/setup/offices/vendor-api-settings-new",
+        // },
       ],
     },
-    {
-      label: "Office Groups",
-      icon: Layers,
-      submenu: [
-        {
-          label: "Manage Office Groups",
-          path: "/setup/office-groups/manage",
-        },
-        {
-          label: "Assign Offices to Groups",
-          path: "/setup/office-groups/assign",
-        },
-      ],
-    },
+    // {
+    //   label: "Office Groups",
+    //   icon: Layers,
+    //   submenu: [
+    //     {
+    //       label: "Manage Office Groups",
+    //       path: "/setup/office-groups/manage",
+    //     },
+    //     {
+    //       label: "Assign Offices to Groups",
+    //       path: "/setup/office-groups/assign",
+    //     },
+    //   ],
+    // },
     {
       label: "Security",
       icon: Lock,
@@ -1067,10 +1067,6 @@ export default function GlobalNav({
         {
           label: "Change My Password",
           path: "/setup/security/change-my-password",
-        },
-        {
-          label: "My Settings",
-          path: "/setup/security/my-settings",
         },
       ],
     },
@@ -1082,16 +1078,20 @@ export default function GlobalNav({
           label: "Provider Setup",
           path: "/setup/providers/provider-setup",
         },
-        {
-          label: "Per Office Settings",
-          path: "/setup/providers/per-office-settings",
-        },
+        // {
+        //   label: "Per Office Settings",
+        //   path: "/setup/providers/per-office-settings",
+        // },
       ],
     },
     {
       label: "Insurance",
       icon: Shield,
       submenu: [
+        {
+          label: "Dashboard",
+          path: "/setup/insurance/dashboard",
+        },
         {
           label: "Insurance Plans",
           path: "/setup/insurance/insurance-plans",
@@ -1108,10 +1108,10 @@ export default function GlobalNav({
           label: "Medical Carriers",
           path: "/setup/insurance/medical-carriers",
         },
-        {
-          label: "Employees",
-          path: "/setup/insurance/employees",
-        },
+        // {
+        //   label: "Employees",
+        //   path: "/setup/insurance/employees",
+        // },
         {
           label: "Employers",
           path: "/setup/insurance/employers",
@@ -1126,10 +1126,10 @@ export default function GlobalNav({
           label: "Referral Sources",
           path: "/setup/referrals/referral-sources",
         },
-        {
-          label: "Custom Demographics",
-          path: "/setup/referrals/custom-demographics",
-        },
+        // {
+        //   label: "Custom Demographics",
+        //   path: "/setup/referrals/custom-demographics",
+        // },
       ],
     },
     {
@@ -1160,18 +1160,18 @@ export default function GlobalNav({
           label: "Type of Service",
           path: "/setup/procedure-codes/type-of-service",
         },
-        {
-          label: "CDT to CPT",
-          path: "/setup/procedure-codes/cdt-to-cpt",
-        },
-        {
-          label: "CPT to ICD",
-          path: "/setup/procedure-codes/cpt-to-icd",
-        },
-        {
-          label: "CDT to ICD",
-          path: "/setup/procedure-codes/cdt-to-icd",
-        },
+        // {
+        //   label: "CDT to CPT",
+        //   path: "/setup/procedure-codes/cdt-to-cpt",
+        // },
+        // {
+        //   label: "CPT to ICD",
+        //   path: "/setup/procedure-codes/cpt-to-icd",
+        // },
+        // {
+        //   label: "CDT to ICD",
+        //   path: "/setup/procedure-codes/cdt-to-icd",
+        // },
       ],
     },
     {
@@ -1198,7 +1198,7 @@ export default function GlobalNav({
           path: "/setup/charting/materials",
         },
         {
-          label: "Per Use Templates",
+          label: "Perio Setup Templates",
           path: "/setup/charting/per-use-templates",
         },
       ],
@@ -1249,34 +1249,34 @@ export default function GlobalNav({
         },
       ],
     },
-    {
-      label: "Scheduler",
-      icon: Calendar,
-      submenu: [
-        {
-          label: "Scheduler View",
-          path: "/setup/scheduler/scheduler-view",
-        },
-        {
-          label: "Scheduler Template",
-          path: "/setup/scheduler/scheduler-template",
-        },
-      ],
-    },
-    {
-      label: "Collection Agencies",
-      icon: Briefcase,
-      submenu: [
-        {
-          label: "Agency Setup",
-          path: "/setup/collection-agencies/agency-setup",
-        },
-        {
-          label: "Assign Accounts",
-          path: "/setup/collection-agencies/assign-accounts",
-        },
-      ],
-    },
+    // {
+    //   label: "Scheduler",
+    //   icon: Calendar,
+    //   submenu: [
+    //     {
+    //       label: "Scheduler View",
+    //       path: "/setup/scheduler/scheduler-view",
+    //     },
+    //     {
+    //       label: "Scheduler Template",
+    //       path: "/setup/scheduler/scheduler-template",
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Collection Agencies",
+    //   icon: Briefcase,
+    //   submenu: [
+    //     {
+    //       label: "Agency Setup",
+    //       path: "/setup/collection-agencies/agency-setup",
+    //     },
+    //     {
+    //       label: "Assign Accounts",
+    //       path: "/setup/collection-agencies/assign-accounts",
+    //     },
+    //   ],
+    // },
     {
       label: "Prescriptions",
       icon: Pill,
@@ -1291,31 +1291,31 @@ export default function GlobalNav({
         },
       ],
     },
-    {
-      label: "Labs",
-      icon: Activity,
-      submenu: [
-        { label: "Lab Setup", path: "/setup/labs/lab-setup" },
-        {
-          label: "Lab Assignments",
-          path: "/setup/labs/lab-assignments",
-        },
-      ],
-    },
-    {
-      label: "Payment / Adjustment Types",
-      icon: DollarSign,
-      submenu: [
-        {
-          label: "Payment Types",
-          path: "/setup/payment-adjustment/payment-types",
-        },
-        {
-          label: "Adjustment Types",
-          path: "/setup/payment-adjustment/adjustment-types",
-        },
-      ],
-    },
+    // {
+    //   label: "Labs",
+    //   icon: Activity,
+    //   submenu: [
+    //     { label: "Lab Setup", path: "/setup/labs/lab-setup" },
+    //     {
+    //       label: "Lab Assignments",
+    //       path: "/setup/labs/lab-assignments",
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Payment / Adjustment Types",
+    //   icon: DollarSign,
+    //   submenu: [
+    //     {
+    //       label: "Payment Types",
+    //       path: "/setup/payment-adjustment/payment-types",
+    //     },
+    //     {
+    //       label: "Adjustment Types",
+    //       path: "/setup/payment-adjustment/adjustment-types",
+    //     },
+    //   ],
+    // },
     {
       label: "Custom Toolbar",
       icon: Settings,
@@ -1330,21 +1330,21 @@ export default function GlobalNav({
         },
       ],
     },
-    {
-      label: "Misc Setups",
-      icon: Settings,
-      submenu: [
-        {
-          label: "Collection Letters Setup",
-          path: "/setup/misc/collection-letters",
-        },
-        { label: "Close Out", path: "/setup/misc/close-out" },
-        {
-          label: "Dentiray Classic Setup",
-          path: "/setup/misc/dentiray-classic",
-        },
-      ],
-    },
+    // {
+    //   label: "Misc Setups",
+    //   icon: Settings,
+    //   submenu: [
+    //     {
+    //       label: "Collection Letters Setup",
+    //       path: "/setup/misc/collection-letters",
+    //     },
+    //     { label: "Close Out", path: "/setup/misc/close-out" },
+    //     {
+    //       label: "Dentiray Classic Setup",
+    //       path: "/setup/misc/dentiray-classic",
+    //     },
+    //   ],
+    // },
   ];
 
   // HELP DROPDOWN MENU

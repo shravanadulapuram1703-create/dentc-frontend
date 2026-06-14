@@ -44,8 +44,10 @@ import InsurancePlanSetup from './components/setup/insurance/InsurancePlanSetup'
 import CustomCoverageSetup from './components/setup/insurance/CustomCoverageSetup';
 import FeeScheduleSetup from './components/setup/insurance/FeeScheduleSetup';
 import FeeScheduleAssignments from './components/setup/insurance/FeeScheduleAssignments';
+import InsuranceDashboard from './components/setup/insurance/InsuranceDashboard';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
+import ReferralSetup from './components/setup/referrals/ReferralSetup';
 import { Loader2 } from 'lucide-react';
 import AIChat from './components/ai-chat/AIChat';
 import AddNewPatient from './components/pages/AddNewPatient';
@@ -328,6 +330,7 @@ function AppRoutes() {
       <Route path="/setup/providers/per-office-settings" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider Per Office Settings" description="Pending backend: providers have a single office_id; no per-office settings model exists yet (backend_devreport.md #20)." /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Insurance */}
+      <Route path="/setup/insurance/dashboard" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><InsuranceDashboard /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/insurance/insurance-plans" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><InsurancePlanSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/insurance/custom-coverage" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CustomCoverageSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/insurance/dental-carriers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CarrierSetup key="carrier-dental" variant="dental" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -336,7 +339,7 @@ function AppRoutes() {
       <Route path="/setup/insurance/employers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><EmployerSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Referrals */}
-      <Route path="/setup/referrals/referral-sources" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Referral Sources" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/referrals/referral-sources" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ReferralSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/referrals/custom-demographics" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Custom Demographics" /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Procedure Codes */}

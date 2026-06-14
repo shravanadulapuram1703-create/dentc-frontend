@@ -183,6 +183,15 @@ hasn't been run against this dev tenant. Run it to light up the dropdowns/labels
 
 ---
 
+### INS-11 🟡 No `elig_status` filter → Pending Verifications uncountable
+The Insurance Dashboard's **Pending Verifications** KPI can't be computed:
+`listInsuranceSubscribers` has no `elig_status` filter, and live `elig_status` is
+uniformly `"unknown"` across 65k+ subscribers. Counting pending verifications
+would mean scanning every subscriber. Surfaced as an honest "awaiting backend"
+tile.
+- **Ask:** Add an `elig_status` filter to the subscribers list (and ideally a
+  verification-status count summary, e.g. on `/reports/summary`).
+
 ## Fee Schedule gaps (Unit 3)
 
 ### FEE-1 🟡 Fee-schedule DELETE is a soft-delete
