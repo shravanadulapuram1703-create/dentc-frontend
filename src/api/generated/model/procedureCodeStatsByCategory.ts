@@ -5,9 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { ScheduleDayInput } from './scheduleDayInput';
 
-export interface AppSchemasProviderSetupScheduleReplace {
-  /** @maxItems 70 */
-  days?: ScheduleDayInput[];
-}
+/**
+ * category → count
+ */
+export type ProcedureCodeStatsByCategory = {[key: string]: number};

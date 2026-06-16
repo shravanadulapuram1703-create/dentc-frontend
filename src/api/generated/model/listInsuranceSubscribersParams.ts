@@ -17,6 +17,14 @@ ins_plan_id?: number | null;
  */
 subscriber_patient_id?: number | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by elig_status
+ */
+elig_status?: string | null;
+/**
  * Filter by is_active
  */
 is_active?: boolean | null;

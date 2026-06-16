@@ -24,10 +24,12 @@ import type {
   AccountsReceivable,
   Aging,
   ErrorResponse,
+  GetInsuranceVerificationSummaryParams,
   GetReportAccountsReceivableParams,
   GetReportAgingParams,
   GetReportSummaryParams,
   GetReportTrendsParams,
+  InsuranceVerificationSummary,
   ReportSummary,
   ReportTrends
 } from '../../model';
@@ -308,6 +310,99 @@ export function useGetReportAccountsReceivable<TData = Awaited<ReturnType<typeof
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetReportAccountsReceivableQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Active subscribers grouped by eligibility status (powers Pending Verifications)
+ */
+export const getInsuranceVerificationSummary = (
+    params?: GetInsuranceVerificationSummaryParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsuranceVerificationSummary>(
+      {url: `/api/v1/reports/insurance-verification-summary`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsuranceVerificationSummaryQueryKey = (params?: GetInsuranceVerificationSummaryParams,) => {
+    return [
+    `/api/v1/reports/insurance-verification-summary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetInsuranceVerificationSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError = ErrorType<ErrorResponse>>(params?: GetInsuranceVerificationSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsuranceVerificationSummaryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>> = ({ signal }) => getInsuranceVerificationSummary(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsuranceVerificationSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>>
+export type GetInsuranceVerificationSummaryQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetInsuranceVerificationSummary<TData = Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  GetInsuranceVerificationSummaryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsuranceVerificationSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getInsuranceVerificationSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsuranceVerificationSummary<TData = Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetInsuranceVerificationSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsuranceVerificationSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getInsuranceVerificationSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsuranceVerificationSummary<TData = Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetInsuranceVerificationSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Active subscribers grouped by eligibility status (powers Pending Verifications)
+ */
+
+export function useGetInsuranceVerificationSummary<TData = Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetInsuranceVerificationSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsuranceVerificationSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsuranceVerificationSummaryQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

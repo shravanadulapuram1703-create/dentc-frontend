@@ -45,6 +45,8 @@ import CustomCoverageSetup from './components/setup/insurance/CustomCoverageSetu
 import FeeScheduleSetup from './components/setup/insurance/FeeScheduleSetup';
 import FeeScheduleAssignments from './components/setup/insurance/FeeScheduleAssignments';
 import InsuranceDashboard from './components/setup/insurance/InsuranceDashboard';
+import ProcedureCodeSetup from './components/setup/procedure-codes/ProcedureCodeSetup';
+import ExplosionCodeSetup from './components/setup/procedure-codes/ExplosionCodeSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
 import ReferralSetup from './components/setup/referrals/ReferralSetup';
@@ -343,8 +345,8 @@ function AppRoutes() {
       <Route path="/setup/referrals/custom-demographics" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Custom Demographics" /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Procedure Codes */}
-      <Route path="/setup/procedure-codes/procedure-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Procedure Codes" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/procedure-codes/explosion-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Explosion Codes" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/procedure-codes/procedure-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ProcedureCodeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/procedure-codes/explosion-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ExplosionCodeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/icd-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="ICD Codes" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/modifier-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Modifier Codes" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/place-of-service" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Place of Service" /></AdminPageWrapper> : <Navigate to="/login" />} />

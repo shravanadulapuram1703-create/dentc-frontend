@@ -206,3 +206,25 @@ new_password }`.
 
 **Impact on Frontend:** Current flow is insecure-by-omission (no old-password check) and
 may fail under least-privilege RBAC.
+
+---
+
+## Gap 8 — `UserRead` has no update-audit fields (added 2026-06-09)
+
+**Module:** Security · **Screen:** Users → detail panel ("Audit Information")
+
+**Business requirement:** show **Last Updated By** and **Last Updated On** alongside the
+existing Created By / Created On.
+
+**Current status:** `UserRead` exposes `created_at` and `created_by` but **no `updated_at`
+/ `updated_by`** (verified in `openapi.json`). So those two fields render "—" — there is no
+data to bind. (Separately, `created_by` is a numeric user id; the UI shows "System" because
+there is no id→name resolution and no `*_by` name on the contract.)
+
+**Suggested:** add `updated_at: datetime` and `updated_by: int` to `UserRead` (and ideally
+`created_by_name` / `updated_by_name`, or an endpoint to resolve user-id → display name, so
+the audit panel can show a person instead of a raw id).
+
+**Impact on frontend:** Last Updated By/On stay blank until these land. Once `updated_at`
+is on `UserRead`, the grid mapper (`mapUsersGrid`) wires it in one line; resolving `*_by` to
+a name needs either the name on the payload or an id→name lookup.

@@ -12,6 +12,7 @@
 
 substitutions:
   _API_BASE_URL: "https://dentc-backend-477406612596.us-central1.run.app"
+  # _API_BASE_URL: "http://127.0.0.1:8000"
   _REGION: "us-central1"
   _REPO: "dentc"
   _IMAGE: "dentc-frontend"

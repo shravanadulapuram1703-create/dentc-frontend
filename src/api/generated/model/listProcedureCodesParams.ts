@@ -21,6 +21,10 @@ is_active?: boolean | null;
  */
 is_ortho?: boolean | null;
 /**
+ * Filter by chart_category
+ */
+chart_category?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

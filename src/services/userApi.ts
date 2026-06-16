@@ -70,6 +70,14 @@ export interface UserDetails {
   created_at: string;
   created_by: number | null;
 
+  // Structural fields
+  short_id: string | null;
+  report_access_provider_id: string | null;
+  custom_1: string | null;
+  custom_2: string | null;
+  signature_data: string | null;
+  image_url: string | null;
+
   // Composed from related resources
   home_office_id: number | null;
   assigned_office_ids: number[];
@@ -150,6 +158,13 @@ export const fetchUserDetails = async (
     created_at: user.created_at,
     created_by: user.created_by ?? null,
 
+    short_id: user.short_id ?? null,
+    report_access_provider_id: user.report_access_provider_id ?? null,
+    custom_1: user.custom_1 ?? null,
+    custom_2: user.custom_2 ?? null,
+    signature_data: user.signature_data ?? null,
+    image_url: user.image_url ?? null,
+
     home_office_id: offices.home_office_id,
     assigned_office_ids: offices.assigned_office_ids,
     group_ids: (groupRes.items ?? []).map((m) => m.group_id),
@@ -205,6 +220,12 @@ export const fetchUserForEdit = async (
     phone: user.phone ?? null,
     is_active: user.is_active,
     patient_access_level: user.patient_access_level ?? security.patient_access_level ?? null,
+    short_id: user.short_id ?? null,
+    report_access_provider_id: user.report_access_provider_id ?? null,
+    custom_1: user.custom_1 ?? null,
+    custom_2: user.custom_2 ?? null,
+    signature_data: user.signature_data ?? null,
+    image_url: user.image_url ?? null,
     home_office_id: offices.home_office_id,
     assigned_offices: offices.assigned_office_ids,
     roles: user.role ? [user.role] : [],

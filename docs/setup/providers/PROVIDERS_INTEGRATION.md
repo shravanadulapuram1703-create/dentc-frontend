@@ -8,6 +8,51 @@
 
 ---
 
+## Update — 2026-06-13: master-detail rewrite
+
+Provider Setup was rewritten from a **flat list + single modal** (camelCase form keys) into a modern
+**master-detail screen** mirroring [`OfficeSetup`](../../../src/components/setup/offices/OfficeSetup.tsx):
+a list view (search · Type · Status · sort) ⇄ a tabbed detail. Forms now bind **directly to the
+backend snake_case** fields (no camelCase aliases). New files under
+`src/components/setup/providers/`: `providerData.ts` + `tabs/{InfoTab,WorksAtTab,OperatoriesTab,InsuranceIdsTab,RouteSlipsTab}.tsx`.
+
+**Backend-driven tabs:**
+
+| Tab | Endpoint(s) | Generated fn |
+|---|---|---|
+| Info (CRUD) | `/api/v1/providers` | `list/get/create/update/deleteProvider` |
+| Works At (multi-office) | `GET`/`PUT /api/v1/offices/{id}/providers` | `listOfficeProviders` / `setOfficeProviders` |
+| Operatories | `/api/v1/operatories` (`provider_id`) | `listOperatories` / `updateOperatory` |
+| Insurance IDs | `/api/v1/provider-insurance-ids` | `list/create/update/deleteProviderInsuranceId` |
+| Route Slips | `/api/v1/provider-route-slips` | `list/create/update/deleteProviderRouteSlip` |
+| Type/Specialty dropdowns | `/api/v1/definitions?group_code=` | `useDefinitions` (free-text fallback) |
+
+**Update — 2026-06-13b (backend gap-fill):** the backend shipped every previously-missing endpoint and
+field, the Orval client was re-synced, and the formerly-gated tabs are now **fully wired**:
+
+| Tab | Endpoint(s) | Generated fn |
+|---|---|---|
+| Schedules | `GET`/`PUT /providers/{id}/schedule` | `getProviderSchedule`/`setProviderSchedule` |
+| Holidays | `/providers/{id}/holidays` | `list/create/update/deleteProviderHoliday` |
+| Watermarks | `/providers/{id}/watermarks` (+ `/image`) | `get/setProviderWatermarks`, `upload/deleteProviderWatermarkImage` |
+| Referrals | `GET`/`PUT /providers/{id}/referral-offices` | `list/setProviderReferralOffices` |
+| Carrier Login | `/provider-carrier-logins` | `list/create/update/deleteProviderCarrierLogin` |
+| User & Permissions | `GET`/`PUT /providers/{id}/user` | `get/setProviderUser` |
+
+Info now also edits the 13 new provider-settings fields (scheduler_color, is_ortho_provider,
+visible_in_appointnow, default_provider_time, is_billing_provider, print_separate_claim_form,
+dosespot_user_id, updox_direct_address, denticon_user_id, ortho_questionnaire_template, custom_1,
+custom_2) — the "pending backend" note was removed. No gated tabs remain. New tab files:
+`tabs/{SchedulesTab,HolidaysTab,WatermarksTab,ReferralsTab,CarrierLoginTab,UserTab}.tsx`.
+
+Remaining open items (see [`provider_setup_backend_devreport.md`](../../provider-setup/provider_setup_backend_devreport.md)):
+client-supplied `ProviderCreate.id` (confirm convention), permissions managed on the linked user (by
+design), and empty `provider_role`/`provider_specialty` definition groups (free-text fallback).
+
+The original CRUD analysis below is retained for history.
+
+---
+
 ## Headline
 
 Greenfield, like Office Groups: backend exposes full CRUD at `/api/v1/providers` (tag: Organization),

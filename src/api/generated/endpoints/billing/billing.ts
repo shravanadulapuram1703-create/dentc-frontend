@@ -26,7 +26,7 @@ import type {
 
 import type {
   AllocatePaymentRequest,
-  AppSchemasFactoryPaymentAllocationRead,
+  AppSchemasBillingPaymentAllocationRead,
   BodyUploadClaimAttachment,
   ClaimAttachmentRead,
   ClaimDetailResponse,
@@ -112,7 +112,7 @@ export const allocatePayment = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead[]>(
+      return customInstance<AppSchemasBillingPaymentAllocationRead[]>(
       {url: `/api/v1/patient-payments/${paymentId}/allocate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: allocatePaymentRequest, signal
@@ -2765,7 +2765,7 @@ export const createPaymentAllocation = (
 ) => {
 
 
-      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
+      return customInstance<PaymentAllocationRead>(
       {url: `/api/v1/payment-allocations`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: paymentAllocationCreate, signal
@@ -2828,7 +2828,7 @@ export const getPaymentAllocation = (
 ) => {
 
 
-      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
+      return customInstance<PaymentAllocationRead>(
       {url: `/api/v1/payment-allocations/${itemId}`, method: 'GET', signal
     },
       options);
@@ -2921,7 +2921,7 @@ export const updatePaymentAllocation = (
 ) => {
 
 
-      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
+      return customInstance<PaymentAllocationRead>(
       {url: `/api/v1/payment-allocations/${itemId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: paymentAllocationUpdate, signal

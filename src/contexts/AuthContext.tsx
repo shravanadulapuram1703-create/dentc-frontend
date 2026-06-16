@@ -10,6 +10,7 @@ import api from "../services/api";
 import { getMeFull, login as login_ } from "@/api/generated/endpoints/auth/auth";
 import type { MeFull } from "@/api/generated/model";
 import { mapAuthError, type AuthError } from "@/features/auth/utils/authErrors";
+import { clearAuthStorageKeepRemembered } from "@/features/auth/rememberMe";
 
 /* -------------------- TYPES -------------------- */
 
@@ -241,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setIsAuthenticated(true);
       } catch {
-        localStorage.clear();
+        clearAuthStorageKeepRemembered();
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -312,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Logout API error:", err);
       // Continue with logout even if API fails
     } finally {
-      localStorage.clear();
+      clearAuthStorageKeepRemembered();
       delete api.defaults.headers.common["Authorization"];
 
       setIsAuthenticated(false);

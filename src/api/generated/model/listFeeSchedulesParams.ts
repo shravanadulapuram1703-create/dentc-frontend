@@ -21,6 +21,18 @@ office_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * Filter by parent_schedule_id
+ */
+parent_schedule_id?: number | null;
+/**
+ * effective_date >= (inclusive lower bound)
+ */
+effective_date_from?: string | null;
+/**
+ * effective_date <= (inclusive upper bound)
+ */
+effective_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

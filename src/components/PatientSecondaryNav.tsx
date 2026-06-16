@@ -188,9 +188,8 @@ export default function PatientSecondaryNav({
       icon: ImageIcon,
       label: "Imaging",
       gradient: "from-cyan-600 to-blue-600",
-      onClick: () =>
-        alert("Launch Imaging System - Coming Soon"),
-      description: "Launch Imaging (XVW Web)",
+      onClick: () => handleNavigation("/imaging"),
+      description: "Patient Imaging",
     },
     {
       icon: Globe,

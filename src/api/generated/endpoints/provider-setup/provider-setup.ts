@@ -25,7 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  AppSchemasProviderSetupScheduleReplace,
+  AssignedProviderProcedureCodeRead,
   AssignedReferralOfficeRead,
   BodyUploadProviderWatermarkImage,
   DeleteProviderWatermarkImageParams,
@@ -33,6 +33,7 @@ import type {
   HTTPValidationError,
   ListProviderCarrierLoginsParams,
   ListProviderHolidaysParams,
+  ProcedureCodesSet,
   ProviderCarrierLoginCreate,
   ProviderCarrierLoginRead,
   ProviderCarrierLoginUpdate,
@@ -44,6 +45,7 @@ import type {
   ProviderWatermarkRead,
   ProviderWatermarkUpdate,
   ReferralOfficesSet,
+  ScheduleReplace,
   UploadProviderWatermarkImageParams,
   UserRead
 } from '../../model';
@@ -153,7 +155,7 @@ export function useGetProviderSchedule<TData = Awaited<ReturnType<typeof getProv
  */
 export const setProviderSchedule = (
     providerId: string,
-    appSchemasProviderSetupScheduleReplace: BodyType<AppSchemasProviderSetupScheduleReplace>,
+    scheduleReplace: BodyType<ScheduleReplace>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -161,7 +163,7 @@ export const setProviderSchedule = (
       return customInstance<ProviderScheduleDayRead[]>(
       {url: `/api/v1/providers/${providerId}/schedule`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: appSchemasProviderSetupScheduleReplace, signal
+      data: scheduleReplace, signal
     },
       options);
     }
@@ -169,8 +171,8 @@ export const setProviderSchedule = (
 
 
 export const getSetProviderScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<ScheduleReplace>}, TContext> => {
 
 const mutationKey = ['setProviderSchedule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -182,7 +184,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setProviderSchedule>>, {providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setProviderSchedule>>, {providerId: string;data: BodyType<ScheduleReplace>}> = (props) => {
           const {providerId,data} = props ?? {};
 
           return  setProviderSchedule(providerId,data,requestOptions)
@@ -196,18 +198,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SetProviderScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof setProviderSchedule>>>
-    export type SetProviderScheduleMutationBody = BodyType<AppSchemasProviderSetupScheduleReplace>
+    export type SetProviderScheduleMutationBody = BodyType<ScheduleReplace>
     export type SetProviderScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
 
     /**
  * @summary Set Provider Schedule
  */
 export const useSetProviderSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setProviderSchedule>>,
         TError,
-        {providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>},
+        {providerId: string;data: BodyType<ScheduleReplace>},
         TContext
       > => {
       return useMutation(getSetProviderScheduleMutationOptions(options), queryClient);
@@ -945,6 +947,162 @@ export const useSetProviderReferralOffices = <TError = ErrorType<ErrorResponse |
         TContext
       > => {
       return useMutation(getSetProviderReferralOfficesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List Provider Procedure Codes
+ */
+export const listProviderProcedureCodes = (
+    providerId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedProviderProcedureCodeRead[]>(
+      {url: `/api/v1/providers/${providerId}/procedure-codes`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProviderProcedureCodesQueryKey = (providerId: string,) => {
+    return [
+    `/api/v1/providers/${providerId}/procedure-codes`
+    ] as const;
+    }
+
+
+export const getListProviderProcedureCodesQueryOptions = <TData = Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(providerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProviderProcedureCodesQueryKey(providerId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProviderProcedureCodes>>> = ({ signal }) => listProviderProcedureCodes(providerId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: providerId !== null && providerId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProviderProcedureCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listProviderProcedureCodes>>>
+export type ListProviderProcedureCodesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListProviderProcedureCodes<TData = Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ providerId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProviderProcedureCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listProviderProcedureCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProviderProcedureCodes<TData = Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ providerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProviderProcedureCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listProviderProcedureCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProviderProcedureCodes<TData = Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ providerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Provider Procedure Codes
+ */
+
+export function useListProviderProcedureCodes<TData = Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ providerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderProcedureCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProviderProcedureCodesQueryOptions(providerId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Set Provider Procedure Codes
+ */
+export const setProviderProcedureCodes = (
+    providerId: string,
+    procedureCodesSet: BodyType<ProcedureCodesSet>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedProviderProcedureCodeRead[]>(
+      {url: `/api/v1/providers/${providerId}/procedure-codes`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: procedureCodesSet, signal
+    },
+      options);
+    }
+
+
+
+export const getSetProviderProcedureCodesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderProcedureCodes>>, TError,{providerId: string;data: BodyType<ProcedureCodesSet>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setProviderProcedureCodes>>, TError,{providerId: string;data: BodyType<ProcedureCodesSet>}, TContext> => {
+
+const mutationKey = ['setProviderProcedureCodes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setProviderProcedureCodes>>, {providerId: string;data: BodyType<ProcedureCodesSet>}> = (props) => {
+          const {providerId,data} = props ?? {};
+
+          return  setProviderProcedureCodes(providerId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetProviderProcedureCodesMutationResult = NonNullable<Awaited<ReturnType<typeof setProviderProcedureCodes>>>
+    export type SetProviderProcedureCodesMutationBody = BodyType<ProcedureCodesSet>
+    export type SetProviderProcedureCodesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Set Provider Procedure Codes
+ */
+export const useSetProviderProcedureCodes = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderProcedureCodes>>, TError,{providerId: string;data: BodyType<ProcedureCodesSet>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setProviderProcedureCodes>>,
+        TError,
+        {providerId: string;data: BodyType<ProcedureCodesSet>},
+        TContext
+      > => {
+      return useMutation(getSetProviderProcedureCodesMutationOptions(options), queryClient);
     }
     /**
  * @summary Get Provider User

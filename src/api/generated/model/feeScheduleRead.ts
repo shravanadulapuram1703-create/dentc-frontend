@@ -13,6 +13,9 @@ export interface FeeScheduleRead {
   fee_type?: string | null;
   ins_plan_id?: number | null;
   office_id?: number | null;
+  effective_date?: string | null;
+  version: number;
+  parent_schedule_id?: number | null;
   is_active: boolean;
   id: number;
   created_at: string;

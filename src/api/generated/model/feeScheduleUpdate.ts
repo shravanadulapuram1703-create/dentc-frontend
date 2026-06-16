@@ -11,5 +11,6 @@ export interface FeeScheduleUpdate {
   fee_type?: string | null;
   ins_plan_id?: number | null;
   office_id?: number | null;
+  effective_date?: string | null;
   is_active?: boolean | null;
 }

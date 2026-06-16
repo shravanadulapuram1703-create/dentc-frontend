@@ -9,6 +9,7 @@
 export interface FeeScheduleEntryUpdate {
   fee_schedule_id?: number | null;
   procedure_code?: string | null;
+  amb_code?: string | null;
   patient_fee?: number | string | null;
   insurance_fee?: number | string | null;
   effective_date?: string | null;

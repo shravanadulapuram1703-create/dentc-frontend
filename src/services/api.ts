@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { env } from "@/shared/config/env";
+import { clearAuthStorageKeepRemembered } from "@/features/auth/rememberMe";
 
 const api = axios.create({
   baseURL: env.apiBaseUrl,
@@ -25,10 +26,16 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     // Check if it's a 401 Unauthorized response
     if (error.response?.status === 401) {
-      // Skip logout for login endpoint to avoid infinite loops
-      if (!error.config?.url?.includes("/auth/login")) {
-        // Clear authentication data
-        localStorage.clear();
+      // Some 401s are business responses, not session expiry — don't log out:
+      //  - /auth/login: wrong credentials (also avoids an infinite loop)
+      //  - /users/me/change-password: wrong *current* password; the screen
+      //    surfaces the error itself.
+      const url = error.config?.url ?? "";
+      const isSessionExpiry =
+        !url.includes("/auth/login") && !url.includes("/users/me/change-password");
+      if (isSessionExpiry) {
+        // Clear authentication data (but keep the "Remember me" identifier)
+        clearAuthStorageKeepRemembered();
         delete api.defaults.headers.common["Authorization"];
         
         // Dispatch a custom event that AuthContext can listen to

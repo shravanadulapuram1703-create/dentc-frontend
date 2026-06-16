@@ -13,9 +13,12 @@ import {
 } from "lucide-react";
 
 import { fetchUserForEdit } from "../../services/userApi";
-import { getUserSetupMetadata } from "../../api/generated/endpoints/users/users";
+import { getUserSetupMetadata, deleteUserImage } from "../../api/generated/endpoints/users/users";
 import { listUserGroups } from "../../api/generated/endpoints/staff/staff";
-import { useListOffices } from "../../api/generated/endpoints/organization/organization";
+import {
+  useListOffices,
+  useListProviders,
+} from "../../api/generated/endpoints/organization/organization";
 import type { UserSetupMetadata } from "../../api/generated/model/userSetupMetadata";
 import type { BackendUser } from "../../types/backendUser";
 
@@ -29,7 +32,7 @@ export type { BackendUser } from "../../types/backendUser";
 interface AddEditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (userData: any) => void;
+  onSave: (userData: any, imageFile?: File | null) => void | Promise<void>;
   editingUser: BackendUser | null; // Can be null for add mode, or have user_id for edit mode
   currentOffice: string;
 }
@@ -73,6 +76,14 @@ export default function AddEditUserModal({
   // Offices for the assignment picker (generated client, OfficeRead).
   const officesQ = useListOffices({ size: 200 }, { query: { enabled: isOpen } });
   const availableOffices = officesQ.data?.items ?? [];
+
+  // Providers for the Report Access Provider dropdown.
+  const providersQ = useListProviders({ size: 200 }, { query: { enabled: isOpen } });
+  const availableProviders = providersQ.data?.items ?? [];
+
+  // User image + signature (image goes via the multipart endpoint after save).
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Dropdown metadata (roles, patient access levels, overtime methods, prefs
   // schema) from GET /api/v1/users/setup-metadata.
@@ -200,6 +211,13 @@ export default function AddEditUserModal({
     email: "",
     phone: "",
 
+    // Structural
+    shortId: "",
+    reportAccessProviderId: "",
+    custom1: "",
+    custom2: "",
+    signatureData: "",
+
     // Status
     active: true,
 
@@ -241,12 +259,15 @@ export default function AddEditUserModal({
 
     // Preferences
     startupScreen: "Dashboard",
+    toolbar: "",
+    perioSetupTemplate: "",
     defaultPerioScreen: "Standard",
     defaultNavigationSearch: "Patient",
     defaultSearchBy: "lastName",
     defaultReferralView: "All",
 
-    showProductionView: true,
+    productionView: false,
+    showProductionColors: false,
     hideProviderTime: false,
     printLabelsForAppointments: false,
     promptForEntryDate: false,
@@ -343,6 +364,8 @@ export default function AddEditUserModal({
   useEffect(() => {
     if (!isOpen) {
       // Reset form when modal closes
+      setImageFile(null);
+      setImagePreview(null);
       setFormData({
         username: "",
         password: "",
@@ -350,6 +373,11 @@ export default function AddEditUserModal({
         lastName: "",
         email: "",
         phone: "",
+        shortId: "",
+        reportAccessProviderId: "",
+        custom1: "",
+        custom2: "",
+        signatureData: "",
         active: true,
         homeOffice: "",
         assignedOffices: [],
@@ -374,11 +402,14 @@ export default function AddEditUserModal({
         overtimeRate: "1.5",
         clockInRequired: false,
         startupScreen: "Dashboard",
+        toolbar: "",
+        perioSetupTemplate: "",
         defaultPerioScreen: "Standard",
         defaultNavigationSearch: "Patient",
         defaultSearchBy: "lastName",
         defaultReferralView: "All",
-        showProductionView: true,
+        productionView: false,
+        showProductionColors: false,
         hideProviderTime: false,
         printLabelsForAppointments: false,
         promptForEntryDate: false,
@@ -403,6 +434,9 @@ export default function AddEditUserModal({
       const prefBool = (k: string, dflt: boolean) =>
         prefs[k] == null ? dflt : prefs[k] === "true";
 
+      setImageFile(null);
+      setImagePreview(loadedUserData.image_url ?? null);
+
       setFormData(prev => ({
         ...prev,
         username: loadedUserData.username ?? "",
@@ -411,6 +445,11 @@ export default function AddEditUserModal({
         lastName: loadedUserData.last_name ?? "",
         email: loadedUserData.email ?? "",
         phone: loadedUserData.phone ?? "",
+        shortId: loadedUserData.short_id ?? "",
+        reportAccessProviderId: loadedUserData.report_access_provider_id ?? "",
+        custom1: loadedUserData.custom_1 ?? "",
+        custom2: loadedUserData.custom_2 ?? "",
+        signatureData: loadedUserData.signature_data ?? "",
         active: loadedUserData.is_active,
         homeOffice: loadedUserData.home_office_id?.toString() ?? "",
         assignedOffices: loadedUserData.assigned_offices?.map(String) ?? [],
@@ -436,11 +475,14 @@ export default function AddEditUserModal({
         clockInRequired: loadedUserData.time_clock?.clock_in_required ?? false,
         // Preferences (stored as key/value strings)
         startupScreen: prefStr("startup_screen", "Dashboard"),
+        toolbar: prefStr("toolbar", ""),
+        perioSetupTemplate: prefStr("perio_setup_template", ""),
         defaultPerioScreen: prefStr("default_perio_screen", "Standard"),
         defaultNavigationSearch: prefStr("default_navigation_search", "Patient"),
         defaultSearchBy: prefStr("default_search_by", "lastName"),
         defaultReferralView: prefStr("default_referral_view", "All"),
-        showProductionView: prefBool("show_production_view", true),
+        productionView: prefBool("production_view", false),
+        showProductionColors: prefBool("show_production_colors", false),
         hideProviderTime: prefBool("hide_provider_time", false),
         printLabelsForAppointments: prefBool("print_labels", false),
         promptForEntryDate: prefBool("prompt_entry_date", false),
@@ -557,6 +599,12 @@ export default function AddEditUserModal({
       is_active: formData.active,
       patient_access_level: formData.patientAccessLevel || null,
 
+      short_id: formData.shortId || null,
+      report_access_provider_id: formData.reportAccessProviderId || null,
+      custom_1: formData.custom1 || null,
+      custom_2: formData.custom2 || null,
+      signature_data: formData.signatureData || null,
+
       home_office_id: formData.homeOffice ? Number(formData.homeOffice) : null,
       assigned_offices: formData.assignedOffices.map(Number),
 
@@ -585,11 +633,14 @@ export default function AddEditUserModal({
 
       preferences: {
         startup_screen: formData.startupScreen,
+        toolbar: formData.toolbar,
+        perio_setup_template: formData.perioSetupTemplate,
         default_perio_screen: formData.defaultPerioScreen,
         default_navigation_search: formData.defaultNavigationSearch,
         default_search_by: formData.defaultSearchBy,
         default_referral_view: formData.defaultReferralView,
-        show_production_view: String(formData.showProductionView),
+        production_view: String(formData.productionView),
+        show_production_colors: String(formData.showProductionColors),
         hide_provider_time: String(formData.hideProviderTime),
         print_labels: String(formData.printLabelsForAppointments),
         prompt_entry_date: String(formData.promptForEntryDate),
@@ -601,7 +652,7 @@ export default function AddEditUserModal({
 
     setSaving(true);
     try {
-      await onSave(payload);
+      await onSave(payload, imageFile);
     } catch (error) {
       console.error("Error saving user:", error);
       // Error handling is done by parent component
@@ -707,6 +758,44 @@ export default function AddEditUserModal({
       ...formData,
       permittedIPs: formData.permittedIPs.filter((i) => i !== ip),
     });
+  };
+
+  // User image: validate, preview, and stage the file for upload after save.
+  const onImageSelected = (file: File | null) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      alert("User image must be a JPEG or PNG file.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert("User image must be 2 MB or smaller.");
+      return;
+    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = async () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (mode === "edit" && editingUser?.user_id) {
+      try {
+        await deleteUserImage(editingUser.user_id);
+      } catch (e) {
+        console.error("Failed to remove user image:", e);
+      }
+    }
+  };
+
+  // Signature: store the image as a data-URL string (backend signature_data).
+  const onSignatureSelected = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () =>
+      setFormData((prev) => ({ ...prev, signatureData: String(reader.result) }));
+    reader.readAsDataURL(file);
   };
 
   if (!isOpen) return null;
@@ -860,20 +949,23 @@ export default function AddEditUserModal({
 
 
                   </div>
-                  <div>
-                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
-                      Password <span className="text-[#EF4444]">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      placeholder="Default: same as username"
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
-                    />
-                  </div>
+                  {/* Password — only on create; not changed from this screen in edit mode. */}
+                  {mode === "add" && (
+                    <div>
+                      <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                        Password <span className="text-[#EF4444]">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        placeholder="Default: same as username"
+                        className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                       First Name <span className="text-[#EF4444]">*</span>
@@ -900,7 +992,21 @@ export default function AddEditUserModal({
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
                     />
                   </div>
-                  {/* Short ID field removed - not in formData schema */}
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                      Short ID (6 chars)
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={formData.shortId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, shortId: e.target.value.toUpperCase() })
+                      }
+                      placeholder="e.g., KRIUDA"
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] uppercase"
+                    />
+                  </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                       Email <span className="text-[#EF4444]">*</span>
@@ -925,6 +1031,32 @@ export default function AddEditUserModal({
                         setFormData({ ...formData, phone: e.target.value })
                       }
                       className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                      Custom 1
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.custom1}
+                      onChange={(e) =>
+                        setFormData({ ...formData, custom1: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                      Custom 2
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.custom2}
+                      onChange={(e) =>
+                        setFormData({ ...formData, custom2: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
                     />
                   </div>
                 </div>
@@ -1007,6 +1139,25 @@ export default function AddEditUserModal({
                       {patientAccessLevels.map(lvl => (
                         <option key={lvl.value} value={lvl.value}>
                           {lvl.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                      Report Access Provider
+                    </label>
+                    <select
+                      value={formData.reportAccessProviderId}
+                      onChange={e =>
+                        setFormData({ ...formData, reportAccessProviderId: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
+                    >
+                      <option value="">None</option>
+                      {availableProviders.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
                         </option>
                       ))}
                     </select>
@@ -1623,6 +1774,34 @@ export default function AddEditUserModal({
                       <option value="chartNumber">Chart Number</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                      Toolbar
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.toolbar}
+                      onChange={(e) =>
+                        setFormData({ ...formData, toolbar: e.target.value })
+                      }
+                      placeholder="e.g., Front Desk"
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                      Perio Setup Template
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.perioSetupTemplate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, perioSetupTemplate: e.target.value })
+                      }
+                      placeholder="e.g., Default Template"
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1635,17 +1814,31 @@ export default function AddEditUserModal({
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.showProductionView}
+                      checked={formData.productionView}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          showProductionView: e.target.checked,
+                          productionView: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 rounded border-[#E2E8F0] text-[#3A6EA5]"
+                    />
+                    <span className="text-[#1E293B]">Production View?</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.showProductionColors}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          showProductionColors: e.target.checked,
                         })
                       }
                       className="w-4 h-4 rounded border-[#E2E8F0] text-[#3A6EA5]"
                     />
                     <span className="text-[#1E293B]">
-                      Show Production View (production colors in appointments)
+                      Show Production Colors in Appointment Units?
                     </span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -1766,6 +1959,86 @@ export default function AddEditUserModal({
                         Is Ortho Assistant
                       </span>
                     </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Media */}
+              <div>
+                <h3 className="font-bold text-[#1F3A5F] mb-4 uppercase tracking-wide border-b-2 border-[#E2E8F0] pb-2">
+                  Profile Media
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  {/* User Image */}
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-2 text-sm">User Image</label>
+                    <div className="flex items-center gap-4">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="User"
+                          className="w-20 h-20 rounded-lg object-cover border-2 border-[#E2E8F0]"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-lg border-2 border-dashed border-[#E2E8F0] flex items-center justify-center text-xs text-[#64748B]">
+                          No image
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          onChange={(e) => onImageSelected(e.target.files?.[0] ?? null)}
+                          className="text-sm"
+                        />
+                        {imagePreview && (
+                          <button
+                            type="button"
+                            onClick={removeImage}
+                            className="block text-xs text-[#EF4444] hover:underline"
+                          >
+                            Remove image
+                          </button>
+                        )}
+                        <p className="text-xs text-[#64748B]">JPEG/PNG, ≤ 2 MB.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Signature */}
+                  <div>
+                    <label className="block text-[#1E293B] font-bold mb-2 text-sm">Signature</label>
+                    <div className="flex items-center gap-4">
+                      {formData.signatureData ? (
+                        <img
+                          src={formData.signatureData}
+                          alt="Signature"
+                          className="h-20 max-w-[160px] object-contain border-2 border-[#E2E8F0] rounded-lg bg-white"
+                        />
+                      ) : (
+                        <div className="w-40 h-20 rounded-lg border-2 border-dashed border-[#E2E8F0] flex items-center justify-center text-xs text-[#64748B] text-center px-2">
+                          No signature
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          onChange={(e) => onSignatureSelected(e.target.files?.[0] ?? null)}
+                          className="text-sm"
+                        />
+                        {formData.signatureData && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, signatureData: "" })}
+                            className="block text-xs text-[#EF4444] hover:underline"
+                          >
+                            Clear signature
+                          </button>
+                        )}
+                        <p className="text-xs text-[#64748B]">Topaz pad capture or an uploaded image.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

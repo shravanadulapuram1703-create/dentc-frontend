@@ -2,7 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { X, UserCheck, Shield, Clock, Settings, Wifi, RefreshCw, AlertCircle } from "lucide-react";
 import { ReadOnlyField } from "../ReadOnlyField";
 import { fetchUserDetails, type UserDetails } from "../../services/userApi";
-import { useListOffices, useListTenants } from "../../api/generated/endpoints/organization/organization";
+import {
+  useListOffices,
+  useListTenants,
+  useListProviders,
+} from "../../api/generated/endpoints/organization/organization";
 import { useListUserGroups } from "../../api/generated/endpoints/staff/staff";
 
 /* =========================================================
@@ -56,6 +60,13 @@ export default function ViewUserDetailsModal({
     return map;
   }, [groupsQ.data]);
 
+  const providersQ = useListProviders({ size: 200 }, { query: { enabled: isOpen } });
+  const providerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of providersQ.data?.items ?? []) map.set(p.id, p.name);
+    return map;
+  }, [providersQ.data]);
+
   // Fetch user details when modal opens
   useEffect(() => {
     if (isOpen && userId != null) {
@@ -97,6 +108,12 @@ export default function ViewUserDetailsModal({
       ? "24/7 (no restriction)"
       : `${lr.allowed_days || "—"} · ${(lr.start_time ?? "").slice(0, 5)}–${(lr.end_time ?? "").slice(0, 5)}`;
 
+  const pref = (k: string) => user?.preferences[k] || "—";
+  const prefYesNo = (k: string) => {
+    const v = user?.preferences[k];
+    return v == null ? "—" : v === "true" ? "Yes" : "No";
+  };
+
   const officeLabel = (officeId: number): string => {
     const o = officeById.get(officeId);
     return o ? `${o.name} (OID: ${o.office_code})` : `Office ${officeId}`;
@@ -115,15 +132,24 @@ export default function ViewUserDetailsModal({
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold">View User Details</h2>
-            {user ? (
-              <p className="text-sm text-[#E2E8F0]">
-                {user.first_name} {user.last_name} (@{user.username}) — Read Only
-              </p>
-            ) : (
-              <p className="text-sm text-[#E2E8F0]">Loading user details...</p>
+          <div className="flex items-center gap-3">
+            {user?.image_url && (
+              <img
+                src={user.image_url}
+                alt={user.username}
+                className="w-12 h-12 rounded-full object-cover border-2 border-white/40"
+              />
             )}
+            <div>
+              <h2 className="text-xl font-bold">View User Details</h2>
+              {user ? (
+                <p className="text-sm text-[#E2E8F0]">
+                  {user.first_name} {user.last_name} (@{user.username}) — Read Only
+                </p>
+              ) : (
+                <p className="text-sm text-[#E2E8F0]">Loading user details...</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {user && (
@@ -230,10 +256,13 @@ export default function ViewUserDetailsModal({
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       <ReadOnlyField label="Username" value={user.username} />
+                      <ReadOnlyField label="Short ID" value={user.short_id || "—"} />
                       <ReadOnlyField label="Email" value={user.email} />
                       <ReadOnlyField label="First Name" value={user.first_name} />
                       <ReadOnlyField label="Last Name" value={user.last_name} />
                       <ReadOnlyField label="Phone" value={user.phone || "—"} />
+                      <ReadOnlyField label="Custom 1" value={user.custom_1 || "—"} />
+                      <ReadOnlyField label="Custom 2" value={user.custom_2 || "—"} />
                       <ReadOnlyField label="Last Login" value={user.last_login_at || "Never"} />
                     </div>
                   </div>
@@ -257,6 +286,15 @@ export default function ViewUserDetailsModal({
                     <div className="grid grid-cols-2 gap-4">
                       <ReadOnlyField label="User Role / Type" value={user.role || "—"} />
                       <ReadOnlyField label="Patient Access Level" value={user.patient_access_level || "—"} />
+                      <ReadOnlyField
+                        label="Report Access Provider"
+                        value={
+                          user.report_access_provider_id
+                            ? providerNameById.get(user.report_access_provider_id) ||
+                              user.report_access_provider_id
+                            : "—"
+                        }
+                      />
                       <ReadOnlyField
                         label="Must Change Password"
                         value={user.must_change_password ? "Yes" : "No"}
@@ -426,17 +464,46 @@ export default function ViewUserDetailsModal({
                       Navigation Defaults
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
-                      <ReadOnlyField label="Start-up Screen" value={user.preferences.startup_screen || "—"} />
-                      <ReadOnlyField label="Default Perio Screen" value={user.preferences.default_perio_screen || "—"} />
-                      <ReadOnlyField label="Default Navigation Search" value={user.preferences.default_navigation_search || "—"} />
-                      <ReadOnlyField label="Default Search By" value={user.preferences.default_search_by || "—"} />
-                      <ReadOnlyField label="Default Referral View" value={user.preferences.default_referral_view || "—"} />
+                      <ReadOnlyField label="Start-up Screen" value={pref("startup_screen")} />
+                      <ReadOnlyField label="Toolbar" value={pref("toolbar")} />
+                      <ReadOnlyField label="Perio Setup Template" value={pref("perio_setup_template")} />
+                      <ReadOnlyField label="Default Perio Screen" value={pref("default_perio_screen")} />
+                      <ReadOnlyField label="Default Navigation Search" value={pref("default_navigation_search")} />
+                      <ReadOnlyField label="Default Search By" value={pref("default_search_by")} />
+                      <ReadOnlyField label="Default Referral View" value={pref("default_referral_view")} />
                     </div>
                   </div>
 
-                  {Object.keys(user.preferences).length === 0 && (
-                    <div className="text-sm text-[#64748B]">No preferences configured</div>
-                  )}
+                  <div>
+                    <h4 className="font-bold text-[#1F3A5F] mb-3 uppercase tracking-wide text-sm border-b border-[#E2E8F0] pb-2">
+                      Scheduler & Production
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <ReadOnlyField label="Production View?" value={prefYesNo("production_view")} />
+                      <ReadOnlyField label="Show Production Colors in Appt Units?" value={prefYesNo("show_production_colors")} />
+                      <ReadOnlyField label="Hide Provider Time" value={prefYesNo("hide_provider_time")} />
+                      <ReadOnlyField label="Print Labels for Appt." value={prefYesNo("print_labels")} />
+                      <ReadOnlyField label="Prompt for Entry Date?" value={prefYesNo("prompt_entry_date")} />
+                      <ReadOnlyField label="Include Inactive Patients?" value={prefYesNo("include_inactive_patients")} />
+                      <ReadOnlyField label="Is Ortho Assistant?" value={prefYesNo("is_ortho_assistant")} />
+                      <ReadOnlyField label="HIPAA Compliant Scheduler?" value={prefYesNo("hipaa_compliant_scheduler")} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-[#1F3A5F] mb-3 uppercase tracking-wide text-sm border-b border-[#E2E8F0] pb-2">
+                      Signature
+                    </h4>
+                    {user.signature_data ? (
+                      <img
+                        src={user.signature_data}
+                        alt="Signature"
+                        className="h-24 max-w-[240px] object-contain border-2 border-[#E2E8F0] rounded-lg bg-white"
+                      />
+                    ) : (
+                      <div className="text-sm text-[#64748B]">No signature on file</div>
+                    )}
+                  </div>
                 </div>
               )}
             </>

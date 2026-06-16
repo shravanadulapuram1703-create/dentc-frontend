@@ -20,7 +20,7 @@ import {
 import type {
   OfficeScheduleDayRead,
   ScheduleDayInput,
-  ScheduleReplace,
+  AppSchemasOfficeSetupScheduleReplace,
 } from "@/api/generated/model";
 
 /**
@@ -108,6 +108,6 @@ export async function saveOfficeSchedule(
     lunch_end: d.is_closed ? null : toApiTime(d.lunch_end),
   }));
 
-  const body: ScheduleReplace = { days: inputDays };
+  const body: AppSchemasOfficeSetupScheduleReplace = { days: inputDays };
   return setOfficeSchedule(officeId, body);
 }

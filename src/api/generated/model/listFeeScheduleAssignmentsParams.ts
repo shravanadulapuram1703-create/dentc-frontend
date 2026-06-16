@@ -25,6 +25,14 @@ provider_id?: string | null;
  */
 office_id?: number | null;
 /**
+ * Filter by office_group_id
+ */
+office_group_id?: number | null;
+/**
+ * Filter by carrier_id
+ */
+carrier_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

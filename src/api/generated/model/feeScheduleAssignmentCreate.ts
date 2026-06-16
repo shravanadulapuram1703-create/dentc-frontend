@@ -11,6 +11,7 @@ export interface FeeScheduleAssignmentCreate {
   carrier_id?: number | null;
   provider_id?: string | null;
   office_id?: number | null;
+  office_group_id?: number | null;
   fee_schedule_id: number;
   specialty_id?: string | null;
 }

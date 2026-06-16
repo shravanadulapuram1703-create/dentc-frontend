@@ -13,6 +13,14 @@ export interface BackendUser {
 
   patient_access_level?: string | null;
 
+  // Structural fields (migration c0d1e2f3a4b5)
+  short_id?: string | null;
+  report_access_provider_id?: string | null;
+  custom_1?: string | null;
+  custom_2?: string | null;
+  signature_data?: string | null;
+  image_url?: string | null; // read-only; set via the image endpoint
+
   home_office_id: number | null;
   assigned_offices: number[];
 

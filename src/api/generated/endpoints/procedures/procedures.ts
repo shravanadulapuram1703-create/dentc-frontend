@@ -42,8 +42,10 @@ import type {
   FeeScheduleEntryCreate,
   FeeScheduleEntryRead,
   FeeScheduleEntryUpdate,
+  FeeScheduleOption,
   FeeScheduleRead,
   FeeScheduleUpdate,
+  HTTPValidationError,
   ListChartMaterialsParams,
   ListCodeBundleItemsParams,
   ListCodeBundlesParams,
@@ -53,6 +55,7 @@ import type {
   ListNoteMacrosParams,
   ListPrescriptionLibraryParams,
   ListProcedureCodesParams,
+  NewFeeScheduleVersionRequest,
   NoteMacroCreate,
   NoteMacroRead,
   NoteMacroUpdate,
@@ -70,7 +73,11 @@ import type {
   PrescriptionLibraryUpdate,
   ProcedureCodeCreate,
   ProcedureCodeRead,
-  ProcedureCodeUpdate
+  ProcedureCodeStats,
+  ProcedureCodeUpdate,
+  ProcedureInsuranceRuleCreate,
+  ProcedureInsuranceRuleRead,
+  ProcedureInsuranceRuleUpdate
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -82,6 +89,598 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Lightweight active fee-schedule id→name/type projection (PROC-6)
+ */
+export const listFeeScheduleOptions = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<FeeScheduleOption[]>(
+      {url: `/api/v1/fee-schedules/options`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListFeeScheduleOptionsQueryKey = () => {
+    return [
+    `/api/v1/fee-schedules/options`
+    ] as const;
+    }
+
+
+export const getListFeeScheduleOptionsQueryOptions = <TData = Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFeeScheduleOptionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFeeScheduleOptions>>> = ({ signal }) => listFeeScheduleOptions(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListFeeScheduleOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof listFeeScheduleOptions>>>
+export type ListFeeScheduleOptionsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListFeeScheduleOptions<TData = Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFeeScheduleOptions>>,
+          TError,
+          Awaited<ReturnType<typeof listFeeScheduleOptions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListFeeScheduleOptions<TData = Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFeeScheduleOptions>>,
+          TError,
+          Awaited<ReturnType<typeof listFeeScheduleOptions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListFeeScheduleOptions<TData = Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lightweight active fee-schedule id→name/type projection (PROC-6)
+ */
+
+export function useListFeeScheduleOptions<TData = Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFeeScheduleOptions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListFeeScheduleOptionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Restore a soft-deleted fee schedule (is_active → true)
+ */
+export const restoreFeeSchedule = (
+    scheduleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<FeeScheduleRead>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/restore`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getRestoreFeeScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreFeeSchedule>>, TError,{scheduleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreFeeSchedule>>, TError,{scheduleId: number}, TContext> => {
+
+const mutationKey = ['restoreFeeSchedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreFeeSchedule>>, {scheduleId: number}> = (props) => {
+          const {scheduleId} = props ?? {};
+
+          return  restoreFeeSchedule(scheduleId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreFeeScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof restoreFeeSchedule>>>
+
+    export type RestoreFeeScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Restore a soft-deleted fee schedule (is_active → true)
+ */
+export const useRestoreFeeSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreFeeSchedule>>, TError,{scheduleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreFeeSchedule>>,
+        TError,
+        {scheduleId: number},
+        TContext
+      > => {
+      return useMutation(getRestoreFeeScheduleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Clone a fee schedule and its entries under a new effective date
+ */
+export const createFeeScheduleVersion = (
+    scheduleId: number,
+    newFeeScheduleVersionRequest: BodyType<NewFeeScheduleVersionRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<FeeScheduleRead>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/new-version`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: newFeeScheduleVersionRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateFeeScheduleVersionMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFeeScheduleVersion>>, TError,{scheduleId: number;data: BodyType<NewFeeScheduleVersionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFeeScheduleVersion>>, TError,{scheduleId: number;data: BodyType<NewFeeScheduleVersionRequest>}, TContext> => {
+
+const mutationKey = ['createFeeScheduleVersion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFeeScheduleVersion>>, {scheduleId: number;data: BodyType<NewFeeScheduleVersionRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  createFeeScheduleVersion(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFeeScheduleVersionMutationResult = NonNullable<Awaited<ReturnType<typeof createFeeScheduleVersion>>>
+    export type CreateFeeScheduleVersionMutationBody = BodyType<NewFeeScheduleVersionRequest>
+    export type CreateFeeScheduleVersionMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Clone a fee schedule and its entries under a new effective date
+ */
+export const useCreateFeeScheduleVersion = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFeeScheduleVersion>>, TError,{scheduleId: number;data: BodyType<NewFeeScheduleVersionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createFeeScheduleVersion>>,
+        TError,
+        {scheduleId: number;data: BodyType<NewFeeScheduleVersionRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateFeeScheduleVersionMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Catalog KPI counts (total / active / inactive / ortho / by-category)
+ */
+export const getProcedureCodeStats = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureCodeStats>(
+      {url: `/api/v1/procedure-codes/stats`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetProcedureCodeStatsQueryKey = () => {
+    return [
+    `/api/v1/procedure-codes/stats`
+    ] as const;
+    }
+
+
+export const getGetProcedureCodeStatsQueryOptions = <TData = Awaited<ReturnType<typeof getProcedureCodeStats>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProcedureCodeStatsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProcedureCodeStats>>> = ({ signal }) => getProcedureCodeStats(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProcedureCodeStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getProcedureCodeStats>>>
+export type GetProcedureCodeStatsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetProcedureCodeStats<TData = Awaited<ReturnType<typeof getProcedureCodeStats>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeStats>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureCodeStats>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureCodeStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureCodeStats<TData = Awaited<ReturnType<typeof getProcedureCodeStats>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeStats>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureCodeStats>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureCodeStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureCodeStats<TData = Awaited<ReturnType<typeof getProcedureCodeStats>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Catalog KPI counts (total / active / inactive / ortho / by-category)
+ */
+
+export function useGetProcedureCodeStats<TData = Awaited<ReturnType<typeof getProcedureCodeStats>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProcedureCodeStatsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Procedure Insurance Rules
+ */
+export const listProcedureInsuranceRules = (
+    code: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureInsuranceRuleRead[]>(
+      {url: `/api/v1/procedure-codes/${code}/insurance-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProcedureInsuranceRulesQueryKey = (code: string,) => {
+    return [
+    `/api/v1/procedure-codes/${code}/insurance-rules`
+    ] as const;
+    }
+
+
+export const getListProcedureInsuranceRulesQueryOptions = <TData = Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProcedureInsuranceRulesQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProcedureInsuranceRules>>> = ({ signal }) => listProcedureInsuranceRules(code, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProcedureInsuranceRulesQueryResult = NonNullable<Awaited<ReturnType<typeof listProcedureInsuranceRules>>>
+export type ListProcedureInsuranceRulesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListProcedureInsuranceRules<TData = Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProcedureInsuranceRules>>,
+          TError,
+          Awaited<ReturnType<typeof listProcedureInsuranceRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProcedureInsuranceRules<TData = Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProcedureInsuranceRules>>,
+          TError,
+          Awaited<ReturnType<typeof listProcedureInsuranceRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProcedureInsuranceRules<TData = Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Procedure Insurance Rules
+ */
+
+export function useListProcedureInsuranceRules<TData = Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureInsuranceRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProcedureInsuranceRulesQueryOptions(code,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create Procedure Insurance Rule
+ */
+export const createProcedureInsuranceRule = (
+    code: string,
+    procedureInsuranceRuleCreate: BodyType<ProcedureInsuranceRuleCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureInsuranceRuleRead>(
+      {url: `/api/v1/procedure-codes/${code}/insurance-rules`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: procedureInsuranceRuleCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateProcedureInsuranceRuleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProcedureInsuranceRule>>, TError,{code: string;data: BodyType<ProcedureInsuranceRuleCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProcedureInsuranceRule>>, TError,{code: string;data: BodyType<ProcedureInsuranceRuleCreate>}, TContext> => {
+
+const mutationKey = ['createProcedureInsuranceRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProcedureInsuranceRule>>, {code: string;data: BodyType<ProcedureInsuranceRuleCreate>}> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  createProcedureInsuranceRule(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProcedureInsuranceRuleMutationResult = NonNullable<Awaited<ReturnType<typeof createProcedureInsuranceRule>>>
+    export type CreateProcedureInsuranceRuleMutationBody = BodyType<ProcedureInsuranceRuleCreate>
+    export type CreateProcedureInsuranceRuleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Create Procedure Insurance Rule
+ */
+export const useCreateProcedureInsuranceRule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProcedureInsuranceRule>>, TError,{code: string;data: BodyType<ProcedureInsuranceRuleCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createProcedureInsuranceRule>>,
+        TError,
+        {code: string;data: BodyType<ProcedureInsuranceRuleCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateProcedureInsuranceRuleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update Procedure Insurance Rule
+ */
+export const updateProcedureInsuranceRule = (
+    code: string,
+    ruleId: number,
+    procedureInsuranceRuleUpdate: BodyType<ProcedureInsuranceRuleUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureInsuranceRuleRead>(
+      {url: `/api/v1/procedure-codes/${code}/insurance-rules/${ruleId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: procedureInsuranceRuleUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateProcedureInsuranceRuleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProcedureInsuranceRule>>, TError,{code: string;ruleId: number;data: BodyType<ProcedureInsuranceRuleUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProcedureInsuranceRule>>, TError,{code: string;ruleId: number;data: BodyType<ProcedureInsuranceRuleUpdate>}, TContext> => {
+
+const mutationKey = ['updateProcedureInsuranceRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProcedureInsuranceRule>>, {code: string;ruleId: number;data: BodyType<ProcedureInsuranceRuleUpdate>}> = (props) => {
+          const {code,ruleId,data} = props ?? {};
+
+          return  updateProcedureInsuranceRule(code,ruleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProcedureInsuranceRuleMutationResult = NonNullable<Awaited<ReturnType<typeof updateProcedureInsuranceRule>>>
+    export type UpdateProcedureInsuranceRuleMutationBody = BodyType<ProcedureInsuranceRuleUpdate>
+    export type UpdateProcedureInsuranceRuleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Update Procedure Insurance Rule
+ */
+export const useUpdateProcedureInsuranceRule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProcedureInsuranceRule>>, TError,{code: string;ruleId: number;data: BodyType<ProcedureInsuranceRuleUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateProcedureInsuranceRule>>,
+        TError,
+        {code: string;ruleId: number;data: BodyType<ProcedureInsuranceRuleUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateProcedureInsuranceRuleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete Procedure Insurance Rule
+ */
+export const deleteProcedureInsuranceRule = (
+    code: string,
+    ruleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/procedure-codes/${code}/insurance-rules/${ruleId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteProcedureInsuranceRuleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProcedureInsuranceRule>>, TError,{code: string;ruleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProcedureInsuranceRule>>, TError,{code: string;ruleId: number}, TContext> => {
+
+const mutationKey = ['deleteProcedureInsuranceRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProcedureInsuranceRule>>, {code: string;ruleId: number}> = (props) => {
+          const {code,ruleId} = props ?? {};
+
+          return  deleteProcedureInsuranceRule(code,ruleId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProcedureInsuranceRuleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProcedureInsuranceRule>>>
+
+    export type DeleteProcedureInsuranceRuleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Delete Procedure Insurance Rule
+ */
+export const useDeleteProcedureInsuranceRule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProcedureInsuranceRule>>, TError,{code: string;ruleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProcedureInsuranceRule>>,
+        TError,
+        {code: string;ruleId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteProcedureInsuranceRuleMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List procedure codes
  */
 export const listProcedureCodes = (

@@ -5,8 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import AuthShell from "../features/auth/components/AuthShell";
 import PasswordField from "../features/auth/components/PasswordField";
 import AuthErrorAlert from "../features/auth/components/AuthErrorAlert";
-
-const REMEMBERED_IDENTIFIER_KEY = "remembered_identifier";
+import { REMEMBERED_IDENTIFIER_KEY } from "../features/auth/rememberMe";
 
 export default function LoginPage() {
   const navigate = useNavigate();

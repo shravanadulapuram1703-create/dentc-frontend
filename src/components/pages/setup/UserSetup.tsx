@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
 import { useUsersGrid } from "@/features/users/useUsersGrid";
@@ -15,6 +16,7 @@ import { fetchUserForEdit } from "../../../services/userApi";
 import {
   createUserComplete,
   updateUserComplete,
+  uploadUserImage,
 } from "../../../api/generated/endpoints/users/users";
 import type { BackendUser } from "../../../types/backendUser";
 
@@ -129,6 +131,7 @@ export default function UserSetup({
   currentOffice,
   setCurrentOffice,
 }: UserSetupProps) {
+  const { user: authUser } = useAuth();
   const [searchText, setSearchText] = useState("");
   const [searchScope, setSearchScope] = useState<"all" | "home">("all");
   const [sortBy, setSortBy] = useState<"name" | "username">("name");
@@ -246,8 +249,18 @@ export default function UserSetup({
     role: filterRole !== "all" ? filterRole : undefined,
   });
 
-
-  console.log({currentOffice,userHomeOID: users[1]?.homeOffice,});
+  // On first load, default-select the signed-in user's own row.
+  const didAutoSelectRef = useRef(false);
+  useEffect(() => {
+    if (didAutoSelectRef.current) return;
+    if (authUser?.id == null || users.length === 0) return;
+    const meId = Number(authUser.id);
+    const mine = users.find(
+      (u) => Number(String(u.id).replace(/^U-/, "")) === meId
+    );
+    if (mine) setSelectedUser(mine);
+    didAutoSelectRef.current = true;
+  }, [users, authUser?.id]);
 
   // const filteredUsers = useMemo(() => {
   //   console.log("---- FILTERING USERS ----");
@@ -466,24 +479,45 @@ export default function UserSetup({
   //   setSelectedUser(null);
   // };
 
-  const handleSaveUser = async (payload: any) => {
+  const handleSaveUser = async (payload: any, imageFile?: File | null) => {
     // The modal builds the compound payload; persist it atomically across users +
     // offices + groups + IP rules + preferences + time-clock + login restrictions.
+    // The user image is uploaded separately (multipart) once we have the user id.
     try {
-      if (editingUser?.user_id) {
-        await updateUserComplete(editingUser.user_id, payload);
+      let userId = editingUser?.user_id ?? null;
+      if (userId) {
+        await updateUserComplete(userId, payload);
       } else {
         // is_active is not part of UserCompleteCreate (new users are active).
         const createBody = { ...payload };
         delete createBody.is_active;
-        await createUserComplete(createBody);
+        const created = await createUserComplete(createBody);
+        userId = created?.id ?? null;
+      }
+
+      if (imageFile && userId) {
+        try {
+          await uploadUserImage(userId, { file: imageFile });
+        } catch (e) {
+          console.error("User image upload failed:", e);
+          alert("User saved, but the image upload failed. You can retry from Edit.");
+        }
       }
 
       await fetchUsers(); // refresh list
-    } finally {
       setShowAddEditModal(false);
       setEditingUser(null);
       setSelectedUser(null);
+    } catch (e: any) {
+      // Keep the modal open so the user can correct and retry.
+      const status = e?.response?.status;
+      const detail =
+        e?.response?.data?.error?.message || e?.response?.data?.detail;
+      if (status === 409) {
+        alert(detail || "That Short ID is already in use — please choose another.");
+      } else {
+        alert(detail || "Failed to save user.");
+      }
     }
   };
 
