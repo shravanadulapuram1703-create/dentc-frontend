@@ -15,7 +15,7 @@ import PatientShellLayout from './components/PatientShellLayout';
 import PatientOverview from './components/patient/overview/PatientOverview';
 import PatientLedger from './components/pages/PatientLedger';
 import Transactions from './components/pages/Transactions';
-import Charting from './components/pages/Charting';
+import RestorativeChart from './features/restorative/RestorativeChart';
 import Reports from './components/pages/Reports';
 import Utilities from './components/pages/Utilities';
 import Setup from './components/pages/Setup';
@@ -47,9 +47,23 @@ import FeeScheduleAssignments from './components/setup/insurance/FeeScheduleAssi
 import InsuranceDashboard from './components/setup/insurance/InsuranceDashboard';
 import ProcedureCodeSetup from './components/setup/procedure-codes/ProcedureCodeSetup';
 import ExplosionCodeSetup from './components/setup/procedure-codes/ExplosionCodeSetup';
+import IcdCodeSetup from './components/setup/procedure-codes/IcdCodeSetup';
+import ModifierCodeSetup from './components/setup/procedure-codes/ModifierCodeSetup';
+import PlaceOfServiceSetup from './components/setup/procedure-codes/PlaceOfServiceSetup';
+import TypeOfServiceSetup from './components/setup/procedure-codes/TypeOfServiceSetup';
+import RestorativeColorSetup from './components/setup/charting/RestorativeColorSetup';
+import RestorativeMaterialSetup from './components/setup/charting/RestorativeMaterialSetup';
+import PerioTemplateSetup from './components/setup/charting/PerioTemplateSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
 import ReferralSetup from './components/setup/referrals/ReferralSetup';
+import PickListSetup from './components/setup/pick-list/PickListSetup';
+import NoteMacroSetup from './components/setup/notes-macros/NoteMacroSetup';
+import MedicalAlertsSetup from './components/setup/medical/MedicalAlertsSetup';
+import MedicalQuestionnaireSetup from './components/setup/medical/MedicalQuestionnaireSetup';
+import DentalQuestionnaireSetup from './components/setup/medical/DentalQuestionnaireSetup';
+import PrescriptionSetup from './components/setup/prescriptions/PrescriptionSetup';
+import CustomToolbarSetup from './components/setup/custom-toolbar/CustomToolbarSetup';
 import { Loader2 } from 'lucide-react';
 import AIChat from './components/ai-chat/AIChat';
 import AddNewPatient from './components/pages/AddNewPatient';
@@ -145,7 +159,7 @@ function AppRoutes() {
         <Route path="overview" element={<PatientOverview />} />
         <Route path="ledger" element={<PatientLedger />} />
         <Route path="transaction" element={<Transactions />} />
-        <Route path="restorative" element={<Charting />} />
+        <Route path="restorative" element={<RestorativeChart />} />
         
         {/* Payment Plan */}
         <Route path="payment-plan/regular" element={<PlaceholderPage title="Regular Payment Plan" description="Manage patient payment plans" />} />
@@ -347,10 +361,10 @@ function AppRoutes() {
       {/* Setup - Procedure Codes */}
       <Route path="/setup/procedure-codes/procedure-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ProcedureCodeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/explosion-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ExplosionCodeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/procedure-codes/icd-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="ICD Codes" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/procedure-codes/modifier-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Modifier Codes" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/procedure-codes/place-of-service" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Place of Service" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/procedure-codes/type-of-service" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Type of Service" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/procedure-codes/icd-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><IcdCodeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/procedure-codes/modifier-codes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ModifierCodeSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/procedure-codes/place-of-service" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceOfServiceSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/procedure-codes/type-of-service" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><TypeOfServiceSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/cdt-to-cpt" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="CDT to CPT Mapping" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/cpt-to-icd" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="CPT to ICD Mapping" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/procedure-codes/cdt-to-icd" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="CDT to ICD Mapping" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -360,15 +374,33 @@ function AppRoutes() {
       <Route path="/setup/fee-schedules/fee-schedule-assignments" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><FeeScheduleAssignments /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Charting */}
-      <Route path="/setup/charting/colors" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Charting Colors" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/charting/materials" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Charting Materials" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/charting/per-use-templates" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Per Use Templates" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/charting/colors" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><RestorativeColorSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/charting/materials" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><RestorativeMaterialSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/charting/per-use-templates" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PerioTemplateSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Medical */}
-      <Route path="/setup/medical/medical-alerts" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Medical Alerts" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/medical/medical-questionnaire" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Medical Questionnaire" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/medical/dental-questionnaire" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Dental Questionnaire" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/medical/medical-alerts" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><MedicalAlertsSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/medical/medical-questionnaire" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><MedicalQuestionnaireSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/medical/dental-questionnaire" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><DentalQuestionnaireSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
+      {/* Setup - Pick List */}
+      <Route path="/setup/pick-list/manage" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PickListSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/pick-list/custom" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Custom Pick Lists" description="Pending backend: no custom/tenant-scoped pick-list flag exists on the questionnaire model — see pick_list_setup_backend_devreport.md GAP PICK-3." /></AdminPageWrapper> : <Navigate to="/login" />} />
+
+      {/* Setup - Custom Toolbar */}
+      <Route path="/setup/custom-toolbar" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CustomToolbarSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/custom-toolbar/configure" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><CustomToolbarSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+
+      {/* Setup - Prescriptions */}
+      <Route path="/setup/prescriptions" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PrescriptionSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/prescriptions/prescription-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PrescriptionSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/prescriptions/common" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PrescriptionSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+
+      {/* Setup - Notes Macros */}
+      <Route path="/setup/notes-macros" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><NoteMacroSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/notes-macros/manage" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><NoteMacroSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/notes-macros/create" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><NoteMacroSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+
       {/* Setup - Scheduler */}
       <Route path="/setup/scheduler/scheduler-view" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Scheduler View Setup" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/scheduler/scheduler-template" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Scheduler Template" /></AdminPageWrapper> : <Navigate to="/login" />} />

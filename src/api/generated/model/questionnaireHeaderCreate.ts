@@ -10,4 +10,5 @@ export interface QuestionnaireHeaderCreate {
   description: string;
   is_multi_select?: boolean | null;
   is_active?: boolean | null;
+  is_custom?: boolean | null;
 }

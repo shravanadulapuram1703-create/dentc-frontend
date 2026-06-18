@@ -16,4 +16,5 @@ export interface DefinitionCreate {
   is_active?: boolean | null;
   is_flash_alert?: boolean | null;
   blocks_charges?: boolean | null;
+  input_type?: string | null;
 }

@@ -38,6 +38,7 @@ import type {
   ListPatientProceduresParams,
   ListPerioChartActivityParams,
   ListPerioChartSettingsParams,
+  ListPerioChartTemplatesParams,
   ListPerioExamDetailsParams,
   ListPerioExamsParams,
   ListPrescriptionsParams,
@@ -47,6 +48,7 @@ import type {
   PaginatedResponsePatientProcedureRead,
   PaginatedResponsePerioChartActivityRead,
   PaginatedResponsePerioChartSettingRead,
+  PaginatedResponsePerioChartTemplateRead,
   PaginatedResponsePerioExamDetailRead,
   PaginatedResponsePerioExamRead,
   PaginatedResponsePrescriptionRead,
@@ -60,6 +62,9 @@ import type {
   PerioChartSettingCreate,
   PerioChartSettingRead,
   PerioChartSettingUpdate,
+  PerioChartTemplateCreate,
+  PerioChartTemplateRead,
+  PerioChartTemplateUpdate,
   PerioExamCreate,
   PerioExamDetailCreate,
   PerioExamDetailRead,
@@ -2753,6 +2758,379 @@ export const useDeletePerioChartSetting = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeletePerioChartSettingMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List perio chart templates
+ */
+export const listPerioChartTemplates = (
+    params?: ListPerioChartTemplatesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePerioChartTemplateRead>(
+      {url: `/api/v1/perio-chart-templates`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPerioChartTemplatesQueryKey = (params?: ListPerioChartTemplatesParams,) => {
+    return [
+    `/api/v1/perio-chart-templates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPerioChartTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof listPerioChartTemplates>>, TError = ErrorType<ErrorResponse>>(params?: ListPerioChartTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPerioChartTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPerioChartTemplatesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPerioChartTemplates>>> = ({ signal }) => listPerioChartTemplates(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPerioChartTemplates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPerioChartTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listPerioChartTemplates>>>
+export type ListPerioChartTemplatesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPerioChartTemplates<TData = Awaited<ReturnType<typeof listPerioChartTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPerioChartTemplatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPerioChartTemplates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPerioChartTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listPerioChartTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPerioChartTemplates<TData = Awaited<ReturnType<typeof listPerioChartTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPerioChartTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPerioChartTemplates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPerioChartTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listPerioChartTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPerioChartTemplates<TData = Awaited<ReturnType<typeof listPerioChartTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPerioChartTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPerioChartTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List perio chart templates
+ */
+
+export function useListPerioChartTemplates<TData = Awaited<ReturnType<typeof listPerioChartTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPerioChartTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPerioChartTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPerioChartTemplatesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create perio chart template
+ */
+export const createPerioChartTemplate = (
+    perioChartTemplateCreate: BodyType<PerioChartTemplateCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioChartTemplateRead>(
+      {url: `/api/v1/perio-chart-templates`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: perioChartTemplateCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePerioChartTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPerioChartTemplate>>, TError,{data: BodyType<PerioChartTemplateCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPerioChartTemplate>>, TError,{data: BodyType<PerioChartTemplateCreate>}, TContext> => {
+
+const mutationKey = ['createPerioChartTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPerioChartTemplate>>, {data: BodyType<PerioChartTemplateCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPerioChartTemplate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePerioChartTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createPerioChartTemplate>>>
+    export type CreatePerioChartTemplateMutationBody = BodyType<PerioChartTemplateCreate>
+    export type CreatePerioChartTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create perio chart template
+ */
+export const useCreatePerioChartTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPerioChartTemplate>>, TError,{data: BodyType<PerioChartTemplateCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPerioChartTemplate>>,
+        TError,
+        {data: BodyType<PerioChartTemplateCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePerioChartTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get perio chart template by id
+ */
+export const getPerioChartTemplate = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioChartTemplateRead>(
+      {url: `/api/v1/perio-chart-templates/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPerioChartTemplateQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/perio-chart-templates/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPerioChartTemplateQueryOptions = <TData = Awaited<ReturnType<typeof getPerioChartTemplate>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPerioChartTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPerioChartTemplateQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPerioChartTemplate>>> = ({ signal }) => getPerioChartTemplate(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPerioChartTemplate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPerioChartTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getPerioChartTemplate>>>
+export type GetPerioChartTemplateQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPerioChartTemplate<TData = Awaited<ReturnType<typeof getPerioChartTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPerioChartTemplate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPerioChartTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getPerioChartTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPerioChartTemplate<TData = Awaited<ReturnType<typeof getPerioChartTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPerioChartTemplate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPerioChartTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getPerioChartTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPerioChartTemplate<TData = Awaited<ReturnType<typeof getPerioChartTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPerioChartTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get perio chart template by id
+ */
+
+export function useGetPerioChartTemplate<TData = Awaited<ReturnType<typeof getPerioChartTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPerioChartTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPerioChartTemplateQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update perio chart template
+ */
+export const updatePerioChartTemplate = (
+    itemId: number,
+    perioChartTemplateUpdate: BodyType<PerioChartTemplateUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioChartTemplateRead>(
+      {url: `/api/v1/perio-chart-templates/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: perioChartTemplateUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePerioChartTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePerioChartTemplate>>, TError,{itemId: number;data: BodyType<PerioChartTemplateUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePerioChartTemplate>>, TError,{itemId: number;data: BodyType<PerioChartTemplateUpdate>}, TContext> => {
+
+const mutationKey = ['updatePerioChartTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePerioChartTemplate>>, {itemId: number;data: BodyType<PerioChartTemplateUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePerioChartTemplate(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePerioChartTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updatePerioChartTemplate>>>
+    export type UpdatePerioChartTemplateMutationBody = BodyType<PerioChartTemplateUpdate>
+    export type UpdatePerioChartTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update perio chart template
+ */
+export const useUpdatePerioChartTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePerioChartTemplate>>, TError,{itemId: number;data: BodyType<PerioChartTemplateUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePerioChartTemplate>>,
+        TError,
+        {itemId: number;data: BodyType<PerioChartTemplateUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePerioChartTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete perio chart template
+ */
+export const deletePerioChartTemplate = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/perio-chart-templates/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePerioChartTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePerioChartTemplate>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePerioChartTemplate>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePerioChartTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePerioChartTemplate>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePerioChartTemplate(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePerioChartTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof deletePerioChartTemplate>>>
+
+    export type DeletePerioChartTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete perio chart template
+ */
+export const useDeletePerioChartTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePerioChartTemplate>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePerioChartTemplate>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePerioChartTemplateMutationOptions(options), queryClient);
     }
     /**
  * @summary List perio chart activity

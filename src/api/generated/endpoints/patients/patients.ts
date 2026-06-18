@@ -44,6 +44,8 @@ import type {
   ListPatientRecallsParams,
   ListPatientSignaturesParams,
   ListPatientsParams,
+  ListReferralDemogDetailsParams,
+  ListReferralDemogHeadersParams,
   ListReferralsParams,
   MedicalHistoryDetailCreate,
   MedicalHistoryDetailRead,
@@ -61,6 +63,8 @@ import type {
   PaginatedResponsePatientRead,
   PaginatedResponsePatientRecallRead,
   PaginatedResponsePatientSignatureRead,
+  PaginatedResponseReferralDemogDetailRead,
+  PaginatedResponseReferralDemogHeaderRead,
   PaginatedResponseReferralRead,
   PatientAlertCreate,
   PatientAlertRead,
@@ -86,6 +90,12 @@ import type {
   PatientSignatureUpdate,
   PatientUpdate,
   ReferralCreate,
+  ReferralDemogDetailCreate,
+  ReferralDemogDetailRead,
+  ReferralDemogDetailUpdate,
+  ReferralDemogHeaderCreate,
+  ReferralDemogHeaderRead,
+  ReferralDemogHeaderUpdate,
   ReferralRead,
   ReferralUpdate
 } from '../../model';
@@ -4676,4 +4686,750 @@ export const useDeleteMedicalHistoryDetail = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteMedicalHistoryDetailMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List referral demog headers
+ */
+export const listReferralDemogHeaders = (
+    params?: ListReferralDemogHeadersParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseReferralDemogHeaderRead>(
+      {url: `/api/v1/referral-demog-headers`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListReferralDemogHeadersQueryKey = (params?: ListReferralDemogHeadersParams,) => {
+    return [
+    `/api/v1/referral-demog-headers`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListReferralDemogHeadersQueryOptions = <TData = Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError = ErrorType<ErrorResponse>>(params?: ListReferralDemogHeadersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReferralDemogHeadersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReferralDemogHeaders>>> = ({ signal }) => listReferralDemogHeaders(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListReferralDemogHeadersQueryResult = NonNullable<Awaited<ReturnType<typeof listReferralDemogHeaders>>>
+export type ListReferralDemogHeadersQueryError = ErrorType<ErrorResponse>
+
+
+export function useListReferralDemogHeaders<TData = Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListReferralDemogHeadersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listReferralDemogHeaders>>,
+          TError,
+          Awaited<ReturnType<typeof listReferralDemogHeaders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListReferralDemogHeaders<TData = Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListReferralDemogHeadersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listReferralDemogHeaders>>,
+          TError,
+          Awaited<ReturnType<typeof listReferralDemogHeaders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListReferralDemogHeaders<TData = Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListReferralDemogHeadersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List referral demog headers
+ */
+
+export function useListReferralDemogHeaders<TData = Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListReferralDemogHeadersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogHeaders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListReferralDemogHeadersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create referral demog header
+ */
+export const createReferralDemogHeader = (
+    referralDemogHeaderCreate: BodyType<ReferralDemogHeaderCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReferralDemogHeaderRead>(
+      {url: `/api/v1/referral-demog-headers`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: referralDemogHeaderCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateReferralDemogHeaderMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReferralDemogHeader>>, TError,{data: BodyType<ReferralDemogHeaderCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReferralDemogHeader>>, TError,{data: BodyType<ReferralDemogHeaderCreate>}, TContext> => {
+
+const mutationKey = ['createReferralDemogHeader'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReferralDemogHeader>>, {data: BodyType<ReferralDemogHeaderCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createReferralDemogHeader(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateReferralDemogHeaderMutationResult = NonNullable<Awaited<ReturnType<typeof createReferralDemogHeader>>>
+    export type CreateReferralDemogHeaderMutationBody = BodyType<ReferralDemogHeaderCreate>
+    export type CreateReferralDemogHeaderMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create referral demog header
+ */
+export const useCreateReferralDemogHeader = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReferralDemogHeader>>, TError,{data: BodyType<ReferralDemogHeaderCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createReferralDemogHeader>>,
+        TError,
+        {data: BodyType<ReferralDemogHeaderCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateReferralDemogHeaderMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get referral demog header by id
+ */
+export const getReferralDemogHeader = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReferralDemogHeaderRead>(
+      {url: `/api/v1/referral-demog-headers/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetReferralDemogHeaderQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/referral-demog-headers/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetReferralDemogHeaderQueryOptions = <TData = Awaited<ReturnType<typeof getReferralDemogHeader>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogHeader>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReferralDemogHeaderQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReferralDemogHeader>>> = ({ signal }) => getReferralDemogHeader(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogHeader>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetReferralDemogHeaderQueryResult = NonNullable<Awaited<ReturnType<typeof getReferralDemogHeader>>>
+export type GetReferralDemogHeaderQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetReferralDemogHeader<TData = Awaited<ReturnType<typeof getReferralDemogHeader>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogHeader>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getReferralDemogHeader>>,
+          TError,
+          Awaited<ReturnType<typeof getReferralDemogHeader>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetReferralDemogHeader<TData = Awaited<ReturnType<typeof getReferralDemogHeader>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogHeader>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getReferralDemogHeader>>,
+          TError,
+          Awaited<ReturnType<typeof getReferralDemogHeader>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetReferralDemogHeader<TData = Awaited<ReturnType<typeof getReferralDemogHeader>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogHeader>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get referral demog header by id
+ */
+
+export function useGetReferralDemogHeader<TData = Awaited<ReturnType<typeof getReferralDemogHeader>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogHeader>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetReferralDemogHeaderQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update referral demog header
+ */
+export const updateReferralDemogHeader = (
+    itemId: number,
+    referralDemogHeaderUpdate: BodyType<ReferralDemogHeaderUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReferralDemogHeaderRead>(
+      {url: `/api/v1/referral-demog-headers/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: referralDemogHeaderUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateReferralDemogHeaderMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReferralDemogHeader>>, TError,{itemId: number;data: BodyType<ReferralDemogHeaderUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateReferralDemogHeader>>, TError,{itemId: number;data: BodyType<ReferralDemogHeaderUpdate>}, TContext> => {
+
+const mutationKey = ['updateReferralDemogHeader'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReferralDemogHeader>>, {itemId: number;data: BodyType<ReferralDemogHeaderUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateReferralDemogHeader(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateReferralDemogHeaderMutationResult = NonNullable<Awaited<ReturnType<typeof updateReferralDemogHeader>>>
+    export type UpdateReferralDemogHeaderMutationBody = BodyType<ReferralDemogHeaderUpdate>
+    export type UpdateReferralDemogHeaderMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update referral demog header
+ */
+export const useUpdateReferralDemogHeader = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReferralDemogHeader>>, TError,{itemId: number;data: BodyType<ReferralDemogHeaderUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateReferralDemogHeader>>,
+        TError,
+        {itemId: number;data: BodyType<ReferralDemogHeaderUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateReferralDemogHeaderMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete referral demog header
+ */
+export const deleteReferralDemogHeader = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/referral-demog-headers/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteReferralDemogHeaderMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReferralDemogHeader>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReferralDemogHeader>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteReferralDemogHeader'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReferralDemogHeader>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteReferralDemogHeader(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteReferralDemogHeaderMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReferralDemogHeader>>>
+
+    export type DeleteReferralDemogHeaderMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete referral demog header
+ */
+export const useDeleteReferralDemogHeader = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReferralDemogHeader>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReferralDemogHeader>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteReferralDemogHeaderMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List referral demog details
+ */
+export const listReferralDemogDetails = (
+    params?: ListReferralDemogDetailsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseReferralDemogDetailRead>(
+      {url: `/api/v1/referral-demog-details`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListReferralDemogDetailsQueryKey = (params?: ListReferralDemogDetailsParams,) => {
+    return [
+    `/api/v1/referral-demog-details`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListReferralDemogDetailsQueryOptions = <TData = Awaited<ReturnType<typeof listReferralDemogDetails>>, TError = ErrorType<ErrorResponse>>(params?: ListReferralDemogDetailsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogDetails>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReferralDemogDetailsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReferralDemogDetails>>> = ({ signal }) => listReferralDemogDetails(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogDetails>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListReferralDemogDetailsQueryResult = NonNullable<Awaited<ReturnType<typeof listReferralDemogDetails>>>
+export type ListReferralDemogDetailsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListReferralDemogDetails<TData = Awaited<ReturnType<typeof listReferralDemogDetails>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListReferralDemogDetailsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogDetails>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listReferralDemogDetails>>,
+          TError,
+          Awaited<ReturnType<typeof listReferralDemogDetails>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListReferralDemogDetails<TData = Awaited<ReturnType<typeof listReferralDemogDetails>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListReferralDemogDetailsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogDetails>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listReferralDemogDetails>>,
+          TError,
+          Awaited<ReturnType<typeof listReferralDemogDetails>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListReferralDemogDetails<TData = Awaited<ReturnType<typeof listReferralDemogDetails>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListReferralDemogDetailsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogDetails>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List referral demog details
+ */
+
+export function useListReferralDemogDetails<TData = Awaited<ReturnType<typeof listReferralDemogDetails>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListReferralDemogDetailsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listReferralDemogDetails>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListReferralDemogDetailsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create referral demog detail
+ */
+export const createReferralDemogDetail = (
+    referralDemogDetailCreate: BodyType<ReferralDemogDetailCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReferralDemogDetailRead>(
+      {url: `/api/v1/referral-demog-details`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: referralDemogDetailCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateReferralDemogDetailMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReferralDemogDetail>>, TError,{data: BodyType<ReferralDemogDetailCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReferralDemogDetail>>, TError,{data: BodyType<ReferralDemogDetailCreate>}, TContext> => {
+
+const mutationKey = ['createReferralDemogDetail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReferralDemogDetail>>, {data: BodyType<ReferralDemogDetailCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createReferralDemogDetail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateReferralDemogDetailMutationResult = NonNullable<Awaited<ReturnType<typeof createReferralDemogDetail>>>
+    export type CreateReferralDemogDetailMutationBody = BodyType<ReferralDemogDetailCreate>
+    export type CreateReferralDemogDetailMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create referral demog detail
+ */
+export const useCreateReferralDemogDetail = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReferralDemogDetail>>, TError,{data: BodyType<ReferralDemogDetailCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createReferralDemogDetail>>,
+        TError,
+        {data: BodyType<ReferralDemogDetailCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateReferralDemogDetailMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get referral demog detail by id
+ */
+export const getReferralDemogDetail = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReferralDemogDetailRead>(
+      {url: `/api/v1/referral-demog-details/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetReferralDemogDetailQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/referral-demog-details/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetReferralDemogDetailQueryOptions = <TData = Awaited<ReturnType<typeof getReferralDemogDetail>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogDetail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReferralDemogDetailQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReferralDemogDetail>>> = ({ signal }) => getReferralDemogDetail(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetReferralDemogDetailQueryResult = NonNullable<Awaited<ReturnType<typeof getReferralDemogDetail>>>
+export type GetReferralDemogDetailQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetReferralDemogDetail<TData = Awaited<ReturnType<typeof getReferralDemogDetail>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogDetail>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getReferralDemogDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getReferralDemogDetail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetReferralDemogDetail<TData = Awaited<ReturnType<typeof getReferralDemogDetail>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogDetail>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getReferralDemogDetail>>,
+          TError,
+          Awaited<ReturnType<typeof getReferralDemogDetail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetReferralDemogDetail<TData = Awaited<ReturnType<typeof getReferralDemogDetail>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogDetail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get referral demog detail by id
+ */
+
+export function useGetReferralDemogDetail<TData = Awaited<ReturnType<typeof getReferralDemogDetail>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getReferralDemogDetail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetReferralDemogDetailQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update referral demog detail
+ */
+export const updateReferralDemogDetail = (
+    itemId: number,
+    referralDemogDetailUpdate: BodyType<ReferralDemogDetailUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReferralDemogDetailRead>(
+      {url: `/api/v1/referral-demog-details/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: referralDemogDetailUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateReferralDemogDetailMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReferralDemogDetail>>, TError,{itemId: number;data: BodyType<ReferralDemogDetailUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateReferralDemogDetail>>, TError,{itemId: number;data: BodyType<ReferralDemogDetailUpdate>}, TContext> => {
+
+const mutationKey = ['updateReferralDemogDetail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReferralDemogDetail>>, {itemId: number;data: BodyType<ReferralDemogDetailUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateReferralDemogDetail(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateReferralDemogDetailMutationResult = NonNullable<Awaited<ReturnType<typeof updateReferralDemogDetail>>>
+    export type UpdateReferralDemogDetailMutationBody = BodyType<ReferralDemogDetailUpdate>
+    export type UpdateReferralDemogDetailMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update referral demog detail
+ */
+export const useUpdateReferralDemogDetail = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReferralDemogDetail>>, TError,{itemId: number;data: BodyType<ReferralDemogDetailUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateReferralDemogDetail>>,
+        TError,
+        {itemId: number;data: BodyType<ReferralDemogDetailUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateReferralDemogDetailMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete referral demog detail
+ */
+export const deleteReferralDemogDetail = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/referral-demog-details/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteReferralDemogDetailMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReferralDemogDetail>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReferralDemogDetail>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteReferralDemogDetail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReferralDemogDetail>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteReferralDemogDetail(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteReferralDemogDetailMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReferralDemogDetail>>>
+
+    export type DeleteReferralDemogDetailMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete referral demog detail
+ */
+export const useDeleteReferralDemogDetail = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReferralDemogDetail>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReferralDemogDetail>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteReferralDemogDetailMutationOptions(options), queryClient);
     }

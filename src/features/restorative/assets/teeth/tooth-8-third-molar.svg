@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" role="img" aria-label="Third molar (wisdom)">
+  <title>Third molar (wisdom)</title>
+  <defs>
+    <linearGradient id="enamel8" x1="0.15" y1="0.05" x2="0.9" y2="0.95">
+      <stop offset="0" stop-color="var(--enamel-hi, #ffffff)"/>
+      <stop offset="0.45" stop-color="var(--enamel-mid, #eef3f6)"/>
+      <stop offset="1" stop-color="var(--enamel-lo, #c9d6dd)"/>
+    </linearGradient>
+    <radialGradient id="sheen8" cx="0.34" cy="0.26" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="root8" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="var(--root-hi, #f3e6cb)"/>
+      <stop offset="0.45" stop-color="var(--root-mid, #d9b079)"/>
+      <stop offset="1" stop-color="var(--root-lo, #a9743c)"/>
+    </linearGradient>
+    <linearGradient id="rootHi8" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.38" stop-color="#fff7e8" stop-opacity="0.6"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5e3a18" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="neck8" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6b4a22" stop-opacity="0"/>
+      <stop offset="1" stop-color="#6b4a22" stop-opacity="0.33"/>
+    </linearGradient>
+    <filter id="soft8" x="-30%" y="-15%" width="160%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3.2" flood-color="#1c2b33" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <g filter="url(#soft8)">
+    <path d="M33,88 C31,106 31,128 37,148 C40,158 44,160 46,158 C48,150 48,120 48,98 C48,93 47,90 46,88 C41,92 37,91 33,88 Z" fill="url(#root8)" stroke="#8a5a2b" stroke-width="0.5"/>
+    <path d="M33,88 C31,106 31,128 37,148 C40,158 44,160 46,158 C48,150 48,120 48,98 C48,93 47,90 46,88 C41,92 37,91 33,88 Z" fill="url(#rootHi8)"/>
+    <path d="M67,88 C69,106 69,128 63,148 C60,158 56,160 54,158 C52,150 52,120 52,98 C52,93 53,90 54,88 C59,92 63,91 67,88 Z" fill="url(#root8)" stroke="#8a5a2b" stroke-width="0.5"/>
+    <path d="M67,88 C69,106 69,128 63,148 C60,158 56,160 54,158 C52,150 52,120 52,98 C52,93 53,90 54,88 C59,92 63,91 67,88 Z" fill="url(#rootHi8)"/>
+    <path d="M28,90 C26,72 28,54 33,44 C35,37 39,33 44,31 C46,35 47,38 49,38 C51,38 53,35 56,31 C61,33 65,37 67,44 C72,54 74,72 72,90 C62,96 38,96 28,90 Z" fill="url(#enamel8)" stroke="#b3c3cb" stroke-width="0.6"/>
+    <path d="M28,90 C26,72 28,54 33,44 C35,37 39,33 44,31 C46,35 47,38 49,38 C51,38 53,35 56,31 C61,33 65,37 67,44 C72,54 74,72 72,90 C62,96 38,96 28,90 Z" fill="url(#neck8)"/>
+    <path d="M28,90 C26,72 28,54 33,44 C35,37 39,33 44,31 C46,35 47,38 49,38 C51,38 53,35 56,31 C61,33 65,37 67,44 C72,54 74,72 72,90 C62,96 38,96 28,90 Z" fill="url(#sheen8)"/>
+  </g>
+</svg>

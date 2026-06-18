@@ -19,8 +19,8 @@ import {
 } from "@/api/generated/endpoints/office-setup/office-setup";
 import type {
   OfficeScheduleDayRead,
-  ScheduleDayInput,
-  AppSchemasOfficeSetupScheduleReplace,
+  AppSchemasOfficeSetupScheduleDayInput,
+  ScheduleReplace,
 } from "@/api/generated/model";
 
 /**
@@ -99,7 +99,7 @@ export async function saveOfficeSchedule(
   officeId: number,
   days: OfficeScheduleDayUi[]
 ): Promise<OfficeScheduleDayRead[]> {
-  const inputDays: ScheduleDayInput[] = days.map((d) => ({
+  const inputDays: AppSchemasOfficeSetupScheduleDayInput[] = days.map((d) => ({
     day_of_week: d.day_of_week,
     is_closed: d.is_closed,
     start_time: d.is_closed ? null : toApiTime(d.start_time),
@@ -108,6 +108,6 @@ export async function saveOfficeSchedule(
     lunch_end: d.is_closed ? null : toApiTime(d.lunch_end),
   }));
 
-  const body: AppSchemasOfficeSetupScheduleReplace = { days: inputDays };
+  const body: ScheduleReplace = { days: inputDays };
   return setOfficeSchedule(officeId, body);
 }

@@ -24,6 +24,10 @@ export interface ReferralRead {
   specialty?: string | null;
   reason_code?: string | null;
   notes?: string | null;
+  e_referral_id?: string | null;
+  practice_name?: string | null;
+  contact_name?: string | null;
+  cost?: string | null;
   created_by?: number | null;
   id: number;
   created_at: string;

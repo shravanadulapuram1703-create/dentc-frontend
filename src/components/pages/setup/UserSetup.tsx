@@ -133,6 +133,15 @@ export default function UserSetup({
 }: UserSetupProps) {
   const { user: authUser } = useAuth();
   const [searchText, setSearchText] = useState("");
+  // Debounced copy of `searchText` sent to the backend as the server-side
+  // `search` param. The list is paginated (size 200) so filtering must happen
+  // server-side — a client-only filter can never find users beyond the first
+  // page (e.g. "udayk", id 246).
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchText.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchText]);
   const [searchScope, setSearchScope] = useState<"all" | "home">("all");
   const [sortBy, setSortBy] = useState<"name" | "username">("name");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -247,6 +256,7 @@ export default function UserSetup({
   const { users, refetch: fetchUsers } = useUsersGrid({
     office_id: filterOID !== "all" ? Number(filterOID) : undefined,
     role: filterRole !== "all" ? filterRole : undefined,
+    search: debouncedSearch || undefined,
   });
 
   // On first load, default-select the signed-in user's own row.
@@ -334,9 +344,9 @@ export default function UserSetup({
 
   
   const filteredUsers = useMemo(() => {
-    // Office (OID) and role filters are applied server-side in useUsersGrid; the
-    // remaining filters — home-office scope, PGID, and text search — run here,
-    // then sort.
+    // Office (OID), role and free-text search are applied server-side in
+    // useUsersGrid (GET /users); the remaining filters — home-office scope and
+    // PGID — run here, then sort.
     return users
       .filter((user) => {
         // Home Office scope
@@ -352,16 +362,6 @@ export default function UserSetup({
           return false;
         }
 
-        // Text search
-        if (searchText.trim()) {
-          const s = searchText.toLowerCase();
-          return (
-            user.firstName?.toLowerCase().includes(s) ||
-            user.lastName?.toLowerCase().includes(s) ||
-            user.username?.toLowerCase().includes(s)
-          );
-        }
-
         return true;
       })
       .sort((a, b) => {
@@ -372,7 +372,7 @@ export default function UserSetup({
         }
         return a.username.localeCompare(b.username);
       });
-  }, [users, searchScope, filterPGID, searchText, sortBy, currentOffice]);
+  }, [users, searchScope, filterPGID, sortBy, currentOffice]);
 
 
 

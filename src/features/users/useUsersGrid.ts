@@ -16,6 +16,8 @@ export interface UsersGridFilters {
   office_id?: number;
   /** Server-side filter: only users with this role. */
   role?: string;
+  /** Server-side free-text search (username / first / last name / email). */
+  search?: string;
 }
 
 export interface UseUsersGridResult {
@@ -37,6 +39,7 @@ export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult
     ...LIST_PARAMS,
     ...(filters.office_id != null ? { office_id: filters.office_id } : {}),
     ...(filters.role ? { role: filters.role } : {}),
+    ...(filters.search ? { search: filters.search } : {}),
   };
 
   const usersQ = useListUsers(usersParams);

@@ -6,7 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AppSchemasOfficeSetupFeeScheduleOption {
-  id: number;
-  name: string;
-}
+export type PerioChartTemplateUpdateAutoAdvance = { [key: string]: unknown } | null;

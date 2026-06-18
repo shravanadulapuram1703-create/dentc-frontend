@@ -9,6 +9,10 @@ import type { ListNoteMacrosOrder } from './listNoteMacrosOrder';
 
 export type ListNoteMacrosParams = {
 /**
+ * Filter by category
+ */
+category?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

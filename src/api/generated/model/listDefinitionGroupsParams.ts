@@ -9,6 +9,10 @@ import type { ListDefinitionGroupsOrder } from './listDefinitionGroupsOrder';
 
 export type ListDefinitionGroupsParams = {
 /**
+ * Filter by group_type
+ */
+group_type?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

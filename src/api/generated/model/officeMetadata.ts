@@ -5,12 +5,12 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { AppSchemasOfficeSetupFeeScheduleOption } from './appSchemasOfficeSetupFeeScheduleOption';
+import type { FeeScheduleOption } from './feeScheduleOption';
 import type { ProviderOption } from './providerOption';
 import type { TimeZoneOption } from './timeZoneOption';
 
 export interface OfficeMetadata {
   time_zones: TimeZoneOption[];
   billing_providers: ProviderOption[];
-  fee_schedules: AppSchemasOfficeSetupFeeScheduleOption[];
+  fee_schedules: FeeScheduleOption[];
 }

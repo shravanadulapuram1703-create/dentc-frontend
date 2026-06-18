@@ -13,6 +13,10 @@ export type ListQuestionnaireHeadersParams = {
  */
 is_active?: boolean | null;
 /**
+ * Filter by is_custom
+ */
+is_custom?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

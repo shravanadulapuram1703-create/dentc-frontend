@@ -18,6 +18,9 @@ export interface DefinitionRead {
   is_active: boolean;
   is_flash_alert: boolean;
   blocks_charges: boolean;
+  input_type?: string | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

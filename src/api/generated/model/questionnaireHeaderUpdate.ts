@@ -10,4 +10,5 @@ export interface QuestionnaireHeaderUpdate {
   description?: string | null;
   is_multi_select?: boolean | null;
   is_active?: boolean | null;
+  is_custom?: boolean | null;
 }

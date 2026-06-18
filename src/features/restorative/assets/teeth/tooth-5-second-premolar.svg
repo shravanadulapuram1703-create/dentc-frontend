@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" role="img" aria-label="Second premolar (bicuspid)">
+  <title>Second premolar (bicuspid)</title>
+  <defs>
+    <linearGradient id="enamel5" x1="0.15" y1="0.05" x2="0.9" y2="0.95">
+      <stop offset="0" stop-color="var(--enamel-hi, #ffffff)"/>
+      <stop offset="0.45" stop-color="var(--enamel-mid, #eef3f6)"/>
+      <stop offset="1" stop-color="var(--enamel-lo, #c9d6dd)"/>
+    </linearGradient>
+    <radialGradient id="sheen5" cx="0.34" cy="0.26" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="root5" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="var(--root-hi, #f3e6cb)"/>
+      <stop offset="0.45" stop-color="var(--root-mid, #d9b079)"/>
+      <stop offset="1" stop-color="var(--root-lo, #a9743c)"/>
+    </linearGradient>
+    <linearGradient id="rootHi5" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.38" stop-color="#fff7e8" stop-opacity="0.6"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5e3a18" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="neck5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6b4a22" stop-opacity="0"/>
+      <stop offset="1" stop-color="#6b4a22" stop-opacity="0.33"/>
+    </linearGradient>
+    <filter id="soft5" x="-30%" y="-15%" width="160%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3.2" flood-color="#1c2b33" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <g filter="url(#soft5)">
+    <path d="M31,90 C32,116 34,148 41,174 C44,184 47,187 50,187 C53,187 56,184 59,174 C66,148 68,116 69,90 C60,95 40,95 31,90 Z" fill="url(#root5)" stroke="#8a5a2b" stroke-width="0.5"/>
+    <path d="M31,90 C32,116 34,148 41,174 C44,184 47,187 50,187 C53,187 56,184 59,174 C66,148 68,116 69,90 C60,95 40,95 31,90 Z" fill="url(#rootHi5)"/>
+    <path d="M30,92 C27,74 28,52 32,40 C34,32 38,26 43,23 C46,27 47,33 48,38 C49,42 51,42 52,38 C53,33 54,27 57,23 C62,26 66,33 68,40 C72,52 73,74 70,92 C60,97 40,97 30,92 Z" fill="url(#enamel5)" stroke="#b3c3cb" stroke-width="0.6"/>
+    <path d="M30,92 C27,74 28,52 32,40 C34,32 38,26 43,23 C46,27 47,33 48,38 C49,42 51,42 52,38 C53,33 54,27 57,23 C62,26 66,33 68,40 C72,52 73,74 70,92 C60,97 40,97 30,92 Z" fill="url(#neck5)"/>
+    <path d="M30,92 C27,74 28,52 32,40 C34,32 38,26 43,23 C46,27 47,33 48,38 C49,42 51,42 52,38 C53,33 54,27 57,23 C62,26 66,33 68,40 C72,52 73,74 70,92 C60,97 40,97 30,92 Z" fill="url(#sheen5)"/>
+  </g>
+</svg>

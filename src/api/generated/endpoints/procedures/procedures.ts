@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AppSchemasProcedureSetupFeeScheduleOption,
   ChartMaterialCreate,
   ChartMaterialRead,
   ChartMaterialUpdate,
@@ -42,17 +43,23 @@ import type {
   FeeScheduleEntryCreate,
   FeeScheduleEntryRead,
   FeeScheduleEntryUpdate,
-  FeeScheduleOption,
   FeeScheduleRead,
   FeeScheduleUpdate,
   HTTPValidationError,
+  IcdBulkStatusRequest,
+  IcdBulkStatusResult,
+  IcdCodeCreate,
+  IcdCodeRead,
+  IcdCodeUpdate,
   ListChartMaterialsParams,
   ListCodeBundleItemsParams,
   ListCodeBundlesParams,
   ListFeeScheduleAssignmentsParams,
   ListFeeScheduleEntriesParams,
   ListFeeSchedulesParams,
+  ListIcdCodesParams,
   ListNoteMacrosParams,
+  ListPlaceOfServiceCodesParams,
   ListPrescriptionLibraryParams,
   ListProcedureCodesParams,
   NewFeeScheduleVersionRequest,
@@ -65,9 +72,14 @@ import type {
   PaginatedResponseFeeScheduleAssignmentRead,
   PaginatedResponseFeeScheduleEntryRead,
   PaginatedResponseFeeScheduleRead,
+  PaginatedResponseIcdCodeRead,
   PaginatedResponseNoteMacroRead,
+  PaginatedResponsePlaceOfServiceCodeRead,
   PaginatedResponsePrescriptionLibraryRead,
   PaginatedResponseProcedureCodeRead,
+  PlaceOfServiceCodeCreate,
+  PlaceOfServiceCodeRead,
+  PlaceOfServiceCodeUpdate,
   PrescriptionLibraryCreate,
   PrescriptionLibraryRead,
   PrescriptionLibraryUpdate,
@@ -97,7 +109,7 @@ export const listFeeScheduleOptions = (
 ) => {
 
 
-      return customInstance<FeeScheduleOption[]>(
+      return customInstance<AppSchemasProcedureSetupFeeScheduleOption[]>(
       {url: `/api/v1/fee-schedules/options`, method: 'GET', signal
     },
       options);
@@ -679,6 +691,69 @@ export const useDeleteProcedureInsuranceRule = <TError = ErrorType<ErrorResponse
         TContext
       > => {
       return useMutation(getDeleteProcedureInsuranceRuleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Activate/deactivate many ICD codes at once
+ */
+export const bulkSetIcdCodeStatus = (
+    icdBulkStatusRequest: BodyType<IcdBulkStatusRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<IcdBulkStatusResult>(
+      {url: `/api/v1/icd-codes/bulk-status`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: icdBulkStatusRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkSetIcdCodeStatusMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkSetIcdCodeStatus>>, TError,{data: BodyType<IcdBulkStatusRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkSetIcdCodeStatus>>, TError,{data: BodyType<IcdBulkStatusRequest>}, TContext> => {
+
+const mutationKey = ['bulkSetIcdCodeStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkSetIcdCodeStatus>>, {data: BodyType<IcdBulkStatusRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkSetIcdCodeStatus(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkSetIcdCodeStatusMutationResult = NonNullable<Awaited<ReturnType<typeof bulkSetIcdCodeStatus>>>
+    export type BulkSetIcdCodeStatusMutationBody = BodyType<IcdBulkStatusRequest>
+    export type BulkSetIcdCodeStatusMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Activate/deactivate many ICD codes at once
+ */
+export const useBulkSetIcdCodeStatus = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkSetIcdCodeStatus>>, TError,{data: BodyType<IcdBulkStatusRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkSetIcdCodeStatus>>,
+        TError,
+        {data: BodyType<IcdBulkStatusRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkSetIcdCodeStatusMutationOptions(options), queryClient);
     }
     /**
  * @summary List procedure codes
@@ -3663,6 +3738,752 @@ export const useDeletePrescriptionLibraryItem = <TError = ErrorType<ErrorRespons
         TContext
       > => {
       return useMutation(getDeletePrescriptionLibraryItemMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List place of service codes
+ */
+export const listPlaceOfServiceCodes = (
+    params?: ListPlaceOfServiceCodesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePlaceOfServiceCodeRead>(
+      {url: `/api/v1/place-of-service-codes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPlaceOfServiceCodesQueryKey = (params?: ListPlaceOfServiceCodesParams,) => {
+    return [
+    `/api/v1/place-of-service-codes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPlaceOfServiceCodesQueryOptions = <TData = Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError = ErrorType<ErrorResponse>>(params?: ListPlaceOfServiceCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPlaceOfServiceCodesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>> = ({ signal }) => listPlaceOfServiceCodes(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPlaceOfServiceCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>>
+export type ListPlaceOfServiceCodesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPlaceOfServiceCodes<TData = Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPlaceOfServiceCodesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPlaceOfServiceCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listPlaceOfServiceCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPlaceOfServiceCodes<TData = Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPlaceOfServiceCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPlaceOfServiceCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listPlaceOfServiceCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPlaceOfServiceCodes<TData = Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPlaceOfServiceCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List place of service codes
+ */
+
+export function useListPlaceOfServiceCodes<TData = Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPlaceOfServiceCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPlaceOfServiceCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPlaceOfServiceCodesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create place of service code
+ */
+export const createPlaceOfServiceCode = (
+    placeOfServiceCodeCreate: BodyType<PlaceOfServiceCodeCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlaceOfServiceCodeRead>(
+      {url: `/api/v1/place-of-service-codes`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: placeOfServiceCodeCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePlaceOfServiceCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlaceOfServiceCode>>, TError,{data: BodyType<PlaceOfServiceCodeCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPlaceOfServiceCode>>, TError,{data: BodyType<PlaceOfServiceCodeCreate>}, TContext> => {
+
+const mutationKey = ['createPlaceOfServiceCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlaceOfServiceCode>>, {data: BodyType<PlaceOfServiceCodeCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPlaceOfServiceCode(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePlaceOfServiceCodeMutationResult = NonNullable<Awaited<ReturnType<typeof createPlaceOfServiceCode>>>
+    export type CreatePlaceOfServiceCodeMutationBody = BodyType<PlaceOfServiceCodeCreate>
+    export type CreatePlaceOfServiceCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create place of service code
+ */
+export const useCreatePlaceOfServiceCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlaceOfServiceCode>>, TError,{data: BodyType<PlaceOfServiceCodeCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPlaceOfServiceCode>>,
+        TError,
+        {data: BodyType<PlaceOfServiceCodeCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePlaceOfServiceCodeMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get place of service code by id
+ */
+export const getPlaceOfServiceCode = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlaceOfServiceCodeRead>(
+      {url: `/api/v1/place-of-service-codes/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPlaceOfServiceCodeQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/place-of-service-codes/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPlaceOfServiceCodeQueryOptions = <TData = Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlaceOfServiceCodeQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlaceOfServiceCode>>> = ({ signal }) => getPlaceOfServiceCode(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlaceOfServiceCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getPlaceOfServiceCode>>>
+export type GetPlaceOfServiceCodeQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPlaceOfServiceCode<TData = Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlaceOfServiceCode>>,
+          TError,
+          Awaited<ReturnType<typeof getPlaceOfServiceCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlaceOfServiceCode<TData = Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlaceOfServiceCode>>,
+          TError,
+          Awaited<ReturnType<typeof getPlaceOfServiceCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlaceOfServiceCode<TData = Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get place of service code by id
+ */
+
+export function useGetPlaceOfServiceCode<TData = Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceOfServiceCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlaceOfServiceCodeQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update place of service code
+ */
+export const updatePlaceOfServiceCode = (
+    itemId: number,
+    placeOfServiceCodeUpdate: BodyType<PlaceOfServiceCodeUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlaceOfServiceCodeRead>(
+      {url: `/api/v1/place-of-service-codes/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: placeOfServiceCodeUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePlaceOfServiceCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlaceOfServiceCode>>, TError,{itemId: number;data: BodyType<PlaceOfServiceCodeUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePlaceOfServiceCode>>, TError,{itemId: number;data: BodyType<PlaceOfServiceCodeUpdate>}, TContext> => {
+
+const mutationKey = ['updatePlaceOfServiceCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePlaceOfServiceCode>>, {itemId: number;data: BodyType<PlaceOfServiceCodeUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePlaceOfServiceCode(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePlaceOfServiceCodeMutationResult = NonNullable<Awaited<ReturnType<typeof updatePlaceOfServiceCode>>>
+    export type UpdatePlaceOfServiceCodeMutationBody = BodyType<PlaceOfServiceCodeUpdate>
+    export type UpdatePlaceOfServiceCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update place of service code
+ */
+export const useUpdatePlaceOfServiceCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlaceOfServiceCode>>, TError,{itemId: number;data: BodyType<PlaceOfServiceCodeUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePlaceOfServiceCode>>,
+        TError,
+        {itemId: number;data: BodyType<PlaceOfServiceCodeUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePlaceOfServiceCodeMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete place of service code
+ */
+export const deletePlaceOfServiceCode = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/place-of-service-codes/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePlaceOfServiceCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlaceOfServiceCode>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePlaceOfServiceCode>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePlaceOfServiceCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePlaceOfServiceCode>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePlaceOfServiceCode(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePlaceOfServiceCodeMutationResult = NonNullable<Awaited<ReturnType<typeof deletePlaceOfServiceCode>>>
+
+    export type DeletePlaceOfServiceCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete place of service code
+ */
+export const useDeletePlaceOfServiceCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePlaceOfServiceCode>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePlaceOfServiceCode>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePlaceOfServiceCodeMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List icd codes
+ */
+export const listIcdCodes = (
+    params?: ListIcdCodesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseIcdCodeRead>(
+      {url: `/api/v1/icd-codes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListIcdCodesQueryKey = (params?: ListIcdCodesParams,) => {
+    return [
+    `/api/v1/icd-codes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListIcdCodesQueryOptions = <TData = Awaited<ReturnType<typeof listIcdCodes>>, TError = ErrorType<ErrorResponse>>(params?: ListIcdCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcdCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListIcdCodesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listIcdCodes>>> = ({ signal }) => listIcdCodes(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listIcdCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListIcdCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listIcdCodes>>>
+export type ListIcdCodesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListIcdCodes<TData = Awaited<ReturnType<typeof listIcdCodes>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListIcdCodesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcdCodes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listIcdCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listIcdCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListIcdCodes<TData = Awaited<ReturnType<typeof listIcdCodes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListIcdCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcdCodes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listIcdCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listIcdCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListIcdCodes<TData = Awaited<ReturnType<typeof listIcdCodes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListIcdCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcdCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List icd codes
+ */
+
+export function useListIcdCodes<TData = Awaited<ReturnType<typeof listIcdCodes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListIcdCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcdCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListIcdCodesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create icd code
+ */
+export const createIcdCode = (
+    icdCodeCreate: BodyType<IcdCodeCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<IcdCodeRead>(
+      {url: `/api/v1/icd-codes`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: icdCodeCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateIcdCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createIcdCode>>, TError,{data: BodyType<IcdCodeCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createIcdCode>>, TError,{data: BodyType<IcdCodeCreate>}, TContext> => {
+
+const mutationKey = ['createIcdCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createIcdCode>>, {data: BodyType<IcdCodeCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createIcdCode(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateIcdCodeMutationResult = NonNullable<Awaited<ReturnType<typeof createIcdCode>>>
+    export type CreateIcdCodeMutationBody = BodyType<IcdCodeCreate>
+    export type CreateIcdCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create icd code
+ */
+export const useCreateIcdCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createIcdCode>>, TError,{data: BodyType<IcdCodeCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createIcdCode>>,
+        TError,
+        {data: BodyType<IcdCodeCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateIcdCodeMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get icd code by id
+ */
+export const getIcdCode = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<IcdCodeRead>(
+      {url: `/api/v1/icd-codes/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetIcdCodeQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/icd-codes/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetIcdCodeQueryOptions = <TData = Awaited<ReturnType<typeof getIcdCode>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIcdCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetIcdCodeQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getIcdCode>>> = ({ signal }) => getIcdCode(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getIcdCode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetIcdCodeQueryResult = NonNullable<Awaited<ReturnType<typeof getIcdCode>>>
+export type GetIcdCodeQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetIcdCode<TData = Awaited<ReturnType<typeof getIcdCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIcdCode>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIcdCode>>,
+          TError,
+          Awaited<ReturnType<typeof getIcdCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIcdCode<TData = Awaited<ReturnType<typeof getIcdCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIcdCode>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getIcdCode>>,
+          TError,
+          Awaited<ReturnType<typeof getIcdCode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetIcdCode<TData = Awaited<ReturnType<typeof getIcdCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIcdCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get icd code by id
+ */
+
+export function useGetIcdCode<TData = Awaited<ReturnType<typeof getIcdCode>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getIcdCode>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetIcdCodeQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update icd code
+ */
+export const updateIcdCode = (
+    itemId: number,
+    icdCodeUpdate: BodyType<IcdCodeUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<IcdCodeRead>(
+      {url: `/api/v1/icd-codes/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: icdCodeUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateIcdCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateIcdCode>>, TError,{itemId: number;data: BodyType<IcdCodeUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateIcdCode>>, TError,{itemId: number;data: BodyType<IcdCodeUpdate>}, TContext> => {
+
+const mutationKey = ['updateIcdCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateIcdCode>>, {itemId: number;data: BodyType<IcdCodeUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateIcdCode(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateIcdCodeMutationResult = NonNullable<Awaited<ReturnType<typeof updateIcdCode>>>
+    export type UpdateIcdCodeMutationBody = BodyType<IcdCodeUpdate>
+    export type UpdateIcdCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update icd code
+ */
+export const useUpdateIcdCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateIcdCode>>, TError,{itemId: number;data: BodyType<IcdCodeUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateIcdCode>>,
+        TError,
+        {itemId: number;data: BodyType<IcdCodeUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateIcdCodeMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete icd code
+ */
+export const deleteIcdCode = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/icd-codes/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteIcdCodeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteIcdCode>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteIcdCode>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteIcdCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteIcdCode>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteIcdCode(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteIcdCodeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteIcdCode>>>
+
+    export type DeleteIcdCodeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete icd code
+ */
+export const useDeleteIcdCode = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteIcdCode>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteIcdCode>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteIcdCodeMutationOptions(options), queryClient);
     }
     /**
  * @summary List fee schedule assignments

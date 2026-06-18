@@ -1,0 +1,212 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Tooth Assets — UI Kit</title>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#16212c; --line:#243443; --txt:#e8eef3; --mut:#94a8b6;
+    --accent:#36b3a8;
+    /* themeable tooth tokens (shared by every SVG) */
+    --enamel-hi:#ffffff; --enamel-mid:#eef3f6; --enamel-lo:#c9d6dd;
+    --root-hi:#f3e6cb; --root-mid:#d9b079; --root-lo:#a9743c;
+    --gum-hi:#f7b8b8; --gum-lo:#e07d83;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--txt);padding:32px 28px 64px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--mut);margin:0 0 24px}
+  h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);
+     margin:36px 0 14px;font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  /* asset grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+        padding:14px 10px 12px;text-align:center;transition:.15s}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .card svg{height:120px;width:auto;display:block;margin:0 auto 8px}
+  .name{font-size:12.5px;color:var(--txt)}
+  .meta{font-size:11px;color:var(--mut);margin-top:1px}
+  .dl{margin-top:9px;font-size:11px;color:var(--accent);background:none;border:1px solid var(--line);
+      border-radius:7px;padding:4px 9px;cursor:pointer}
+  .dl:hover{border-color:var(--accent)}
+  /* arch chart strip like the reference */
+  .arch{background:linear-gradient(#fff,#f3f6f8);border-radius:12px;padding:0;overflow:hidden}
+  .gum{background:linear-gradient(var(--gum-hi),var(--gum-lo));padding:6px 10px}
+  .row{display:flex;justify-content:center;gap:2px;align-items:flex-end}
+  .row.lower{align-items:flex-start}
+  .row svg{height:96px;width:auto}
+  .row.upper svg{transform:scaleY(-1)}
+  .plane{height:10px;background:#fff}
+  /* controls */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .chip{border:1px solid var(--line);background:var(--panel);color:var(--txt);
+        border-radius:20px;padding:7px 15px;cursor:pointer;font-size:13px}
+  .chip:hover,.chip.on{border-color:var(--accent);color:var(--accent)}
+  code{background:#0b1219;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px}
+  .note{color:var(--mut);font-size:13.5px;max-width:760px}
+  .swatches{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .swatches label{font-size:12px;color:var(--mut);display:flex;gap:5px;align-items:center}
+  input[type=color]{width:30px;height:26px;border:none;background:none;border-radius:6px;cursor:pointer}
+</style>
+
+<h1>3D Tooth Assets</h1>
+<p class="sub">Scalable SVG dental kit — glossy enamel crowns, anatomical roots, themeable via CSS variables.</p>
+
+<h2>Theme</h2>
+<div class="panel">
+  <div class="controls">
+    <button class="chip on" data-theme="clinical">Clinical (default)</button>
+    <button class="chip" data-theme="ivory">Warm ivory</button>
+    <button class="chip" data-theme="flat">Flat mono</button>
+    <button class="chip" data-theme="dark">On-dark</button>
+  </div>
+  <div class="swatches">
+    <label>Enamel <input type="color" id="c-en" value="#eef3f6"></label>
+    <label>Root <input type="color" id="c-rt" value="#d9b079"></label>
+    <label>Gum <input type="color" id="c-gm" value="#e07d83"></label>
+  </div>
+</div>
+
+<h2>The set — 8 tooth types</h2>
+<div class="grid" id="grid"></div>
+
+<h2>Dental chart strip (upper &amp; lower arch)</h2>
+<div class="arch">
+  <div class="gum"><div class="row upper" id="rowUpper"></div></div>
+  <div class="plane"></div>
+  <div class="gum"><div class="row lower" id="rowLower"></div></div>
+</div>
+
+<h2>How to use</h2>
+<p class="note">
+  Each file is a standalone <code>.svg</code>. Drop it in an <code>&lt;img&gt;</code>, inline it, or
+  set it as a CSS background. To recolor in your app, inline the SVG and override the tokens on any
+  ancestor: <code>--enamel-mid</code>, <code>--enamel-hi</code>, <code>--enamel-lo</code>,
+  <code>--root-hi</code>, <code>--root-mid</code>, <code>--root-lo</code>. The canonical orientation is
+  crown-up; for the upper arch apply <code>transform: scaleY(-1)</code> (as shown above). Status states
+  (selected, missing, treatment-planned) map cleanly to token overrides — e.g. tint enamel blue for a
+  selected tooth, or swap roots to grey for "missing".
+</p>
+
+<script>
+/* ---- shared defs + per-tooth geometry (matches the standalone .svg files) ---- */
+const DEFS = u => `
+  <linearGradient id="enamel${u}" x1="0.15" y1="0.05" x2="0.9" y2="0.95">
+    <stop offset="0" stop-color="var(--enamel-hi,#ffffff)"/>
+    <stop offset="0.45" stop-color="var(--enamel-mid,#eef3f6)"/>
+    <stop offset="1" stop-color="var(--enamel-lo,#c9d6dd)"/></linearGradient>
+  <radialGradient id="sheen${u}" cx="0.34" cy="0.26" r="0.5">
+    <stop offset="0" stop-color="#fff" stop-opacity="0.95"/>
+    <stop offset="0.6" stop-color="#fff" stop-opacity="0.25"/>
+    <stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="root${u}" x1="0.2" y1="0" x2="0.8" y2="1">
+    <stop offset="0" stop-color="var(--root-hi,#f3e6cb)"/>
+    <stop offset="0.45" stop-color="var(--root-mid,#d9b079)"/>
+    <stop offset="1" stop-color="var(--root-lo,#a9743c)"/></linearGradient>
+  <linearGradient id="rootHi${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="0.38" stop-color="#fff7e8" stop-opacity="0.6"/>
+    <stop offset="0.55" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="1" stop-color="#5e3a18" stop-opacity="0.28"/></linearGradient>
+  <linearGradient id="neck${u}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#6b4a22" stop-opacity="0"/>
+    <stop offset="1" stop-color="#6b4a22" stop-opacity="0.33"/></linearGradient>
+  <filter id="soft${u}" x="-30%" y="-15%" width="160%" height="130%">
+    <feDropShadow dx="0" dy="3" stdDeviation="3.2" flood-color="#1c2b33" flood-opacity="0.28"/></filter>`;
+
+const TEETH = [
+ {id:'central-incisor', name:'Central incisor', meta:'1 root',
+  crown:"M28,92 C25,72 24,46 27,26 C28,18 31,15 35,14 C41,17 59,17 65,14 C69,15 72,18 73,26 C76,46 75,72 72,92 C62,97 38,97 28,92 Z",
+  roots:["M30,90 C31,116 33,146 40,172 C44,183 47,186 50,186 C53,186 56,183 60,172 C67,146 69,116 70,90 C60,95 40,95 30,90 Z"]},
+ {id:'lateral-incisor', name:'Lateral incisor', meta:'1 root',
+  crown:"M33,92 C30,74 30,48 33,30 C35,20 39,16 44,15 C48,18 52,18 56,15 C61,16 65,20 67,30 C70,48 70,74 67,92 C59,97 41,97 33,92 Z",
+  roots:["M35,90 C36,114 37,144 43,168 C46,179 48,182 50,182 C52,182 54,179 57,168 C63,144 64,114 65,90 C58,95 42,95 35,90 Z"]},
+ {id:'canine', name:'Canine', meta:'1 long root',
+  crown:"M31,92 C28,70 30,46 38,28 C43,18 47,12 50,11 C53,12 57,18 62,28 C70,46 72,70 69,92 C60,97 40,97 31,92 Z",
+  roots:["M32,90 C33,118 35,152 43,178 C46,189 48,192 50,192 C52,192 54,189 57,178 C65,152 67,118 68,90 C59,95 41,95 32,90 Z"]},
+ {id:'first-premolar', name:'First premolar', meta:'2 roots',
+  crown:"M30,92 C27,74 27,52 31,38 C33,30 37,24 42,21 C45,24 46,30 47,36 C48,40 52,40 53,36 C54,29 56,23 59,20 C64,24 67,31 69,40 C72,54 72,74 70,92 C60,97 40,97 30,92 Z",
+  roots:["M31,90 C30,114 30,146 36,170 C38,180 41,183 43,182 C46,178 48,150 49,120 C49,104 48,96 47,91 C41,95 35,94 31,90 Z",
+         "M69,90 C70,114 70,146 64,170 C62,180 59,183 57,182 C54,178 52,150 51,120 C51,104 52,96 53,91 C59,95 65,94 69,90 Z"]},
+ {id:'second-premolar', name:'Second premolar', meta:'1 root',
+  crown:"M30,92 C27,74 28,52 32,40 C34,32 38,26 43,23 C46,27 47,33 48,38 C49,42 51,42 52,38 C53,33 54,27 57,23 C62,26 66,33 68,40 C72,52 73,74 70,92 C60,97 40,97 30,92 Z",
+  roots:["M31,90 C32,116 34,148 41,174 C44,184 47,187 50,187 C53,187 56,184 59,174 C66,148 68,116 69,90 C60,95 40,95 31,90 Z"]},
+ {id:'first-molar', name:'First molar', meta:'3 roots',
+  crown:"M22,90 C20,70 20,50 25,38 C27,31 31,26 36,24 C38,28 39,33 41,35 C43,37 45,33 46,28 C47,25 53,25 54,28 C55,33 57,37 59,35 C61,33 62,28 64,24 C69,26 73,31 75,38 C80,50 80,70 78,90 C64,97 36,97 22,90 Z",
+  roots:["M27,89 C24,112 22,142 28,166 C30,176 33,179 35,178 C39,172 41,140 42,112 C42,100 41,93 40,89 C35,93 31,92 27,89 Z",
+         "M44,90 C44,116 45,150 49,172 C50,179 50,179 51,179 C52,179 52,179 53,172 C57,150 58,116 58,90 C54,94 48,94 44,90 Z",
+         "M73,89 C76,112 78,142 72,166 C70,176 67,179 65,178 C61,172 59,140 58,112 C58,100 59,93 60,89 C65,93 69,92 73,89 Z"]},
+ {id:'second-molar', name:'Second molar', meta:'3 roots',
+  crown:"M24,90 C22,70 23,51 28,40 C30,33 34,28 39,26 C41,30 42,34 44,36 C46,38 47,34 48,29 C49,26 51,26 52,29 C53,34 54,38 56,36 C58,34 59,30 61,26 C66,28 70,33 72,40 C77,51 78,70 76,90 C63,97 37,97 24,90 Z",
+  roots:["M29,89 C26,110 25,138 31,162 C33,172 36,175 38,174 C41,168 43,138 44,112 C44,100 43,93 42,89 C37,93 33,92 29,89 Z",
+         "M45,90 C45,114 46,146 50,168 C51,174 51,174 52,168 C56,146 56,114 56,90 C53,94 48,94 45,90 Z",
+         "M71,89 C74,110 75,138 69,162 C67,172 64,175 62,174 C59,168 57,138 56,112 C56,100 57,93 58,89 C63,93 67,92 71,89 Z"]},
+ {id:'third-molar', name:'Third molar', meta:'wisdom',
+  crown:"M28,90 C26,72 28,54 33,44 C35,37 39,33 44,31 C46,35 47,38 49,38 C51,38 53,35 56,31 C61,33 65,37 67,44 C72,54 74,72 72,90 C62,96 38,96 28,90 Z",
+  roots:["M33,88 C31,106 31,128 37,148 C40,158 44,160 46,158 C48,150 48,120 48,98 C48,93 47,90 46,88 C41,92 37,91 33,88 Z",
+         "M67,88 C69,106 69,128 63,148 C60,158 56,160 54,158 C52,150 52,120 52,98 C52,93 53,90 54,88 C59,92 63,91 67,88 Z"]},
+];
+
+function svgMarkup(t,u){
+  const roots = t.roots.map(d =>
+    `<path d="${d}" fill="url(#root${u})" stroke="#8a5a2b" stroke-width="0.5"/>`+
+    `<path d="${d}" fill="url(#rootHi${u})"/>`).join('');
+  const c = t.crown;
+  const crown =
+    `<path d="${c}" fill="url(#enamel${u})" stroke="#b3c3cb" stroke-width="0.6"/>`+
+    `<path d="${c}" fill="url(#neck${u})"/>`+
+    `<path d="${c}" fill="url(#sheen${u})"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" role="img" aria-label="${t.name}">`+
+    `<defs>${DEFS(u)}</defs><g filter="url(#soft${u})">${roots}${crown}</g></svg>`;
+}
+
+/* build asset grid */
+const grid = document.getElementById('grid');
+TEETH.forEach((t,i)=>{
+  const card=document.createElement('div');card.className='card';
+  card.innerHTML = svgMarkup(t,'g'+i) +
+    `<div class="name">${t.name}</div><div class="meta">${t.meta}</div>`+
+    `<button class="dl" data-i="${i}">Download .svg</button>`;
+  grid.appendChild(card);
+});
+
+/* build arch strips */
+const up=document.getElementById('rowUpper'), lo=document.getElementById('rowLower');
+const order=[7,6,5,4,3,2,1,0]; // molar -> incisor each side
+function fillRow(row,prefix){
+  // left side molar->incisor, then mirror right side incisor->molar
+  order.forEach((idx,k)=>{ row.insertAdjacentHTML('beforeend', svgMarkup(TEETH[idx],prefix+'L'+k)); });
+  [...order].reverse().forEach((idx,k)=>{ row.insertAdjacentHTML('beforeend', svgMarkup(TEETH[idx],prefix+'R'+k)); });
+}
+fillRow(up,'u'); fillRow(lo,'d');
+
+/* download individual svg */
+grid.addEventListener('click',e=>{
+  if(!e.target.classList.contains('dl'))return;
+  const t=TEETH[+e.target.dataset.i];
+  const s=svgMarkup(t,t.id);
+  const blob=new Blob([s],{type:'image/svg+xml'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='tooth-'+t.id+'.svg';a.click();URL.revokeObjectURL(a.href);
+});
+
+/* theming */
+const THEMES={
+  clinical:{'--enamel-hi':'#ffffff','--enamel-mid':'#eef3f6','--enamel-lo':'#c9d6dd','--root-hi':'#f3e6cb','--root-mid':'#d9b079','--root-lo':'#a9743c','--gum-hi':'#f7b8b8','--gum-lo':'#e07d83'},
+  ivory:{'--enamel-hi':'#fffdf6','--enamel-mid':'#f6efdd','--enamel-lo':'#ddcfa8','--root-hi':'#efddb6','--root-mid':'#caa15f','--root-lo':'#8f5e2a','--gum-hi':'#f3a9a2','--gum-lo':'#d56b66'},
+  flat:{'--enamel-hi':'#f2f5f7','--enamel-mid':'#e3e9ed','--enamel-lo':'#cdd6dc','--root-hi':'#dfe6ea','--root-mid':'#b9c6cf','--root-lo':'#8fa1ad','--gum-hi':'#e9b7bb','--gum-lo':'#cf8a8f'},
+  dark:{'--enamel-hi':'#dfe9f0','--enamel-mid':'#b9cad7','--enamel-lo':'#7e95a5','--root-hi':'#c9a36a','--root-mid':'#9c7239','--root-lo':'#5f421e','--gum-hi':'#b5575c','--gum-lo':'#7e3a3e'},
+};
+document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-theme]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const t=THEMES[b.dataset.theme];
+  for(const k in t) document.documentElement.style.setProperty(k,t[k]);
+  cEn.value=t['--enamel-mid']; cRt.value=t['--root-mid']; cGm.value=t['--gum-lo'];
+});
+const cEn=document.getElementById('c-en'),cRt=document.getElementById('c-rt'),cGm=document.getElementById('c-gm');
+cEn.oninput=e=>document.documentElement.style.setProperty('--enamel-mid',e.target.value);
+cRt.oninput=e=>document.documentElement.style.setProperty('--root-mid',e.target.value);
+cGm.oninput=e=>document.documentElement.style.setProperty('--gum-lo',e.target.value);
+</script>

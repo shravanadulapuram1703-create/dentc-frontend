@@ -17,6 +17,14 @@ patient_id?: number | null;
  */
 office_id?: number | null;
 /**
+ * Filter by referral_type
+ */
+referral_type?: string | null;
+/**
+ * Filter by reason_code
+ */
+reason_code?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

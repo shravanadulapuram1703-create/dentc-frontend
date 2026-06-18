@@ -1211,10 +1211,10 @@ export default function GlobalNav({
           label: "Manage Pick Lists",
           path: "/setup/pick-list/manage",
         },
-        {
-          label: "Custom Pick Lists",
-          path: "/setup/pick-list/custom",
-        },
+        // {
+        //   label: "Custom Pick Lists",
+        //   path: "/setup/pick-list/custom",
+        // },
       ],
     },
     {
@@ -1225,10 +1225,10 @@ export default function GlobalNav({
           label: "Create Notes Macros",
           path: "/setup/notes-macros/create",
         },
-        {
-          label: "Manage Macros",
-          path: "/setup/notes-macros/manage",
-        },
+        // {
+        //   label: "Manage Macros",
+        //   path: "/setup/notes-macros/manage",
+        // },
       ],
     },
     {
@@ -1285,10 +1285,12 @@ export default function GlobalNav({
           label: "Prescription Setup",
           path: "/setup/prescriptions/prescription-setup",
         },
-        {
-          label: "Common Prescriptions",
-          path: "/setup/prescriptions/common",
-        },
+        // "Common Prescriptions" was a duplicate of the same single screen — collapsed
+        // to one option so Prescriptions renders as a direct link.
+        // {
+        //   label: "Common Prescriptions",
+        //   path: "/setup/prescriptions/common",
+        // },
       ],
     },
     // {
@@ -1324,10 +1326,10 @@ export default function GlobalNav({
           label: "Configure Toolbar",
           path: "/setup/custom-toolbar/configure",
         },
-        {
-          label: "Reset to Default",
-          path: "/setup/custom-toolbar/reset",
-        },
+        // {
+        //   label: "Reset to Default",
+        //   path: "/setup/custom-toolbar/reset",
+        // },
       ],
     },
     // {
@@ -1470,12 +1472,17 @@ export default function GlobalNav({
     }
   };
 
-  const renderSubmenu = (items: any[], level: number = 0, parentKey: string = "") => {
+  const renderSubmenu = (
+    items: any[],
+    level: number = 0,
+    parentKey: string = "",
+    collapseSingle: boolean = false,
+  ) => {
     return (
       <div className={`${level === 0 ? "py-1" : ""}`}>
         {items.map((item, index) => {
           const submenuKey = `${parentKey}-${index}`;
-          
+
           if (item.type === "divider") {
             return (
               <div
@@ -1486,6 +1493,25 @@ export default function GlobalNav({
           }
 
           if (item.submenu) {
+            // When a parent has a single leaf option, render it as a direct link
+            // (parent label/icon, no drill-down) instead of a secondary flyout.
+            const leafChildren = item.submenu.filter(
+              (c: any) => c && c.type !== "divider" && c.path && !c.submenu,
+            );
+            if (collapseSingle && item.submenu.length === 1 && leafChildren.length === 1) {
+              const only = leafChildren[0];
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleNavClick(only.path)}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                >
+                  {item.icon && <item.icon className="w-4 h-4" />}
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              );
+            }
+
             const isOpen = !!openSubmenus[submenuKey];
             
             return (
@@ -1865,7 +1891,7 @@ export default function GlobalNav({
           {activeDropdown === "setup" && (
             <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["setup"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["setup"]?.getBoundingClientRect().left }}>
               <div className="max-h-[80vh] overflow-y-auto">
-                {renderSubmenu(setupMenuItems)}
+                {renderSubmenu(setupMenuItems, 0, "", true)}
               </div>
             </div>
           )}

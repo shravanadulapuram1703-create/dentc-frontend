@@ -7,10 +7,7 @@
  */
 import type { ScheduleDayInput } from './scheduleDayInput';
 
-export interface AppSchemasOfficeSetupScheduleReplace {
-  /**
-     * @minItems 1
-     * @maxItems 7
-     */
-  days: ScheduleDayInput[];
+export interface AppSchemasProviderSetupScheduleReplace {
+  /** @maxItems 70 */
+  days?: ScheduleDayInput[];
 }

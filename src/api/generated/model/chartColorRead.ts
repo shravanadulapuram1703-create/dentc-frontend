@@ -19,6 +19,7 @@ export interface ChartColorRead {
   gradient_angle?: string | null;
   gradient_method?: string | null;
   created_by?: string | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;

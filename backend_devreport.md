@@ -860,3 +860,16 @@ Screen: Ortho Misc Setup tab (gated; legacy screen is empty).
 Current Status: No `ortho_misc` resource anywhere. The only ortho resource is patient-level `ortho-plans`.
 Suggested Endpoint: Define the resource (columns unknown) + `GET`/`PUT /api/v1/offices/{office_id}/ortho-misc`.
 Impact on Frontend: Tab gated; needs requirements + backend resource.
+
+---
+
+## Restorative Charting (`REST-*`)
+
+Full per-tooth metadata upgrade for `/patient/:id/restorative` (materials, bridge/
+denture templates, mobility, endo, per-tooth notes, chart-level settings, FDI/
+Universal/Palmer numbering). Frontend persists onto existing `chart_conditions`
+today; upgraded contracts (`REST-1` enrich chart_conditions · `REST-2`
+chart_status_templates · `REST-3` chart_settings · `REST-4` chart_tooth_notes ·
+`REST-5` seed colors/materials · `REST-6` deferred FHIR) are documented in
+`docs/restorative/restorative_charting_backend_devreport.md`. Integration design +
+MIT attribution: `docs/restorative/ARCHITECTURE.md`.

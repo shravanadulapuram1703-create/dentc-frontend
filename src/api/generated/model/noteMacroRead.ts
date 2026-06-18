@@ -13,6 +13,8 @@ export interface NoteMacroRead {
   content: string;
   category?: string | null;
   created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

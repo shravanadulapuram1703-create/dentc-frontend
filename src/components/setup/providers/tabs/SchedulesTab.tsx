@@ -6,11 +6,7 @@ import {
   getProviderSchedule,
   setProviderSchedule,
 } from "@/api/generated/endpoints/provider-setup/provider-setup";
-import type {
-  OfficeRead,
-  ProviderScheduleDayRead,
-  AppSchemasProviderSetupScheduleDayInput,
-} from "@/api/generated/model";
+import type { OfficeRead, ProviderScheduleDayRead, ScheduleDayInput } from "@/api/generated/model";
 
 interface SchedulesTabProps {
   providerId: string;
@@ -147,8 +143,8 @@ export default function SchedulesTab({ providerId }: SchedulesTabProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Flatten every scope into one provider ScheduleDayInput[] (the PUT replaces the full set).
-      const days: AppSchemasProviderSetupScheduleDayInput[] = [];
+      // Flatten every scope into one ScheduleDayInput[] (the PUT replaces the full set).
+      const days: ScheduleDayInput[] = [];
       for (const [key, scope] of scopes) {
         const officeId = key === ALL ? null : Number(key);
         for (const d of scope.days) {

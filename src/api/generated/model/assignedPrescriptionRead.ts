@@ -15,6 +15,7 @@ export interface AssignedPrescriptionRead {
   refills: number;
   is_as_written: boolean;
   is_active: boolean;
+  updated_by?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;

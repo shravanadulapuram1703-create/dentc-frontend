@@ -16,6 +16,7 @@ import PatientHeader from "./PatientHeader";
 import PatientDetailsGrid from "./PatientDetailsGrid";
 import ResponsiblePartyCard from "./ResponsiblePartyCard";
 import InsuranceCard from "./InsuranceCard";
+import InsuranceBenefitsModal from "@/features/restorative/InsuranceBenefitsModal";
 import AccountMembersTable from "./AccountMembersTable";
 import AppointmentsTable from "./AppointmentsTable";
 import RecallsTable from "./RecallsTable";
@@ -78,6 +79,7 @@ export default function PatientOverview() {
 
   const numericId = patientId ? Number(patientId) : NaN;
   const validId = Number.isFinite(numericId);
+  const [insType, setInsType] = useState<"primary" | "secondary" | null>(null);
 
   // Real account/clinical data composed from canonical resources. These share
   // React Query cache keys with PatientShellLayout, so no duplicate requests.
@@ -219,14 +221,8 @@ export default function PatientOverview() {
   };
 
   /** ✅ Insurance status click placeholder (REAL PMS behavior) */
-  const handleInsuranceStatusClick = (
-    type: "primary" | "secondary",
-  ) => {
-    alert(
-      `${
-        type === "primary" ? "Primary" : "Secondary"
-      } insurance status – future implementation`,
-    );
+  const handleInsuranceStatusClick = (type: "primary" | "secondary") => {
+    setInsType(type);
   };
 
   // Loading state
@@ -417,6 +413,9 @@ export default function PatientOverview() {
             showMedical={true}
             onInsuranceStatusClick={handleInsuranceStatusClick}
           />
+          {insType && validId && (
+            <InsuranceBenefitsModal patientId={numericId} insuranceType={insType} onTypeChange={setInsType} onClose={() => setInsType(null)} />
+          )}
         </div>
       </div>
 

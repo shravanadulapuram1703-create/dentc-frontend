@@ -12,6 +12,8 @@ export interface ChartMaterialRead {
   name: string;
   pattern?: string | null;
   color?: string | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

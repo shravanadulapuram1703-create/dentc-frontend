@@ -22,4 +22,8 @@ export interface ReferralUpdate {
   specialty?: string | null;
   reason_code?: string | null;
   notes?: string | null;
+  e_referral_id?: string | null;
+  practice_name?: string | null;
+  contact_name?: string | null;
+  cost?: number | string | null;
 }

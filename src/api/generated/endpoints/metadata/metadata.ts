@@ -55,6 +55,9 @@ import type {
   PaginatedResponseImagingTemplateRead,
   PaginatedResponseQuestionnaireHeaderRead,
   PaginatedResponseQuestionnaireOptionRead,
+  PickListCascadeResult,
+  PickListItemsReplace,
+  PickListOptionRead,
   QuestionnaireHeaderCreate,
   QuestionnaireHeaderRead,
   QuestionnaireHeaderUpdate,
@@ -72,6 +75,131 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Atomically replace a pick list's items (PICK-2)
+ */
+export const replacePickListItems = (
+    headerId: number,
+    pickListItemsReplace: BodyType<PickListItemsReplace>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PickListOptionRead[]>(
+      {url: `/api/v1/questionnaire-headers/${headerId}/options`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: pickListItemsReplace, signal
+    },
+      options);
+    }
+
+
+
+export const getReplacePickListItemsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePickListItems>>, TError,{headerId: number;data: BodyType<PickListItemsReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replacePickListItems>>, TError,{headerId: number;data: BodyType<PickListItemsReplace>}, TContext> => {
+
+const mutationKey = ['replacePickListItems'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replacePickListItems>>, {headerId: number;data: BodyType<PickListItemsReplace>}> = (props) => {
+          const {headerId,data} = props ?? {};
+
+          return  replacePickListItems(headerId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplacePickListItemsMutationResult = NonNullable<Awaited<ReturnType<typeof replacePickListItems>>>
+    export type ReplacePickListItemsMutationBody = BodyType<PickListItemsReplace>
+    export type ReplacePickListItemsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Atomically replace a pick list's items (PICK-2)
+ */
+export const useReplacePickListItems = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePickListItems>>, TError,{headerId: number;data: BodyType<PickListItemsReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof replacePickListItems>>,
+        TError,
+        {headerId: number;data: BodyType<PickListItemsReplace>},
+        TContext
+      > => {
+      return useMutation(getReplacePickListItemsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Soft-delete a pick list and remove its items (PICK-1)
+ */
+export const deletePickListCascade = (
+    headerId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PickListCascadeResult>(
+      {url: `/api/v1/questionnaire-headers/${headerId}/cascade`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePickListCascadeMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePickListCascade>>, TError,{headerId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePickListCascade>>, TError,{headerId: number}, TContext> => {
+
+const mutationKey = ['deletePickListCascade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePickListCascade>>, {headerId: number}> = (props) => {
+          const {headerId} = props ?? {};
+
+          return  deletePickListCascade(headerId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePickListCascadeMutationResult = NonNullable<Awaited<ReturnType<typeof deletePickListCascade>>>
+
+    export type DeletePickListCascadeMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Soft-delete a pick list and remove its items (PICK-1)
+ */
+export const useDeletePickListCascade = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePickListCascade>>, TError,{headerId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePickListCascade>>,
+        TError,
+        {headerId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePickListCascadeMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List definitions
  */
 export const listDefinitions = (

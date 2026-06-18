@@ -12,6 +12,7 @@ export interface QuestionnaireHeaderRead {
   description: string;
   is_multi_select: boolean;
   is_active: boolean;
+  is_custom: boolean;
   id: number;
   created_at: string;
 }

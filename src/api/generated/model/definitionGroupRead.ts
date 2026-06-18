@@ -16,6 +16,8 @@ export interface DefinitionGroupRead {
   is_editable: boolean;
   can_add: boolean;
   group_type?: string | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }
