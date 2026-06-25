@@ -4,6 +4,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
 import { useUsersGrid } from "@/features/users/useUsersGrid";
+import type { SecurityGroupRef } from "@/features/users/mapUsersGrid";
 import {
   useListTenants,
   useListOffices,
@@ -109,6 +110,7 @@ interface User {
 
   role: string;
   securityGroup: string;
+  securityGroups: SecurityGroupRef[];
 
   createdBy?: string;
   createdAt?: string;
@@ -483,6 +485,7 @@ export default function UserSetup({
     // The modal builds the compound payload; persist it atomically across users +
     // offices + groups + IP rules + preferences + time-clock + login restrictions.
     // The user image is uploaded separately (multipart) once we have the user id.
+    const isEdit = Boolean(editingUser?.user_id);
     try {
       let userId = editingUser?.user_id ?? null;
       if (userId) {
@@ -508,13 +511,27 @@ export default function UserSetup({
       setShowAddEditModal(false);
       setEditingUser(null);
       setSelectedUser(null);
+      // Confirm success — the save flow previously gave no feedback (KAN-18).
+      alert(isEdit ? "User updated successfully" : "User added successfully");
     } catch (e: any) {
       // Keep the modal open so the user can correct and retry.
       const status = e?.response?.status;
-      const detail =
-        e?.response?.data?.error?.message || e?.response?.data?.detail;
+      const raw = e?.response?.data?.error?.message ?? e?.response?.data?.detail;
+      // FastAPI 422 returns `detail` as an array of {loc, msg, type}; format it
+      // into "field: message" lines instead of rendering [object Object].
+      const detail = Array.isArray(raw)
+        ? raw
+            .map((d: any) => {
+              const loc = Array.isArray(d?.loc) ? d.loc[d.loc.length - 1] : d?.loc;
+              return loc ? `${loc}: ${d?.msg ?? "invalid value"}` : d?.msg;
+            })
+            .filter(Boolean)
+            .join("\n")
+        : raw;
       if (status === 409) {
         alert(detail || "That Short ID is already in use — please choose another.");
+      } else if (status === 422) {
+        alert(`Please correct the following:\n${detail || "Some fields are invalid."}`);
       } else {
         alert(detail || "Failed to save user.");
       }
@@ -898,11 +915,30 @@ export default function UserSetup({
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-[#64748B] mb-0.5">
-                            SECURITY GROUP
+                            SECURITY GROUPS
                           </label>
-                          <p className="text-sm text-[#1E293B]">
-                            {selectedUser.securityGroup}
-                          </p>
+                          {selectedUser.securityGroups.length > 0 ? (
+                            <>
+                              <div className="space-y-1 max-h-[120px] overflow-y-auto pr-1">
+                                {selectedUser.securityGroups.map((g: SecurityGroupRef) => (
+                                  <div
+                                    key={g.id}
+                                    className="px-2 py-1 bg-[#E8EFF7] border border-[#3A6EA5] rounded text-xs"
+                                  >
+                                    <div className="font-bold text-[#1E293B]">
+                                      {g.oid} - {g.name}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <p className="text-xs text-[#64748B] mt-1">
+                                User belongs to {selectedUser.securityGroups.length} group
+                                {selectedUser.securityGroups.length !== 1 ? "s" : ""}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-[#1E293B]">—</p>
+                          )}
                         </div>
                       </div>
                     </div>

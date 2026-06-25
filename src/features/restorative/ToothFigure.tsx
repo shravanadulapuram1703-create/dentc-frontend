@@ -1,221 +1,168 @@
+import { useMemo, useRef } from 'react';
 import type { Arch } from './toothLayout';
-import { CERVICAL_FRACTION } from './toothAssets';
 import type { ToothArea } from './types';
 import type { ToothGlyph } from './chartModel';
+import { lookupCondition } from './conditionTaxonomy';
+import ToothShape, { type SegmentKey } from './ToothShape';
 
 interface ToothFigureProps {
   id: string;
-  assetSrc: string;
+  type: 'molar' | 'premolar' | 'canine' | 'incisor';
   arch: Arch;
-  /** Which zone of THIS tooth is currently selected (if any). */
+  rootLabels: string[];
+  /** This tooth's selected area (null if not selected; 'surface' handled elsewhere). */
   selectedArea: ToothArea | null;
+  /** Root labels selected (when selectedArea === 'root'; supports multi-select). */
+  selectedRoots?: string[];
   glyphs: ToothGlyph[];
-  /** Whole-tooth missing → fade the figure. */
   missing: boolean;
   hasNote?: boolean;
-  /** Hover summary (legacy hover-to-reveal). */
-  summary?: string;
-  onSelectZone: (id: string, area: ToothArea) => void;
+  /** Active module colour (blue/green/red) for selection highlights. */
+  selColor?: string;
+  onSelectSegment: (id: string, area: ToothArea, root?: string) => void;
+  /** Active Watch placement on this tooth: a draggable arrow at (x,y) % of the figure. */
+  watchPlacement?: { dir: string; x: number; y: number; onMove: (x: number, y: number) => void } | null;
+  /** Click a saved Watch arrow → edit/delete its notes. */
+  onWatchClick?: (id: string, glyph: ToothGlyph) => void;
   width?: number;
   height?: number;
 }
 
-const SEL = 'rgba(47,127,240,0.30)';
-const SEL_RING = '#2f7ff0';
+const DIR_ROT: Record<string, number> = { ne: 45, se: 135, sw: 225, nw: 315, n: 0, e: 90, s: 180, w: 270 };
 
 /**
- * A single tooth rendered from the anatomical asset, with the four legacy click
- * zones (whole-tooth / crown / root + the separate surface selector) and
- * condition graphic overlays.
+ * A single tooth rendered as a segmented inline vector (crown / junction / each
+ * root individually clickable). Maps the tooth's condition glyphs and selection
+ * state onto per-segment props for ToothShape.
  */
 export default function ToothFigure({
-  id,
-  assetSrc,
-  arch,
-  selectedArea,
-  glyphs,
-  missing,
-  hasNote = false,
-  summary,
-  onSelectZone,
-  width = 50,
-  height = 100,
+  id, type, arch, rootLabels, selectedArea, selectedRoots, glyphs, missing, hasNote = false, selColor, onSelectSegment, watchPlacement, onWatchClick, width = 76, height = 138,
 }: ToothFigureProps) {
-  const flip = arch === 'upper';
-  const crownPct = CERVICAL_FRACTION * 100;
-  const crownStyle = flip ? { bottom: 4, height: `${crownPct}%` } : { top: 4, height: `${crownPct}%` };
-  const rootStyle = flip ? { top: 4, height: `${100 - crownPct}%` } : { bottom: 4, height: `${100 - crownPct}%` };
-  const wholeSelected = selectedArea === 'whole';
+  const rootKeys = useMemo(() => rootLabels.map((l) => `root:${l}`), [rootLabels]);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+
+  const onArrowMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current || !watchPlacement || !boxRef.current) return;
+    const r = boxRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
+    watchPlacement.onMove(Math.round(x), Math.round(y));
+  };
+
+  // Saved Watch arrows render as positioned overlays (at their stored x/y), not
+  // as a generic segment glyph.
+  const watchGlyphs = useMemo(() => glyphs.filter((g) => g.code === 'WATCH' && g.watch), [glyphs]);
+
+  // Group the remaining condition glyphs by the segment they render on.
+  const segmentGlyphs = useMemo(() => {
+    const m = new Map<SegmentKey, ToothGlyph[]>();
+    const add = (key: SegmentKey, g: ToothGlyph) => { const a = m.get(key) ?? []; a.push(g); m.set(key, a); };
+    // Procedures that span the whole tooth (extraction X / missing outline /
+    // implant hardware) render in a dedicated 'whole' bucket; other whole-area
+    // marks (ortho, eruption, drift) draw on the crown.
+    const isWholeSpan = (code: string) => /(EXTRACT|REMOVAL|AVULSION|MISSING|IMPLANT|CONGEN|LOOSE|RETAINED_ROOT)/.test(code.toUpperCase());
+    for (const g of glyphs) {
+      if (g.code === 'WATCH' && g.watch) continue;
+      if (g.area === 'surface') continue;
+      if (g.area === 'whole') add(isWholeSpan(g.code) ? 'whole' : 'crown', g);
+      else if (g.area === 'crown') add('crown', g);
+      else if (g.area === 'junction') add('junction', g);
+      else if (g.area === 'root') {
+        if (g.root) add(`root:${g.root}`, g);
+        else for (const k of rootKeys) add(k, g); // all roots
+      }
+    }
+    return m;
+  }, [glyphs, rootKeys]);
+
+  // Which segments render as selected.
+  const selectedKeys = useMemo(() => {
+    const s = new Set<SegmentKey>();
+    if (selectedArea === 'whole') { s.add('crown'); s.add('junction'); rootKeys.forEach((k) => s.add(k)); }
+    else if (selectedArea === 'crown') s.add('crown');
+    else if (selectedArea === 'junction') s.add('junction');
+    else if (selectedArea === 'root') {
+      if (selectedRoots && selectedRoots.length) selectedRoots.forEach((r) => s.add(`root:${r}`));
+      else rootKeys.forEach((k) => s.add(k));
+    }
+    return s;
+  }, [selectedArea, selectedRoots, rootKeys]);
+
+  const tooltips = useMemo(() => {
+    const m = new Map<SegmentKey, string>();
+    for (const [key, gs] of segmentGlyphs) {
+      m.set(key, gs.map((g) => lookupCondition(g.code)?.label ?? g.code).join(', '));
+    }
+    return m;
+  }, [segmentGlyphs]);
+
+  const onSelect = (key: SegmentKey) => {
+    if (key === 'crown') onSelectSegment(id, 'crown');
+    else if (key === 'junction') onSelectSegment(id, 'junction');
+    else if (key.startsWith('root:')) onSelectSegment(id, 'root', key.slice(5));
+    else onSelectSegment(id, 'whole');
+  };
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onSelectZone(id, 'whole')}
-      title={summary || `Tooth ${id} — click for whole-tooth`}
-      style={{
-        position: 'relative',
-        width,
-        height,
-        cursor: 'pointer',
-        borderRadius: 6,
-        outline: wholeSelected ? `2px solid ${SEL_RING}` : '2px solid transparent',
-        background: wholeSelected ? SEL : 'transparent',
-        opacity: missing ? 0.4 : 1,
-        filter: missing ? 'grayscale(1)' : undefined,
-      }}
-    >
-      <img
-        src={assetSrc}
-        alt={`Tooth ${id}`}
-        draggable={false}
-        style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', transform: flip ? 'scaleY(-1)' : undefined }}
+    <div ref={boxRef} style={{ position: 'relative', width, height }}>
+      <ToothShape
+        uid={`t${id}`}
+        type={type}
+        arch={arch}
+        rootLabels={rootLabels}
+        selectedKeys={selectedKeys}
+        segmentGlyphs={segmentGlyphs}
+        tooltips={tooltips}
+        missing={missing}
+        selColor={selColor}
+        onSelect={onSelect}
+        width={width}
+        height={height}
       />
-
-      <Zone label={`Tooth ${id} crown`} selected={selectedArea === 'crown'} style={crownStyle} onClick={(e) => { e.stopPropagation(); onSelectZone(id, 'crown'); }} />
-      <Zone label={`Tooth ${id} root`} selected={selectedArea === 'root'} style={rootStyle} onClick={(e) => { e.stopPropagation(); onSelectZone(id, 'root'); }} />
-
-      {glyphs.length > 0 && (
-        <svg viewBox="0 0 100 200" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', transform: flip ? 'scaleY(-1)' : undefined }}>
-          {glyphs.map((g, i) => (
-            <ConditionGlyph key={`${g.code}-${i}`} glyph={g} flip={flip} />
-          ))}
-        </svg>
+      {hasNote && (
+        <div title="Tooth has a note" style={{ position: 'absolute', top: 2, right: 2, width: 13, height: 13, borderRadius: 3, background: '#f59e0b', color: '#fff', fontSize: 9, lineHeight: '13px', textAlign: 'center', fontWeight: 700 }}>
+          ✎
+        </div>
       )}
 
-      {hasNote && (
-        <div title="Tooth has a note" style={{ position: 'absolute', top: 2, right: 2, width: 12, height: 12, borderRadius: 3, background: '#f59e0b', color: '#fff', fontSize: 9, lineHeight: '12px', textAlign: 'center', fontWeight: 700 }}>
-          ✎
+      {/* Saved Watch arrows at their stored position — click to edit/delete. */}
+      {watchGlyphs.map((g, i) => (
+        <div
+          key={`watch-${i}`}
+          role="button"
+          title="Edit watch notes"
+          onClick={(e) => { if (onWatchClick && !watchPlacement) { e.stopPropagation(); onWatchClick(id, g); } }}
+          style={{ position: 'absolute', left: `${g.watch!.x}%`, top: `${g.watch!.y}%`, transform: 'translate(-50%,-50%)', pointerEvents: watchPlacement ? 'none' : 'auto', cursor: 'pointer', zIndex: 5 }}
+        >
+          <WatchArrow size={30} dir={g.watch!.dir} color={g.color} />
+        </div>
+      ))}
+
+      {watchPlacement && (
+        <div
+          role="button"
+          title="Drag the Watch arrow into position"
+          onPointerDown={(e) => { e.stopPropagation(); try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* no-op */ } draggingRef.current = true; }}
+          onPointerMove={onArrowMove}
+          onPointerUp={(e) => { try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* no-op */ } draggingRef.current = false; }}
+          onClick={(e) => e.stopPropagation()}
+          style={{ position: 'absolute', left: `${watchPlacement.x}%`, top: `${watchPlacement.y}%`, transform: 'translate(-50%,-50%)', cursor: 'move', zIndex: 6, touchAction: 'none' }}
+        >
+          <WatchArrow size={32} dir={watchPlacement.dir} color={selColor} />
         </div>
       )}
     </div>
   );
 }
 
-function Zone({ label, selected, style, onClick }: { label: string; selected: boolean; style: React.CSSProperties; onClick: (e: React.MouseEvent) => void; }) {
+function WatchArrow({ size, dir, color = '#dc2626' }: { size: number; dir: string; color?: string }) {
   return (
-    <div
-      role="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      style={{ position: 'absolute', left: 4, right: 4, borderRadius: 5, cursor: 'pointer', background: selected ? SEL : 'transparent', outline: selected ? `2px solid ${SEL_RING}` : 'none', ...style }}
-    />
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ transform: `rotate(${DIR_ROT[dir] ?? 0}deg)`, filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.45))' }}>
+      <g stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="21" x2="12" y2="4" />
+        <polyline points="5,11 12,4 19,11" />
+      </g>
+    </svg>
   );
 }
-
-const CROWN = { x: 50, y: 56 };
-const ROOT = { x: 50, y: 158 };
-
-function ConditionGlyph({ glyph, flip }: { glyph: ToothGlyph; flip: boolean }) {
-  const { area, code, color, drawable, pattern, sub, watch } = glyph;
-  if (!drawable && !watch) return null;
-  const at = area === 'root' ? ROOT : area === 'whole' ? { x: 50, y: 96 } : CROWN;
-  const c = code.toUpperCase();
-
-  // Watch — directional arrow at the stored anchor (saved = red).
-  if (c === 'WATCH' && watch) {
-    const px = (watch.x / 100) * 100;
-    const py = (watch.y / 100) * 200;
-    const ang = DIR_ANGLE[watch.dir] ?? 0;
-    return (
-      <g transform={`translate(${px} ${py}) rotate(${flip ? -ang : ang})`}>
-        <g stroke="#d23b3b" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="0" y1="16" x2="0" y2="-16" />
-          <polyline points="-9,-7 0,-16 9,-7" />
-        </g>
-      </g>
-    );
-  }
-
-  // Crown / bridge units — material-coloured cap over the crown.
-  if (/(CROWN|THREE_QUARTER|BRIDGE_PILLAR|BRIDGE_PONTIC)/.test(c)) {
-    const isPontic = c.includes('PONTIC');
-    return (
-      <g>
-        <path d="M24 84 C24 50 28 30 50 30 C72 30 76 50 76 84 C64 90 36 90 24 84 Z" fill={color} opacity={isPontic ? 0.55 : 0.8} stroke={isPontic ? '#9a7b1f' : '#7a6212'} strokeWidth="2" strokeDasharray={c.includes('NEEDED') || c.includes('REPLACE') ? '5 3' : undefined} />
-        {pattern && <path d="M30 50 H70 M30 62 H70 M30 74 H70" stroke="#ffffff" strokeWidth="1.5" opacity="0.5" />}
-      </g>
-    );
-  }
-  if (c === 'FILLING') {
-    return <rect x={38} y={48} width={24} height={22} rx={4} fill={color} opacity="0.85" stroke="#1f2937" strokeWidth="1" />;
-  }
-  if (/(DECAY|CARIES)/.test(c)) {
-    return <circle cx={at.x} cy={at.y} r="11" fill="#111" opacity="0.85" />;
-  }
-  if (c.includes('ABSCESS')) {
-    return <circle cx={ROOT.x} cy={172} r="9" fill="none" stroke={color} strokeWidth="3" />;
-  }
-  if (/(RCT|ROOT.?CANAL|INFECTION)/.test(c)) {
-    return <line x1={ROOT.x} y1={96} x2={ROOT.x} y2={178} stroke={color} strokeWidth="4" strokeLinecap="round" />;
-  }
-  if (c.includes('APICO')) {
-    return (
-      <g stroke={color} strokeWidth="2.5">
-        <line x1={40} y1={170} x2={60} y2={170} />
-        <line x1={50} y1={160} x2={50} y2={180} />
-      </g>
-    );
-  }
-  if (c.includes('ROOT_TIP') || c === 'ROOTTIP') {
-    return <circle cx={ROOT.x} cy={176} r="6" fill={color} />;
-  }
-  // Missing (+ unerupted = dashed outline only; supernumerary handled in Arch).
-  if (c.includes('MISSING')) {
-    const unerupted = sub === 'unerupted';
-    return (
-      <g stroke="#7a7a7a" strokeWidth="2.5" fill="none" strokeDasharray="4 3">
-        <rect x={26} y={28} width={48} height={56} rx={10} />
-        {!unerupted && (
-          <>
-            <line x1={30} y1={32} x2={70} y2={80} strokeDasharray="0" />
-            <line x1={70} y1={32} x2={30} y2={80} strokeDasharray="0" />
-          </>
-        )}
-      </g>
-    );
-  }
-  if (/(CRACK|CHIP|FRACTURE)/.test(c)) {
-    return <polyline points="42,30 52,48 44,58 56,78" fill="none" stroke="#1a1a1a" strokeWidth="2.5" />;
-  }
-  if (/(ABRASION|EROSION|LESION)/.test(c)) {
-    return <ellipse cx={50} cy={82} rx={20} ry={7} fill={color} opacity="0.6" />;
-  }
-  if (/(DRIFT|TIP|IMPACT|ERUPT)/.test(c)) {
-    const left = c.includes('MESIAL') || c.includes('FACIAL');
-    const dir = left ? -1 : 1;
-    return (
-      <g stroke={color} strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <line x1={50 - dir * 18} y1={56} x2={50 + dir * 18} y2={56} />
-        <polyline points={`${50 + dir * 8},46 ${50 + dir * 18},56 ${50 + dir * 8},66`} />
-      </g>
-    );
-  }
-  if (/(SPLINT|BRIDGE|SPACER|DENTURE)/.test(c)) {
-    return <rect x={20} y={86} width={60} height={8} rx={3} fill={color} opacity="0.8" />;
-  }
-  if (c.includes('BRACE')) {
-    return (
-      <g fill="none" stroke={color} strokeWidth="3">
-        <rect x={40} y={48} width={20} height={14} rx={2} />
-        <line x1={26} y1={55} x2={74} y2={55} />
-      </g>
-    );
-  }
-  if (c.includes('IMPLANT')) {
-    return (
-      <g stroke={color} strokeWidth="3">
-        <line x1={50} y1={96} x2={50} y2={176} />
-        <line x1={40} y1={120} x2={60} y2={120} />
-        <line x1={40} y1={140} x2={60} y2={140} />
-        <line x1={40} y1={160} x2={60} y2={160} />
-      </g>
-    );
-  }
-  return <circle cx={at.x} cy={at.y} r="8" fill={color} opacity="0.85" />;
-}
-
-const DIR_ANGLE: Record<string, number> = {
-  n: 0, ne: 45, e: 90, se: 135, s: 180, sw: 225, w: 270, nw: 315,
-};

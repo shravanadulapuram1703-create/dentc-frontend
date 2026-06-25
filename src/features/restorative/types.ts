@@ -2,8 +2,8 @@ import type { SurfaceKey } from './toothLayout';
 
 export type ChartTab = 'pre-existing' | 'completed' | 'tx-plans';
 
-// The four legacy tooth-selection areas.
-export type ToothArea = 'whole' | 'crown' | 'root' | 'surface';
+// Tooth-selection areas (root = a specific root when ActiveSelection.root is set).
+export type ToothArea = 'whole' | 'crown' | 'junction' | 'root' | 'surface';
 
 // A palette condition/procedure tool. `action` items (conditions/legend) are
 // utility buttons; everything else applies a condition_code to the selection.
@@ -13,7 +13,11 @@ export interface PaletteItem {
   condition_code?: string;
   /** Maps to ChartCondition.chart_as. */
   chart_as?: string;
-  action?: 'open-conditions' | 'open-legend';
+  action?: 'open-conditions' | 'open-legend' | 'open-explosion';
+  /** Selection areas that activate this button (undefined = active for any selection). */
+  areas?: ToothArea[];
+  /** Only active when a full arch (all upper or all lower teeth) is selected. */
+  requiresArch?: boolean;
 }
 
 // A normalized row for the bottom transaction grid, unioned from
@@ -42,4 +46,6 @@ export interface ActiveSelection {
   teeth: string[];
   /** Surfaces selected when area === 'surface' (applies to teeth[0]). */
   surfaces: Set<SurfaceKey>;
+  /** Selected root labels when area === 'root' (empty = all roots; supports multi-select). */
+  roots?: string[];
 }

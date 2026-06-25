@@ -47,6 +47,24 @@ export const IMAGING_GROUP_SOURCE = 'dentc-frontend';
 /** Backend list endpoints cap `size` at 200. */
 export const LIST_SIZE = 200;
 
+// ---------------------------------------------------------------------------
+// Device-scan / imaging-agent
+// ---------------------------------------------------------------------------
+
+/** Acquisition modalities offered in the capture tab (sent as `scan_type`). */
+export const SCAN_TYPES = [
+  { value: 'periapical', label: 'Periapical' },
+  { value: 'bitewing', label: 'Bitewing' },
+  { value: 'panoramic', label: 'Panoramic' },
+  { value: 'cephalometric', label: 'Cephalometric' },
+  { value: 'cbct', label: 'CBCT (3D)' },
+] as const;
+
+export const DEFAULT_SCAN_TYPE = SCAN_TYPES[0].value;
+
+/** Product name of the local agent, shown in the setup/status UI. */
+export const AGENT_NAME = 'DentC Imaging Agent';
+
 // React Query cache keys (match the generated query keys these endpoints use).
 export const PATIENT_DOCUMENTS_KEY = '/api/v1/patient-documents';
 export const IMAGE_GROUPS_KEY = '/api/v1/image-groups';

@@ -164,7 +164,7 @@ export default function GlobalNav({
   }, []);
 
   // Get Auth Context for current organization
-  const { currentOrganization, user, organizations } = useAuth();
+  const { currentOrganization, user, organizations, activePatient } = useAuth();
 
   // State for offices fetched from backend API.
   // Bound to the AuthContext `Office` shape (snake_case API fields, `OFF-{id}`
@@ -226,7 +226,7 @@ export default function GlobalNav({
 
   // PATIENT DROPDOWN MENU (Patient Context)
   const patientMenuItems = [
-    { label: "Search Patient", path: "/patient", icon: Search },
+    { label: "Search Patient", path: "/patient?switch=1", icon: Search },
     {
       label: "Add New Patient",
       path: "/patient/new",
@@ -1409,22 +1409,14 @@ export default function GlobalNav({
   ];
 
   const handleNavClick = (path: string) => {
-    // Check if path requires patient ID
+    // Patient-scoped paths resolve against the persistent default patient. We
+    // only fall through to the search picker when no patient has ever been
+    // selected — never an interrupting prompt.
     if (path.includes(":patientId")) {
-      // Try to get active patient from sessionStorage
-      const activePatient =
-        sessionStorage.getItem("activePatient");
-      if (activePatient) {
-        const patient = JSON.parse(activePatient);
-        const resolvedPath = path.replace(
-          ":patientId",
-          patient.id,
-        );
-        navigate(resolvedPath);
+      if (activePatient?.id) {
+        navigate(path.replace(":patientId", activePatient.id));
       } else {
-        // No active patient - show search modal or redirect to patient search
-        alert("Please select a patient first");
-        navigate("/patient");
+        navigate("/patient?switch=1");
       }
     } else {
       navigate(path);
@@ -1557,52 +1549,20 @@ export default function GlobalNav({
   };
 
   const handleTransactionsClick = () => {
-    // Check if path requires patient ID
-    const path = "/patient/:patientId/transaction";
-    if (path.includes(":patientId")) {
-      // Try to get active patient from sessionStorage
-      const activePatient =
-        sessionStorage.getItem("activePatient");
-      if (activePatient) {
-        const patient = JSON.parse(activePatient);
-        const resolvedPath = path.replace(
-          ":patientId",
-          patient.id,
-        );
-        navigate(resolvedPath);
-      } else {
-        // No active patient - show search modal or redirect to patient search
-        alert("Please select a patient first");
-        navigate("/patient");
-      }
+    if (activePatient?.id) {
+      navigate(`/patient/${activePatient.id}/transaction`);
     } else {
-      navigate(path);
+      navigate("/patient?switch=1");
     }
     setActiveDropdown(null);
     setActiveMenuPath([]);
   };
 
   const handleChartingClick = () => {
-    // Check if path requires patient ID
-    const path = "/patient/:patientId/advanced-charting";
-    if (path.includes(":patientId")) {
-      // Try to get active patient from sessionStorage
-      const activePatient =
-        sessionStorage.getItem("activePatient");
-      if (activePatient) {
-        const patient = JSON.parse(activePatient);
-        const resolvedPath = path.replace(
-          ":patientId",
-          patient.id,
-        );
-        navigate(resolvedPath);
-      } else {
-        // No active patient - show search modal or redirect to patient search
-        alert("Please select a patient first");
-        navigate("/patient");
-      }
+    if (activePatient?.id) {
+      navigate(`/patient/${activePatient.id}/advanced-charting`);
     } else {
-      navigate(path);
+      navigate("/patient?switch=1");
     }
     setActiveDropdown(null);
     setActiveMenuPath([]);

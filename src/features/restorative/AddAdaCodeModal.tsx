@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ProcedureCodeRead, ProviderRead } from '@/api/generated/model';
 import { useListCodeBundles, useListCodeBundleItems } from '@/api/generated/endpoints/procedures/procedures';
 import { loadProcedureCodes } from '@/components/setup/insurance/procedureCodeService';
-import { codeAllowedOnTooth, estimateInsurance } from './txPlanModel';
+import { codeAllowedOnTooth, estimateInsurance, classifyTooth } from './txPlanModel';
+
+// AMB / "A" codes = alternative-maximum-benefit downgrade codes (end in 'A').
+const isAmbCode = (c: { code: string; legacy_code?: string | null }) =>
+  /A$/.test(c.code) || /A$/.test(c.legacy_code ?? '');
 
 export interface AdaEntry {
   tooth: string;
@@ -19,6 +23,8 @@ interface AddAdaCodeModalProps {
   teeth: string[];
   surface: string | null;
   providers: ProviderRead[];
+  /** Preferred provider chosen in the toolbar — seeds the provider dropdown. */
+  defaultProviderId?: string;
   /** Pre-filter hint from the palette tool (e.g. "crown", "extraction"). */
   presetQuery?: string;
   presetLabel?: string;
@@ -31,14 +37,14 @@ interface AddAdaCodeModalProps {
  * enforcement, fee + insurance estimate, provider (Completed), Add Procedure with
  * auto-advance across the selected teeth.
  */
-export default function AddAdaCodeModal({ mode, teeth, surface, providers, presetQuery, presetLabel, onAdd, onClose }: AddAdaCodeModalProps) {
+export default function AddAdaCodeModal({ mode, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, onAdd, onClose }: AddAdaCodeModalProps) {
   const [codeMap, setCodeMap] = useState<Map<string, ProcedureCodeRead>>(new Map());
   const [query, setQuery] = useState(presetQuery ?? '');
   const [category, setCategory] = useState('');
   const [selected, setSelected] = useState<ProcedureCodeRead | null>(null);
   const [fee, setFee] = useState('0');
   const [insEst, setInsEst] = useState('0');
-  const [providerId, setProviderId] = useState(providers.find((p) => p.is_active)?.id ?? providers[0]?.id ?? '');
+  const [providerId, setProviderId] = useState(defaultProviderId || providers.find((p) => p.is_active)?.id || providers[0]?.id || '');
   const [idx, setIdx] = useState(0);
   const [bundleId, setBundleId] = useState<number | ''>('');
   const [busy, setBusy] = useState(false);
@@ -46,6 +52,7 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, prese
   useEffect(() => { loadProcedureCodes().then(setCodeMap).catch(() => {}); }, []);
 
   const currentTooth = teeth[idx] ?? teeth[0] ?? '';
+  const anterior = currentTooth ? classifyTooth(currentTooth) === 'anterior' : false;
   const all = useMemo(() => [...codeMap.values()], [codeMap]);
   const categories = useMemo(() => [...new Set(all.map((c) => c.category).filter(Boolean))].sort(), [all]);
 
@@ -53,10 +60,12 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, prese
     const q = query.trim().toLowerCase();
     return all
       .filter((c) => c.is_active !== false)
+      // Anterior teeth are not subject to downgrades — no A / AMB codes.
+      .filter((c) => !(anterior && isAmbCode(c)))
       .filter((c) => !category || c.category === category)
       .filter((c) => !q || c.code.toLowerCase().includes(q) || c.description.toLowerCase().includes(q) || (c.legacy_code ?? '').toLowerCase().includes(q))
       .slice(0, 60);
-  }, [all, query, category]);
+  }, [all, query, category, anterior]);
 
   const bundles = useListCodeBundles({ size: 200 });
   const bundleItems = useListCodeBundleItems({ bundle_id: typeof bundleId === 'number' ? bundleId : undefined }, { query: { enabled: typeof bundleId === 'number' } });
@@ -149,6 +158,7 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, prese
                     className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ background: selected?.code === c.code ? '#dbeafe' : undefined }}>
                     <span className="w-14 shrink-0 font-semibold text-slate-700">{c.code}</span>
+                    {isAmbCode(c) && <span className="shrink-0 rounded bg-amber-100 px-1 text-[9px] font-bold text-amber-700" title="Alternative Maximum Benefit (downgrade) code">AMB</span>}
                     <span className="flex-1 truncate text-slate-600">{c.description}</span>
                     <span className="shrink-0 text-slate-400">${Number(c.default_fee || 0).toFixed(0)}</span>
                   </button>

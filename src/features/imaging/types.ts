@@ -20,9 +20,49 @@ export interface GalleryImage {
 
 /**
  * Lifecycle of the local imaging device (intra-oral sensor) bridge.
- * `unavailable` is the default state when no bridge URL is configured.
+ * - `detecting`   — probing the agent on mount (transient).
+ * - `unavailable` — agent not installed/running (connection refused) → show setup.
+ * - `idle`        — agent reachable and ready.
+ * - `scanning`    — a capture is in progress.
+ * - `error`       — agent reachable but returned an error.
  */
-export type DeviceScanStatus = 'unavailable' | 'idle' | 'scanning' | 'error';
+export type DeviceScanStatus =
+  | 'detecting'
+  | 'unavailable'
+  | 'idle'
+  | 'scanning'
+  | 'error';
+
+/**
+ * Agent capability info from `GET /status`. Lets the UI surface the agent
+ * version (for update prompts) and whether the vendor software (EzDent-i) is
+ * actually running so the dentist knows before launching a scan.
+ */
+export interface DeviceInfo {
+  /** Agent semantic version, for update prompts. */
+  version: string | null;
+  /** Imaging vendor this agent drives, e.g. `vatech`. */
+  vendor: string | null;
+  /** True when the vendor capture software (EzDent-i) is detected as running. */
+  software_running: boolean;
+}
+
+/** Result of probing the agent: connection state + capability info when reachable. */
+export interface DeviceStatusResult {
+  status: Extract<DeviceScanStatus, 'unavailable' | 'idle' | 'error'>;
+  info: DeviceInfo | null;
+}
+
+/**
+ * Deep-link the vendor software to the right patient before capture (the
+ * "Open in Vatech" action — mirrors EzDent-i's `VTEzBridge /main:chart_no`).
+ */
+export interface DeviceLaunchInput {
+  patient_id: number;
+  first_name?: string;
+  last_name?: string;
+  dob?: string;
+}
 
 /** Parameters the bridge needs to attribute a scan to the right patient. */
 export interface DeviceScanInput {
@@ -45,7 +85,8 @@ export interface DeviceScanResult {
  * This is the seam where a real hardware bridge plugs in later.
  */
 export interface ImagingDevice {
-  checkStatus(): Promise<DeviceScanStatus>;
+  checkStatus(): Promise<DeviceStatusResult>;
+  launchSoftware(input: DeviceLaunchInput): Promise<void>;
   startScan(input: DeviceScanInput): Promise<{ scan_id: string }>;
   pollScan(scanId: string): Promise<DeviceScanResult>;
 }

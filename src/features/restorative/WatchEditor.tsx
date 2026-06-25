@@ -3,98 +3,72 @@ import { useListNoteMacros } from '@/api/generated/endpoints/procedures/procedur
 
 interface WatchEditorProps {
   tooth: string;
-  onSave: (data: { dir: string; x: number; y: number; note: string }) => void;
+  initialNote?: string;
+  onSave: (note: string) => void;
+  onDelete?: () => void;
   onClose: () => void;
 }
 
-const DIRS = [
-  { dir: 'nw', label: '↖' }, { dir: 'n', label: '↑' }, { dir: 'ne', label: '↗' },
-  { dir: 'w', label: '←' }, { dir: '', label: '•' }, { dir: 'e', label: '→' },
-  { dir: 'sw', label: '↙' }, { dir: 's', label: '↓' }, { dir: 'se', label: '↘' },
-];
+// Fallback macro rows when no note-macros are configured (matches the legacy
+// surface-position macros: Buccal / Crown / Distal / Facial / Lingual …).
+const FALLBACK_MACROS = ['Buccal', 'Crown', 'Distal', 'Facial', 'Lingual', 'Mesial', 'Occlusal', 'Incisal'].map((m) => ({
+  id: `fb-${m}`,
+  name: m,
+  content: m,
+}));
 
-/**
- * Legacy Watch workflow: pick a directional arrow, place it on the tooth box,
- * then add a note (optionally from a Macro). Anchor is a percent of the figure.
- */
-export default function WatchEditor({ tooth, onSave, onClose }: WatchEditorProps) {
-  const [dir, setDir] = useState('n');
-  const [anchor, setAnchor] = useState({ x: 50, y: 35 });
-  const [note, setNote] = useState('');
-  const macros = useListNoteMacros({ size: 200 });
+/** Step 2 of the Watch workflow: the "Add Watch Notes" dialog (arrow already placed). */
+export default function WatchEditor({ tooth, initialNote = '', onSave, onDelete, onClose }: WatchEditorProps) {
+  const [note, setNote] = useState(initialNote);
+  const macrosQuery = useListNoteMacros({ size: 200 });
+  const macros = (macrosQuery.data?.items ?? []).length ? macrosQuery.data!.items : FALLBACK_MACROS;
 
-  const place = (e: React.MouseEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    setAnchor({
-      x: Math.round(((e.clientX - r.left) / r.width) * 100),
-      y: Math.round(((e.clientY - r.top) / r.height) * 100),
-    });
-  };
-
-  const insertMacro = (id: string) => {
-    const m = macros.data?.items.find((x) => String(x.id) === id);
-    if (m?.content) setNote((n) => (n ? `${n}\n${m.content}` : m.content));
-  };
+  const addMacro = (text: string) => setNote((n) => (n ? `${n}, ${text}` : text));
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative w-[460px] rounded-lg border border-slate-300 bg-white shadow-2xl">
-        <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-b from-[#2566a8] to-[#16406e] px-4 py-2 text-white">
-          <span className="text-sm font-semibold">Watch — Tooth #{tooth}</span>
-          <button onClick={onClose} aria-label="Close" className="rounded px-1.5 hover:bg-white/15">✕</button>
+      <div className="relative w-[460px] rounded border border-slate-400 bg-[#eef1f5] shadow-2xl">
+        <div className="flex items-center justify-between bg-gradient-to-b from-[#2f7fe0] to-[#1f5fb8] px-3 py-1.5 text-white">
+          <span className="text-sm font-semibold">Add Watch Notes — Tooth #{tooth}</span>
+          <button onClick={onClose} aria-label="Close" className="flex h-5 w-5 items-center justify-center rounded-sm bg-rose-600 text-xs hover:bg-rose-700">✕</button>
         </div>
-        <div className="flex gap-3 p-3">
-          {/* Direction grid */}
-          <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase text-slate-500">Direction</div>
-            <div className="grid grid-cols-3 gap-1" style={{ width: 96 }}>
-              {DIRS.map((d) => (
-                <button
-                  key={d.label}
-                  disabled={!d.dir}
-                  onClick={() => d.dir && setDir(d.dir)}
-                  className="flex h-8 w-8 items-center justify-center rounded border text-base disabled:opacity-30"
-                  style={dir === d.dir ? { background: '#dbeafe', borderColor: '#2f7ff0' } : { borderColor: '#cbd5e1' }}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-            {/* Placement box */}
-            <div className="mb-1 mt-3 text-[11px] font-semibold uppercase text-slate-500">Place</div>
-            <div onClick={place} className="relative cursor-crosshair rounded border border-slate-300 bg-slate-50" style={{ width: 96, height: 120 }} title="Click to position the arrow">
-              <div style={{ position: 'absolute', left: `${anchor.x}%`, top: `${anchor.y}%`, transform: 'translate(-50%,-50%)', color: '#d23b3b', fontWeight: 700 }}>
-                {DIRS.find((d) => d.dir === dir)?.label ?? '↑'}
-              </div>
-            </div>
-          </div>
 
-          {/* Notes + macro */}
-          <div className="flex-1">
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase text-slate-500">Watch Note</span>
-              <select onChange={(e) => { insertMacro(e.target.value); e.currentTarget.selectedIndex = 0; }} className="rounded border border-slate-300 px-1 py-0.5 text-xs">
-                <option value="">Insert Macro…</option>
-                {(macros.data?.items ?? []).map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
+        <div className="p-3">
+          <div className="mb-1 text-xs font-semibold text-slate-700">Watch Notes</div>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            className="w-full rounded border-2 border-slate-400 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Surfaces affected / reason to watch…"
+          />
+
+          <div className="mb-1 mt-3 text-xs font-semibold text-slate-700">Watch Notes</div>
+          <div className="max-h-[180px] overflow-y-auto rounded border border-slate-400 bg-white">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0">
+                <tr style={{ background: 'linear-gradient(180deg,#e7eaef,#cfd6df)' }}>
+                  <th className="border-b border-slate-300 px-3 py-1.5 text-left font-semibold text-slate-600">Macro</th>
+                  <th className="border-b border-slate-300 px-3 py-1.5 text-left font-semibold text-slate-600">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {macros.map((m) => (
+                  <tr key={m.id} onClick={() => addMacro(m.content || m.name)} className="cursor-pointer hover:bg-blue-50">
+                    <td className="border-b border-slate-100 px-3 py-1 text-rose-700">{m.name}</td>
+                    <td className="border-b border-slate-100 px-3 py-1 text-slate-700">{m.content || m.name}</td>
+                  </tr>
                 ))}
-              </select>
-            </div>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={7}
-              placeholder="Surfaces affected, reason to watch…"
-              className="w-full rounded border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+              </tbody>
+            </table>
           </div>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 p-2">
-          <button onClick={onClose} className="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button onClick={() => onSave({ dir, x: anchor.x, y: anchor.y, note: note.trim() })} className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
-            Save Watch
-          </button>
+
+        <div className="flex justify-center gap-2 border-t border-slate-300 bg-[#e3e7ec] p-2">
+          <button onClick={() => onSave(note.trim())} className="rounded border border-slate-400 bg-white px-5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50">Save</button>
+          <button onClick={() => onDelete?.()} disabled={!onDelete} className="rounded border border-slate-400 bg-white px-5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40">Delete</button>
+          <button onClick={onClose} className="rounded border border-slate-400 bg-white px-5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50">Close</button>
         </div>
       </div>
     </div>

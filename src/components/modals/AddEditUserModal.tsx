@@ -21,6 +21,7 @@ import {
 } from "../../api/generated/endpoints/organization/organization";
 import type { UserSetupMetadata } from "../../api/generated/model/userSetupMetadata";
 import type { BackendUser } from "../../types/backendUser";
+import { apiAssetUrl } from "../../utils/apiAsset";
 
 // Re-export BackendUser for backward compatibility
 export type { BackendUser } from "../../types/backendUser";
@@ -494,6 +495,24 @@ export default function AddEditUserModal({
   }, [isOpen, mode, loadedUserData]);
 
   
+  // Keep Home Office valid: it must always be one of the assigned offices.
+  // When the assignment list changes, default it to the first assigned office
+  // (or clear it when none are assigned). Without this, the controlled <select>
+  // shows the first office while formData.homeOffice stays "" (the empty value
+  // matches no <option>), so re-selecting the displayed option fires no
+  // onChange and save fails with "required fields: homeOffice". See KAN-17.
+  useEffect(() => {
+    setFormData(prev => {
+      if (prev.assignedOffices.length === 0) {
+        return prev.homeOffice === "" ? prev : { ...prev, homeOffice: "" };
+      }
+      if (prev.homeOffice && prev.assignedOffices.includes(prev.homeOffice)) {
+        return prev; // current selection is still valid — leave it
+      }
+      return { ...prev, homeOffice: prev.assignedOffices[0] ?? "" };
+    });
+  }, [formData.assignedOffices]);
+
   const REQUIRED_FIELDS = [
     "username",
     "firstName",
@@ -544,6 +563,14 @@ export default function AddEditUserModal({
     // Validation
     if (!isFormValid) {
       alert(`Please fill in all required fields: ${missingFields.join(", ")}`);
+      return;
+    }
+
+    // Email must be a valid address — the backend enforces EmailStr and would
+    // otherwise reject it with an opaque 422 (e.g. a domain with no dot). See KAN-17.
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(formData.email.trim())) {
+      alert("Please enter a valid email address (e.g., name@example.com)");
       return;
     }
 
@@ -1416,11 +1443,18 @@ export default function AddEditUserModal({
                     onChange={(e) =>
                       setFormData({ ...formData, homeOffice: e.target.value })
                     }
+                    disabled={formData.assignedOffices.length === 0}
+                    className={`w-full px-3 py-2 border-2 rounded-lg ${fieldError("homeOffice")} focus:outline-none focus:border-[#3A6EA5] disabled:bg-[#F1F5F9] disabled:text-[#94A3B8]`}
                   >
+                    <option value="">
+                      {formData.assignedOffices.length === 0
+                        ? "Assign an office first"
+                        : "Select Home Office"}
+                    </option>
                     {availableOffices
                       .filter(o => formData.assignedOffices.includes(String(o.id)))
                       .map(o => (
-                        <option key={o.id} value={o.id}>
+                        <option key={o.id} value={String(o.id)}>
                           {o.name} (OID: {o.office_code})
                         </option>
                       ))}
@@ -1975,7 +2009,7 @@ export default function AddEditUserModal({
                     <div className="flex items-center gap-4">
                       {imagePreview ? (
                         <img
-                          src={imagePreview}
+                          src={apiAssetUrl(imagePreview)}
                           alt="User"
                           className="w-20 h-20 rounded-lg object-cover border-2 border-[#E2E8F0]"
                         />

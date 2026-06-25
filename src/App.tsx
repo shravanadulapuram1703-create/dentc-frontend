@@ -14,8 +14,14 @@ import Patient from './components/pages/Patient';
 import PatientShellLayout from './components/PatientShellLayout';
 import PatientOverview from './components/patient/overview/PatientOverview';
 import PatientLedger from './components/pages/PatientLedger';
-import Transactions from './components/pages/Transactions';
+import TransactionsEntryPage from './features/transactions/TransactionsEntryPage';
+import AccountLedgerPage from './features/account-ledger/AccountLedgerPage';
 import RestorativeChart from './features/restorative/RestorativeChart';
+import PerioChart from './features/perio/PerioChart';
+import TreatmentPlanPage from './features/treatment-plans/TreatmentPlanPage';
+import PrescriptionsPage from './features/prescriptions/PrescriptionsPage';
+import LabTrackingPage from './features/lab-tracking/LabTrackingPage';
+import { InsurancePlanScreen } from './features/patient-insurance';
 import Reports from './components/pages/Reports';
 import Utilities from './components/pages/Utilities';
 import Setup from './components/pages/Setup';
@@ -28,8 +34,8 @@ import PatientDocuments from './components/patient/PatientDocuments';
 import { ImagingWorkspace } from './features/imaging';
 import EmergencyContacts from './components/patient/EmergencyContacts';
 import AddEditPatientNote from './components/patient/AddEditPatientNote';
-import ProgressNotesListing from './components/patient/ProgressNotesListing';
-import AddEditProgressNote from './components/patient/AddEditProgressNote';
+import ProgressNotesList from './features/progress-notes/ProgressNotesList';
+import ProgressNoteEditor from './features/progress-notes/ProgressNoteEditor';
 import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
 import GroupSetup from './components/setup/security/groups/GroupSetup';
@@ -158,7 +164,8 @@ function AppRoutes() {
         {/* Patient Pages */}
         <Route path="overview" element={<PatientOverview />} />
         <Route path="ledger" element={<PatientLedger />} />
-        <Route path="transaction" element={<Transactions />} />
+        <Route path="account-ledger" element={<AccountLedgerPage />} />
+        <Route path="transaction" element={<TransactionsEntryPage />} />
         <Route path="restorative" element={<RestorativeChart />} />
         
         {/* Payment Plan */}
@@ -166,33 +173,34 @@ function AppRoutes() {
         <Route path="payment-plan/ortho" element={<PlaceholderPage title="Ortho Payment Plan" description="Manage orthodontic payment plans" />} />
         
         {/* Insurance - Dental */}
-        <Route path="insurance/dental/primary" element={<PlaceholderPage title="Primary Dental Insurance" />} />
-        <Route path="insurance/dental/secondary" element={<PlaceholderPage title="Secondary Dental Insurance" />} />
-        <Route path="insurance/dental/tertiary" element={<PlaceholderPage title="Tertiary Dental Insurance" />} />
-        <Route path="insurance/dental/quaternary" element={<PlaceholderPage title="Quaternary Dental Insurance" />} />
-        
+        <Route path="insurance/dental/primary" element={<InsurancePlanScreen category="D" order="primary" />} />
+        <Route path="insurance/dental/secondary" element={<InsurancePlanScreen category="D" order="secondary" />} />
+        <Route path="insurance/dental/tertiary" element={<InsurancePlanScreen category="D" order="tertiary" />} />
+        <Route path="insurance/dental/quaternary" element={<InsurancePlanScreen category="D" order="quaternary" />} />
+
         {/* Insurance - Medical */}
-        <Route path="insurance/medical/primary" element={<PlaceholderPage title="Primary Medical Insurance" />} />
-        <Route path="insurance/medical/secondary" element={<PlaceholderPage title="Secondary Medical Insurance" />} />
-        <Route path="insurance/medical/tertiary" element={<PlaceholderPage title="Tertiary Medical Insurance" />} />
+        <Route path="insurance/medical/primary" element={<InsurancePlanScreen category="M" order="primary" />} />
+        <Route path="insurance/medical/secondary" element={<InsurancePlanScreen category="M" order="secondary" />} />
+        <Route path="insurance/medical/tertiary" element={<InsurancePlanScreen category="M" order="tertiary" />} />
         
         {/* Insurance Forms */}
         <Route path="insurance-forms/dental" element={<PlaceholderPage title="Dental Insurance Forms" />} />
         <Route path="insurance-forms/medical" element={<PlaceholderPage title="Medical Insurance Forms" />} />
         
         {/* Other Patient Pages */}
-        <Route path="perio" element={<PlaceholderPage title="Periodontal Charting" />} />
+        <Route path="perio" element={<PerioChart />} />
         <Route path="notes" element={<PatientNotesListing />} />
         <Route path="notes/new" element={<AddEditPatientNote mode="add" />} />
         <Route path="notes/edit/:noteId" element={<AddEditPatientNote mode="edit" />} />
         <Route path="notes/view/:noteId" element={<AddEditPatientNote mode="view" />} />
-        <Route path="progress-notes" element={<ProgressNotesListing />} />
-        <Route path="progress-notes/new" element={<AddEditProgressNote mode="add" />} />
-        <Route path="progress-notes/edit/:noteId" element={<AddEditProgressNote mode="edit" />} />
-        <Route path="progress-notes/view/:noteId" element={<AddEditProgressNote mode="view" />} />
+        <Route path="progress-notes" element={<ProgressNotesList />} />
+        <Route path="progress-notes/new" element={<ProgressNoteEditor mode="add" />} />
+        <Route path="progress-notes/edit/:noteId" element={<ProgressNoteEditor mode="edit" />} />
+        <Route path="progress-notes/view/:noteId" element={<ProgressNoteEditor mode="view" />} />
         <Route path="claim/:claimId" element={<ClaimDetail />} />
-        <Route path="treatment" element={<PlaceholderPage title="Treatment Plan" />} />
-        <Route path="prescriptions" element={<PlaceholderPage title="Prescriptions" />} />
+        <Route path="treatment" element={<TreatmentPlanPage />} />
+        <Route path="prescriptions" element={<PrescriptionsPage />} />
+        <Route path="lab-tracking" element={<LabTrackingPage />} />
         <Route path="documents" element={<PatientDocuments />} />
         <Route path="imaging" element={<ImagingWorkspace />} />
         <Route path="emergency-contacts" element={<EmergencyContacts />} />

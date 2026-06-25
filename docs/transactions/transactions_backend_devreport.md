@@ -243,3 +243,61 @@
   status, transaction type) and fix the **`description`-vs-`key1`** value bug.
 - Wire the unwired-but-existing endpoints: `allocatePayment`, `createLedgerInsuranceDetail`,
   `updatePatientPayment(is_void)`, `listPatientPayments`/`listPatientAdjustments`.
+
+---
+
+# Transactions Entry screen (legacy "Transactions Entry", module M03) — charge-entry gaps
+
+> Added 2026-06-23 when building the full-page **Transactions Entry** screen
+> (`src/features/transactions/**`, route `/patient/:id/transaction`). This is the per-patient
+> charge/payment/adjustment entry screen (distinct from the Transactions **Dashboard** above and the
+> read-only **Ledger**). Read paths are fully wired: `/patient-procedures`, `/patient-payments` (+
+> `/allocate`), `/patient-adjustments`, `/definitions`, `/procedure-codes`. Gaps below are CHG-*.
+
+## CHG-1 — Per-procedure estimate engine 🟡
+- **Screen:** Add Procedures tab (posting a charge); Payments/Adjustments "Procedures To Post" grid.
+- **Business requirement:** When a procedure is added, the backend should derive `insurance_estimate`
+  and `patient_estimate` from the patient's coverage + fee schedule.
+- **Current status:** `PatientProcedureCreate` accepts client-supplied estimates only. We post
+  `insurance_estimate: 0` and `patient_estimate: fee` (mirrors `AddProcedure.tsx`). No coverage-driven
+  split endpoint exists.
+- **Suggested endpoint:** `POST /api/v1/patients/{id}/estimate { procedure_code, fee, provider_id }`
+  → `{ insurance_estimate, patient_estimate }`.
+
+## CHG-2 — Structured tooth/surface/material rules per code 🟡
+- **Screen:** Add Procedures → ToothSurfaceEnforcement modal.
+- **Business requirement:** Per-code anatomy mode, allowed tooth set, surface min/max, allowed
+  surfaces, material options.
+- **Current status:** `ProcedureCodeRead` exposes only flat `requires_tooth/surface/quadrant/lab`
+  booleans + `default_fee`. The structured rules are fabricated client-side from those booleans.
+- **Suggested:** add `anatomy_rules` / `surface_rules` / `material_rules` to `ProcedureCodeRead`.
+
+## CHG-3 — "All Medical" procedure codes 🟡
+- **Screen:** Add Procedures → ALL MEDICAL category button.
+- **Business requirement:** Medical/CPT (non-ADA) codes for medical cross-billing.
+- **Current status:** `/procedure-codes` is seeded with ADA (`D####`) codes only; the ALL MEDICAL
+  filter (codes without a leading letter) returns empty against current data.
+
+## CHG-4 — Explosion (multi-procedure) codes 🔴
+- **Screen:** Add Procedures → "Explosion Codes" dropdown + GO.
+- **Business requirement:** A single user-defined code that expands to a set of procedures (e.g. a
+  "NP Exam" bundle) posted together.
+- **Current status:** No explosion-code resource in `openapi.json`. The control is rendered disabled.
+- **Suggested endpoint:** `GET /api/v1/explosion-codes` + `…/{code}/expand` → `[{ procedure_code, … }]`.
+
+## CHG-5 — Payment Bank #, and per-procedure Pat Paid / Pat Adj columns 🟡
+- **Screen:** Payments tab (Bank # field); Payments/Adjustments "Procedures To Post" grid.
+- **Business requirement:** Persist a deposit **Bank #** on a payment; show **Pat Paid** and **Pat Adj**
+  already applied per procedure (to compute true **Rem Amt**).
+- **Current status:** `PatientPaymentCreate` has no `bank_number` field (Bank # is captured but not
+  saved). `PatientProcedureRead` carries no per-procedure paid/adjusted running totals, so the grid
+  shows Pat Paid / Pat Adj as `0.00` and Rem Amt = `patient_estimate`.
+- **Suggested:** add `bank_number` to payments; expose `paid_to_date` / `adjusted_to_date` on
+  `PatientProcedureRead` (or a `…/procedures/{id}/allocations-summary`).
+
+## CHG-6 — Preferred Hygienist persistence 🟡
+- **Screen:** Toolbar "-- Preferred Hygienist --" dropdown.
+- **Business requirement:** Record a second (hygiene) provider alongside the treating provider on a
+  charge / visit.
+- **Current status:** `PatientProcedureCreate` has a single `provider_id`. The hygienist selection is
+  shown for parity but not persisted.

@@ -202,6 +202,47 @@ Also note for the backend: Tx-Plans defaults to the **highest** plan (by `create
 `referred-out` value for `treatment_plan_items.status` would let the "Referred Out" filter be exact
 (FE currently matches the literal `referred-out`).
 
+## GAP REST-9 — root-level conditions (segmented anatomy)
+
+Teeth now render as segmented vector anatomy (crown / junction / each root) with anatomically-correct
+root counts (upper molars 3 = MB/DB/Palatal; upper 1st premolars 2 = Buccal/Palatal; lower molars 2 =
+Mesial/Distal; rest 1). Conditions can be charted on a **specific root** (e.g. RCT on only the distal
+root of #30). The affected root currently rides in `chart_conditions.region` as `root=<label>`, and
+`area='junction'` is now a valid value alongside whole/crown/root/surface.
+
+```text
+chart_conditions  (promote the interim region tag to a first-class column)
+  segment       string?   # 'crown' | 'junction' | 'root' | 'surface' (mirrors area)
+  root_segment  string?   # anatomical root label: mesiobuccal | distobuccal | palatal
+                          #   | buccal | mesial | distal | root  (region `root=` today)
+```
+FE swap is localised to `chartModel.ts` (`encodeRegion`/`decodeRegion`) once the column exists. No new
+endpoints. Standard anatomical root labels are the agreed vocabulary.
+
+## GAP REST-10 — freehand drawing / "Draw Mode" persistence
+
+Draw Mode lets the clinician sketch freehand over the chart, then **Save Draw Chart** stores it as a
+**Progress Note**. There is no dedicated drawing resource, so the FE persists each drawing two ways
+against existing endpoints:
+
+- **Vector (source of truth / re-render):** the strokes (normalized 0–1000 viewBox, `{color,width,pts}`)
+  are packed into `progress_notes.notes_html` as `{"type":"rx-draw","strokes":[…],"doc_id":N}`. The chart
+  reads these back and redraws them as a read-only overlay (`savedStrokes`), filtering out `is_deleted`.
+- **Raster (attachment):** the same strokes are rasterized to a transparent **PNG** (`<canvas>` →
+  `toBlob`) and uploaded to the **binary store** via `POST /patient-documents`
+  (`document_type='restorative-drawing'`, `description=<note text>`); the returned document `id` is
+  linked back into the note's `notes_html.doc_id`.
+
+```text
+progress_notes  (promote the interim notes_html packing to first-class)
+  drawing_strokes   json?     # vector stroke list (region-normalized)
+  drawing_doc_id    integer?  # FK → patient_documents (the rasterized .png snapshot)
+```
+Interim only — no new endpoints required today (reuses `progress-notes` + `patient-documents`). A
+first-class `drawing_*` pair (or a dedicated `chart_drawings` resource) would remove the JSON-in-HTML
+packing and the two-write coupling. Verified live (patient 80001): PNG persisted as a
+`restorative-drawing` document, note carried strokes + `doc_id`, drawing re-rendered on reload.
+
 ## GAP REST-6 (deferred) — server-side FHIR R4 export
 
 Optional `GET /api/v1/chart-conditions/export/fhir?patient_id=` returning an HL7

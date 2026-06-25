@@ -20,6 +20,7 @@ import {
   mapAdvancedFormToPutPayload,
   type LookupOption,
 } from '../../../services/accountSetupTransform';
+import { apiAssetUrl } from '../../../utils/apiAsset';
 
 // ========================================
 // TYPES
@@ -108,7 +109,17 @@ function BasicTab({
   usStateOptions: LookupOption[];
   cultureOptions: LookupOption[];
 }) {
-  const [logoPreview, setLogoPreview] = useState<string>(formData.logoUrl);
+  // Render logo directly from formData.logoUrl — the single source of truth.
+  // Don't mirror it into local state: useState's initializer only runs once at
+  // mount, so when formData arrives later (async fetch / relogin) the mirror
+  // stays at its initial empty value and the "No logo uploaded" empty state
+  // shows even though the backend has the logo (KAN-13).
+  //
+  // Resolve the URL through apiAssetUrl so backend-relative paths like
+  // "/uploads/logos/tenant_1.jpg" are prefixed with the API host; otherwise
+  // the browser resolves them against the SPA origin (e.g. localhost:5173) and
+  // gets Vite's index.html back, producing a broken <img>.
+  const logoPreview = apiAssetUrl(formData.logoUrl);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,10 +141,10 @@ function BasicTab({
       return;
     }
 
-    // Create preview
+    // Set the data-URL preview straight onto formData; handleSave will detect
+    // the "data:image/" prefix and upload it via the multipart endpoint.
     const reader = new FileReader();
     reader.onloadend = () => {
-      setLogoPreview(reader.result as string);
       updateFormData({ logoUrl: reader.result as string });
     };
     reader.readAsDataURL(file);
@@ -419,10 +430,7 @@ function BasicTab({
                 />
                 {isEditMode && (
                   <button
-                    onClick={() => {
-                      setLogoPreview('');
-                      updateFormData({ logoUrl: '' });
-                    }}
+                    onClick={() => updateFormData({ logoUrl: '' })}
                     className="w-full px-3 py-2 border-2 border-[#E2E8F0] text-[#DC2626] rounded-lg hover:bg-[#FEE2E2] font-bold transition-all text-sm"
                   >
                     Remove Logo

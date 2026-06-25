@@ -1,35 +1,40 @@
 import { useMemo, useState } from "react";
 import { Search, Plus, Copy, Edit, Trash2, Shield, ShieldCheck } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useListUserGroups,
-  createUserGroup,
   deleteUserGroup,
 } from "../../../../api/generated/endpoints/staff/staff";
-import type { UserGroupRead } from "../../../../api/generated/model/userGroupRead";
-import { GROUP_RIGHTS } from "../../../../data/groupRights";
 import {
-  getGroupRights,
-  setGroupRights,
-  clearGroupRights,
-} from "../../../../features/groups/groupRightsStore";
+  useGetUserGroupRights,
+  useListPermissions,
+  copyUserGroup,
+  getGetUserGroupRightsQueryKey,
+} from "../../../../api/generated/endpoints/security/security";
+import type { UserGroupRead } from "../../../../api/generated/model/userGroupRead";
 import AddEditGroupModal from "./AddEditGroupModal";
 
-const LABEL_BY_CODE = new Map(GROUP_RIGHTS.map((r) => [r.code, r.label]));
-
 export default function GroupSetup() {
+  const queryClient = useQueryClient();
   const groupsQ = useListUserGroups({ size: 200 });
   const groups: UserGroupRead[] = useMemo(
     () => groupsQ.data?.items ?? [],
     [groupsQ.data],
   );
 
+  // Global rights catalog — used to resolve right codes to display labels.
+  const permsQ = useListPermissions({ query: { staleTime: 5 * 60_000 } });
+  const labelByCode = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of permsQ.data ?? []) m.set(p.code, p.label);
+    return m;
+  }, [permsQ.data]);
+
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "id">("name");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingGroup, setEditingGroup] = useState<UserGroupRead | null>(null);
-  // Bump to re-read locally-stored rights after a save without refetching groups.
-  const [rightsRev, setRightsRev] = useState(0);
 
   const filteredGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -48,14 +53,19 @@ export default function GroupSetup() {
   }, [groups, search, sortBy]);
 
   const selectedGroup = groups.find((g) => g.id === selectedId) ?? null;
+
+  // Live-fetch the selected group's rights from the backend (KAN-15).
+  // groupId=0 placeholder is safe because the query is disabled when no
+  // selection — React Query won't fire the request.
+  const rightsQ = useGetUserGroupRights(selectedId ?? 0, {
+    query: { enabled: selectedId != null },
+  });
   const selectedRights = useMemo(() => {
-    if (selectedId == null) return [];
-    // rightsRev forces recompute after a modal save.
-    void rightsRev;
-    return getGroupRights(selectedId)
-      .map((code) => LABEL_BY_CODE.get(code) ?? code)
+    const codes = rightsQ.data ?? [];
+    return codes
+      .map((code) => labelByCode.get(code) ?? code)
       .sort((a, b) => a.localeCompare(b));
-  }, [selectedId, rightsRev]);
+  }, [rightsQ.data, labelByCode]);
 
   const openAdd = () => {
     setEditingGroup(null);
@@ -71,14 +81,11 @@ export default function GroupSetup() {
   const handleCopy = async () => {
     if (!selectedGroup) return;
     try {
-      const created = await createUserGroup({
-        name: `${selectedGroup.name} (copy)`,
-        is_active: true,
-      });
-      setGroupRights(created.id, getGroupRights(selectedGroup.id));
+      // Backend copies the group AND its rights in one transaction.
+      const created = await copyUserGroup(selectedGroup.id);
       await groupsQ.refetch();
       setSelectedId(created.id);
-      setRightsRev((r) => r + 1);
+      // New group id → its own rights query auto-fires; nothing to invalidate.
     } catch (e: any) {
       const detail = e?.response?.data?.error?.message || e?.response?.data?.detail;
       alert(detail || "Failed to copy group.");
@@ -92,7 +99,6 @@ export default function GroupSetup() {
     }
     try {
       await deleteUserGroup(selectedGroup.id);
-      clearGroupRights(selectedGroup.id);
       await groupsQ.refetch();
       setSelectedId(null);
     } catch (e: any) {
@@ -106,7 +112,9 @@ export default function GroupSetup() {
     setEditingGroup(null);
     await groupsQ.refetch();
     setSelectedId(groupId);
-    setRightsRev((r) => r + 1);
+    // Ensure the rights panel reflects the just-saved set even if the user
+    // saved the group that was already selected (id unchanged → no auto-refetch).
+    queryClient.invalidateQueries({ queryKey: getGetUserGroupRightsQueryKey(groupId) });
   };
 
   return (
@@ -205,7 +213,11 @@ export default function GroupSetup() {
                 </div>
 
                 <div className="max-h-[560px] overflow-y-auto divide-y divide-[#F1F5F9]">
-                  {selectedRights.length === 0 ? (
+                  {rightsQ.isLoading || permsQ.isLoading ? (
+                    <div className="py-16 text-center text-sm text-[#64748B]">
+                      Loading assigned rights…
+                    </div>
+                  ) : selectedRights.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <Shield className="mb-2 h-10 w-10 text-[#CBD5E1]" />
                       <p className="text-sm font-bold text-[#64748B]">No rights assigned yet</p>

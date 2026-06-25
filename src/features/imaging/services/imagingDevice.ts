@@ -1,9 +1,10 @@
 import { env } from '@/shared/config/env';
 import {
   DeviceUnavailableError,
+  type DeviceLaunchInput,
   type DeviceScanInput,
   type DeviceScanResult,
-  type DeviceScanStatus,
+  type DeviceStatusResult,
   type ImagingDevice,
 } from '../types';
 
@@ -31,6 +32,16 @@ interface BridgeScanStatus {
   error?: string;
 }
 
+interface BridgeStatusResponse {
+  status?: string;
+  version?: string;
+  vendor?: string;
+  /** EzDent-i / vendor software detected as running. */
+  software_running?: boolean;
+  /** Legacy prototype field name; accepted as a fallback. */
+  vatech_running?: boolean;
+}
+
 const requireBridge = (): string => {
   if (!env.imagingDeviceEnabled || !env.imagingBridgeUrl) {
     throw new DeviceUnavailableError();
@@ -42,15 +53,42 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 export const imagingDevice: ImagingDevice = {
-  async checkStatus(): Promise<DeviceScanStatus> {
-    if (!env.imagingDeviceEnabled || !env.imagingBridgeUrl) return 'unavailable';
+  async checkStatus(): Promise<DeviceStatusResult> {
+    if (!env.imagingDeviceEnabled || !env.imagingBridgeUrl) {
+      return { status: 'unavailable', info: null };
+    }
     try {
       const res = await fetch(`${env.imagingBridgeUrl}/status`, {
         signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
       });
-      return res.ok ? 'idle' : 'error';
+      // Reachable but unhealthy (e.g. 5xx) → distinct error state.
+      if (!res.ok) return { status: 'error', info: null };
+      const data = (await res.json().catch(() => ({}))) as BridgeStatusResponse;
+      return {
+        status: 'idle',
+        info: {
+          version: data.version ?? null,
+          vendor: data.vendor ?? null,
+          software_running: Boolean(data.software_running ?? data.vatech_running),
+        },
+      };
     } catch {
-      return 'error';
+      // Connection refused / timed out → the agent isn't installed or running.
+      // Surface as "unavailable" so the UI offers the first-time setup flow.
+      return { status: 'unavailable', info: null };
+    }
+  },
+
+  async launchSoftware(input: DeviceLaunchInput): Promise<void> {
+    const base = requireBridge();
+    const res = await fetch(`${base}/launch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(data.error || `Failed to launch imaging software (${res.status})`);
     }
   },
 

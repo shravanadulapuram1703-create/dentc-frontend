@@ -1,4 +1,6 @@
 import type { SurfaceKey, SurfaceDef } from './toothLayout';
+import { PatternDefs } from './chartGlyphs';
+import { surfaceFillUrl, surfaceFillDefs, segmentFill } from './glyphFills';
 
 interface SurfaceSelectorProps {
   id: string;
@@ -8,14 +10,13 @@ interface SurfaceSelectorProps {
   posterior: boolean;
   /** Surfaces currently selected for charting. */
   selected: Set<SurfaceKey>;
-  /** Surfaces that already carry a charted condition (shown filled). */
-  charted?: Set<SurfaceKey>;
+  /** Charted surface conditions (code + source colour) → drives the wedge pattern. */
+  surfaceGlyphs?: Map<SurfaceKey, { code: string; color: string }>;
   onToggle: (id: string, surface: SurfaceKey) => void;
+  /** Active module colour (blue/green/red) for the selected surfaces. */
+  selColor?: string;
   size?: number;
 }
-
-const SEL = '#2f7ff0';
-const CHARTED = '#d23b3b';
 
 /**
  * The occlusal "surface picker" beneath/above each tooth: a circle split into a
@@ -27,10 +28,13 @@ export default function SurfaceSelector({
   mesialOnRight,
   posterior,
   selected,
-  charted,
+  surfaceGlyphs,
   onToggle,
+  selColor = '#2f7ff0',
   size = 30,
 }: SurfaceSelectorProps) {
+  const uid = `sg${id}`;
+  const fillDefs = surfaceGlyphs ? surfaceFillDefs(surfaceGlyphs.values()) : [];
   const facial: SurfaceDef = posterior ? { key: 'B', label: 'Buccal' } : { key: 'F', label: 'Facial' };
   const mesial: SurfaceDef = { key: 'M', label: 'Mesial' };
   const distal: SurfaceDef = { key: 'D', label: 'Distal' };
@@ -42,10 +46,20 @@ export default function SurfaceSelector({
   };
   const center: SurfaceDef = posterior ? { key: 'O', label: 'Occlusal' } : { key: 'I', label: 'Incisal' };
 
-  const fill = (key: SurfaceKey) =>
-    selected.has(key) ? SEL : charted?.has(key) ? CHARTED : '#ffffff';
-  const textFill = (key: SurfaceKey) =>
-    selected.has(key) || charted?.has(key) ? '#ffffff' : '#9aa3ad';
+  const fill = (key: SurfaceKey) => {
+    if (selected.has(key)) return selColor;
+    const g = surfaceGlyphs?.get(key);
+    if (g) return surfaceFillUrl(uid, g.code, g.color) ?? g.color;
+    return '#ffffff';
+  };
+  // Light pattern fills (dots/hatch/hound) need dark labels; solid fills need white.
+  const textFill = (key: SurfaceKey) => {
+    if (selected.has(key)) return '#ffffff';
+    const g = surfaceGlyphs?.get(key);
+    if (!g) return '#9aa3ad';
+    const kind = segmentFill(g.code);
+    return kind && kind !== 'solid' ? '#1f2937' : '#ffffff';
+  };
 
   // Geometry: outer circle r=15, inner circle r=6, wedges between.
   const wedges: { key: SurfaceKey; d: string; tx: number; ty: number }[] = [
@@ -57,16 +71,17 @@ export default function SurfaceSelector({
 
   return (
     <svg width={size} height={size} viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+      {fillDefs.length > 0 && <defs><PatternDefs uid={uid} pairs={fillDefs} /></defs>}
       <circle cx="15" cy="15" r="14.3" fill="#ffffff" stroke="#c33b3b" strokeWidth="0.8" />
       {wedges.map((w) => (
-        <g key={w.key} onClick={() => onToggle(id, w.key)} style={{ cursor: 'pointer' }}>
+        <g key={w.key} onClick={(e) => { e.stopPropagation(); onToggle(id, w.key); }} style={{ cursor: 'pointer' }}>
           <path d={w.d} fill={fill(w.key)} stroke="#d8a3a3" strokeWidth="0.6" />
           <text x={w.tx} y={w.ty} fontSize="5.5" textAnchor="middle" dominantBaseline="middle" fill={textFill(w.key)} pointerEvents="none">
             {w.key}
           </text>
         </g>
       ))}
-      <g onClick={() => onToggle(id, center.key)} style={{ cursor: 'pointer' }}>
+      <g onClick={(e) => { e.stopPropagation(); onToggle(id, center.key); }} style={{ cursor: 'pointer' }}>
         <circle cx="15" cy="15" r="5.6" fill={fill(center.key)} stroke="#d8a3a3" strokeWidth="0.6" />
         <text x="15" y="15.3" fontSize="5.5" textAnchor="middle" dominantBaseline="middle" fill={textFill(center.key)} pointerEvents="none">
           {center.key}

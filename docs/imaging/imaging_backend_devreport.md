@@ -118,6 +118,41 @@ is the subject of Gap 7.
 
 ---
 
+## 3b. Phase 2 — Integrated imaging agent (Vatech)
+
+The prototype's device-acquisition idea is now a **first-class, in-repo agent**
+(`imaging-agent/`) — a single Python/FastAPI process replacing the prototype's
+Node-service + spawned-Python-watcher + in-memory/S3 storage.
+
+**What it does:** detects EzDent-i, deep-links a patient (`VTEzBridge /main:chart_no`),
+watches the EzDent-i export folder for a freshly captured image (`watchdog`), and
+streams the bytes back to the browser. **It never persists images** — the web app
+stores them through `patient-documents` (the same path as a manual upload).
+
+**Contract (v1, snake_case, loopback `127.0.0.1:8765`):** `GET /status`,
+`POST /launch`, `POST /scan/start`, `GET /scan/{id}/status`, `GET /scan/{id}/image`.
+Consumed only by [`imagingDevice.ts`](../../src/features/imaging/services/imagingDevice.ts).
+
+**Web changes:**
+- Runtime auto-detect (default loopback URL; `imagingDeviceEnabled` only gates
+  hard-disable). Connection-refused → `unavailable` → first-time **setup card**;
+  reachable-but-5xx → `error`; reachable → `idle` with version/vendor info.
+- Two-tab workspace — **Scan & Capture** (status banner, "Open in imaging
+  software", capture) and **Images** (existing gallery/viewer/tooth-association).
+- `imagingDevice` gained `launchSoftware` + richer `checkStatus` (`DeviceStatusResult`).
+
+**Security:** loopback-only bind, CORS allow-list, optional `X-DentC-Agent-Token`,
+PHI temp files served once then deleted, no cloud credentials.
+
+**Packaging (planned, Phase 4):** PyInstaller single signed `.exe` + per-user
+auto-start + installer; see `imaging-agent/BUILD.md`. This satisfies the spirit of
+**Gap 7** on the frontend side; a backend acquisition endpoint with modality/DICOM
+metadata is still the long-term fix.
+
+**Verified:** agent `/status`, scan/start → folder-watch capture → status →
+image fetch → temp cleanup (served-once → 404), all live; web two-tab UI with
+both `unavailable` (setup card) and `idle` (connected) states live at :5173.
+
 ## 4. Validation checklist (Phase 1)
 
 - [x] Gallery lists patient images from the backend (no mock data).

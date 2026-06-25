@@ -67,8 +67,14 @@ export interface UserDetails {
   is_active: boolean;
   must_change_password: boolean;
   last_login_at: string | null;
+
+  // Audit trail (UserRead) — *_by_name are resolved server-side.
   created_at: string;
   created_by: number | null;
+  created_by_name: string | null;
+  updated_at: string | null;
+  updated_by: number | null;
+  updated_by_name: string | null;
 
   // Structural fields
   short_id: string | null;
@@ -157,6 +163,10 @@ export const fetchUserDetails = async (
     last_login_at: user.last_login_at ?? null,
     created_at: user.created_at,
     created_by: user.created_by ?? null,
+    created_by_name: user.created_by_name ?? null,
+    updated_at: user.updated_at ?? null,
+    updated_by: user.updated_by ?? null,
+    updated_by_name: user.updated_by_name ?? null,
 
     short_id: user.short_id ?? null,
     report_access_provider_id: user.report_access_provider_id ?? null,

@@ -11,8 +11,15 @@ export type ChartSource = 'pre-existing' | 'completed' | 'tx-plan';
 export const SOURCE_COLOR: Record<ChartSource, string> = {
   'pre-existing': '#1d4ed8', // blue
   completed: '#15803d', // green
-  'tx-plan': '#b45309', // red/amber
+  'tx-plan': '#dc2626', // red
 };
+
+/** Translucent variant of a #rrggbb colour — used for selection fills/tints. */
+export function rgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
 
 export function genId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `id-${Math.abs(hash(JSON.stringify(Date)))}`;

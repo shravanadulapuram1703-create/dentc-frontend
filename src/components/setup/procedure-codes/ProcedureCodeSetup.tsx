@@ -88,6 +88,42 @@ function fmtDateTime(value?: string | null): string {
   });
 }
 
+/**
+ * Pull a human-friendly description out of an axios/HTTP error.
+ *
+ * Backend wraps errors as { error: { code, message, details } } and FastAPI
+ * 422 returns `detail` as an array of {loc, msg, type}. The previous handler
+ * just rendered `e.message`, which was always axios's generic "Request failed
+ * with status code 4xx" — masking real causes like a duplicate code (KAN-16).
+ */
+function describeSaveError(e: unknown, fallback: string): string {
+  const err = e as { response?: { status?: number; data?: unknown }; message?: string };
+  const status = err?.response?.status;
+  const data = err?.response?.data as
+    | { error?: { message?: string; details?: string }; detail?: unknown }
+    | undefined;
+  // FastAPI validation array → "field: message" lines.
+  if (Array.isArray(data?.detail)) {
+    const lines = (data.detail as Array<{ loc?: unknown; msg?: string }>)
+      .map((d) => {
+        const loc = Array.isArray(d?.loc) ? (d.loc as unknown[])[d.loc.length - 1] : d?.loc;
+        return loc ? `${loc}: ${d?.msg ?? "invalid value"}` : d?.msg;
+      })
+      .filter(Boolean)
+      .join("\n");
+    return lines || fallback;
+  }
+  if (status === 409) {
+    return "A procedure code with that value already exists — please choose another.";
+  }
+  return (
+    data?.error?.message ||
+    (typeof data?.detail === "string" ? data.detail : undefined) ||
+    err?.message ||
+    fallback
+  );
+}
+
 export default function ProcedureCodeSetup() {
   const [codes, setCodes] = useState<ProcedureCodeRead[]>([]);
   const [stats, setStats] = useState<ProcedureCodeStats | null>(null);
@@ -266,7 +302,7 @@ export default function ProcedureCodeSetup() {
       await loadData();
     } catch (e: unknown) {
       toast.error("Save failed", {
-        description: e instanceof Error ? e.message : "Could not save procedure code",
+        description: describeSaveError(e, "Could not save procedure code"),
       });
     } finally {
       setSaving(false);
@@ -282,7 +318,7 @@ export default function ProcedureCodeSetup() {
       await loadData();
     } catch (e: unknown) {
       toast.error("Delete failed", {
-        description: e instanceof Error ? e.message : "Could not delete procedure code",
+        description: describeSaveError(e, "Could not delete procedure code"),
       });
     } finally {
       setDeletingCode(null);

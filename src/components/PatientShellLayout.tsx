@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useParams, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import GlobalNav from './GlobalNav';
 import PatientSecondaryNav from './PatientSecondaryNav';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
@@ -38,6 +39,7 @@ export default function PatientShellLayout({
 }: PatientShellLayoutProps) {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
+  const { setActivePatient } = useAuth();
   const numericId = patientId ? Number(patientId) : NaN;
   const validId = !Number.isNaN(numericId);
 
@@ -199,11 +201,23 @@ export default function PatientShellLayout({
     alertsQuery.data,
   ]);
 
+  // Persist whichever patient is in context as this user's default, so it
+  // reopens automatically everywhere (no patient prompt) until they switch.
+  useEffect(() => {
+    if (!patient) return;
+    setActivePatient({
+      id: patient.id,
+      name: patient.name,
+      age: patient.age,
+      gender: patient.gender,
+      dob: patient.dob,
+    });
+  }, [patient, setActivePatient]);
+
   const handleClosePatient = () => {
-    // Clear patient context
-    sessionStorage.removeItem('activePatient');
-    // Return to patient search/list (query state clears on unmount)
-    navigate('/patient');
+    // Closing is an explicit "switch patient" intent → show the search picker.
+    // The persisted default patient is left intact on purpose.
+    navigate('/patient?switch=1');
   };
 
   if (loading) {
@@ -238,7 +252,7 @@ export default function PatientShellLayout({
             <h3 className="text-lg font-bold text-red-600 mb-2">Error Loading Patient</h3>
             <p className="text-slate-600 mb-4">{error || 'Patient not found'}</p>
             <button
-              onClick={() => navigate('/patient')}
+              onClick={() => navigate('/patient?switch=1')}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
             >
               Return to Patient Search

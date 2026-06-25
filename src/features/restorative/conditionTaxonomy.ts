@@ -55,6 +55,20 @@ const WHOLE: ConditionDef[] = [
   { code: 'SQUARE_MESIAL', label: 'Square Mesial Root', area: 'whole', drawable: true, color: BLUE },
   { code: 'SQUARE_DISTAL', label: 'Square Distal Root', area: 'whole', drawable: true, color: BLUE },
   { code: 'SQUARE_MIDDLE', label: 'Square Middle Root', area: 'whole', drawable: true, color: BLUE },
+  { code: 'ANKYLOSIS', label: 'Ankylosis', area: 'whole', drawable: true, color: BLUE },
+  { code: 'AVULSION', label: 'Avulsion', area: 'whole', drawable: true, color: RED },
+  { code: 'CONCUSSION', label: 'Concussion', area: 'whole', drawable: true, color: GREY },
+  { code: 'CONGENITALLY_MISSING', label: 'Congenitally Missing', area: 'whole', drawable: true, color: RED },
+  { code: 'ECTOPIC_ERUPTION', label: 'Ectopic Eruption', area: 'whole', drawable: true, color: BLUE },
+  { code: 'GEMINATION', label: 'Gemination', area: 'whole', drawable: true, color: BLUE },
+  { code: 'INTRUSION', label: 'Intrusion', area: 'whole', drawable: true, color: RED },
+  { code: 'LOOSE_TOOTH', label: 'Loose Tooth', area: 'whole', drawable: true, color: RED },
+  { code: 'PARTIALLY_ERUPTED', label: 'Partially Erupted', area: 'whole', drawable: true, color: BLUE },
+  { code: 'PERICORONITIS', label: 'Pericoronitis', area: 'whole', drawable: true, color: RED },
+  { code: 'RETAINED_ROOT', label: 'Retained Root', area: 'whole', drawable: true, color: BLUE },
+  { code: 'ROTATED_MESIAL', label: 'Rotated Mesial', area: 'whole', drawable: true, color: BLUE },
+  { code: 'ROTATED_DISTAL', label: 'Rotated Distal', area: 'whole', drawable: true, color: BLUE },
+  { code: 'TRAUMA', label: 'Trauma', area: 'whole', drawable: true, color: RED },
 ];
 
 // ---- Crown ----------------------------------------------------------------
@@ -79,6 +93,18 @@ const CROWN: ConditionDef[] = [
   { code: 'TOOTHBRUSH_EROSION', label: 'Toothbrush Erosion', area: 'crown', drawable: true, color: PINK },
   { code: 'BRUXISM_WEAR', label: 'Bruxism Wear', area: 'crown', drawable: true, color: PINK },
   { code: 'BRUXISM_NECK_WEAR', label: 'Bruxism Neck Wear', area: 'crown', drawable: true, color: PINK },
+  { code: 'THREE_QUARTER_CROWN', label: '3/4 Crown', area: 'crown', drawable: true, color: GOLD, material_aware: true },
+  { code: 'CHIPPED_H', label: 'Chipped / Fractured (H)', area: 'crown', drawable: true },
+  { code: 'DEMINERALIZATION', label: 'Demineralization / White Spots', area: 'crown', drawable: true, color: BLUE },
+  { code: 'DISCOLORATION', label: 'Discoloration', area: 'crown', drawable: true, color: GREY },
+  { code: 'FLUOROSIS', label: 'Fluorosis', area: 'crown', drawable: true, color: GOLD },
+  { code: 'HYPOCALCIFICATION', label: 'Hypocalcification', area: 'crown', drawable: true, color: GOLD },
+  { code: 'HYPOPLASIA', label: 'Hypoplasia', area: 'crown', drawable: true, color: BLUE },
+  { code: 'PINS', label: 'Pins', area: 'crown', drawable: true, color: GREEN },
+  { code: 'PRE_ERUPTIVE_CARIES', label: 'Pre-Eruptive Caries', area: 'crown', drawable: true, color: PINK },
+  { code: 'STAIN', label: 'Stain', area: 'crown', drawable: true, color: GOLD },
+  { code: 'OPEN_MARGIN_MESIAL', label: 'Open Margin Mesial', area: 'crown', drawable: true, color: BLUE },
+  { code: 'OPEN_MARGIN_DISTAL', label: 'Open Margin Distal', area: 'crown', drawable: true, color: BLUE },
 ];
 
 // ---- Root -----------------------------------------------------------------
@@ -88,12 +114,21 @@ const ROOT: ConditionDef[] = [
   { code: 'ABSCESS', label: 'Abscess', area: 'root', drawable: true, color: RED },
   { code: 'APICOECTOMY', label: 'Apicoectomy', area: 'root', drawable: true, color: RED },
   { code: 'ROOT_TIP', label: 'Root Tip', area: 'root', drawable: true, color: RED },
+  { code: 'ROOT_FRACTURE', label: 'Root Fracture', area: 'root', drawable: true, color: RED },
+  { code: 'ROOT_RESORPTION', label: 'Root Resorption', area: 'root', drawable: true, color: RED },
+  { code: 'PERIAPICAL_LESION', label: 'Periapical Lesion', area: 'root', drawable: true, color: PINK },
+  { code: 'GUTTA_PERCHA', label: 'Gutta-Percha', area: 'root', drawable: true, color: RED },
   { code: 'PULP_INFLAM', label: 'Pulp Inflammation', area: 'root', drawable: false },
   { code: 'PARAPULPAL_PIN', label: 'Parapulpal Pin', area: 'root', drawable: true, color: GREEN },
   { code: 'INFECTION', label: 'Infection', area: 'root', drawable: true, color: RED },
   { code: 'SQUARE_MESIAL', label: 'Square Mesial', area: 'root', drawable: true, color: BLUE },
   { code: 'SQUARE_DISTAL', label: 'Square Distal', area: 'root', drawable: true, color: BLUE },
   { code: 'SQUARE_MIDDLE', label: 'Square Middle', area: 'root', drawable: true, color: BLUE },
+  { code: 'FISTULA', label: 'Fistula', area: 'root', drawable: true, color: RED },
+  { code: 'PARL', label: 'PARL (Periapical Radiolucency)', area: 'root', drawable: true, color: RED },
+  { code: 'PULP_STONES', label: 'Pulp Stones', area: 'root', drawable: true, color: GREY },
+  { code: 'RESORPTION_INTERNAL', label: 'Resorption Internal', area: 'root', drawable: true, color: RED },
+  { code: 'RESORPTION_EXTERNAL', label: 'Resorption External', area: 'root', drawable: true, color: RED },
 ];
 
 // ---- Surface --------------------------------------------------------------
@@ -112,10 +147,20 @@ const SURFACE: ConditionDef[] = [
   { code: 'OPEN_CONTACT_DISTAL', label: 'Open Contact Distal', area: 'surface', drawable: true, color: BLUE },
 ];
 
+// Cervical / neck (CEJ) conditions.
+const JUNCTION: ConditionDef[] = [
+  { code: 'RECESSION', label: 'Recession', area: 'junction', drawable: true, color: PINK },
+  { code: 'ABFRACTION', label: 'Abfraction', area: 'junction', drawable: true, color: PINK },
+  { code: 'CERVICAL_DECAY', label: 'Cervical Decay', area: 'junction', drawable: true },
+  { code: 'CALCULUS', label: 'Calculus', area: 'junction', drawable: false },
+  { code: 'CLASS_V', label: 'Class V', area: 'junction', drawable: true, color: PINK },
+];
+
 const TAXONOMY: Record<ToothArea, ConditionDef[]> = {
   whole: WHOLE,
   crown: CROWN,
   root: ROOT,
+  junction: JUNCTION,
   surface: SURFACE,
 };
 
@@ -135,6 +180,8 @@ for (const def of [
   { code: 'WATCH', label: 'Watch', area: 'whole', drawable: true, color: RED },
   { code: 'ERUPTED', label: 'Erupted', area: 'whole', drawable: true, color: BLUE },
   { code: 'IMPACTED', label: 'Impacted', area: 'whole', drawable: true, color: BLUE },
+  { code: 'RESTORATION', label: 'Restoration', area: 'surface', drawable: true, color: BLUE, material_aware: true, chart_as_default: 'completed' },
+  { code: 'DEFECTIVE', label: 'Defective', area: 'surface', drawable: true, color: RED },
   { code: 'NOTE', label: 'Note', area: 'whole', drawable: false },
 ] as ConditionDef[]) {
   if (!BY_CODE.has(def.code)) BY_CODE.set(def.code, def);

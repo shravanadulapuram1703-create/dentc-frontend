@@ -22,7 +22,7 @@ export interface ChartSettings {
 
 export const DEFAULT_CHART_SETTINGS: ChartSettings = {
   numbering_system: 'UNIVERSAL',
-  dentition: 'permanent',
+  dentition: 'permanent-17',
   wisdom_visible: true,
   occlusal_visible: true,
   show_base: true,

@@ -380,7 +380,16 @@
     color: var(--color-text-muted) !important;
     cursor: not-allowed !important;
   }
-  
+
+  /* Compact selects (dense legacy grids/toolbars). The default select padding
+     above (0.75rem) clips the selected value inside our fixed-height (h-7)
+     controls. Higher specificity than the bare `select` rule in this same layer
+     wins the !important cascade, so the value stays visible. */
+  select.tx-select {
+    padding: 0 1.75rem 0 0.5rem !important;
+    border-width: 1px !important;
+  }
+
   /* Textarea */
   textarea {
     background: var(--color-input-bg) !important;

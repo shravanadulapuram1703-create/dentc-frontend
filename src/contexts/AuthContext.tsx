@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -11,6 +12,10 @@ import { getMeFull, login as login_ } from "@/api/generated/endpoints/auth/auth"
 import type { MeFull } from "@/api/generated/model";
 import { mapAuthError, type AuthError } from "@/features/auth/utils/authErrors";
 import { clearAuthStorageKeepRemembered } from "@/features/auth/rememberMe";
+import {
+  getLastPatient,
+  setLastPatient,
+} from "@/features/patient-context/lastPatientStorage";
 
 /* -------------------- TYPES -------------------- */
 
@@ -146,6 +151,20 @@ function buildAuthState(me: MeFull): {
   return { user, organizations };
 }
 
+/**
+ * The signed-in user's id as last persisted to localStorage (`me_full`), used
+ * to key the persistent "last selected patient" before the React `user` state
+ * has hydrated. Returns `null` when no user is stored.
+ */
+function storedUserId(): string | null {
+  try {
+    const raw = localStorage.getItem("me_full");
+    return raw ? ((JSON.parse(raw) as User | null)?.id ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
 /* -------------------- CONTEXT -------------------- */
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -177,11 +196,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem("current_office") ?? ""
   );
 
-  const [activePatient, setActivePatient] = useState<ActivePatient | null>(
-    null
+  // Restored synchronously from per-user localStorage so the persistent
+  // default patient is available on the very first render (no prompt flash).
+  const [activePatient, setActivePatientState] = useState<ActivePatient | null>(
+    () => getLastPatient(storedUserId()),
   );
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  /* ---------- PERSISTENT DEFAULT PATIENT ---------- */
+  // Single setter for "the patient currently in context". Persists per-user so
+  // the selection survives navigation, refresh, restart, and logout/login, and
+  // mirrors to sessionStorage for any legacy reader. Every patient open flows
+  // through here (via PatientShellLayout), so this is the one capture point.
+  const setActivePatient = useCallback(
+    (patient: ActivePatient | null) => {
+      setActivePatientState(patient);
+      setLastPatient(user?.id ?? storedUserId(), patient);
+      if (patient) {
+        sessionStorage.setItem("activePatient", JSON.stringify(patient));
+      } else {
+        sessionStorage.removeItem("activePatient");
+      }
+    },
+    [user?.id],
+  );
 
   /* ---------- DERIVED: numeric tenant id ---------- */
   // currentOrganization is the display id "ORG-<tenantPk>"; the user's
@@ -227,6 +266,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         localStorage.setItem("me_full", JSON.stringify(restoredUser));
         localStorage.setItem("access_ctx", JSON.stringify(orgs));
+
+        // Restore this user's persistent default patient.
+        setActivePatientState(getLastPatient(restoredUser.id));
 
         const activeOrg = orgs.find((o) => o.is_current) ?? orgs[0];
 
@@ -275,6 +317,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("me_full", JSON.stringify(newUser));
       localStorage.setItem("access_ctx", JSON.stringify(orgs));
 
+      // Reopen this user's persistent default patient (null for a different
+      // user / first-ever login) so we never prompt for a patient again.
+      setActivePatientState(getLastPatient(newUser.id));
+
       const activeOrg =
         orgs.find((o) => o.is_current) ?? orgs[0];
 
@@ -321,7 +367,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setOrganizations([]);
       setCurrentOrganization("");
       setCurrentOffice("");
-      setActivePatient(null);
+      // Clear in-memory context only — the per-user localStorage default
+      // patient is intentionally preserved so it reopens on next login.
+      setActivePatientState(null);
+      sessionStorage.removeItem("activePatient");
       setIsLoggingOut(false);
     }
   };

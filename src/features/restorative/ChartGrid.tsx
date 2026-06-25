@@ -6,6 +6,9 @@ interface ChartGridProps {
   onSelectRow: (id: string) => void;
   onRowDoubleClick?: (id: string) => void;
   loading: boolean;
+  maxHeightPx?: number;
+  /** When set, renders a Maximize button in the header (between Description and Th). */
+  onMaximize?: () => void;
 }
 
 const COLS: { key: keyof GridRow | 'n'; label: string; w: string; align?: 'right' | 'center' }[] = [
@@ -23,9 +26,9 @@ const COLS: { key: keyof GridRow | 'n'; label: string; w: string; align?: 'right
   { key: 'n', label: 'N', w: '34px', align: 'center' },
 ];
 
-export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubleClick, loading }: ChartGridProps) {
+export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubleClick, loading, maxHeightPx = 170, onMaximize }: ChartGridProps) {
   return (
-    <div className="overflow-auto border-t border-slate-300 bg-white" style={{ maxHeight: 170 }}>
+    <div className="overflow-auto border-t border-slate-300 bg-white" style={{ maxHeight: maxHeightPx }}>
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
           <tr style={{ background: 'linear-gradient(180deg,#f3f5f8,#dfe4ea)' }}>
@@ -35,7 +38,21 @@ export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubl
                 className="border-b border-slate-300 px-2 py-1.5 font-semibold text-slate-600"
                 style={{ width: c.w, textAlign: c.align ?? 'left' }}
               >
-                {c.label}
+                {c.key === 'description' && onMaximize ? (
+                  <div className="flex items-center justify-between">
+                    <span>{c.label}</span>
+                    <button
+                      onClick={onMaximize}
+                      title="Maximize table"
+                      className="ml-2 flex items-center gap-1 rounded bg-slate-800 px-2 py-0.5 text-[11px] font-semibold text-white shadow hover:bg-slate-900"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5-5 5 5" /></svg>
+                      Maximize
+                    </button>
+                  </div>
+                ) : (
+                  c.label
+                )}
               </th>
             ))}
           </tr>
@@ -101,14 +118,14 @@ export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubl
 function typeColor(type: string): string {
   if (type.startsWith('PRE')) return '#1d4ed8';
   if (type.startsWith('COMP')) return '#15803d';
-  if (type.startsWith('TX')) return '#b45309';
+  if (type.startsWith('TX')) return '#dc2626';
   return '#334155';
 }
 
-// Subtle per-type row tint (legacy blue/green/red colour coding).
+// Subtle per-type row tint (consistent blue/green/red colour coding).
 function typeRowTint(type: string): string | undefined {
   if (type.startsWith('PRE')) return '#f5f8ff';
   if (type.startsWith('COMP')) return '#f4fbf6';
-  if (type.startsWith('TX')) return '#fef7f1';
+  if (type.startsWith('TX')) return '#fef2f2';
   return undefined;
 }

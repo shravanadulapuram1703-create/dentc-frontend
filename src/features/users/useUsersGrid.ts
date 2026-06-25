@@ -5,6 +5,10 @@ import {
   useListOffices,
   useListTenants,
 } from "@/api/generated/endpoints/organization/organization";
+import {
+  useListUserGroupMemberships,
+  useListUserGroups,
+} from "@/api/generated/endpoints/staff/staff";
 import { mapUsersGrid, type UserGridRow } from "./mapUsersGrid";
 
 // Pilot: fetch a single large page of each resource. Proper cursor/page
@@ -46,6 +50,8 @@ export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult
   const userOfficesQ = useListUserOffices(LIST_PARAMS);
   const officesQ = useListOffices(LIST_PARAMS);
   const tenantsQ = useListTenants(LIST_PARAMS);
+  const groupMembershipsQ = useListUserGroupMemberships(LIST_PARAMS);
+  const groupsQ = useListUserGroups(LIST_PARAMS);
 
   const users = useMemo(
     () =>
@@ -54,8 +60,17 @@ export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult
         userOffices: userOfficesQ.data?.items ?? [],
         offices: officesQ.data?.items ?? [],
         tenants: tenantsQ.data?.items ?? [],
+        userGroupMemberships: groupMembershipsQ.data?.items ?? [],
+        userGroups: groupsQ.data?.items ?? [],
       }),
-    [usersQ.data, userOfficesQ.data, officesQ.data, tenantsQ.data],
+    [
+      usersQ.data,
+      userOfficesQ.data,
+      officesQ.data,
+      tenantsQ.data,
+      groupMembershipsQ.data,
+      groupsQ.data,
+    ],
   );
 
   return {
@@ -64,17 +79,23 @@ export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult
       usersQ.isLoading ||
       userOfficesQ.isLoading ||
       officesQ.isLoading ||
-      tenantsQ.isLoading,
+      tenantsQ.isLoading ||
+      groupMembershipsQ.isLoading ||
+      groupsQ.isLoading,
     isError:
       usersQ.isError ||
       userOfficesQ.isError ||
       officesQ.isError ||
-      tenantsQ.isError,
+      tenantsQ.isError ||
+      groupMembershipsQ.isError ||
+      groupsQ.isError,
     refetch: () => {
       void usersQ.refetch();
       void userOfficesQ.refetch();
       void officesQ.refetch();
       void tenantsQ.refetch();
+      void groupMembershipsQ.refetch();
+      void groupsQ.refetch();
     },
   };
 }

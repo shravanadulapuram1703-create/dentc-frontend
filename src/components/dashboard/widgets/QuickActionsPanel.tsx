@@ -38,7 +38,7 @@ export default function QuickActionsPanel(_props: Props) {
   const actions: QuickAction[] = [
     { label: "Create Patient", icon: UserPlus, to: "/patient/new" },
     { label: "Schedule Appt", icon: CalendarPlus, to: "/scheduler" },
-    { label: "Search Patient", icon: Search, to: "/patient" },
+    { label: "Search Patient", icon: Search, to: "/patient?switch=1" },
     { label: "Check In", icon: LogIn, to: "/scheduler", hint: "On the schedule" },
     { label: "Checkout", icon: LogOut, to: "/scheduler", hint: "On the schedule" },
     { label: "Collect Payment", icon: DollarSign, to: "/patient", hint: "Select a patient" },

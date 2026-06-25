@@ -1,5 +1,5 @@
-import { NUMBERING_LABELS, type NumberingSystem } from './numbering';
-import type { DentitionMode } from './dentition';
+import { useState } from 'react';
+import { DENTITION_BANDS, type DentitionMode } from './dentition';
 
 interface ChartToolbarProps {
   hasSelection: boolean;
@@ -15,21 +15,13 @@ interface ChartToolbarProps {
   onToggleXray: () => void;
   canToothHistory: boolean;
   onToothHistory: () => void;
-  // Phase-3 additions
-  numberingSystem: NumberingSystem;
-  onNumberingChange: (n: NumberingSystem) => void;
-  wisdomVisible: boolean;
-  onToggleWisdom: () => void;
-  occlusalVisible: boolean;
-  onToggleOcclusal: () => void;
-  edentulous: boolean;
-  onToggleEdentulous: () => void;
-  onOpenTemplates: () => void;
-  canNote: boolean;
-  onOpenNote: () => void;
-  // M06 additions
-  lockSelectionTools: boolean; // Tx Plans tab disables Change Dentition + Last Selection (legacy)
-  onOpenInsurance: () => void;
+  /** Tx Plans tab disables Change Dentition + Last Selection (legacy). */
+  lockSelectionTools: boolean;
+  onOpenAda: () => void;
+  /** Timeline date filter (YYYY-MM-DD); empty = no filter. */
+  timelineFrom: string;
+  timelineTo: string;
+  onTimelineChange: (from: string, to: string) => void;
 }
 
 const btn =
@@ -40,11 +32,11 @@ export default function ChartToolbar(props: ChartToolbarProps) {
   const {
     hasSelection, onClearSelection, onLastSelection, dentition, onDentitionChange,
     view, onViewChange, drawMode, onToggleDrawMode, showXray, onToggleXray,
-    canToothHistory, onToothHistory, numberingSystem, onNumberingChange,
-    wisdomVisible, onToggleWisdom, occlusalVisible, onToggleOcclusal,
-    edentulous, onToggleEdentulous, onOpenTemplates, canNote, onOpenNote,
-    lockSelectionTools, onOpenInsurance,
+    canToothHistory, onToothHistory, lockSelectionTools, onOpenAda,
+    timelineFrom, timelineTo, onTimelineChange,
   } = props;
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const timelineActive = !!(timelineFrom || timelineTo);
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-100 px-3 py-2">
@@ -54,11 +46,8 @@ export default function ChartToolbar(props: ChartToolbarProps) {
       <button className={btn} onClick={onLastSelection} disabled={lockSelectionTools} title={lockSelectionTools ? 'Unavailable on Tx Plans' : ''}>
         <Icon path="M4 10h12M4 10l4-4M4 10l4 4" /> Last Selection
       </button>
-      <button className={btn} onClick={onOpenTemplates}>
-        <Icon path="M3 4h6v6H3zM11 4h6v6h-6zM7 14h6v2H7z" /> Templates
-      </button>
-      <button className={btn} onClick={onOpenNote} disabled={!canNote}>
-        <Icon path="M5 3h7l3 3v11H5zM12 3v4h4" /> Note
+      <button className={btn} onClick={onOpenAda} disabled={!hasSelection} title="Add ADA / procedure code">
+        <Icon path="M7 5l-4 5 4 5M13 5l4 5-4 5" /> ADA Codes
       </button>
       <button className={btn} onClick={onToggleDrawMode} style={drawMode ? active : undefined}>
         <Icon path="M4 14l8-8 2 2-8 8H4z" /> Draw Mode
@@ -72,31 +61,10 @@ export default function ChartToolbar(props: ChartToolbarProps) {
       </select>
 
       <select value={dentition} disabled={lockSelectionTools} onChange={(e) => onDentitionChange(e.target.value as DentitionMode)} title={lockSelectionTools ? 'Unavailable on Tx Plans' : 'Change Dentition'} className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 shadow-sm disabled:opacity-50">
-        <option value="permanent">Permanent Dentition</option>
-        <option value="primary">Primary (Pediatric)</option>
-        <option value="mixed">Mixed Dentition</option>
-      </select>
-
-      <select
-        value={numberingSystem}
-        onChange={(e) => onNumberingChange(e.target.value as NumberingSystem)}
-        title="Tooth numbering system"
-        className="rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 shadow-sm"
-      >
-        {(Object.keys(NUMBERING_LABELS) as NumberingSystem[]).map((n) => (
-          <option key={n} value={n}>{NUMBERING_LABELS[n]}</option>
+        {DENTITION_BANDS.map((b) => (
+          <option key={b.id} value={b.id}>{b.label}</option>
         ))}
       </select>
-
-      <button className={btn} onClick={onToggleWisdom} style={!wisdomVisible ? active : undefined} title="Toggle wisdom teeth">
-        <Icon path="M6 4c3 0 8 0 8 6 0 5-2 6-3 6s-1-3-2-3-1 3-2 3-3-1-3-6c0-3 2-6 2-6z" /> Wisdom
-      </button>
-      <button className={btn} onClick={onToggleOcclusal} style={!occlusalVisible ? active : undefined} title="Toggle surface selectors">
-        <Icon path="M10 3a7 7 0 100 14 7 7 0 000-14zM10 7v6M7 10h6" /> Occlusal
-      </button>
-      <button className={btn} onClick={onToggleEdentulous} style={edentulous ? active : undefined} title="Mark arch edentulous (display)">
-        <Icon path="M4 10h12" /> Edentulous
-      </button>
 
       <button className={btn} onClick={onToothHistory} disabled={!canToothHistory}>
         <Icon path="M10 3a7 7 0 100 14 7 7 0 000-14zM10 6v4l3 2" /> Tooth History
@@ -104,12 +72,32 @@ export default function ChartToolbar(props: ChartToolbarProps) {
       <button className={btn} onClick={onToggleXray} style={showXray ? active : undefined}>
         <Icon path="M3 4h14v12H3zM3 8h14M7 4v12" /> Show X-Ray
       </button>
-      <button className={btn} onClick={onOpenInsurance} title="View insurance benefits">
-        <Icon path="M10 2l6 3v5c0 4-3 7-6 8-3-1-6-4-6-8V5z" /> Insurance
-      </button>
 
-      <div className="ml-auto flex items-center gap-2 rounded bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-        <Icon path="M10 3a7 7 0 100 14 7 7 0 000-14zM10 6v4l3 2" stroke="#fff" /> Timeline
+      <div className="relative ml-auto">
+        <button
+          onClick={() => setTimelineOpen((v) => !v)}
+          title="Filter charting by a date range"
+          className="flex items-center gap-2 rounded px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
+          style={{ background: timelineActive ? '#0f766e' : '#0d9488' }}
+        >
+          <Icon path="M10 3a7 7 0 100 14 7 7 0 000-14zM10 6v4l3 2" stroke="#fff" />
+          Timeline{timelineActive ? ' •' : ''}
+        </button>
+        {timelineOpen && (
+          <div className="absolute right-0 z-30 mt-1 w-64 rounded border border-slate-300 bg-white p-3 text-xs text-slate-700 shadow-xl">
+            <div className="mb-2 font-semibold text-slate-600">Show charting between</div>
+            <label className="mb-2 flex items-center justify-between gap-2">From
+              <input type="date" value={timelineFrom} max={timelineTo || undefined} onChange={(e) => onTimelineChange(e.target.value, timelineTo)} className="rounded border border-slate-300 px-2 py-1" />
+            </label>
+            <label className="flex items-center justify-between gap-2">To
+              <input type="date" value={timelineTo} min={timelineFrom || undefined} onChange={(e) => onTimelineChange(timelineFrom, e.target.value)} className="rounded border border-slate-300 px-2 py-1" />
+            </label>
+            <div className="mt-3 flex justify-between">
+              <button onClick={() => onTimelineChange('', '')} disabled={!timelineActive} className="rounded border border-slate-300 px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-40">Clear</button>
+              <button onClick={() => setTimelineOpen(false)} className="rounded bg-teal-600 px-3 py-1 font-semibold text-white hover:bg-teal-700">Done</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

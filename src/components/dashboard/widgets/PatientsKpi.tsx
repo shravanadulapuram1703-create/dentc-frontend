@@ -40,7 +40,7 @@ export default function PatientsKpi({ currentOffice }: Props) {
           tone="slate"
           icon={<Users className="w-4 h-4" />}
           loading={active.isLoading}
-          onClick={() => navigate("/patient")}
+          onClick={() => navigate("/patient?switch=1")}
         />
         <KpiStat
           label="Recall Due"

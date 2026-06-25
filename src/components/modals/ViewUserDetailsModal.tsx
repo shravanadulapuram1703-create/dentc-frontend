@@ -8,6 +8,8 @@ import {
   useListProviders,
 } from "../../api/generated/endpoints/organization/organization";
 import { useListUserGroups } from "../../api/generated/endpoints/staff/staff";
+import { formatUsDateTime } from "../../utils/datetime";
+import { apiAssetUrl } from "../../utils/apiAsset";
 
 /* =========================================================
    TYPES
@@ -135,7 +137,7 @@ export default function ViewUserDetailsModal({
           <div className="flex items-center gap-3">
             {user?.image_url && (
               <img
-                src={user.image_url}
+                src={apiAssetUrl(user.image_url)}
                 alt={user.username}
                 className="w-12 h-12 rounded-full object-cover border-2 border-white/40"
               />
@@ -263,7 +265,10 @@ export default function ViewUserDetailsModal({
                       <ReadOnlyField label="Phone" value={user.phone || "—"} />
                       <ReadOnlyField label="Custom 1" value={user.custom_1 || "—"} />
                       <ReadOnlyField label="Custom 2" value={user.custom_2 || "—"} />
-                      <ReadOnlyField label="Last Login" value={user.last_login_at || "Never"} />
+                      <ReadOnlyField
+                        label="Last Login"
+                        value={user.last_login_at ? formatUsDateTime(user.last_login_at) : "Never"}
+                      />
                     </div>
                   </div>
 
@@ -276,6 +281,25 @@ export default function ViewUserDetailsModal({
                       label="Status"
                       value={user.is_active ? "Active (Can log in)" : "Inactive (Login disabled)"}
                     />
+                  </div>
+
+                  {/* Audit Information (times shown in US Eastern) */}
+                  <div>
+                    <h3 className="font-bold text-[#1F3A5F] mb-4 uppercase tracking-wide border-b-2 border-[#E2E8F0] pb-2">
+                      Audit Information
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <ReadOnlyField label="Created On" value={formatUsDateTime(user.created_at)} />
+                      <ReadOnlyField
+                        label="Created By"
+                        value={user.created_by_name || (user.created_by != null ? `User #${user.created_by}` : "—")}
+                      />
+                      <ReadOnlyField label="Updated On" value={formatUsDateTime(user.updated_at)} />
+                      <ReadOnlyField
+                        label="Updated By"
+                        value={user.updated_by_name || (user.updated_by != null ? `User #${user.updated_by}` : "—")}
+                      />
+                    </div>
                   </div>
 
                   {/* Security & Role */}

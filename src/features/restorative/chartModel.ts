@@ -3,6 +3,7 @@ import type { SurfaceKey } from './toothLayout';
 import type { ToothArea } from './types';
 import { lookupCondition } from './conditionTaxonomy';
 import type { RestorationTemplate } from './restorationTemplates';
+import { SOURCE_COLOR, type ChartSource } from './txPlanModel';
 
 // Adapter between our row-per-condition persistence (chart_conditions) and the
 // rich per-tooth view-model the UI wants. ALL interim encodings live here so the
@@ -10,6 +11,10 @@ import type { RestorationTemplate } from './restorationTemplates';
 // chart_tooth_notes) is a single-file change.
 
 export interface ToothGlyph {
+  /** Source chart_condition id (for edit/delete of e.g. a Watch arrow). */
+  id?: number;
+  /** Source chart_condition notes. */
+  note?: string | null;
   area: ToothArea;
   code: string;
   color: string;
@@ -20,6 +25,8 @@ export interface ToothGlyph {
   group_id?: string | null;
   /** Whole-tooth subtype: unerupted | deciduous | supernumerary | permanent. */
   sub?: string | null;
+  /** Specific root label this glyph applies to (undefined = all roots / n/a). */
+  root?: string | null;
   /** Watch arrow placement (% of the figure box) + compass direction. */
   watch?: { dir: string; x: number; y: number } | null;
 }
@@ -39,10 +46,14 @@ export interface RegionQualifiers {
   /** watch arrow anchor, percent of the figure box. */
   wx?: number | null;
   wy?: number | null;
+  /** specific root label (anatomical) a root-area condition applies to. */
+  root?: string | null;
 }
 
 export interface ToothState {
   surfaces: Set<SurfaceKey>;
+  /** Per-surface charted condition (code + source colour) → drives the wedge pattern. */
+  surfaceGlyphs: Map<SurfaceKey, { code: string; color: string }>;
   glyphs: ToothGlyph[];
   missing: boolean;
   note?: string;
@@ -61,6 +72,7 @@ export function encodeRegion(opts: RegionQualifiers): string | null {
   if (opts.dir) parts.push(`dir=${opts.dir}`);
   if (opts.wx != null) parts.push(`wx=${Math.round(opts.wx)}`);
   if (opts.wy != null) parts.push(`wy=${Math.round(opts.wy)}`);
+  if (opts.root) parts.push(`root=${opts.root}`);
   return parts.length ? parts.join(SEP) : null;
 }
 export function decodeRegion(region: string | null | undefined): RegionQualifiers {
@@ -77,6 +89,7 @@ export function decodeRegion(region: string | null | undefined): RegionQualifier
     else if (k === 'dir') out.dir = v;
     else if (k === 'wx') out.wx = Number(v);
     else if (k === 'wy') out.wy = Number(v);
+    else if (k === 'root') out.root = v;
   }
   return out;
 }
@@ -95,7 +108,7 @@ export function toToothStates(
   const get = (t: string): ToothState => {
     let s = map.get(t);
     if (!s) {
-      s = { surfaces: new Set<SurfaceKey>(), glyphs: [], missing: false, groups: new Set<string>() };
+      s = { surfaces: new Set<SurfaceKey>(), surfaceGlyphs: new Map(), glyphs: [], missing: false, groups: new Set<string>() };
       map.set(t, s);
     }
     return s;
@@ -121,22 +134,34 @@ export function toToothStates(
         if ('MDBLOIF'.includes(ch)) st.surfaces.add(ch as SurfaceKey);
       }
     }
-    const { group_id, grade, sub, dir, wx, wy } = decodeRegion(c.region);
+    const { group_id, grade, sub, dir, wx, wy, root } = decodeRegion(c.region);
     if (group_id) st.groups.add(group_id);
 
     if (code) {
       const def = lookupCondition(code);
       const mat = resolveMaterial?.(c.material_id);
+      // Consistent colour coding: chart_as drives the colour (blue/green/red).
+      const sourceColor = c.chart_as ? SOURCE_COLOR[c.chart_as as ChartSource] : undefined;
+      const glyphColor = sourceColor ?? mat?.color ?? def?.color ?? '#2f7ff0';
+      // Record charted surfaces with their condition so the wedges render the pattern.
+      if (area === 'surface' && c.surface) {
+        for (const ch of c.surface.toUpperCase().split('')) {
+          if ('MDBLOIF'.includes(ch)) st.surfaceGlyphs.set(ch as SurfaceKey, { code, color: glyphColor });
+        }
+      }
       st.glyphs.push({
+        id: c.id,
+        note: c.notes ?? null,
         area,
         code,
-        color: mat?.color ?? def?.color ?? '#2f7ff0',
+        color: glyphColor,
         drawable: def?.drawable ?? true,
         material_id: c.material_id ?? null,
         pattern: mat?.pattern ?? null,
         grade: grade ?? null,
         group_id: group_id ?? null,
         sub: sub ?? null,
+        root: root ?? null,
         watch: code === 'WATCH' && dir ? { dir, x: wx ?? 50, y: wy ?? 40 } : null,
       });
     }

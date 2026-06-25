@@ -18,7 +18,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { components } from '../../styles/theme';
 import { useListPatients } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
@@ -147,7 +148,27 @@ function buildParams(snap: SearchSnapshot, currentOffice: string, page: number):
   return params;
 }
 
-export default function Patient({ onLogout, currentOffice, setCurrentOffice }: PatientProps) {
+/**
+ * Persistent-default-patient guard for the `/patient` entry point.
+ *
+ * If the signed-in user already has a patient in context, we reopen it instead
+ * of showing the search picker — the app must never prompt for a patient when
+ * one is remembered. Reaching the picker on purpose (Search Patient / Close
+ * Patient) is done via `?switch=1`, which bypasses the redirect.
+ */
+export default function Patient(props: PatientProps) {
+  const { activePatient } = useAuth();
+  const [searchParams] = useSearchParams();
+  const wantsSwitch = searchParams.get('switch') === '1';
+
+  if (activePatient?.id && !wantsSwitch) {
+    return <Navigate to={`/patient/${activePatient.id}/overview`} replace />;
+  }
+
+  return <PatientSearchPage {...props} />;
+}
+
+function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: PatientProps) {
   const navigate = useNavigate();
 
   // Form state (uncommitted until SEARCH is pressed).

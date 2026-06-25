@@ -11,6 +11,7 @@ const AREA_LABEL: Record<ToothArea, string> = {
   whole: 'Whole Tooth',
   crown: 'Crown',
   root: 'Root',
+  junction: 'Neck / CEJ',
   surface: 'Surface',
 };
 
