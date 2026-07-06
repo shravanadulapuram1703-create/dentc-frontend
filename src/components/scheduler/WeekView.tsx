@@ -1,4 +1,5 @@
 import type { Appointment } from "../../services/schedulerApi";
+import type { ProviderColor } from "../../utils/providerColor";
 
 interface WeekViewProps {
   /** Any date within the week to render (week runs Sun–Sat). */
@@ -9,8 +10,8 @@ interface WeekViewProps {
   onSelectDay: (date: Date) => void;
   /** Open the edit modal for an appointment. */
   onEditAppointment: (appointment: Appointment) => void;
-  /** Map a procedure-type name to its Tailwind color classes. */
-  getColor: (procedureTypeName: string) => string;
+  /** Resolve an appointment's provider color (matches the day view / legend). */
+  getProviderColor: (appointment: Appointment) => ProviderColor;
 }
 
 const fmtYMD = (d: Date): string =>
@@ -28,7 +29,7 @@ export default function WeekView({
   appointments,
   onSelectDay,
   onEditAppointment,
-  getColor,
+  getProviderColor,
 }: WeekViewProps) {
   // Build the 7 days of the week containing selectedDate (Sunday first).
   const weekStart = new Date(selectedDate);
@@ -78,13 +79,18 @@ export default function WeekView({
               {dayAppts.length === 0 ? (
                 <div className="text-[11px] text-[#94A3B8] px-1 py-2">No appointments</div>
               ) : (
-                dayAppts.map((appt) => (
+                dayAppts.map((appt) => {
+                  const c = getProviderColor(appt);
+                  return (
                   <button
                     key={appt.id}
                     onClick={() => onEditAppointment(appt)}
-                    className={`w-full text-left border-l-4 rounded px-2 py-1 overflow-hidden ${getColor(
-                      appt.procedure_label,
-                    )}`}
+                    className="w-full text-left border-l-4 rounded px-2 py-1 overflow-hidden"
+                    style={{
+                      backgroundColor: c.bg,
+                      borderLeftColor: c.border,
+                      color: c.text,
+                    }}
                     title={`${appt.start_time} ${appt.patient_name} — ${appt.procedure_label}`}
                   >
                     <div className="text-[11px] font-semibold truncate">
@@ -94,7 +100,8 @@ export default function WeekView({
                       {appt.procedure_label}
                     </div>
                   </button>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

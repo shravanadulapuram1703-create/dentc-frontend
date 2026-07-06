@@ -1,5 +1,30 @@
-import GlobalNav from '../GlobalNav';
-import { User, Mail, Phone, MapPin, Calendar, Clock, Lock, Bell } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { UserCog } from "lucide-react";
+import AppShell from "../layout/AppShell";
+import { useAuth } from "../../contexts/AuthContext.js";
+import { useMyProfile } from "../my-page/lib/useMyProfile";
+import { useMySchedule, useMyAlerts } from "../my-page/lib/useMyDay";
+import {
+  loadTasks,
+  saveTasks,
+  loadQuickLinks,
+  saveQuickLinks,
+  loadNotificationPrefs,
+  saveNotificationPrefs,
+  loadCollapsed,
+  saveCollapsed,
+  type MyTask,
+  type QuickLink,
+  type NotificationPrefs,
+} from "../my-page/lib/myPageStorage";
+import MyPageHero from "../my-page/widgets/MyPageHero";
+import MyStatsStrip from "../my-page/widgets/MyStatsStrip";
+import MyScheduleWidget from "../my-page/widgets/MyScheduleWidget";
+import MyTasksWidget from "../my-page/widgets/MyTasksWidget";
+import MyAlertsWidget from "../my-page/widgets/MyAlertsWidget";
+import QuickLinksWidget from "../my-page/widgets/QuickLinksWidget";
+import AccountSettingsSection from "../my-page/widgets/AccountSettingsSection";
+import CollapsibleSection from "../my-page/components/CollapsibleSection";
 
 interface MyPageProps {
   onLogout: () => void;
@@ -7,244 +32,112 @@ interface MyPageProps {
   setCurrentOffice: (office: string) => void;
 }
 
+/**
+ * My Page — the user's personalized home dashboard after login.
+ *
+ * Distinct from the office-wide Dashboard: everything here is scoped to *you* —
+ * your schedule (via your linked provider), your tasks, your shortcuts, your
+ * account. Personal state that has no backend home (tasks, favorites, prefs,
+ * folded panels) persists per-user to localStorage; live data (schedule,
+ * alerts) is derived from the same office feed the Dashboard already caches.
+ */
 export default function MyPage({ onLogout, currentOffice, setCurrentOffice }: MyPageProps) {
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  const profileQuery = useMyProfile();
+  const profile = profileQuery.data?.user;
+  const providerId = profile?.report_access_provider_id ?? null;
+
+  const schedule = useMySchedule(currentOffice, providerId);
+  const { alerts, isLoading: alertsLoading } = useMyAlerts(currentOffice);
+
+  /* ---- Per-user persisted state (rehydrates when the user changes) ---- */
+  const [tasks, setTasks] = useState<MyTask[]>(() => loadTasks(userId));
+  const [quickLinks, setQuickLinks] = useState<QuickLink[]>(() => loadQuickLinks(userId));
+  const [prefs, setPrefs] = useState<NotificationPrefs>(() => loadNotificationPrefs(userId));
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => loadCollapsed(userId));
+
+  useEffect(() => {
+    setTasks(loadTasks(userId));
+    setQuickLinks(loadQuickLinks(userId));
+    setPrefs(loadNotificationPrefs(userId));
+    setCollapsed(loadCollapsed(userId));
+  }, [userId]);
+
+  const updateTasks = useCallback(
+    (next: MyTask[]) => {
+      setTasks(next);
+      saveTasks(userId, next);
+    },
+    [userId],
+  );
+  const updateQuickLinks = useCallback(
+    (next: QuickLink[]) => {
+      setQuickLinks(next);
+      saveQuickLinks(userId, next);
+    },
+    [userId],
+  );
+  const updatePrefs = useCallback(
+    (next: NotificationPrefs) => {
+      setPrefs(next);
+      saveNotificationPrefs(userId, next);
+    },
+    [userId],
+  );
+  const toggleSection = useCallback(
+    (key: string) => {
+      setCollapsed((prev) => {
+        const next = { ...prev, [key]: !prev[key] };
+        saveCollapsed(userId, next);
+        return next;
+      });
+    },
+    [userId],
+  );
+
+  const openTaskCount = useMemo(() => tasks.filter((t) => !t.done).length, [tasks]);
+  const accountOpen = collapsed["account"] === true; // default collapsed
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <GlobalNav 
-        onLogout={onLogout} 
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-      
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <User className="w-8 h-8 text-blue-600" />
-          <div>
-            <h1 className="text-gray-900">My Page</h1>
-            <p className="text-gray-600">Manage your personal settings and preferences</p>
-          </div>
-        </div>
+    <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+      <div className="mx-auto w-full max-w-[1600px] px-4 py-4 sm:px-6 sm:py-6 space-y-6">
+        <MyPageHero
+          name={user?.name}
+          role={user?.role}
+          currentOffice={currentOffice}
+          imageUrl={profile?.image_url}
+          lastLoginAt={profile?.last_login_at}
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Information */}
+        <MyStatsStrip schedule={schedule} openTaskCount={openTaskCount} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-gray-900">Profile Information</h2>
-              </div>
-              <div className="p-6">
-                <div className="flex items-start gap-6 mb-6">
-                  <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-12 h-12 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-2">
-                      Upload Photo
-                    </button>
-                    <p className="text-gray-600">JPG, GIF or PNG. Max size of 2MB</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-gray-700 mb-2">First Name</label>
-                    <input
-                      type="text"
-                      defaultValue="Dr. Sarah"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Last Name</label>
-                    <input
-                      type="text"
-                      defaultValue="Wilson"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="email"
-                        defaultValue="s.wilson@dentalpms.com"
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="tel"
-                        defaultValue="(555) 123-4567"
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-gray-700 mb-2">Role</label>
-                    <input
-                      type="text"
-                      defaultValue="Dentist"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6 flex justify-end gap-3">
-                  <button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                    Cancel
-                  </button>
-                  <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Security Settings */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-gray-900">Security Settings</h2>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2">Current Password</label>
-                    <input
-                      type="password"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">New Password</label>
-                    <input
-                      type="password"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2">Confirm New Password</label>
-                    <input
-                      type="password"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    Update Password
-                  </button>
-                </div>
-              </div>
-            </div>
+            <MyScheduleWidget schedule={schedule} />
+            <MyTasksWidget tasks={tasks} onChange={updateTasks} />
           </div>
-
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-gray-900 mb-4">My Statistics</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                    <span className="text-gray-700">Today's Appointments</span>
-                  </div>
-                  <span className="text-gray-900">12</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-green-600" />
-                    <span className="text-gray-700">My Patients</span>
-                  </div>
-                  <span className="text-gray-900">487</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-orange-600" />
-                    <span className="text-gray-700">Hours This Week</span>
-                  </div>
-                  <span className="text-gray-900">38.5</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Notification Preferences */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-gray-900">Notifications</h2>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-gray-900">Email Notifications</div>
-                      <div className="text-gray-600">Receive email updates</div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-gray-900">SMS Notifications</div>
-                      <div className="text-gray-600">Receive text messages</div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-gray-900">Appointment Reminders</div>
-                      <div className="text-gray-600">Daily appointment summary</div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-gray-900 mb-4">Recent Activity</h2>
-              <div className="space-y-3">
-                <div className="text-gray-700">
-                  <span className="text-gray-900">Login</span>
-                  <div className="text-gray-600">Today, 8:30 AM</div>
-                </div>
-                <div className="text-gray-700">
-                  <span className="text-gray-900">Updated patient record</span>
-                  <div className="text-gray-600">Yesterday, 3:45 PM</div>
-                </div>
-                <div className="text-gray-700">
-                  <span className="text-gray-900">Created invoice</span>
-                  <div className="text-gray-600">Yesterday, 2:20 PM</div>
-                </div>
-              </div>
-            </div>
+            <MyAlertsWidget alerts={alerts} isLoading={alertsLoading} />
+            <QuickLinksWidget links={quickLinks} onChange={updateQuickLinks} />
           </div>
         </div>
+
+        <CollapsibleSection
+          title="Account & Settings"
+          icon={<UserCog className="w-4 h-4" />}
+          open={accountOpen}
+          onToggle={() => toggleSection("account")}
+        >
+          <AccountSettingsSection
+            profile={profile}
+            role={user?.role}
+            prefs={prefs}
+            onPrefsChange={updatePrefs}
+          />
+        </CollapsibleSection>
       </div>
-    </div>
+    </AppShell>
   );
 }

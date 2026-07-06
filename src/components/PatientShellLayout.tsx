@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useParams, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import GlobalNav from './GlobalNav';
+import AppShell from './layout/AppShell';
 import PatientSecondaryNav from './PatientSecondaryNav';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useGetPatient, useListPatientAlerts } from '@/api/generated/endpoints/patients/patients';
@@ -222,31 +222,21 @@ export default function PatientShellLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <GlobalNav 
-          onLogout={onLogout} 
-          currentOffice={currentOffice}
-          setCurrentOffice={setCurrentOffice}
-        />
-        <div className="flex items-center justify-center h-[calc(100vh-180px)]">
+      <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} bgClassName="bg-slate-50">
+        <div className="flex items-center justify-center h-[calc(100vh-var(--app-nav-height))]">
           <div className="text-center">
             <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
             <p className="text-slate-600 font-medium">Loading patient...</p>
           </div>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
   if (error || !patient) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <GlobalNav 
-          onLogout={onLogout} 
-          currentOffice={currentOffice}
-          setCurrentOffice={setCurrentOffice}
-        />
-        <div className="flex items-center justify-center h-[calc(100vh-180px)]">
+      <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} bgClassName="bg-slate-50">
+        <div className="flex items-center justify-center h-[calc(100vh-var(--app-nav-height))]">
           <div className="text-center bg-white rounded-lg shadow-md border-2 border-red-200 p-6 max-w-md">
             <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-red-600 mb-2">Error Loading Patient</h3>
@@ -259,24 +249,20 @@ export default function PatientShellLayout({
             </button>
           </div>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Global Navigation - Always Visible */}
-      <GlobalNav 
-        onLogout={onLogout} 
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-
-      {/* ✅ STEP 3: Hard vertical offset for fixed GlobalNav */}
-      {/* DO NOT REMOVE: Required to prevent patient info from being covered by fixed navigation */}
-      <div className="pt-[120px]">
-        {/* PATIENT CONTEXT SHELL - Persistent Container */}
-        <div className="bg-white border-b-2 border-slate-200 shadow-sm">
+    <AppShell
+      onLogout={onLogout}
+      currentOffice={currentOffice}
+      setCurrentOffice={setCurrentOffice}
+      bgClassName="bg-slate-50"
+    >
+      {/* PATIENT CONTEXT SHELL - Persistent, sticks right below the fixed nav so
+          the patient identity + tab bar stay visible while content scrolls. */}
+      <div className="bg-white border-b-2 border-slate-200 shadow-sm sticky top-[var(--app-nav-height)] z-30">
           {/* Patient Summary Header */}
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
@@ -377,7 +363,6 @@ export default function PatientShellLayout({
         <div className="min-h-[calc(100vh-400px)]">
           <Outlet context={{ patient }} />
         </div>
-      </div>
-    </div>
+    </AppShell>
   );
 }

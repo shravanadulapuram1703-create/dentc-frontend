@@ -19,6 +19,8 @@ import {
   updateAppointment as updateAppointmentApi,
   updateAppointmentStatus as updateAppointmentStatusApi,
   deleteAppointment as deleteAppointmentApi,
+  listAppointments,
+  listAppointmentProcedures,
 } from "@/api/generated/endpoints/appointments/appointments";
 import {
   listOperatories,
@@ -28,8 +30,20 @@ import {
 import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
 import { listTreatmentPlans } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
-import { getPatient } from "@/api/generated/endpoints/patients/patients";
-import type { AppointmentRead, AppointmentSchedulerRead } from "@/api/generated/model";
+import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
+import {
+  getPatient,
+  getPatientContext,
+  listPatientAlerts,
+} from "@/api/generated/endpoints/patients/patients";
+import type {
+  AppointmentRead,
+  AppointmentSchedulerRead,
+  AppointmentProcedureRead,
+  SchedulerPatientRead,
+  PatientAlertRead,
+  PatientBalance,
+} from "@/api/generated/model";
 
 // The backend caps `size` at 200 on every list endpoint (see Orval param models,
 // e.g. ListProvidersParams `@maximum 200`). Sending more — `size: 500` was the
@@ -101,6 +115,12 @@ export interface Appointment {
   lab_recvd_on?: string;
   missed?: boolean;
   cancelled?: boolean;
+  is_new_patient?: boolean;
+  is_blocked?: boolean;
+  /** Server-owned status timestamps (set by PATCH /appointments/{id}/status). */
+  confirmed_on?: string | null;
+  checked_in_on?: string | null;
+  checked_out_on?: string | null;
   campaign_id?: string;
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
@@ -120,6 +140,9 @@ export interface Provider {
   id: string;
   name: string;
   office?: string;
+  /** Hex color set on the Provider Setup screen (ProviderRead.scheduler_color).
+   *  Drives the provider's appointment color on the scheduler. */
+  scheduler_color?: string | null;
 }
 
 export interface ProcedureType {
@@ -284,6 +307,11 @@ const mapAppointment = (
   lab_recvd_on: a.lab_received_on ?? undefined,
   missed: a.is_missed ?? undefined,
   cancelled: a.is_cancelled ?? undefined,
+  is_new_patient: a.is_new_patient ?? undefined,
+  is_blocked: a.is_blocked ?? undefined,
+  confirmed_on: a.confirmed_on ?? null,
+  checked_in_on: a.checked_in_on ?? null,
+  checked_out_on: a.checked_out_on ?? null,
   campaign_id: a.campaign_id ?? undefined,
   treatment_plan_id: a.treatment_plan_id ?? undefined,
 });
@@ -348,6 +376,10 @@ const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
   provider_name: a.provider_name ?? "",
   missed: a.is_missed ?? undefined,
   cancelled: a.is_cancelled ?? undefined,
+  is_blocked: a.is_blocked ?? undefined,
+  confirmed_on: a.confirmed_on ?? null,
+  checked_in_on: a.checked_in_on ?? null,
+  checked_out_on: a.checked_out_on ?? null,
 });
 
 export const fetchAppointments = async (
@@ -514,6 +546,244 @@ export const updateAppointmentStatus = async (
   return mapSchedulerAppointment(updated);
 };
 
+// ===== APPOINTMENT DETAILS (left-click pop-out) =====
+
+/** A single procedure line attached to the appointment (shown in the details
+ *  window's procedure grid and used to total the estimated patient portion). */
+export interface AppointmentProcedureLine {
+  id: number;
+  tooth: string;
+  procedure_code: string;
+  description: string;
+  fee: number;
+  insurance_estimate: number;
+  est_patient: number;
+  status: string;
+}
+
+/** A related appointment row (upcoming for this patient, or same-day family). */
+export interface RelatedAppointment {
+  id: string;
+  date: string;
+  time: string;
+  office: string;
+  operatory_name: string;
+  status: string;
+  provider_name: string;
+  duration: number;
+  patient_name?: string;
+}
+
+/** A per-patient medical alert (the red-cross badge on the appointment). */
+export interface PatientMedicalAlert {
+  id: number;
+  alert: string;
+  blocks_charges: boolean;
+}
+
+/** A patient's computed account balance (drives the $ badge on the block and
+ *  the balance line in the details pop-out). `balance` > 0 ⇒ money is owed. */
+export interface PatientBalanceInfo {
+  balance: number; // total account balance (charges − payments)
+  patient_balance: number; // patient-responsibility portion
+  insurance_balance: number; // outstanding expected-insurance portion
+  total_charged: number;
+  total_paid: number;
+}
+
+const toNum = (v: unknown): number => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** Map the typed PatientBalance (or the untyped context.balance dict, whose
+ *  shape is identical) to the FE balance view-model. */
+const mapPatientBalance = (
+  b: PatientBalance | Record<string, unknown> | null | undefined,
+): PatientBalanceInfo | null => {
+  if (!b) return null;
+  const src = b as Record<string, unknown>;
+  return {
+    balance: toNum(src.account_balance ?? src.balance),
+    patient_balance: toNum(src.patient_balance),
+    insurance_balance: toNum(src.insurance_balance),
+    total_charged: toNum(src.total_charged),
+    total_paid: toNum(src.total_paid),
+  };
+};
+
+/**
+ * Fully-hydrated appointment details for the left-click pop-out (PDF pages 6–7):
+ * patient demographics + phones + current/preferred provider + responsible-party
+ * type + preferred language; the appointment time/procedures/fees; created &
+ * modified stamps; the status-timestamp grid; upcoming + same-day family
+ * appointments; and the patient's medical alerts.
+ */
+export interface AppointmentDetails {
+  appointment: Appointment;
+  patient: SchedulerPatientRead | null;
+  phones: { home: string; work: string; cell: string };
+  provider_name: string;
+  preferred_provider: string;
+  responsible_party_type: string;
+  preferred_language: string;
+  procedures: AppointmentProcedureLine[];
+  est_patient_total: number;
+  fee_total: number;
+  balance: PatientBalanceInfo | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  upcoming: RelatedAppointment[];
+  family: RelatedAppointment[];
+  alerts: PatientMedicalAlert[];
+}
+
+const num = (v: string | number | null | undefined): number => {
+  if (v == null || v === "") return 0;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const mapProcedureLine = (p: AppointmentProcedureRead): AppointmentProcedureLine => {
+  const fee = num(p.fee);
+  const ins = num(p.insurance_estimate);
+  return {
+    id: p.id,
+    tooth: p.tooth ?? "",
+    procedure_code: p.procedure_code,
+    description: p.description ?? "",
+    fee,
+    insurance_estimate: ins,
+    est_patient: Math.max(fee - ins, 0),
+    status: p.status ?? "",
+  };
+};
+
+/** Fetch everything the details pop-out needs, in parallel. Degrades field-by-
+ *  field: a failed sub-fetch leaves that section empty rather than failing the
+ *  whole window. */
+export const fetchAppointmentDetails = async (
+  appt: Appointment,
+): Promise<AppointmentDetails> => {
+  const today = appt.date;
+
+  const [providersRes, operatoriesRes, proceduresRes, ctxRes, alertsRes, rawRes] =
+    await Promise.all([
+      listProviders(PAGE).catch(() => null),
+      listOperatories(PAGE).catch(() => null),
+      listAppointmentProcedures({ appointment_id: appt.id, ...PAGE }).catch(
+        () => null,
+      ),
+      appt.patient_id != null
+        ? getPatientContext(appt.patient_id).catch(() => null)
+        : Promise.resolve(null),
+      appt.patient_id != null
+        ? listPatientAlerts({ patient_id: appt.patient_id, is_active: true, ...PAGE }).catch(
+            () => null,
+          )
+        : Promise.resolve(null),
+      getAppointmentApi(appt.id).catch(() => null),
+    ]);
+
+  const providerNames = namesMap(providersRes?.items);
+  const operatoryNames = namesMap(operatoriesRes?.items);
+
+  const procedures = (proceduresRes?.items ?? []).map(mapProcedureLine);
+  const est_patient_total = procedures.reduce((s, p) => s + p.est_patient, 0);
+  const fee_total = procedures.reduce((s, p) => s + p.fee, 0);
+
+  const patient = ctxRes?.patient ?? null;
+  const preferred_provider =
+    (patient?.preferred_provider_id != null &&
+      providerNames.get(String(patient.preferred_provider_id))) ||
+    (patient?.preferred_provider_id ? String(patient.preferred_provider_id) : "");
+
+  // Upcoming appointments for this patient (from today, ascending).
+  let upcoming: RelatedAppointment[] = [];
+  if (appt.patient_id != null) {
+    const up = await listAppointments({
+      patient_id: appt.patient_id,
+      date_from: today,
+      sort: "date",
+      order: "asc",
+      size: 25,
+    }).catch(() => null);
+    upcoming = (up?.items ?? [])
+      .filter((a) => a.id !== appt.id && !a.is_cancelled)
+      .map((a) => ({
+        id: a.id,
+        date: a.date,
+        time: a.start_time,
+        office: String(a.office_id ?? ""),
+        operatory_name:
+          (a.operatory_id != null && operatoryNames.get(String(a.operatory_id))) ||
+          (a.operatory_id ? String(a.operatory_id) : ""),
+        status: a.status,
+        provider_name:
+          (a.provider_id != null && providerNames.get(String(a.provider_id))) ||
+          (a.provider_id ? String(a.provider_id) : ""),
+        duration: a.duration,
+      }));
+  }
+
+  return {
+    appointment: appt,
+    patient,
+    phones: {
+      home: patient?.phone ?? "",
+      work: patient?.work_phone ?? "",
+      cell: patient?.cell_phone ?? "",
+    },
+    provider_name: appt.provider_name,
+    preferred_provider,
+    responsible_party_type: patient?.patient_type ?? "",
+    preferred_language: patient?.preferred_language ?? "",
+    procedures,
+    est_patient_total,
+    fee_total,
+    // The context aggregate already carries the balance — no extra call.
+    balance: mapPatientBalance(ctxRes?.balance),
+    created_at: rawRes?.created_at ?? null,
+    updated_at: rawRes?.updated_at ?? null,
+    upcoming,
+    // Same-day family/account appointments require a responsible-party linkage
+    // the backend does not expose on the feed — documented as a gap; left empty.
+    family: [],
+    alerts: (alertsRes?.items ?? []).map((a: PatientAlertRead) => ({
+      id: a.id,
+      alert: a.alert,
+      blocks_charges: a.blocks_charges,
+    })),
+  };
+};
+
+/** Fetch just the patient's active medical alerts (red-cross badge / popover). */
+export const fetchPatientAlerts = async (
+  patientId: number | null | undefined,
+): Promise<PatientMedicalAlert[]> => {
+  if (patientId == null) return [];
+  const res = await listPatientAlerts({
+    patient_id: patientId,
+    is_active: true,
+    ...PAGE,
+  }).catch(() => null);
+  return (res?.items ?? []).map((a: PatientAlertRead) => ({
+    id: a.id,
+    alert: a.alert,
+    blocks_charges: a.blocks_charges,
+  }));
+};
+
+/** Fetch a patient's computed account balance (the $ badge on the block). Uses
+ *  the dedicated cached-aggregate endpoint GET /patients/{id}/balance. */
+export const fetchPatientBalance = async (
+  patientId: number | null | undefined,
+): Promise<PatientBalanceInfo | null> => {
+  if (patientId == null) return null;
+  const b = await getPatientBalance(patientId).catch(() => null);
+  return mapPatientBalance(b);
+};
+
 // ===== REFERENCE DATA =====
 
 export const fetchOperatories = async (
@@ -544,6 +814,7 @@ export const fetchProviders = async (
     id: String(p.id),
     name: p.name,
     office: p.office_id != null ? String(p.office_id) : undefined,
+    scheduler_color: p.scheduler_color ?? null,
   }));
 };
 

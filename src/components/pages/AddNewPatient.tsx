@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import GlobalNav from "../GlobalNav";
+import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
 import { checkDuplicatePatient } from "../../services/patient.service";
 import { DuplicatePatient } from "../../types/patient";
@@ -607,15 +607,8 @@ export default function AddNewPatient({
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav
-        onLogout={onLogout}
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-
-      {/* Content with top padding */}
-      <div className="pt-[120px]">
+    <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+      <div>
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4">
           <div className="flex items-center justify-between">
@@ -2191,6 +2184,6 @@ export default function AddNewPatient({
           </div>
         </div>
       )}
-    </div>
+    </AppShell>
   );
 }

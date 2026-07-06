@@ -23,12 +23,15 @@ import PrescriptionsPage from './features/prescriptions/PrescriptionsPage';
 import LabTrackingPage from './features/lab-tracking/LabTrackingPage';
 import { InsurancePlanScreen } from './features/patient-insurance';
 import Reports from './components/pages/Reports';
+import ReportRunnerPage from './components/reports/pages/ReportRunnerPage';
 import Utilities from './components/pages/Utilities';
+import UtilityRunnerPage from './components/utilities/pages/UtilityRunnerPage';
+import { legacyRedirects as utilityLegacyRedirects } from './components/utilities/utilityCatalog';
 import Setup from './components/pages/Setup';
 import Help from './components/pages/Help';
 import MyPage from './components/pages/MyPage';
 import PlaceholderPage from './components/PlaceholderPage';
-import GlobalNav from './components/GlobalNav';
+import AppShell from './components/layout/AppShell';
 import PatientNotesListing from './components/patient/PatientNotesListing';
 import PatientDocuments from './components/patient/PatientDocuments';
 import { ImagingWorkspace } from './features/imaging';
@@ -73,6 +76,7 @@ import CustomToolbarSetup from './components/setup/custom-toolbar/CustomToolbarS
 import { Loader2 } from 'lucide-react';
 import AIChat from './components/ai-chat/AIChat';
 import AddNewPatient from './components/pages/AddNewPatient';
+import { HelpProvider } from './components/help';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -87,16 +91,14 @@ function AdminPageWrapper({
   setCurrentOffice: (office: string) => void;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <GlobalNav 
-        onLogout={onLogout} 
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-      <div className="pt-[120px]">
-        {children}
-      </div>
-    </div>
+    <AppShell
+      onLogout={onLogout}
+      currentOffice={currentOffice}
+      setCurrentOffice={setCurrentOffice}
+      bgClassName="bg-slate-50"
+    >
+      {children}
+    </AppShell>
   );
 }
 
@@ -220,13 +222,31 @@ function AppRoutes() {
           isAuthenticated ? 
           <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
             <Reports onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-          </AdminPageWrapper> : 
+          </AdminPageWrapper> :
           <Navigate to="/login" />
-        } 
+        }
       />
-      
+
+      {/* Reports - Generic runner (filter → preview → export). See src/components/reports/reportCatalog.ts */}
+      <Route
+        path="/reports/run/:reportId"
+        element={
+          isAuthenticated ?
+          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+            <ReportRunnerPage onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
+          </AdminPageWrapper> :
+          <Navigate to="/login" />
+        }
+      />
+
+      {/* Nav category entries → matching runner report (others remain placeholders below) */}
+      <Route path="/reports/ledger" element={<Navigate to="/reports/run/production" replace />} />
+      <Route path="/reports/appointment" element={<Navigate to="/reports/run/appointments" replace />} />
+      <Route path="/reports/treatment-plan" element={<Navigate to="/reports/run/treatment-plans" replace />} />
+      <Route path="/reports/insurance" element={<Navigate to="/reports/run/insurance-claims" replace />} />
+
       {/* Reports - Lists */}
-      <Route path="/reports/lists/patient-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Patient List" /></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/reports/lists/patient-list" element={<Navigate to="/reports/run/patient-list" replace />} />
       <Route path="/reports/lists/responsible-party-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Responsible Party List" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/reports/lists/provider-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider List" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/reports/lists/security-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Security List" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -246,68 +266,36 @@ function AppRoutes() {
       <Route 
         path="/utilities" 
         element={
-          isAuthenticated ? 
-          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
-            <Utilities onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-          </AdminPageWrapper> : 
+          isAuthenticated ?
+          <Utilities onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> :
           <Navigate to="/login" />
         } 
       />
       
-      {/* Utilities - Generate Contract Charges */}
-      <Route path="/utilities/generate-contract-charges/ortho-payment-plan" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Generate Ortho Payment Plan Charges" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/generate-contract-charges/regular-payment-plan" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Generate Regular Payment Plan Charges" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/generate-contract-charges/by-practice" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Generate Charges by Practice" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Utilities - Batch & Claims */}
-      <Route path="/utilities/batch-claims/eclaims-new" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Batch Claims Processing – EClaims (New)" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/batch-claims/paper-med" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Batch Claims Processing – Paper / Med EClaims" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/batch-claims/eclaims-management" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="EClaims Management" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/batch-claims/batch-eligibility" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Batch Eligibility" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/batch-claims/close-out-managed-care" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Close Out Managed Care Claims" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/batch-claims/referral-management" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Referral Management" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Utilities - Insurance/Procedure */}
-      <Route path="/utilities/insurance-procedure/consolidate-duplicate-plans" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Consolidate Duplicate Plans" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/insurance-procedure/consolidate-duplicate-carriers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Consolidate Duplicate Carriers" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/insurance-procedure/new-plan-assignment" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="New Plan Assignment" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/insurance-procedure/procedure-code-replace" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Procedure Code Replace" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/insurance-procedure/coverage-category-copy" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Coverage Category Copy" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Utilities - PGID */}
-      <Route path="/utilities/pgid/change-future-appointments" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Change Future Appointments" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/pgid/data-conversion-mapping" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Data Conversion Mapping" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/pgid/change-patient-fee-schedule" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Change Patient Fee Schedule" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/pgid/change-patient-home-office" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Change Patient Home Office" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Utilities - Office Specific */}
-      <Route path="/utilities/office-specific/access-dental/direct-claims" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Access Dental - Direct Claims" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/office-specific/access-dental/encounter-info-cap-plans" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Access Dental - Encounter Info Cap Plans" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/office-specific/dha" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="DHA Utilities" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/office-specific/universal" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Universal Utilities" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/office-specific/cs-benefits" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="CS Benefits" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/office-specific/dca" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="DCA Utilities" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/office-specific/corro-maduro" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Corro Maduro" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Utilities - User Functions */}
-      <Route path="/utilities/user-functions/tickler" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Tickler" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/user-functions/timeclock" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Timeclock" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/user-functions/timeclock-editor" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Timeclock Editor" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Utilities - Launch */}
-      <Route path="/utilities/launch/appointnow" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="AppointNow" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/launch/automated-campaigns" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Automated Campaigns" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/launch/apteryx-dcv" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Apteryx DCV" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/utilities/launch/xvw-web" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="XVW Web" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
+      {/* Utilities - Generic runner (RBAC-gated, param → confirm → run → audit).
+          See src/components/utilities/utilityCatalog.ts */}
+      <Route
+        path="/utilities/run/:utilityId"
+        element={
+          isAuthenticated ?
+          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+            <UtilityRunnerPage />
+          </AdminPageWrapper> :
+          <Navigate to="/login" />
+        }
+      />
+
+      {/* Legacy Utilities nav paths → matching modern runner (generated from the catalog). */}
+      {utilityLegacyRedirects().map((r) => (
+        <Route key={r.from} path={r.from} element={<Navigate to={r.to} replace />} />
+      ))}
+
       {/* SETUP (Strict Admin Context) */}
       <Route 
         path="/setup" 
         element={
-          isAuthenticated ? 
-          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
-            <Setup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-          </AdminPageWrapper> : 
+          isAuthenticated ?
+          <Setup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> :
           <Navigate to="/login" />
         } 
       />
@@ -463,13 +451,17 @@ function AppContent() {
   const { chatWidth } = useAIChat();
 
   return (
-    <div 
-      style={{ 
+    <div
+      style={{
         marginRight: chatWidth > 0 ? `${chatWidth}px` : '0',
         transition: 'margin-right 0.3s ease-in-out'
       }}
     >
-      <AppRoutes />
+      {/* HelpProvider exposes Report-an-Issue app-wide (nav menu, floating button,
+          Help Center) and owns the single support-ticket dialog. */}
+      <HelpProvider>
+        <AppRoutes />
+      </HelpProvider>
       <LogoutOverlay />
       {/* Global AI Chat Assistant - Available on all screens */}
       <AIChat />

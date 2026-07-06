@@ -65,14 +65,18 @@ import {
   BookOpen,
   ClipboardCheck,
   Loader2,
+  LifeBuoy,
+  Bug,
+  MessageCircle,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { SubmenuPortal } from "./navigation/SubmenuPortal";
 import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth, type Office } from "../contexts/AuthContext.js";
 import { useAIChat } from "../contexts/AIChatContext.js";
+import { useHelp } from "./help";
 import api from "../services/api.js";
 import { listOffices } from "@/api/generated/endpoints/organization/organization";
 
@@ -81,6 +85,9 @@ export interface GlobalNavProps {
   currentOffice: string;
   setCurrentOffice: (office: string) => void;
 }
+
+/** Menu-item "path" that opens the Report an Issue dialog instead of navigating. */
+const REPORT_ISSUE_SENTINEL = "__report_issue__";
 
 // State management for multi-level menu navigation
 interface MenuPathNode {
@@ -103,6 +110,10 @@ export default function GlobalNav({
   // Get chat width to adjust GlobalNav position
   // GlobalNav is always within AIChatProvider context (wraps Router)
   const { chatWidth } = useAIChat();
+
+  // Report-an-Issue launcher (Help dropdown). GlobalNav renders inside
+  // HelpProvider (see App.tsx), so this is always available.
+  const { openReportIssue } = useHelp();
   
   // CLICK-DRIVEN STATE MANAGEMENT
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -121,6 +132,35 @@ export default function GlobalNav({
   const submenuRefs = useRef<{
     [key: string]: HTMLDivElement | null;
   }>({});
+
+  // Root element of the fixed nav. We measure its actual rendered height and
+  // publish it to the `--app-nav-height` CSS variable so every page can reserve
+  // the correct space regardless of breakpoint, wrapping, or zoom level. This is
+  // the single source of truth that replaces the brittle hard-coded pt-[120px].
+  const navRootRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = navRootRef.current;
+    if (!el) return;
+
+    const publishHeight = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      if (h > 0) {
+        document.documentElement.style.setProperty("--app-nav-height", `${h}px`);
+      }
+    };
+
+    publishHeight();
+
+    const ro = new ResizeObserver(publishHeight);
+    ro.observe(el);
+    window.addEventListener("resize", publishHeight);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", publishHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -232,199 +272,200 @@ export default function GlobalNav({
       path: "/patient/new",
       icon: UserPlus,
     },
-    {
-      label: "Add New Member",
-      path: "/patient/member/new",
-      icon: Users,
-    },
-    {
-      label: "Add / Link Ortho Patient",
-      path: "/patient/ortho/link",
-      icon: Link2,
-    },
+    // --- Hidden per request: items below are commented out until needed ---
+    // {
+    //   label: "Add New Member",
+    //   path: "/patient/member/new",
+    //   icon: Users,
+    // },
+    // {
+    //   label: "Add / Link Ortho Patient",
+    //   path: "/patient/ortho/link",
+    //   icon: Link2,
+    // },
     { type: "divider" },
     {
       label: "Patient Overview",
       path: "/patient/:patientId/overview",
       icon: User,
     },
-    {
-      label: "Patient Information",
-      path: "/patient/:patientId/information",
-      icon: FileText,
-    },
-    {
-      label: "Responsible Party",
-      path: "/patient/:patientId/responsible-party",
-      icon: UserCheck,
-    },
-    {
-      label: "Recall Due Dates",
-      path: "/patient/:patientId/recall",
-      icon: CalendarClock,
-    },
-    {
-      label: "Medical History",
-      path: "/patient/:patientId/medical",
-      icon: Heart,
-    },
-    {
-      label: "Prescriptions",
-      path: "/patient/:patientId/prescriptions",
-      icon: Pill,
-    },
-    {
-      label: "Payment Plan",
-      icon: Receipt,
-      submenu: [
-        {
-          label: "Regular Payment Plan",
-          path: "/patient/:patientId/payment-plan/regular",
-        },
-        {
-          label: "Ortho Payment Plan",
-          path: "/patient/:patientId/payment-plan/ortho",
-        },
-      ],
-    },
-    {
-      label: "Insurance Information",
-      icon: Shield,
-      submenu: [
-        {
-          label: "Dental Insurance",
-          submenu: [
-            {
-              label: "Primary Dental",
-              path: "/patient/:patientId/insurance/dental/primary",
-            },
-            {
-              label: "Secondary Dental",
-              path: "/patient/:patientId/insurance/dental/secondary",
-            },
-            {
-              label: "Tertiary Dental",
-              path: "/patient/:patientId/insurance/dental/tertiary",
-            },
-            {
-              label: "Quaternary Dental",
-              path: "/patient/:patientId/insurance/dental/quaternary",
-            },
-          ],
-        },
-        {
-          label: "Medical Insurance",
-          submenu: [
-            {
-              label: "Primary Medical",
-              path: "/patient/:patientId/insurance/medical/primary",
-            },
-            {
-              label: "Secondary Medical",
-              path: "/patient/:patientId/insurance/medical/secondary",
-            },
-            {
-              label: "Tertiary Medical",
-              path: "/patient/:patientId/insurance/medical/tertiary",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      label: "Insurance Fill-Out Forms",
-      icon: FileText,
-      submenu: [
-        {
-          label: "Dental Forms",
-          path: "/patient/:patientId/insurance-forms/dental",
-        },
-        {
-          label: "Medical Forms",
-          path: "/patient/:patientId/insurance-forms/medical",
-        },
-      ],
-    },
-    {
-      label: "Notes",
-      path: "/patient/:patientId/notes",
-      icon: ClipboardList,
-    },
-    {
-      label: "Flash Alerts",
-      path: "/patient/:patientId/flash-alerts",
-      icon: AlertCircle,
-    },
-    {
-      label: "Status Tracker",
-      path: "/patient/:patientId/status-tracker",
-      icon: Activity,
-    },
-    {
-      label: "Caries Risk Assessment",
-      path: "/patient/:patientId/caries-risk",
-      icon: Target,
-    },
-    {
-      label: "Basic Measurements",
-      path: "/patient/:patientId/measurements",
-      icon: Ruler,
-    },
-    { type: "divider" },
-    {
-      label: "Email Patient",
-      path: "/patient/:patientId/email",
-      icon: Mail,
-    },
-    {
-      label: "Change Patient Home Office",
-      path: "/patient/:patientId/change-office",
-      icon: Building2,
-    },
-    {
-      label: "Assign to Restricted User",
-      path: "/patient/:patientId/assign-restricted",
-      icon: UserX,
-    },
-    {
-      label: "Addresses",
-      path: "/patient/:patientId/addresses",
-      icon: MapPin,
-    },
-    {
-      label: "Unclose Last Statement",
-      path: "/patient/:patientId/unclose-statement",
-      icon: RotateCcw,
-    },
-    {
-      label: "Reallocate Account",
-      path: "/patient/:patientId/reallocate",
-      icon: Repeat,
-    },
-    { type: "divider" },
-    {
-      label: "Online Registered Patients",
-      icon: MonitorPlay,
-      submenu: [
-        {
-          label: "New",
-          path: "/patient/online-registered/new",
-        },
-        {
-          label: "Existing",
-          path: "/patient/online-registered/existing",
-        },
-        {
-          label: "Unarchive",
-          path: "/patient/online-registered/unarchive",
-        },
-      ],
-    },
-    {
-      label: "Patient Portal Signups",
-      path: "/patient/portal-signups",
-      icon: Smartphone,
-    },
+    // {
+    //   label: "Patient Information",
+    //   path: "/patient/:patientId/information",
+    //   icon: FileText,
+    // },
+    // {
+    //   label: "Responsible Party",
+    //   path: "/patient/:patientId/responsible-party",
+    //   icon: UserCheck,
+    // },
+    // {
+    //   label: "Recall Due Dates",
+    //   path: "/patient/:patientId/recall",
+    //   icon: CalendarClock,
+    // },
+    // {
+    //   label: "Medical History",
+    //   path: "/patient/:patientId/medical",
+    //   icon: Heart,
+    // },
+    // {
+    //   label: "Prescriptions",
+    //   path: "/patient/:patientId/prescriptions",
+    //   icon: Pill,
+    // },
+    // {
+    //   label: "Payment Plan",
+    //   icon: Receipt,
+    //   submenu: [
+    //     {
+    //       label: "Regular Payment Plan",
+    //       path: "/patient/:patientId/payment-plan/regular",
+    //     },
+    //     {
+    //       label: "Ortho Payment Plan",
+    //       path: "/patient/:patientId/payment-plan/ortho",
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Insurance Information",
+    //   icon: Shield,
+    //   submenu: [
+    //     {
+    //       label: "Dental Insurance",
+    //       submenu: [
+    //         {
+    //           label: "Primary Dental",
+    //           path: "/patient/:patientId/insurance/dental/primary",
+    //         },
+    //         {
+    //           label: "Secondary Dental",
+    //           path: "/patient/:patientId/insurance/dental/secondary",
+    //         },
+    //         {
+    //           label: "Tertiary Dental",
+    //           path: "/patient/:patientId/insurance/dental/tertiary",
+    //         },
+    //         {
+    //           label: "Quaternary Dental",
+    //           path: "/patient/:patientId/insurance/dental/quaternary",
+    //         },
+    //       ],
+    //     },
+    //     {
+    //       label: "Medical Insurance",
+    //       submenu: [
+    //         {
+    //           label: "Primary Medical",
+    //           path: "/patient/:patientId/insurance/medical/primary",
+    //         },
+    //         {
+    //           label: "Secondary Medical",
+    //           path: "/patient/:patientId/insurance/medical/secondary",
+    //         },
+    //         {
+    //           label: "Tertiary Medical",
+    //           path: "/patient/:patientId/insurance/medical/tertiary",
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Insurance Fill-Out Forms",
+    //   icon: FileText,
+    //   submenu: [
+    //     {
+    //       label: "Dental Forms",
+    //       path: "/patient/:patientId/insurance-forms/dental",
+    //     },
+    //     {
+    //       label: "Medical Forms",
+    //       path: "/patient/:patientId/insurance-forms/medical",
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Notes",
+    //   path: "/patient/:patientId/notes",
+    //   icon: ClipboardList,
+    // },
+    // {
+    //   label: "Flash Alerts",
+    //   path: "/patient/:patientId/flash-alerts",
+    //   icon: AlertCircle,
+    // },
+    // {
+    //   label: "Status Tracker",
+    //   path: "/patient/:patientId/status-tracker",
+    //   icon: Activity,
+    // },
+    // {
+    //   label: "Caries Risk Assessment",
+    //   path: "/patient/:patientId/caries-risk",
+    //   icon: Target,
+    // },
+    // {
+    //   label: "Basic Measurements",
+    //   path: "/patient/:patientId/measurements",
+    //   icon: Ruler,
+    // },
+    // { type: "divider" },
+    // {
+    //   label: "Email Patient",
+    //   path: "/patient/:patientId/email",
+    //   icon: Mail,
+    // },
+    // {
+    //   label: "Change Patient Home Office",
+    //   path: "/patient/:patientId/change-office",
+    //   icon: Building2,
+    // },
+    // {
+    //   label: "Assign to Restricted User",
+    //   path: "/patient/:patientId/assign-restricted",
+    //   icon: UserX,
+    // },
+    // {
+    //   label: "Addresses",
+    //   path: "/patient/:patientId/addresses",
+    //   icon: MapPin,
+    // },
+    // {
+    //   label: "Unclose Last Statement",
+    //   path: "/patient/:patientId/unclose-statement",
+    //   icon: RotateCcw,
+    // },
+    // {
+    //   label: "Reallocate Account",
+    //   path: "/patient/:patientId/reallocate",
+    //   icon: Repeat,
+    // },
+    // { type: "divider" },
+    // {
+    //   label: "Online Registered Patients",
+    //   icon: MonitorPlay,
+    //   submenu: [
+    //     {
+    //       label: "New",
+    //       path: "/patient/online-registered/new",
+    //     },
+    //     {
+    //       label: "Existing",
+    //       path: "/patient/online-registered/existing",
+    //     },
+    //     {
+    //       label: "Unarchive",
+    //       path: "/patient/online-registered/unarchive",
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Patient Portal Signups",
+    //   path: "/patient/portal-signups",
+    //   icon: Smartphone,
+    // },
   ];
 
   // TRANSACTIONS DROPDOWN MENU (Patient Context)
@@ -473,11 +514,12 @@ export default function GlobalNav({
 
   // CHARTING DROPDOWN MENU (Patient Context)
   const chartingMenuItems = [
-    {
-      label: "Advanced Charting",
-      path: "/patient/:patientId/advanced-charting",
-      icon: Activity,
-    },
+    // --- Hidden per request: commented out until needed ---
+    // {
+    //   label: "Advanced Charting",
+    //   path: "/patient/:patientId/advanced-charting",
+    //   icon: Activity,
+    // },
     {
       label: "Restorative Chart",
       path: "/patient/:patientId/restorative",
@@ -488,260 +530,51 @@ export default function GlobalNav({
       path: "/patient/:patientId/perio",
       icon: TrendingUp,
     },
-    {
-      label: "Perio Chart (Old)",
-      path: "/patient/:patientId/perio-old",
-      icon: BarChart3,
-    },
+    // {
+    //   label: "Perio Chart (Old)",
+    //   path: "/patient/:patientId/perio-old",
+    //   icon: BarChart3,
+    // },
   ];
 
   // REPORTS DROPDOWN MENU (Global Admin Context)
+  // Only reports that are actually implemented are listed. Each entry maps to the
+  // Reports dashboard or a working report screen (/reports/run/:id — see
+  // src/components/reports/reportCatalog.ts). Legacy placeholder entries were removed.
   const reportsMenuItems = [
     {
-      label: "Daily Reports",
-      path: "/reports/daily",
+      label: "Reports Dashboard",
+      path: "/reports",
+      icon: BarChart3,
+    },
+    { type: "divider" },
+    {
+      label: "Financial",
+      icon: DollarSign,
+      submenu: [
+        { label: "Production Report", path: "/reports/run/production" },
+        { label: "Collections Report", path: "/reports/run/collections" },
+      ],
+    },
+    {
+      label: "Patient",
+      icon: Users,
+      submenu: [{ label: "Patient List", path: "/reports/run/patient-list" }],
+    },
+    {
+      label: "Appointment",
       icon: Calendar,
+      submenu: [{ label: "Appointment Report", path: "/reports/run/appointments" }],
     },
     {
-      label: "Monthly Reports",
-      path: "/reports/monthly",
-      icon: CalendarClock,
+      label: "Clinical",
+      icon: Stethoscope,
+      submenu: [{ label: "Treatment Plan Report", path: "/reports/run/treatment-plans" }],
     },
     {
-      label: "Ledger Reports",
-      path: "/reports/ledger",
-      icon: FileSpreadsheet,
-    },
-    {
-      label: "Management Reports",
-      path: "/reports/management",
-      icon: Briefcase,
-    },
-    {
-      label: "Insurance Reports",
-      path: "/reports/insurance",
+      label: "Insurance",
       icon: Shield,
-    },
-    {
-      label: "Appointment Reports",
-      path: "/reports/appointment",
-      icon: Calendar,
-    },
-    {
-      label: "Treatment Plan Reports",
-      path: "/reports/treatment-plan",
-      icon: Clipboard,
-    },
-    {
-      label: "Referral Reports",
-      path: "/reports/referral",
-      icon: Network,
-    },
-    {
-      label: "Recall Reports",
-      path: "/reports/recall",
-      icon: Bell,
-    },
-    {
-      label: "Ortho Reports",
-      path: "/reports/ortho",
-      icon: Target,
-    },
-    {
-      label: "Statements",
-      path: "/reports/statements",
-      icon: FileBarChart,
-    },
-    { type: "divider" },
-    {
-      label: "Lists",
-      icon: ListChecks,
-      submenu: [
-        {
-          label: "Patient List",
-          path: "/reports/lists/patient-list",
-        },
-        {
-          label: "Responsible Party List",
-          path: "/reports/lists/responsible-party-list",
-        },
-        {
-          label: "Provider List",
-          path: "/reports/lists/provider-list",
-        },
-        {
-          label: "Security List",
-          path: "/reports/lists/security-list",
-        },
-        {
-          label: "Setup List",
-          path: "/reports/lists/setup-list",
-        },
-      ],
-    },
-    {
-      label: "Interactive Reports",
-      icon: Activity,
-      submenu: [
-        {
-          label: "Unsigned Progress Notes",
-          path: "/reports/interactive/unsigned-progress-notes",
-        },
-        {
-          label: "Eligibility Verification",
-          path: "/reports/interactive/eligibility-verification",
-        },
-      ],
-    },
-    {
-      label: "Office Reports",
-      icon: Building2,
-      submenu: [
-        {
-          label: "Abbey Dental",
-          path: "/reports/office/abbey-dental",
-        },
-        {
-          label: "Access Dental Reports",
-          path: "/reports/office/access-dental",
-        },
-        {
-          label: "BrightNow Reports",
-          path: "/reports/office/brightnow",
-        },
-        {
-          label: "CHI St. Joseph Children's Health Reports",
-          path: "/reports/office/chi-st-joseph",
-        },
-        { label: "DCA Reports", path: "/reports/office/dca" },
-        {
-          label: "Dental Care Reports",
-          path: "/reports/office/dental-care",
-        },
-        { label: "DHA Reports", path: "/reports/office/dha" },
-        {
-          label: "Great Hills Reports",
-          path: "/reports/office/great-hills",
-        },
-        {
-          label: "Hawaii Family Dental Reports",
-          path: "/reports/office/hawaii-family",
-        },
-        {
-          label: "Healthy Smiles for Kids",
-          path: "/reports/office/healthy-smiles",
-        },
-        {
-          label: "Healthcare Network",
-          path: "/reports/office/healthcare-network",
-        },
-        {
-          label: "Kane Dental",
-          path: "/reports/office/kane-dental",
-        },
-        {
-          label: "Lumina Reports",
-          path: "/reports/office/lumina",
-        },
-        {
-          label: "Kansas Head Start",
-          path: "/reports/office/kansas-head-start",
-        },
-        {
-          label: "Mid Atlantic Reports",
-          path: "/reports/office/mid-atlantic",
-        },
-        {
-          label: "Nursing Home Dental Care",
-          path: "/reports/office/nursing-home",
-        },
-        {
-          label: "OnHealthCare Reports",
-          path: "/reports/office/onhealthcare",
-        },
-        {
-          label: "Ottawa Reports",
-          path: "/reports/office/ottawa",
-        },
-        {
-          label: "Pacific Center for Special Care",
-          path: "/reports/office/pacific-center",
-        },
-        {
-          label: "Premier Perio Reports",
-          path: "/reports/office/premier-perio",
-        },
-        {
-          label: "Snodgrass-King Reports",
-          path: "/reports/office/snodgrass-king",
-        },
-        {
-          label: "Tru Family Dental Reports",
-          path: "/reports/office/tru-family",
-        },
-        {
-          label: "Venture Health Reports",
-          path: "/reports/office/venture-health",
-        },
-        {
-          label: "Village Family Dental Reports",
-          path: "/reports/office/village-family",
-        },
-      ],
-    },
-    { type: "divider" },
-    { label: "Letters", path: "/reports/letters", icon: Mail },
-    {
-      label: "Postcards",
-      path: "/reports/postcards",
-      icon: Send,
-    },
-    { label: "Labels", path: "/reports/labels", icon: Tag },
-    {
-      label: "Custom Letter",
-      path: "/reports/custom-letter",
-      icon: FileEdit,
-    },
-    {
-      label: "Advanced Custom Letter",
-      path: "/reports/advanced-custom-letter",
-      icon: FileText,
-    },
-    {
-      label: "Custom Postcard",
-      path: "/reports/custom-postcard",
-      icon: Send,
-    },
-    { type: "divider" },
-    {
-      label: "My Reports",
-      path: "/reports/my-reports",
-      icon: Star,
-    },
-    {
-      label: "Blank Insurance Forms",
-      path: "/reports/blank-insurance-forms",
-      icon: FileText,
-    },
-    {
-      label: "Patient Registration / Medical Info Forms",
-      path: "/reports/registration-forms",
-      icon: ClipboardCheck,
-    },
-    {
-      label: "My Favorites",
-      path: "/reports/my-favorites",
-      icon: Star,
-    },
-    {
-      label: "Search Report",
-      path: "/reports/search",
-      icon: SearchCheck,
-    },
-    {
-      label: "Reports (Old)",
-      path: "/reports/old",
-      icon: Archive,
+      submenu: [{ label: "Insurance Claims Report", path: "/reports/run/insurance-claims" }],
     },
   ];
 
@@ -1350,65 +1183,58 @@ export default function GlobalNav({
   ];
 
   // HELP DROPDOWN MENU
+  // Modernized: a single Help Center hub + a prominent Report an Issue action
+  // (files a tracked Jira ticket). Legacy links (Remote Support, Payer ID lists,
+  // Learning Center, My Invoices, About…) were removed. Category links deep-link
+  // into the Help Center via ?tab=. REPORT_ISSUE_SENTINEL opens the ticket dialog.
   const helpMenuItems = [
     {
-      label: "Get Help",
-      path: "/help/get-help",
-      icon: HelpCircle,
+      label: "Help Center",
+      path: "/help",
+      icon: LifeBuoy,
     },
     {
-      label: "Remote Support",
-      path: "/help/remote-support",
-      icon: MonitorPlay,
+      label: "Report an Issue",
+      path: REPORT_ISSUE_SENTINEL,
+      icon: Bug,
     },
+    { type: "divider" },
     {
-      label: "Imaging Remote Support",
-      path: "/help/imaging-remote-support",
-      icon: MonitorPlay,
-    },
-    {
-      label: "Downloads and Links",
-      path: "/help/downloads-links",
-      icon: Download,
-    },
-    {
-      label: "Submit Product Suggestion",
-      path: "/help/submit-suggestion",
-      icon: Lightbulb,
-    },
-    {
-      label: "Denticon Learning Center",
-      path: "/help/learning-center",
+      label: "User Guides",
+      path: "/help?tab=guides",
       icon: BookOpen,
     },
     {
+      label: "FAQs",
+      path: "/help?tab=faqs",
+      icon: HelpCircle,
+    },
+    {
+      label: "Troubleshooting",
+      path: "/help?tab=troubleshooting",
+      icon: Wrench,
+    },
+    {
       label: "Release Notes",
-      path: "/help/release-notes",
+      path: "/help?tab=release-notes",
       icon: FileText,
     },
     {
-      label: "Dental Carrier Payer ID List",
-      path: "/help/dental-payer-id",
-      icon: ListChecks,
-    },
-    {
-      label: "Medical Carrier Payer ID List",
-      path: "/help/medical-payer-id",
-      icon: ListChecks,
-    },
-    {
-      label: "My Invoices",
-      path: "/help/my-invoices",
-      icon: Receipt,
-    },
-    {
-      label: "About Denticon",
-      path: "/help/about",
-      icon: Activity,
+      label: "Contact Support",
+      path: "/help?tab=contact",
+      icon: MessageCircle,
     },
   ];
 
   const handleNavClick = (path: string) => {
+    // Report an Issue opens the global ticket dialog rather than navigating.
+    if (path === REPORT_ISSUE_SENTINEL) {
+      openReportIssue();
+      setActiveDropdown(null);
+      setActiveMenuPath([]);
+      setOpenSubmenus({});
+      return;
+    }
     // Patient-scoped paths resolve against the persistent default patient. We
     // only fall through to the search picker when no patient has ever been
     // selected — never an interrupting prompt.
@@ -1569,7 +1395,8 @@ export default function GlobalNav({
   };
 
   return (
-    <div 
+    <div
+      ref={navRootRef}
       className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] border-b-2 border-[#162942] shadow-lg fixed top-0 left-0 z-50"
       style={{
         right: `${chatWidth}px`,
@@ -1685,7 +1512,7 @@ export default function GlobalNav({
       </div>
 
       {/* Main Navigation */}
-      <div className="px-4 py-1 md:px-6 md:py-2 flex items-center gap-1 overflow-x-auto">
+      <div className="px-4 py-1 md:px-6 md:py-2 flex items-center gap-1 overflow-x-auto whitespace-nowrap scrollbar-thin [&>*]:flex-shrink-0">
         {/* Scheduler - No Dropdown */}
         <button
           onClick={handleSchedulerClick}

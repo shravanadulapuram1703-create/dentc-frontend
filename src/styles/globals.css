@@ -158,6 +158,18 @@
     box-sizing: border-box;
   }
 
+  :root {
+    /*
+     * Height of the fixed GlobalNav. This is a DEFAULT fallback only — at
+     * runtime GlobalNav measures its own rendered height (ResizeObserver) and
+     * overwrites this value, so it stays correct across every breakpoint,
+     * line-wrap, and browser zoom level. Pages reserve space with
+     * `pt-[var(--app-nav-height)]` / `top-[var(--app-nav-height)]` instead of
+     * brittle hard-coded pixel offsets. SINGLE SOURCE OF TRUTH.
+     */
+    --app-nav-height: 120px;
+  }
+
   html {
     font-size: var(--font-size-base);
     -webkit-font-smoothing: antialiased;
@@ -170,8 +182,10 @@
     background: var(--color-bg-secondary);
     color: var(--color-text-primary);
     min-height: 100vh;
-    /* ❌ REMOVED: overflow-x: hidden; → This breaks DevTools & responsive layouts */
-    /* ✅ Let content containers handle their own scrolling */
+    /* NOTE: do NOT set overflow-x:hidden here — it forces overflow-y into a
+       clipping context and breaks `position: sticky` headers (Scheduler etc).
+       Horizontal overflow is contained at the component level instead (tables,
+       data grids, and the nav row each own their overflow-x). */
     line-height: 1.6;
   }
   
@@ -388,6 +402,26 @@
   select.tx-select {
     padding: 0 1.75rem 0 0.5rem !important;
     border-width: 1px !important;
+  }
+
+  /* Scheduler header filters — translucent-on-dark to match the slate toolbar.
+     Class-qualified so it beats the bare `select` !important rule (same trick as
+     tx-select above). The option list stays white-on-dark-text for readability. */
+  select.hdr-filter-select {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    padding: 0.375rem 0.5rem !important;
+    font-weight: var(--font-weight-medium) !important;
+  }
+  select.hdr-filter-select:focus {
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+  }
+  select.hdr-filter-select option {
+    background: #ffffff !important;
+    color: var(--color-text-primary) !important;
   }
 
   /* Textarea */

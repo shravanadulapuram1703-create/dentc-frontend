@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   BarChart3,
   TrendingUp,
@@ -11,10 +10,6 @@ import {
   Wrench,
   Play,
   PieChart as PieChartIcon,
-  Activity,
-  DollarSign,
-  Stethoscope,
-  Briefcase,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -41,6 +36,7 @@ import {
 } from "../reports/lib/reportRange";
 import { useExecutiveSummary, useReportTrends } from "../reports/lib/reportMetrics";
 import { exportCsv } from "../reports/lib/exportCsv";
+import ReportCatalog from "../reports/components/ReportCatalog";
 
 interface ReportsProps {
   onLogout: () => void;
@@ -50,19 +46,10 @@ interface ReportsProps {
 
 const PIE_COLORS = ["#3A6EA5", "#2FB9A7", "#F59E0B", "#8B5CF6", "#EC4899", "#10B981", "#94A3B8"];
 
-const REPORT_CATEGORIES: { label: string; desc: string; route: string; icon: typeof Activity }[] = [
-  { label: "Operational", desc: "Daily & schedule reports", route: "/reports/daily", icon: Activity },
-  { label: "Financial", desc: "Ledger, production & collections", route: "/reports/ledger", icon: DollarSign },
-  { label: "Patient", desc: "Demographics & patient lists", route: "/reports/lists/patient-list", icon: Users },
-  { label: "Clinical", desc: "Treatment plans & procedures", route: "/reports/treatment-plan", icon: Stethoscope },
-  { label: "Administrative", desc: "Management & office performance", route: "/reports/management", icon: Briefcase },
-];
-
 // onLogout/setCurrentOffice are supplied by the route wrapper but the page chrome
 // (GlobalNav + top padding) is rendered by AdminPageWrapper in App.tsx, so only
 // currentOffice is consumed here (for office-scoped metrics).
 export default function Reports({ currentOffice }: ReportsProps) {
-  const navigate = useNavigate();
   const [preset, setPreset] = useState<RangePreset>("this_month");
   const [custom, setCustom] = useState<DateRange>(() => resolveRange("this_month"));
   const [analyticsOn, setAnalyticsOn] = useState(false);
@@ -273,27 +260,9 @@ export default function Reports({ currentOffice }: ReportsProps) {
           </WidgetCard>
         )}
 
-        {/* Report Categories */}
-        <WidgetCard title="Report Categories" icon={<BarChart3 className="w-4 h-4" />}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {REPORT_CATEGORIES.map((c) => {
-              const Icon = c.icon;
-              return (
-                <button
-                  key={c.label}
-                  type="button"
-                  onClick={() => navigate(c.route)}
-                  className="flex items-start gap-3 p-4 border-2 border-[#E2E8F0] rounded-lg hover:border-[#3A6EA5] hover:bg-[#F1F5F9] transition-colors text-left"
-                >
-                  <Icon className="w-5 h-5 text-[#3A6EA5] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-sm font-bold text-[#1F3A5F]">{c.label} Reports</div>
-                    <div className="text-xs text-[#64748B]">{c.desc}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        {/* Report Library (catalog → generic runner) */}
+        <WidgetCard title="Report Library" icon={<BarChart3 className="w-4 h-4" />}>
+          <ReportCatalog />
         </WidgetCard>
     </div>
   );

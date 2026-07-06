@@ -1,4 +1,4 @@
-import GlobalNav from '../GlobalNav';
+import AppShell from '../layout/AppShell';
 import {
   Users,
   Search,
@@ -252,10 +252,8 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
     searchByOptions.find((o) => o.value === searchBy)?.placeholder ?? 'Search…';
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Page Header */}
         <div className="bg-white rounded-xl shadow-md border-2 border-[#E2E8F0] overflow-hidden">
           <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between">
@@ -718,7 +716,7 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }
 

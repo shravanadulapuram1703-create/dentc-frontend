@@ -7,32 +7,48 @@ import {
   ChevronRight,
   Plus,
   Loader2,
+  X,
+  Palette,
 } from "lucide-react";
-import GlobalNav from "../GlobalNav";
+import AppShell from "../layout/AppShell";
 import WeekView from "../scheduler/WeekView";
 import MonthView from "../scheduler/MonthView";
+import AppointmentDetailsPopover from "../scheduler/AppointmentDetailsPopover";
+import CancelAppointmentDialog, {
+  type CancellationResult,
+} from "../scheduler/CancelAppointmentDialog";
+import MedicalAlertPopover from "../scheduler/MedicalAlertPopover";
+import {
+  CONFIRMATION_STATUSES,
+  SAMEDAY_STATUSES,
+  statusMetaFor,
+} from "../scheduler/statusMeta";
 import NewAppointmentModal from "../modals/NewAppointmentModal";
-import DatePickerCalendar from "../modals/DatePickerCalendar";
 import CalendarPicker from "../CalendarPicker";
-import { components } from "../../styles/theme";
-import { procedureTypeColorClasses } from "../../utils/procedureTypeColor";
+import {
+  buildProviderColorMapFromSetup,
+  providerColorFor,
+  type ProviderColor,
+} from "../../utils/providerColor";
 import {
   fetchAppointments,
   fetchOperatories,
   fetchProviders,
   fetchSchedulerConfig,
-  fetchProcedureTypes,
   fetchAppointmentStatuses,
+  fetchPatientAlerts,
+  fetchPatientBalance,
   createAppointment,
   updateAppointment,
   deleteAppointment,
   updateAppointmentStatus,
   type Appointment,
   type AppointmentStatus,
+  type AppointmentStatusName,
+  type PatientBalanceInfo,
   type Operatory,
   type Provider,
   type SchedulerConfig,
-  type ProcedureType,
   type AppointmentCreateRequest,
   type AppointmentUpdateRequest,
 } from "../../services/schedulerApi";
@@ -55,6 +71,11 @@ const DEFAULT_STATUS_NAMES = [
 ] as const;
 
 type ViewMode = "daily" | "weekly" | "monthly";
+
+/** Pixel height of one time-slot row (the daily grid renders a full 24h at the
+ *  office's slot interval; appointment blocks are positioned against this). */
+const SLOT_PX = 40;
+const MINUTES_PER_DAY = 24 * 60;
 
 const fmtYMD = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -199,19 +220,48 @@ export default function Scheduler({
   } | null>(null);
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
-  const [showDatePickerModal, setShowDatePickerModal] =
-    useState(false);
+
+  // Left-click "Appointment Details" pop-out (PDF pages 5–7).
+  const [detailsAppt, setDetailsAppt] = useState<Appointment | null>(null);
+  const [detailsAnchor, setDetailsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Cancel dialog (PDF page 16).
+  const [cancelAppt, setCancelAppt] = useState<Appointment | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Medical-alert popover (PDF page 18) + per-patient active-alert cache.
+  const [alertPopover, setAlertPopover] = useState<{
+    patientName: string;
+    alerts: string[];
+    x: number;
+    y: number;
+  } | null>(null);
+  const [alertsByPatient, setAlertsByPatient] = useState<Map<number, string[]>>(new Map());
+  // Per-patient computed balance (drives the $ badge on the block).
+  const [balanceByPatient, setBalanceByPatient] = useState<Map<number, PatientBalanceInfo>>(
+    new Map(),
+  );
+
+  // Provider color legend (opt-in strip below the toolbar).
+  const [showLegend, setShowLegend] = useState(false);
+
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
 
-  // Generate time slots based on scheduler config
+  // Generate the FULL 24-hour timeline at the office's slot interval. The office
+  // start/end hours (from Office Setup) no longer clip the rows — instead the
+  // whole day renders and slots outside office hours are grayed out and made
+  // non-interactive (see isOutsideOfficeHours + the slot render).
   const generateTimeSlots = (config: SchedulerConfig): string[] => {
+    const interval = config.slotInterval > 0 ? config.slotInterval : 10;
     const slots: string[] = [];
-    for (let hour = config.startHour; hour < config.endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += config.slotInterval) {
-        const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-        slots.push(time);
-      }
+    for (let minutes = 0; minutes < MINUTES_PER_DAY; minutes += interval) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      slots.push(
+        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      );
     }
     return slots;
   };
@@ -226,7 +276,6 @@ export default function Scheduler({
   // Data state
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [operatories, setOperatories] = useState<Operatory[]>([]);
-  const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
   const [appointmentStatuses, setAppointmentStatuses] = useState<AppointmentStatus[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
 
@@ -256,12 +305,14 @@ export default function Scheduler({
       setIsLoadingOperatories(true);
       setError(null);
       try {
-        // Scope operatories and providers to the selected office (service
-        // extracts the numeric office_id from "OFF-1"). Providers feed the
-        // provider filter dropdown.
+        // Operatories are office-scoped (they are the calendar columns). Providers
+        // are fetched UNSCOPED: an appointment in this office can belong to a
+        // provider whose home office differs, and we need every in-view provider's
+        // name + scheduler_color for the blocks/legend/columns. The provider
+        // filter dropdown then lists all providers.
         const [ops, provs] = await Promise.all([
           fetchOperatories(currentOffice),
-          fetchProviders(currentOffice).catch(() => []),
+          fetchProviders().catch(() => []),
         ]);
         setOperatories(ops);
         setProviders(provs);
@@ -274,23 +325,6 @@ export default function Scheduler({
     };
 
     loadOperatories();
-  }, [currentOffice]);
-
-  // Fetch procedure types on mount and when office changes
-  useEffect(() => {
-    const loadProcedureTypes = async () => {
-      try {
-        // Procedure types come from the tenant-wide `definitions` table and
-        // are not office-scoped on the backend.
-        const data = await fetchProcedureTypes();
-        setProcedureTypes(data);
-      } catch (err: any) {
-        console.error("Error loading procedure types:", err);
-        // Don't set error state for procedure types - it's not critical for basic functionality
-      }
-    };
-
-    loadProcedureTypes();
   }, [currentOffice]);
 
   // Fetch appointment statuses from the backend `definitions` table so the
@@ -321,6 +355,14 @@ export default function Scheduler({
         : DEFAULT_STATUS_NAMES.map((name) => ({ value: name, label: name })),
     [appointmentStatuses],
   );
+
+  // status name -> backend color (from `appt_status` definitions), used to tint
+  // the quick-status icons and block status strip. Empty until statuses load.
+  const statusColors = useMemo(() => {
+    const m = new Map<string, string>();
+    appointmentStatuses.forEach((s) => s.color && m.set(s.name, s.color));
+    return m;
+  }, [appointmentStatuses]);
 
   // Validate config to ensure it has valid values
   const isValidConfig = (config: any): config is SchedulerConfig => {
@@ -372,6 +414,28 @@ export default function Scheduler({
     [providers],
   );
 
+  // provider_id -> color, preferring the hex each provider set on the Provider
+  // Setup screen (scheduler_color) and falling back to a stable palette color.
+  // Drives block tinting, column accents, and the legend.
+  const providerColorMap = useMemo(
+    () => buildProviderColorMapFromSetup(providers),
+    [providers],
+  );
+
+  // provider_id -> name resolved from the scheduler feed (server-side), used as
+  // a fallback when a provider isn't in the (office-scoped) master list so the
+  // legend/columns never fall back to showing the raw id.
+  const feedProviderNames = useMemo(() => {
+    const m = new Map<string, string>();
+    appointments.forEach((a) => {
+      if (a.provider_id && a.provider_name) m.set(a.provider_id, a.provider_name);
+    });
+    return m;
+  }, [appointments]);
+
+  const resolveProviderName = (id: string): string =>
+    providerNameById.get(id) || feedProviderNames.get(id) || `Provider ${id}`;
+
   // ✅ FIX: Filter appointments to only include those with valid operatories
   const validAppointments = useMemo(
     () =>
@@ -382,6 +446,23 @@ export default function Scheduler({
       ),
     [appointments, activeOperatoryIds],
   );
+
+  // Legend: the distinct providers present in the current view, each with its
+  // stable color. Only in-view providers are shown so the legend stays short.
+  const legendProviders = useMemo(() => {
+    const ids = new Set(
+      validAppointments
+        .map((a) => a.provider_id)
+        .filter((id): id is string => !!id),
+    );
+    return [...ids]
+      .map((id) => ({
+        id,
+        name: providerNameById.get(id) || feedProviderNames.get(id) || `Provider ${id}`,
+        color: providerColorFor(id, providerColorMap),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [validAppointments, providerNameById, feedProviderNames, providerColorMap]);
 
   // ✅ PERFORMANCE OPTIMIZATION: Precompute appointments by operatory and date.
   // Keyed by operatory_id so it matches the column lookup (operatory.id).
@@ -429,6 +510,58 @@ export default function Scheduler({
     loadAppointments();
   }, [selectedDate, currentOffice, viewMode, filterStatus, filterProvider, filterOperatory]);
 
+  // Background: for the patients on the *current day*, load their active medical
+  // alerts (red-cross badge, PDF pages 4/18) and computed account balance ($
+  // badge). Daily view only, deduped by patient_id, capped, and non-blocking.
+  // The scheduler feed carries neither a has_alert flag nor the balance — both
+  // are documented backend gaps (SCHED-APPT-4/7) that would remove this fan-out.
+  useEffect(() => {
+    if (viewMode !== "daily") return;
+    const currentDate = formatDateYYYYMMDD(selectedDate);
+    const ids = [
+      ...new Set(
+        appointments
+          .filter((a) => a.date === currentDate && a.patient_id != null)
+          .map((a) => a.patient_id as number),
+      ),
+    ]
+      .filter((id) => !alertsByPatient.has(id))
+      .slice(0, 40);
+    if (ids.length === 0) return;
+
+    let alive = true;
+    (async () => {
+      const entries = await Promise.all(
+        ids.map(
+          async (
+            id,
+          ): Promise<[number, string[], PatientBalanceInfo | null]> => {
+            const [alerts, balance] = await Promise.all([
+              fetchPatientAlerts(id).catch(() => []),
+              fetchPatientBalance(id).catch(() => null),
+            ]);
+            return [id, alerts.map((al) => al.alert), balance];
+          },
+        ),
+      );
+      if (!alive) return;
+      setAlertsByPatient((prev) => {
+        const next = new Map(prev);
+        entries.forEach(([id, list]) => next.set(id, list));
+        return next;
+      });
+      setBalanceByPatient((prev) => {
+        const next = new Map(prev);
+        entries.forEach(([id, , bal]) => bal && next.set(id, bal));
+        return next;
+      });
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointments, selectedDate, viewMode]);
+
   // Update time slots when config changes - only if config is valid
   useEffect(() => {
     if (isValidConfig(schedulerConfig)) {
@@ -439,6 +572,28 @@ export default function Scheduler({
       }
     }
   }, [schedulerConfig]);
+
+  // The grid renders a full 24h; auto-scroll to the office start hour so the
+  // day view opens on the working hours instead of the grayed midnight slots.
+  useEffect(() => {
+    if (viewMode !== "daily") return;
+    const el = gridScrollRef.current;
+    if (!el) return;
+    const interval = schedulerConfig.slotInterval > 0 ? schedulerConfig.slotInterval : 10;
+    const startMinutes = schedulerConfig.startHour * 60;
+    // Small delay so the 24h grid / operatory columns have finished laying out.
+    const id = window.setTimeout(() => {
+      el.scrollTop = Math.max(0, (startMinutes * SLOT_PX) / interval - SLOT_PX);
+    }, 150);
+    return () => window.clearTimeout(id);
+  }, [
+    viewMode,
+    schedulerConfig.startHour,
+    schedulerConfig.slotInterval,
+    timeSlots.length,
+    operatories.length,
+    currentOffice,
+  ]);
 
   // ===== TIME BLOCKING & OVERLAP LOGIC =====
 
@@ -507,24 +662,34 @@ export default function Scheduler({
 
   // ===== END TIME BLOCKING LOGIC =====
 
-  // Get procedure type color (centralized in utils/procedureTypeColor)
-  const getProcedureTypeColor = (procedureTypeName: string): string => {
-    const procedureType = procedureTypes.find(
-      (pt) => pt.name === procedureTypeName
-    );
-    return procedureTypeColorClasses(procedureType?.color);
-  };
+  // Minutes per slot interval and pixels per minute — drive both the row height
+  // and the absolutely-positioned appointment blocks so they stay aligned for
+  // any office slot interval.
+  const slotInterval = schedulerConfig.slotInterval > 0 ? schedulerConfig.slotInterval : 10;
+  const pxPerMinute = SLOT_PX / slotInterval;
 
-  // Calculate appointment position
+  // Position a block against the midnight-anchored 24h timeline.
   const getAppointmentPosition = (appointment: Appointment) => {
     const parts = appointment.start_time.split(":").map(Number);
     const hours = parts[0] ?? 0;
     const minutes = parts[1] ?? 0;
-    const startMinutes = (hours - 8) * 60 + minutes;
-    const slotHeight = 40; // Height per 10-minute slot
-    const top = (startMinutes / 10) * slotHeight;
-    const height = (appointment.duration / 10) * slotHeight;
+    const startMinutes = hours * 60 + minutes;
+    const top = startMinutes * pxPerMinute;
+    const height = (appointment.duration || slotInterval) * pxPerMinute;
     return { top, height };
+  };
+
+  // Is this HH:MM slot outside the selected office's configured hours? Such
+  // slots are visible but grayed out and non-interactive (Office Setup drives
+  // startHour/endHour via fetchSchedulerConfig).
+  const isOutsideOfficeHours = (time: string): boolean => {
+    const parts = time.split(":").map(Number);
+    const hour = parts[0] ?? 0;
+    const minute = parts[1] ?? 0;
+    const mins = hour * 60 + minute;
+    const startMins = schedulerConfig.startHour * 60;
+    const endMins = schedulerConfig.endHour * 60;
+    return mins < startMins || mins >= endMins;
   };
 
   // Handle right-click on empty slot
@@ -996,7 +1161,7 @@ export default function Scheduler({
     }
   };
 
-  // Set appointment status
+  // Set appointment status (applies immediately via PATCH /appointments/{id}/status).
   const handleSetStatus = async (
     appointment: Appointment,
     status: Appointment["status"],
@@ -1006,10 +1171,14 @@ export default function Scheduler({
         appointment.id,
         status
       );
-      setAppointments(
-        appointments.map((appt) =>
-          appt.id === appointment.id ? updatedAppointment : appt
-        )
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.id === appointment.id ? updatedAppointment : appt,
+        ),
+      );
+      // Keep the open details pop-out in sync.
+      setDetailsAppt((prev) =>
+        prev && prev.id === appointment.id ? updatedAppointment : prev,
       );
     } catch (err: any) {
       setError(`Failed to update status: ${err.message}`);
@@ -1021,6 +1190,68 @@ export default function Scheduler({
       x: 0,
       y: 0,
       type: "empty",
+    });
+  };
+
+  // Route a status change: "Cancelled" opens the cancellation dialog (PDF p.16);
+  // everything else (incl. Missed) applies immediately.
+  const requestSetStatus = (
+    appointment: Appointment,
+    status: AppointmentStatusName,
+  ) => {
+    setContextMenu({ visible: false, x: 0, y: 0, type: "empty" });
+    if (status === "Cancelled") {
+      setCancelAppt(appointment);
+      return;
+    }
+    handleSetStatus(appointment, status);
+  };
+
+  // Confirm cancellation from the dialog. The backend status-PATCH accepts only
+  // {status}; note/reason/call-list are collected but not yet persisted
+  // server-side (gap SCHED-APPT-2) — logged so nothing is silently dropped.
+  const confirmCancel = async (result: CancellationResult) => {
+    if (!cancelAppt) return;
+    setIsCancelling(true);
+    try {
+      await handleSetStatus(cancelAppt, "Cancelled");
+      console.info("Appointment cancelled", {
+        id: cancelAppt.id,
+        ...result,
+      });
+      setCancelAppt(null);
+      setDetailsAppt(null);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Left-click an appointment → open the read-only details pop-out (PDF p.5–7).
+  const handleAppointmentLeftClick = (
+    e: React.MouseEvent,
+    appointment: Appointment,
+  ) => {
+    e.stopPropagation();
+    setContextMenu({ visible: false, x: 0, y: 0, type: "empty" });
+    setDetailsAnchor({ x: e.clientX, y: e.clientY });
+    setDetailsAppt(appointment);
+  };
+
+  // Click the red-cross badge → medical-alert popover (PDF p.18).
+  const handleShowMedicalAlert = (
+    e: React.MouseEvent,
+    appointment: Appointment,
+  ) => {
+    e.stopPropagation();
+    const alerts =
+      appointment.patient_id != null
+        ? alertsByPatient.get(appointment.patient_id) ?? []
+        : [];
+    setAlertPopover({
+      patientName: appointment.patient_name,
+      alerts,
+      x: e.clientX,
+      y: e.clientY,
     });
   };
 
@@ -1057,41 +1288,35 @@ export default function Scheduler({
   // with the number of operatories, avoiding empty gaps on the right.
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-
-      {/* Scheduler Content with top padding (match GlobalNav height) */}
-      <div className="pt-[120px] md:pt-[136px]">
-        {/* Scheduler Header */}
-        <div className="bg-white shadow-md border-b border-[#E2E8F0] sticky top-[120px] md:top-[136px] z-10">
-          {/* Slate Blue Header Bar */}
-          <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-shrink-0">
-              <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <Calendar
-                  className="w-7 h-7 text-white"
-                  strokeWidth={2}
-                />
+    <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+      {/* Fill exactly the viewport below the fixed nav and let ONLY the grid
+          scroll. Without this the page also scrolls, which drags the grid's
+          sticky operatory headers up over the date/filter bar. */}
+      <div className="flex flex-col h-[calc(100vh-var(--app-nav-height))] overflow-hidden">
+        {/* Scheduler Header — fixed at the top of the non-scrolling column */}
+        <div className="bg-white shadow-md border-b border-[#E2E8F0] flex-shrink-0 relative z-10">
+          {/* Single-row slate header: title, date nav, view toggle, inline
+              filters, and the action button — the separate filter row was
+              folded in here to reclaim that vertical space. Wraps gracefully
+              on narrow widths. */}
+          <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+            {/* Title */}
+            <div className="flex items-center gap-2.5 flex-shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" strokeWidth={2} />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Scheduler
-                </h1>
-                <p className="text-sm text-white/80">
-                  Office: {currentOffice}
-                </p>
+              <div className="leading-tight">
+                <h1 className="text-lg font-bold text-white">Scheduler</h1>
+                <p className="text-[11px] text-white/80">Office: {currentOffice}</p>
               </div>
             </div>
 
-            {/* ✅ FIX: Center Date Navigation with overflow control */}
-            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-[50vw]">
-              {/* Date Picker Button */}
+            {/* Date navigation + view toggle */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 ref={calendarBtnRef}
-                onClick={() =>
-                  setShowCalendarPicker(!showCalendarPicker)
-                }
-                className="px-3 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors flex items-center gap-2 text-white text-sm font-medium flex-shrink-0"
+                onClick={() => setShowCalendarPicker(!showCalendarPicker)}
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors flex items-center gap-1.5 text-white text-sm font-medium"
                 aria-label="Select date"
               >
                 <Calendar className="w-4 h-4" strokeWidth={2} />
@@ -1101,11 +1326,9 @@ export default function Scheduler({
                   year: "numeric",
                 })}
               </button>
-
-              {/* View-aware navigation (steps by day / week / month) */}
               <button
                 onClick={() => stepDate(-1)}
-                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                className="px-2 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-0.5"
                 aria-label="Previous"
               >
                 <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
@@ -1113,27 +1336,25 @@ export default function Scheduler({
               </button>
               <button
                 onClick={goToToday}
-                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex-shrink-0"
+                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium"
                 aria-label="Go to today"
               >
                 Today
               </button>
               <button
                 onClick={() => stepDate(1)}
-                className="px-2.5 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-1 flex-shrink-0"
+                className="px-2 py-1.5 bg-white/10 border border-white/30 rounded-md hover:bg-white/20 transition-colors text-white text-xs font-medium flex items-center gap-0.5"
                 aria-label="Next"
               >
                 Next
                 <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
               </button>
-
-              {/* View toggle: Day / Week / Month */}
-              <div className="flex items-center bg-white/10 border border-white/30 rounded-md overflow-hidden flex-shrink-0 ml-1">
+              <div className="flex items-center bg-white/10 border border-white/30 rounded-md overflow-hidden ml-0.5">
                 {(["daily", "weekly", "monthly"] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
-                    className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                       viewMode === mode
                         ? "bg-white text-[#1F3A5F]"
                         : "text-white hover:bg-white/20"
@@ -1146,11 +1367,80 @@ export default function Scheduler({
               </div>
             </div>
 
-            {/* ✅ FIX: Right Action Buttons with overflow control */}
-            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap max-w-[30vw] flex-shrink-0">
+            {/* Inline filters + action, pushed to the right */}
+            <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="hdr-filter-select rounded-md text-xs focus:outline-none max-w-[130px]"
+                aria-label="Filter by status"
+                title="Filter by status"
+              >
+                <option className="bg-white text-slate-800" value="">All statuses</option>
+                {statusMenuItems.map((s) => (
+                  <option className="bg-white text-slate-800" key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterProvider}
+                onChange={(e) => setFilterProvider(e.target.value)}
+                className="hdr-filter-select rounded-md text-xs focus:outline-none max-w-[140px]"
+                aria-label="Filter by provider"
+                title="Filter by provider"
+              >
+                <option className="bg-white text-slate-800" value="">All providers</option>
+                {providers.map((p) => (
+                  <option className="bg-white text-slate-800" key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterOperatory}
+                onChange={(e) => setFilterOperatory(e.target.value)}
+                className="hdr-filter-select rounded-md text-xs focus:outline-none max-w-[140px]"
+                aria-label="Filter by operatory"
+                title="Filter by operatory"
+              >
+                <option className="bg-white text-slate-800" value="">All operatories</option>
+                {operatories.map((op) => (
+                  <option className="bg-white text-slate-800" key={op.id} value={op.id}>
+                    {op.name}
+                  </option>
+                ))}
+              </select>
+              {(filterStatus || filterProvider || filterOperatory) && (
+                <button
+                  onClick={() => {
+                    setFilterStatus("");
+                    setFilterProvider("");
+                    setFilterOperatory("");
+                  }}
+                  className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+                  aria-label="Clear filters"
+                  title="Clear filters"
+                >
+                  <X className="w-4 h-4" strokeWidth={2} />
+                </button>
+              )}
+              <button
+                onClick={() => setShowLegend((v) => !v)}
+                className={`px-2.5 py-1.5 border rounded-md transition-colors flex items-center gap-1.5 text-xs font-medium ${
+                  showLegend
+                    ? "bg-white text-[#1F3A5F] border-white"
+                    : "bg-white/10 text-white border-white/30 hover:bg-white/20"
+                }`}
+                aria-pressed={showLegend}
+                title="Toggle provider color legend"
+              >
+                <Palette className="w-4 h-4" strokeWidth={2} />
+                Legend
+              </button>
               <button
                 onClick={() => handleAddNewAppointment()}
-                className="px-3 py-1.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm flex-shrink-0"
+                className="px-3 py-1.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-md transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-sm ml-1"
                 aria-label="Add new appointment"
               >
                 <Plus className="w-4 h-4" strokeWidth={2.5} />
@@ -1159,63 +1449,31 @@ export default function Scheduler({
             </div>
           </div>
 
-          {/* Filter bar — backend-driven status/provider/operatory filters */}
-          <div className="bg-white border-t border-[#E2E8F0] px-6 py-2 flex flex-wrap items-center gap-3">
-            <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-              Filters:
-            </span>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-2 py-1 border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:outline-none focus:border-[#3A6EA5]"
-              aria-label="Filter by status"
-            >
-              <option value="">All statuses</option>
-              {statusMenuItems.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filterProvider}
-              onChange={(e) => setFilterProvider(e.target.value)}
-              className="px-2 py-1 border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:outline-none focus:border-[#3A6EA5]"
-              aria-label="Filter by provider"
-            >
-              <option value="">All providers</option>
-              {providers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filterOperatory}
-              onChange={(e) => setFilterOperatory(e.target.value)}
-              className="px-2 py-1 border border-[#CBD5E1] rounded text-sm text-[#1E293B] focus:outline-none focus:border-[#3A6EA5]"
-              aria-label="Filter by operatory"
-            >
-              <option value="">All operatories</option>
-              {operatories.map((op) => (
-                <option key={op.id} value={op.id}>
-                  {op.name}
-                </option>
-              ))}
-            </select>
-            {(filterStatus || filterProvider || filterOperatory) && (
-              <button
-                onClick={() => {
-                  setFilterStatus("");
-                  setFilterProvider("");
-                  setFilterOperatory("");
-                }}
-                className="text-xs font-semibold text-[#3A6EA5] hover:underline"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
+          {/* Provider color legend (opt-in) — in-view providers with their
+              stable colors. Kept out of the default layout to save vertical
+              space; toggled via the Legend button above. */}
+          {showLegend && (
+            <div className="bg-white border-t border-[#E2E8F0] px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">
+                Providers:
+              </span>
+              {legendProviders.length === 0 ? (
+                <span className="text-xs text-[#94A3B8]">
+                  No appointments in view.
+                </span>
+              ) : (
+                legendProviders.map((p) => (
+                  <span key={p.id} className="flex items-center gap-1.5 text-xs text-[#1E293B]">
+                    <span
+                      className="inline-block w-3 h-3 rounded-sm border"
+                      style={{ backgroundColor: p.color.bg, borderColor: p.color.border }}
+                    />
+                    {p.name}
+                  </span>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Error Message */}
@@ -1252,9 +1510,11 @@ export default function Scheduler({
           </div>
         )}
 
-        {/* ✅ FIX: Scheduler Grid with Tailwind class and ARIA */}
+        {/* ✅ FIX: Scheduler Grid — the ONLY scroll region (flex-1 + min-h-0 so
+            it fills the remaining column height and scrolls internally). */}
         <div
-          className="overflow-auto scheduler-scroll-container h-[calc(100vh-170px)]"
+          ref={gridScrollRef}
+          className="overflow-auto scheduler-scroll-container flex-1 min-h-0"
           role="grid"
           aria-label="Appointment scheduler"
           aria-rowcount={timeSlots.length + 1}
@@ -1267,15 +1527,24 @@ export default function Scheduler({
             <div className="sticky left-0 bg-white border-r-2 border-[#E2E8F0] z-10 shadow-md flex-shrink-0 w-20">
               {/* Sticky blue time header */}
               <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm sticky top-0 z-20"></div>
-              {timeSlots.map((time, index) => (
-                <div
-                  key={time}
-                  className="h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm text-slate-600 font-semibold"
-                  role="rowheader"
-                >
-                  {index % 6 === 0 && time}
-                </div>
-              ))}
+              {timeSlots.map((time) => {
+                const outside = isOutsideOfficeHours(time);
+                return (
+                  <div
+                    key={time}
+                    className={`h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm font-semibold ${
+                      outside ? "bg-slate-100 text-slate-400" : "text-slate-600"
+                    }`}
+                    role="rowheader"
+                  >
+                    {time.endsWith(":00") &&
+                      new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Operatory Columns */}
@@ -1286,14 +1555,26 @@ export default function Scheduler({
                 role="gridcell"
                 aria-colindex={colIndex + 2}
               >
-                {/* ✅ FIX: Column Header - Sticky with backdrop-blur */}
-                <div className="h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-3 py-1.5 border-b-2 border-[#16293B] sticky top-0 z-20">
-                  <div className="text-sm font-bold">
+                {/* ✅ FIX: Column Header - Sticky with backdrop-blur. A colored
+                    top accent shows the operatory's assigned provider color. */}
+                <div className="relative h-12 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm text-white px-3 py-1.5 border-b-2 border-[#16293B] sticky top-0 z-20">
+                  {operatory.provider_id && (
+                    <span
+                      className="absolute left-0 right-0 top-0 h-1.5"
+                      style={{
+                        backgroundColor: providerColorFor(
+                          operatory.provider_id,
+                          providerColorMap,
+                        ).border,
+                      }}
+                    />
+                  )}
+                  <div className="text-sm font-bold truncate">
                     {operatory.name}
                   </div>
                   {operatory.provider_id && (
                     <div className="text-xs opacity-90 truncate">
-                      {providerNameById.get(operatory.provider_id) ?? ""}
+                      {resolveProviderName(operatory.provider_id)}
                     </div>
                   )}
                 </div>
@@ -1301,6 +1582,7 @@ export default function Scheduler({
                 {/* Time Slots */}
                 <div className="relative bg-white">
                   {timeSlots.map((time, rowIndex) => {
+                    const outside = isOutsideOfficeHours(time);
                     const slotBlocked = isSlotBlocked(
                       time,
                       operatory.id,
@@ -1310,17 +1592,21 @@ export default function Scheduler({
                         time,
                         operatory.id,
                       );
+                    // Slots outside office hours are visible but non-interactive.
+                    const disabled = outside || slotBlocked;
 
                     return (
                       <div
                         key={`${operatory.id}-${time}`}
                         className={`h-10 border-b border-slate-200 transition-colors ${
-                          slotBlocked
+                          outside
                             ? "bg-slate-100 cursor-not-allowed"
-                            : "hover:bg-[#F7F9FC] cursor-pointer"
+                            : slotBlocked
+                              ? "bg-slate-100 cursor-not-allowed"
+                              : "hover:bg-[#F7F9FC] cursor-pointer"
                         }`}
                         onContextMenu={(e) => {
-                          if (!slotBlocked) {
+                          if (!disabled) {
                             handleEmptySlotRightClick(
                               e,
                               time,
@@ -1331,9 +1617,11 @@ export default function Scheduler({
                           }
                         }}
                         title={
-                          slotBlocked && occupyingAppt
-                            ? `Time unavailable - occupied by ${occupyingAppt.patient_name} (${occupyingAppt.start_time}-${occupyingAppt.end_time})`
-                            : ""
+                          outside
+                            ? "Outside office hours"
+                            : slotBlocked && occupyingAppt
+                              ? `Time unavailable - occupied by ${occupyingAppt.patient_name} (${occupyingAppt.start_time}-${occupyingAppt.end_time})`
+                              : ""
                         }
                         role="gridcell"
                         aria-rowindex={rowIndex + 2}
@@ -1349,14 +1637,43 @@ export default function Scheduler({
                   ).map((appointment) => {
                     const { top, height } =
                       getAppointmentPosition(appointment);
+                    const meta = statusMetaFor(appointment.status);
+                    const statusColor =
+                      statusColors.get(appointment.status) ?? meta.color;
+                    // Provider-specific color for the block (see legend).
+                    const pc: ProviderColor = providerColorFor(
+                      appointment.provider_id,
+                      providerColorMap,
+                    );
+                    const hasAlerts =
+                      appointment.patient_id != null &&
+                      (alertsByPatient.get(appointment.patient_id)?.length ?? 0) > 0;
+                    // $ badge when the patient owes an outstanding balance.
+                    const patientBalance =
+                      appointment.patient_id != null
+                        ? balanceByPatient.get(appointment.patient_id)
+                        : undefined;
+                    const owesMoney = (patientBalance?.balance ?? 0) > 0;
+                    // Missed appointments stay on the grid with a strikethrough
+                    // (PDF page 15); cancelled ones are dimmed.
+                    const isStruck = appointment.missed || appointment.cancelled;
                     return (
                       <div
                         key={appointment.id}
-                        className={`absolute left-1 right-1 border-2 rounded px-2 py-1 cursor-pointer overflow-hidden ${getProcedureTypeColor(appointment.procedure_label)}`}
+                        className={`absolute left-1 right-1 border-2 rounded pr-2 py-1 cursor-pointer overflow-hidden ${
+                          appointment.cancelled ? "opacity-60" : ""
+                        }`}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
+                          backgroundColor: pc.bg,
+                          borderColor: pc.border,
+                          color: pc.text,
                         }}
+                        onClick={(e) =>
+                          handleAppointmentLeftClick(e, appointment)
+                        }
+                        onDoubleClick={() => handleEditAppointment(appointment)}
                         onContextMenu={(e) =>
                           handleAppointmentRightClick(
                             e,
@@ -1364,23 +1681,89 @@ export default function Scheduler({
                           )
                         }
                         role="button"
-                        aria-label={`${appointment.patient_name} - ${appointment.procedure_label} at ${appointment.start_time}`}
+                        aria-label={`${appointment.patient_name} - ${appointment.procedure_label} at ${appointment.start_time} (${appointment.status})`}
                         tabIndex={0}
                       >
-                        <div className="text-xs truncate">
-                          <strong>
-                            {appointment.start_time}
-                          </strong>{" "}
-                          {appointment.patient_name}
-                        </div>
-                        <div className="text-xs truncate">
-                          {appointment.procedure_label}
-                        </div>
-                        {appointment.duration >= 30 && (
-                          <div className="text-xs opacity-75">
-                            {appointment.duration} min
+                        {/* Status color strip (left edge) */}
+                        <span
+                          className="absolute left-0 top-0 bottom-0 w-1.5"
+                          style={{ backgroundColor: statusColor }}
+                          title={appointment.status}
+                        />
+                        <div className="pl-2">
+                          <div
+                            className={`text-xs truncate flex items-center gap-1 ${
+                              isStruck ? "line-through" : ""
+                            }`}
+                          >
+                            <span
+                              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] font-bold flex-shrink-0"
+                              style={{ backgroundColor: statusColor, color: "#fff" }}
+                              title={appointment.status}
+                            >
+                              {meta.letter}
+                            </span>
+                            <strong>{appointment.start_time}</strong>
+                            <span className="truncate">
+                              {appointment.patient_name}
+                            </span>
+                            {appointment.is_new_patient && (
+                              <span
+                                className="text-[9px] font-bold text-emerald-700"
+                                title="New patient"
+                              >
+                                NP
+                              </span>
+                            )}
+                            {owesMoney && (
+                              <span
+                                className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-green-600 text-white text-[9px] font-bold flex-shrink-0"
+                                title={`Outstanding balance: $${(patientBalance?.balance ?? 0).toLocaleString(
+                                  "en-US",
+                                  { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                                )}${
+                                  patientBalance && patientBalance.patient_balance > 0
+                                    ? ` (patient $${patientBalance.patient_balance.toLocaleString(
+                                        "en-US",
+                                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                                      )})`
+                                    : ""
+                                }`}
+                                aria-label="Patient has an outstanding balance"
+                              >
+                                $
+                              </span>
+                            )}
+                            {hasAlerts && (
+                              <button
+                                type="button"
+                                onClick={(e) =>
+                                  handleShowMedicalAlert(e, appointment)
+                                }
+                                className="text-red-600 hover:text-red-800 flex-shrink-0"
+                                title="Medical alert"
+                                aria-label="View medical alert"
+                              >
+                                <span aria-hidden>✚</span>
+                              </button>
+                            )}
                           </div>
-                        )}
+                          <div
+                            className={`text-xs truncate ${
+                              isStruck ? "line-through" : ""
+                            }`}
+                          >
+                            {appointment.provider_name
+                              ? `${appointment.provider_name}: `
+                              : ""}
+                            {appointment.procedure_label}
+                          </div>
+                          {appointment.duration >= 30 && (
+                            <div className="text-xs opacity-75">
+                              {appointment.duration} min
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1396,7 +1779,9 @@ export default function Scheduler({
               appointments={validAppointments}
               onSelectDay={handleSelectDay}
               onEditAppointment={handleEditAppointment}
-              getColor={getProcedureTypeColor}
+              getProviderColor={(appt) =>
+                providerColorFor(appt.provider_id, providerColorMap)
+              }
             />
           )}
 
@@ -1405,7 +1790,9 @@ export default function Scheduler({
               selectedDate={selectedDate}
               appointments={validAppointments}
               onSelectDay={handleSelectDay}
-              getColor={getProcedureTypeColor}
+              getProviderColor={(appt) =>
+                providerColorFor(appt.provider_id, providerColorMap)
+              }
             />
           )}
         </div>
@@ -1676,24 +2063,82 @@ export default function Scheduler({
                     </>
                   )}
 
-                  {/* ✅ STEP 6: Set Status Submenu (backend-driven via definitions) */}
+                  {/* ✅ STEP 6: Set Status Submenu — grouped like the legacy
+                      menu (PDF page 12): confirmation statuses, then same-day
+                      statuses, then Missed / Cancelled. */}
                   {activeSubmenu.type === "status" && (
                     <>
-                      {statusMenuItems.map((status) => (
-                        <button
-                          key={status.value}
-                          onClick={() => {
-                            handleSetStatus(
-                              submenuAppointment!,
-                              status.value as Appointment["status"],
-                            );
-                            closeSubmenu();
-                          }}
-                          className={menuItemClass}
-                        >
-                          {status.label}
-                        </button>
-                      ))}
+                      <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+                        Confirmation
+                      </div>
+                      {CONFIRMATION_STATUSES.map((name) => {
+                        const m = statusMetaFor(name);
+                        return (
+                          <button
+                            key={name}
+                            onClick={() => {
+                              requestSetStatus(submenuAppointment!, name);
+                              closeSubmenu();
+                            }}
+                            className={`${menuItemClass} flex items-center gap-2`}
+                          >
+                            <span
+                              className="inline-flex w-4 h-4 rounded-full items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                              style={{ backgroundColor: statusColors.get(name) ?? m.color }}
+                            >
+                              {m.letter}
+                            </span>
+                            {m.label}
+                          </button>
+                        );
+                      })}
+                      <div className="my-1 border-t border-[#E2E8F0]" />
+                      <div className="px-3 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+                        Same-day
+                      </div>
+                      {SAMEDAY_STATUSES.map((name) => {
+                        const m = statusMetaFor(name);
+                        return (
+                          <button
+                            key={name}
+                            onClick={() => {
+                              requestSetStatus(submenuAppointment!, name);
+                              closeSubmenu();
+                            }}
+                            className={`${menuItemClass} flex items-center gap-2`}
+                          >
+                            <span
+                              className="inline-flex w-4 h-4 rounded-full items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                              style={{ backgroundColor: statusColors.get(name) ?? m.color }}
+                            >
+                              {m.letter}
+                            </span>
+                            {m.label}
+                          </button>
+                        );
+                      })}
+                      <div className="my-1 border-t border-[#E2E8F0]" />
+                      {(["Missed", "Cancelled"] as const).map((name) => {
+                        const m = statusMetaFor(name);
+                        return (
+                          <button
+                            key={name}
+                            onClick={() => {
+                              requestSetStatus(submenuAppointment!, name);
+                              closeSubmenu();
+                            }}
+                            className={`${menuItemClass} flex items-center gap-2 font-medium`}
+                          >
+                            <span
+                              className="inline-flex w-4 h-4 rounded-full items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                              style={{ backgroundColor: m.color }}
+                            >
+                              {m.letter}
+                            </span>
+                            {m.label}
+                          </button>
+                        );
+                      })}
                     </>
                   )}
                 </div>
@@ -1701,7 +2146,39 @@ export default function Scheduler({
             })(),
             document.body,
           )}
+
+        {/* Appointment Details pop-out (left-click) — PDF pages 5–7 */}
+        {detailsAppt && (
+          <AppointmentDetailsPopover
+            appointment={detailsAppt}
+            anchor={detailsAnchor}
+            statusColors={statusColors}
+            onClose={() => setDetailsAppt(null)}
+            onSetStatus={(status) => requestSetStatus(detailsAppt, status)}
+            onCancelRequest={() => setCancelAppt(detailsAppt)}
+          />
+        )}
+
+        {/* Cancel Appointment dialog — PDF page 16 */}
+        {cancelAppt && (
+          <CancelAppointmentDialog
+            patientName={cancelAppt.patient_name}
+            busy={isCancelling}
+            onConfirm={confirmCancel}
+            onClose={() => setCancelAppt(null)}
+          />
+        )}
+
+        {/* Medical Alert popover — PDF page 18 */}
+        {alertPopover && (
+          <MedicalAlertPopover
+            patientName={alertPopover.patientName}
+            alerts={alertPopover.alerts}
+            anchor={{ x: alertPopover.x, y: alertPopover.y }}
+            onClose={() => setAlertPopover(null)}
+          />
+        )}
       </div>
-    </div>
+    </AppShell>
   );
 }

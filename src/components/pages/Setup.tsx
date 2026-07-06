@@ -1,4 +1,4 @@
-import GlobalNav from '../GlobalNav';
+import AppShell from '../layout/AppShell';
 import { Settings, Building2, Users, CreditCard, FileText, Calendar, Printer, Bell } from 'lucide-react';
 
 interface SetupProps {
@@ -52,14 +52,8 @@ export default function Setup({ onLogout, currentOffice, setCurrentOffice }: Set
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <GlobalNav 
-        onLogout={onLogout} 
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-      
-      <div className="p-6">
+    <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} bgClassName="bg-gray-50">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center gap-4 mb-6">
           <Settings className="w-8 h-8 text-blue-600" />
           <div>
@@ -131,6 +125,6 @@ export default function Setup({ onLogout, currentOffice, setCurrentOffice }: Set
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

@@ -85,7 +85,50 @@ New module: `src/components/reports/` (`lib/reportRange.ts`, `lib/reportMetrics.
 `lib/exportCsv.ts`, `components/ReportFilterBar.tsx`) reusing `dashboard/components/{KpiStat,WidgetCard}`
 and `dashboard/lib/aggregate.ts`.
 
-## 5. Out of scope (later units)
-Dedicated report screens (Financial, Patient, Appointment, Clinical, Operational, Provider),
-the `/reports/lists|interactive|office/*` placeholders, scheduled reports, and PDF/Excel/email
-export — all backend-gap or follow-on work. See `reports_backend_devreport.md`.
+## 5. Unit 2 deliverable — report-runner framework + dedicated report screens
+
+A declarative **report-runner framework** now drives dedicated report screens. A
+`ReportDefinition` (`src/components/reports/types.ts`) describes one report — its
+filters, table columns, `fetch`/aggregation, summary cards + optional chart — and the
+generic `ReportShell` renders any definition end-to-end:
+
+> **Select** (catalog) → **Filter** (date range / office / provider / status / keyword +
+> per-report extras) → **Preview** (summary KPI cards + bar/pie chart + sortable,
+> searchable, client-paginated table with truncation surfaced) → **Export** (CSV, Excel,
+> PDF, Print). Saved filter "views" persist per report in `localStorage`.
+
+**New files** under `src/components/reports/`:
+- `types.ts` (`ReportDefinition`/`ColumnDef`/`ReportFilters`/`ReportData`/`AnyReportDefinition`),
+  `reportCatalog.ts` (registry + `CATEGORIES`).
+- `lib/`: `exportMatrix.ts` (columns+rows → shared string matrix), `exportPdf.ts`
+  (jsPDF + autotable, landscape), `exportExcel.ts` (dependency-free SpreadsheetML `.xls`),
+  `savedViews.ts` (localStorage presets), `useReportRefData.ts` (offices/providers +
+  id→name maps).
+- `components/`: `ReportShell.tsx` (runner), `ReportFilterPanel.tsx`, `DataTable.tsx`
+  (sort/search/paginate), `ReportChart.tsx` (bar/pie), `ReportCatalog.tsx` (searchable,
+  categorized cards).
+- `reports/`: `helpers.ts` + six definitions — `productionReport`, `collectionsReport`,
+  `patientListReport`, `appointmentReport`, `treatmentPlanReport`, `insuranceClaimReport`.
+- `pages/ReportRunnerPage.tsx` (route target).
+
+**Routing** (`App.tsx`): `/reports/run/:reportId` → `ReportRunnerPage`; the Reports home
+(`Reports.tsx`) now renders `ReportCatalog` (replacing the static category cards). Legacy
+nav category routes redirect to the matching runner report (`/reports/ledger` →
+`run/production`, `/reports/appointment` → `run/appointments`, `/reports/treatment-plan` →
+`run/treatment-plans`, `/reports/insurance` → `run/insurance-claims`,
+`/reports/lists/patient-list` → `run/patient-list`).
+
+**Backend endpoints used** (client-side aggregation as before — gap #1): production =
+`listPatientProcedures`, collections = `listPatientPayments`, patient list = `listPatients`,
+appointments = `listSchedulerAppointments` (denormalized names; provider/status filtered
+client-side), treatment plans = `listTreatmentPlans`, claims = `listInsuranceClaims`;
+offices/providers via `listOffices`/`listProviders`.
+
+Live-verified at :5173 (Production over 2024-09 = 1,000 rows w/ mapped provider names +
+currency totals; Appointments 2026-07-01→05 = denormalized patient/provider/operatory;
+Patient List = 1,600 rows; CSV/Excel/PDF export all fire without error).
+
+## 6. Out of scope (later units)
+The `/reports/interactive|office/*` placeholders, remaining `/reports/lists/*` entries,
+provider/management/statement report screens, **server-side** PDF/Excel/email export, and
+scheduled reports — all backend-gap or follow-on work. See `reports_backend_devreport.md`.

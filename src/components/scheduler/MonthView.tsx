@@ -1,4 +1,5 @@
 import type { Appointment } from "../../services/schedulerApi";
+import type { ProviderColor } from "../../utils/providerColor";
 
 interface MonthViewProps {
   /** Any date within the month to render. */
@@ -7,8 +8,8 @@ interface MonthViewProps {
   appointments: Appointment[];
   /** Jump to the day view for a specific date. */
   onSelectDay: (date: Date) => void;
-  /** Map a procedure-type name to its Tailwind color classes. */
-  getColor: (procedureTypeName: string) => string;
+  /** Resolve an appointment's provider color (matches the day view / legend). */
+  getProviderColor: (appointment: Appointment) => ProviderColor;
 }
 
 const fmtYMD = (d: Date): string =>
@@ -26,7 +27,7 @@ export default function MonthView({
   selectedDate,
   appointments,
   onSelectDay,
-  getColor,
+  getProviderColor,
 }: MonthViewProps) {
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
@@ -101,17 +102,23 @@ export default function MonthView({
                 {day.getDate()}
               </div>
               <div className="space-y-0.5">
-                {visible.map((appt) => (
+                {visible.map((appt) => {
+                  const c = getProviderColor(appt);
+                  return (
                   <div
                     key={appt.id}
-                    className={`text-[10px] leading-tight truncate border-l-2 rounded px-1 ${getColor(
-                      appt.procedure_label,
-                    )}`}
+                    className="text-[10px] leading-tight truncate border-l-2 rounded px-1"
+                    style={{
+                      backgroundColor: c.bg,
+                      borderLeftColor: c.border,
+                      color: c.text,
+                    }}
                     title={`${appt.start_time} ${appt.patient_name} — ${appt.procedure_label}`}
                   >
                     {appt.start_time} {appt.patient_name}
                   </div>
-                ))}
+                  );
+                })}
                 {overflow > 0 && (
                   <div className="text-[10px] text-[#64748B] px-1 font-medium">
                     +{overflow} more

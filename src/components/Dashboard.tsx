@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import GlobalNav from "./GlobalNav.js";
+import AppShell from "./layout/AppShell";
 import type { UserRole } from "../contexts/AuthContext.js";
 import DashboardHeader from "./dashboard/widgets/DashboardHeader";
 import GlobalSearchWidget from "./dashboard/widgets/GlobalSearchWidget";
@@ -81,15 +81,12 @@ export default function Dashboard({
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC]">
-      <GlobalNav
-        onLogout={handleLogout}
-        currentOffice={currentOffice}
-        setCurrentOffice={setCurrentOffice}
-      />
-
-      <div className="pt-[120px]">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <AppShell
+      onLogout={handleLogout}
+      currentOffice={currentOffice}
+      setCurrentOffice={setCurrentOffice}
+    >
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
           <DashboardHeader userName={user?.name} role={user?.role} currentOffice={currentOffice} />
 
           <TodaysAppointmentsKpi currentOffice={currentOffice} />
@@ -106,8 +103,7 @@ export default function Dashboard({
           </div>
 
           <AnalyticsWidget currentOffice={currentOffice} />
-        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
