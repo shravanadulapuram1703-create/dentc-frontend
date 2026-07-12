@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   // Content Security Policy (adjust as needed)
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https:;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:;"
   );
   next();
 });
@@ -54,6 +54,13 @@ app.use(express.static(distPath, {
   etag: true,
   lastModified: true,
   setHeaders: (res, path) => {
+    // The service worker script must never be cached, so browsers always
+    // re-check it and can pick up the self-destroying version in public/sw.js.
+    if (path.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Service-Worker-Allowed', '/');
+      return;
+    }
     // Cache static assets aggressively
     if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
