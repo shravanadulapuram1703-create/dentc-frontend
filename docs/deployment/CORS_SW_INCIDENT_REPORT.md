@@ -11,10 +11,61 @@ No 'Access-Control-Allow-Origin' header is present on the requested resource.
 ```
 plus a WebSocket CSP violation and `sw.js ... no-response` network errors.
 
-**Bottom line for the backend team: no backend change is required.** The backend CORS is
-correctly configured. The real cause was a **stale service worker on the client**, fixed on the
-frontend. This report documents what we verified so the backend side can be confidently ruled out,
-plus two small items worth a look.
+**UPDATE (live reproduction, logged in as an admin on production):** ruling the backend out was
+premature. A logged-in test on `reckondental.com` isolated a **primary, backend-side defect** that
+requires a fix — see **§0** below, which now supersedes the "no backend change required" framing.
+The service-worker and CSP items (§2, §3) are real but secondary and already fixed on the frontend.
+
+---
+
+## 0. PRIMARY defect — `/appointments` router returns a 500-class error with NO CORS header (backend)
+
+Reproduced in a **clean browser** (verified 0 service workers / 0 caches, so this is independent of
+the stale-worker issue in §2). Logged in as admin and measured each request from the live page:
+
+| Request (authenticated) | Result |
+|---|---|
+| `GET /api/v1/offices` | **200** ✅ (`type: cors`) |
+| `GET /api/v1/users/me` | **422** ✅ (`type: cors` — CORS present even on error) |
+| `GET /api/v1/appointments` | **`Failed to fetch`** in ~330 ms ❌ |
+| `GET /api/v1/appointments/scheduler` | **`Failed to fetch`** in ~322 ms ❌ |
+| `GET /api/v1/appointments[/scheduler]` **unauthenticated** | **401** ✅ (CORS header present) |
+
+**Interpretation:**
+- The routes exist and CORS works at the 401 level (unauthenticated returns 401 **with** the header).
+- The failure appears **only after auth succeeds**, fails **fast (~330 ms → not a timeout)**, and hits
+  the **whole `/appointments` router**, while sibling routers (`/offices`, `/users`) succeed.
+- That is the signature of an **unhandled 500 in the appointments router**. In FastAPI/Starlette the
+  `ServerErrorMiddleware` sits **outside** `CORSMiddleware`, so a 500 is returned **without**
+  `Access-Control-Allow-Origin`. The browser then reports "No 'Access-Control-Allow-Origin' header is
+  present" — a **server error masquerading as a CORS error**.
+
+**Backend actions:**
+1. Check `dentc-backend` Cloud Run logs for a 500 / traceback on `GET /api/v1/appointments/scheduler`
+   (and `/appointments`) for an **authenticated** request. Likely a missing `office_id`/context or a
+   query bug (the test account had **no office selected** — a required-context path may be throwing
+   instead of returning 422/400).
+2. Ensure errors still carry CORS headers — register an exception handler or make `CORSMiddleware`
+   the outermost middleware — so genuine 500s surface as 500s in the browser, not phantom CORS errors.
+
+> Consequence for the frontend: even after the frontend fixes (§2, §3) deploy, **the Scheduler will
+> remain empty until this 500 is fixed.** This is the top-priority item.
+
+## 0b. Trailing-slash redirect downgrades to insecure `http://` (backend/proxy)
+
+`GET /api/v1/appointments/scheduler/` (trailing slash) returns:
+```
+HTTP/1.1 307 Temporary Redirect
+location: http://dentc-backend-477406612596.us-central1.run.app/api/v1/appointments/scheduler?...
+```
+The `Location` is **`http://`**, not `https://` — a scheme downgrade because TLS is terminated at
+Cloud Run's edge and forwarded to the app as `http`. Preflighted (auth-bearing) requests cannot
+follow cross-origin redirects, so any caller hitting the slash variant fails. The frontend currently
+calls the **no-slash** canonical path so it dodges this today, but it is a latent bug.
+
+**Backend action:** honor the forwarded proto so generated URLs/redirects use `https` — e.g. run
+uvicorn with `--forwarded-allow-ips='*'` (+ `--proxy-headers`) or add Starlette's
+`ProxyHeadersMiddleware` / set `root_path`.
 
 ---
 
@@ -96,10 +147,16 @@ revision: `gcloud run services update-traffic dentc-backend --region us-central1
 
 ---
 
-## Summary of asks for the backend team
-1. **CORS:** nothing broken — but tighten `CORS_ORIGINS` from "reflect any origin" to an explicit
-   allow-list (§4).
-2. **WebSocket:** confirm `wss://.../api/v1/ai-chat/ws` is publicly reachable and confirm/advise on
-   the `?token=` auth scheme (§3).
-3. No other backend action required — the outage cause was a client-side service worker, fixed on
-   the frontend.
+## Summary of asks for the backend team (priority order)
+1. **P0 — fix the 500 on the `/appointments` router (§0).** This is the actual blocker for the
+   Scheduler. Authenticated requests to `/api/v1/appointments` and `/api/v1/appointments/scheduler`
+   fail fast with no CORS header (a 500 behind the CORS middleware). Check Cloud Run logs; also make
+   error responses carry CORS headers.
+2. **P1 — fix the `http://` scheme downgrade on trailing-slash 307 redirects (§0b)** via forwarded
+   proto / proxy headers.
+3. **P2 — tighten `CORS_ORIGINS`** from "reflect any origin" to an explicit allow-list (§4).
+4. **P2 — WebSocket:** confirm `wss://.../api/v1/ai-chat/ws` is publicly reachable and confirm/advise
+   on the `?token=` auth scheme (§3).
+
+Frontend-side items (stale service worker §2, CSP `wss:` §3) are already fixed in the frontend repo
+and pending deploy.
