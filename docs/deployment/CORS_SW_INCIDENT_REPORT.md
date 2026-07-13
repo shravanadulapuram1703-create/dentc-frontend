@@ -160,3 +160,36 @@ revision: `gcloud run services update-traffic dentc-backend --region us-central1
 
 Frontend-side items (stale service worker §2, CSP `wss:` §3) are already fixed in the frontend repo
 and pending deploy.
+
+---
+
+## Resolution (backend team response, 2026-07-12)
+
+The backend team confirmed the diagnosis. Root cause and status:
+
+- **P0 root cause = unapplied DB migrations (confirmed).** Production `recondental_migrated` was stamped
+  below the Alembic head (`b0c1d2e3f4a5`) and missing the columns from revision `a9b0c1d2e3f4`
+  (`appointments.posted_on, cancellation_note, cancellation_reason, add_to_call_list, created_by,
+  updated_by`; `appointment_procedures.est_patient`). The scheduler feed's `select(Appointment, …)`
+  loads every column, so one missing column raised `UndefinedColumn` on **every** call — matching the
+  unconditional ~300 ms failure. Sibling routers worked because their migrations were applied.
+  - **P0a (code, done):** added a catch-all exception handler wired *inside* `CORSMiddleware`, so 500s
+    now return through CORS with `Access-Control-*` headers (honest 500, not phantom CORS).
+  - **P0b (deploy, ACTION REQUIRED):** run `alembic upgrade head` against `recondental_migrated`
+    out-of-band (Cloud SQL proxy or a Cloud Run Job — not on app startup), then roll the service. All
+    pending revisions are additive/nullable, so safe.
+- **P1 (code, done):** uvicorn/gunicorn now trust `X-Forwarded-Proto` via `--forwarded-allow-ips="*"`,
+  so trailing-slash redirects emit `https://`. Takes effect on next image build + deploy.
+- **P2 (code + deploy, done/landing):** `CORS_ORIGINS` tightened to an explicit allow-list (strips `*`,
+  defaults to the `reckondental.com` origins).
+- **AI-chat WebSocket:** intentionally deferred by the backend team for now. The frontend CSP fix
+  (§3, `connect-src … wss:`) already unblocks it whenever they re-enable it.
+
+**Still gating production:** P0b (apply migrations) + the backend rebuild/redeploy for P0a/P1 and the
+`CORS_ORIGINS` env update. **Separately, the frontend image must be rebuilt/deployed** for the
+service-worker kill-switch (§2) and CSP `wss:` (§3) to reach returning users — these are client-side
+and unaffected by any backend change.
+
+**Verification once both sides deploy:** log in on `reckondental.com/dashboard`; confirm
+`GET /api/v1/appointments/scheduler` → 200 (no `http://` redirect), a forced error carries
+`access-control-allow-origin`, and Today's Appointments / Today's Schedule populate.
