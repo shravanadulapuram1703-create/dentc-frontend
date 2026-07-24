@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AIChatProvider, useAIChat } from './contexts/AIChatContext';
+import { ChatProvider, useMessagingContext } from './contexts/ChatContext';
 import { AppProviders } from './app/providers';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -74,7 +74,8 @@ import DentalQuestionnaireSetup from './components/setup/medical/DentalQuestionn
 import PrescriptionSetup from './components/setup/prescriptions/PrescriptionSetup';
 import CustomToolbarSetup from './components/setup/custom-toolbar/CustomToolbarSetup';
 import { Loader2 } from 'lucide-react';
-import AIChat from './components/ai-chat/AIChat';
+import Chat from './components/Chat';
+import MessagesPage from './features/messaging/MessagesPage';
 import AddNewPatient from './components/pages/AddNewPatient';
 import { HelpProvider } from './components/help';
 
@@ -410,15 +411,25 @@ function AppRoutes() {
           <Navigate to="/login" />
         } 
       />
-      <Route 
-        path="/my-page" 
+      <Route
+        path="/my-page"
         element={
-          isAuthenticated ? 
-          <MyPage onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> : 
+          isAuthenticated ?
+          <MyPage onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> :
           <Navigate to="/login" />
-        } 
+        }
       />
-      
+
+      {/* Direct Messaging (user-to-user) — full-page surface */}
+      <Route
+        path="/messages"
+        element={
+          isAuthenticated ?
+          <MessagesPage onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> :
+          <Navigate to="/login" />
+        }
+      />
+
       {/* Default Route */}
       <Route path="/" element={<Navigate to="/login" />} />
     </Routes>
@@ -448,7 +459,7 @@ function LogoutOverlay() {
 }
 
 function AppContent() {
-  const { chatWidth } = useAIChat();
+  const { chatWidth } = useMessagingContext();
 
   return (
     <div
@@ -463,8 +474,8 @@ function AppContent() {
         <AppRoutes />
       </HelpProvider>
       <LogoutOverlay />
-      {/* Global AI Chat Assistant - Available on all screens */}
-      <AIChat />
+      {/* Global Direct Messaging - floating launcher + slide-in panel, all screens */}
+      <Chat />
     </div>
   );
 }
@@ -473,11 +484,11 @@ export default function App() {
   return (
     <AppProviders>
       <AuthProvider>
-        <AIChatProvider>
+        <ChatProvider>
           <Router>
             <AppContent />
           </Router>
-        </AIChatProvider>
+        </ChatProvider>
       </AuthProvider>
     </AppProviders>
   );

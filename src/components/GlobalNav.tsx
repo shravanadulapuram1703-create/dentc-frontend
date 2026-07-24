@@ -75,7 +75,7 @@ import { SubmenuPortal } from "./navigation/SubmenuPortal";
 import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth, type Office } from "../contexts/AuthContext.js";
-import { useAIChat } from "../contexts/AIChatContext.js";
+import { useMessagingContext } from "../contexts/ChatContext.js";
 import { useHelp } from "./help";
 import api from "../services/api.js";
 import { listOffices } from "@/api/generated/endpoints/organization/organization";
@@ -108,8 +108,8 @@ export default function GlobalNav({
   const [searchQuery, setSearchQuery] = useState("");
   
   // Get chat width to adjust GlobalNav position
-  // GlobalNav is always within AIChatProvider context (wraps Router)
-  const { chatWidth } = useAIChat();
+  // GlobalNav is always within ChatProvider context (wraps Router)
+  const { chatWidth } = useMessagingContext();
 
   // Report-an-Issue launcher (Help dropdown). GlobalNav renders inside
   // HelpProvider (see App.tsx), so this is always available.

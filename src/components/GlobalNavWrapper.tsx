@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAIChat } from '../contexts/AIChatContext';
+import { useMessagingContext } from '../contexts/ChatContext';
 import GlobalNav, { GlobalNavProps } from './GlobalNav';
 
 export default function GlobalNavWrapper(props: GlobalNavProps) {
-  const { chatWidth } = useAIChat();
+  const { chatWidth } = useMessagingContext();
 
   return (
     <div
