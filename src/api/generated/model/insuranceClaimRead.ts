@@ -35,4 +35,6 @@ export interface InsuranceClaimRead {
   is_active: boolean;
   created_by?: number | null;
   created_at: string;
+  patient_name?: string | null;
+  carrier_name?: string | null;
 }

@@ -47,6 +47,15 @@ const schema = z.object({
   VITE_JIRA_API_TOKEN: z.string().optional(),
   // Target Jira project key that tickets are created under.
   VITE_JIRA_PROJECT_KEY: z.string().default("SUP"),
+
+  // --- AppointNow (external online booking) ----------------------------------
+  // The public booking screen (/book/:office_code) and the staff request inbox
+  // talk to a swappable transport. Two modes:
+  //   local  (default) — client-side simulation (localStorage + BroadcastChannel).
+  //                       Fully demonstrable end-to-end in a browser; no backend.
+  //   api    — hit the real /api/v1/appointnow/* endpoints once the backend team
+  //            ships them (see docs/appointnow/appointnow_backend_devreport.md).
+  VITE_APPOINTNOW_BACKEND: z.enum(["local", "api"]).default("local"),
 });
 
 const parsed = schema.parse(import.meta.env);
@@ -108,4 +117,9 @@ export const env = {
     apiToken: jiraApiToken,
     projectKey: parsed.VITE_JIRA_PROJECT_KEY,
   },
+  /**
+   * AppointNow transport mode. "local" runs the client-side booking simulation;
+   * "api" targets the real /api/v1/appointnow/* endpoints (backend gap).
+   */
+  appointNowBackend: parsed.VITE_APPOINTNOW_BACKEND,
 } as const;

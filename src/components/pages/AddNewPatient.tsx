@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
 import { checkDuplicatePatient } from "../../services/patient.service";
@@ -22,18 +22,92 @@ import {
   type ReferralTypeOption,
   type PatientTypeOption,
 } from "../../services/patientMetadataApi";
-import { 
-  createPatientFull,
+import {
+  registerPatientResilient,
+  buildPatientCreate,
   type PatientCreateRequestFull,
-  type PatientDetails 
 } from "../../services/patientApi";
-import { fetchProviders, type Provider } from "../../services/schedulerApi";
+import type { RegisterRequest } from "@/api/generated/model";
+import { fetchProviders, isHygienist, type Provider } from "../../services/schedulerApi";
+import { listReferrals } from "@/api/generated/endpoints/patients/patients";
+import type { ReferralRead } from "@/api/generated/model";
+import { resolveOffice, officeKeyToId, type OfficeOption } from "../../services/officeLookup";
+
+/** referral_type direction codes: "0" = Referred By, "1" = Referred To. */
+const REFERRAL_DIRECTION_TO = "1";
 import { Loader2 } from "lucide-react";
+import {
+  createPatientInsurance,
+  createPatientRecall,
+  createPatientEmergencyContact,
+} from "@/api/generated/endpoints/patients/patients";
+import { createInsuranceSubscriber } from "@/api/generated/endpoints/insurance/insurance";
+import WizardStepper from "../../features/add-patient/WizardStepper";
+import ResponsiblePartyStep from "../../features/add-patient/steps/ResponsiblePartyStep";
+import InsuranceSlotStep from "../../features/add-patient/steps/InsuranceSlotStep";
+import MedicalAlertsStep from "../../features/add-patient/steps/MedicalAlertsStep";
+import QuestionnairesStep from "../../features/add-patient/steps/QuestionnairesStep";
+import RecallStep from "../../features/add-patient/steps/RecallStep";
+import {
+  buildWizardSteps,
+  COVERAGE_SLOTS,
+  DEFAULT_RECALLS,
+  emptyResponsibleParty,
+  emptyInsuranceSlot,
+  emptyMedicalAlerts,
+  emptyQuestionnaires,
+  slotHasPlan,
+  buildSubscriberCreateForSlot,
+  buildPatientInsuranceCreateForSlot,
+  buildResponsiblePartyIn,
+  buildMedicalAlertsIn,
+  buildQuestionnaireResponsesIn,
+  buildRecallCreate,
+  buildOpeningBalanceIn,
+  toCode,
+  type ResponsiblePartyForm,
+  type InsuranceSlotForm,
+  type MedicalAlertsForm,
+  type QuestionnairesForm,
+  type RecallEntry,
+  type CoverageSlotKey,
+} from "../../features/add-patient/wizardModel";
+import {
+  loadPatientForEdit,
+  savePatientEdits,
+  type PatientAudit,
+  type PatientEditSnapshot,
+} from "../../features/add-patient/editMode";
 
 interface AddNewPatientProps {
-  onLogout: () => void;
+  /** Required by the page chrome; unused in the modal variant. */
+  onLogout?: () => void;
   currentOffice: string;
-  setCurrentOffice: (office: string) => void;
+  setCurrentOffice?: (office: string) => void;
+  /**
+   * "edit" hydrates the form from an existing patient and saves with PATCH
+   * instead of registering a new one. The screen itself is the create flow's
+   * Patient Information step — the legacy tool edits a patient through the
+   * same form it creates one with.
+   */
+  mode?: "create" | "edit";
+  /**
+   * "modal" drops the app chrome and renders inside an overlay dialog, which is
+   * how the Overview's PATIENT INFORMATION → EDIT button opens this. "page" is
+   * the full-screen route used by Add New Patient.
+   */
+  variant?: "page" | "modal";
+  /** Patient to edit in the modal variant (the page variant reads the route). */
+  patientId?: number;
+  /** Modal variant only — dismiss without saving. */
+  onClose?: () => void;
+  /**
+   * Modal variant only — called after a successful save. Receives the patient
+   * id (the newly-registered id in create mode, the edited id in edit mode) so
+   * an embedding flow (e.g. the Scheduler new-appointment wizard) can continue
+   * with the patient it just created.
+   */
+  onSaved?: (patientId: number) => void;
 }
 
 interface PatientFormData {
@@ -125,12 +199,43 @@ interface PatientFormData {
   balanceOver120: string;
 }
 
+/**
+ * Provider option label. The seeded data has many providers sharing a name
+ * (e.g. several "Dhileep Jinna"), so append the title to tell them apart.
+ */
+const providerLabel = (p: Provider): string =>
+  p.title ? `${p.name}, ${p.title}` : p.name;
+
+/**
+ * Pull the legacy "Emergency Contact" block out of the Medical Questionnaire
+ * answers so it can be stored in the real `patient-emergency-contacts` resource
+ * (LEG-3) rather than living on as questionnaire rows.
+ */
+const emergencyContactFromQuestionnaire = (q: QuestionnairesForm) => ({
+  name: (q.medical[toCode("Emergency contact name")] ?? "").trim(),
+  phone: (q.medical[toCode("Emergency contact phone")] ?? "").trim(),
+  relationship: (q.medical[toCode("Emergency contact relationship to patient")] ?? "").trim(),
+});
+
 export default function AddNewPatient({
   onLogout,
   currentOffice,
   setCurrentOffice,
+  mode = "create",
+  variant = "page",
+  patientId: propPatientId,
+  onClose,
+  onSaved,
 }: AddNewPatientProps) {
   const navigate = useNavigate();
+  const { patientId: routePatientId } = useParams<{ patientId?: string }>();
+  const isModal = variant === "modal";
+  // The modal is handed its patient directly; the page reads the route.
+  const editPatientId =
+    mode !== "edit"
+      ? NaN
+      : (propPatientId ?? (routePatientId ? Number(routePatientId) : NaN));
+  const isEditMode = Number.isFinite(editPatientId);
 
   // Calculate age from birthdate
   const calculateAge = (birthdate: string): string => {
@@ -215,8 +320,8 @@ export default function AddNewPatient({
 
     // Office & Provider
     office: currentOffice,
-    feeSchedule: "CP-50",
-    feeScheduleId: "FS-007", // Default to CP-50
+    feeSchedule: "", // real default selected once fee schedules load
+    feeScheduleId: "",
     preferredProvider: "",
     preferredHygienist: "None",
 
@@ -274,67 +379,128 @@ export default function AddNewPatient({
     formData.lastName.trim() !== "" &&
     formData.firstName.trim() !== "";
 
-  // ✅ Load all metadata on mount
+  // ✅ Load every dropdown source on mount.
+  //
+  // These run in PARALLEL and each settles independently. They used to be chained
+  // inside one `try` after `await fetchPatientMetadata()`, which meant a slow or
+  // failing definitions call left Preferred Provider / Fee Schedule / Hygienist
+  // permanently empty. Now one failure only blanks its own dropdown.
   useEffect(() => {
-    const loadAllMetadata = async () => {
+    let cancelled = false;
+
+    const loadMetadata = async () => {
       setLoadingMetadata(true);
-      setMetadataError(null);
-      
       try {
-        // Load patient metadata (titles, pronouns, states, etc.)
         const metadataResponse = await fetchPatientMetadata();
+        if (cancelled) return;
         setMetadata(metadataResponse);
         setPatientTypesMetadata(metadataResponse.patient_types);
-        
-        // Load providers
-        setLoadingProviders(true);
-        try {
-          const providersList = await fetchProviders(currentOffice);
-          setProviders(providersList);
-          // Filter hygienists (assuming they have a type or role field)
-          // For now, we'll use all providers as potential hygienists
-          setHygienists(providersList);
-        } catch (error) {
-          console.error('Error loading providers:', error);
-        } finally {
-          setLoadingProviders(false);
-        }
-        
-        // Load fee schedules
-        setLoadingFeeSchedules(true);
-      try {
-        const response = await getFeeSchedules(currentOffice);
-        setFeeSchedules(response.feeSchedules);
-        
-        // If no fee schedule is set, use the first available
-        if (!formData.feeScheduleId && response.feeSchedules.length > 0) {
-          const defaultSchedule = response.feeSchedules.find(fs => fs.feeScheduleName === 'CP-50') 
-            || response.feeSchedules[0];
-          
-          if (defaultSchedule) {
-            setFormData(prev => ({
-              ...prev,
-              feeSchedule: defaultSchedule.feeScheduleName,
-              feeScheduleId: defaultSchedule.feeScheduleId,
-            }));
-          }
-        }
+        setMetadataError(null);
       } catch (error) {
-        console.error('Error loading fee schedules:', error);
-        setFeeScheduleError('Failed to load fee schedules. Using default values.');
+        console.error("Error loading patient metadata:", error);
+        if (!cancelled) setMetadataError("Failed to load form metadata. Some fields may not be available.");
       } finally {
-        setLoadingFeeSchedules(false);
-        }
-      } catch (error) {
-        console.error('Error loading metadata:', error);
-        setMetadataError('Failed to load form metadata. Some fields may not be available.');
-      } finally {
-        setLoadingMetadata(false);
+        if (!cancelled) setLoadingMetadata(false);
       }
     };
 
-    loadAllMetadata();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Office name for the read-only "Office" field. Re-runs whenever the global
+    // nav selection changes, so the field always tracks the header.
+    const loadHomeOffice = async () => {
+      try {
+        const office = await resolveOffice(currentOffice);
+        if (cancelled) return;
+        setHomeOffice(office);
+        setFormData((prev) => ({
+          ...prev,
+          office: office?.name ?? currentOffice ?? "",
+        }));
+      } catch (error) {
+        console.error("Error resolving current office:", error);
+        // Fall back to the raw key so the field is never blank.
+        if (!cancelled) setFormData((prev) => ({ ...prev, office: currentOffice ?? "" }));
+      }
+    };
+
+    const loadProviders = async () => {
+      setLoadingProviders(true);
+      try {
+        const providersList = await fetchProviders(currentOffice);
+        if (cancelled) return;
+        // Preferred Provider = the treating providers (dentists); Preferred
+        // Hygienist = only providers whose ProviderRead.role is a hygienist.
+        const hygienistList = providersList.filter(isHygienist);
+        setProviders(providersList.filter((p) => !isHygienist(p)));
+        setHygienists(hygienistList);
+      } catch (error) {
+        console.error("Error loading providers:", error);
+      } finally {
+        if (!cancelled) setLoadingProviders(false);
+      }
+    };
+
+    const loadFeeSchedules = async () => {
+      setLoadingFeeSchedules(true);
+      try {
+        const response = await getFeeSchedules(currentOffice);
+        if (cancelled) return;
+        setFeeSchedules(response.feeSchedules);
+        setFeeScheduleError(
+          response.feeSchedules.length === 0 ? "No fee schedules are set up for this organization." : null,
+        );
+        // Default to the office's usual schedule when none is chosen yet.
+        setFormData((prev) => {
+          if (prev.feeScheduleId || response.feeSchedules.length === 0) return prev;
+          const preferred =
+            response.feeSchedules.find((fs) => fs.feeScheduleName === "CP-50") ??
+            response.feeSchedules[0]!;
+          return {
+            ...prev,
+            feeSchedule: preferred.feeScheduleName,
+            feeScheduleId: preferred.feeScheduleId,
+          };
+        });
+      } catch (error) {
+        console.error("Error loading fee schedules:", error);
+        if (!cancelled) setFeeScheduleError("Failed to load fee schedules.");
+      } finally {
+        if (!cancelled) setLoadingFeeSchedules(false);
+      }
+    };
+
+    // "Referred To" = referral sources the practice refers patients OUT to
+    // (direction code "1"; "0" is Referred By). Filtered SERVER-side — the
+    // referrals table holds 800+ rows, so paging them all client-side just to
+    // fill a dropdown was needlessly slow.
+    const loadReferralTargets = async () => {
+      setLoadingReferralTargets(true);
+      try {
+        const res = await listReferrals({
+          referral_type: REFERRAL_DIRECTION_TO,
+          size: 200,
+          sort: "last_name",
+          order: "asc",
+        });
+        if (cancelled) return;
+        setReferralTargets(res.items ?? []);
+      } catch (error) {
+        console.error("Error loading referral targets:", error);
+      } finally {
+        if (!cancelled) setLoadingReferralTargets(false);
+      }
+    };
+
+    void Promise.allSettled([
+      loadHomeOffice(),
+      loadMetadata(),
+      loadProviders(),
+      loadFeeSchedules(),
+      loadReferralTargets(),
+    ]);
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentOffice]);
 
   // ✅ Fee Schedule Change Handler
@@ -400,6 +566,14 @@ export default function AddNewPatient({
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
   const [hygienists, setHygienists] = useState<Provider[]>([]);
+
+  // "Referred To" targets — real referral sources (direction code "1").
+  const [referralTargets, setReferralTargets] = useState<ReferralRead[]>([]);
+  const [loadingReferralTargets, setLoadingReferralTargets] = useState(false);
+
+  // The office this patient is being registered under — always mirrors the
+  // office picked in the global nav (`currentOffice`), resolved to its name.
+  const [homeOffice, setHomeOffice] = useState<OfficeOption | null>(null);
   
   // Patient Types metadata
   const [patientTypesMetadata, setPatientTypesMetadata] = useState<PatientTypeOption[]>([]);
@@ -407,6 +581,163 @@ export default function AddNewPatient({
   // Loading and saving states
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Inline validation errors, keyed by field name (legacy parity: the form
+  // "identifies where there is missing information" rather than popping alerts).
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const clearError = (field: string) =>
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+
+  // ── Wizard state (legacy Denticon multi-step registration) ──────────────
+  const [stepIndex, setStepIndex] = useState(0);
+  const [maxReached, setMaxReached] = useState(0);
+  const [respParty, setRespParty] = useState<ResponsiblePartyForm>(emptyResponsibleParty());
+  const [insuranceSlots, setInsuranceSlots] = useState<Record<string, InsuranceSlotForm>>({});
+  const [medicalAlerts, setMedicalAlerts] = useState<MedicalAlertsForm>(emptyMedicalAlerts());
+  const [questionnaires, setQuestionnaires] = useState<QuestionnairesForm>(emptyQuestionnaires());
+  // Resolved catalog labels lifted from the steps (code → label) so Finish can
+  // send alert_label / question_text with the register payload.
+  const [medicalAlertLabels, setMedicalAlertLabels] = useState<Record<string, string>>({});
+  const [questionLabels, setQuestionLabels] = useState<{
+    dental: Record<string, string>;
+    medical: Record<string, string>;
+  }>({ dental: {}, medical: {} });
+  const [recalls, setRecalls] = useState<RecallEntry[]>(() =>
+    DEFAULT_RECALLS.map((r) => ({ ...r })),
+  );
+  const [firstVisit, setFirstVisit] = useState("");
+  const [lastVisit, setLastVisit] = useState("");
+
+  // ── Edit mode ───────────────────────────────────────────────────────────
+  // The wizard is hydrated once, after metadata has loaded, because `sex` is
+  // stored as a display name taken from the tenant's gender list.
+  const [isLoadingPatient, setIsLoadingPatient] = useState(isEditMode);
+  const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
+  const [loadedPatientId, setLoadedPatientId] = useState<number | null>(null);
+  const [audit, setAudit] = useState<PatientAudit | null>(null);
+
+  // Hydrate every step from the stored patient. Waits for metadata because
+  // `sex` is held as the tenant's display label. Runs once per patient id; the
+  // guard also stops a metadata refetch from discarding edits already typed in.
+  useEffect(() => {
+    if (!isEditMode || !metadata || loadedPatientId === editPatientId) return;
+    let cancelled = false;
+
+    (async () => {
+      setIsLoadingPatient(true);
+      try {
+        const snapshot: PatientEditSnapshot = await loadPatientForEdit(
+          editPatientId,
+          metadata.genders,
+        );
+        if (cancelled) return;
+
+        setFormData((prev) => ({ ...prev, ...(snapshot.form as Partial<PatientFormData>) }));
+        setPatientTypes((prev) => ({ ...prev, ...snapshot.patient_types }));
+        setAudit(snapshot.audit);
+        setFirstVisit(snapshot.first_visit);
+        setLastVisit(snapshot.last_visit);
+        setLoadWarnings(snapshot.warnings);
+        setLoadedPatientId(editPatientId);
+
+        // Keep the patient on their own home office rather than whatever the
+        // global nav happens to have selected.
+        if (snapshot.patient.home_office_id != null) {
+          const office = await resolveOffice(String(snapshot.patient.home_office_id));
+          if (!cancelled && office) {
+            setHomeOffice(office);
+            setFormData((prev) => ({ ...prev, office: office.name }));
+          }
+        }
+      } catch (error: any) {
+        console.error("Error loading patient for edit:", error);
+        if (!cancelled) {
+          setSaveError(
+            error?.response?.data?.detail || error?.message || "Failed to load this patient.",
+          );
+        }
+      } finally {
+        if (!cancelled) setIsLoadingPatient(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, editPatientId, metadata, loadedPatientId]);
+
+  // Resolve the fee-schedule display name once the list is available — edit
+  // mode hydrates the id from the patient record, which alone renders blank.
+  useEffect(() => {
+    if (!formData.feeScheduleId || feeSchedules.length === 0) return;
+    const match = feeSchedules.find((fs) => fs.feeScheduleId === formData.feeScheduleId);
+    if (match && match.feeScheduleName !== formData.feeSchedule) {
+      setFormData((prev) => ({ ...prev, feeSchedule: match.feeScheduleName }));
+    }
+  }, [feeSchedules, formData.feeScheduleId, formData.feeSchedule]);
+
+  // Which coverage slots are active, from the Step-1 "Coverage Type" checkboxes.
+  const coverage = {
+    primary_dental: formData.primaryDental,
+    secondary_dental: formData.secondaryDental,
+    primary_medical: formData.primaryMedical,
+    secondary_medical: formData.secondaryMedical,
+  };
+
+  /**
+   * The live step list. EVERY selected coverage type gets its own insurance
+   * screen (legacy chains Primary Dental → Secondary Dental → …), so the flow
+   * grows/shrinks with the Step-1 checkboxes.
+   */
+  const steps = useMemo(() => {
+    const all = buildWizardSteps({
+      primary_dental: formData.primaryDental,
+      secondary_dental: formData.secondaryDental,
+      primary_medical: formData.primaryMedical,
+      secondary_medical: formData.secondaryMedical,
+    });
+    // Editing is entered from the Overview's PATIENT INFORMATION panel, so it
+    // edits that panel only — responsible party, insurance and recalls each
+    // have their own EDIT button on that screen.
+    return isEditMode ? all.slice(0, 1) : all;
+  }, [
+    isEditMode,
+    formData.primaryDental,
+    formData.secondaryDental,
+    formData.primaryMedical,
+    formData.secondaryMedical,
+  ]);
+  const currentStep = steps[Math.min(stepIndex, steps.length - 1)];
+
+  // Changing coverage on Step 1 can shorten the flow — keep the index in range.
+  useEffect(() => {
+    if (stepIndex > steps.length - 1) setStepIndex(steps.length - 1);
+    setMaxReached((m) => Math.min(m, steps.length - 1));
+  }, [steps.length, stepIndex]);
+
+  const activeInsuranceSlots: InsuranceSlotForm[] = COVERAGE_SLOTS.filter(
+    (s) => coverage[s.key],
+  ).map((s) => insuranceSlots[s.key] ?? emptyInsuranceSlot(s));
+
+  const slotFor = (key: CoverageSlotKey): InsuranceSlotForm =>
+    insuranceSlots[key] ?? emptyInsuranceSlot(COVERAGE_SLOTS.find((s) => s.key === key)!);
+
+  const updateInsuranceSlot = (key: string, patch: Partial<InsuranceSlotForm>) =>
+    setInsuranceSlots((prev) => {
+      const slotDef = COVERAGE_SLOTS.find((s) => s.key === key)!;
+      const base = prev[key] ?? emptyInsuranceSlot(slotDef);
+      return { ...prev, [key]: { ...base, ...patch } };
+    });
+
+  const goToStep = (i: number) => {
+    setStepIndex(i);
+    setMaxReached((m) => Math.max(m, i));
+  };
 
   // Check Patient (Duplicate Detection)
   const handleCheckPatient = async () => {
@@ -437,43 +768,34 @@ export default function AddNewPatient({
     }
   };
 
-  // Quick Save
-  const handleQuickSave = async () => {
-    // Validation
-    if (!formData.sex) {
-      alert(" Sex is required");
-      return;
-    }
-    if (!formData.address1) {
-      alert(" Address is required");
-      return;
-    }
-    if (!formData.preferredProvider) {
-      alert(" Preferred Provider is required");
-      return;
-    }
-    if (!formData.referralType) {
-      alert(" Referral Type is required");
-      return;
-    }
+  // Numeric office id saved as `home_office_id`. Prefer the resolved office
+  // record (from the global-nav selection); fall back to parsing the key.
+  const getOfficeIdNum = (): number | undefined =>
+    homeOffice?.id ?? officeKeyToId(currentOffice);
 
-    setIsSaving(true);
-    setSaveError(null);
+  // Validate the Step-1 required fields; surface inline (legacy parity: "identify
+  // where there is missing information") instead of a chain of blocking alerts.
+  // Returns true when valid.
+  const validateStep1 = (): boolean => {
+    const nextErrors: Record<string, string> = {};
+    if (!formData.sex) nextErrors.sex = "Sex is required";
+    if (!formData.address1.trim()) nextErrors.address1 = "Address is required";
+    if (!formData.preferredProvider) nextErrors.preferredProvider = "Preferred Provider is required";
+    if (!formData.referralType) nextErrors.referralType = "Referral Type is required";
 
-    try {
-      // Extract numeric office ID
-      const extractOfficeIdNumber = (officeId?: string): number | undefined => {
-        if (!officeId) return undefined;
-        if (/^\d+$/.test(officeId)) return parseInt(officeId, 10);
-        const match = officeId.match(/(\d+)$/);
-        return match && match[1] ? parseInt(match[1], 10) : undefined;
-      };
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      const firstField = Object.keys(nextErrors)[0];
+      document
+        .querySelector(`[data-field="${firstField}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
 
-      const officeIdNum = extractOfficeIdNumber(currentOffice);
-      if (!officeIdNum) {
-        throw new Error("Invalid office ID");
-      }
-
+  const buildPatientPayload = (officeIdNum: number): PatientCreateRequestFull => {
       // Convert form data to API format
       const patientTypesArray = Object.entries(patientTypes)
         .filter(([_, checked]) => checked)
@@ -547,6 +869,10 @@ export default function AddNewPatient({
           no_auto_email: formData.noAutoEmail,
           no_auto_sms: formData.noAutoSMS,
           add_to_quickfill: formData.addToQuickFill,
+          // The "Active" checkbox was never included, so `is_active` went out as
+          // null and the backend silently defaulted it to true — un-ticking Active
+          // was ignored.
+          is_active: formData.active,
         },
         responsible_party: {
           relationship: formData.relToResp !== "Please Select" ? formData.relToResp : undefined,
@@ -572,6 +898,9 @@ export default function AddNewPatient({
           patient_notes: formData.patientNotes || undefined,
           hipaa_sharing: formData.hipaaSharing || undefined,
         },
+        // Visit history captured on the Recall step (backend columns exist).
+        ...(firstVisit && { first_visit: firstVisit }),
+        ...(lastVisit && { last_visit: lastVisit }),
         starting_balances: {
           current: parseFloat(formData.balanceCurrent) || 0,
           over_30: parseFloat(formData.balanceOver30) || 0,
@@ -581,12 +910,123 @@ export default function AddNewPatient({
         },
         patient_types: patientTypesArray,
       };
+      return payload;
+  };
 
-      const createdPatient = await createPatientFull(payload);
-      
-      alert(" Patient saved successfully!");
-      // Use numeric ID for navigation (API expects numeric ID, not chart number)
-      navigate(`/patient/${createdPatient.id}/overview`);
+  // Compose the atomic /patients/register request. `full` includes the wizard's
+  // later-step data (alerts / questionnaires / recalls); Quick Save omits them.
+  const buildRegisterRequest = (officeIdNum: number, full: boolean) => {
+    const patient = buildPatientCreate(buildPatientPayload(officeIdNum));
+    const opening_balance = buildOpeningBalanceIn({
+      current: formData.balanceCurrent,
+      over_30: formData.balanceOver30,
+      over_60: formData.balanceOver60,
+      over_90: formData.balanceOver90,
+      over_120: formData.balanceOver120,
+    });
+    // LEG-10..13: a non-self guarantor is sent as `person` and is created AND
+    // linked by the backend inside this same transaction.
+    const responsible_party = buildResponsiblePartyIn(respParty);
+    const request: RegisterRequest = { patient, responsible_party };
+    if (opening_balance) request.opening_balance = opening_balance;
+    if (full) {
+      const alerts = buildMedicalAlertsIn(medicalAlerts, medicalAlertLabels);
+      const answers = buildQuestionnaireResponsesIn(questionnaires, questionLabels);
+      if (alerts.length) request.medical_alerts = alerts;
+      if (answers.length) request.questionnaire_responses = answers;
+      // Recalls are intentionally NOT sent here — `RecallIn` cannot express
+      // LEG-8's interval_unit / scheduled_date / scheduled_time, so they are
+      // persisted through the standalone patient-recalls resource instead
+      // (gap LEG-17).
+    }
+    return request;
+  };
+
+  /**
+   * Everything that cannot ride inside the register composite, attached after the
+   * patient exists. Best-effort: each failure is reported, none undoes the patient.
+   *   • Insurance — subscribers/plans are their own resources.
+   *   • Recalls   — need LEG-8 fields `RecallIn` lacks (gap LEG-17).
+   *   • Emergency contact — real `patient-emergency-contacts` resource (LEG-3).
+   */
+  const persistPostRegister = async (patientId: number, officeIdNum: number): Promise<string[]> => {
+    const warnings: string[] = [];
+
+    // Recalls (rows with a due date) — full fidelity via patient-recalls.
+    for (const entry of recalls) {
+      if (!entry.due_date) continue;
+      try {
+        await createPatientRecall(buildRecallCreate(entry, patientId, officeIdNum));
+      } catch {
+        warnings.push(`Recall "${entry.reason || entry.procedure_code}" could not be saved.`);
+      }
+    }
+
+    // Emergency contact (LEG-3) — captured on the Medical Questionnaire step.
+    const ec = emergencyContactFromQuestionnaire(questionnaires);
+    if (ec.name) {
+      try {
+        await createPatientEmergencyContact({
+          patient_id: patientId,
+          name: ec.name,
+          relationship: ec.relationship || undefined,
+          phone: ec.phone || undefined,
+          is_primary: true,
+          is_active: true,
+        });
+      } catch {
+        warnings.push("Emergency contact could not be saved.");
+      }
+    }
+
+    for (const slot of activeInsuranceSlots) {
+      if (!slotHasPlan(slot)) continue;
+      try {
+        let subscriberId: number | null = null;
+        try {
+          const sub = await createInsuranceSubscriber(
+            buildSubscriberCreateForSlot(slot, formData.lastName, formData.firstName),
+          );
+          subscriberId = (sub as any).id ?? null;
+        } catch {
+          subscriberId = null; // fall back to a subscriber-less link
+        }
+        await createPatientInsurance(
+          buildPatientInsuranceCreateForSlot(slot, patientId, subscriberId),
+        );
+      } catch {
+        warnings.push(`${slot.label} insurance could not be saved.`);
+      }
+    }
+    return warnings;
+  };
+
+  // Quick Save — atomic register of just the patient (+ self-RP link + opening
+  // balance), then straight to Overview (skips the rest of the wizard).
+  const handleQuickSave = async () => {
+    if (!validateStep1()) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const officeIdNum = getOfficeIdNum();
+      if (!officeIdNum) {
+        setSaveError("Invalid office ID");
+        alert(" Invalid office ID — please select an office.");
+        return;
+      }
+      const res = await registerPatientResilient(buildRegisterRequest(officeIdNum, false));
+      if (res.warnings.length > 0) {
+        alert(` Patient saved. Some items need attention:\n• ${res.warnings.join("\n• ")}`);
+      } else {
+        alert(" Patient saved successfully!");
+      }
+      // Embedded (modal) create: hand the new patient back to the host flow
+      // instead of navigating away (e.g. Scheduler continues to the appointment).
+      if (isModal) {
+        onSaved?.(res.patient_id);
+        return;
+      }
+      navigate(`/patient/${res.patient_id}/overview`);
     } catch (error: any) {
       console.error("Error saving patient:", error);
       const errorMessage = error.response?.data?.detail || error.message || "Failed to save patient";
@@ -595,6 +1035,109 @@ export default function AddNewPatient({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Finish — one atomic register (patient + RP + alerts + questionnaires + recalls
+  // + opening balance), then attach insurance. A register failure rolls back the
+  // whole patient; insurance is best-effort and surfaced as a warning.
+  const handleFinish = async () => {
+    if (!validateStep1()) {
+      goToStep(0);
+      return;
+    }
+    // A non-self guarantor is created as a real record, so it needs a name
+    // (legacy marks Last/First required on the Responsible Party screen).
+    if (respParty.rp_source !== "Self" && !respParty.last_name.trim()) {
+      alert(" The responsible party needs at least a last name.");
+      const rpIndex = steps.findIndex((s) => s.id === "responsible-party");
+      if (rpIndex >= 0) goToStep(rpIndex);
+      return;
+    }
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const officeIdNum = getOfficeIdNum();
+      if (!officeIdNum) {
+        setSaveError("Invalid office ID");
+        alert(" Invalid office ID — please select an office.");
+        return;
+      }
+      const res = await registerPatientResilient(buildRegisterRequest(officeIdNum, true));
+      const warnings = [
+        ...res.warnings,
+        ...(await persistPostRegister(res.patient_id, officeIdNum)),
+      ];
+      if (warnings.length > 0) {
+        alert(` Patient registered. Some items need attention:\n• ${warnings.join("\n• ")}`);
+      } else {
+        alert(" Patient registered successfully!");
+      }
+      // Embedded (modal) create: hand the new patient back to the host flow.
+      if (isModal) {
+        onSaved?.(res.patient_id);
+        return;
+      }
+      navigate(`/patient/${res.patient_id}/overview`);
+    } catch (error: any) {
+      console.error("Error registering patient:", error);
+      const errorMessage = error.response?.data?.detail || error.message || "Failed to register patient";
+      setSaveError(errorMessage);
+      alert(` Error registering patient: ${errorMessage}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /**
+   * Edit mode save — PATCH the patient and reconcile every related resource,
+   * then return to the Overview the user came from. Uses the very same
+   * `buildPatientPayload` the create flow does, so the two stay in lockstep.
+   */
+  const handleSaveEdits = async () => {
+    if (!validateStep1()) {
+      goToStep(0);
+      return;
+    }
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const officeIdNum = getOfficeIdNum();
+      if (!officeIdNum) {
+        setSaveError("Invalid office ID");
+        return;
+      }
+      const warnings = await savePatientEdits({
+        patient_id: editPatientId,
+        patient: buildPatientCreate(buildPatientPayload(officeIdNum)),
+        opening_balance: buildOpeningBalanceIn({
+          current: formData.balanceCurrent,
+          over_30: formData.balanceOver30,
+          over_60: formData.balanceOver60,
+          over_90: formData.balanceOver90,
+          over_120: formData.balanceOver120,
+        }),
+      });
+      if (warnings.length > 0) {
+        alert(`Patient updated. Some items need attention:\n• ${warnings.join("\n• ")}`);
+      }
+      if (isModal) onSaved?.(editPatientId);
+      else navigate(`/patient/${editPatientId}/overview`);
+    } catch (error: any) {
+      console.error("Error updating patient:", error);
+      const errorMessage =
+        error.response?.data?.detail || error.message || "Failed to update patient";
+      setSaveError(errorMessage);
+      alert(`Error updating patient: ${errorMessage}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Advance from the current step; Step 1 must pass required-field validation.
+  const handleContinue = () => {
+    if (stepIndex === 0 && !validateStep1()) return;
+    goToStep(Math.min(stepIndex + 1, steps.length - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Add timestamp to notes
@@ -606,11 +1149,15 @@ export default function AddNewPatient({
     });
   };
 
-  return (
-    <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+  const screen = (
+    <>
       <div>
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4">
+        {/* Header — sticky in the dialog so the title and close stay reachable. */}
+        <div
+          className={`bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 ${
+            isModal ? "sticky top-0 z-10" : ""
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -618,22 +1165,99 @@ export default function AddNewPatient({
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  Step 1: Add Patient Information
+                  {isEditMode
+                    ? "Patient Information"
+                    : `Step ${stepIndex + 1} of ${steps.length}: ${currentStep?.label}`}
                 </h1>
                 <p className="text-sm text-white/80">
-                  Complete identity fields to unlock form
+                  {isEditMode
+                    ? `Editing ${formData.lastName || ""}${formData.firstName ? `, ${formData.firstName}` : ""}`.trim() ||
+                      "Edit patient"
+                    : stepIndex === 0
+                      ? "Complete identity fields to unlock the form"
+                      : "New patient registration"}
                 </p>
               </div>
             </div>
-            <div className="text-right text-white text-sm">
-              <div>PGID: 2829</div>
-              <div>OID: 108</div>
+            <div className="flex items-start gap-4">
+              {/* Legacy header block: record ids + provenance. */}
+              <div className="text-right text-white text-xs leading-5">
+                <div className="text-sm">
+                  PGID: {isEditMode ? editPatientId : "—"}
+                </div>
+                <div className="text-sm">
+                  OID: {audit?.office_id ?? homeOffice?.id ?? "—"}
+                </div>
+                {isEditMode && (
+                  <>
+                    <div
+                      className="text-white/80"
+                      // The patient resource exposes no `updated_by`, so this is
+                      // the user who created the record (gap PE-4).
+                      title={
+                        audit?.modified_by_is_creator
+                          ? "The patient record does not store a last-editor; showing the user who created it."
+                          : undefined
+                      }
+                    >
+                      Modified By: {audit?.modified_by || "—"}
+                      {audit?.modified_by_is_creator && (
+                        <span className="text-white/60"> (creator)</span>
+                      )}
+                    </div>
+                    <div className="text-white/80">
+                      Modified On: {audit?.modified_on || "—"}
+                    </div>
+                  </>
+                )}
+              </div>
+              {isModal && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="text-white hover:bg-white/15 p-1.5 rounded transition-colors"
+                >
+                  <X className="w-6 h-6" strokeWidth={2} />
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="max-w-[1600px] mx-auto p-6">
-          <div className="grid grid-cols-12 gap-6">
+        {/* Wizard step indicator — a single-screen edit has nothing to step through. */}
+        {!isEditMode && (
+          <WizardStepper
+            steps={steps}
+            current={stepIndex}
+            maxReached={maxReached}
+            onStepClick={(i) => {
+              // Leaving Step 1 forward requires the required fields.
+              if (stepIndex === 0 && i > 0 && !validateStep1()) return;
+              setStepIndex(i);
+            }}
+          />
+        )}
+
+        <div className={isModal ? "p-6" : "max-w-[1600px] mx-auto p-6"}>
+          {isLoadingPatient && (
+            <div className="mb-4 flex items-center gap-3 rounded-lg border-2 border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#1F3A5F]">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading this patient&rsquo;s saved information…
+            </div>
+          )}
+          {loadWarnings.length > 0 && (
+            <div className="mb-4 rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <ul className="list-disc pl-5 space-y-1">
+                {loadWarnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* ── Step 1: Patient Information ─────────────────────────────── */}
+          <div className={stepIndex === 0 ? "grid grid-cols-12 gap-6" : "hidden"}>
             {/* Main Form - Left Side (9 columns) */}
             <div className="col-span-9 space-y-3">
               {/* 1. Identity Gate Section */}
@@ -709,8 +1333,9 @@ export default function AddNewPatient({
                   </div>
                 </div>
 
-                {/* Check Patient Button */}
-                <div className="mt-4">
+                {/* Check Patient Button — duplicate detection is a registration
+                    step; the record already exists when editing. */}
+                <div className={`mt-4 ${isEditMode ? "hidden" : ""}`}>
                   <button
                     onClick={handleCheckPatient}
                     disabled={!isIdentityComplete || checkingDuplicate}
@@ -801,18 +1426,24 @@ export default function AddNewPatient({
                   </h3>
 
                   <div className="space-y-3">
-                    <div>
+                    <div data-field="address1">
                       <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                         Address Line 1 <span className="text-[#EF4444]">*</span>
                       </label>
                       <input
                         type="text"
                         value={formData.address1}
-                        onChange={(e) =>
-                          setFormData({ ...formData, address1: e.target.value })
-                        }
-                        className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
+                        onChange={(e) => {
+                          setFormData({ ...formData, address1: e.target.value });
+                          clearError("address1");
+                        }}
+                        className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm ${
+                          errors.address1 ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                        }`}
                       />
+                      {errors.address1 && (
+                        <p className="text-xs text-[#EF4444] mt-1">{errors.address1}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1004,17 +1635,20 @@ export default function AddNewPatient({
                         </select>
                       </div>
 
-                      <div>
+                      <div data-field="sex">
                         <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                           Sex <span className="text-[#EF4444]">*</span>
                         </label>
                         <select
                           value={formData.sex}
-                          onChange={(e) =>
-                            setFormData({ ...formData, sex: e.target.value })
-                          }
+                          onChange={(e) => {
+                            setFormData({ ...formData, sex: e.target.value });
+                            clearError("sex");
+                          }}
                           disabled={loadingMetadata}
-                          className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
+                          className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100 ${
+                            errors.sex ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                          }`}
                         >
                           <option value="">Select</option>
                           {metadata?.genders.map((gender) => (
@@ -1023,6 +1657,9 @@ export default function AddNewPatient({
                             </option>
                           ))}
                         </select>
+                        {errors.sex && (
+                          <p className="text-xs text-[#EF4444] mt-1">{errors.sex}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1204,7 +1841,21 @@ export default function AddNewPatient({
                       Coverage Type
                     </h3>
 
-                    <div className="grid grid-cols-1 gap-y-2 gap-x-3">
+                    {/* Read-only while editing: these checkboxes only choose which
+                        insurance screens the NEW-patient wizard shows. An existing
+                        patient's coverage is edited from the Overview's insurance
+                        panel, so leaving them live here would be a silent no-op. */}
+                    {isEditMode && (
+                      <p className="text-xs text-[#64748B] mb-2">
+                        Current coverage. Edit plans from the Overview&rsquo;s insurance panel.
+                      </p>
+                    )}
+                    <fieldset
+                      disabled={isEditMode}
+                      className={`grid grid-cols-1 gap-y-2 gap-x-3 border-0 p-0 m-0 ${
+                        isEditMode ? "opacity-70" : ""
+                      }`}
+                    >
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -1213,6 +1864,13 @@ export default function AddNewPatient({
                           setFormData({
                             ...formData,
                             noCoverage: e.target.checked,
+                            // "No Coverage" is exclusive with any selected coverage.
+                            ...(e.target.checked && {
+                              primaryDental: false,
+                              secondaryDental: false,
+                              primaryMedical: false,
+                              secondaryMedical: false,
+                            }),
                           })
                         }
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
@@ -1230,6 +1888,7 @@ export default function AddNewPatient({
                           setFormData({
                             ...formData,
                             primaryDental: e.target.checked,
+                            ...(e.target.checked && { noCoverage: false }),
                           })
                         }
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
@@ -1247,6 +1906,7 @@ export default function AddNewPatient({
                           setFormData({
                             ...formData,
                             secondaryDental: e.target.checked,
+                            ...(e.target.checked && { noCoverage: false }),
                           })
                         }
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
@@ -1264,6 +1924,7 @@ export default function AddNewPatient({
                           setFormData({
                             ...formData,
                             primaryMedical: e.target.checked,
+                            ...(e.target.checked && { noCoverage: false }),
                           })
                         }
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
@@ -1281,6 +1942,7 @@ export default function AddNewPatient({
                           setFormData({
                             ...formData,
                             secondaryMedical: e.target.checked,
+                            ...(e.target.checked && { noCoverage: false }),
                           })
                         }
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
@@ -1289,7 +1951,7 @@ export default function AddNewPatient({
                         Secondary Medical
                       </span>
                     </label>
-                    </div>
+                    </fieldset>
                   </div>
                 </div>
 
@@ -1306,10 +1968,18 @@ export default function AddNewPatient({
                       </label>
                       <input
                         type="text"
-                        value={formData.office}
+                        value={
+                          homeOffice
+                            ? `${homeOffice.name}${homeOffice.short_id ? ` [${homeOffice.short_id}]` : ""}`
+                            : formData.office || "Select an office in the top bar"
+                        }
                         readOnly
+                        title="Set by the office selector in the top navigation"
                         className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg bg-gray-100 text-sm"
                       />
+                      <p className="text-xs text-[#64748B] mt-1">
+                        From the office selected in the top bar.
+                      </p>
                     </div>
 
                     <div>
@@ -1346,28 +2016,40 @@ export default function AddNewPatient({
                       )}
                     </div>
 
-                    <div>
+                    <div data-field="preferredProvider">
                       <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                         Preferred Provider <span className="text-[#EF4444]">*</span>
                       </label>
                       <select
                         value={formData.preferredProvider}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({
                             ...formData,
                             preferredProvider: e.target.value,
-                          })
-                        }
+                          });
+                          clearError("preferredProvider");
+                        }}
                         disabled={loadingProviders}
-                        className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
+                        className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100 ${
+                          errors.preferredProvider ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                        }`}
                       >
-                        <option value="">Select Provider</option>
+                        <option value="">
+                          {loadingProviders
+                            ? "Loading providers…"
+                            : providers.length === 0
+                              ? "No providers for this office"
+                              : "Select Provider"}
+                        </option>
                         {providers.map((provider) => (
                           <option key={provider.id} value={provider.id}>
-                            {provider.name}
+                            {providerLabel(provider)}
                           </option>
                         ))}
                       </select>
+                      {errors.preferredProvider && (
+                        <p className="text-xs text-[#EF4444] mt-1">{errors.preferredProvider}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1385,10 +2067,16 @@ export default function AddNewPatient({
                         disabled={loadingProviders}
                         className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
                       >
-                        <option value="None">None</option>
+                        <option value="None">
+                          {loadingProviders
+                            ? "Loading…"
+                            : hygienists.length === 0
+                              ? "None (no hygienists for this office)"
+                              : "None"}
+                        </option>
                         {hygienists.map((hygienist) => (
                           <option key={hygienist.id} value={hygienist.id}>
-                            {hygienist.name}
+                            {providerLabel(hygienist)}
                           </option>
                         ))}
                       </select>
@@ -1403,20 +2091,23 @@ export default function AddNewPatient({
                   </h3>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
+                    <div data-field="referralType">
                       <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                         Referral Type <span className="text-[#EF4444]">*</span>
                       </label>
                       <select
                         value={formData.referralType}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({
                             ...formData,
                             referralType: e.target.value,
-                          })
-                        }
+                          });
+                          clearError("referralType");
+                        }}
                         disabled={loadingMetadata}
-                        className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
+                        className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100 ${
+                          errors.referralType ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                        }`}
                       >
                         <option value="">Select</option>
                         {metadata?.referral_types.map((type) => (
@@ -1425,6 +2116,9 @@ export default function AddNewPatient({
                           </option>
                         ))}
                       </select>
+                      {errors.referralType && (
+                        <p className="text-xs text-[#EF4444] mt-1">{errors.referralType}</p>
+                      )}
                     </div>
 
                     <div>
@@ -1459,11 +2153,28 @@ export default function AddNewPatient({
                             referredTo: e.target.value,
                           })
                         }
-                        className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
+                        disabled={loadingReferralTargets}
+                        className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
                       >
-                        <option value="">Select</option>
-                        <option value="Specialist A">Specialist A</option>
-                        <option value="Specialist B">Specialist B</option>
+                        <option value="">
+                          {loadingReferralTargets
+                            ? "Loading…"
+                            : referralTargets.length === 0
+                              ? "No referral targets set up"
+                              : "Select"}
+                        </option>
+                        {referralTargets.map((r) => {
+                          const label =
+                            r.practice_name ||
+                            [r.last_name, r.first_name].filter(Boolean).join(", ") ||
+                            `Referral #${r.id}`;
+                          return (
+                            <option key={r.id} value={label}>
+                              {label}
+                              {r.specialty ? ` — ${r.specialty}` : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
 
@@ -1955,63 +2666,184 @@ export default function AddNewPatient({
             </div>
           </div>
 
-          {/* Footer Buttons */}
-          <div className="flex justify-between items-center mt-6 pt-4 border-t-2 border-[#E2E8F0]">
-            <button
-              onClick={() =>
-                alert("Future implementation: Responsible Party workflow")
+          {/* ── Later steps (siblings of the Step-1 grid), keyed by step id ── */}
+          {currentStep?.id === "responsible-party" && (
+            <ResponsiblePartyStep
+              value={respParty}
+              onChange={setRespParty}
+              patient={{
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                dob: formData.birthdate,
+                sex: formData.sex,
+                marital_status: formData.maritalStatus,
+                ssn: formData.ssn,
+                address_line1: formData.address1,
+                address_line2: formData.address2,
+                city: formData.city,
+                state: formData.state,
+                zip: formData.zip,
+                phone: formData.phone,
+                cell_phone: formData.cellPhone,
+                work_phone: formData.workPhone,
+                email: formData.email,
+              }}
+            />
+          )}
+          {/* One insurance screen per selected coverage type. */}
+          {currentStep?.slotKey && (
+            <InsuranceSlotStep
+              key={currentStep.slotKey}
+              slot={slotFor(currentStep.slotKey)}
+              onChange={(patch) => updateInsuranceSlot(currentStep.slotKey!, patch)}
+              // The patient does not exist until Finish, so the legacy
+              // "Account Plans" scope has nothing to scope to yet.
+              patientId={null}
+            />
+          )}
+          {currentStep?.id === "medical-alerts" && (
+            <MedicalAlertsStep
+              value={medicalAlerts}
+              onChange={setMedicalAlerts}
+              onCatalog={setMedicalAlertLabels}
+            />
+          )}
+          {currentStep?.id === "questionnaires" && (
+            <QuestionnairesStep
+              value={questionnaires}
+              onChange={setQuestionnaires}
+              onCatalog={(which, labels) =>
+                setQuestionLabels((prev) => ({ ...prev, [which]: labels }))
               }
-              disabled={!isIdentityComplete}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors ${
-                isIdentityComplete
-                  ? "bg-[#3A6EA5] text-white hover:bg-[#1F3A5F]"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              Responsible Party &gt;&gt;
-            </button>
+            />
+          )}
+          {currentStep?.id === "recall" && (
+            <RecallStep
+              entries={recalls}
+              onChange={setRecalls}
+              firstVisit={firstVisit}
+              lastVisit={lastVisit}
+              onVisitChange={(which, v) => (which === "first" ? setFirstVisit(v) : setLastVisit(v))}
+            />
+          )}
 
+          {/* ── Footer / wizard navigation ─────────────────────────────── */}
+          <div className="flex justify-between items-center mt-6 pt-4 border-t-2 border-[#E2E8F0]">
             <div className="flex gap-3">
+              {stepIndex > 0 && (
+                <button
+                  onClick={() => {
+                    setStepIndex((s) => Math.max(0, s - 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-white text-[#1F3A5F] border-2 border-[#1F3A5F] rounded-lg hover:bg-[#F7F9FC] transition-colors font-semibold text-sm"
+                >
+                  &lt;&lt; Back
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => {
                   if (
-                    confirm(
-                      "Are you sure you want to cancel? All unsaved data will be lost.",
-                    )
+                    !confirm("Are you sure you want to cancel? All unsaved data will be lost.")
                   ) {
-                    navigate("/patient");
+                    return;
                   }
+                  if (isModal) onClose?.();
+                  else navigate(isEditMode ? `/patient/${editPatientId}/overview` : "/patient");
                 }}
                 className="px-6 py-2 bg-white text-[#1F3A5F] border-2 border-[#1F3A5F] rounded-lg hover:bg-[#F7F9FC] transition-colors font-semibold text-sm"
               >
                 Cancel
               </button>
 
-              <button
-                onClick={handleQuickSave}
-                disabled={!isIdentityComplete || isSaving}
-                className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 ${
-                  isIdentityComplete && !isSaving
-                    ? "bg-[#2FB9A7] text-white hover:bg-[#26a396]"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Quick Save"
-                )}
-              </button>
-              {saveError && (
-                <div className="mt-2 text-sm text-red-600">
-                  {saveError}
-                </div>
+              {/* Editing saves from any step — the record already exists, so
+                  there is no "register at the end" moment to wait for. */}
+              {isEditMode && (
+                <button
+                  onClick={handleSaveEdits}
+                  disabled={!isIdentityComplete || isSaving || isLoadingPatient}
+                  className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 ${
+                    isIdentityComplete && !isSaving && !isLoadingPatient
+                      ? "bg-[#2FB9A7] text-white hover:bg-[#26a396]"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              )}
+
+              {/* Quick Save is only offered on Step 1 (save patient, skip wizard). */}
+              {!isEditMode && stepIndex === 0 && (
+                <button
+                  onClick={handleQuickSave}
+                  disabled={!isIdentityComplete || isSaving}
+                  className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 ${
+                    isIdentityComplete && !isSaving
+                      ? "bg-white text-[#2FB9A7] border-2 border-[#2FB9A7] hover:bg-[#F0FDF9]"
+                      : "bg-gray-100 text-gray-400 border-2 border-gray-200 cursor-not-allowed"
+                  }`}
+                >
+                  {isSaving ? "Saving..." : "Quick Save"}
+                </button>
+              )}
+
+              {stepIndex < steps.length - 1 ? (
+                <button
+                  onClick={handleContinue}
+                  disabled={!isIdentityComplete || isSaving}
+                  className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors ${
+                    isIdentityComplete && !isSaving
+                      ? "bg-[#3A6EA5] text-white hover:bg-[#1F3A5F]"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  Continue &gt;&gt;
+                </button>
+              ) : isEditMode ? null : (
+                <button
+                  onClick={handleFinish}
+                  disabled={!isIdentityComplete || isSaving}
+                  className={`px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 ${
+                    isIdentityComplete && !isSaving
+                      ? "bg-[#2FB9A7] text-white hover:bg-[#26a396]"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Finishing...
+                    </>
+                  ) : (
+                    "Finish"
+                  )}
+                </button>
               )}
             </div>
           </div>
+
+          {(saveError || Object.keys(errors).length > 0) && (
+            <div className="mt-2 text-right">
+              {saveError && <span className="text-sm text-red-600">{saveError}</span>}
+              {Object.keys(errors).length > 0 && (
+                <span className="text-sm text-[#EF4444] font-medium">
+                  Please complete the highlighted required field
+                  {Object.keys(errors).length > 1 ? "s" : ""}.
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -2184,6 +3016,36 @@ export default function AddNewPatient({
           </div>
         </div>
       )}
+    </>
+  );
+
+  // The dialog is a plain overlay rather than the app chrome — the Overview
+  // stays mounted underneath, so closing returns to it without a refetch.
+  if (isModal) {
+    return (
+      <div
+        className="fixed inset-0 z-[60] overflow-y-auto bg-black/40 p-4"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(e) => {
+          // Backdrop click closes; clicks inside the card must not.
+          if (e.target === e.currentTarget) onClose?.();
+        }}
+      >
+        <div className="mx-auto my-4 w-full max-w-[1500px] overflow-hidden rounded-lg border-2 border-[#3A6EA5] bg-white shadow-2xl">
+          {screen}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AppShell
+      onLogout={onLogout ?? (() => {})}
+      currentOffice={currentOffice}
+      setCurrentOffice={setCurrentOffice ?? (() => {})}
+    >
+      {screen}
     </AppShell>
   );
 }

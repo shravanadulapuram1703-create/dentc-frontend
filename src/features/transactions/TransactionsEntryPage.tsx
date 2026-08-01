@@ -3,8 +3,8 @@ import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { Loader2, Printer, BookOpen, FilePlus2 } from 'lucide-react';
 import { fetchProviders, type Provider } from '@/services/schedulerApi';
 import { useDefinitions } from '@/hooks/useDefinitions';
-import type { PatientProcedureRead } from '@/api/generated/model';
-import { createInsuranceClaim } from '@/api/generated/endpoints/billing/billing';
+import type { PatientProcedureRead, PatientBalance } from '@/api/generated/model';
+import { createInsuranceClaim, getPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import {
   loadRawTransactions,
@@ -17,6 +17,7 @@ import {
   genId,
   money,
   num,
+  fmtDate,
   providerLabelResolver,
   todayDisplay,
   toIsoDate,
@@ -66,6 +67,8 @@ export default function TransactionsEntryPage() {
 
   const [raw, setRaw] = useState<RawTransactions>({ procs: [], pays: [], adjs: [] });
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
+  const [balance, setBalance] = useState<PatientBalance | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const [creatingClaim, setCreatingClaim] = useState(false);
@@ -121,6 +124,22 @@ export default function TransactionsEntryPage() {
     };
   }, [validId, patientId, appliedIso, reloadKey]);
 
+  // Account balance for the Responsible dashboard block. Loaded independently of
+  // the transaction grid and NEVER blocks it — the balance endpoint can be slow on
+  // a cold cache. Refetches after any post (reloadKey) so the balance stays live.
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    setBalanceLoading(true);
+    getPatientBalance(patientId)
+      .then((b) => alive && setBalance(b))
+      .catch(() => alive && setBalance(null))
+      .finally(() => alive && setBalanceLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [validId, patientId, reloadKey]);
+
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
 
   const rows = useMemo(
@@ -128,6 +147,10 @@ export default function TransactionsEntryPage() {
     [raw, patientName, providerLabel, paymentLabel, adjustmentLabel],
   );
   const todayCharges = useMemo(() => raw.procs.reduce((s, p) => s + num(p.fee), 0), [raw.procs]);
+  // Today's estimate split for the dashboard: insurance portion is the sum of the
+  // day's procedure insurance estimates; patient portion is the remainder (charges
+  // − insurance − deductible, with deductible 0 until CHG-7 is implemented).
+  const todayEstIns = useMemo(() => raw.procs.reduce((s, p) => s + num(p.insurance_estimate), 0), [raw.procs]);
 
   const handleGo = () => setAppliedIso(toIsoDate(transactionDate));
 
@@ -176,14 +199,55 @@ export default function TransactionsEntryPage() {
       <div className="flex items-center px-5 py-2 text-sm font-semibold text-white" style={{ background: HEADER_GRADIENT }}>
         Transactions Entry
         <span className="ml-3 rounded bg-white/15 px-2 py-0.5 text-xs font-normal">{patientName}</span>
-        <div className="ml-auto flex items-center gap-4 text-xs font-normal">
-          <span>
-            Today&apos;s Total Charges <span className="font-semibold">{money(todayCharges)}</span>
-          </span>
-          <button onClick={() => window.print()} className="rounded p-1 hover:bg-white/10" title="Print">
-            <Printer className="h-4 w-4" />
-          </button>
-        </div>
+        <button onClick={() => window.print()} className="ml-auto rounded p-1 hover:bg-white/10" title="Print">
+          <Printer className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Patient Dashboard — the legacy check-out review block. Left: the
+          Responsible party's running account (Balance / Est Ins / Est Pat) from
+          the balance endpoint. Right: today's charge split so the front desk can
+          confirm at a glance what the patient owes before checking out. */}
+      <div className="grid grid-cols-1 gap-x-8 gap-y-2 border-x border-b border-slate-200 bg-white px-5 py-3 text-xs md:grid-cols-[1.3fr_1fr_1.2fr]">
+        {/* Responsible + running balance */}
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          <dt className="font-semibold text-slate-500">Responsible</dt>
+          <dd className="font-semibold text-slate-800">{patientName}</dd>
+          <dt className="font-semibold text-slate-500">RP BD</dt>
+          <dd className="text-slate-700">{patient?.dob ? fmtDate(patient.dob) : '—'}</dd>
+          <dt className="font-semibold text-slate-500">Balance</dt>
+          <dd className={`font-bold tabular-nums ${num(balance?.balance) > 0 ? 'text-red-600' : 'text-slate-800'}`}>
+            {balanceLoading ? '…' : money(balance?.balance)}
+          </dd>
+          <dt className="font-semibold text-slate-500">Est Ins</dt>
+          <dd className="tabular-nums text-blue-700">{balanceLoading ? '…' : money(balance?.estimated_insurance)}</dd>
+          <dt className="font-semibold text-slate-500">Est Pat</dt>
+          <dd className="tabular-nums text-slate-800">{balanceLoading ? '…' : money(balance?.estimated_patient)}</dd>
+        </dl>
+
+        {/* Insurance (carrier names not joined on this screen yet — see CHG-7) */}
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 content-start">
+          <dt className="font-semibold text-slate-500">Prim. Ins</dt>
+          <dd className="text-slate-400" title="Carrier name not joined on this screen yet (CHG-8)">—</dd>
+          <dt className="font-semibold text-slate-500">Sec. Ins</dt>
+          <dd className="text-slate-400" title="Carrier name not joined on this screen yet (CHG-8)">—</dd>
+        </dl>
+
+        {/* Today's charge split */}
+        <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 content-start">
+          <dt className="font-semibold text-slate-500">Today&apos;s Total Charges</dt>
+          <dd className="text-right font-bold tabular-nums text-slate-900">{money(todayCharges)}</dd>
+          <dt className="font-semibold text-slate-500" title="Deductible applied is not computed yet (CHG-7 / PLAN-3)">
+            Today&apos;s Est Ded †
+          </dt>
+          <dd className="text-right tabular-nums text-slate-500">{money(0)}</dd>
+          <dt className="font-semibold text-slate-500">Today&apos;s Est Ins Portion</dt>
+          <dd className="text-right tabular-nums text-blue-700">{money(todayEstIns)}</dd>
+          <dt className="font-semibold text-slate-500">Today&apos;s Est Pat Portion</dt>
+          <dd className="text-right font-semibold tabular-nums text-slate-900">
+            {money(Math.max(0, todayCharges - todayEstIns))}
+          </dd>
+        </dl>
       </div>
 
       {/* Toolbar */}

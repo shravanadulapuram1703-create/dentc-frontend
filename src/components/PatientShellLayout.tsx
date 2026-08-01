@@ -77,8 +77,16 @@ export default function PatientShellLayout({
   // Helper function to format date from YYYY-MM-DD to MM/DD/YYYY
   const formatDate = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
+    // Plain YYYY-MM-DD must be formatted from parts — `new Date("YYYY-MM-DD")`
+    // parses as UTC midnight and shifts back a day in negative-offset timezones.
+    const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+    if (dateOnly) {
+      const [, y, m, d] = dateOnly;
+      return `${m}/${d}/${y}`;
+    }
     try {
       const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
       return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     } catch {
       return dateStr;

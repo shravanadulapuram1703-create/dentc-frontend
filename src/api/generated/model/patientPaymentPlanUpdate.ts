@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { PatientPaymentPlanUpdatePlanType } from './patientPaymentPlanUpdatePlanType';
 
 export interface PatientPaymentPlanUpdate {
   patient_id?: number | null;
@@ -22,6 +23,20 @@ export interface PatientPaymentPlanUpdate {
   first_due_date?: string | null;
   rem_payments?: number | null;
   rem_total_amt?: number | string | null;
+  plan_type?: PatientPaymentPlanUpdatePlanType;
   notes?: string | null;
   is_active?: boolean | null;
+  tx_plan_amt?: number | string | null;
+  treatment_plan_id?: string | null;
+  billing_code?: string | null;
+  financial_disclosure?: string | null;
+  payment_code?: string | null;
+  payment_token_id?: string | null;
+  card_holder_name?: string | null;
+  card_last4?: string | null;
+  card_exp_month?: number | null;
+  card_exp_year?: number | null;
+  post_down_payment_with_card?: boolean | null;
+  total_of_payments?: number | string | null;
+  created_by_id?: number | null;
 }

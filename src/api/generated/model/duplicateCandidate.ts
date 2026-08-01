@@ -15,4 +15,7 @@ export interface DuplicateCandidate {
   is_active: boolean;
   /** 0-100 heuristic confidence */
   match_score: number;
+  email?: string | null;
+  home_office_short_id?: string | null;
+  preferred_provider_name?: string | null;
 }

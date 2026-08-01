@@ -27,12 +27,15 @@ import type {
 import type {
   ErrorResponse,
   HTTPValidationError,
+  ListPatientTreatmentPlanItemsParams,
   ListTreatmentPlanInsuranceDetailsParams,
   ListTreatmentPlanItemsParams,
   ListTreatmentPlansParams,
   PaginatedResponseTreatmentPlanInsuranceDetailRead,
   PaginatedResponseTreatmentPlanItemRead,
   PaginatedResponseTreatmentPlanRead,
+  ReEstimateResult,
+  ReEstimateTreatmentPlanParams,
   TreatmentPlanCreate,
   TreatmentPlanInsuranceDetailCreate,
   TreatmentPlanInsuranceDetailRead,
@@ -41,6 +44,7 @@ import type {
   TreatmentPlanItemRead,
   TreatmentPlanItemUpdate,
   TreatmentPlanRead,
+  TreatmentPlanReport,
   TreatmentPlanSummary,
   TreatmentPlanUpdate
 } from '../../model';
@@ -134,6 +138,261 @@ export function useGetTreatmentPlanSummary<TData = Awaited<ReturnType<typeof get
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetTreatmentPlanSummaryQueryOptions(planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Compute per-item insurance estimates from the patient's coverage (PLAN-3)
+ */
+export const reEstimateTreatmentPlan = (
+    planId: string,
+    params?: ReEstimateTreatmentPlanParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ReEstimateResult>(
+      {url: `/api/v1/treatment-plans/${planId}/re-estimate`, method: 'POST',
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getReEstimateTreatmentPlanMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reEstimateTreatmentPlan>>, TError,{planId: string;params?: ReEstimateTreatmentPlanParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof reEstimateTreatmentPlan>>, TError,{planId: string;params?: ReEstimateTreatmentPlanParams}, TContext> => {
+
+const mutationKey = ['reEstimateTreatmentPlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reEstimateTreatmentPlan>>, {planId: string;params?: ReEstimateTreatmentPlanParams}> = (props) => {
+          const {planId,params} = props ?? {};
+
+          return  reEstimateTreatmentPlan(planId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReEstimateTreatmentPlanMutationResult = NonNullable<Awaited<ReturnType<typeof reEstimateTreatmentPlan>>>
+
+    export type ReEstimateTreatmentPlanMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Compute per-item insurance estimates from the patient's coverage (PLAN-3)
+ */
+export const useReEstimateTreatmentPlan = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reEstimateTreatmentPlan>>, TError,{planId: string;params?: ReEstimateTreatmentPlanParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reEstimateTreatmentPlan>>,
+        TError,
+        {planId: string;params?: ReEstimateTreatmentPlanParams},
+        TContext
+      > => {
+      return useMutation(getReEstimateTreatmentPlanMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Server-side treatment-plan report payload (PLAN-6)
+ */
+export const getTreatmentPlanReport = (
+    planId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TreatmentPlanReport>(
+      {url: `/api/v1/treatment-plans/${planId}/report`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTreatmentPlanReportQueryKey = (planId: string,) => {
+    return [
+    `/api/v1/treatment-plans/${planId}/report`
+    ] as const;
+    }
+
+
+export const getGetTreatmentPlanReportQueryOptions = <TData = Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(planId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTreatmentPlanReportQueryKey(planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTreatmentPlanReport>>> = ({ signal }) => getTreatmentPlanReport(planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTreatmentPlanReportQueryResult = NonNullable<Awaited<ReturnType<typeof getTreatmentPlanReport>>>
+export type GetTreatmentPlanReportQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetTreatmentPlanReport<TData = Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTreatmentPlanReport>>,
+          TError,
+          Awaited<ReturnType<typeof getTreatmentPlanReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTreatmentPlanReport<TData = Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTreatmentPlanReport>>,
+          TError,
+          Awaited<ReturnType<typeof getTreatmentPlanReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTreatmentPlanReport<TData = Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Server-side treatment-plan report payload (PLAN-6)
+ */
+
+export function useGetTreatmentPlanReport<TData = Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTreatmentPlanReportQueryOptions(planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary All of a patient's plan items in one call (PLAN-12)
+ */
+export const listPatientTreatmentPlanItems = (
+    patientId: number,
+    params?: ListPatientTreatmentPlanItemsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TreatmentPlanItemRead[]>(
+      {url: `/api/v1/patients/${patientId}/treatment-plan-items`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientTreatmentPlanItemsQueryKey = (patientId: number,
+    params?: ListPatientTreatmentPlanItemsParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/treatment-plan-items`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientTreatmentPlanItemsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: ListPatientTreatmentPlanItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientTreatmentPlanItemsQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>> = ({ signal }) => listPatientTreatmentPlanItems(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientTreatmentPlanItemsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>>
+export type ListPatientTreatmentPlanItemsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPatientTreatmentPlanItems<TData = Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  ListPatientTreatmentPlanItemsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientTreatmentPlanItems<TData = Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListPatientTreatmentPlanItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientTreatmentPlanItems<TData = Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListPatientTreatmentPlanItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary All of a patient's plan items in one call (PLAN-12)
+ */
+
+export function useListPatientTreatmentPlanItems<TData = Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListPatientTreatmentPlanItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientTreatmentPlanItems>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientTreatmentPlanItemsQueryOptions(patientId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

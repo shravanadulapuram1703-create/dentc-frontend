@@ -23,4 +23,6 @@ export interface PatientPaymentRead {
   is_void: boolean;
   created_by?: number | null;
   created_at: string;
+  patient_name?: string | null;
+  provider_name?: string | null;
 }

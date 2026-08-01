@@ -21,6 +21,30 @@ tooth?: string | null;
  */
 provider_id?: string | null;
 /**
+ * Filter by procedure_code
+ */
+procedure_code?: string | null;
+/**
+ * Filter by chart_as
+ */
+chart_as?: string | null;
+/**
+ * Filter by is_inactive
+ */
+is_inactive?: boolean | null;
+/**
+ * Filter by group_id
+ */
+group_id?: string | null;
+/**
+ * Filter by status
+ */
+status?: string | null;
+/**
+ * Filter by material_id
+ */
+material_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

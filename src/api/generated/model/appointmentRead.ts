@@ -36,6 +36,12 @@ export interface AppointmentRead {
   confirmed_on?: string | null;
   checked_in_on?: string | null;
   checked_out_on?: string | null;
+  posted_on?: string | null;
+  cancellation_note?: string | null;
+  cancellation_reason?: string | null;
+  add_to_call_list: boolean;
+  created_by?: number | null;
+  updated_by?: number | null;
   created_at: string;
   updated_at?: string | null;
 }

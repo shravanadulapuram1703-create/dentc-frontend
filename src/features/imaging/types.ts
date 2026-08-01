@@ -15,6 +15,46 @@ export interface GalleryImage {
 }
 
 // ---------------------------------------------------------------------------
+// DICOM archive (migrated Apteryx PACS → GCS + Postgres)
+//
+// The response/param shapes come straight from the generated Orval client
+// (`Imaging` tag) so the frontend mirrors the backend exactly. We re-export them
+// here under the names the imaging components already use, and add the one
+// frontend-only helper (`DicomImage`) plus a filters alias.
+// See `docs/imaging/DICOM_IMAGING_API_CONTRACT.md`.
+// ---------------------------------------------------------------------------
+
+export type {
+  InstanceAssets,
+  DicomInstanceOut,
+  DicomSeriesOut,
+  DicomStudyOut,
+  PatientImagingResponse,
+  PatientImagingSummary,
+} from '@/api/generated/model';
+
+import type {
+  DicomInstanceOut,
+  DicomSeriesOut,
+  DicomStudyOut,
+  GetPatientImagingParams,
+} from '@/api/generated/model';
+
+/** Server-side filters for `GET /patients/{id}/imaging` (contract §3.1). */
+export type DicomImagingFilters = GetPatientImagingParams;
+
+/**
+ * A single DICOM instance flattened out of the study/series tree, carrying back-
+ * references to its parents so the gallery tile and viewer can show study/series
+ * context without re-walking the tree.
+ */
+export interface DicomImage {
+  instance: DicomInstanceOut;
+  series: DicomSeriesOut;
+  study: DicomStudyOut;
+}
+
+// ---------------------------------------------------------------------------
 // Device-scan integration boundary
 // ---------------------------------------------------------------------------
 

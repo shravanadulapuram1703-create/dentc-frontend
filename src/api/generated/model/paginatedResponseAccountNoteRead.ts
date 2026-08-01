@@ -6,9 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AccountNoteRead } from './accountNoteRead';
-import type { PageMeta } from './pageMeta';
+import type { AppSchemasCommonPageMeta } from './appSchemasCommonPageMeta';
 
 export interface PaginatedResponseAccountNoteRead {
   items: AccountNoteRead[];
-  meta: PageMeta;
+  meta: AppSchemasCommonPageMeta;
 }

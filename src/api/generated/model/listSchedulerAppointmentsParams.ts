@@ -10,4 +10,12 @@ export type ListSchedulerAppointmentsParams = {
 date_from?: string | null;
 date_to?: string | null;
 office_id?: number | null;
+/**
+ * Scope to one provider (MP-7 / G8)
+ */
+provider_id?: string | null;
+/**
+ * Scope to one appointment status
+ */
+status?: string | null;
 };

@@ -14,6 +14,9 @@ export interface PatientRecallRead {
   procedure_code?: string | null;
   due_date?: string | null;
   interval_months?: number | null;
+  interval_unit?: string | null;
+  scheduled_date?: string | null;
+  scheduled_time?: string | null;
   last_completed?: string | null;
   status: string;
   notes?: string | null;

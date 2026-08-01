@@ -1,0 +1,24 @@
+{
+  "summary": "AFTER the redeploy of migration d5e6f7a8b9c0, the patient WRITE path is broken: POST /api/v1/patients AND POST /api/v1/patients/register BOTH return 500 {error:{code:internal_error}} on any valid payload. Plain POST /patients worked BEFORE the redeploy (patients 83878-83881 were created earlier the same session). So this is a server-side regression introduced by the migration/redeploy, not a payload problem.",
+  "evidence": {
+    "endpoints_exist": "OPTIONS 200; unauth GET/POST 401 (routes present).",
+    "not_validation": "500 (unhandled exception), not 422 — the body passes Pydantic validation.",
+    "payload_independent": "500 reproduced with a MINIMAL body, and with patient_types sent as [] AND as null — no field combination avoids it.",
+    "frontend_status": "Verified correct: right endpoints, schema-valid bodies (every field matches the generated Orval models), tsc + eslint green. Frontend now calls /patients/register with a resilient fallback to POST /patients + per-resource writes; both 500 today."
+  },
+  "minimal_repro_request_POST_/api/v1/patients": {
+    "home_office_id": 1, "first_name": "Nina", "last_name": "Nulltypes",
+    "dob": "1981-02-02", "gender": "F", "address_line1": "3 Null Ct",
+    "preferred_provider_id": "PRV-103", "referral_type": "Online",
+    "marital_status": "Single", "patient_type": "General", "patient_types": null,
+    "is_active": null
+  },
+  "response_500": {"error":{"code":"internal_error","message":"An unexpected error occurred","details":null}},
+  "likely_backend_causes": [
+    "A new column added by d5e6f7a8b9c0 is NOT NULL without a server default, so INSERT fails.",
+    "A column type mismatch (e.g. patient_types JSON) the ORM can't serialize on insert/return.",
+    "The migration was applied but the app/CRUD references a column/relationship inconsistent with the DB.",
+    "An exception in the post-insert chart_no auto-generation added to PatientCRUD."
+  ],
+  "ask": "Check the backend server logs for the traceback on POST /api/v1/patients (500). The generic error envelope hides the real exception."
+}

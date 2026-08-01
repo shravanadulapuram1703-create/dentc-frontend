@@ -1,0 +1,1039 @@
+{
+  "_source": "src/features/add-patient/legacyCatalogs.ts (frontend source of truth)",
+  "_note": "Codes (key1) are slugged from the label with the same rule the UI uses, so seeded answers key identically to what the wizard already sends. `section` groups rows as the legacy screen does; `sort_order` preserves legacy ordering; `input_type` is yesno|text|date|textarea.",
+  "_counts": {
+    "MEDALERT": 88,
+    "DENTQUEST": 29,
+    "MEDQUEST": 22
+  },
+  "MEDALERT": [
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "no_known_allergies",
+      "description": "No Known Allergies",
+      "sort_order": 1
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "aspirin",
+      "description": "Aspirin",
+      "sort_order": 2
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "barbiturates_sleeping_pills",
+      "description": "Barbiturates / Sleeping Pills",
+      "sort_order": 3
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "codeine",
+      "description": "Codeine",
+      "sort_order": 4
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "erythromycin",
+      "description": "Erythromycin",
+      "sort_order": 5
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "iodine",
+      "description": "Iodine",
+      "sort_order": 6
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "latex_rubber",
+      "description": "Latex Rubber",
+      "sort_order": 7
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "local_anesthetics",
+      "description": "Local Anesthetics",
+      "sort_order": 8
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "metals",
+      "description": "Metals",
+      "sort_order": 9
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "no_epinephrine",
+      "description": "No Epinephrine",
+      "sort_order": 10
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "penicillin",
+      "description": "Penicillin",
+      "sort_order": 11
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "prior_hepatitis",
+      "description": "Prior Hepatitis",
+      "sort_order": 12
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "sulfa_drugs",
+      "description": "Sulfa Drugs",
+      "sort_order": 13
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Allergic To",
+      "key1": "other_narcotics",
+      "description": "Other Narcotics",
+      "sort_order": 14
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "no_change_since_last_recorded",
+      "description": "No Change Since Last Recorded",
+      "sort_order": 15
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "no_known_concerns_or_issues",
+      "description": "No Known Concerns or Issues",
+      "sort_order": 16
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "abnormal_bleeding",
+      "description": "Abnormal Bleeding",
+      "sort_order": 17
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "aids_hiv_infection",
+      "description": "AIDS/HIV Infection",
+      "sort_order": 18
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "alcohol_drug_abuse",
+      "description": "Alcohol/Drug Abuse",
+      "sort_order": 19
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "angina",
+      "description": "Angina",
+      "sort_order": 20
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "anemia",
+      "description": "Anemia",
+      "sort_order": 21
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "ankles_swell",
+      "description": "Ankles Swell",
+      "sort_order": 22
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "anorexia",
+      "description": "Anorexia",
+      "sort_order": 23
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "arteriosclerosis",
+      "description": "Arteriosclerosis",
+      "sort_order": 24
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "arthritis",
+      "description": "Arthritis",
+      "sort_order": 25
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "asthma",
+      "description": "Asthma",
+      "sort_order": 26
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "autoimmune_disease",
+      "description": "Autoimmune Disease",
+      "sort_order": 27
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "bladder_trouble",
+      "description": "Bladder Trouble",
+      "sort_order": 28
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "blood_clotting_problems",
+      "description": "Blood Clotting Problems",
+      "sort_order": 29
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "blood_transfusion",
+      "description": "Blood Transfusion",
+      "sort_order": 30
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "bulimia",
+      "description": "Bulimia",
+      "sort_order": 31
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "bronchitis",
+      "description": "Bronchitis",
+      "sort_order": 32
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "cancer_tumor_or_growth",
+      "description": "Cancer / Tumor or Growth",
+      "sort_order": 33
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "cardiac_pacemaker",
+      "description": "Cardiac Pacemaker",
+      "sort_order": 34
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "cardiovascular_disease",
+      "description": "Cardiovascular Disease",
+      "sort_order": 35
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "chemotherapy",
+      "description": "Chemotherapy",
+      "sort_order": 36
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "chest_pain_upon_exertion",
+      "description": "Chest Pain Upon Exertion",
+      "sort_order": 37
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "color_blindness",
+      "description": "Color Blindness",
+      "sort_order": 38
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "congenital_heart_defect",
+      "description": "Congenital Heart Defect",
+      "sort_order": 39
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "contact_lenses",
+      "description": "Contact Lenses",
+      "sort_order": 40
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "congestive_heart_failure",
+      "description": "Congestive Heart Failure",
+      "sort_order": 41
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "damaged_heart_valve",
+      "description": "Damaged Heart Valve",
+      "sort_order": 42
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "diabetes",
+      "description": "Diabetes",
+      "sort_order": 43
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "emphysema",
+      "description": "Emphysema",
+      "sort_order": 44
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "environmental_allergies",
+      "description": "Environmental Allergies",
+      "sort_order": 45
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "epilepsy",
+      "description": "Epilepsy",
+      "sort_order": 46
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "fainting_spells",
+      "description": "Fainting Spells",
+      "sort_order": 47
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "fever_blisters",
+      "description": "Fever Blisters",
+      "sort_order": 48
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "frequent_headaches",
+      "description": "Frequent Headaches",
+      "sort_order": 49
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "frequently_dry_mouth_sjogren",
+      "description": "Frequently Dry Mouth / Sjogren",
+      "sort_order": 50
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "gag_reflex",
+      "description": "Gag Reflex",
+      "sort_order": 51
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "gall_bladder_trouble",
+      "description": "Gall Bladder Trouble",
+      "sort_order": 52
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "hay_fever",
+      "description": "Hay Fever",
+      "sort_order": 53
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "heart_attack",
+      "description": "Heart Attack",
+      "sort_order": 54
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "heart_disease",
+      "description": "Heart Disease",
+      "sort_order": 55
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "heart_murmur",
+      "description": "Heart Murmur",
+      "sort_order": 56
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "hepatitis",
+      "description": "Hepatitis",
+      "sort_order": 57
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "herpes",
+      "description": "Herpes",
+      "sort_order": 58
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "high_blood_pressure",
+      "description": "High Blood Pressure",
+      "sort_order": 59
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "hives",
+      "description": "Hives",
+      "sort_order": 60
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "jaundice",
+      "description": "Jaundice",
+      "sort_order": 61
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "joint_replacement",
+      "description": "Joint Replacement",
+      "sort_order": 62
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "kidney",
+      "description": "Kidney",
+      "sort_order": 63
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "leukemia",
+      "description": "Leukemia",
+      "sort_order": 64
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "liver_disease",
+      "description": "Liver Disease",
+      "sort_order": 65
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "low_blood_pressure",
+      "description": "Low Blood Pressure",
+      "sort_order": 66
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "lupus",
+      "description": "Lupus",
+      "sort_order": 67
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "mental_health_problems",
+      "description": "Mental Health Problems",
+      "sort_order": 68
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "mitral_valve_prolapse",
+      "description": "Mitral Valve Prolapse",
+      "sort_order": 69
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "pacemaker",
+      "description": "Pacemaker",
+      "sort_order": 70
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "persistent_diarrhea",
+      "description": "Persistent Diarrhea",
+      "sort_order": 71
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "premedicate",
+      "description": "Premedicate",
+      "sort_order": 72
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "radiation_treatment",
+      "description": "Radiation Treatment",
+      "sort_order": 73
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "rheumatic_fever",
+      "description": "Rheumatic Fever",
+      "sort_order": 74
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "rheumatic_heart_disease",
+      "description": "Rheumatic Heart Disease",
+      "sort_order": 75
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "rheumatoid_arthritis",
+      "description": "Rheumatoid Arthritis",
+      "sort_order": 76
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "seizures",
+      "description": "Seizures",
+      "sort_order": 77
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "sexually_transmitted_disease",
+      "description": "Sexually Transmitted Disease",
+      "sort_order": 78
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "shortness_of_breath",
+      "description": "Shortness of Breath",
+      "sort_order": 79
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "skin_rash",
+      "description": "Skin Rash",
+      "sort_order": 80
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "sinus_trouble",
+      "description": "Sinus Trouble",
+      "sort_order": 81
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "stomach_ulcers",
+      "description": "Stomach Ulcers",
+      "sort_order": 82
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "stroke",
+      "description": "Stroke",
+      "sort_order": 83
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "thyroid_problems",
+      "description": "Thyroid Problems",
+      "sort_order": 84
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "tuberculosis",
+      "description": "Tuberculosis",
+      "sort_order": 85
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "unusual_weight_loss",
+      "description": "Unusual Weight Loss",
+      "sort_order": 86
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Check, if applicable",
+      "key1": "urinate_frequently",
+      "description": "Urinate Frequently",
+      "sort_order": 87
+    },
+    {
+      "group_type": "MEDALERT",
+      "section": "Other",
+      "key1": "see_scanned_documents_pt_note",
+      "description": "See Scanned Documents: Pt Note",
+      "sort_order": 88
+    }
+  ],
+  "DENTQUEST": [
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "name_of_previous_dentist",
+      "description": "Name of previous Dentist",
+      "input_type": "text",
+      "sort_order": 1
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "phone",
+      "description": "Phone",
+      "input_type": "text",
+      "sort_order": 2
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "date_of_your_last_cleaning",
+      "description": "Date of your last cleaning",
+      "input_type": "date",
+      "sort_order": 3
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "last_exam_date",
+      "description": "Last exam date",
+      "input_type": "date",
+      "sort_order": 4
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "date_of_your_last_full_series_x_rays",
+      "description": "Date of your last full series x-rays",
+      "input_type": "date",
+      "sort_order": 5
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "date_of_last_cavity_detection_bitewing_x_rays",
+      "description": "Date of last cavity detection (bitewing) x-rays",
+      "input_type": "date",
+      "sort_order": 6
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_your_gums_bleed_while_brushing_or_flossing",
+      "description": "Do your gums bleed while brushing or flossing ?",
+      "input_type": "yesno",
+      "sort_order": 7
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "are_your_teeth_sensitive_to_hot_cold_or_sweets",
+      "description": "Are your teeth sensitive to hot, cold or sweets ?",
+      "input_type": "yesno",
+      "sort_order": 8
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_get_frequent_fever_blisters_mouth_ulcers_or_sores_on_",
+      "description": "Do you get frequent fever blisters, mouth ulcers, or sores on your lips or in your mouth ?",
+      "input_type": "yesno",
+      "sort_order": 9
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "have_you_ever_had_burning_of_the_tongue_or_cracking_of_the_c",
+      "description": "Have you ever had burning of the tongue or cracking of the corners of your mouth ?",
+      "input_type": "yesno",
+      "sort_order": 10
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_chew_smoke_tobacco_in_any_form",
+      "description": "Do you chew/smoke tobacco in any form ?",
+      "input_type": "yesno",
+      "sort_order": 11
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "have_you_had_any_head_neck_or_jaw_injuries",
+      "description": "Have you had any head, neck or jaw injuries ?",
+      "input_type": "yesno",
+      "sort_order": 12
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_notice_popping_clicking_or_soreness_of_the_jaws_or_po",
+      "description": "Do you notice popping, clicking or soreness of the jaws or points just in front of the ears ?",
+      "input_type": "yesno",
+      "sort_order": 13
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_clench_or_grind_your_teeth",
+      "description": "Do you clench or grind your teeth ?",
+      "input_type": "yesno",
+      "sort_order": 14
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "have_you_ever_had_orthodontic_treatment",
+      "description": "Have you ever had orthodontic treatment ?",
+      "input_type": "yesno",
+      "sort_order": 15
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "if_yes_date_of_placement",
+      "description": "If Yes, date of placement",
+      "input_type": "date",
+      "sort_order": 16
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_wear_dentures_or_partials",
+      "description": "Do you wear dentures or partials ?",
+      "input_type": "yesno",
+      "sort_order": 17
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "if_yes_date_of_placement_of_dentures",
+      "description": "If Yes, date of placement of dentures ?",
+      "input_type": "date",
+      "sort_order": 18
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "are_you_happy_with_your_dentures",
+      "description": "Are you happy with your dentures ?",
+      "input_type": "yesno",
+      "sort_order": 19
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "are_you_having_any_specific_problems_with_your_teeth_gums_or",
+      "description": "Are you having any specific problems with your teeth, gums, or mouth at this time ?",
+      "input_type": "yesno",
+      "sort_order": 20
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "are_you_happy_with_your_smile",
+      "description": "Are you happy with your smile ?",
+      "input_type": "yesno",
+      "sort_order": 21
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_have_problems_with_teeth_fillings_breaking",
+      "description": "Do you have problems with teeth/fillings breaking ?",
+      "input_type": "yesno",
+      "sort_order": 22
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_regularly_use_dental_floss",
+      "description": "Do you regularly use dental floss ?",
+      "input_type": "yesno",
+      "sort_order": 23
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_have_or_have_you_ever_been_told_that_you_have_pyorrhe",
+      "description": "Do you have, or have you ever been told, that you have Pyorrhea (Periodontal Disease) ?",
+      "input_type": "yesno",
+      "sort_order": 24
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_have_difficulty_in_opening_your_mouth_widely",
+      "description": "Do you have difficulty in opening your mouth widely ?",
+      "input_type": "yesno",
+      "sort_order": 25
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_have_an_unpleasant_taste_or_odor_in_your_teeth_mouth",
+      "description": "Do you have an unpleasant taste or odor in your teeth/mouth ?",
+      "input_type": "yesno",
+      "sort_order": 26
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "does_food_catch_between_your_teeth",
+      "description": "Does food catch between your teeth ?",
+      "input_type": "yesno",
+      "sort_order": 27
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Dental Questionnaire",
+      "key1": "do_you_want_to_learn_to_control_your_dental_disease_and_reta",
+      "description": "Do you want to learn to control your dental disease and retain your teeth ?",
+      "input_type": "yesno",
+      "sort_order": 28
+    },
+    {
+      "group_type": "DENTQUEST",
+      "section": "Additional Comments",
+      "key1": "any_disease_condition_or_problem_not_listed_please_list",
+      "description": "Any Disease, Condition or Problem not Listed ? Please list",
+      "input_type": "textarea",
+      "sort_order": 29
+    }
+  ],
+  "MEDQUEST": [
+    {
+      "group_type": "MEDQUEST",
+      "section": "Emergency Contact",
+      "key1": "emergency_contact_name",
+      "description": "Emergency contact name",
+      "input_type": "text",
+      "sort_order": 1
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Emergency Contact",
+      "key1": "emergency_contact_phone",
+      "description": "Emergency contact phone",
+      "input_type": "text",
+      "sort_order": 2
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Emergency Contact",
+      "key1": "emergency_contact_relationship_to_patient",
+      "description": "Emergency contact relationship to patient",
+      "input_type": "text",
+      "sort_order": 3
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "family_physician",
+      "description": "Family Physician",
+      "input_type": "text",
+      "sort_order": 4
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "phone",
+      "description": "Phone",
+      "input_type": "text",
+      "sort_order": 5
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "are_you_currently_under_care_of_a_physician",
+      "description": "Are you currently under care of a Physician ?",
+      "input_type": "yesno",
+      "sort_order": 6
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "if_yes_what_is_the_condition_being_treated",
+      "description": "If Yes, what is the condition being treated ?",
+      "input_type": "textarea",
+      "sort_order": 7
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "have_you_had_any_serious_illness_operation_or_been_hospitali",
+      "description": "Have you had any serious illness, operation or been hospitalized within the past 5 years ?",
+      "input_type": "yesno",
+      "sort_order": 8
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "if_yes_what_illness_or_problem",
+      "description": "If Yes, what illness or problem ?",
+      "input_type": "text",
+      "sort_order": 9
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "are_you_currently_taking_any_medication",
+      "description": "Are you currently taking any medication ?",
+      "input_type": "yesno",
+      "sort_order": 10
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "if_yes_what",
+      "description": "If Yes, what ?",
+      "input_type": "textarea",
+      "sort_order": 11
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "have_you_taken_bisphosphonates_fosamax_boniva_zometa_actonel",
+      "description": "Have you taken bisphosphonates (Fosamax, Boniva, Zometa, Actonel, Didronel, Aredia, Skelid, Reclast)",
+      "input_type": "yesno",
+      "sort_order": 12
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "have_you_ever_taken_the_diet_control_drug_fen_phen",
+      "description": "Have you ever taken the diet control drug Fen-Phen ?",
+      "input_type": "yesno",
+      "sort_order": 13
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "do_you_use_alcoholic_beverages",
+      "description": "Do you use alcoholic beverages ?",
+      "input_type": "yesno",
+      "sort_order": 14
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Medical Questionnaire",
+      "key1": "do_you_smoke",
+      "description": "Do you smoke ?",
+      "input_type": "yesno",
+      "sort_order": 15
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Women Only",
+      "key1": "are_you_pregnant",
+      "description": "Are you pregnant?",
+      "input_type": "yesno",
+      "sort_order": 16
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Women Only",
+      "key1": "if_yes_what_is_your_due_date",
+      "description": "If Yes, what is your due date ?",
+      "input_type": "date",
+      "sort_order": 17
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Women Only",
+      "key1": "are_you_currently_nursing",
+      "description": "Are you currently nursing ?",
+      "input_type": "yesno",
+      "sort_order": 18
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Women Only",
+      "key1": "do_you_have_menstrual_period_problems",
+      "description": "Do you have menstrual period problems ?",
+      "input_type": "yesno",
+      "sort_order": 19
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Women Only",
+      "key1": "are_you_on_hormone_replacement_therapy",
+      "description": "Are you on hormone replacement therapy ?",
+      "input_type": "yesno",
+      "sort_order": 20
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Women Only",
+      "key1": "are_you_on_birth_control_pills_fertility_drugs",
+      "description": "Are you on birth control pills / fertility drugs ?",
+      "input_type": "yesno",
+      "sort_order": 21
+    },
+    {
+      "group_type": "MEDQUEST",
+      "section": "Additional Comments",
+      "key1": "any_disease_condition_or_problem_not_listed_please_list",
+      "description": "Any Disease, Condition or Problem not Listed ? Please list",
+      "input_type": "textarea",
+      "sort_order": 22
+    }
+  ]
+}

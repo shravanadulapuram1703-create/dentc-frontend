@@ -25,16 +25,33 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BodyUploadProgressNoteAttachment,
+  BulkChartConditionsRequest,
+  BulkChartConditionsResult,
   CariesRiskAssessmentCreate,
   CariesRiskAssessmentRead,
   CariesRiskAssessmentUpdate,
+  ChartAggregate,
   ChartConditionCreate,
   ChartConditionRead,
   ChartConditionUpdate,
+  ChartSettingsRead,
+  ChartSettingsUpsert,
+  ChartStatusTemplateCreate,
+  ChartStatusTemplateRead,
+  ChartStatusTemplateUpdate,
+  ChartToothNoteCreate,
+  ChartToothNoteRead,
+  ChartToothNoteUpdate,
+  ChartToothNoteUpsert,
+  ComparePerioExamsParams,
   ErrorResponse,
+  GetChartSettingsParams,
   HTTPValidationError,
   ListCariesRiskAssessmentsParams,
   ListChartConditionsParams,
+  ListChartStatusTemplatesParams,
+  ListChartToothNotesParams,
   ListPatientProceduresParams,
   ListPerioChartActivityParams,
   ListPerioChartSettingsParams,
@@ -45,6 +62,8 @@ import type {
   ListProgressNotesParams,
   PaginatedResponseCariesRiskAssessmentRead,
   PaginatedResponseChartConditionRead,
+  PaginatedResponseChartStatusTemplateRead,
+  PaginatedResponseChartToothNoteRead,
   PaginatedResponsePatientProcedureRead,
   PaginatedResponsePerioChartActivityRead,
   PaginatedResponsePerioChartSettingRead,
@@ -62,20 +81,26 @@ import type {
   PerioChartSettingCreate,
   PerioChartSettingRead,
   PerioChartSettingUpdate,
+  PerioChartSettingUpdateMe,
   PerioChartTemplateCreate,
   PerioChartTemplateRead,
   PerioChartTemplateUpdate,
+  PerioComparisonResult,
   PerioExamCreate,
   PerioExamDetailCreate,
   PerioExamDetailRead,
   PerioExamDetailUpdate,
+  PerioExamDetailsBulkUpsert,
   PerioExamRead,
   PerioExamUpdate,
   PrescriptionCreate,
   PrescriptionRead,
   PrescriptionUpdate,
+  ProgressNoteAttachmentRead,
   ProgressNoteCreate,
   ProgressNoteRead,
+  ProgressNoteSignRequest,
+  ProgressNoteSignResult,
   ProgressNoteUpdate
 } from '../../model';
 
@@ -88,25 +113,28 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Sign Progress Note
+ * @summary Sign a note as the caller, or as a verified provider (PN-2)
  */
 export const signProgressNote = (
     noteId: number,
+    progressNoteSignRequestNull?: BodyType<ProgressNoteSignRequest | null>| null,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<unknown>(
-      {url: `/api/v1/progress-notes/${noteId}/sign`, method: 'POST', signal
+      return customInstance<ProgressNoteSignResult>(
+      {url: `/api/v1/progress-notes/${noteId}/sign`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: progressNoteSignRequestNull, signal
     },
       options);
     }
 
 
 
-export const getSignProgressNoteMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number}, TContext> => {
+export const getSignProgressNoteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number;data?: BodyType<ProgressNoteSignRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number;data?: BodyType<ProgressNoteSignRequest | null>}, TContext> => {
 
 const mutationKey = ['signProgressNote'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -118,10 +146,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signProgressNote>>, {noteId: number}> = (props) => {
-          const {noteId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signProgressNote>>, {noteId: number;data?: BodyType<ProgressNoteSignRequest | null>}> = (props) => {
+          const {noteId,data} = props ?? {};
 
-          return  signProgressNote(noteId,requestOptions)
+          return  signProgressNote(noteId,data,requestOptions)
         }
 
 
@@ -132,23 +160,935 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SignProgressNoteMutationResult = NonNullable<Awaited<ReturnType<typeof signProgressNote>>>
-
-    export type SignProgressNoteMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+    export type SignProgressNoteMutationBody = BodyType<ProgressNoteSignRequest | null> | undefined
+    export type SignProgressNoteMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Sign Progress Note
+ * @summary Sign a note as the caller, or as a verified provider (PN-2)
  */
-export const useSignProgressNote = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useSignProgressNote = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signProgressNote>>, TError,{noteId: number;data?: BodyType<ProgressNoteSignRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof signProgressNote>>,
         TError,
-        {noteId: number},
+        {noteId: number;data?: BodyType<ProgressNoteSignRequest | null>},
         TContext
       > => {
       return useMutation(getSignProgressNoteMutationOptions(options), queryClient);
     }
     /**
+ * @summary List a note's attachments (PN-3)
+ */
+export const listProgressNoteAttachments = (
+    noteId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProgressNoteAttachmentRead[]>(
+      {url: `/api/v1/progress-notes/${noteId}/attachments`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProgressNoteAttachmentsQueryKey = (noteId: number,) => {
+    return [
+    `/api/v1/progress-notes/${noteId}/attachments`
+    ] as const;
+    }
+
+
+export const getListProgressNoteAttachmentsQueryOptions = <TData = Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError = ErrorType<ErrorResponse>>(noteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProgressNoteAttachmentsQueryKey(noteId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProgressNoteAttachments>>> = ({ signal }) => listProgressNoteAttachments(noteId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: noteId !== null && noteId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProgressNoteAttachmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listProgressNoteAttachments>>>
+export type ListProgressNoteAttachmentsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListProgressNoteAttachments<TData = Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProgressNoteAttachments>>,
+          TError,
+          Awaited<ReturnType<typeof listProgressNoteAttachments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProgressNoteAttachments<TData = Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProgressNoteAttachments>>,
+          TError,
+          Awaited<ReturnType<typeof listProgressNoteAttachments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProgressNoteAttachments<TData = Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List a note's attachments (PN-3)
+ */
+
+export function useListProgressNoteAttachments<TData = Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProgressNoteAttachments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProgressNoteAttachmentsQueryOptions(noteId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Attach a file to a note (PN-3)
+ */
+export const uploadProgressNoteAttachment = (
+    noteId: number,
+    bodyUploadProgressNoteAttachment: BodyType<BodyUploadProgressNoteAttachment>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`file`, bodyUploadProgressNoteAttachment.file);
+if(bodyUploadProgressNoteAttachment.attachment_type !== undefined && bodyUploadProgressNoteAttachment.attachment_type !== null) {
+ formData.append(`attachment_type`, bodyUploadProgressNoteAttachment.attachment_type);
+ }
+if(bodyUploadProgressNoteAttachment.description !== undefined && bodyUploadProgressNoteAttachment.description !== null) {
+ formData.append(`description`, bodyUploadProgressNoteAttachment.description);
+ }
+
+      return customInstance<ProgressNoteAttachmentRead>(
+      {url: `/api/v1/progress-notes/${noteId}/attachments`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getUploadProgressNoteAttachmentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadProgressNoteAttachment>>, TError,{noteId: number;data: BodyType<BodyUploadProgressNoteAttachment>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadProgressNoteAttachment>>, TError,{noteId: number;data: BodyType<BodyUploadProgressNoteAttachment>}, TContext> => {
+
+const mutationKey = ['uploadProgressNoteAttachment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadProgressNoteAttachment>>, {noteId: number;data: BodyType<BodyUploadProgressNoteAttachment>}> = (props) => {
+          const {noteId,data} = props ?? {};
+
+          return  uploadProgressNoteAttachment(noteId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadProgressNoteAttachmentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadProgressNoteAttachment>>>
+    export type UploadProgressNoteAttachmentMutationBody = BodyType<BodyUploadProgressNoteAttachment>
+    export type UploadProgressNoteAttachmentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Attach a file to a note (PN-3)
+ */
+export const useUploadProgressNoteAttachment = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadProgressNoteAttachment>>, TError,{noteId: number;data: BodyType<BodyUploadProgressNoteAttachment>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadProgressNoteAttachment>>,
+        TError,
+        {noteId: number;data: BodyType<BodyUploadProgressNoteAttachment>},
+        TContext
+      > => {
+      return useMutation(getUploadProgressNoteAttachmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Remove a note attachment (PN-3)
+ */
+export const deleteProgressNoteAttachment = (
+    noteId: number,
+    attachmentId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/progress-notes/${noteId}/attachments/${attachmentId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteProgressNoteAttachmentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProgressNoteAttachment>>, TError,{noteId: number;attachmentId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProgressNoteAttachment>>, TError,{noteId: number;attachmentId: number}, TContext> => {
+
+const mutationKey = ['deleteProgressNoteAttachment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProgressNoteAttachment>>, {noteId: number;attachmentId: number}> = (props) => {
+          const {noteId,attachmentId} = props ?? {};
+
+          return  deleteProgressNoteAttachment(noteId,attachmentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProgressNoteAttachmentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProgressNoteAttachment>>>
+
+    export type DeleteProgressNoteAttachmentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove a note attachment (PN-3)
+ */
+export const useDeleteProgressNoteAttachment = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProgressNoteAttachment>>, TError,{noteId: number;attachmentId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProgressNoteAttachment>>,
+        TError,
+        {noteId: number;attachmentId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteProgressNoteAttachmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Atomically insert-or-update a chart's tooth rows (PERIO-BE-8)
+ */
+export const bulkUpsertPerioExamDetails = (
+    examId: number,
+    perioExamDetailsBulkUpsert: BodyType<PerioExamDetailsBulkUpsert>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioExamDetailRead[]>(
+      {url: `/api/v1/perio-exams/${examId}/details`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: perioExamDetailsBulkUpsert, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkUpsertPerioExamDetailsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPerioExamDetails>>, TError,{examId: number;data: BodyType<PerioExamDetailsBulkUpsert>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPerioExamDetails>>, TError,{examId: number;data: BodyType<PerioExamDetailsBulkUpsert>}, TContext> => {
+
+const mutationKey = ['bulkUpsertPerioExamDetails'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkUpsertPerioExamDetails>>, {examId: number;data: BodyType<PerioExamDetailsBulkUpsert>}> = (props) => {
+          const {examId,data} = props ?? {};
+
+          return  bulkUpsertPerioExamDetails(examId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkUpsertPerioExamDetailsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkUpsertPerioExamDetails>>>
+    export type BulkUpsertPerioExamDetailsMutationBody = BodyType<PerioExamDetailsBulkUpsert>
+    export type BulkUpsertPerioExamDetailsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Atomically insert-or-update a chart's tooth rows (PERIO-BE-8)
+ */
+export const useBulkUpsertPerioExamDetails = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPerioExamDetails>>, TError,{examId: number;data: BodyType<PerioExamDetailsBulkUpsert>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkUpsertPerioExamDetails>>,
+        TError,
+        {examId: number;data: BodyType<PerioExamDetailsBulkUpsert>},
+        TContext
+      > => {
+      return useMutation(getBulkUpsertPerioExamDetailsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Summarise + delta perio exams across dates (PERIO-BE-10)
+ */
+export const comparePerioExams = (
+    params: ComparePerioExamsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioComparisonResult>(
+      {url: `/api/v1/perio-exams/compare`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getComparePerioExamsQueryKey = (params?: ComparePerioExamsParams,) => {
+    return [
+    `/api/v1/perio-exams/compare`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getComparePerioExamsQueryOptions = <TData = Awaited<ReturnType<typeof comparePerioExams>>, TError = ErrorType<ErrorResponse>>(params: ComparePerioExamsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comparePerioExams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComparePerioExamsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comparePerioExams>>> = ({ signal }) => comparePerioExams(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comparePerioExams>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComparePerioExamsQueryResult = NonNullable<Awaited<ReturnType<typeof comparePerioExams>>>
+export type ComparePerioExamsQueryError = ErrorType<ErrorResponse>
+
+
+export function useComparePerioExams<TData = Awaited<ReturnType<typeof comparePerioExams>>, TError = ErrorType<ErrorResponse>>(
+ params: ComparePerioExamsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comparePerioExams>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comparePerioExams>>,
+          TError,
+          Awaited<ReturnType<typeof comparePerioExams>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComparePerioExams<TData = Awaited<ReturnType<typeof comparePerioExams>>, TError = ErrorType<ErrorResponse>>(
+ params: ComparePerioExamsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comparePerioExams>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comparePerioExams>>,
+          TError,
+          Awaited<ReturnType<typeof comparePerioExams>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComparePerioExams<TData = Awaited<ReturnType<typeof comparePerioExams>>, TError = ErrorType<ErrorResponse>>(
+ params: ComparePerioExamsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comparePerioExams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Summarise + delta perio exams across dates (PERIO-BE-10)
+ */
+
+export function useComparePerioExams<TData = Awaited<ReturnType<typeof comparePerioExams>>, TError = ErrorType<ErrorResponse>>(
+ params: ComparePerioExamsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comparePerioExams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComparePerioExamsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get the caller's perio chart settings, seeding defaults (PERIO-BE-11)
+ */
+export const getMyPerioChartSettings = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioChartSettingRead>(
+      {url: `/api/v1/perio-chart-settings/me`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMyPerioChartSettingsQueryKey = () => {
+    return [
+    `/api/v1/perio-chart-settings/me`
+    ] as const;
+    }
+
+
+export const getGetMyPerioChartSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyPerioChartSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPerioChartSettings>>> = ({ signal }) => getMyPerioChartSettings(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyPerioChartSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyPerioChartSettings>>>
+export type GetMyPerioChartSettingsQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetMyPerioChartSettings<TData = Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPerioChartSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPerioChartSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyPerioChartSettings<TData = Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPerioChartSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPerioChartSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyPerioChartSettings<TData = Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the caller's perio chart settings, seeding defaults (PERIO-BE-11)
+ */
+
+export function useGetMyPerioChartSettings<TData = Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPerioChartSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyPerioChartSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update the caller's perio chart settings (PERIO-BE-11)
+ */
+export const updateMyPerioChartSettings = (
+    perioChartSettingUpdateMe: BodyType<PerioChartSettingUpdateMe>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PerioChartSettingRead>(
+      {url: `/api/v1/perio-chart-settings/me`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: perioChartSettingUpdateMe, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateMyPerioChartSettingsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyPerioChartSettings>>, TError,{data: BodyType<PerioChartSettingUpdateMe>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyPerioChartSettings>>, TError,{data: BodyType<PerioChartSettingUpdateMe>}, TContext> => {
+
+const mutationKey = ['updateMyPerioChartSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyPerioChartSettings>>, {data: BodyType<PerioChartSettingUpdateMe>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyPerioChartSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyPerioChartSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyPerioChartSettings>>>
+    export type UpdateMyPerioChartSettingsMutationBody = BodyType<PerioChartSettingUpdateMe>
+    export type UpdateMyPerioChartSettingsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update the caller's perio chart settings (PERIO-BE-11)
+ */
+export const useUpdateMyPerioChartSettings = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyPerioChartSettings>>, TError,{data: BodyType<PerioChartSettingUpdateMe>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyPerioChartSettings>>,
+        TError,
+        {data: BodyType<PerioChartSettingUpdateMe>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyPerioChartSettingsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Per-patient chart view settings (defaults if none) (REST-3)
+ */
+export const getChartSettings = (
+    params: GetChartSettingsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartSettingsRead>(
+      {url: `/api/v1/chart-settings`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetChartSettingsQueryKey = (params?: GetChartSettingsParams,) => {
+    return [
+    `/api/v1/chart-settings`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetChartSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getChartSettings>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: GetChartSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetChartSettingsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChartSettings>>> = ({ signal }) => getChartSettings(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChartSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetChartSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getChartSettings>>>
+export type GetChartSettingsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetChartSettings<TData = Awaited<ReturnType<typeof getChartSettings>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetChartSettingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChartSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getChartSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChartSettings<TData = Awaited<ReturnType<typeof getChartSettings>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetChartSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChartSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getChartSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChartSettings<TData = Awaited<ReturnType<typeof getChartSettings>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetChartSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Per-patient chart view settings (defaults if none) (REST-3)
+ */
+
+export function useGetChartSettings<TData = Awaited<ReturnType<typeof getChartSettings>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetChartSettingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetChartSettingsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Upsert per-patient chart view settings (REST-3)
+ */
+export const upsertChartSettings = (
+    chartSettingsUpsert: BodyType<ChartSettingsUpsert>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartSettingsRead>(
+      {url: `/api/v1/chart-settings`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: chartSettingsUpsert, signal
+    },
+      options);
+    }
+
+
+
+export const getUpsertChartSettingsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertChartSettings>>, TError,{data: BodyType<ChartSettingsUpsert>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof upsertChartSettings>>, TError,{data: BodyType<ChartSettingsUpsert>}, TContext> => {
+
+const mutationKey = ['upsertChartSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof upsertChartSettings>>, {data: BodyType<ChartSettingsUpsert>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  upsertChartSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpsertChartSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof upsertChartSettings>>>
+    export type UpsertChartSettingsMutationBody = BodyType<ChartSettingsUpsert>
+    export type UpsertChartSettingsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Upsert per-patient chart view settings (REST-3)
+ */
+export const useUpsertChartSettings = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertChartSettings>>, TError,{data: BodyType<ChartSettingsUpsert>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof upsertChartSettings>>,
+        TError,
+        {data: BodyType<ChartSettingsUpsert>},
+        TContext
+      > => {
+      return useMutation(getUpsertChartSettingsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Upsert a per-tooth note by (patient, tooth) (REST-4)
+ */
+export const upsertChartToothNote = (
+    chartToothNoteUpsert: BodyType<ChartToothNoteUpsert>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartToothNoteUpsert>(
+      {url: `/api/v1/chart-tooth-notes/upsert`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: chartToothNoteUpsert, signal
+    },
+      options);
+    }
+
+
+
+export const getUpsertChartToothNoteMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertChartToothNote>>, TError,{data: BodyType<ChartToothNoteUpsert>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof upsertChartToothNote>>, TError,{data: BodyType<ChartToothNoteUpsert>}, TContext> => {
+
+const mutationKey = ['upsertChartToothNote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof upsertChartToothNote>>, {data: BodyType<ChartToothNoteUpsert>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  upsertChartToothNote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpsertChartToothNoteMutationResult = NonNullable<Awaited<ReturnType<typeof upsertChartToothNote>>>
+    export type UpsertChartToothNoteMutationBody = BodyType<ChartToothNoteUpsert>
+    export type UpsertChartToothNoteMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Upsert a per-tooth note by (patient, tooth) (REST-4)
+ */
+export const useUpsertChartToothNote = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertChartToothNote>>, TError,{data: BodyType<ChartToothNoteUpsert>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof upsertChartToothNote>>,
+        TError,
+        {data: BodyType<ChartToothNoteUpsert>},
+        TContext
+      > => {
+      return useMutation(getUpsertChartToothNoteMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Atomically create a span of conditions with a shared group_id
+ */
+export const bulkCreateChartConditions = (
+    bulkChartConditionsRequest: BodyType<BulkChartConditionsRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BulkChartConditionsResult>(
+      {url: `/api/v1/chart-conditions/bulk`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkChartConditionsRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkCreateChartConditionsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateChartConditions>>, TError,{data: BodyType<BulkChartConditionsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkCreateChartConditions>>, TError,{data: BodyType<BulkChartConditionsRequest>}, TContext> => {
+
+const mutationKey = ['bulkCreateChartConditions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreateChartConditions>>, {data: BodyType<BulkChartConditionsRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkCreateChartConditions(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkCreateChartConditionsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreateChartConditions>>>
+    export type BulkCreateChartConditionsMutationBody = BodyType<BulkChartConditionsRequest>
+    export type BulkCreateChartConditionsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Atomically create a span of conditions with a shared group_id
+ */
+export const useBulkCreateChartConditions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateChartConditions>>, TError,{data: BodyType<BulkChartConditionsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkCreateChartConditions>>,
+        TError,
+        {data: BodyType<BulkChartConditionsRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkCreateChartConditionsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Full restorative chart state for a patient in one call
+ */
+export const getPatientChart = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartAggregate>(
+      {url: `/api/v1/patients/${patientId}/chart`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientChartQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/chart`
+    ] as const;
+    }
+
+
+export const getGetPatientChartQueryOptions = <TData = Awaited<ReturnType<typeof getPatientChart>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientChart>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientChartQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientChart>>> = ({ signal }) => getPatientChart(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientChart>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientChartQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientChart>>>
+export type GetPatientChartQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientChart<TData = Awaited<ReturnType<typeof getPatientChart>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientChart>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientChart>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientChart>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientChart<TData = Awaited<ReturnType<typeof getPatientChart>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientChart>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientChart>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientChart>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientChart<TData = Awaited<ReturnType<typeof getPatientChart>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientChart>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Full restorative chart state for a patient in one call
+ */
+
+export function useGetPatientChart<TData = Awaited<ReturnType<typeof getPatientChart>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientChart>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientChartQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List patient procedures
  */
 export const listPatientProcedures = (
@@ -3504,6 +4444,752 @@ export const useDeletePerioChartActivity = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeletePerioChartActivityMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List chart status templates
+ */
+export const listChartStatusTemplates = (
+    params?: ListChartStatusTemplatesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseChartStatusTemplateRead>(
+      {url: `/api/v1/chart-status-templates`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListChartStatusTemplatesQueryKey = (params?: ListChartStatusTemplatesParams,) => {
+    return [
+    `/api/v1/chart-status-templates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListChartStatusTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof listChartStatusTemplates>>, TError = ErrorType<ErrorResponse>>(params?: ListChartStatusTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartStatusTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListChartStatusTemplatesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listChartStatusTemplates>>> = ({ signal }) => listChartStatusTemplates(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listChartStatusTemplates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListChartStatusTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listChartStatusTemplates>>>
+export type ListChartStatusTemplatesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListChartStatusTemplates<TData = Awaited<ReturnType<typeof listChartStatusTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListChartStatusTemplatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartStatusTemplates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listChartStatusTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listChartStatusTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListChartStatusTemplates<TData = Awaited<ReturnType<typeof listChartStatusTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListChartStatusTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartStatusTemplates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listChartStatusTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listChartStatusTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListChartStatusTemplates<TData = Awaited<ReturnType<typeof listChartStatusTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListChartStatusTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartStatusTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List chart status templates
+ */
+
+export function useListChartStatusTemplates<TData = Awaited<ReturnType<typeof listChartStatusTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListChartStatusTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartStatusTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListChartStatusTemplatesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create chart status template
+ */
+export const createChartStatusTemplate = (
+    chartStatusTemplateCreate: BodyType<ChartStatusTemplateCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartStatusTemplateRead>(
+      {url: `/api/v1/chart-status-templates`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: chartStatusTemplateCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateChartStatusTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createChartStatusTemplate>>, TError,{data: BodyType<ChartStatusTemplateCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createChartStatusTemplate>>, TError,{data: BodyType<ChartStatusTemplateCreate>}, TContext> => {
+
+const mutationKey = ['createChartStatusTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createChartStatusTemplate>>, {data: BodyType<ChartStatusTemplateCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createChartStatusTemplate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateChartStatusTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createChartStatusTemplate>>>
+    export type CreateChartStatusTemplateMutationBody = BodyType<ChartStatusTemplateCreate>
+    export type CreateChartStatusTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create chart status template
+ */
+export const useCreateChartStatusTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createChartStatusTemplate>>, TError,{data: BodyType<ChartStatusTemplateCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createChartStatusTemplate>>,
+        TError,
+        {data: BodyType<ChartStatusTemplateCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateChartStatusTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get chart status template by id
+ */
+export const getChartStatusTemplate = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartStatusTemplateRead>(
+      {url: `/api/v1/chart-status-templates/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetChartStatusTemplateQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/chart-status-templates/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetChartStatusTemplateQueryOptions = <TData = Awaited<ReturnType<typeof getChartStatusTemplate>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartStatusTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetChartStatusTemplateQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChartStatusTemplate>>> = ({ signal }) => getChartStatusTemplate(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChartStatusTemplate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetChartStatusTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getChartStatusTemplate>>>
+export type GetChartStatusTemplateQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetChartStatusTemplate<TData = Awaited<ReturnType<typeof getChartStatusTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartStatusTemplate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChartStatusTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getChartStatusTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChartStatusTemplate<TData = Awaited<ReturnType<typeof getChartStatusTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartStatusTemplate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChartStatusTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getChartStatusTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChartStatusTemplate<TData = Awaited<ReturnType<typeof getChartStatusTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartStatusTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get chart status template by id
+ */
+
+export function useGetChartStatusTemplate<TData = Awaited<ReturnType<typeof getChartStatusTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartStatusTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetChartStatusTemplateQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update chart status template
+ */
+export const updateChartStatusTemplate = (
+    itemId: number,
+    chartStatusTemplateUpdate: BodyType<ChartStatusTemplateUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartStatusTemplateRead>(
+      {url: `/api/v1/chart-status-templates/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: chartStatusTemplateUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateChartStatusTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateChartStatusTemplate>>, TError,{itemId: number;data: BodyType<ChartStatusTemplateUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateChartStatusTemplate>>, TError,{itemId: number;data: BodyType<ChartStatusTemplateUpdate>}, TContext> => {
+
+const mutationKey = ['updateChartStatusTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateChartStatusTemplate>>, {itemId: number;data: BodyType<ChartStatusTemplateUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateChartStatusTemplate(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateChartStatusTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateChartStatusTemplate>>>
+    export type UpdateChartStatusTemplateMutationBody = BodyType<ChartStatusTemplateUpdate>
+    export type UpdateChartStatusTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update chart status template
+ */
+export const useUpdateChartStatusTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateChartStatusTemplate>>, TError,{itemId: number;data: BodyType<ChartStatusTemplateUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateChartStatusTemplate>>,
+        TError,
+        {itemId: number;data: BodyType<ChartStatusTemplateUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateChartStatusTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete chart status template
+ */
+export const deleteChartStatusTemplate = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/chart-status-templates/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteChartStatusTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChartStatusTemplate>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChartStatusTemplate>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteChartStatusTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChartStatusTemplate>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteChartStatusTemplate(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChartStatusTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChartStatusTemplate>>>
+
+    export type DeleteChartStatusTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete chart status template
+ */
+export const useDeleteChartStatusTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChartStatusTemplate>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChartStatusTemplate>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteChartStatusTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List chart tooth notes
+ */
+export const listChartToothNotes = (
+    params?: ListChartToothNotesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseChartToothNoteRead>(
+      {url: `/api/v1/chart-tooth-notes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListChartToothNotesQueryKey = (params?: ListChartToothNotesParams,) => {
+    return [
+    `/api/v1/chart-tooth-notes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListChartToothNotesQueryOptions = <TData = Awaited<ReturnType<typeof listChartToothNotes>>, TError = ErrorType<ErrorResponse>>(params?: ListChartToothNotesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartToothNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListChartToothNotesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listChartToothNotes>>> = ({ signal }) => listChartToothNotes(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listChartToothNotes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListChartToothNotesQueryResult = NonNullable<Awaited<ReturnType<typeof listChartToothNotes>>>
+export type ListChartToothNotesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListChartToothNotes<TData = Awaited<ReturnType<typeof listChartToothNotes>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListChartToothNotesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartToothNotes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listChartToothNotes>>,
+          TError,
+          Awaited<ReturnType<typeof listChartToothNotes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListChartToothNotes<TData = Awaited<ReturnType<typeof listChartToothNotes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListChartToothNotesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartToothNotes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listChartToothNotes>>,
+          TError,
+          Awaited<ReturnType<typeof listChartToothNotes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListChartToothNotes<TData = Awaited<ReturnType<typeof listChartToothNotes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListChartToothNotesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartToothNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List chart tooth notes
+ */
+
+export function useListChartToothNotes<TData = Awaited<ReturnType<typeof listChartToothNotes>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListChartToothNotesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listChartToothNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListChartToothNotesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create chart tooth note
+ */
+export const createChartToothNote = (
+    chartToothNoteCreate: BodyType<ChartToothNoteCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartToothNoteRead>(
+      {url: `/api/v1/chart-tooth-notes`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: chartToothNoteCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateChartToothNoteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createChartToothNote>>, TError,{data: BodyType<ChartToothNoteCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createChartToothNote>>, TError,{data: BodyType<ChartToothNoteCreate>}, TContext> => {
+
+const mutationKey = ['createChartToothNote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createChartToothNote>>, {data: BodyType<ChartToothNoteCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createChartToothNote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateChartToothNoteMutationResult = NonNullable<Awaited<ReturnType<typeof createChartToothNote>>>
+    export type CreateChartToothNoteMutationBody = BodyType<ChartToothNoteCreate>
+    export type CreateChartToothNoteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create chart tooth note
+ */
+export const useCreateChartToothNote = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createChartToothNote>>, TError,{data: BodyType<ChartToothNoteCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createChartToothNote>>,
+        TError,
+        {data: BodyType<ChartToothNoteCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateChartToothNoteMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get chart tooth note by id
+ */
+export const getChartToothNote = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartToothNoteRead>(
+      {url: `/api/v1/chart-tooth-notes/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetChartToothNoteQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/chart-tooth-notes/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetChartToothNoteQueryOptions = <TData = Awaited<ReturnType<typeof getChartToothNote>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartToothNote>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetChartToothNoteQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getChartToothNote>>> = ({ signal }) => getChartToothNote(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getChartToothNote>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetChartToothNoteQueryResult = NonNullable<Awaited<ReturnType<typeof getChartToothNote>>>
+export type GetChartToothNoteQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetChartToothNote<TData = Awaited<ReturnType<typeof getChartToothNote>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartToothNote>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChartToothNote>>,
+          TError,
+          Awaited<ReturnType<typeof getChartToothNote>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChartToothNote<TData = Awaited<ReturnType<typeof getChartToothNote>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartToothNote>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getChartToothNote>>,
+          TError,
+          Awaited<ReturnType<typeof getChartToothNote>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetChartToothNote<TData = Awaited<ReturnType<typeof getChartToothNote>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartToothNote>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get chart tooth note by id
+ */
+
+export function useGetChartToothNote<TData = Awaited<ReturnType<typeof getChartToothNote>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getChartToothNote>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetChartToothNoteQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update chart tooth note
+ */
+export const updateChartToothNote = (
+    itemId: number,
+    chartToothNoteUpdate: BodyType<ChartToothNoteUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChartToothNoteRead>(
+      {url: `/api/v1/chart-tooth-notes/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: chartToothNoteUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateChartToothNoteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateChartToothNote>>, TError,{itemId: number;data: BodyType<ChartToothNoteUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateChartToothNote>>, TError,{itemId: number;data: BodyType<ChartToothNoteUpdate>}, TContext> => {
+
+const mutationKey = ['updateChartToothNote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateChartToothNote>>, {itemId: number;data: BodyType<ChartToothNoteUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateChartToothNote(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateChartToothNoteMutationResult = NonNullable<Awaited<ReturnType<typeof updateChartToothNote>>>
+    export type UpdateChartToothNoteMutationBody = BodyType<ChartToothNoteUpdate>
+    export type UpdateChartToothNoteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update chart tooth note
+ */
+export const useUpdateChartToothNote = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateChartToothNote>>, TError,{itemId: number;data: BodyType<ChartToothNoteUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateChartToothNote>>,
+        TError,
+        {itemId: number;data: BodyType<ChartToothNoteUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateChartToothNoteMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete chart tooth note
+ */
+export const deleteChartToothNote = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/chart-tooth-notes/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteChartToothNoteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChartToothNote>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChartToothNote>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteChartToothNote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChartToothNote>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteChartToothNote(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChartToothNoteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChartToothNote>>>
+
+    export type DeleteChartToothNoteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete chart tooth note
+ */
+export const useDeleteChartToothNote = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChartToothNote>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChartToothNote>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteChartToothNoteMutationOptions(options), queryClient);
     }
     /**
  * @summary List caries risk assessments

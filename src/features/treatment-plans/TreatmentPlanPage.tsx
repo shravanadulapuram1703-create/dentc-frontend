@@ -27,10 +27,16 @@ import {
   type TxStatus,
   type TxRow,
 } from './txModel';
-import { loadProcedureCodes, codeDescription } from './treatmentPlanService';
+import {
+  loadProcedureCodes,
+  codeDescription,
+  loadProviderEligibility,
+  providerEligibleFor,
+} from './treatmentPlanService';
 import TxPlanGrid from './TxPlanGrid';
 import TxPlanToolbar, { type IdChange, type ReEstimateArgs } from './TxPlanToolbar';
 import ProcedureEntryPanel, { type EntryState } from './ProcedureEntryPanel';
+import EditTreatmentModal, { type EditTreatmentSave } from './EditTreatmentModal';
 import TxPlanReportModal from './TxPlanReportModal';
 import { buildTxPlanPdf, filterReportRows, type ReportHeader, type ReportOptions } from './txReport';
 
@@ -110,6 +116,11 @@ export default function TreatmentPlanPage() {
   });
   const [reportOpen, setReportOpen] = useState(false);
   const [sortByTooth, setSortByTooth] = useState(false);
+  // Edit Treatment modal — the item id being edited (legacy: click Diag Date).
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  // Set once the user opens the Provider panel, so we only fetch provider
+  // eligibility on demand (not on every page load).
+  const [eligibilityWanted, setEligibilityWanted] = useState(false);
 
   const availableTids = useMemo(() => {
     const tids = [...new Set([...tidByPlan.values()])].sort((a, b) => a - b);
@@ -141,6 +152,26 @@ export default function TreatmentPlanPage() {
   }, [rows]);
 
   const selectedRows = useMemo(() => rows.filter((r) => selected.has(r.id)), [rows, selected]);
+  const selectedCodes = useMemo(
+    () => [...new Set(selectedRows.map((r) => r.code))],
+    [selectedRows],
+  );
+
+  // Provider eligibility for the legacy "Change Provider" restriction. Fetched
+  // lazily (only after the Provider panel is first opened) and cached; each
+  // provider's assigned procedure-code allow-list decides whether they can be
+  // assigned to the selected procedures. See providerEligibleFor / PLAN-16.
+  const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
+  const eligibilityQuery = useQuery({
+    queryKey: ['tx-provider-eligibility', providerIds],
+    enabled: eligibilityWanted && providerIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: () => loadProviderEligibility(providerIds),
+  });
+  const eligibleProviders = useMemo(() => {
+    if (selectedCodes.length === 0 || !eligibilityQuery.data) return providers;
+    return providers.filter((p) => providerEligibleFor(eligibilityQuery.data, p.id, selectedCodes));
+  }, [providers, selectedCodes, eligibilityQuery.data]);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -210,8 +241,10 @@ export default function TreatmentPlanPage() {
           fee: num(code.default_fee),
           insurance_estimate: 0,
           priority: entry.order,
+          phase_id: entry.phase,
           billing_order: encodePhase(entry.phase),
           status: 'diagnosed',
+          provider_id: entry.provider_id || null,
           diagnosed_by: entry.provider_id || null,
         },
       });
@@ -222,7 +255,8 @@ export default function TreatmentPlanPage() {
     if (!requireSelection()) return;
     void run('Update provider', async () => {
       for (const r of selectedRows) {
-        await updateItem.mutateAsync({ itemId: r.id, data: { diagnosed_by: providerId } });
+        // Dual-write: dedicated provider_id (new) + legacy diagnosed_by the grid reads.
+        await updateItem.mutateAsync({ itemId: r.id, data: { provider_id: providerId, diagnosed_by: providerId } });
       }
       toast.success(`Provider updated on ${selectedRows.length} procedure(s)`);
     });
@@ -253,7 +287,11 @@ export default function TreatmentPlanPage() {
       for (const r of selectedRows) {
         const data: Record<string, unknown> = {};
         if (targetPlan && targetPlan !== r.plan_id) data.plan_id = targetPlan;
-        if (change.phase != null) data.billing_order = encodePhase(change.phase);
+        if (change.phase != null) {
+          // Dual-write: real phase_id (new) + legacy billing_order stopgap.
+          data.phase_id = change.phase;
+          data.billing_order = encodePhase(change.phase);
+        }
         if (change.order != null) data.priority = change.order;
         if (Object.keys(data).length) await updateItem.mutateAsync({ itemId: r.id, data });
       }
@@ -277,8 +315,10 @@ export default function TreatmentPlanPage() {
             fee: r.fee,
             insurance_estimate: r.est_ins,
             priority: r.order,
+            phase_id: r.phase,
             billing_order: encodePhase(r.phase),
             status: r.status,
+            provider_id: r.provider_id || null,
             diagnosed_by: r.provider_id || null,
           },
         });
@@ -313,6 +353,38 @@ export default function TreatmentPlanPage() {
       // endpoint that does not exist yet (see PLAN-3 in the dev report).
       toast.info('Insurance benefit re-estimation is not yet available (backend gap PLAN-3).');
     });
+
+  // ---- Edit Treatment modal (click Diag Date) -----------------------------
+  const editingItem = useMemo(
+    () => (editingItemId ? items.find((it) => it.id === editingItemId) ?? null : null),
+    [editingItemId, items],
+  );
+  const editingTid = editingItem ? tidByPlan.get(editingItem.plan_id) ?? 1 : 1;
+
+  const onSaveEdit = (save: EditTreatmentSave) => {
+    if (!editingItem) return;
+    void run('Save treatment', async () => {
+      const data: Record<string, unknown> = { ...save.patch };
+      // Re-parent when the Tx Plan ID changed (creates the target plan if needed).
+      if (save.targetTid != null) {
+        const targetPlan = await ensurePlanForTid(save.targetTid);
+        if (targetPlan !== editingItem.plan_id) data.plan_id = targetPlan;
+      }
+      await updateItem.mutateAsync({ itemId: editingItem.id, data });
+      setEditingItemId(null);
+      toast.success('Treatment updated');
+    });
+  };
+
+  const onDeleteEdit = () => {
+    if (!editingItem) return;
+    if (!window.confirm(`Delete ${editingItem.procedure_code} from the treatment plan?`)) return;
+    void run('Delete', async () => {
+      await deleteItem.mutateAsync({ itemId: editingItem.id });
+      setEditingItemId(null);
+      toast.success('Procedure deleted');
+    });
+  };
 
   // ---- Toolbar: additional actions ----------------------------------------
 
@@ -476,7 +548,10 @@ export default function TreatmentPlanPage() {
 
       <TxPlanToolbar
         selectedCount={selectedRows.length}
-        providers={providers}
+        providers={eligibleProviders}
+        totalProviderCount={providers.length}
+        eligibilityLoading={eligibilityQuery.isFetching}
+        onProviderPanelOpen={() => setEligibilityWanted(true)}
         busy={busy}
         statusFilter={statusFilter}
         onStatusFilter={setStatusFilter}
@@ -506,6 +581,7 @@ export default function TreatmentPlanPage() {
         selected={selected}
         onToggle={toggle}
         onToggleAll={toggleAll}
+        onEditRow={setEditingItemId}
         loading={plansQuery.isLoading || itemsQuery.isLoading}
       />
 
@@ -516,6 +592,20 @@ export default function TreatmentPlanPage() {
         busy={busy}
         onAdd={onAdd}
       />
+
+      {editingItem && (
+        <EditTreatmentModal
+          item={editingItem}
+          providers={providers}
+          availableTids={availableTids}
+          currentTid={editingTid}
+          descriptionFallback={codeMap(editingItem.procedure_code)}
+          busy={busy}
+          onSave={onSaveEdit}
+          onDelete={onDeleteEdit}
+          onClose={() => setEditingItemId(null)}
+        />
+      )}
 
       {reportOpen && (
         <TxPlanReportModal

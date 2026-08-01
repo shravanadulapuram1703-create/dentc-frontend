@@ -13,6 +13,22 @@ export type ListProgressNotesParams = {
  */
 patient_id?: number | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by is_struck_off
+ */
+is_struck_off?: boolean | null;
+/**
+ * note_date >= (inclusive lower bound)
+ */
+note_date_from?: string | null;
+/**
+ * note_date <= (inclusive upper bound)
+ */
+note_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

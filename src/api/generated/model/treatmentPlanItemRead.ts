@@ -14,13 +14,20 @@ export interface TreatmentPlanItemRead {
   tooth?: string | null;
   surface?: string | null;
   priority: number;
+  phase_id?: number | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   fee: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   insurance_estimate: string;
+  discount?: string | null;
   billing_order?: string | null;
   status: string;
   diagnosed_by?: string | null;
+  provider_id?: string | null;
+  diagnosed_date?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_archived: boolean;
   created_at: string;
   updated_at?: string | null;
 }

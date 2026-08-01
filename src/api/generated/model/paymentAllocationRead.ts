@@ -7,17 +7,13 @@
  */
 
 export interface PaymentAllocationRead {
+  id: number;
   patient_id: number;
-  legacy_id?: string | null;
-  procedure_id?: string | null;
   payment_id?: string | null;
+  procedure_id?: string | null;
   claim_id?: string | null;
-  ins_plan_id?: number | null;
-  provider_id?: string | null;
-  alloc_date?: string | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   amount: string;
   alloc_type?: string | null;
-  id: number;
-  created_at: string;
+  alloc_date?: string | null;
 }

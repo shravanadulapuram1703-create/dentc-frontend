@@ -7,12 +7,8 @@
  */
 
 export interface PageMeta {
-  /** @minimum 1 */
   page: number;
-  /** @minimum 1 */
   size: number;
-  /** @minimum 0 */
   total: number;
-  /** @minimum 0 */
   pages: number;
 }

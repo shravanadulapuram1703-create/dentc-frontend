@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ChatProvider, useMessagingContext } from './contexts/ChatContext';
 import { AppProviders } from './app/providers';
@@ -12,7 +12,7 @@ import Dashboard from './components/Dashboard';
 import Scheduler from './components/pages/Scheduler';
 import Patient from './components/pages/Patient';
 import PatientShellLayout from './components/PatientShellLayout';
-import PatientOverview from './components/patient/overview/PatientOverview';
+import PatientOverview from './features/patient-overview/PatientOverviewPage';
 import PatientLedger from './components/pages/PatientLedger';
 import TransactionsEntryPage from './features/transactions/TransactionsEntryPage';
 import AccountLedgerPage from './features/account-ledger/AccountLedgerPage';
@@ -22,6 +22,8 @@ import TreatmentPlanPage from './features/treatment-plans/TreatmentPlanPage';
 import PrescriptionsPage from './features/prescriptions/PrescriptionsPage';
 import LabTrackingPage from './features/lab-tracking/LabTrackingPage';
 import { InsurancePlanScreen } from './features/patient-insurance';
+import OrthoPaymentPlanPage from './features/payment-plans/OrthoPaymentPlanPage';
+import RegularPaymentPlanPage from './features/payment-plans/RegularPaymentPlanPage';
 import Reports from './components/pages/Reports';
 import ReportRunnerPage from './components/reports/pages/ReportRunnerPage';
 import Utilities from './components/pages/Utilities';
@@ -78,6 +80,9 @@ import Chat from './components/Chat';
 import MessagesPage from './features/messaging/MessagesPage';
 import AddNewPatient from './components/pages/AddNewPatient';
 import { HelpProvider } from './components/help';
+import PublicBookingPage from './features/appointnow/public/PublicBookingPage';
+import RequestInbox from './features/appointnow/requests/RequestInbox';
+import { AppointNowProvider } from './features/appointnow/AppointNowContext';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -114,7 +119,11 @@ function AppRoutes() {
       <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/dashboard" /> : <ResetPasswordPage />} />
       <Route path="/activate-legacy" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LegacyActivationPage />} />
       <Route path="/signup" element={<SignUpPage />} />
-      
+
+      {/* AppointNow — PUBLIC online-booking page. No auth, no app shell; safe to
+          embed on a third-party office website (iframe or direct link). */}
+      <Route path="/book/:office_code" element={<PublicBookingPage />} />
+
       {/* Dashboard */}
       <Route 
         path="/dashboard" 
@@ -146,15 +155,16 @@ function AppRoutes() {
       />
 
       {/* Add New Patient */}
-      <Route 
-        path="/patient/new" 
+      <Route
+        path="/patient/new"
         element={
-          isAuthenticated ? 
-          <AddNewPatient onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> : 
+          isAuthenticated ?
+          <AddNewPatient onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> :
           <Navigate to="/login" />
-        } 
+        }
       />
-      
+
+
       {/* PATIENT CONTEXT SHELL - Persistent Container with Nested Routes */}
       <Route 
         path="/patient/:patientId/*" 
@@ -172,8 +182,8 @@ function AppRoutes() {
         <Route path="restorative" element={<RestorativeChart />} />
         
         {/* Payment Plan */}
-        <Route path="payment-plan/regular" element={<PlaceholderPage title="Regular Payment Plan" description="Manage patient payment plans" />} />
-        <Route path="payment-plan/ortho" element={<PlaceholderPage title="Ortho Payment Plan" description="Manage orthodontic payment plans" />} />
+        <Route path="payment-plan/regular" element={<RegularPaymentPlanPage />} />
+        <Route path="payment-plan/ortho" element={<OrthoPaymentPlanPage />} />
         
         {/* Insurance - Dental */}
         <Route path="insurance/dental/primary" element={<InsurancePlanScreen category="D" order="primary" />} />
@@ -216,9 +226,21 @@ function AppRoutes() {
       <Route path="/patient-overview" element={<Navigate to="/patient/12345/overview" replace />} />
       <Route path="/patient-ledger" element={<Navigate to="/patient/12345/ledger" replace />} />
       
+      {/* AppointNow — staff request inbox (approve/decline online bookings). */}
+      <Route
+        path="/appointnow/requests"
+        element={
+          isAuthenticated ?
+          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+            <RequestInbox />
+          </AdminPageWrapper> :
+          <Navigate to="/login" />
+        }
+      />
+
       {/* REPORTS (Global Admin Context) */}
-      <Route 
-        path="/reports" 
+      <Route
+        path="/reports"
         element={
           isAuthenticated ? 
           <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
@@ -459,7 +481,15 @@ function LogoutOverlay() {
 }
 
 function AppContent() {
+  const location = useLocation();
   const { chatWidth } = useMessagingContext();
+
+  // The public AppointNow booking page (/book/*) must render clean and
+  // embeddable — no global nav, messaging launcher, Help FAB, or logout overlay.
+  const isPublicBooking = location.pathname.startsWith('/book');
+  if (isPublicBooking) {
+    return <AppRoutes />;
+  }
 
   return (
     <div
@@ -485,9 +515,11 @@ export default function App() {
     <AppProviders>
       <AuthProvider>
         <ChatProvider>
-          <Router>
-            <AppContent />
-          </Router>
+          <AppointNowProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </AppointNowProvider>
         </ChatProvider>
       </AuthProvider>
     </AppProviders>

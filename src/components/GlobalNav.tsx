@@ -77,6 +77,7 @@ import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth, type Office } from "../contexts/AuthContext.js";
 import { useMessagingContext } from "../contexts/ChatContext.js";
 import { useHelp } from "./help";
+import { useAppointNow } from "@/features/appointnow/AppointNowContext";
 import api from "../services/api.js";
 import { listOffices } from "@/api/generated/endpoints/organization/organization";
 
@@ -114,6 +115,9 @@ export default function GlobalNav({
   // Report-an-Issue launcher (Help dropdown). GlobalNav renders inside
   // HelpProvider (see App.tsx), so this is always available.
   const { openReportIssue } = useHelp();
+
+  // AppointNow online-booking requests — pending count drives the nav bell badge.
+  const { pendingCount: appointNowPending } = useAppointNow();
   
   // CLICK-DRIVEN STATE MANAGEMENT
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -812,7 +816,7 @@ export default function GlobalNav({
       submenu: [
         {
           label: "AppointNow",
-          path: "/utilities/launch/appointnow",
+          path: "/appointnow/requests",
         },
         {
           label: "Automated Campaigns",
@@ -1434,6 +1438,21 @@ export default function GlobalNav({
 
         {/* Office Selector & Organization Switcher */}
         <div className="flex items-center gap-3">
+          {/* AppointNow: incoming online-booking requests */}
+          <button
+            onClick={() => navigate("/appointnow/requests")}
+            title="AppointNow booking requests"
+            aria-label="AppointNow booking requests"
+            className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 border border-white/30 transition-all backdrop-blur-sm"
+          >
+            <Bell className="w-5 h-5 text-white" strokeWidth={2} />
+            {appointNowPending > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#EF4444] px-1 text-[11px] font-bold text-white shadow">
+                {appointNowPending > 99 ? "99+" : appointNowPending}
+              </span>
+            )}
+          </button>
+
           {/* OWNER-ONLY: Organization Switcher */}
           <OrganizationSwitcher />
 

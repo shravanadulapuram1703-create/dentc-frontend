@@ -35,4 +35,8 @@ export interface AppointmentCreate {
   confirmed_on?: string | null;
   checked_in_on?: string | null;
   checked_out_on?: string | null;
+  posted_on?: string | null;
+  cancellation_note?: string | null;
+  cancellation_reason?: string | null;
+  add_to_call_list?: boolean | null;
 }

@@ -17,6 +17,30 @@ patient_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * Filter by pref_provider_id
+ */
+pref_provider_id?: string | null;
+/**
+ * Filter by ins_plan_id
+ */
+ins_plan_id?: number | null;
+/**
+ * banding_date >= (inclusive lower bound)
+ */
+banding_date_from?: string | null;
+/**
+ * banding_date <= (inclusive upper bound)
+ */
+banding_date_to?: string | null;
+/**
+ * treat_start_date >= (inclusive lower bound)
+ */
+treat_start_date_from?: string | null;
+/**
+ * treat_start_date <= (inclusive upper bound)
+ */
+treat_start_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

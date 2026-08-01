@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { AppointmentSchedulerReadInsuranceEligibility } from './appointmentSchedulerReadInsuranceEligibility';
 
 /**
  * Denormalized appointment row for the calendar — names resolved server-side
@@ -28,7 +29,23 @@ export interface AppointmentSchedulerRead {
   is_missed?: boolean;
   is_cancelled?: boolean;
   is_blocked?: boolean;
+  is_posted?: boolean;
+  posted_on?: string | null;
   confirmed_on?: string | null;
   checked_in_on?: string | null;
   checked_out_on?: string | null;
+  has_alert?: boolean;
+  patient_age?: number | null;
+  patient_gender?: string | null;
+  responsible_party_id?: string | null;
+  service_summary?: string | null;
+  insurance_eligibility?: AppointmentSchedulerReadInsuranceEligibility;
+  account_balance?: string | null;
+  created_by?: number | null;
+  created_by_name?: string | null;
+  updated_by?: number | null;
+  updated_by_name?: string | null;
+  cancellation_note?: string | null;
+  cancellation_reason?: string | null;
+  add_to_call_list?: boolean;
 }

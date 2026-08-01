@@ -9,9 +9,14 @@
 export interface PatientInsPaymentPlanUpdate {
   patient_id?: number | null;
   legacy_plan_id?: string | null;
+  ortho_plan_id?: number | null;
   periodic_order?: number | null;
   periodic_date?: string | null;
   periodic_amt?: number | string | null;
+  plan_amount?: number | string | null;
+  down_payment?: number | string | null;
+  rem_total_amt?: number | string | null;
+  rem_payments?: number | null;
   is_billed?: boolean | null;
   billing_code?: string | null;
   ledger_id?: string | null;

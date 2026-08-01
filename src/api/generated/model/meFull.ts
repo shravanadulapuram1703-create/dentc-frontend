@@ -16,4 +16,6 @@ export interface MeFull {
   user: UserRead;
   tenant?: TenantBrief | null;
   offices?: OfficeAssignment[];
+  last_patient_id?: number | null;
+  provider_id?: string | null;
 }

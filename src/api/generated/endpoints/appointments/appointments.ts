@@ -37,6 +37,7 @@ import type {
   HTTPValidationError,
   ListAppointmentProceduresParams,
   ListAppointmentsParams,
+  ListFamilyAppointmentsParams,
   ListSchedulerAppointmentsParams,
   PaginatedResponseAppointmentProcedureRead,
   PaginatedResponseAppointmentRead
@@ -208,6 +209,99 @@ export const useUpdateAppointmentStatus = <TError = ErrorType<ErrorResponse | HT
       return useMutation(getUpdateAppointmentStatusMutationOptions(options), queryClient);
     }
     /**
+ * @summary Appointments across every patient on an account (legacy VIEW FUTURE FAMILY APPT, PO-4)
+ */
+export const listFamilyAppointments = (
+    params: ListFamilyAppointmentsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/appointments/family`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListFamilyAppointmentsQueryKey = (params?: ListFamilyAppointmentsParams,) => {
+    return [
+    `/api/v1/appointments/family`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListFamilyAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFamilyAppointmentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFamilyAppointments>>> = ({ signal }) => listFamilyAppointments(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListFamilyAppointmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listFamilyAppointments>>>
+export type ListFamilyAppointmentsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListFamilyAppointmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFamilyAppointments>>,
+          TError,
+          Awaited<ReturnType<typeof listFamilyAppointments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFamilyAppointments>>,
+          TError,
+          Awaited<ReturnType<typeof listFamilyAppointments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Appointments across every patient on an account (legacy VIEW FUTURE FAMILY APPT, PO-4)
+ */
+
+export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListFamilyAppointmentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List appointments
  */
 export const listAppointments = (

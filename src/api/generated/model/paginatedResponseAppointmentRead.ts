@@ -6,9 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AppointmentRead } from './appointmentRead';
-import type { PageMeta } from './pageMeta';
+import type { AppSchemasCommonPageMeta } from './appSchemasCommonPageMeta';
 
 export interface PaginatedResponseAppointmentRead {
   items: AppointmentRead[];
-  meta: PageMeta;
+  meta: AppSchemasCommonPageMeta;
 }

@@ -7,6 +7,7 @@
  */
 
 export interface ProgressNoteRead {
+  id: number;
   patient_id: number;
   office_id?: number | null;
   legacy_id?: string | null;
@@ -19,8 +20,16 @@ export interface ProgressNoteRead {
   signed_by?: number | null;
   signed_at?: string | null;
   is_struck_off: boolean;
+  struck_off_at?: string | null;
+  struck_off_by?: number | null;
+  drawing_strokes?: unknown[] | null;
+  drawing_doc_id?: number | null;
   is_deleted: boolean;
   created_by?: number | null;
-  id: number;
   created_at: string;
+  created_by_name?: string | null;
+  signed_by_name?: string | null;
+  struck_off_by_name?: string | null;
+  is_locked?: boolean;
+  attachment_count?: number;
 }

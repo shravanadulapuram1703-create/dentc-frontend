@@ -21,7 +21,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  HealthCheck200
+  HealthCheck200,
+  MessagingHealthCheck200,
+  RedisHealthCheck200
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -113,6 +115,204 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Live Redis connectivity probe (set/get round-trip).
+ *
+ * Use this to verify the VPC egress + REDIS_HOST wiring after a Cloud Run
+ * deploy. ``{"status": "ok", "connected": true}`` means the service can reach
+ * Memorystore on its private IP. Never 500s — a broken Redis reports
+ * ``connected: false`` with the reason so the check itself stays reachable.
+ * @summary Redis Health
+ */
+export const redisHealthCheck = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<RedisHealthCheck200>(
+      {url: `/health/redis`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getRedisHealthCheckQueryKey = () => {
+    return [
+    `/health/redis`
+    ] as const;
+    }
+
+
+export const getRedisHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof redisHealthCheck>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof redisHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRedisHealthCheckQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof redisHealthCheck>>> = ({ signal }) => redisHealthCheck(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof redisHealthCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RedisHealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof redisHealthCheck>>>
+export type RedisHealthCheckQueryError = ErrorType<unknown>
+
+
+export function useRedisHealthCheck<TData = Awaited<ReturnType<typeof redisHealthCheck>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof redisHealthCheck>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof redisHealthCheck>>,
+          TError,
+          Awaited<ReturnType<typeof redisHealthCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRedisHealthCheck<TData = Awaited<ReturnType<typeof redisHealthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof redisHealthCheck>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof redisHealthCheck>>,
+          TError,
+          Awaited<ReturnType<typeof redisHealthCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRedisHealthCheck<TData = Awaited<ReturnType<typeof redisHealthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof redisHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Redis Health
+ */
+
+export function useRedisHealthCheck<TData = Awaited<ReturnType<typeof redisHealthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof redisHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRedisHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Report the real-time fan-out mode.
+ *
+ * Without Redis the WS gateway still works, but delivery is in-process only
+ * and does NOT cross workers/instances — a failure that is invisible from the
+ * UI (REST history stays correct while live events silently go missing). This
+ * endpoint exists so a deploy can be *verified* rather than assumed.
+ *
+ * ``fanout: "redis"`` is the only correct state for multi-instance serving.
+ * @summary Messaging Health
+ */
+export const messagingHealthCheck = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MessagingHealthCheck200>(
+      {url: `/health/messaging`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getMessagingHealthCheckQueryKey = () => {
+    return [
+    `/health/messaging`
+    ] as const;
+    }
+
+
+export const getMessagingHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof messagingHealthCheck>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof messagingHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMessagingHealthCheckQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof messagingHealthCheck>>> = ({ signal }) => messagingHealthCheck(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof messagingHealthCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MessagingHealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof messagingHealthCheck>>>
+export type MessagingHealthCheckQueryError = ErrorType<unknown>
+
+
+export function useMessagingHealthCheck<TData = Awaited<ReturnType<typeof messagingHealthCheck>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof messagingHealthCheck>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof messagingHealthCheck>>,
+          TError,
+          Awaited<ReturnType<typeof messagingHealthCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMessagingHealthCheck<TData = Awaited<ReturnType<typeof messagingHealthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof messagingHealthCheck>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof messagingHealthCheck>>,
+          TError,
+          Awaited<ReturnType<typeof messagingHealthCheck>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMessagingHealthCheck<TData = Awaited<ReturnType<typeof messagingHealthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof messagingHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Messaging Health
+ */
+
+export function useMessagingHealthCheck<TData = Awaited<ReturnType<typeof messagingHealthCheck>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof messagingHealthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMessagingHealthCheckQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

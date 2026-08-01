@@ -7,6 +7,7 @@
  */
 import type { PatientContextBalance } from './patientContextBalance';
 import type { PatientContextInsurance } from './patientContextInsurance';
+import type { PatientContextOpeningBalance } from './patientContextOpeningBalance';
 import type { PatientContextVisit } from './patientContextVisit';
 import type { SchedulerPatientRead } from './schedulerPatientRead';
 
@@ -15,4 +16,5 @@ export interface PatientContext {
   balance: PatientContextBalance;
   insurance: PatientContextInsurance[];
   visit: PatientContextVisit;
+  opening_balance?: PatientContextOpeningBalance;
 }

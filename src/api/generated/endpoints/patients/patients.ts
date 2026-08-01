@@ -28,6 +28,7 @@ import type {
   AccountNoteCreate,
   AccountNoteRead,
   AccountNoteUpdate,
+  AccountPlanRead,
   BodyUploadPatientDocument,
   DuplicateCheckRequest,
   DuplicateCheckResponse,
@@ -37,38 +38,51 @@ import type {
   ListMedicalHistoryDetailsParams,
   ListMedicalHistoryRecordsParams,
   ListPatientAlertsParams,
+  ListPatientConsentsParams,
   ListPatientDocumentsParams,
   ListPatientEmergencyContactsParams,
   ListPatientInsuranceParams,
+  ListPatientMedicalAlertsParams,
   ListPatientNotesParams,
+  ListPatientQuestionnaireResponsesParams,
   ListPatientRecallsParams,
   ListPatientSignaturesParams,
   ListPatientsParams,
   ListReferralDemogDetailsParams,
   ListReferralDemogHeadersParams,
   ListReferralsParams,
+  ListResponsiblePartiesParams,
   MedicalHistoryDetailCreate,
   MedicalHistoryDetailRead,
   MedicalHistoryDetailUpdate,
   MedicalHistoryRecordCreate,
   MedicalHistoryRecordRead,
   MedicalHistoryRecordUpdate,
+  OpeningBalanceIn,
+  OpeningBalanceRead,
   PaginatedResponseAccountNoteRead,
   PaginatedResponseMedicalHistoryDetailRead,
   PaginatedResponseMedicalHistoryRecordRead,
   PaginatedResponsePatientAlertRead,
+  PaginatedResponsePatientConsentRead,
   PaginatedResponsePatientEmergencyContactRead,
   PaginatedResponsePatientInsuranceRead,
+  PaginatedResponsePatientMedicalAlertRead,
   PaginatedResponsePatientNoteRead,
+  PaginatedResponsePatientQuestionnaireResponseRead,
   PaginatedResponsePatientRead,
   PaginatedResponsePatientRecallRead,
   PaginatedResponsePatientSignatureRead,
   PaginatedResponseReferralDemogDetailRead,
   PaginatedResponseReferralDemogHeaderRead,
   PaginatedResponseReferralRead,
+  PaginatedResponseResponsiblePartyRead,
   PatientAlertCreate,
   PatientAlertRead,
   PatientAlertUpdate,
+  PatientConsentCreate,
+  PatientConsentRead,
+  PatientConsentUpdate,
   PatientContext,
   PatientCreate,
   PatientDocumentRead,
@@ -78,9 +92,16 @@ import type {
   PatientInsuranceCreate,
   PatientInsuranceRead,
   PatientInsuranceUpdate,
+  PatientMedicalAlertCreate,
+  PatientMedicalAlertRead,
+  PatientMedicalAlertUpdate,
   PatientNoteCreate,
   PatientNoteRead,
   PatientNoteUpdate,
+  PatientOverviewResponse,
+  PatientQuestionnaireResponseCreate,
+  PatientQuestionnaireResponseRead,
+  PatientQuestionnaireResponseUpdate,
   PatientRead,
   PatientRecallCreate,
   PatientRecallRead,
@@ -97,7 +118,13 @@ import type {
   ReferralDemogHeaderRead,
   ReferralDemogHeaderUpdate,
   ReferralRead,
-  ReferralUpdate
+  ReferralUpdate,
+  RegisterRequest,
+  RegisterResponse,
+  ResponsiblePartyCreate,
+  ResponsiblePartyRead,
+  ResponsiblePartyUpdate,
+  RosterPatientRead
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -585,6 +612,593 @@ export const useCheckPatientDuplicate = <TError = ErrorType<ErrorResponse | HTTP
       return useMutation(getCheckPatientDuplicateMutationOptions(options), queryClient);
     }
     /**
+ * @summary Register a patient with responsible party, alerts, questionnaire, recalls and opening balance in one transaction (GAP-AP-13/15/18)
+ */
+export const registerPatient = (
+    registerRequest: BodyType<RegisterRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<RegisterResponse>(
+      {url: `/api/v1/patients/register`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: registerRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getRegisterPatientMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPatient>>, TError,{data: BodyType<RegisterRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerPatient>>, TError,{data: BodyType<RegisterRequest>}, TContext> => {
+
+const mutationKey = ['registerPatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerPatient>>, {data: BodyType<RegisterRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerPatient(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterPatientMutationResult = NonNullable<Awaited<ReturnType<typeof registerPatient>>>
+    export type RegisterPatientMutationBody = BodyType<RegisterRequest>
+    export type RegisterPatientMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Register a patient with responsible party, alerts, questionnaire, recalls and opening balance in one transaction (GAP-AP-13/15/18)
+ */
+export const useRegisterPatient = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerPatient>>, TError,{data: BodyType<RegisterRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof registerPatient>>,
+        TError,
+        {data: BodyType<RegisterRequest>},
+        TContext
+      > => {
+      return useMutation(getRegisterPatientMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get a patient's opening A/R aging buckets (GAP-AP-12)
+ */
+export const getPatientOpeningBalance = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OpeningBalanceRead>(
+      {url: `/api/v1/patients/${patientId}/opening-balance`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientOpeningBalanceQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/opening-balance`
+    ] as const;
+    }
+
+
+export const getGetPatientOpeningBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientOpeningBalanceQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientOpeningBalance>>> = ({ signal }) => getPatientOpeningBalance(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientOpeningBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientOpeningBalance>>>
+export type GetPatientOpeningBalanceQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientOpeningBalance<TData = Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientOpeningBalance>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientOpeningBalance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientOpeningBalance<TData = Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientOpeningBalance>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientOpeningBalance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientOpeningBalance<TData = Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get a patient's opening A/R aging buckets (GAP-AP-12)
+ */
+
+export function useGetPatientOpeningBalance<TData = Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOpeningBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientOpeningBalanceQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Seed/replace a patient's opening A/R aging buckets (GAP-AP-12)
+ */
+export const setPatientOpeningBalance = (
+    patientId: number,
+    openingBalanceIn: BodyType<OpeningBalanceIn>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OpeningBalanceRead>(
+      {url: `/api/v1/patients/${patientId}/opening-balance`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: openingBalanceIn, signal
+    },
+      options);
+    }
+
+
+
+export const getSetPatientOpeningBalanceMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPatientOpeningBalance>>, TError,{patientId: number;data: BodyType<OpeningBalanceIn>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setPatientOpeningBalance>>, TError,{patientId: number;data: BodyType<OpeningBalanceIn>}, TContext> => {
+
+const mutationKey = ['setPatientOpeningBalance'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setPatientOpeningBalance>>, {patientId: number;data: BodyType<OpeningBalanceIn>}> = (props) => {
+          const {patientId,data} = props ?? {};
+
+          return  setPatientOpeningBalance(patientId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetPatientOpeningBalanceMutationResult = NonNullable<Awaited<ReturnType<typeof setPatientOpeningBalance>>>
+    export type SetPatientOpeningBalanceMutationBody = BodyType<OpeningBalanceIn>
+    export type SetPatientOpeningBalanceMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Seed/replace a patient's opening A/R aging buckets (GAP-AP-12)
+ */
+export const useSetPatientOpeningBalance = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPatientOpeningBalance>>, TError,{patientId: number;data: BodyType<OpeningBalanceIn>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setPatientOpeningBalance>>,
+        TError,
+        {patientId: number;data: BodyType<OpeningBalanceIn>},
+        TContext
+      > => {
+      return useMutation(getSetPatientOpeningBalanceMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Aggregate Patient Overview: patient+balance+RP+members+appts+recalls+insurance+referrals+contracts (PO-1)
+ */
+export const getPatientOverview = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientOverviewResponse>(
+      {url: `/api/v1/patients/${patientId}/overview`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientOverviewQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/overview`
+    ] as const;
+    }
+
+
+export const getGetPatientOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getPatientOverview>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientOverviewQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientOverview>>> = ({ signal }) => getPatientOverview(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientOverview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientOverview>>>
+export type GetPatientOverviewQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientOverview<TData = Awaited<ReturnType<typeof getPatientOverview>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientOverview<TData = Awaited<ReturnType<typeof getPatientOverview>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientOverview<TData = Awaited<ReturnType<typeof getPatientOverview>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Aggregate Patient Overview: patient+balance+RP+members+appts+recalls+insurance+referrals+contracts (PO-1)
+ */
+
+export function useGetPatientOverview<TData = Awaited<ReturnType<typeof getPatientOverview>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientOverviewQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Insurance plans already on this patient's account (PO-12: canonical name for account-plans)
+ */
+export const listPatientInsurancePlans = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPlanRead[]>(
+      {url: `/api/v1/patients/${patientId}/insurance-plans`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientInsurancePlansQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/insurance-plans`
+    ] as const;
+    }
+
+
+export const getListPatientInsurancePlansQueryOptions = <TData = Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientInsurancePlansQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientInsurancePlans>>> = ({ signal }) => listPatientInsurancePlans(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientInsurancePlansQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientInsurancePlans>>>
+export type ListPatientInsurancePlansQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPatientInsurancePlans<TData = Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientInsurancePlans>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientInsurancePlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientInsurancePlans<TData = Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientInsurancePlans>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientInsurancePlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientInsurancePlans<TData = Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Insurance plans already on this patient's account (PO-12: canonical name for account-plans)
+ */
+
+export function useListPatientInsurancePlans<TData = Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientInsurancePlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientInsurancePlansQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Alias of /insurance-plans (legacy Account Plans scope, LEG-5) — kept for back-compat
+ */
+export const listPatientAccountPlans = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPlanRead[]>(
+      {url: `/api/v1/patients/${patientId}/account-plans`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientAccountPlansQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/account-plans`
+    ] as const;
+    }
+
+
+export const getListPatientAccountPlansQueryOptions = <TData = Awaited<ReturnType<typeof listPatientAccountPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAccountPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientAccountPlansQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientAccountPlans>>> = ({ signal }) => listPatientAccountPlans(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientAccountPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientAccountPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientAccountPlans>>>
+export type ListPatientAccountPlansQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPatientAccountPlans<TData = Awaited<ReturnType<typeof listPatientAccountPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAccountPlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientAccountPlans>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientAccountPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientAccountPlans<TData = Awaited<ReturnType<typeof listPatientAccountPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAccountPlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientAccountPlans>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientAccountPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientAccountPlans<TData = Awaited<ReturnType<typeof listPatientAccountPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAccountPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Alias of /insurance-plans (legacy Account Plans scope, LEG-5) — kept for back-compat
+ */
+
+export function useListPatientAccountPlans<TData = Awaited<ReturnType<typeof listPatientAccountPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAccountPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientAccountPlansQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Patients a responsible party is billing-responsible for, with balance/aging/visits (LEG-14/PO-3)
+ */
+export const listResponsiblePartyPatients = (
+    rpId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<RosterPatientRead[]>(
+      {url: `/api/v1/responsible-parties/${rpId}/patients`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListResponsiblePartyPatientsQueryKey = (rpId: string,) => {
+    return [
+    `/api/v1/responsible-parties/${rpId}/patients`
+    ] as const;
+    }
+
+
+export const getListResponsiblePartyPatientsQueryOptions = <TData = Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(rpId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListResponsiblePartyPatientsQueryKey(rpId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listResponsiblePartyPatients>>> = ({ signal }) => listResponsiblePartyPatients(rpId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: rpId !== null && rpId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListResponsiblePartyPatientsQueryResult = NonNullable<Awaited<ReturnType<typeof listResponsiblePartyPatients>>>
+export type ListResponsiblePartyPatientsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListResponsiblePartyPatients<TData = Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ rpId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listResponsiblePartyPatients>>,
+          TError,
+          Awaited<ReturnType<typeof listResponsiblePartyPatients>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListResponsiblePartyPatients<TData = Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ rpId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listResponsiblePartyPatients>>,
+          TError,
+          Awaited<ReturnType<typeof listResponsiblePartyPatients>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListResponsiblePartyPatients<TData = Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ rpId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Patients a responsible party is billing-responsible for, with balance/aging/visits (LEG-14/PO-3)
+ */
+
+export function useListResponsiblePartyPatients<TData = Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ rpId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsiblePartyPatients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListResponsiblePartyPatientsQueryOptions(rpId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List patients
  */
 export const listPatients = (
@@ -2450,6 +3064,379 @@ export const useDeletePatientSignature = <TError = ErrorType<ErrorResponse>,
       return useMutation(getDeletePatientSignatureMutationOptions(options), queryClient);
     }
     /**
+ * @summary List patient consents
+ */
+export const listPatientConsents = (
+    params?: ListPatientConsentsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePatientConsentRead>(
+      {url: `/api/v1/patient-consents`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientConsentsQueryKey = (params?: ListPatientConsentsParams,) => {
+    return [
+    `/api/v1/patient-consents`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientConsentsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientConsents>>, TError = ErrorType<ErrorResponse>>(params?: ListPatientConsentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientConsentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientConsents>>> = ({ signal }) => listPatientConsents(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientConsents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientConsentsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientConsents>>>
+export type ListPatientConsentsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientConsents<TData = Awaited<ReturnType<typeof listPatientConsents>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPatientConsentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientConsents>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientConsents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientConsents<TData = Awaited<ReturnType<typeof listPatientConsents>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientConsentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientConsents>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientConsents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientConsents<TData = Awaited<ReturnType<typeof listPatientConsents>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientConsentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List patient consents
+ */
+
+export function useListPatientConsents<TData = Awaited<ReturnType<typeof listPatientConsents>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientConsentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientConsentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create patient consent
+ */
+export const createPatientConsent = (
+    patientConsentCreate: BodyType<PatientConsentCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientConsentRead>(
+      {url: `/api/v1/patient-consents`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: patientConsentCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePatientConsentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientConsent>>, TError,{data: BodyType<PatientConsentCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPatientConsent>>, TError,{data: BodyType<PatientConsentCreate>}, TContext> => {
+
+const mutationKey = ['createPatientConsent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPatientConsent>>, {data: BodyType<PatientConsentCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPatientConsent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePatientConsentMutationResult = NonNullable<Awaited<ReturnType<typeof createPatientConsent>>>
+    export type CreatePatientConsentMutationBody = BodyType<PatientConsentCreate>
+    export type CreatePatientConsentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create patient consent
+ */
+export const useCreatePatientConsent = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientConsent>>, TError,{data: BodyType<PatientConsentCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPatientConsent>>,
+        TError,
+        {data: BodyType<PatientConsentCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePatientConsentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get patient consent by id
+ */
+export const getPatientConsent = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientConsentRead>(
+      {url: `/api/v1/patient-consents/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientConsentQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/patient-consents/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPatientConsentQueryOptions = <TData = Awaited<ReturnType<typeof getPatientConsent>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientConsentQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientConsent>>> = ({ signal }) => getPatientConsent(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientConsent>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientConsentQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientConsent>>>
+export type GetPatientConsentQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientConsent<TData = Awaited<ReturnType<typeof getPatientConsent>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsent>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientConsent>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientConsent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientConsent<TData = Awaited<ReturnType<typeof getPatientConsent>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsent>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientConsent>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientConsent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientConsent<TData = Awaited<ReturnType<typeof getPatientConsent>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get patient consent by id
+ */
+
+export function useGetPatientConsent<TData = Awaited<ReturnType<typeof getPatientConsent>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientConsentQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update patient consent
+ */
+export const updatePatientConsent = (
+    itemId: number,
+    patientConsentUpdate: BodyType<PatientConsentUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientConsentRead>(
+      {url: `/api/v1/patient-consents/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patientConsentUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePatientConsentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientConsent>>, TError,{itemId: number;data: BodyType<PatientConsentUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePatientConsent>>, TError,{itemId: number;data: BodyType<PatientConsentUpdate>}, TContext> => {
+
+const mutationKey = ['updatePatientConsent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePatientConsent>>, {itemId: number;data: BodyType<PatientConsentUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePatientConsent(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePatientConsentMutationResult = NonNullable<Awaited<ReturnType<typeof updatePatientConsent>>>
+    export type UpdatePatientConsentMutationBody = BodyType<PatientConsentUpdate>
+    export type UpdatePatientConsentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update patient consent
+ */
+export const useUpdatePatientConsent = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientConsent>>, TError,{itemId: number;data: BodyType<PatientConsentUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePatientConsent>>,
+        TError,
+        {itemId: number;data: BodyType<PatientConsentUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePatientConsentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete patient consent
+ */
+export const deletePatientConsent = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/patient-consents/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePatientConsentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientConsent>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePatientConsent>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePatientConsent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePatientConsent>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePatientConsent(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePatientConsentMutationResult = NonNullable<Awaited<ReturnType<typeof deletePatientConsent>>>
+
+    export type DeletePatientConsentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete patient consent
+ */
+export const useDeletePatientConsent = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientConsent>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePatientConsent>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePatientConsentMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List medical history records
  */
 export const listMedicalHistoryRecords = (
@@ -3942,6 +4929,752 @@ export const useDeletePatientRecall = <TError = ErrorType<ErrorResponse>,
       return useMutation(getDeletePatientRecallMutationOptions(options), queryClient);
     }
     /**
+ * @summary List patient medical alerts
+ */
+export const listPatientMedicalAlerts = (
+    params?: ListPatientMedicalAlertsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePatientMedicalAlertRead>(
+      {url: `/api/v1/patient-medical-alerts`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientMedicalAlertsQueryKey = (params?: ListPatientMedicalAlertsParams,) => {
+    return [
+    `/api/v1/patient-medical-alerts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientMedicalAlertsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError = ErrorType<ErrorResponse>>(params?: ListPatientMedicalAlertsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientMedicalAlertsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientMedicalAlerts>>> = ({ signal }) => listPatientMedicalAlerts(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientMedicalAlertsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientMedicalAlerts>>>
+export type ListPatientMedicalAlertsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientMedicalAlerts<TData = Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPatientMedicalAlertsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientMedicalAlerts>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientMedicalAlerts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientMedicalAlerts<TData = Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientMedicalAlertsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientMedicalAlerts>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientMedicalAlerts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientMedicalAlerts<TData = Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientMedicalAlertsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List patient medical alerts
+ */
+
+export function useListPatientMedicalAlerts<TData = Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientMedicalAlertsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalAlerts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientMedicalAlertsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create patient medical alert
+ */
+export const createPatientMedicalAlert = (
+    patientMedicalAlertCreate: BodyType<PatientMedicalAlertCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientMedicalAlertRead>(
+      {url: `/api/v1/patient-medical-alerts`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: patientMedicalAlertCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePatientMedicalAlertMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientMedicalAlert>>, TError,{data: BodyType<PatientMedicalAlertCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPatientMedicalAlert>>, TError,{data: BodyType<PatientMedicalAlertCreate>}, TContext> => {
+
+const mutationKey = ['createPatientMedicalAlert'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPatientMedicalAlert>>, {data: BodyType<PatientMedicalAlertCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPatientMedicalAlert(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePatientMedicalAlertMutationResult = NonNullable<Awaited<ReturnType<typeof createPatientMedicalAlert>>>
+    export type CreatePatientMedicalAlertMutationBody = BodyType<PatientMedicalAlertCreate>
+    export type CreatePatientMedicalAlertMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create patient medical alert
+ */
+export const useCreatePatientMedicalAlert = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientMedicalAlert>>, TError,{data: BodyType<PatientMedicalAlertCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPatientMedicalAlert>>,
+        TError,
+        {data: BodyType<PatientMedicalAlertCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePatientMedicalAlertMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get patient medical alert by id
+ */
+export const getPatientMedicalAlert = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientMedicalAlertRead>(
+      {url: `/api/v1/patient-medical-alerts/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientMedicalAlertQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/patient-medical-alerts/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPatientMedicalAlertQueryOptions = <TData = Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientMedicalAlertQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientMedicalAlert>>> = ({ signal }) => getPatientMedicalAlert(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientMedicalAlertQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientMedicalAlert>>>
+export type GetPatientMedicalAlertQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientMedicalAlert<TData = Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalAlert>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalAlert>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalAlert<TData = Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalAlert>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalAlert>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalAlert<TData = Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get patient medical alert by id
+ */
+
+export function useGetPatientMedicalAlert<TData = Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlert>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientMedicalAlertQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update patient medical alert
+ */
+export const updatePatientMedicalAlert = (
+    itemId: number,
+    patientMedicalAlertUpdate: BodyType<PatientMedicalAlertUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientMedicalAlertRead>(
+      {url: `/api/v1/patient-medical-alerts/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patientMedicalAlertUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePatientMedicalAlertMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientMedicalAlert>>, TError,{itemId: number;data: BodyType<PatientMedicalAlertUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePatientMedicalAlert>>, TError,{itemId: number;data: BodyType<PatientMedicalAlertUpdate>}, TContext> => {
+
+const mutationKey = ['updatePatientMedicalAlert'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePatientMedicalAlert>>, {itemId: number;data: BodyType<PatientMedicalAlertUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePatientMedicalAlert(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePatientMedicalAlertMutationResult = NonNullable<Awaited<ReturnType<typeof updatePatientMedicalAlert>>>
+    export type UpdatePatientMedicalAlertMutationBody = BodyType<PatientMedicalAlertUpdate>
+    export type UpdatePatientMedicalAlertMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update patient medical alert
+ */
+export const useUpdatePatientMedicalAlert = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientMedicalAlert>>, TError,{itemId: number;data: BodyType<PatientMedicalAlertUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePatientMedicalAlert>>,
+        TError,
+        {itemId: number;data: BodyType<PatientMedicalAlertUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePatientMedicalAlertMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete patient medical alert
+ */
+export const deletePatientMedicalAlert = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/patient-medical-alerts/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePatientMedicalAlertMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientMedicalAlert>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePatientMedicalAlert>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePatientMedicalAlert'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePatientMedicalAlert>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePatientMedicalAlert(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePatientMedicalAlertMutationResult = NonNullable<Awaited<ReturnType<typeof deletePatientMedicalAlert>>>
+
+    export type DeletePatientMedicalAlertMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete patient medical alert
+ */
+export const useDeletePatientMedicalAlert = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientMedicalAlert>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePatientMedicalAlert>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePatientMedicalAlertMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List patient questionnaire responses
+ */
+export const listPatientQuestionnaireResponses = (
+    params?: ListPatientQuestionnaireResponsesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePatientQuestionnaireResponseRead>(
+      {url: `/api/v1/patient-questionnaire-responses`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientQuestionnaireResponsesQueryKey = (params?: ListPatientQuestionnaireResponsesParams,) => {
+    return [
+    `/api/v1/patient-questionnaire-responses`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientQuestionnaireResponsesQueryOptions = <TData = Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError = ErrorType<ErrorResponse>>(params?: ListPatientQuestionnaireResponsesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientQuestionnaireResponsesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>> = ({ signal }) => listPatientQuestionnaireResponses(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientQuestionnaireResponsesQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>>
+export type ListPatientQuestionnaireResponsesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientQuestionnaireResponses<TData = Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPatientQuestionnaireResponsesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientQuestionnaireResponses<TData = Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientQuestionnaireResponsesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientQuestionnaireResponses<TData = Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientQuestionnaireResponsesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List patient questionnaire responses
+ */
+
+export function useListPatientQuestionnaireResponses<TData = Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientQuestionnaireResponsesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientQuestionnaireResponses>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientQuestionnaireResponsesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create patient questionnaire response
+ */
+export const createPatientQuestionnaireResponse = (
+    patientQuestionnaireResponseCreate: BodyType<PatientQuestionnaireResponseCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientQuestionnaireResponseRead>(
+      {url: `/api/v1/patient-questionnaire-responses`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: patientQuestionnaireResponseCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePatientQuestionnaireResponseMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientQuestionnaireResponse>>, TError,{data: BodyType<PatientQuestionnaireResponseCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPatientQuestionnaireResponse>>, TError,{data: BodyType<PatientQuestionnaireResponseCreate>}, TContext> => {
+
+const mutationKey = ['createPatientQuestionnaireResponse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPatientQuestionnaireResponse>>, {data: BodyType<PatientQuestionnaireResponseCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPatientQuestionnaireResponse(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePatientQuestionnaireResponseMutationResult = NonNullable<Awaited<ReturnType<typeof createPatientQuestionnaireResponse>>>
+    export type CreatePatientQuestionnaireResponseMutationBody = BodyType<PatientQuestionnaireResponseCreate>
+    export type CreatePatientQuestionnaireResponseMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create patient questionnaire response
+ */
+export const useCreatePatientQuestionnaireResponse = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientQuestionnaireResponse>>, TError,{data: BodyType<PatientQuestionnaireResponseCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPatientQuestionnaireResponse>>,
+        TError,
+        {data: BodyType<PatientQuestionnaireResponseCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePatientQuestionnaireResponseMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get patient questionnaire response by id
+ */
+export const getPatientQuestionnaireResponse = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientQuestionnaireResponseRead>(
+      {url: `/api/v1/patient-questionnaire-responses/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientQuestionnaireResponseQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/patient-questionnaire-responses/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPatientQuestionnaireResponseQueryOptions = <TData = Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientQuestionnaireResponseQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>> = ({ signal }) => getPatientQuestionnaireResponse(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientQuestionnaireResponseQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>>
+export type GetPatientQuestionnaireResponseQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientQuestionnaireResponse<TData = Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientQuestionnaireResponse<TData = Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientQuestionnaireResponse<TData = Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get patient questionnaire response by id
+ */
+
+export function useGetPatientQuestionnaireResponse<TData = Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientQuestionnaireResponse>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientQuestionnaireResponseQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update patient questionnaire response
+ */
+export const updatePatientQuestionnaireResponse = (
+    itemId: number,
+    patientQuestionnaireResponseUpdate: BodyType<PatientQuestionnaireResponseUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientQuestionnaireResponseRead>(
+      {url: `/api/v1/patient-questionnaire-responses/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patientQuestionnaireResponseUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePatientQuestionnaireResponseMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientQuestionnaireResponse>>, TError,{itemId: number;data: BodyType<PatientQuestionnaireResponseUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePatientQuestionnaireResponse>>, TError,{itemId: number;data: BodyType<PatientQuestionnaireResponseUpdate>}, TContext> => {
+
+const mutationKey = ['updatePatientQuestionnaireResponse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePatientQuestionnaireResponse>>, {itemId: number;data: BodyType<PatientQuestionnaireResponseUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePatientQuestionnaireResponse(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePatientQuestionnaireResponseMutationResult = NonNullable<Awaited<ReturnType<typeof updatePatientQuestionnaireResponse>>>
+    export type UpdatePatientQuestionnaireResponseMutationBody = BodyType<PatientQuestionnaireResponseUpdate>
+    export type UpdatePatientQuestionnaireResponseMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update patient questionnaire response
+ */
+export const useUpdatePatientQuestionnaireResponse = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientQuestionnaireResponse>>, TError,{itemId: number;data: BodyType<PatientQuestionnaireResponseUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePatientQuestionnaireResponse>>,
+        TError,
+        {itemId: number;data: BodyType<PatientQuestionnaireResponseUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePatientQuestionnaireResponseMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete patient questionnaire response
+ */
+export const deletePatientQuestionnaireResponse = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/patient-questionnaire-responses/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePatientQuestionnaireResponseMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientQuestionnaireResponse>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePatientQuestionnaireResponse>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePatientQuestionnaireResponse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePatientQuestionnaireResponse>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePatientQuestionnaireResponse(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePatientQuestionnaireResponseMutationResult = NonNullable<Awaited<ReturnType<typeof deletePatientQuestionnaireResponse>>>
+
+    export type DeletePatientQuestionnaireResponseMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete patient questionnaire response
+ */
+export const useDeletePatientQuestionnaireResponse = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientQuestionnaireResponse>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePatientQuestionnaireResponse>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePatientQuestionnaireResponseMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List patient emergency contacts
  */
 export const listPatientEmergencyContacts = (
@@ -4313,6 +6046,379 @@ export const useDeletePatientEmergencyContact = <TError = ErrorType<ErrorRespons
         TContext
       > => {
       return useMutation(getDeletePatientEmergencyContactMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List responsible parties
+ */
+export const listResponsibleParties = (
+    params?: ListResponsiblePartiesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseResponsiblePartyRead>(
+      {url: `/api/v1/responsible-parties`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListResponsiblePartiesQueryKey = (params?: ListResponsiblePartiesParams,) => {
+    return [
+    `/api/v1/responsible-parties`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListResponsiblePartiesQueryOptions = <TData = Awaited<ReturnType<typeof listResponsibleParties>>, TError = ErrorType<ErrorResponse>>(params?: ListResponsiblePartiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsibleParties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListResponsiblePartiesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listResponsibleParties>>> = ({ signal }) => listResponsibleParties(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listResponsibleParties>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListResponsiblePartiesQueryResult = NonNullable<Awaited<ReturnType<typeof listResponsibleParties>>>
+export type ListResponsiblePartiesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListResponsibleParties<TData = Awaited<ReturnType<typeof listResponsibleParties>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListResponsiblePartiesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsibleParties>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listResponsibleParties>>,
+          TError,
+          Awaited<ReturnType<typeof listResponsibleParties>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListResponsibleParties<TData = Awaited<ReturnType<typeof listResponsibleParties>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListResponsiblePartiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsibleParties>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listResponsibleParties>>,
+          TError,
+          Awaited<ReturnType<typeof listResponsibleParties>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListResponsibleParties<TData = Awaited<ReturnType<typeof listResponsibleParties>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListResponsiblePartiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsibleParties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List responsible parties
+ */
+
+export function useListResponsibleParties<TData = Awaited<ReturnType<typeof listResponsibleParties>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListResponsiblePartiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResponsibleParties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListResponsiblePartiesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create responsible party
+ */
+export const createResponsibleParty = (
+    responsiblePartyCreate: BodyType<ResponsiblePartyCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ResponsiblePartyRead>(
+      {url: `/api/v1/responsible-parties`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: responsiblePartyCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateResponsiblePartyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createResponsibleParty>>, TError,{data: BodyType<ResponsiblePartyCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createResponsibleParty>>, TError,{data: BodyType<ResponsiblePartyCreate>}, TContext> => {
+
+const mutationKey = ['createResponsibleParty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createResponsibleParty>>, {data: BodyType<ResponsiblePartyCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createResponsibleParty(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateResponsiblePartyMutationResult = NonNullable<Awaited<ReturnType<typeof createResponsibleParty>>>
+    export type CreateResponsiblePartyMutationBody = BodyType<ResponsiblePartyCreate>
+    export type CreateResponsiblePartyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create responsible party
+ */
+export const useCreateResponsibleParty = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createResponsibleParty>>, TError,{data: BodyType<ResponsiblePartyCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createResponsibleParty>>,
+        TError,
+        {data: BodyType<ResponsiblePartyCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateResponsiblePartyMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get responsible party by id
+ */
+export const getResponsibleParty = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ResponsiblePartyRead>(
+      {url: `/api/v1/responsible-parties/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetResponsiblePartyQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/responsible-parties/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetResponsiblePartyQueryOptions = <TData = Awaited<ReturnType<typeof getResponsibleParty>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsibleParty>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetResponsiblePartyQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getResponsibleParty>>> = ({ signal }) => getResponsibleParty(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getResponsibleParty>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetResponsiblePartyQueryResult = NonNullable<Awaited<ReturnType<typeof getResponsibleParty>>>
+export type GetResponsiblePartyQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetResponsibleParty<TData = Awaited<ReturnType<typeof getResponsibleParty>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsibleParty>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getResponsibleParty>>,
+          TError,
+          Awaited<ReturnType<typeof getResponsibleParty>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetResponsibleParty<TData = Awaited<ReturnType<typeof getResponsibleParty>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsibleParty>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getResponsibleParty>>,
+          TError,
+          Awaited<ReturnType<typeof getResponsibleParty>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetResponsibleParty<TData = Awaited<ReturnType<typeof getResponsibleParty>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsibleParty>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get responsible party by id
+ */
+
+export function useGetResponsibleParty<TData = Awaited<ReturnType<typeof getResponsibleParty>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getResponsibleParty>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetResponsiblePartyQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update responsible party
+ */
+export const updateResponsibleParty = (
+    itemId: number,
+    responsiblePartyUpdate: BodyType<ResponsiblePartyUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ResponsiblePartyRead>(
+      {url: `/api/v1/responsible-parties/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: responsiblePartyUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateResponsiblePartyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateResponsibleParty>>, TError,{itemId: number;data: BodyType<ResponsiblePartyUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateResponsibleParty>>, TError,{itemId: number;data: BodyType<ResponsiblePartyUpdate>}, TContext> => {
+
+const mutationKey = ['updateResponsibleParty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateResponsibleParty>>, {itemId: number;data: BodyType<ResponsiblePartyUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateResponsibleParty(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateResponsiblePartyMutationResult = NonNullable<Awaited<ReturnType<typeof updateResponsibleParty>>>
+    export type UpdateResponsiblePartyMutationBody = BodyType<ResponsiblePartyUpdate>
+    export type UpdateResponsiblePartyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update responsible party
+ */
+export const useUpdateResponsibleParty = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateResponsibleParty>>, TError,{itemId: number;data: BodyType<ResponsiblePartyUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateResponsibleParty>>,
+        TError,
+        {itemId: number;data: BodyType<ResponsiblePartyUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateResponsiblePartyMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete responsible party
+ */
+export const deleteResponsibleParty = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/responsible-parties/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteResponsiblePartyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteResponsibleParty>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteResponsibleParty>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteResponsibleParty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteResponsibleParty>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteResponsibleParty(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteResponsiblePartyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteResponsibleParty>>>
+
+    export type DeleteResponsiblePartyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete responsible party
+ */
+export const useDeleteResponsibleParty = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteResponsibleParty>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteResponsibleParty>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteResponsiblePartyMutationOptions(options), queryClient);
     }
     /**
  * @summary List medical history details

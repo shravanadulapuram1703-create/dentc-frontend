@@ -203,20 +203,24 @@ export function buildRows(
   const rows = items.map((it) => {
     const fee = num(it.fee);
     const est_ins = num(it.insurance_estimate);
+    // phase_data_migration: the item now has real `phase_id` / `provider_id` /
+    // `diagnosed_date` columns. Prefer them, falling back to the legacy stopgaps
+    // (billing_order / diagnosed_by / created_at) for rows not yet migrated.
+    const prov = it.provider_id ?? it.diagnosed_by ?? '';
     return {
       id: it.id,
       plan_id: it.plan_id,
       tid: tidByPlan.get(it.plan_id) ?? 1,
-      phase: decodePhase(it.billing_order),
+      phase: it.phase_id ?? decodePhase(it.billing_order),
       order: it.priority ?? 1,
       status: normalizeStatus(it.status),
-      diag_date: it.created_at ?? '',
+      diag_date: it.diagnosed_date ?? it.created_at ?? '',
       code: it.procedure_code,
       description: it.description || codeDesc(it.procedure_code) || '',
       tooth: it.tooth ?? '',
       surface: it.surface ?? '',
-      provider_id: it.diagnosed_by ?? '',
-      provider_label: providerLabel(it.diagnosed_by),
+      provider_id: prov,
+      provider_label: providerLabel(prov),
       fee,
       est_ins,
       est_pat: estPat(fee, est_ins),

@@ -13,6 +13,7 @@ export interface PatientEmergencyContactRead {
   relationship?: string | null;
   phone?: string | null;
   email?: string | null;
+  is_primary: boolean;
   is_active: boolean;
   created_by?: number | null;
   id: number;

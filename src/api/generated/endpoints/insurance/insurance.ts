@@ -25,10 +25,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  EligibilityVerifyRequest,
+  EligibilityVerifyResult,
   EmployerCreate,
   EmployerRead,
   EmployerUpdate,
   ErrorResponse,
+  HTTPValidationError,
   InsCustomCoverageCreate,
   InsCustomCoverageRead,
   InsCustomCoverageUpdate,
@@ -67,6 +70,70 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Stamp a subscriber's eligibility verification (INS-PT-5)
+ */
+export const verifySubscriberEligibility = (
+    subscriberId: number,
+    eligibilityVerifyRequestNull?: BodyType<EligibilityVerifyRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EligibilityVerifyResult>(
+      {url: `/api/v1/insurance-subscribers/${subscriberId}/verify-eligibility`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: eligibilityVerifyRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getVerifySubscriberEligibilityMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifySubscriberEligibility>>, TError,{subscriberId: number;data?: BodyType<EligibilityVerifyRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifySubscriberEligibility>>, TError,{subscriberId: number;data?: BodyType<EligibilityVerifyRequest | null>}, TContext> => {
+
+const mutationKey = ['verifySubscriberEligibility'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifySubscriberEligibility>>, {subscriberId: number;data?: BodyType<EligibilityVerifyRequest | null>}> = (props) => {
+          const {subscriberId,data} = props ?? {};
+
+          return  verifySubscriberEligibility(subscriberId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifySubscriberEligibilityMutationResult = NonNullable<Awaited<ReturnType<typeof verifySubscriberEligibility>>>
+    export type VerifySubscriberEligibilityMutationBody = BodyType<EligibilityVerifyRequest | null> | undefined
+    export type VerifySubscriberEligibilityMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Stamp a subscriber's eligibility verification (INS-PT-5)
+ */
+export const useVerifySubscriberEligibility = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifySubscriberEligibility>>, TError,{subscriberId: number;data?: BodyType<EligibilityVerifyRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof verifySubscriberEligibility>>,
+        TError,
+        {subscriberId: number;data?: BodyType<EligibilityVerifyRequest | null>},
+        TContext
+      > => {
+      return useMutation(getVerifySubscriberEligibilityMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List employers
  */
 export const listEmployers = (

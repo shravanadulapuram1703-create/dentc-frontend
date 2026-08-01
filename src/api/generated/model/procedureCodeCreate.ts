@@ -36,6 +36,9 @@ export interface ProcedureCodeCreate {
   ar_code?: string | null;
   is_post_op?: boolean | null;
   exempt_from_dental_max?: boolean | null;
+  amb_code?: string | null;
+  is_downgrade?: boolean | null;
+  alternate_of?: string | null;
   lock_default_provider?: boolean | null;
   default_provider_id?: string | null;
   default_notes_macro_id?: number | null;

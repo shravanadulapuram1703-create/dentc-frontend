@@ -22,7 +22,9 @@ export default function TxPlanReportModal({ availableTids, defaultTid, busy, onC
   const [multiTids, setMultiTids] = useState<Set<number>>(new Set(availableTids));
   const [phase, setPhase] = useState('');
   const [disclosure, setDisclosure] = useState('Treatment Plan Disclosure');
-  const [includeWithoutUcr, setIncludeWithoutUcr] = useState(false);
+  // Default on so the common report includes every procedure; unchecking hides
+  // procedures with no UCR/fee (see filterReportRows).
+  const [includeWithoutUcr, setIncludeWithoutUcr] = useState(true);
   const [printAccountName, setPrintAccountName] = useState(true);
   const [printRespPartyAddress, setPrintRespPartyAddress] = useState(true);
   const [statuses, setStatuses] = useState<Set<TxStatus>>(new Set<TxStatus>(['diagnosed', 'accepted']));

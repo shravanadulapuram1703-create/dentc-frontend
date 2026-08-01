@@ -25,12 +25,19 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BodyUploadMyPhoto,
   BodyUploadUserImage,
   ChangePasswordRequest,
   ErrorResponse,
   HTTPValidationError,
+  LastPatientRead,
+  LastPatientUpdate,
+  ListMyNotificationsParams,
   ListUsersParams,
+  NotificationList,
+  NotificationRead,
   PaginatedResponseUserRead,
+  PreferencesBlob,
   SecuritySettings,
   SecuritySettingsRead,
   TimeClockConfig,
@@ -40,7 +47,13 @@ import type {
   UserCreate,
   UserImageResult,
   UserRead,
+  UserSelfUpdate,
   UserSetupMetadata,
+  UserSignatureRead,
+  UserSignatureUpdate,
+  UserTaskCreate,
+  UserTaskRead,
+  UserTaskUpdate,
   UserUpdate
 } from '../../model';
 
@@ -206,6 +219,1372 @@ export const useChangeMyPassword = <TError = ErrorType<ErrorResponse | HTTPValid
         TContext
       > => {
       return useMutation(getChangeMyPasswordMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update your own name / phone / email (MP-1)
+ */
+export const updateMyProfile = (
+    userSelfUpdate: BodyType<UserSelfUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserRead>(
+      {url: `/api/v1/users/me`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: userSelfUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateMyProfileMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: BodyType<UserSelfUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: BodyType<UserSelfUpdate>}, TContext> => {
+
+const mutationKey = ['updateMyProfile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyProfile>>, {data: BodyType<UserSelfUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyProfile>>>
+    export type UpdateMyProfileMutationBody = BodyType<UserSelfUpdate>
+    export type UpdateMyProfileMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Update your own name / phone / email (MP-1)
+ */
+export const useUpdateMyProfile = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,{data: BodyType<UserSelfUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyProfile>>,
+        TError,
+        {data: BodyType<UserSelfUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyProfileMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Upload your own avatar (MP-2)
+ */
+export const uploadMyPhoto = (
+    bodyUploadMyPhoto: BodyType<BodyUploadMyPhoto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`file`, bodyUploadMyPhoto.file);
+
+      return customInstance<UserImageResult>(
+      {url: `/api/v1/users/me/photo`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getUploadMyPhotoMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMyPhoto>>, TError,{data: BodyType<BodyUploadMyPhoto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadMyPhoto>>, TError,{data: BodyType<BodyUploadMyPhoto>}, TContext> => {
+
+const mutationKey = ['uploadMyPhoto'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadMyPhoto>>, {data: BodyType<BodyUploadMyPhoto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadMyPhoto(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadMyPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof uploadMyPhoto>>>
+    export type UploadMyPhotoMutationBody = BodyType<BodyUploadMyPhoto>
+    export type UploadMyPhotoMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Upload your own avatar (MP-2)
+ */
+export const useUploadMyPhoto = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMyPhoto>>, TError,{data: BodyType<BodyUploadMyPhoto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadMyPhoto>>,
+        TError,
+        {data: BodyType<BodyUploadMyPhoto>},
+        TContext
+      > => {
+      return useMutation(getUploadMyPhotoMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Remove your own avatar (MP-2)
+ */
+export const deleteMyPhoto = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/users/me/photo`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteMyPhotoMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyPhoto>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMyPhoto>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteMyPhoto'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMyPhoto>>, void> = () => {
+
+
+          return  deleteMyPhoto(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMyPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMyPhoto>>>
+
+    export type DeleteMyPhotoMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Remove your own avatar (MP-2)
+ */
+export const useDeleteMyPhoto = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyPhoto>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMyPhoto>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDeleteMyPhotoMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List your personal tasks (MP-3)
+ */
+export const listMyTasks = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserTaskRead[]>(
+      {url: `/api/v1/users/me/tasks`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListMyTasksQueryKey = () => {
+    return [
+    `/api/v1/users/me/tasks`
+    ] as const;
+    }
+
+
+export const getListMyTasksQueryOptions = <TData = Awaited<ReturnType<typeof listMyTasks>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTasks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyTasksQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyTasks>>> = ({ signal }) => listMyTasks(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyTasks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyTasksQueryResult = NonNullable<Awaited<ReturnType<typeof listMyTasks>>>
+export type ListMyTasksQueryError = ErrorType<ErrorResponse>
+
+
+export function useListMyTasks<TData = Awaited<ReturnType<typeof listMyTasks>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTasks>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyTasks>>,
+          TError,
+          Awaited<ReturnType<typeof listMyTasks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyTasks<TData = Awaited<ReturnType<typeof listMyTasks>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTasks>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyTasks>>,
+          TError,
+          Awaited<ReturnType<typeof listMyTasks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyTasks<TData = Awaited<ReturnType<typeof listMyTasks>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTasks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List your personal tasks (MP-3)
+ */
+
+export function useListMyTasks<TData = Awaited<ReturnType<typeof listMyTasks>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTasks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyTasksQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create a personal task (MP-3)
+ */
+export const createMyTask = (
+    userTaskCreate: BodyType<UserTaskCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserTaskRead>(
+      {url: `/api/v1/users/me/tasks`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: userTaskCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateMyTaskMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMyTask>>, TError,{data: BodyType<UserTaskCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMyTask>>, TError,{data: BodyType<UserTaskCreate>}, TContext> => {
+
+const mutationKey = ['createMyTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMyTask>>, {data: BodyType<UserTaskCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMyTask(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMyTaskMutationResult = NonNullable<Awaited<ReturnType<typeof createMyTask>>>
+    export type CreateMyTaskMutationBody = BodyType<UserTaskCreate>
+    export type CreateMyTaskMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Create a personal task (MP-3)
+ */
+export const useCreateMyTask = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMyTask>>, TError,{data: BodyType<UserTaskCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createMyTask>>,
+        TError,
+        {data: BodyType<UserTaskCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateMyTaskMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update a personal task (MP-3)
+ */
+export const updateMyTask = (
+    taskId: number,
+    userTaskUpdate: BodyType<UserTaskUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserTaskRead>(
+      {url: `/api/v1/users/me/tasks/${taskId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: userTaskUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateMyTaskMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyTask>>, TError,{taskId: number;data: BodyType<UserTaskUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyTask>>, TError,{taskId: number;data: BodyType<UserTaskUpdate>}, TContext> => {
+
+const mutationKey = ['updateMyTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyTask>>, {taskId: number;data: BodyType<UserTaskUpdate>}> = (props) => {
+          const {taskId,data} = props ?? {};
+
+          return  updateMyTask(taskId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyTaskMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyTask>>>
+    export type UpdateMyTaskMutationBody = BodyType<UserTaskUpdate>
+    export type UpdateMyTaskMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Update a personal task (MP-3)
+ */
+export const useUpdateMyTask = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyTask>>, TError,{taskId: number;data: BodyType<UserTaskUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyTask>>,
+        TError,
+        {taskId: number;data: BodyType<UserTaskUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyTaskMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete a personal task (MP-3)
+ */
+export const deleteMyTask = (
+    taskId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/users/me/tasks/${taskId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteMyTaskMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyTask>>, TError,{taskId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMyTask>>, TError,{taskId: number}, TContext> => {
+
+const mutationKey = ['deleteMyTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMyTask>>, {taskId: number}> = (props) => {
+          const {taskId} = props ?? {};
+
+          return  deleteMyTask(taskId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMyTaskMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMyTask>>>
+
+    export type DeleteMyTaskMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Delete a personal task (MP-3)
+ */
+export const useDeleteMyTask = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyTask>>, TError,{taskId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMyTask>>,
+        TError,
+        {taskId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteMyTaskMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get your UI preferences blob (MP-4)
+ */
+export const getMyPreferences = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PreferencesBlob>(
+      {url: `/api/v1/users/me/preferences`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMyPreferencesQueryKey = () => {
+    return [
+    `/api/v1/users/me/preferences`
+    ] as const;
+    }
+
+
+export const getGetMyPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof getMyPreferences>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPreferences>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyPreferencesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPreferences>>> = ({ signal }) => getMyPreferences(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyPreferences>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof getMyPreferences>>>
+export type GetMyPreferencesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetMyPreferences<TData = Awaited<ReturnType<typeof getMyPreferences>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPreferences>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyPreferences<TData = Awaited<ReturnType<typeof getMyPreferences>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPreferences>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyPreferences<TData = Awaited<ReturnType<typeof getMyPreferences>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPreferences>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get your UI preferences blob (MP-4)
+ */
+
+export function useGetMyPreferences<TData = Awaited<ReturnType<typeof getMyPreferences>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPreferences>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyPreferencesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Replace your UI preferences blob (MP-4)
+ */
+export const setMyPreferences = (
+    preferencesBlob: BodyType<PreferencesBlob>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PreferencesBlob>(
+      {url: `/api/v1/users/me/preferences`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: preferencesBlob, signal
+    },
+      options);
+    }
+
+
+
+export const getSetMyPreferencesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMyPreferences>>, TError,{data: BodyType<PreferencesBlob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setMyPreferences>>, TError,{data: BodyType<PreferencesBlob>}, TContext> => {
+
+const mutationKey = ['setMyPreferences'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setMyPreferences>>, {data: BodyType<PreferencesBlob>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setMyPreferences(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetMyPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof setMyPreferences>>>
+    export type SetMyPreferencesMutationBody = BodyType<PreferencesBlob>
+    export type SetMyPreferencesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Replace your UI preferences blob (MP-4)
+ */
+export const useSetMyPreferences = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMyPreferences>>, TError,{data: BodyType<PreferencesBlob>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setMyPreferences>>,
+        TError,
+        {data: BodyType<PreferencesBlob>},
+        TContext
+      > => {
+      return useMutation(getSetMyPreferencesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List your notifications with unread count (MP-6)
+ */
+export const listMyNotifications = (
+    params?: ListMyNotificationsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NotificationList>(
+      {url: `/api/v1/users/me/notifications`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListMyNotificationsQueryKey = (params?: ListMyNotificationsParams,) => {
+    return [
+    `/api/v1/users/me/notifications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListMyNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyNotificationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyNotifications>>> = ({ signal }) => listMyNotifications(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyNotifications>>>
+export type ListMyNotificationsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  ListMyNotificationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyNotifications>>,
+          TError,
+          Awaited<ReturnType<typeof listMyNotifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyNotifications>>,
+          TError,
+          Awaited<ReturnType<typeof listMyNotifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List your notifications with unread count (MP-6)
+ */
+
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Mark a notification read (MP-6)
+ */
+export const markMyNotificationRead = (
+    notificationId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NotificationRead>(
+      {url: `/api/v1/users/me/notifications/${notificationId}/read`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getMarkMyNotificationReadMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markMyNotificationRead>>, TError,{notificationId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof markMyNotificationRead>>, TError,{notificationId: number}, TContext> => {
+
+const mutationKey = ['markMyNotificationRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markMyNotificationRead>>, {notificationId: number}> = (props) => {
+          const {notificationId} = props ?? {};
+
+          return  markMyNotificationRead(notificationId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkMyNotificationReadMutationResult = NonNullable<Awaited<ReturnType<typeof markMyNotificationRead>>>
+
+    export type MarkMyNotificationReadMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Mark a notification read (MP-6)
+ */
+export const useMarkMyNotificationRead = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markMyNotificationRead>>, TError,{notificationId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markMyNotificationRead>>,
+        TError,
+        {notificationId: number},
+        TContext
+      > => {
+      return useMutation(getMarkMyNotificationReadMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Mark all your notifications read (MP-6)
+ */
+export const markAllMyNotificationsRead = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/users/me/notifications/read-all`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getMarkAllMyNotificationsReadMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, TError,void, TContext> => {
+
+const mutationKey = ['markAllMyNotificationsRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, void> = () => {
+
+
+          return  markAllMyNotificationsRead(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkAllMyNotificationsReadMutationResult = NonNullable<Awaited<ReturnType<typeof markAllMyNotificationsRead>>>
+
+    export type MarkAllMyNotificationsReadMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Mark all your notifications read (MP-6)
+ */
+export const useMarkAllMyNotificationsRead = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markAllMyNotificationsRead>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getMarkAllMyNotificationsReadMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get the caller's persistent default patient
+ */
+export const getMyLastPatient = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LastPatientRead>(
+      {url: `/api/v1/users/me/last-patient`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMyLastPatientQueryKey = () => {
+    return [
+    `/api/v1/users/me/last-patient`
+    ] as const;
+    }
+
+
+export const getGetMyLastPatientQueryOptions = <TData = Awaited<ReturnType<typeof getMyLastPatient>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLastPatient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyLastPatientQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLastPatient>>> = ({ signal }) => getMyLastPatient(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyLastPatient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyLastPatientQueryResult = NonNullable<Awaited<ReturnType<typeof getMyLastPatient>>>
+export type GetMyLastPatientQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetMyLastPatient<TData = Awaited<ReturnType<typeof getMyLastPatient>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLastPatient>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyLastPatient>>,
+          TError,
+          Awaited<ReturnType<typeof getMyLastPatient>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyLastPatient<TData = Awaited<ReturnType<typeof getMyLastPatient>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLastPatient>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyLastPatient>>,
+          TError,
+          Awaited<ReturnType<typeof getMyLastPatient>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyLastPatient<TData = Awaited<ReturnType<typeof getMyLastPatient>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLastPatient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the caller's persistent default patient
+ */
+
+export function useGetMyLastPatient<TData = Awaited<ReturnType<typeof getMyLastPatient>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLastPatient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyLastPatientQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Set (or clear with null) the caller's default patient
+ */
+export const setMyLastPatient = (
+    lastPatientUpdate: BodyType<LastPatientUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LastPatientRead>(
+      {url: `/api/v1/users/me/last-patient`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: lastPatientUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getSetMyLastPatientMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMyLastPatient>>, TError,{data: BodyType<LastPatientUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setMyLastPatient>>, TError,{data: BodyType<LastPatientUpdate>}, TContext> => {
+
+const mutationKey = ['setMyLastPatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setMyLastPatient>>, {data: BodyType<LastPatientUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setMyLastPatient(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetMyLastPatientMutationResult = NonNullable<Awaited<ReturnType<typeof setMyLastPatient>>>
+    export type SetMyLastPatientMutationBody = BodyType<LastPatientUpdate>
+    export type SetMyLastPatientMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Set (or clear with null) the caller's default patient
+ */
+export const useSetMyLastPatient = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMyLastPatient>>, TError,{data: BodyType<LastPatientUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setMyLastPatient>>,
+        TError,
+        {data: BodyType<LastPatientUpdate>},
+        TContext
+      > => {
+      return useMutation(getSetMyLastPatientMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Clear the caller's default patient
+ */
+export const clearMyLastPatient = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/users/me/last-patient`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getClearMyLastPatientMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMyLastPatient>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearMyLastPatient>>, TError,void, TContext> => {
+
+const mutationKey = ['clearMyLastPatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearMyLastPatient>>, void> = () => {
+
+
+          return  clearMyLastPatient(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearMyLastPatientMutationResult = NonNullable<Awaited<ReturnType<typeof clearMyLastPatient>>>
+
+    export type ClearMyLastPatientMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Clear the caller's default patient
+ */
+export const useClearMyLastPatient = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearMyLastPatient>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clearMyLastPatient>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getClearMyLastPatientMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get the logged-in user's signature
+ */
+export const getMySignature = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserSignatureRead>(
+      {url: `/api/v1/users/me/signature`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMySignatureQueryKey = () => {
+    return [
+    `/api/v1/users/me/signature`
+    ] as const;
+    }
+
+
+export const getGetMySignatureQueryOptions = <TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMySignatureQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMySignature>>> = ({ signal }) => getMySignature(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMySignatureQueryResult = NonNullable<Awaited<ReturnType<typeof getMySignature>>>
+export type GetMySignatureQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMySignature>>,
+          TError,
+          Awaited<ReturnType<typeof getMySignature>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMySignature>>,
+          TError,
+          Awaited<ReturnType<typeof getMySignature>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the logged-in user's signature
+ */
+
+export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMySignatureQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Save the logged-in user's signature
+ */
+export const setMySignature = (
+    userSignatureUpdate: BodyType<UserSignatureUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserSignatureRead>(
+      {url: `/api/v1/users/me/signature`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: userSignatureUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getSetMySignatureMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMySignature>>, TError,{data: BodyType<UserSignatureUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setMySignature>>, TError,{data: BodyType<UserSignatureUpdate>}, TContext> => {
+
+const mutationKey = ['setMySignature'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setMySignature>>, {data: BodyType<UserSignatureUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setMySignature(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetMySignatureMutationResult = NonNullable<Awaited<ReturnType<typeof setMySignature>>>
+    export type SetMySignatureMutationBody = BodyType<UserSignatureUpdate>
+    export type SetMySignatureMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Save the logged-in user's signature
+ */
+export const useSetMySignature = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setMySignature>>, TError,{data: BodyType<UserSignatureUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setMySignature>>,
+        TError,
+        {data: BodyType<UserSignatureUpdate>},
+        TContext
+      > => {
+      return useMutation(getSetMySignatureMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get a user's signature
+ */
+export const getUserSignature = (
+    userId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserSignatureRead>(
+      {url: `/api/v1/users/${userId}/signature`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetUserSignatureQueryKey = (userId: number,) => {
+    return [
+    `/api/v1/users/${userId}/signature`
+    ] as const;
+    }
+
+
+export const getGetUserSignatureQueryOptions = <TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserSignatureQueryKey(userId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserSignature>>> = ({ signal }) => getUserSignature(userId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: userId !== null && userId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserSignatureQueryResult = NonNullable<Awaited<ReturnType<typeof getUserSignature>>>
+export type GetUserSignatureQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ userId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserSignature>>,
+          TError,
+          Awaited<ReturnType<typeof getUserSignature>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserSignature>>,
+          TError,
+          Awaited<ReturnType<typeof getUserSignature>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get a user's signature
+ */
+
+export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUserSignatureQueryOptions(userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Save a user's signature
+ */
+export const setUserSignature = (
+    userId: number,
+    userSignatureUpdate: BodyType<UserSignatureUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserSignatureRead>(
+      {url: `/api/v1/users/${userId}/signature`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: userSignatureUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getSetUserSignatureMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setUserSignature>>, TError,{userId: number;data: BodyType<UserSignatureUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setUserSignature>>, TError,{userId: number;data: BodyType<UserSignatureUpdate>}, TContext> => {
+
+const mutationKey = ['setUserSignature'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setUserSignature>>, {userId: number;data: BodyType<UserSignatureUpdate>}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  setUserSignature(userId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetUserSignatureMutationResult = NonNullable<Awaited<ReturnType<typeof setUserSignature>>>
+    export type SetUserSignatureMutationBody = BodyType<UserSignatureUpdate>
+    export type SetUserSignatureMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Save a user's signature
+ */
+export const useSetUserSignature = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setUserSignature>>, TError,{userId: number;data: BodyType<UserSignatureUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setUserSignature>>,
+        TError,
+        {userId: number;data: BodyType<UserSignatureUpdate>},
+        TContext
+      > => {
+      return useMutation(getSetUserSignatureMutationOptions(options), queryClient);
     }
     /**
  * @summary Create a fully-configured user in one transaction

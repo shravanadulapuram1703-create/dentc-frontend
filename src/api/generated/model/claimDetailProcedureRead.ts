@@ -34,6 +34,7 @@ export interface ClaimDetailProcedureRead {
   hold_claim: boolean;
   is_void: boolean;
   material_id?: number | null;
+  treatment_plan_id?: string | null;
   notes?: string | null;
   created_by?: number | null;
   created_at: string;

@@ -496,7 +496,7 @@ export default function RestorativeChart() {
         data: {
           id: genId(), plan_id, procedure_code: e.procedure_code, description: e.description,
           tooth: e.tooth, surface: e.surface || null, fee: e.fee, insurance_estimate: e.insurance_estimate,
-          status: 'planned', priority: phase === 'ALL' ? 1 : Number(phase) || 1,
+          status: 'diagnosed', priority: phase === 'ALL' ? 1 : Number(phase) || 1,
         },
       });
       queryClient.invalidateQueries({ queryKey: getListTreatmentPlanItemsQueryKey({ plan_id, size: 200 }) });

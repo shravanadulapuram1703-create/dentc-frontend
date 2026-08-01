@@ -34,7 +34,10 @@ export interface PatientProcedureRead {
   hold_claim: boolean;
   is_void: boolean;
   material_id?: number | null;
+  treatment_plan_id?: string | null;
   notes?: string | null;
   created_by?: number | null;
   created_at: string;
+  patient_name?: string | null;
+  provider_name?: string | null;
 }

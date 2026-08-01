@@ -45,8 +45,23 @@ export interface PatientCreate {
   guardian_phone?: string | null;
   referral_type?: string | null;
   referred_by?: string | null;
+  referred_to?: string | null;
+  referral_to_date?: string | null;
   patient_notes?: string | null;
+  hipaa_sharing_notes?: string | null;
   responsible_party_id?: string | null;
+  responsible_party_relationship?: string | null;
   patient_type?: string | null;
+  patient_types?: unknown | null;
+  pronouns?: string | null;
+  driver_license?: string | null;
+  student_status?: string | null;
+  school_name?: string | null;
+  preferred_hygienist_id?: string | null;
+  fee_schedule_id?: number | null;
+  assign_benefits?: boolean | null;
+  add_to_quickfill?: boolean | null;
+  no_correspondence?: boolean | null;
+  photo_document_id?: number | null;
   is_active?: boolean | null;
 }

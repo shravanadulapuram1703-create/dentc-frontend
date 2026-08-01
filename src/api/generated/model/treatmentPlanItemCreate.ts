@@ -5,18 +5,25 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { TreatmentPlanItemCreateStatus } from './treatmentPlanItemCreateStatus';
 
 export interface TreatmentPlanItemCreate {
   id: string;
   plan_id: string;
   procedure_code: string;
+  fee: number | string;
   description?: string | null;
   tooth?: string | null;
   surface?: string | null;
   priority?: number | null;
-  fee: number | string;
+  phase_id?: number | null;
   insurance_estimate?: number | string | null;
+  discount?: number | string | null;
   billing_order?: string | null;
-  status?: string | null;
+  status?: TreatmentPlanItemCreateStatus;
   diagnosed_by?: string | null;
+  provider_id?: string | null;
+  diagnosed_date?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }

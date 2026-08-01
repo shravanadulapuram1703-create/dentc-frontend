@@ -6,6 +6,8 @@ interface TxPlanGridProps {
   selected: Set<string>;
   onToggle: (id: string) => void;
   onToggleAll: (checked: boolean) => void;
+  /** Open the Edit Treatment modal for a row (legacy: click the Diag Date link). */
+  onEditRow: (id: string) => void;
   loading: boolean;
 }
 
@@ -31,7 +33,7 @@ function fmtDate(iso: string): string {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US');
 }
 
-export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, loading }: TxPlanGridProps) {
+export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEditRow, loading }: TxPlanGridProps) {
   const totals = useMemo(
     () =>
       rows.reduce(
@@ -91,7 +93,16 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, load
                   <td className="px-2 py-1 text-center" onClick={(e) => e.stopPropagation()}>
                     <input type="checkbox" checked={isSel} onChange={() => onToggle(r.id)} aria-label={`Select ${r.code}`} />
                   </td>
-                  <td className="px-2 py-1 text-slate-600">{fmtDate(r.diag_date)}</td>
+                  <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="font-medium text-sky-600 underline decoration-dotted underline-offset-2 hover:text-sky-800"
+                      title="Edit this procedure"
+                      onClick={() => onEditRow(r.id)}
+                    >
+                      {fmtDate(r.diag_date) || 'Edit'}
+                    </button>
+                  </td>
                   <td className="px-2 py-1 text-center">{r.tid}</td>
                   <td className="px-2 py-1 text-center">{r.phase}</td>
                   <td className="px-2 py-1 text-center">{r.order}</td>

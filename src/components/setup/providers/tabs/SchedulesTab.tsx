@@ -6,7 +6,13 @@ import {
   getProviderSchedule,
   setProviderSchedule,
 } from "@/api/generated/endpoints/provider-setup/provider-setup";
-import type { OfficeRead, ProviderScheduleDayRead, ScheduleDayInput } from "@/api/generated/model";
+// Provider schedules use the provider-setup day shape (it carries `effective_from`
+// and a per-office scope); the office-setup screens use the generic ScheduleDayInput.
+import type {
+  OfficeRead,
+  ProviderScheduleDayRead,
+  ScheduleDayInput,
+} from "@/api/generated/model";
 
 interface SchedulesTabProps {
   providerId: string;

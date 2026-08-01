@@ -18,6 +18,7 @@ export interface AppointmentProcedureRead {
   fee: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   insurance_estimate: string;
+  est_patient?: string | null;
   billing_order?: string | null;
   status: string;
   material_id?: number | null;

@@ -63,6 +63,7 @@ import type {
   ListPrescriptionLibraryParams,
   ListProcedureCodesParams,
   NewFeeScheduleVersionRequest,
+  NoteMacroCategory,
   NoteMacroCreate,
   NoteMacroRead,
   NoteMacroUpdate,
@@ -756,6 +757,98 @@ export const useBulkSetIcdCodeStatus = <TError = ErrorType<ErrorResponse>,
       return useMutation(getBulkSetIcdCodeStatusMutationOptions(options), queryClient);
     }
     /**
+ * @summary Distinct macro categories for the Category dropdown (PN-6)
+ */
+export const listNoteMacroCategories = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NoteMacroCategory[]>(
+      {url: `/api/v1/note-macros/categories`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListNoteMacroCategoriesQueryKey = () => {
+    return [
+    `/api/v1/note-macros/categories`
+    ] as const;
+    }
+
+
+export const getListNoteMacroCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listNoteMacroCategories>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNoteMacroCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListNoteMacroCategoriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNoteMacroCategories>>> = ({ signal }) => listNoteMacroCategories(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listNoteMacroCategories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListNoteMacroCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listNoteMacroCategories>>>
+export type ListNoteMacroCategoriesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListNoteMacroCategories<TData = Awaited<ReturnType<typeof listNoteMacroCategories>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNoteMacroCategories>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNoteMacroCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listNoteMacroCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListNoteMacroCategories<TData = Awaited<ReturnType<typeof listNoteMacroCategories>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNoteMacroCategories>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNoteMacroCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listNoteMacroCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListNoteMacroCategories<TData = Awaited<ReturnType<typeof listNoteMacroCategories>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNoteMacroCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Distinct macro categories for the Category dropdown (PN-6)
+ */
+
+export function useListNoteMacroCategories<TData = Awaited<ReturnType<typeof listNoteMacroCategories>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNoteMacroCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListNoteMacroCategoriesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List procedure codes
  */
 export const listProcedureCodes = (

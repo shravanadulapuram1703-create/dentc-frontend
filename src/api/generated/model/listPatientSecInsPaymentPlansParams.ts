@@ -17,6 +17,18 @@ patient_id?: number | null;
  */
 is_billed?: boolean | null;
 /**
+ * Filter by ortho_plan_id
+ */
+ortho_plan_id?: number | null;
+/**
+ * periodic_date >= (inclusive lower bound)
+ */
+periodic_date_from?: string | null;
+/**
+ * periodic_date <= (inclusive upper bound)
+ */
+periodic_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

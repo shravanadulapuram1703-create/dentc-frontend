@@ -33,6 +33,10 @@ date?: string | null;
  */
 status?: string | null;
 /**
+ * Filter by is_archived
+ */
+is_archived?: boolean | null;
+/**
  * date >= (inclusive lower bound)
  */
 date_from?: string | null;

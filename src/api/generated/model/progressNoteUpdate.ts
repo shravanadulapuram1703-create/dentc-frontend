@@ -18,5 +18,9 @@ export interface ProgressNoteUpdate {
   signed_by?: number | null;
   signed_at?: string | null;
   is_struck_off?: boolean | null;
+  struck_off_at?: string | null;
+  struck_off_by?: number | null;
+  drawing_strokes?: unknown | null;
+  drawing_doc_id?: number | null;
   is_deleted?: boolean | null;
 }

@@ -21,6 +21,18 @@ procedure_code?: string | null;
  */
 status?: string | null;
 /**
+ * Filter by phase_id
+ */
+phase_id?: number | null;
+/**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
+ * Filter by is_archived
+ */
+is_archived?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -16,4 +16,12 @@ export interface TreatmentPlanRead {
   created_by?: number | null;
   created_at: string;
   updated_at?: string | null;
+  patient_name?: string | null;
+  item_count?: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_fee?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  est_insurance?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  est_patient?: string;
 }

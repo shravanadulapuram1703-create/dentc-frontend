@@ -373,7 +373,7 @@ export default function EditPatientModal({
       // Additional Identification (may need to be added to API)
       chartNo: patient.chart_no || "",
       driverLicense: (patient as any).driver_license || "",
-      mediId: (patient as any).medi_id || "",
+      mediId: (patient as any).medicaid_id || (patient as any).medi_id || "",
       studentStatus: (patient as any).student_status || "No",
       schoolName: (patient as any).school_name || "",
 

@@ -10,9 +10,14 @@ export interface PatientInsPaymentPlanRead {
   tenant_id: number;
   patient_id: number;
   legacy_plan_id?: string | null;
+  ortho_plan_id?: number | null;
   periodic_order?: number | null;
   periodic_date?: string | null;
   periodic_amt?: string | null;
+  plan_amount?: string | null;
+  down_payment?: string | null;
+  rem_total_amt?: string | null;
+  rem_payments?: number | null;
   is_billed: boolean;
   billing_code?: string | null;
   ledger_id?: string | null;

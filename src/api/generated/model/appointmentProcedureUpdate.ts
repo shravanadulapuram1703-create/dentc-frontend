@@ -16,6 +16,7 @@ export interface AppointmentProcedureUpdate {
   description?: string | null;
   fee?: number | string | null;
   insurance_estimate?: number | string | null;
+  est_patient?: number | string | null;
   billing_order?: string | null;
   status?: string | null;
   material_id?: number | null;

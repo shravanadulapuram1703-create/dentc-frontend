@@ -37,6 +37,30 @@ office_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * submitted_date >= (inclusive lower bound)
+ */
+submitted_date_from?: string | null;
+/**
+ * submitted_date <= (inclusive upper bound)
+ */
+submitted_date_to?: string | null;
+/**
+ * paid_date >= (inclusive lower bound)
+ */
+paid_date_from?: string | null;
+/**
+ * paid_date <= (inclusive upper bound)
+ */
+paid_date_to?: string | null;
+/**
+ * created_at >= (inclusive lower bound)
+ */
+created_at_from?: string | null;
+/**
+ * created_at <= (inclusive upper bound)
+ */
+created_at_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

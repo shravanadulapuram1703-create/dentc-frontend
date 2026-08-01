@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Upload } from 'lucide-react';
 import type { GalleryImage } from '../types';
 import { useImagingGallery } from '../hooks/useImagingGallery';
 import { useImageDelete } from '../hooks/useImageMutations';
@@ -8,6 +8,7 @@ import UploadButton from './UploadButton';
 import CategoryFilter from './CategoryFilter';
 import ImageViewer from './ImageViewer';
 import ToothAssociationPanel from './ToothAssociationPanel';
+import DicomStudySection from './DicomStudySection';
 
 interface ImagesTabProps {
   patientId: number;
@@ -47,9 +48,23 @@ export default function ImagesTab({ patientId, officeId }: ImagesTabProps) {
 
   return (
     <div className="space-y-5">
-      <UploadButton patientId={patientId} officeId={officeId} />
+      {/* Scanned imaging (DICOM archive from cloud storage) */}
+      <DicomStudySection patientId={patientId} />
 
+      {/* Uploaded images (manual uploads + device captures) */}
       <div className="bg-white rounded-lg shadow-sm border border-[#E2E8F0] p-5 space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-[#2FB9A7]/10 rounded-lg">
+            <Upload className="w-5 h-5 text-[#2FB9A7]" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-[#1E293B]">Uploaded Images</h2>
+            <p className="text-xs text-[#64748B]">Manually uploaded files & device captures</p>
+          </div>
+        </div>
+
+        <UploadButton patientId={patientId} officeId={officeId} />
+
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <CategoryFilter
             value={category}

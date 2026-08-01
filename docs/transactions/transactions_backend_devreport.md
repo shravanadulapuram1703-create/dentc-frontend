@@ -301,3 +301,42 @@
   charge / visit.
 - **Current status:** `PatientProcedureCreate` has a single `provider_id`. The hygienist selection is
   shown for parity but not persisted.
+
+## Patient Dashboard (check-out review) — SHIPPED 2026-07-31
+The legacy check-out review block was added to the top of the Transactions Entry screen so the front
+desk can confirm at a glance what the patient owes before setting the appointment to *Checked Out*:
+- **Responsible** section — Responsible name, RP BD (dob), **Balance / Est Ins / Est Pat** from
+  `GET /patients/{id}/balance` (`PatientBalance.balance` / `estimated_insurance` / `estimated_patient`;
+  verified live 200 in ~0.4s warm). Loaded independently of the grid so a cold balance never blocks it;
+  refetched after every post.
+- **Today's** section — **Total Charges** (Σ today's procedure fees), **Est Ins Portion**
+  (Σ today's `insurance_estimate`), **Est Pat Portion** (charges − ins − deductible), and **Est Ded**.
+- **Grid** already renders the **Pm** (claim/credit marker) and **Bill** (billing_status) columns the
+  tutorial calls out.
+
+## CHG-7 — Today's Est **Deductible** portion not computed 🟡
+- **Screen:** Patient Dashboard → "Today's Est Ded".
+- **Business requirement:** Split today's patient portion into deductible vs. coinsurance, and (on the
+  printed plan) flag deductible-affected fees with a tilde `~` (see treatment-plan **PLAN-21**).
+- **Current status:** Shown as `0.00` (gated `†`). There is no per-procedure deductible figure; this
+  depends on the same insurance-estimate engine as **CHG-1** / treatment-plan **PLAN-3**.
+- **Suggested:** return `estimated_deductible` on the balance/estimate payloads (per day and per
+  procedure).
+
+## CHG-8 — Primary/Secondary insurance carrier names on the Transactions screen 🟡
+- **Screen:** Patient Dashboard → "Prim. Ins" / "Sec. Ins".
+- **Business requirement:** Show the patient's primary/secondary carrier at check-out.
+- **Current status:** Rendered as `—`. Carrier names require joining `patient_insurance` →
+  `insurance_plans` → `carriers`; not fetched on this screen yet (data exists — see the Patient
+  Insurance phase). A small `GET /patients/{id}/insurance-summary` (carrier names by rank) would avoid
+  a 3-hop client join.
+
+## CHG-9 — "Checked Out" appointment status from the Transactions screen 🔴
+- **Screen:** Legacy check-out flow ends by setting the appointment status to **Checked Out**.
+- **Business requirement:** After reviewing charges, update today's appointment status to Checked Out
+  without leaving the Transactions screen.
+- **Current status:** Appointment status is a **Scheduler** concern (`PATCH /appointments/{id}/status`
+  exists — see the Scheduler phase), but the Transactions Entry screen has no link between the current
+  visit and its appointment, so it cannot flip the status. **Suggested:** surface the day's
+  appointment id on the patient/visit context (or a `…/patients/{id}/todays-appointment`) so a
+  "Check Out" button here can PATCH the status.

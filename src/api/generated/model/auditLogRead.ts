@@ -5,7 +5,6 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { AuditLogReadDetails } from './auditLogReadDetails';
 
 export interface AuditLogRead {
   id: number;
@@ -19,6 +18,6 @@ export interface AuditLogRead {
   status_code?: number | null;
   ip_address?: string | null;
   request_id?: string | null;
-  details?: AuditLogReadDetails;
+  details?: unknown | null;
   created_at: string;
 }

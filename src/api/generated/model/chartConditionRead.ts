@@ -23,6 +23,19 @@ export interface ChartConditionRead {
   chart_as?: string | null;
   is_inactive: boolean;
   notes?: string | null;
+  group_id?: string | null;
+  grade?: string | null;
+  segment?: string | null;
+  root_segment?: string | null;
+  tooth_status?: string | null;
+  root_scope?: string | null;
+  rct_fill?: string | null;
+  watch_dir?: string | null;
+  watch_x?: number | null;
+  watch_y?: number | null;
+  status?: string | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

@@ -13,8 +13,13 @@ export interface PatientInsuranceCreate {
   legacy_plan_type?: string | null;
   insurance_type: string;
   relationship?: string | null;
+  sec_sub_rel_to_prim_sub?: string | null;
   deductible_remaining?: number | string | null;
   max_remaining?: number | string | null;
   ortho_remaining?: number | string | null;
+  dentical_share_month?: number | null;
+  dentical_share_year?: number | null;
+  dentical_share_amount?: number | string | null;
+  dentical_unused?: number | string | null;
   is_active?: boolean | null;
 }

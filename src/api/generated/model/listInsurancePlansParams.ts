@@ -21,6 +21,10 @@ employer_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * Filter by group_number
+ */
+group_number?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

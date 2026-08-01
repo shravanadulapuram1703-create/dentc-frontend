@@ -24,10 +24,27 @@ export interface PatientPaymentPlanRead {
   first_due_date?: string | null;
   rem_payments?: number | null;
   rem_total_amt?: string | null;
+  plan_type: string;
   notes?: string | null;
   is_active: boolean;
   created_by?: string | null;
+  tx_plan_amt?: string | null;
+  treatment_plan_id?: string | null;
+  billing_code?: string | null;
+  financial_disclosure?: string | null;
+  payment_code?: string | null;
+  payment_token_id?: string | null;
+  card_holder_name?: string | null;
+  card_last4?: string | null;
+  card_exp_month?: number | null;
+  card_exp_year?: number | null;
+  post_down_payment_with_card: boolean;
+  total_of_payments?: string | null;
+  created_by_id?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
 }

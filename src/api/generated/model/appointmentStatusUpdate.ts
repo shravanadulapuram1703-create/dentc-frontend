@@ -8,4 +8,7 @@
 
 export interface AppointmentStatusUpdate {
   status: string;
+  cancellation_note?: string | null;
+  cancellation_reason?: string | null;
+  add_to_call_list?: boolean | null;
 }

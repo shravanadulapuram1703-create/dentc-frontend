@@ -4,10 +4,58 @@
 // match, category list) so the page stays focused on state + mutations.
 
 import { loadProcedureCodes, codeDescription } from '@/components/setup/insurance/procedureCodeService';
+import { listProviderProcedureCodes } from '@/api/generated/endpoints/provider-setup/provider-setup';
 import type { ProcedureCodeRead } from '@/api/generated/model';
 import { PROC_CATEGORIES, codeInCategory, type ProcCategory } from './txModel';
 
 export { loadProcedureCodes, codeDescription };
+
+// ---- Provider eligibility (legacy "Change Provider" restriction) ----------
+//
+// Legacy Denticon only lets you assign a provider who is *eligible* to perform
+// the selected procedures ("Denticon will only allow you to assign providers
+// eligible to perform those specific procedures" — M08 Change Provider, step 3).
+// Eligibility is the provider's assigned procedure-code allow-list
+// (`GET /providers/{id}/procedure-codes`).
+//
+// Convention: an **empty** allow-list means the provider is *unrestricted*
+// (eligible for every code) — the standard allow-list semantics and the safe
+// default while the backend is unseeded (all providers currently return `[]`,
+// see backend gap PLAN-16). A provider is filtered out only when they have an
+// explicit allow-list that does *not* cover every selected code.
+
+/** providerId → set of eligible codes, or `null` when unrestricted (empty list / unknown). */
+export type ProviderEligibility = Map<string, Set<string> | null>;
+
+/** Fetch each provider's assigned procedure-code allow-list (parallel, best-effort). */
+export async function loadProviderEligibility(providerIds: string[]): Promise<ProviderEligibility> {
+  const entries = await Promise.all(
+    providerIds.map(async (id) => {
+      try {
+        const codes = await listProviderProcedureCodes(id);
+        const arr = Array.isArray(codes) ? codes : [];
+        // Empty allow-list = unrestricted (eligible for all).
+        return [id, arr.length ? new Set(arr.map((c) => c.code)) : null] as const;
+      } catch {
+        // On error, don't block the provider — treat as unrestricted.
+        return [id, null] as const;
+      }
+    }),
+  );
+  return new Map(entries);
+}
+
+/** True when the provider may perform every one of `codes` (unrestricted ⇒ true). */
+export function providerEligibleFor(
+  eligibility: ProviderEligibility | undefined,
+  providerId: string,
+  codes: string[],
+): boolean {
+  if (!eligibility) return true;
+  const set = eligibility.get(providerId);
+  if (!set) return true; // unrestricted / unknown
+  return codes.every((c) => set.has(c));
+}
 
 /** All active codes belonging to a legacy category button, sorted by code. */
 export async function codesInCategory(cat: ProcCategory): Promise<ProcedureCodeRead[]> {

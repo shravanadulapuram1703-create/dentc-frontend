@@ -309,7 +309,19 @@ export default function AddEditAppointmentForm({
           }),
         ]);
 
-        setProviders(providersData);
+        // Some offices have operatories but no office-scoped providers assigned.
+        // Without a provider list the appointment can't be saved (provider is
+        // required and the "Change Provider" picker would be empty), so fall back
+        // to the full provider list when the office-scoped fetch comes back empty.
+        let effectiveProviders = providersData;
+        if (effectiveProviders.length === 0) {
+          try {
+            effectiveProviders = await fetchProviders();
+          } catch (err) {
+            console.error("Provider fallback fetch failed:", err);
+          }
+        }
+        setProviders(effectiveProviders);
         setOperatories(operatoriesData);
         setProcedureTypes(procedureTypesData);
         setStatusOptions(statusesData);
@@ -429,16 +441,33 @@ export default function AddEditAppointmentForm({
     homePhone: patient.homePhone || "",
     bypassPhone: false,
 
-    // Operatory & Scheduling
-    appointmentDate: getTodayDate(), // NEW: Appointment date
-    operatory: selectedSlot?.operatory || (operatories.length > 0 ? operatories[0]?.id || "" : ""),
+    // Operatory & Scheduling — seed from the slot the user picked and any
+    // date/time/defaults carried in from the New Appointment chooser
+    // (initialAppointmentData), falling back to today's date and API defaults.
+    appointmentDate: initialAppointmentData?.date
+      ? // YYYY-MM-DD → MM/DD/YYYY (the field renders MM/DD/YYYY).
+        (() => {
+          const [y, m, d] = initialAppointmentData.date.split("-");
+          return y && m && d ? `${m}/${d}/${y}` : getTodayDate();
+        })()
+      : getTodayDate(),
+    operatory:
+      selectedSlot?.operatory ||
+      initialAppointmentData?.operatory ||
+      (operatories.length > 0 ? operatories[0]?.id || "" : ""),
     status: statusOptions.length > 0 ? statusOptions[0]?.name || "Scheduled" : "Scheduled",
-    startsAt: selectedSlot?.time || "09:00 AM",
-    duration: 30,
-    procedureType: procedureTypes.length > 0 ? procedureTypes[0]?.name || "" : "",
-    provider: getDefaultProvider(
-      selectedSlot?.operatory || (operatories.length > 0 ? operatories[0]?.id || "" : ""),
-    ), // Auto-populate provider from API
+    startsAt: selectedSlot?.time || initialAppointmentData?.time || "09:00 AM",
+    duration: initialAppointmentData?.duration ?? 30,
+    procedureType:
+      initialAppointmentData?.procedureType ||
+      (procedureTypes.length > 0 ? procedureTypes[0]?.name || "" : ""),
+    provider:
+      initialAppointmentData?.provider ||
+      getDefaultProvider(
+        selectedSlot?.operatory ||
+          initialAppointmentData?.operatory ||
+          (operatories.length > 0 ? operatories[0]?.id || "" : ""),
+      ), // Auto-populate provider from API
 
     // Flags
     missed: false,
@@ -453,7 +482,7 @@ export default function AddEditAppointmentForm({
     labRecvdOn: "",
 
     // Notes & Campaign
-    notes: "",
+    notes: initialAppointmentData?.notes || "",
     campaignId: "",
   });
 
@@ -880,17 +909,6 @@ export default function AddEditAppointmentForm({
       console.error("Error saving appointment:", error);
       const errorMessage = error.response?.data?.detail || error.message || "Failed to save appointment";
       alert(`❌ Error: ${errorMessage}`);
-    }
-  };
-
-  const handleDeleteAppointment = () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this appointment?",
-      )
-    ) {
-      alert("Appointment deleted");
-      onClose();
     }
   };
 
@@ -2093,7 +2111,11 @@ export default function AddEditAppointmentForm({
           </div>
         </div>
 
-        {/* ACTION BUTTONS */}
+        {/* ACTION BUTTONS
+            Only wired actions are shown. Deletion lives on the scheduler grid's
+            right-click menu (a real API call); the legacy in-form Insurance
+            Verification / Change Provider / Post buttons were alert-only stubs
+            and are tracked as frontend gaps (see docs/scheduler). */}
         <div className="flex justify-between pt-3 border-t-2 border-[#E2E8F0]">
           <div className="flex gap-3">
             <button
@@ -2102,45 +2124,20 @@ export default function AddEditAppointmentForm({
             >
               BACK
             </button>
-            <button
-              onClick={handleDeleteAppointment}
-              className="bg-[#EF4444] text-white px-5 py-1.5 rounded-lg hover:bg-[#DC2626] transition-colors font-medium text-sm"
-            >
-              Delete Appt
-            </button>
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleCalcTime}
+              title="Set the appointment duration from the total of the planned procedures"
               className="bg-[#8B5CF6] text-white px-5 py-1.5 rounded-lg hover:bg-[#7C3AED] transition-colors font-medium text-sm"
             >
               Calc Time
             </button>
             <button
-              onClick={() =>
-                alert("Insurance Verification opened")
-              }
-              className="bg-[#F59E0B] text-white px-5 py-1.5 rounded-lg hover:bg-[#D97706] transition-colors font-medium text-sm"
-            >
-              Insurance Verification
-            </button>
-            <button
-              onClick={() => alert("Change Provider opened")}
-              className="bg-[#6B7280] text-white px-5 py-1.5 rounded-lg hover:bg-[#4B5563] transition-colors font-medium text-sm"
-            >
-              Change Provider
-            </button>
-            <button
-              onClick={() => alert("Post procedures")}
-              className="bg-[#2FB9A7] text-white px-5 py-1.5 rounded-lg hover:bg-[#26a396] transition-colors font-medium text-sm"
-            >
-              Post
-            </button>
-            <button
               onClick={handleSave}
               className="bg-[#3A6EA5] text-white px-6 py-1.5 rounded-lg hover:bg-[#1F3A5F] transition-colors font-medium shadow-md text-sm"
             >
-              SAVE
+              {editingAppointment ? "SAVE CHANGES" : "SAVE APPOINTMENT"}
             </button>
             <button
               onClick={onClose}

@@ -18,6 +18,7 @@ export interface InsurancePlanCreate {
   family_max?: number | string | null;
   family_deductible?: number | string | null;
   anniversary_date?: string | null;
+  anniversary_expiry_date?: string | null;
   coverage_type?: string | null;
   is_active?: boolean | null;
 }

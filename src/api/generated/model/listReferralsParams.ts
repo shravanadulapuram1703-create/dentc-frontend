@@ -25,6 +25,10 @@ referral_type?: string | null;
  */
 reason_code?: string | null;
 /**
+ * Filter by legacy_id
+ */
+legacy_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

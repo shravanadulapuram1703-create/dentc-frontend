@@ -5,7 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { PerioChartTemplateCreateAutoAdvance } from './perioChartTemplateCreateAutoAdvance';
+import type { PerioAutoAdvance } from './perioAutoAdvance';
 
 export interface PerioChartTemplateCreate {
   name: string;
@@ -16,5 +16,5 @@ export interface PerioChartTemplateCreate {
   ip_level?: number | null;
   fgm_level?: number | null;
   start_voice?: boolean | null;
-  auto_advance?: PerioChartTemplateCreateAutoAdvance;
+  auto_advance?: PerioAutoAdvance | null;
 }

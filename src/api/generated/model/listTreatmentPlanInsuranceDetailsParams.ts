@@ -17,6 +17,10 @@ plan_item_id?: string | null;
  */
 ins_plan_id?: number | null;
 /**
+ * Filter by is_archived
+ */
+is_archived?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

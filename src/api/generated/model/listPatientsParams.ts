@@ -57,6 +57,14 @@ patient_type?: string | null;
  */
 responsible_party_id?: string | null;
 /**
+ * Filter by preferred_hygienist_id
+ */
+preferred_hygienist_id?: string | null;
+/**
+ * Filter by fee_schedule_id
+ */
+fee_schedule_id?: number | null;
+/**
  * created_at >= (inclusive lower bound)
  */
 created_at_from?: string | null;

@@ -13,6 +13,22 @@ export type ListPerioExamsParams = {
  */
 patient_id?: number | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by is_voided
+ */
+is_voided?: boolean | null;
+/**
+ * exam_date >= (inclusive lower bound)
+ */
+exam_date_from?: string | null;
+/**
+ * exam_date <= (inclusive upper bound)
+ */
+exam_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

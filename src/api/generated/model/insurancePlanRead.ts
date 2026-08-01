@@ -20,6 +20,7 @@ export interface InsurancePlanRead {
   family_max?: string | null;
   family_deductible?: string | null;
   anniversary_date?: string | null;
+  anniversary_expiry_date?: string | null;
   coverage_type?: string | null;
   is_active: boolean;
   id: number;

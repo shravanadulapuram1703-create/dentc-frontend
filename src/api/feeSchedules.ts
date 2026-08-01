@@ -1,19 +1,22 @@
 /**
  * Fee Schedule API Service
- * 
- * Handles all fee schedule related API calls and data management.
- * Backend-ready with proper error handling for desktop (.exe) packaging.
+ *
+ * Thin adapter over the generated Orval client's real `GET /api/v1/fee-schedules`
+ * (`listFeeSchedules`, tag: Procedures). Returns the small `FeeSchedule` shape the
+ * patient add/edit forms already consume. The legacy raw-`fetch` + mock-schedule
+ * fallback was removed (GAP-AP-5): the dropdown now reflects real, tenant-scoped
+ * fee schedules and `feeScheduleId` is the numeric backend id (as a string).
  */
 
-// Environment configuration for API endpoints
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import { listFeeSchedules } from "@/api/generated/endpoints/procedures/procedures";
+import type { FeeScheduleRead } from "@/api/generated/model";
 
 // ============================================================================
 // Types & Interfaces
 // ============================================================================
 
 export interface FeeSchedule {
-  feeScheduleId: string;
+  feeScheduleId: string; // backend fee_schedules.id, as a string for <select> values
   feeScheduleName: string;
   description?: string;
   isActive: boolean;
@@ -40,312 +43,136 @@ export interface ProcedureCodesResponse {
   feeScheduleName: string;
 }
 
-export interface ApiError {
-  message: string;
-  code?: string;
-  details?: any;
-}
-
 // ============================================================================
 // In-Memory Cache (Session-based)
 // ============================================================================
 
 class FeeScheduleCache {
-  private cache: Map<string, ProcedureCodesResponse> = new Map();
-  private feeScheduleListCache: FeeScheduleResponse | null = null;
-  private cacheTimestamp: Map<string, number> = new Map();
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  // Keyed by office so switching offices re-queries instead of reusing a stale list.
+  private byOffice = new Map<string, FeeScheduleResponse>();
 
-  set(key: string, data: ProcedureCodesResponse): void {
-    this.cache.set(key, data);
-    this.cacheTimestamp.set(key, Date.now());
+  setFeeScheduleList(key: string, data: FeeScheduleResponse): void {
+    this.byOffice.set(key, data);
   }
-
-  get(key: string): ProcedureCodesResponse | null {
-    const timestamp = this.cacheTimestamp.get(key);
-    if (!timestamp || Date.now() - timestamp > this.CACHE_DURATION) {
-      this.cache.delete(key);
-      this.cacheTimestamp.delete(key);
-      return null;
-    }
-    return this.cache.get(key) || null;
+  getFeeScheduleList(key: string): FeeScheduleResponse | null {
+    return this.byOffice.get(key) ?? null;
   }
-
-  setFeeScheduleList(data: FeeScheduleResponse): void {
-    this.feeScheduleListCache = data;
+  /** Any cached list — used by helpers that only need names/ids. */
+  getAny(): FeeScheduleResponse | null {
+    const first = this.byOffice.values().next();
+    return first.done ? null : first.value;
   }
-
-  getFeeScheduleList(): FeeScheduleResponse | null {
-    return this.feeScheduleListCache;
-  }
-
   clear(): void {
-    this.cache.clear();
-    this.cacheTimestamp.clear();
-    this.feeScheduleListCache = null;
-  }
-
-  clearProcedures(feeScheduleId: string): void {
-    this.cache.delete(feeScheduleId);
-    this.cacheTimestamp.delete(feeScheduleId);
+    this.byOffice.clear();
   }
 }
 
 const cache = new FeeScheduleCache();
 
-// ============================================================================
-// Mock Data (Development/Fallback)
-// ============================================================================
-
-const MOCK_FEE_SCHEDULES: FeeSchedule[] = [
-  {
-    feeScheduleId: 'FS-001',
-    feeScheduleName: 'Standard Fee Schedule',
-    description: 'Default fee schedule for cash patients',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-  {
-    feeScheduleId: 'FS-002',
-    feeScheduleName: 'United Concordia PPO Plans - Excel',
-    description: 'PPO fee schedule for United Concordia',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-  {
-    feeScheduleId: 'FS-003',
-    feeScheduleName: 'UCR California 2024',
-    description: 'Usual, Customary, and Reasonable fees for California',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-  {
-    feeScheduleId: 'FS-004',
-    feeScheduleName: 'PPO Network A',
-    description: 'PPO Network A contracted rates',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-  {
-    feeScheduleId: 'FS-005',
-    feeScheduleName: 'Medicaid Schedule',
-    description: 'State Medicaid fee schedule',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-  {
-    feeScheduleId: 'FS-006',
-    feeScheduleName: 'Pediatric Fee Schedule',
-    description: 'Specialized fee schedule for pediatric patients',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-  {
-    feeScheduleId: 'FS-007',
-    feeScheduleName: 'CP-50',
-    description: 'CP-50 contracted fee schedule',
-    isActive: true,
-    effectiveDate: '2024-01-01',
-  },
-];
-
-const MOCK_PROCEDURE_CODES: Record<string, ProcedureCode[]> = {
-  'FS-001': [
-    { procedureCode: 'D0120', description: 'Periodic Oral Evaluation', fee: 75.00, category: 'Diagnostic' },
-    { procedureCode: 'D0150', description: 'Comprehensive Oral Evaluation', fee: 95.00, category: 'Diagnostic' },
-    { procedureCode: 'D1110', description: 'Prophylaxis - Adult', fee: 95.00, category: 'Preventive' },
-    { procedureCode: 'D1120', description: 'Prophylaxis - Child', fee: 75.00, category: 'Preventive' },
-    { procedureCode: 'D2140', description: 'Amalgam - One Surface', fee: 145.00, category: 'Restorative' },
-  ],
-  'FS-002': [
-    { procedureCode: 'D0120', description: 'Periodic Oral Evaluation', fee: 65.00, coverageType: 'PPO', category: 'Diagnostic' },
-    { procedureCode: 'D0150', description: 'Comprehensive Oral Evaluation', fee: 85.00, coverageType: 'PPO', category: 'Diagnostic' },
-    { procedureCode: 'D1110', description: 'Prophylaxis - Adult', fee: 85.00, coverageType: 'PPO', category: 'Preventive' },
-    { procedureCode: 'D1120', description: 'Prophylaxis - Child', fee: 65.00, coverageType: 'PPO', category: 'Preventive' },
-    { procedureCode: 'D2140', description: 'Amalgam - One Surface', fee: 125.00, coverageType: 'PPO', category: 'Restorative' },
-  ],
-  'FS-003': [
-    { procedureCode: 'D0120', description: 'Periodic Oral Evaluation', fee: 85.00, category: 'Diagnostic' },
-    { procedureCode: 'D0150', description: 'Comprehensive Oral Evaluation', fee: 105.00, category: 'Diagnostic' },
-    { procedureCode: 'D1110', description: 'Prophylaxis - Adult', fee: 105.00, category: 'Preventive' },
-    { procedureCode: 'D1120', description: 'Prophylaxis - Child', fee: 85.00, category: 'Preventive' },
-    { procedureCode: 'D2140', description: 'Amalgam - One Surface', fee: 165.00, category: 'Restorative' },
-  ],
-};
+/** Extract a numeric office id from "OFF-1" / "1" / "office-108" → number | undefined. */
+function officeIdToNumber(officeId?: string): number | undefined {
+  if (!officeId) return undefined;
+  if (/^\d+$/.test(officeId)) return parseInt(officeId, 10);
+  const m = officeId.match(/(\d+)$/);
+  return m && m[1] ? parseInt(m[1], 10) : undefined;
+}
 
 // ============================================================================
 // API Functions
 // ============================================================================
 
+const toFeeSchedule = (f: FeeScheduleRead): FeeSchedule => ({
+  feeScheduleId: String(f.id),
+  feeScheduleName: f.name,
+  description: f.fee_type ?? undefined,
+  isActive: f.is_active,
+  effectiveDate: f.effective_date ?? undefined,
+  officeId: f.office_id != null ? String(f.office_id) : undefined,
+});
+
 /**
- * Fetch all fee schedules for a given office
- * @param officeId - Optional office ID to filter schedules
- * @returns Promise with fee schedule list
+ * Fetch selectable active fee schedules.
+ *
+ * Fee schedules are mostly **org-wide** — their `fee_type` is carrier / plan /
+ * provider / ucr and `office_id` is null, so filtering by `office_id` returns an
+ * empty list (that is exactly why the dropdown was blank). We therefore ask for
+ * the office-scoped set first and, when the office has none of its own, fall back
+ * to the org-wide list — which is what the Fee Schedule Setup screen shows.
+ *
+ * @param officeId - Optional office id ("OFF-1"/"1"); used as a preference, not a hard filter.
  */
 export async function getFeeSchedules(officeId?: string): Promise<FeeScheduleResponse> {
-  try {
-    // Check cache first
-    const cached = cache.getFeeScheduleList();
-    if (cached) {
-      return cached;
-    }
+  const cacheKey = officeId ?? "";
+  const cached = cache.getFeeScheduleList(cacheKey);
+  if (cached) return cached;
 
-    // Build query params
-    const params = new URLSearchParams();
-    if (officeId) {
-      params.append('officeId', officeId);
-    }
+  const office_id = officeIdToNumber(officeId);
 
-    const url = `${API_BASE_URL}/fee-schedules?${params.toString()}`;
-    
-    // Attempt API call
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  // Office-specific schedules (if this office defines any of its own).
+  let items: FeeScheduleRead[] = [];
+  if (office_id != null) {
+    const scoped = await listFeeSchedules({
+      office_id,
+      is_active: true,
+      size: 200,
+      sort: "name",
     });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data: FeeScheduleResponse = await response.json();
-    
-    // Cache the result
-    cache.setFeeScheduleList(data);
-    
-    return data;
-  } catch (error) {
-    console.warn('Fee Schedule API unavailable, using mock data:', error);
-    
-    // Return mock data as fallback
-    const mockResponse: FeeScheduleResponse = {
-      feeSchedules: MOCK_FEE_SCHEDULES,
-      total: MOCK_FEE_SCHEDULES.length,
-    };
-    
-    cache.setFeeScheduleList(mockResponse);
-    return mockResponse;
+    items = scoped.items ?? [];
   }
+
+  // Fall back to the org-wide list when the office has no schedules of its own.
+  if (items.length === 0) {
+    const all = await listFeeSchedules({ is_active: true, size: 200, sort: "name" });
+    items = all.items ?? [];
+  }
+
+  const feeSchedules = items.map(toFeeSchedule);
+  const response: FeeScheduleResponse = { feeSchedules, total: feeSchedules.length };
+  cache.setFeeScheduleList(cacheKey, response);
+  return response;
 }
 
 /**
- * Fetch procedure codes for a specific fee schedule
- * @param feeScheduleId - Fee schedule ID
- * @returns Promise with procedure codes
+ * Procedure-code preload for a fee schedule. The patient add/edit forms call this
+ * only to warm a cache and ignore the result; there is no patient-facing
+ * fee-schedule-entries join here, so this is a no-op that returns an empty list.
+ * (Fee Schedule Setup has its own dedicated entries screen.)
  */
 export async function getProcedureCodesByFeeSchedule(
-  feeScheduleId: string
+  feeScheduleId: string,
 ): Promise<ProcedureCodesResponse> {
-  try {
-    // Check cache first
-    const cached = cache.get(feeScheduleId);
-    if (cached) {
-      return cached;
-    }
-
-    const url = `${API_BASE_URL}/fee-schedules/${feeScheduleId}/procedures`;
-    
-    // Attempt API call
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data: ProcedureCodesResponse = await response.json();
-    
-    // Cache the result
-    cache.set(feeScheduleId, data);
-    
-    return data;
-  } catch (error) {
-    console.warn('Procedure Codes API unavailable, using mock data:', error);
-    
-    // Return mock data as fallback
-    const feeSchedule = MOCK_FEE_SCHEDULES.find(fs => fs.feeScheduleId === feeScheduleId);
-    const procedures = MOCK_PROCEDURE_CODES[feeScheduleId] || MOCK_PROCEDURE_CODES['FS-001'] || [];
-    
-    const mockResponse: ProcedureCodesResponse = {
-      procedures: procedures || [],
-      feeScheduleId,
-      feeScheduleName: feeSchedule?.feeScheduleName || 'Unknown Fee Schedule',
-    };
-    
-    cache.set(feeScheduleId, mockResponse);
-    return mockResponse;
-  }
+  const schedule = (cache.getAny()?.feeSchedules ?? []).find(
+    (fs) => fs.feeScheduleId === feeScheduleId,
+  );
+  return {
+    procedures: [],
+    feeScheduleId,
+    feeScheduleName: schedule?.feeScheduleName ?? "",
+  };
 }
 
-/**
- * Get a single fee schedule by ID
- * @param feeScheduleId - Fee schedule ID
- * @returns Promise with fee schedule or null
- */
+/** Get a single fee schedule by id. */
 export async function getFeeScheduleById(feeScheduleId: string): Promise<FeeSchedule | null> {
-  try {
-    const response = await getFeeSchedules();
-    return response.feeSchedules.find(fs => fs.feeScheduleId === feeScheduleId) || null;
-  } catch (error) {
-    console.error('Error fetching fee schedule:', error);
-    return null;
-  }
+  const response = await getFeeSchedules();
+  return response.feeSchedules.find((fs) => fs.feeScheduleId === feeScheduleId) || null;
 }
 
-/**
- * Clear all cached fee schedule data
- */
+/** Clear all cached fee schedule data. */
 export function clearFeeScheduleCache(): void {
   cache.clear();
 }
 
-/**
- * Clear cached procedure codes for a specific fee schedule
- * @param feeScheduleId - Fee schedule ID
- */
-export function clearProcedureCache(feeScheduleId: string): void {
-  cache.clearProcedures(feeScheduleId);
-}
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Find fee schedule by name (case-insensitive)
- * @param name - Fee schedule name
- * @returns Promise with fee schedule or null
- */
+/** Find fee schedule by name (case-insensitive). */
 export async function findFeeScheduleByName(name: string): Promise<FeeSchedule | null> {
-  try {
-    const response = await getFeeSchedules();
-    return response.feeSchedules.find(
-      fs => fs.feeScheduleName.toLowerCase() === name.toLowerCase()
-    ) || null;
-  } catch (error) {
-    console.error('Error finding fee schedule by name:', error);
-    return null;
-  }
+  const response = await getFeeSchedules();
+  return (
+    response.feeSchedules.find((fs) => fs.feeScheduleName.toLowerCase() === name.toLowerCase()) ||
+    null
+  );
 }
 
-/**
- * Get default fee schedule for an office
- * @param officeId - Office ID
- * @returns Promise with default fee schedule or first available
- */
+/** Get the default (first active) fee schedule for an office. */
 export async function getDefaultFeeSchedule(officeId?: string): Promise<FeeSchedule | null> {
-  try {
-    const response = await getFeeSchedules(officeId);
-    // Return first active schedule as default
-    return response.feeSchedules.find(fs => fs.isActive) || response.feeSchedules[0] || null;
-  } catch (error) {
-    console.error('Error getting default fee schedule:', error);
-    return null;
-  }
+  const response = await getFeeSchedules(officeId);
+  return response.feeSchedules.find((fs) => fs.isActive) || response.feeSchedules[0] || null;
 }

@@ -16,7 +16,14 @@ export interface ReEstimateArgs {
 
 interface TxPlanToolbarProps {
   selectedCount: number;
+  /** Providers eligible to perform the selected procedures (legacy restriction). */
   providers: ProviderRead[];
+  /** Total providers before eligibility filtering (for the "N of M" hint). */
+  totalProviderCount: number;
+  /** True while provider eligibility is being fetched. */
+  eligibilityLoading: boolean;
+  /** Fired when the Provider panel is opened, so eligibility is fetched on demand. */
+  onProviderPanelOpen: () => void;
   busy: boolean;
   statusFilter: TxStatus | 'all';
   onStatusFilter: (v: TxStatus | 'all') => void;
@@ -56,7 +63,7 @@ const field = 'h-7 rounded border border-slate-300 px-2 text-xs focus:border-sky
 const selectField = `${field} tx-select`;
 
 export default function TxPlanToolbar(props: TxPlanToolbarProps) {
-  const { selectedCount, providers, busy } = props;
+  const { selectedCount, providers, totalProviderCount, eligibilityLoading, busy } = props;
   const [panel, setPanel] = useState<Panel>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const has = selectedCount > 0;
@@ -85,7 +92,14 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
         <button className={btn} disabled={busy} onClick={props.onSave}>
           Save
         </button>
-        <button className={btn} disabled={busy} onClick={() => toggle('provider')}>
+        <button
+          className={btn}
+          disabled={busy}
+          onClick={() => {
+            props.onProviderPanelOpen();
+            toggle('provider');
+          }}
+        >
           Provider
         </button>
         <button className={btn} disabled={busy} onClick={props.onDelete}>
@@ -182,29 +196,50 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
 
       {/* Inline action bars */}
       {panel === 'provider' && (
-        <div className="flex flex-wrap items-end gap-3 border-t border-slate-200 bg-white px-3 py-2">
-          <span className="text-xs font-semibold text-slate-600">Set provider on {selectedCount} selected:</span>
-          <select className={`${selectField} w-56`} value={provId} onChange={(e) => setProvId(e.target.value)}>
-            <option value="">— Select provider —</option>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.short_id ? `${p.short_id} : ${p.name}` : p.name}
-              </option>
-            ))}
-          </select>
-          <button
-            className={primaryBtn}
-            disabled={!provId || busy}
-            onClick={() => {
-              props.onChangeProvider(provId);
-              close();
-            }}
-          >
-            Change
-          </button>
-          <button className={cancelBtn} onClick={close}>
-            Cancel
-          </button>
+        <div className="flex flex-col gap-1.5 border-t border-slate-200 bg-white px-3 py-2">
+          <div className="flex flex-wrap items-end gap-3">
+            <span className="text-xs font-semibold text-slate-600">
+              Change selected treatment&apos;s provider to:
+            </span>
+            <select
+              className={`${selectField} w-56`}
+              value={provId}
+              onChange={(e) => setProvId(e.target.value)}
+              disabled={eligibilityLoading}
+            >
+              <option value="">{eligibilityLoading ? 'Loading providers…' : '— Select provider —'}</option>
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.short_id ? `${p.short_id} : ${p.name}` : p.name}
+                </option>
+              ))}
+            </select>
+            <button
+              className={primaryBtn}
+              disabled={!provId || busy || selectedCount === 0}
+              onClick={() => {
+                props.onChangeProvider(provId);
+                close();
+              }}
+            >
+              Change
+            </button>
+            <button className={cancelBtn} onClick={close}>
+              Cancel
+            </button>
+          </div>
+          {/* Legacy: only providers eligible for the selected procedures are shown. */}
+          {selectedCount === 0 ? (
+            <span className="text-[11px] text-amber-600">Select one or more procedures first.</span>
+          ) : !eligibilityLoading && providers.length === 0 ? (
+            <span className="text-[11px] text-red-600">
+              No provider is eligible to perform all {selectedCount} selected procedure(s).
+            </span>
+          ) : !eligibilityLoading && providers.length < totalProviderCount ? (
+            <span className="text-[11px] text-slate-500">
+              Showing {providers.length} of {totalProviderCount} providers eligible for the selected procedure(s).
+            </span>
+          ) : null}
         </div>
       )}
 

@@ -5,7 +5,6 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { AssignedProviderProcedureCodeReadValidTeeth } from './assignedProviderProcedureCodeReadValidTeeth';
 
 export interface AssignedProviderProcedureCodeRead {
   code: string;
@@ -30,7 +29,7 @@ export interface AssignedProviderProcedureCodeRead {
   min_surfaces?: number | null;
   max_surfaces?: number | null;
   default_material_id?: number | null;
-  valid_teeth?: AssignedProviderProcedureCodeReadValidTeeth;
+  valid_teeth?: unknown | null;
   taxable: boolean;
   sales_tax_code?: string | null;
   visit_code?: string | null;
@@ -38,6 +37,9 @@ export interface AssignedProviderProcedureCodeRead {
   ar_code?: string | null;
   is_post_op: boolean;
   exempt_from_dental_max: boolean;
+  amb_code?: string | null;
+  is_downgrade: boolean;
+  alternate_of?: string | null;
   lock_default_provider: boolean;
   default_provider_id?: string | null;
   default_notes_macro_id?: number | null;

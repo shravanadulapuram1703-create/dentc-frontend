@@ -25,8 +25,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AccountLedgerResponse,
   AllocatePaymentRequest,
-  AppSchemasBillingPaymentAllocationRead,
+  AppSchemasFactoryPaymentAllocationRead,
   BodyUploadClaimAttachment,
   ClaimAttachmentRead,
   ClaimDetailResponse,
@@ -35,7 +36,10 @@ import type {
   ClaimSubmissionCreate,
   ClaimSubmissionRead,
   ClaimSubmissionUpdate,
+  ContractResponse,
   ErrorResponse,
+  GenerateScheduleRequest,
+  GetPatientAccountLedgerParams,
   GetPatientLedgerParams,
   HTTPValidationError,
   InsuranceClaimCreate,
@@ -53,12 +57,13 @@ import type {
   ListPatientInsPaymentPlansParams,
   ListPatientPaymentPlansParams,
   ListPatientPaymentsParams,
+  ListPatientPlanInstallmentsParams,
   ListPatientRegPlansParams,
   ListPatientSecInsPaymentPlansParams,
   ListPaymentAllocationsParams,
-  OrthoPlanCreate,
+  OrthoPlanFullCreate,
+  OrthoPlanFullUpdate,
   OrthoPlanRead,
-  OrthoPlanUpdate,
   PaginatedResponseClaimSubmissionRead,
   PaginatedResponseInsuranceClaimRead,
   PaginatedResponseLedgerInsuranceDetailRead,
@@ -67,6 +72,7 @@ import type {
   PaginatedResponsePatientInsPaymentPlanRead,
   PaginatedResponsePatientPaymentPlanRead,
   PaginatedResponsePatientPaymentRead,
+  PaginatedResponsePatientPlanInstallmentRead,
   PaginatedResponsePatientRegPlanRead,
   PaginatedResponsePatientSecInsPaymentPlanRead,
   PaginatedResponsePaymentAllocationRead,
@@ -83,6 +89,9 @@ import type {
   PatientPaymentPlanUpdate,
   PatientPaymentRead,
   PatientPaymentUpdate,
+  PatientPlanInstallmentCreate,
+  PatientPlanInstallmentRead,
+  PatientPlanInstallmentUpdate,
   PatientRegPlanCreate,
   PatientRegPlanRead,
   PatientRegPlanUpdate,
@@ -91,7 +100,13 @@ import type {
   PatientSecInsPaymentPlanUpdate,
   PaymentAllocationCreate,
   PaymentAllocationRead,
-  PaymentAllocationUpdate
+  PaymentAllocationUpdate,
+  PostDueRequest,
+  PostDueResult,
+  PostInstallmentRequest,
+  PostedInstallment,
+  ReplaceInstallmentsRequest,
+  ScheduleResponse
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -112,7 +127,7 @@ export const allocatePayment = (
 ) => {
 
 
-      return customInstance<AppSchemasBillingPaymentAllocationRead[]>(
+      return customInstance<PaymentAllocationRead[]>(
       {url: `/api/v1/patient-payments/${paymentId}/allocate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: allocatePaymentRequest, signal
@@ -408,6 +423,889 @@ export function useGetPatientLedger<TData = Awaited<ReturnType<typeof getPatient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPatientLedgerQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Denormalised account-ledger feed (charges+payments+adjustments) with running balance (AL-1/2/4/5/7)
+ */
+export const getPatientAccountLedger = (
+    patientId: number,
+    params?: GetPatientAccountLedgerParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountLedgerResponse>(
+      {url: `/api/v1/patients/${patientId}/account-ledger`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientAccountLedgerQueryKey = (patientId: number,
+    params?: GetPatientAccountLedgerParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/account-ledger`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientAccountLedgerQueryOptions = <TData = Awaited<ReturnType<typeof getPatientAccountLedger>>, TError = ErrorType<HTTPValidationError>>(patientId: number,
+    params?: GetPatientAccountLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountLedger>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientAccountLedgerQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientAccountLedger>>> = ({ signal }) => getPatientAccountLedger(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountLedger>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientAccountLedgerQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientAccountLedger>>>
+export type GetPatientAccountLedgerQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof getPatientAccountLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientAccountLedgerParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountLedger>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientAccountLedger>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientAccountLedger>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof getPatientAccountLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientAccountLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountLedger>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientAccountLedger>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientAccountLedger>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof getPatientAccountLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientAccountLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountLedger>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Denormalised account-ledger feed (charges+payments+adjustments) with running balance (AL-1/2/4/5/7)
+ */
+
+export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof getPatientAccountLedger>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientAccountLedgerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountLedger>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientAccountLedgerQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Post a primary-insurance instalment to the patient ledger (PP-2)
+ */
+export const postInsPaymentPlanInstallment = (
+    installmentId: number,
+    postInstallmentRequestNull?: BodyType<PostInstallmentRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PostedInstallment>(
+      {url: `/api/v1/patient-ins-payment-plans/${installmentId}/post`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postInstallmentRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getPostInsPaymentPlanInstallmentMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postInsPaymentPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postInsPaymentPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext> => {
+
+const mutationKey = ['postInsPaymentPlanInstallment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postInsPaymentPlanInstallment>>, {installmentId: number;data?: BodyType<PostInstallmentRequest | null>}> = (props) => {
+          const {installmentId,data} = props ?? {};
+
+          return  postInsPaymentPlanInstallment(installmentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostInsPaymentPlanInstallmentMutationResult = NonNullable<Awaited<ReturnType<typeof postInsPaymentPlanInstallment>>>
+    export type PostInsPaymentPlanInstallmentMutationBody = BodyType<PostInstallmentRequest | null> | undefined
+    export type PostInsPaymentPlanInstallmentMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Post a primary-insurance instalment to the patient ledger (PP-2)
+ */
+export const usePostInsPaymentPlanInstallment = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postInsPaymentPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postInsPaymentPlanInstallment>>,
+        TError,
+        {installmentId: number;data?: BodyType<PostInstallmentRequest | null>},
+        TContext
+      > => {
+      return useMutation(getPostInsPaymentPlanInstallmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Post a secondary-insurance instalment to the patient ledger (PP-2)
+ */
+export const postSecInsPaymentPlanInstallment = (
+    installmentId: number,
+    postInstallmentRequestNull?: BodyType<PostInstallmentRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PostedInstallment>(
+      {url: `/api/v1/patient-sec-ins-payment-plans/${installmentId}/post`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postInstallmentRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getPostSecInsPaymentPlanInstallmentMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postSecInsPaymentPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postSecInsPaymentPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext> => {
+
+const mutationKey = ['postSecInsPaymentPlanInstallment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postSecInsPaymentPlanInstallment>>, {installmentId: number;data?: BodyType<PostInstallmentRequest | null>}> = (props) => {
+          const {installmentId,data} = props ?? {};
+
+          return  postSecInsPaymentPlanInstallment(installmentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostSecInsPaymentPlanInstallmentMutationResult = NonNullable<Awaited<ReturnType<typeof postSecInsPaymentPlanInstallment>>>
+    export type PostSecInsPaymentPlanInstallmentMutationBody = BodyType<PostInstallmentRequest | null> | undefined
+    export type PostSecInsPaymentPlanInstallmentMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Post a secondary-insurance instalment to the patient ledger (PP-2)
+ */
+export const usePostSecInsPaymentPlanInstallment = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postSecInsPaymentPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postSecInsPaymentPlanInstallment>>,
+        TError,
+        {installmentId: number;data?: BodyType<PostInstallmentRequest | null>},
+        TContext
+      > => {
+      return useMutation(getPostSecInsPaymentPlanInstallmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Post a patient-side instalment to the patient ledger (PP-2)
+ */
+export const postPatientPlanInstallment = (
+    installmentId: number,
+    postInstallmentRequestNull?: BodyType<PostInstallmentRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PostedInstallment>(
+      {url: `/api/v1/patient-plan-installments/${installmentId}/post`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postInstallmentRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getPostPatientPlanInstallmentMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPatientPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postPatientPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext> => {
+
+const mutationKey = ['postPatientPlanInstallment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postPatientPlanInstallment>>, {installmentId: number;data?: BodyType<PostInstallmentRequest | null>}> = (props) => {
+          const {installmentId,data} = props ?? {};
+
+          return  postPatientPlanInstallment(installmentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostPatientPlanInstallmentMutationResult = NonNullable<Awaited<ReturnType<typeof postPatientPlanInstallment>>>
+    export type PostPatientPlanInstallmentMutationBody = BodyType<PostInstallmentRequest | null> | undefined
+    export type PostPatientPlanInstallmentMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Post a patient-side instalment to the patient ledger (PP-2)
+ */
+export const usePostPatientPlanInstallment = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postPatientPlanInstallment>>, TError,{installmentId: number;data?: BodyType<PostInstallmentRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postPatientPlanInstallment>>,
+        TError,
+        {installmentId: number;data?: BodyType<PostInstallmentRequest | null>},
+        TContext
+      > => {
+      return useMutation(getPostPatientPlanInstallmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Post every instalment due on/before a date (nightly batch, PP-2)
+ */
+export const postDuePaymentPlanInstallments = (
+    postDueRequestNull?: BodyType<PostDueRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PostDueResult>(
+      {url: `/api/v1/payment-plans/post-due`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postDueRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getPostDuePaymentPlanInstallmentsMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postDuePaymentPlanInstallments>>, TError,{data?: BodyType<PostDueRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postDuePaymentPlanInstallments>>, TError,{data?: BodyType<PostDueRequest | null>}, TContext> => {
+
+const mutationKey = ['postDuePaymentPlanInstallments'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postDuePaymentPlanInstallments>>, {data?: BodyType<PostDueRequest | null>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postDuePaymentPlanInstallments(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostDuePaymentPlanInstallmentsMutationResult = NonNullable<Awaited<ReturnType<typeof postDuePaymentPlanInstallments>>>
+    export type PostDuePaymentPlanInstallmentsMutationBody = BodyType<PostDueRequest | null> | undefined
+    export type PostDuePaymentPlanInstallmentsMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Post every instalment due on/before a date (nightly batch, PP-2)
+ */
+export const usePostDuePaymentPlanInstallments = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postDuePaymentPlanInstallments>>, TError,{data?: BodyType<PostDueRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postDuePaymentPlanInstallments>>,
+        TError,
+        {data?: BodyType<PostDueRequest | null>},
+        TContext
+      > => {
+      return useMutation(getPostDuePaymentPlanInstallmentsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Patient-side instalment schedule with posted/unposted state (OPP-9/RPP-5)
+ */
+export const getPaymentPlanSchedule = (
+    planKind: 'ortho' | 'regular',
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ScheduleResponse>(
+      {url: `/api/v1/payment-plans/${planKind}/${planId}/installments`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPaymentPlanScheduleQueryKey = (planKind: 'ortho' | 'regular',
+    planId: number,) => {
+    return [
+    `/api/v1/payment-plans/${planKind}/${planId}/installments`
+    ] as const;
+    }
+
+
+export const getGetPaymentPlanScheduleQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError = ErrorType<HTTPValidationError>>(planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentPlanScheduleQueryKey(planKind,planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentPlanSchedule>>> = ({ signal }) => getPaymentPlanSchedule(planKind,planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planKind !== null && planKind !== undefined && planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPaymentPlanScheduleQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentPlanSchedule>>>
+export type GetPaymentPlanScheduleQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPaymentPlanSchedule<TData = Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanSchedule>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanSchedule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanSchedule<TData = Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanSchedule>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanSchedule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanSchedule<TData = Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Patient-side instalment schedule with posted/unposted state (OPP-9/RPP-5)
+ */
+
+export function useGetPaymentPlanSchedule<TData = Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPaymentPlanScheduleQueryOptions(planKind,planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Replace the unposted instalments of a contract (OPP-9/RPP-5)
+ */
+export const replacePaymentPlanSchedule = (
+    planKind: 'ortho' | 'regular',
+    planId: number,
+    replaceInstallmentsRequest: BodyType<ReplaceInstallmentsRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ScheduleResponse>(
+      {url: `/api/v1/payment-plans/${planKind}/${planId}/installments`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: replaceInstallmentsRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getReplacePaymentPlanScheduleMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePaymentPlanSchedule>>, TError,{planKind: 'ortho' | 'regular';planId: number;data: BodyType<ReplaceInstallmentsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replacePaymentPlanSchedule>>, TError,{planKind: 'ortho' | 'regular';planId: number;data: BodyType<ReplaceInstallmentsRequest>}, TContext> => {
+
+const mutationKey = ['replacePaymentPlanSchedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replacePaymentPlanSchedule>>, {planKind: 'ortho' | 'regular';planId: number;data: BodyType<ReplaceInstallmentsRequest>}> = (props) => {
+          const {planKind,planId,data} = props ?? {};
+
+          return  replacePaymentPlanSchedule(planKind,planId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplacePaymentPlanScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof replacePaymentPlanSchedule>>>
+    export type ReplacePaymentPlanScheduleMutationBody = BodyType<ReplaceInstallmentsRequest>
+    export type ReplacePaymentPlanScheduleMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Replace the unposted instalments of a contract (OPP-9/RPP-5)
+ */
+export const useReplacePaymentPlanSchedule = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replacePaymentPlanSchedule>>, TError,{planKind: 'ortho' | 'regular';planId: number;data: BodyType<ReplaceInstallmentsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof replacePaymentPlanSchedule>>,
+        TError,
+        {planKind: 'ortho' | 'regular';planId: number;data: BodyType<ReplaceInstallmentsRequest>},
+        TContext
+      > => {
+      return useMutation(getReplacePaymentPlanScheduleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Amortise the contract terms into an instalment schedule (OPP-9/RPP-5)
+ */
+export const generatePaymentPlanSchedule = (
+    planKind: 'ortho' | 'regular',
+    planId: number,
+    generateScheduleRequestNull?: BodyType<GenerateScheduleRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ScheduleResponse>(
+      {url: `/api/v1/payment-plans/${planKind}/${planId}/installments/generate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: generateScheduleRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getGeneratePaymentPlanScheduleMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generatePaymentPlanSchedule>>, TError,{planKind: 'ortho' | 'regular';planId: number;data?: BodyType<GenerateScheduleRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof generatePaymentPlanSchedule>>, TError,{planKind: 'ortho' | 'regular';planId: number;data?: BodyType<GenerateScheduleRequest | null>}, TContext> => {
+
+const mutationKey = ['generatePaymentPlanSchedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generatePaymentPlanSchedule>>, {planKind: 'ortho' | 'regular';planId: number;data?: BodyType<GenerateScheduleRequest | null>}> = (props) => {
+          const {planKind,planId,data} = props ?? {};
+
+          return  generatePaymentPlanSchedule(planKind,planId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GeneratePaymentPlanScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof generatePaymentPlanSchedule>>>
+    export type GeneratePaymentPlanScheduleMutationBody = BodyType<GenerateScheduleRequest | null> | undefined
+    export type GeneratePaymentPlanScheduleMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Amortise the contract terms into an instalment schedule (OPP-9/RPP-5)
+ */
+export const useGeneratePaymentPlanSchedule = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generatePaymentPlanSchedule>>, TError,{planKind: 'ortho' | 'regular';planId: number;data?: BodyType<GenerateScheduleRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof generatePaymentPlanSchedule>>,
+        TError,
+        {planKind: 'ortho' | 'regular';planId: number;data?: BodyType<GenerateScheduleRequest | null>},
+        TContext
+      > => {
+      return useMutation(getGeneratePaymentPlanScheduleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Server-computed contract payload (Truth-in-Lending box + schedule, PP-3)
+ */
+export const getPaymentPlanContract = (
+    planKind: 'ortho' | 'regular',
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ContractResponse>(
+      {url: `/api/v1/payment-plans/${planKind}/${planId}/contract`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPaymentPlanContractQueryKey = (planKind: 'ortho' | 'regular',
+    planId: number,) => {
+    return [
+    `/api/v1/payment-plans/${planKind}/${planId}/contract`
+    ] as const;
+    }
+
+
+export const getGetPaymentPlanContractQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentPlanContract>>, TError = ErrorType<HTTPValidationError>>(planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContract>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentPlanContractQueryKey(planKind,planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentPlanContract>>> = ({ signal }) => getPaymentPlanContract(planKind,planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planKind !== null && planKind !== undefined && planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContract>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPaymentPlanContractQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentPlanContract>>>
+export type GetPaymentPlanContractQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPaymentPlanContract<TData = Awaited<ReturnType<typeof getPaymentPlanContract>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContract>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanContract>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanContract>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanContract<TData = Awaited<ReturnType<typeof getPaymentPlanContract>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContract>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanContract>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanContract>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanContract<TData = Awaited<ReturnType<typeof getPaymentPlanContract>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContract>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Server-computed contract payload (Truth-in-Lending box + schedule, PP-3)
+ */
+
+export function useGetPaymentPlanContract<TData = Awaited<ReturnType<typeof getPaymentPlanContract>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContract>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPaymentPlanContractQueryOptions(planKind,planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Server-rendered contract PDF (PP-3)
+ */
+export const getPaymentPlanContractPdf = (
+    planKind: 'ortho' | 'regular',
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/payment-plans/${planKind}/${planId}/contract.pdf`, method: 'GET',
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPaymentPlanContractPdfQueryKey = (planKind: 'ortho' | 'regular',
+    planId: number,) => {
+    return [
+    `/api/v1/payment-plans/${planKind}/${planId}/contract.pdf`
+    ] as const;
+    }
+
+
+export const getGetPaymentPlanContractPdfQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError = ErrorType<HTTPValidationError>>(planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentPlanContractPdfQueryKey(planKind,planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>> = ({ signal }) => getPaymentPlanContractPdf(planKind,planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planKind !== null && planKind !== undefined && planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPaymentPlanContractPdfQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>>
+export type GetPaymentPlanContractPdfQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPaymentPlanContractPdf<TData = Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanContractPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanContractPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanContractPdf<TData = Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanContractPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanContractPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanContractPdf<TData = Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Server-rendered contract PDF (PP-3)
+ */
+
+export function useGetPaymentPlanContractPdf<TData = Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanContractPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPaymentPlanContractPdfQueryOptions(planKind,planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Server-rendered payment-coupon strip PDF (PP-3)
+ */
+export const getPaymentPlanCouponsPdf = (
+    planKind: 'ortho' | 'regular',
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/payment-plans/${planKind}/${planId}/coupons.pdf`, method: 'GET',
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPaymentPlanCouponsPdfQueryKey = (planKind: 'ortho' | 'regular',
+    planId: number,) => {
+    return [
+    `/api/v1/payment-plans/${planKind}/${planId}/coupons.pdf`
+    ] as const;
+    }
+
+
+export const getGetPaymentPlanCouponsPdfQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError = ErrorType<HTTPValidationError>>(planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentPlanCouponsPdfQueryKey(planKind,planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>> = ({ signal }) => getPaymentPlanCouponsPdf(planKind,planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planKind !== null && planKind !== undefined && planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPaymentPlanCouponsPdfQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>>
+export type GetPaymentPlanCouponsPdfQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPaymentPlanCouponsPdf<TData = Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanCouponsPdf<TData = Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentPlanCouponsPdf<TData = Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Server-rendered payment-coupon strip PDF (PP-3)
+ */
+
+export function useGetPaymentPlanCouponsPdf<TData = Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError = ErrorType<HTTPValidationError>>(
+ planKind: 'ortho' | 'regular',
+    planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentPlanCouponsPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPaymentPlanCouponsPdfQueryOptions(planKind,planId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2765,7 +3663,7 @@ export const createPaymentAllocation = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead>(
+      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
       {url: `/api/v1/payment-allocations`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: paymentAllocationCreate, signal
@@ -2828,7 +3726,7 @@ export const getPaymentAllocation = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead>(
+      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
       {url: `/api/v1/payment-allocations/${itemId}`, method: 'GET', signal
     },
       options);
@@ -2921,7 +3819,7 @@ export const updatePaymentAllocation = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead>(
+      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
       {url: `/api/v1/payment-allocations/${itemId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: paymentAllocationUpdate, signal
@@ -4156,6 +5054,379 @@ export const useDeletePatientSecInsPaymentPlan = <TError = ErrorType<ErrorRespon
       return useMutation(getDeletePatientSecInsPaymentPlanMutationOptions(options), queryClient);
     }
     /**
+ * @summary List patient plan installments
+ */
+export const listPatientPlanInstallments = (
+    params?: ListPatientPlanInstallmentsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponsePatientPlanInstallmentRead>(
+      {url: `/api/v1/patient-plan-installments`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientPlanInstallmentsQueryKey = (params?: ListPatientPlanInstallmentsParams,) => {
+    return [
+    `/api/v1/patient-plan-installments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientPlanInstallmentsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError = ErrorType<ErrorResponse>>(params?: ListPatientPlanInstallmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientPlanInstallmentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientPlanInstallments>>> = ({ signal }) => listPatientPlanInstallments(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientPlanInstallmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientPlanInstallments>>>
+export type ListPatientPlanInstallmentsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientPlanInstallments<TData = Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListPatientPlanInstallmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientPlanInstallments>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientPlanInstallments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientPlanInstallments<TData = Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientPlanInstallmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientPlanInstallments>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientPlanInstallments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientPlanInstallments<TData = Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientPlanInstallmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List patient plan installments
+ */
+
+export function useListPatientPlanInstallments<TData = Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListPatientPlanInstallmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientPlanInstallments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientPlanInstallmentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create patient plan installment
+ */
+export const createPatientPlanInstallment = (
+    patientPlanInstallmentCreate: BodyType<PatientPlanInstallmentCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientPlanInstallmentRead>(
+      {url: `/api/v1/patient-plan-installments`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: patientPlanInstallmentCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreatePatientPlanInstallmentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientPlanInstallment>>, TError,{data: BodyType<PatientPlanInstallmentCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPatientPlanInstallment>>, TError,{data: BodyType<PatientPlanInstallmentCreate>}, TContext> => {
+
+const mutationKey = ['createPatientPlanInstallment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPatientPlanInstallment>>, {data: BodyType<PatientPlanInstallmentCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPatientPlanInstallment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePatientPlanInstallmentMutationResult = NonNullable<Awaited<ReturnType<typeof createPatientPlanInstallment>>>
+    export type CreatePatientPlanInstallmentMutationBody = BodyType<PatientPlanInstallmentCreate>
+    export type CreatePatientPlanInstallmentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create patient plan installment
+ */
+export const useCreatePatientPlanInstallment = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPatientPlanInstallment>>, TError,{data: BodyType<PatientPlanInstallmentCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPatientPlanInstallment>>,
+        TError,
+        {data: BodyType<PatientPlanInstallmentCreate>},
+        TContext
+      > => {
+      return useMutation(getCreatePatientPlanInstallmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get patient plan installment by id
+ */
+export const getPatientPlanInstallment = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientPlanInstallmentRead>(
+      {url: `/api/v1/patient-plan-installments/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientPlanInstallmentQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/patient-plan-installments/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetPatientPlanInstallmentQueryOptions = <TData = Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientPlanInstallmentQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientPlanInstallment>>> = ({ signal }) => getPatientPlanInstallment(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientPlanInstallmentQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientPlanInstallment>>>
+export type GetPatientPlanInstallmentQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientPlanInstallment<TData = Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientPlanInstallment>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientPlanInstallment>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientPlanInstallment<TData = Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientPlanInstallment>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientPlanInstallment>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientPlanInstallment<TData = Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get patient plan installment by id
+ */
+
+export function useGetPatientPlanInstallment<TData = Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientPlanInstallment>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientPlanInstallmentQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update patient plan installment
+ */
+export const updatePatientPlanInstallment = (
+    itemId: number,
+    patientPlanInstallmentUpdate: BodyType<PatientPlanInstallmentUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientPlanInstallmentRead>(
+      {url: `/api/v1/patient-plan-installments/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patientPlanInstallmentUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePatientPlanInstallmentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientPlanInstallment>>, TError,{itemId: number;data: BodyType<PatientPlanInstallmentUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePatientPlanInstallment>>, TError,{itemId: number;data: BodyType<PatientPlanInstallmentUpdate>}, TContext> => {
+
+const mutationKey = ['updatePatientPlanInstallment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePatientPlanInstallment>>, {itemId: number;data: BodyType<PatientPlanInstallmentUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updatePatientPlanInstallment(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePatientPlanInstallmentMutationResult = NonNullable<Awaited<ReturnType<typeof updatePatientPlanInstallment>>>
+    export type UpdatePatientPlanInstallmentMutationBody = BodyType<PatientPlanInstallmentUpdate>
+    export type UpdatePatientPlanInstallmentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update patient plan installment
+ */
+export const useUpdatePatientPlanInstallment = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientPlanInstallment>>, TError,{itemId: number;data: BodyType<PatientPlanInstallmentUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePatientPlanInstallment>>,
+        TError,
+        {itemId: number;data: BodyType<PatientPlanInstallmentUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePatientPlanInstallmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete patient plan installment
+ */
+export const deletePatientPlanInstallment = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/patient-plan-installments/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeletePatientPlanInstallmentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientPlanInstallment>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePatientPlanInstallment>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deletePatientPlanInstallment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePatientPlanInstallment>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deletePatientPlanInstallment(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePatientPlanInstallmentMutationResult = NonNullable<Awaited<ReturnType<typeof deletePatientPlanInstallment>>>
+
+    export type DeletePatientPlanInstallmentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete patient plan installment
+ */
+export const useDeletePatientPlanInstallment = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePatientPlanInstallment>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePatientPlanInstallment>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeletePatientPlanInstallmentMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List patient reg plans
  */
 export const listPatientRegPlans = (
@@ -4625,7 +5896,7 @@ export function useListOrthoPlans<TData = Awaited<ReturnType<typeof listOrthoPla
  * @summary Create ortho plan
  */
 export const createOrthoPlan = (
-    orthoPlanCreate: BodyType<OrthoPlanCreate>,
+    orthoPlanFullCreate: BodyType<OrthoPlanFullCreate>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -4633,7 +5904,7 @@ export const createOrthoPlan = (
       return customInstance<OrthoPlanRead>(
       {url: `/api/v1/ortho-plans`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: orthoPlanCreate, signal
+      data: orthoPlanFullCreate, signal
     },
       options);
     }
@@ -4641,8 +5912,8 @@ export const createOrthoPlan = (
 
 
 export const getCreateOrthoPlanMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrthoPlan>>, TError,{data: BodyType<OrthoPlanCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createOrthoPlan>>, TError,{data: BodyType<OrthoPlanCreate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrthoPlan>>, TError,{data: BodyType<OrthoPlanFullCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createOrthoPlan>>, TError,{data: BodyType<OrthoPlanFullCreate>}, TContext> => {
 
 const mutationKey = ['createOrthoPlan'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -4654,7 +5925,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrthoPlan>>, {data: BodyType<OrthoPlanCreate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrthoPlan>>, {data: BodyType<OrthoPlanFullCreate>}> = (props) => {
           const {data} = props ?? {};
 
           return  createOrthoPlan(data,requestOptions)
@@ -4668,18 +5939,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateOrthoPlanMutationResult = NonNullable<Awaited<ReturnType<typeof createOrthoPlan>>>
-    export type CreateOrthoPlanMutationBody = BodyType<OrthoPlanCreate>
+    export type CreateOrthoPlanMutationBody = BodyType<OrthoPlanFullCreate>
     export type CreateOrthoPlanMutationError = ErrorType<ErrorResponse>
 
     /**
  * @summary Create ortho plan
  */
 export const useCreateOrthoPlan = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrthoPlan>>, TError,{data: BodyType<OrthoPlanCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrthoPlan>>, TError,{data: BodyType<OrthoPlanFullCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createOrthoPlan>>,
         TError,
-        {data: BodyType<OrthoPlanCreate>},
+        {data: BodyType<OrthoPlanFullCreate>},
         TContext
       > => {
       return useMutation(getCreateOrthoPlanMutationOptions(options), queryClient);
@@ -4781,7 +6052,7 @@ export function useGetOrthoPlan<TData = Awaited<ReturnType<typeof getOrthoPlan>>
  */
 export const updateOrthoPlan = (
     itemId: number,
-    orthoPlanUpdate: BodyType<OrthoPlanUpdate>,
+    orthoPlanFullUpdate: BodyType<OrthoPlanFullUpdate>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -4789,7 +6060,7 @@ export const updateOrthoPlan = (
       return customInstance<OrthoPlanRead>(
       {url: `/api/v1/ortho-plans/${itemId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: orthoPlanUpdate, signal
+      data: orthoPlanFullUpdate, signal
     },
       options);
     }
@@ -4797,8 +6068,8 @@ export const updateOrthoPlan = (
 
 
 export const getUpdateOrthoPlanMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrthoPlan>>, TError,{itemId: number;data: BodyType<OrthoPlanUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateOrthoPlan>>, TError,{itemId: number;data: BodyType<OrthoPlanUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrthoPlan>>, TError,{itemId: number;data: BodyType<OrthoPlanFullUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOrthoPlan>>, TError,{itemId: number;data: BodyType<OrthoPlanFullUpdate>}, TContext> => {
 
 const mutationKey = ['updateOrthoPlan'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -4810,7 +6081,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrthoPlan>>, {itemId: number;data: BodyType<OrthoPlanUpdate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrthoPlan>>, {itemId: number;data: BodyType<OrthoPlanFullUpdate>}> = (props) => {
           const {itemId,data} = props ?? {};
 
           return  updateOrthoPlan(itemId,data,requestOptions)
@@ -4824,18 +6095,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateOrthoPlanMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrthoPlan>>>
-    export type UpdateOrthoPlanMutationBody = BodyType<OrthoPlanUpdate>
+    export type UpdateOrthoPlanMutationBody = BodyType<OrthoPlanFullUpdate>
     export type UpdateOrthoPlanMutationError = ErrorType<ErrorResponse>
 
     /**
  * @summary Update ortho plan
  */
 export const useUpdateOrthoPlan = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrthoPlan>>, TError,{itemId: number;data: BodyType<OrthoPlanUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrthoPlan>>, TError,{itemId: number;data: BodyType<OrthoPlanFullUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateOrthoPlan>>,
         TError,
-        {itemId: number;data: BodyType<OrthoPlanUpdate>},
+        {itemId: number;data: BodyType<OrthoPlanFullUpdate>},
         TContext
       > => {
       return useMutation(getUpdateOrthoPlanMutationOptions(options), queryClient);

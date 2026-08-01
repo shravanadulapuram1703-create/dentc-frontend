@@ -29,6 +29,8 @@ export interface PatientBalance {
   insurance_balance?: number;
   /** Sum of today's non-void procedure charges */
   today_charges?: number;
+  /** Seeded opening A/R (GAP-AP-12); already in balance/aging */
+  opening_balance?: number;
   aging?: BalanceAging;
   recent_activity?: BalanceRecentActivity;
   /** UTC timestamp the balance was computed */

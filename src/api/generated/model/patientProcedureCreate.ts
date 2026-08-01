@@ -30,5 +30,6 @@ export interface PatientProcedureCreate {
   hold_claim?: boolean | null;
   is_void?: boolean | null;
   material_id?: number | null;
+  treatment_plan_id?: string | null;
   notes?: string | null;
 }

@@ -28,7 +28,13 @@ import type {
   CollectionAgencyCreate,
   CollectionAgencyRead,
   CollectionAgencyUpdate,
+  DicomInstanceOut,
+  DownloadDicomOriginalParams,
   ErrorResponse,
+  GetDicomThumbnailParams,
+  GetDicomWebImageParams,
+  GetPatientImagingParams,
+  HTTPValidationError,
   ImageDetailCreate,
   ImageDetailRead,
   ImageDetailUpdate,
@@ -40,7 +46,9 @@ import type {
   ListImageGroupsParams,
   PaginatedResponseCollectionAgencyRead,
   PaginatedResponseImageDetailRead,
-  PaginatedResponseImageGroupRead
+  PaginatedResponseImageGroupRead,
+  PatientImagingResponse,
+  PatientImagingSummary
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -48,6 +56,590 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary Patient imaging tree (studies → series → instances) with ready-to-use image URLs
+ */
+export const getPatientImaging = (
+    patientId: number,
+    params?: GetPatientImagingParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientImagingResponse>(
+      {url: `/api/v1/patients/${patientId}/imaging`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientImagingQueryKey = (patientId: number,
+    params?: GetPatientImagingParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/imaging`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientImagingQueryOptions = <TData = Awaited<ReturnType<typeof getPatientImaging>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: GetPatientImagingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImaging>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientImagingQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientImaging>>> = ({ signal }) => getPatientImaging(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientImaging>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientImagingQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientImaging>>>
+export type GetPatientImagingQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientImaging<TData = Awaited<ReturnType<typeof getPatientImaging>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientImagingParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImaging>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientImaging>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientImaging>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientImaging<TData = Awaited<ReturnType<typeof getPatientImaging>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientImagingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImaging>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientImaging>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientImaging>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientImaging<TData = Awaited<ReturnType<typeof getPatientImaging>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientImagingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImaging>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Patient imaging tree (studies → series → instances) with ready-to-use image URLs
+ */
+
+export function useGetPatientImaging<TData = Awaited<ReturnType<typeof getPatientImaging>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientImagingParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImaging>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientImagingQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Imaging counts for the tab badge / patient overview
+ */
+export const getPatientImagingSummary = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientImagingSummary>(
+      {url: `/api/v1/patients/${patientId}/imaging/summary`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientImagingSummaryQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/imaging/summary`
+    ] as const;
+    }
+
+
+export const getGetPatientImagingSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getPatientImagingSummary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImagingSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientImagingSummaryQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientImagingSummary>>> = ({ signal }) => getPatientImagingSummary(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientImagingSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientImagingSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientImagingSummary>>>
+export type GetPatientImagingSummaryQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientImagingSummary<TData = Awaited<ReturnType<typeof getPatientImagingSummary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImagingSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientImagingSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientImagingSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientImagingSummary<TData = Awaited<ReturnType<typeof getPatientImagingSummary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImagingSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientImagingSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientImagingSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientImagingSummary<TData = Awaited<ReturnType<typeof getPatientImagingSummary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImagingSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Imaging counts for the tab badge / patient overview
+ */
+
+export function useGetPatientImagingSummary<TData = Awaited<ReturnType<typeof getPatientImagingSummary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientImagingSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientImagingSummaryQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Single image instance metadata + asset URLs
+ */
+export const getDicomInstance = (
+    sopInstanceUid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<DicomInstanceOut>(
+      {url: `/api/v1/dicom-instances/${sopInstanceUid}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetDicomInstanceQueryKey = (sopInstanceUid: string,) => {
+    return [
+    `/api/v1/dicom-instances/${sopInstanceUid}`
+    ] as const;
+    }
+
+
+export const getGetDicomInstanceQueryOptions = <TData = Awaited<ReturnType<typeof getDicomInstance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(sopInstanceUid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomInstance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDicomInstanceQueryKey(sopInstanceUid);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDicomInstance>>> = ({ signal }) => getDicomInstance(sopInstanceUid, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sopInstanceUid !== null && sopInstanceUid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDicomInstance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDicomInstanceQueryResult = NonNullable<Awaited<ReturnType<typeof getDicomInstance>>>
+export type GetDicomInstanceQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetDicomInstance<TData = Awaited<ReturnType<typeof getDicomInstance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomInstance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDicomInstance>>,
+          TError,
+          Awaited<ReturnType<typeof getDicomInstance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDicomInstance<TData = Awaited<ReturnType<typeof getDicomInstance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomInstance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDicomInstance>>,
+          TError,
+          Awaited<ReturnType<typeof getDicomInstance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDicomInstance<TData = Awaited<ReturnType<typeof getDicomInstance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomInstance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Single image instance metadata + asset URLs
+ */
+
+export function useGetDicomInstance<TData = Awaited<ReturnType<typeof getDicomInstance>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomInstance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDicomInstanceQueryOptions(sopInstanceUid,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Thumbnail JPEG (token-authorised; use directly in <img src>)
+ */
+export const getDicomThumbnail = (
+    sopInstanceUid: string,
+    params: GetDicomThumbnailParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/dicom-instances/${sopInstanceUid}/thumbnail`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetDicomThumbnailQueryKey = (sopInstanceUid: string,
+    params?: GetDicomThumbnailParams,) => {
+    return [
+    `/api/v1/dicom-instances/${sopInstanceUid}/thumbnail`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetDicomThumbnailQueryOptions = <TData = Awaited<ReturnType<typeof getDicomThumbnail>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(sopInstanceUid: string,
+    params: GetDicomThumbnailParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomThumbnail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDicomThumbnailQueryKey(sopInstanceUid,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDicomThumbnail>>> = ({ signal }) => getDicomThumbnail(sopInstanceUid,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sopInstanceUid !== null && sopInstanceUid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDicomThumbnail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDicomThumbnailQueryResult = NonNullable<Awaited<ReturnType<typeof getDicomThumbnail>>>
+export type GetDicomThumbnailQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetDicomThumbnail<TData = Awaited<ReturnType<typeof getDicomThumbnail>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomThumbnailParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomThumbnail>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDicomThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof getDicomThumbnail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDicomThumbnail<TData = Awaited<ReturnType<typeof getDicomThumbnail>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomThumbnailParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomThumbnail>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDicomThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof getDicomThumbnail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDicomThumbnail<TData = Awaited<ReturnType<typeof getDicomThumbnail>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomThumbnailParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomThumbnail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Thumbnail JPEG (token-authorised; use directly in <img src>)
+ */
+
+export function useGetDicomThumbnail<TData = Awaited<ReturnType<typeof getDicomThumbnail>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomThumbnailParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomThumbnail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDicomThumbnailQueryOptions(sopInstanceUid,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Full-resolution web JPEG (token-authorised)
+ */
+export const getDicomWebImage = (
+    sopInstanceUid: string,
+    params: GetDicomWebImageParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/dicom-instances/${sopInstanceUid}/web`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetDicomWebImageQueryKey = (sopInstanceUid: string,
+    params?: GetDicomWebImageParams,) => {
+    return [
+    `/api/v1/dicom-instances/${sopInstanceUid}/web`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetDicomWebImageQueryOptions = <TData = Awaited<ReturnType<typeof getDicomWebImage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(sopInstanceUid: string,
+    params: GetDicomWebImageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomWebImage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDicomWebImageQueryKey(sopInstanceUid,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDicomWebImage>>> = ({ signal }) => getDicomWebImage(sopInstanceUid,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sopInstanceUid !== null && sopInstanceUid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDicomWebImage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDicomWebImageQueryResult = NonNullable<Awaited<ReturnType<typeof getDicomWebImage>>>
+export type GetDicomWebImageQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetDicomWebImage<TData = Awaited<ReturnType<typeof getDicomWebImage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomWebImageParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomWebImage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDicomWebImage>>,
+          TError,
+          Awaited<ReturnType<typeof getDicomWebImage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDicomWebImage<TData = Awaited<ReturnType<typeof getDicomWebImage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomWebImageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomWebImage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDicomWebImage>>,
+          TError,
+          Awaited<ReturnType<typeof getDicomWebImage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDicomWebImage<TData = Awaited<ReturnType<typeof getDicomWebImage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomWebImageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomWebImage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Full-resolution web JPEG (token-authorised)
+ */
+
+export function useGetDicomWebImage<TData = Awaited<ReturnType<typeof getDicomWebImage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: GetDicomWebImageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDicomWebImage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDicomWebImageQueryOptions(sopInstanceUid,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Original .dcm download (token-authorised, audited)
+ */
+export const downloadDicomOriginal = (
+    sopInstanceUid: string,
+    params: DownloadDicomOriginalParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/dicom-instances/${sopInstanceUid}/original`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getDownloadDicomOriginalQueryKey = (sopInstanceUid: string,
+    params?: DownloadDicomOriginalParams,) => {
+    return [
+    `/api/v1/dicom-instances/${sopInstanceUid}/original`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getDownloadDicomOriginalQueryOptions = <TData = Awaited<ReturnType<typeof downloadDicomOriginal>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(sopInstanceUid: string,
+    params: DownloadDicomOriginalParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadDicomOriginal>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadDicomOriginalQueryKey(sopInstanceUid,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadDicomOriginal>>> = ({ signal }) => downloadDicomOriginal(sopInstanceUid,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sopInstanceUid !== null && sopInstanceUid !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadDicomOriginal>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadDicomOriginalQueryResult = NonNullable<Awaited<ReturnType<typeof downloadDicomOriginal>>>
+export type DownloadDicomOriginalQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useDownloadDicomOriginal<TData = Awaited<ReturnType<typeof downloadDicomOriginal>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: DownloadDicomOriginalParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadDicomOriginal>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadDicomOriginal>>,
+          TError,
+          Awaited<ReturnType<typeof downloadDicomOriginal>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadDicomOriginal<TData = Awaited<ReturnType<typeof downloadDicomOriginal>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: DownloadDicomOriginalParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadDicomOriginal>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadDicomOriginal>>,
+          TError,
+          Awaited<ReturnType<typeof downloadDicomOriginal>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadDicomOriginal<TData = Awaited<ReturnType<typeof downloadDicomOriginal>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: DownloadDicomOriginalParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadDicomOriginal>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Original .dcm download (token-authorised, audited)
+ */
+
+export function useDownloadDicomOriginal<TData = Awaited<ReturnType<typeof downloadDicomOriginal>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ sopInstanceUid: string,
+    params: DownloadDicomOriginalParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadDicomOriginal>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadDicomOriginalQueryOptions(sopInstanceUid,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 

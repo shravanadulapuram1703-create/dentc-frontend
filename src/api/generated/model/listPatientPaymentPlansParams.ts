@@ -17,6 +17,30 @@ patient_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * Filter by plan_type
+ */
+plan_type?: string | null;
+/**
+ * Filter by treatment_plan_id
+ */
+treatment_plan_id?: string | null;
+/**
+ * setup_date >= (inclusive lower bound)
+ */
+setup_date_from?: string | null;
+/**
+ * setup_date <= (inclusive upper bound)
+ */
+setup_date_to?: string | null;
+/**
+ * first_due_date >= (inclusive lower bound)
+ */
+first_due_date_from?: string | null;
+/**
+ * first_due_date <= (inclusive upper bound)
+ */
+first_due_date_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

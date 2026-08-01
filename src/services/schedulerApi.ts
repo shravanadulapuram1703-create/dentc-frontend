@@ -143,6 +143,11 @@ export interface Provider {
   /** Hex color set on the Provider Setup screen (ProviderRead.scheduler_color).
    *  Drives the provider's appointment color on the scheduler. */
   scheduler_color?: string | null;
+  /** ProviderRead.role — e.g. "dentist" / "hygienist". Used to split the
+   *  Preferred Provider vs Preferred Hygienist pickers. */
+  role?: string;
+  /** Display title (DMD/DDS…), handy for disambiguating duplicate names. */
+  title?: string | null;
 }
 
 export interface ProcedureType {
@@ -815,8 +820,13 @@ export const fetchProviders = async (
     name: p.name,
     office: p.office_id != null ? String(p.office_id) : undefined,
     scheduler_color: p.scheduler_color ?? null,
+    role: p.role ?? undefined,
+    title: p.title ?? null,
   }));
 };
+
+/** True when the provider's role marks them as a hygienist. */
+export const isHygienist = (p: Provider): boolean => /hygien/i.test(p.role ?? "");
 
 export const fetchSchedulerConfig = async (
   officeId?: string,

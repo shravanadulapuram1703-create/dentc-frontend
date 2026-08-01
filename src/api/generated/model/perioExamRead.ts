@@ -6,7 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * PERIO-BE-6: exam read with audit columns + resolved actor display names.
+ */
 export interface PerioExamRead {
+  id: number;
   patient_id: number;
   office_id?: number | null;
   legacy_id?: string | null;
@@ -14,6 +18,9 @@ export interface PerioExamRead {
   notes?: string | null;
   is_voided: boolean;
   created_by?: number | null;
-  id: number;
+  updated_by?: number | null;
   created_at: string;
+  updated_at?: string | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
 }

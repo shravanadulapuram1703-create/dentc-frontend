@@ -37,6 +37,10 @@ office_id?: number | null;
  */
 billing_status?: string | null;
 /**
+ * Filter by treatment_plan_id
+ */
+treatment_plan_id?: string | null;
+/**
  * Filter by is_void
  */
 is_void?: boolean | null;

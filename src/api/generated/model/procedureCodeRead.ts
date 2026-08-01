@@ -37,6 +37,9 @@ export interface ProcedureCodeRead {
   ar_code?: string | null;
   is_post_op: boolean;
   exempt_from_dental_max: boolean;
+  amb_code?: string | null;
+  is_downgrade: boolean;
+  alternate_of?: string | null;
   lock_default_provider: boolean;
   default_provider_id?: string | null;
   default_notes_macro_id?: number | null;

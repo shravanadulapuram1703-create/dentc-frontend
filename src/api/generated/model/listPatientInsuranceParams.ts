@@ -21,6 +21,14 @@ insurance_type?: string | null;
  */
 ins_plan_id?: number | null;
 /**
+ * Filter by legacy_plan_type
+ */
+legacy_plan_type?: string | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;
