@@ -3,15 +3,35 @@
 Every machine-specific value (export folder, bridge exe, allowed origins) is a
 config value, never hardcoded in logic. The Vatech export folder in particular
 ends in an install-specific id (e.g. `Sub026052`), so we auto-discover it.
+
+Values can also be set via a `.env` file (see `.env.example`) instead of real
+shell environment variables — mainly for `DENTC_AGENT_VATECH_REST_USERNAME`/
+`_PASSWORD`, since typing a password with shell-special characters (`@`, `&`,
+`%`, ...) into `cmd`/PowerShell's `set`/`$env:` is exactly the kind of thing
+that gets silently mangled by the shell's own parsing; a `.env` file has no
+such issue and only needs setting once instead of every launch. A real OS
+environment variable always wins if both are set (`load_dotenv`'s default:
+never override what's already there).
 """
 
 from __future__ import annotations
 
 import glob
 import os
+import re
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Packaged (PyInstaller onefile) vs. `python -m agent`: look for `.env` next
+# to the exe when frozen, next to this project's root otherwise — CWD isn't
+# reliable for either (the exe's CWD depends on how Windows launched it; a
+# dev's CWD depends on where they happened to run the command from).
+_env_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent.parent
+load_dotenv(_env_dir / ".env")
 
 
 def _csv_env(name: str, default: list[str]) -> list[str]:
@@ -75,6 +95,15 @@ class Config:
             ],
         )
     )
+    # Regex match for hosted origins, so new deployments (staging subdomains,
+    # a domain rename, etc.) don't require pushing an updated env var / config
+    # to every desktop running the agent — only this default (or the env var,
+    # for a one-off override) needs to change. Mirrors the backend's
+    # CORS_ORIGIN_REGEX (see dentc-backend app/core/config.py).
+    allowed_origin_regex: str | None = os.environ.get(
+        "DENTC_AGENT_ORIGIN_REGEX",
+        r"^https://([a-z0-9-]+\.)*reckondental\.com$",
+    ) or None
     # Optional shared token; when set, requests must send `X-DentC-Agent-Token`.
     token: str | None = os.environ.get("DENTC_AGENT_TOKEN") or None
     export_folder: str | None = field(default_factory=_discover_vatech_export_folder)
@@ -85,9 +114,34 @@ class Config:
     # A captured file is served once then cleaned up after this many seconds.
     temp_ttl_seconds: int = 600
 
+    # EzWebServer REST API (patient create/prepopulate — VTEzBridge's CLI/XML
+    # route cannot do this; see VATECH_INTEGRATION_FINDINGS.md). Prepopulation
+    # is skipped entirely (falls back to plain chart_no focus) unless both
+    # username and password are set — never hardcode a credential here.
+    vatech_rest_base_url: str = os.environ.get(
+        "DENTC_AGENT_VATECH_REST_URL", "http://127.0.0.1:43112/api/v1"
+    )
+    vatech_rest_username: str | None = os.environ.get("DENTC_AGENT_VATECH_REST_USERNAME") or None
+    vatech_rest_password: str | None = os.environ.get("DENTC_AGENT_VATECH_REST_PASSWORD") or None
+
     def ensure_temp_dir(self) -> str:
         Path(self.temp_dir).mkdir(parents=True, exist_ok=True)
         return self.temp_dir
+
+    def is_origin_allowed(self, origin: str | None) -> bool:
+        """Mirrors the CORSMiddleware allow-list, for the `/ws` handshake.
+
+        `CORSMiddleware` never runs on a websocket upgrade, so the origin has
+        to be checked by hand here — same two rules (exact list + hosted-domain
+        regex) as the HTTP routes get for free.
+        """
+        if not origin:
+            return False
+        if origin in self.allowed_origins:
+            return True
+        if self.allowed_origin_regex and re.match(self.allowed_origin_regex, origin):
+            return True
+        return False
 
 
 config = Config()

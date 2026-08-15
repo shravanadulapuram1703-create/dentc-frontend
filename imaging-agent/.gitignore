@@ -4,3 +4,11 @@ __pycache__/
 build/
 dist/
 *.spec
+
+# real credentials — .env.example is the template that IS committed
+
+
+# installer build output + signing material (dev cert has a private key —
+# never commit it even though it's worthless for real trust; see BUILD.md)
+installer/Output/
+installer/*.pfx
