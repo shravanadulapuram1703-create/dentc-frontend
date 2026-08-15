@@ -129,6 +129,14 @@ export interface ImagingDevice {
   launchSoftware(input: DeviceLaunchInput): Promise<void>;
   startScan(input: DeviceScanInput): Promise<{ scan_id: string }>;
   pollScan(scanId: string): Promise<DeviceScanResult>;
+  /**
+   * Start a scan and wait for the captured bytes in one call. Prefers the
+   * agent's `/ws` push endpoint (near-instant completion notice) and
+   * transparently falls back to `startScan` + `pollScan` when the socket
+   * isn't available — e.g. an older agent build on that workstation that
+   * predates `/ws`. Same success/failure contract either way.
+   */
+  runScan(input: DeviceScanInput): Promise<DeviceScanResult>;
 }
 
 /** Thrown by device calls when no bridge is configured/reachable. */

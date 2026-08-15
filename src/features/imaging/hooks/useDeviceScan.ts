@@ -14,9 +14,11 @@ import { errMsg } from '../utils/errorMessage';
 /**
  * Device-scan state machine over the `imagingDevice` boundary, with runtime
  * agent detection. Probes status on mount (and on `refresh`); `launch` deep-links
- * the vendor software to the patient; `runScan` drives start → poll and returns
- * the captured File (or null on failure/unavailable) for the caller to upload —
- * keeping scan and manual-upload persistence on a single path.
+ * the vendor software to the patient; `runScan` drives the capture (pushed over
+ * the agent's websocket when available, polled over HTTP otherwise — see
+ * `imagingDevice.runScan`) and returns the captured File (or null on
+ * failure/unavailable) for the caller to upload — keeping scan and
+ * manual-upload persistence on a single path.
  */
 export const useDeviceScan = () => {
   const [status, setStatus] = useState<DeviceScanStatus>('detecting');
@@ -75,8 +77,7 @@ export const useDeviceScan = () => {
       setIsScanning(true);
       setStatus('scanning');
       try {
-        const { scan_id } = await imagingDevice.startScan(input);
-        const result = await imagingDevice.pollScan(scan_id);
+        const result = await imagingDevice.runScan(input);
         if (isMountedRef.current) setStatus('idle');
         return result;
       } catch (err) {

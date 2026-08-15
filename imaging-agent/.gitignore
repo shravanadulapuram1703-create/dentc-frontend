@@ -6,7 +6,7 @@ dist/
 *.spec
 
 # real credentials — .env.example is the template that IS committed
-
+.env
 
 # installer build output + signing material (dev cert has a private key —
 # never commit it even though it's worthless for real trust; see BUILD.md)
