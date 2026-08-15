@@ -11,8 +11,13 @@ COPY . .
 # The backend URL must be passed here as a build arg.
 ARG VITE_API_BASE_URL
 ARG VITE_APP_ENV=production
+# Relative path — served from public/downloads/ (see .dockerignore/COPY . .
+# above) via the same domain this build ends up deployed to, so it works
+# without needing to know that domain ahead of time.
+ARG VITE_IMAGING_AGENT_DOWNLOAD_URL=/downloads/Imaging-agent-Setup.exe
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_ENV=$VITE_APP_ENV
+ENV VITE_IMAGING_AGENT_DOWNLOAD_URL=$VITE_IMAGING_AGENT_DOWNLOAD_URL
 RUN npm run build
 
 # ---- Runtime stage: serve dist/ with the existing Express server ----

@@ -20,7 +20,10 @@ const schema = z.object({
   // to override the host, or to "off"/"disabled" to hard-disable the feature.
   VITE_IMAGING_BRIDGE_URL: z.string().optional(),
   // Where the first-time setup card sends users to download the agent installer.
-  VITE_IMAGING_AGENT_DOWNLOAD_URL: z.string().url().optional(),
+  // A relative path (e.g. "/downloads/Imaging-agent-Setup.exe", served from
+  // public/) works fine in an <a href> and is domain-agnostic across
+  // environments — so this only requires non-empty, not a full absolute URL.
+  VITE_IMAGING_AGENT_DOWNLOAD_URL: z.string().min(1).optional(),
 
   // Human-readable application version surfaced in the Help Center and attached
   // to every support ticket. Bump per release (or wire to your CI build number).
