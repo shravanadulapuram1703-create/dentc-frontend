@@ -24,6 +24,7 @@ import {
 import { useListProgressNotes } from '@/api/generated/endpoints/clinical/clinical';
 import type { ProgressNoteRead } from '@/api/generated/model';
 import { fmtCreatedAt, fmtDos, isLocked, isSigned, parseTeeth } from './progressNotesService';
+import { useUserNames } from '@/services/userDirectory';
 
 interface PatientData {
   id: string;
@@ -44,6 +45,11 @@ export default function ProgressNotesList() {
 
   const numericPatientId = Number(patientId);
   const validPatientId = Number.isFinite(numericPatientId);
+
+  // Created/Modified shows a name, not a raw id (KAN-78). ProgressNoteRead
+  // carries `*_by_name` companions, so the directory is only a fallback for
+  // rows the backend left unresolved.
+  const { resolve: resolveUser } = useUserNames();
 
   const [filterType, setFilterType] = useState('Show All (No Search Filter)');
   const [criteria, setCriteria] = useState('');
@@ -273,11 +279,16 @@ export default function ProgressNotesList() {
                         <td className="px-3 py-2.5 text-xs">
                           <div className="font-medium text-slate-700">{fmtCreatedAt(n.created_at)}</div>
                           {n.created_by != null && (
-                            <div className="font-semibold text-blue-700">User #{n.created_by}</div>
+                            <div className="font-semibold text-blue-700">
+                              {resolveUser(n.created_by, n.created_by_name)}
+                            </div>
                           )}
                           {signed && (
                             <div className="mt-0.5 font-semibold text-green-700">
-                              Signed{n.signed_by != null ? ` (User #${n.signed_by})` : ''}
+                              Signed
+                              {n.signed_by != null
+                                ? ` (${resolveUser(n.signed_by, n.signed_by_name)})`
+                                : ''}
                             </div>
                           )}
                         </td>

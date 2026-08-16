@@ -24,6 +24,7 @@ import {
   useDeletePatientNote,
 } from '@/api/generated/endpoints/patients/patients';
 import type { PatientNoteRead } from '@/api/generated/model';
+import { useUserNames } from '@/services/userDirectory';
 
 // Display shape used by the table, mapped from the backend PatientNoteRead.
 interface PatientNote {
@@ -56,15 +57,20 @@ function formatNoteDate(iso?: string | null): string {
     : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
-// Map a backend note to the table row shape. `created_by` is a numeric user id;
-// a display name is not yet exposed by the API (see patients_backend_devreport.md).
-function mapNote(note: PatientNoteRead): PatientNote {
+// Map a backend note to the table row shape. `PatientNoteRead` exposes only a
+// numeric `created_by` — unlike `ProgressNoteRead`, it has no `created_by_name`
+// companion — so the name is resolved against the tenant user directory
+// (KAN-75; backend parity requested in patients_backend_devreport.md).
+function mapNote(
+  note: PatientNoteRead,
+  resolveUser: (id?: number | null, nameFromApi?: string | null) => string,
+): PatientNote {
   return {
     id: note.id,
     type: note.note_type || 'Patient Notes',
     content: note.notes,
     createdDate: formatNoteDate(note.created_at),
-    createdBy: note.created_by != null ? `User #${note.created_by}` : '—',
+    createdBy: resolveUser(note.created_by),
   };
 }
 
@@ -76,6 +82,9 @@ export default function PatientNotesListing() {
 
   const numericPatientId = Number(patientId);
   const validPatientId = Number.isFinite(numericPatientId);
+
+  // "Created By" shows the staff member's name rather than a raw id (KAN-75).
+  const { resolve: resolveUser } = useUserNames();
 
   const [filterType, setFilterType] = useState<string>('Show All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,7 +110,12 @@ export default function PatientNotesListing() {
     },
   });
 
-  const allNotes: PatientNote[] = (notesQuery.data?.items ?? []).map(mapNote);
+  // Pass `resolveUser` explicitly rather than using `.map(mapNote)` — `Array.map`
+  // hands the callback (item, index, array), so the index would land in the
+  // resolver slot.
+  const allNotes: PatientNote[] = (notesQuery.data?.items ?? []).map((note) =>
+    mapNote(note, resolveUser),
+  );
 
   // Filter patient notes by type (client-side over the loaded page).
   const filteredNotes = allNotes.filter(

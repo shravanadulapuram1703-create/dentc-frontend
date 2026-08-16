@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
@@ -32,6 +32,7 @@ import { fetchProviders, isHygienist, type Provider } from "../../services/sched
 import { listReferrals } from "@/api/generated/endpoints/patients/patients";
 import type { ReferralRead } from "@/api/generated/model";
 import { resolveOffice, officeKeyToId, type OfficeOption } from "../../services/officeLookup";
+import { MIN_DOB_ISO, todayIsoDate, validateDob, ageFromDob } from "../../utils/datetime";
 
 /** referral_type direction codes: "0" = Referred By, "1" = Referred To. */
 const REFERRAL_DIRECTION_TO = "1";
@@ -78,6 +79,14 @@ import {
   type PatientAudit,
   type PatientEditSnapshot,
 } from "../../features/add-patient/editMode";
+
+/** Step-1 required fields that an existing record may already be missing. */
+interface PreexistingGaps {
+  sex: boolean;
+  address1: boolean;
+  preferredProvider: boolean;
+  referralType: boolean;
+}
 
 interface AddNewPatientProps {
   /** Required by the page chrome; unused in the modal variant. */
@@ -237,27 +246,9 @@ export default function AddNewPatient({
       : (propPatientId ?? (routePatientId ? Number(routePatientId) : NaN));
   const isEditMode = Number.isFinite(editPatientId);
 
-  // Calculate age from birthdate
-  const calculateAge = (birthdate: string): string => {
-    if (!birthdate) return "";
-    
-    const today = new Date();
-    const birthDate = new Date(birthdate);
-    
-    // Check if date is valid
-    if (isNaN(birthDate.getTime())) return "";
-    
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    // If birthday hasn't occurred this year yet, subtract 1
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    // Return empty string for negative ages (future dates)
-    return age >= 0 ? age.toString() : "";
-  };
+  // Age beside the Birth Date field. Blank whenever the date isn't usable, so a
+  // rejected DOB never reads as if it were accepted.
+  const calculateAge = ageFromDob;
 
   // Form data state
   const [formData, setFormData] = useState<PatientFormData>({
@@ -374,8 +365,11 @@ export default function AddNewPatient({
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   // ✅ Identity Gate Logic
+  // The DOB must be *valid*, not merely filled in — a future or out-of-range
+  // birth date keeps the rest of the form locked (KAN-37).
+  const dobError = validateDob(formData.birthdate);
   const isIdentityComplete =
-    formData.birthdate.trim() !== "" &&
+    dobError === null &&
     formData.lastName.trim() !== "" &&
     formData.firstName.trim() !== "";
 
@@ -593,6 +587,12 @@ export default function AddNewPatient({
       return next;
     });
 
+  // Surface the DOB problem as soon as something has been entered; an untouched
+  // empty field only complains once the user tries to move on.
+  const showDobError = Boolean(
+    dobError && (formData.birthdate.trim() !== "" || errors.birthdate)
+  );
+
   // ── Wizard state (legacy Denticon multi-step registration) ──────────────
   const [stepIndex, setStepIndex] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
@@ -621,6 +621,16 @@ export default function AddNewPatient({
   const [loadedPatientId, setLoadedPatientId] = useState<number | null>(null);
   const [audit, setAudit] = useState<PatientAudit | null>(null);
 
+  // Required Step-1 fields the stored record was already missing when it loaded.
+  // Only meaningful in edit mode; create starts with no record and enforces
+  // everything. See `requiredHere` (KAN-29).
+  const preexistingGapsRef = useRef<PreexistingGaps>({
+    sex: false,
+    address1: false,
+    preferredProvider: false,
+    referralType: false,
+  });
+
   // Hydrate every step from the stored patient. Waits for metadata because
   // `sex` is held as the tenant's display label. Runs once per patient id; the
   // guard also stops a metadata refetch from discarding edits already typed in.
@@ -637,7 +647,19 @@ export default function AddNewPatient({
         );
         if (cancelled) return;
 
-        setFormData((prev) => ({ ...prev, ...(snapshot.form as Partial<PatientFormData>) }));
+        setFormData((prev) => {
+          const hydrated = { ...prev, ...(snapshot.form as Partial<PatientFormData>) };
+          // Remember which required fields the stored record already lacked, so
+          // editing an unrelated field isn't blocked by a gap the user never
+          // created (KAN-29). See `requiredInEditMode` below.
+          preexistingGapsRef.current = {
+            sex: !hydrated.sex,
+            address1: !hydrated.address1?.trim(),
+            preferredProvider: !hydrated.preferredProvider,
+            referralType: !hydrated.referralType,
+          };
+          return hydrated;
+        });
         setPatientTypes((prev) => ({ ...prev, ...snapshot.patient_types }));
         setAudit(snapshot.audit);
         setFirstVisit(snapshot.first_visit);
@@ -776,15 +798,41 @@ export default function AddNewPatient({
   // Validate the Step-1 required fields; surface inline (legacy parity: "identify
   // where there is missing information") instead of a chain of blocking alerts.
   // Returns true when valid.
+  /**
+   * Whether a create-flow required field should block **this** save.
+   *
+   * Creating a patient requires Sex, Address, Preferred Provider and Referral
+   * Type. Edit reuses this same Step-1 form, which applied those rules
+   * retroactively to records that pre-date them — 88% of existing patients have
+   * no `preferred_provider_id` — so Save bailed out early and the edit appeared
+   * to do nothing (KAN-29 / KAN-86).
+   *
+   * In edit mode a field is therefore enforced only if the stored record already
+   * had a value: existing data still cannot be erased, but a gap the user did not
+   * create cannot block an unrelated change.
+   */
+  const requiredHere = (field: keyof PreexistingGaps): boolean =>
+    !isEditMode || !preexistingGapsRef.current[field];
+
   const validateStep1 = (): boolean => {
     const nextErrors: Record<string, string> = {};
-    if (!formData.sex) nextErrors.sex = "Sex is required";
-    if (!formData.address1.trim()) nextErrors.address1 = "Address is required";
-    if (!formData.preferredProvider) nextErrors.preferredProvider = "Preferred Provider is required";
-    if (!formData.referralType) nextErrors.referralType = "Referral Type is required";
+    if (dobError) nextErrors.birthdate = dobError;
+    if (!formData.sex && requiredHere("sex")) nextErrors.sex = "Sex is required";
+    if (!formData.address1.trim() && requiredHere("address1"))
+      nextErrors.address1 = "Address is required";
+    if (!formData.preferredProvider && requiredHere("preferredProvider"))
+      nextErrors.preferredProvider = "Preferred Provider is required";
+    if (!formData.referralType && requiredHere("referralType"))
+      nextErrors.referralType = "Referral Type is required";
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      // A bare `return false` left Save looking inert — the user saw nothing at
+      // all happen. Say what is missing, then jump to the first offending field.
+      setSaveError(
+        `Please complete the highlighted field${Object.keys(nextErrors).length > 1 ? "s" : ""}: ` +
+          Object.values(nextErrors).join(", "),
+      );
       const firstField = Object.keys(nextErrors)[0];
       document
         .querySelector(`[data-field="${firstField}"]`)
@@ -792,6 +840,7 @@ export default function AddNewPatient({
       return false;
     }
     setErrors({});
+    setSaveError(null);
     return true;
   };
 
@@ -1275,18 +1324,28 @@ export default function AddNewPatient({
 
                 <div className="grid grid-cols-12 gap-3">
                   {/* Birth Date - takes 3 columns */}
-                  <div className="col-span-3">
+                  <div className="col-span-3" data-field="birthdate">
                     <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                       Birth Date <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="date"
                       value={formData.birthdate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, birthdate: e.target.value })
-                      }
-                      className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
+                      // `min`/`max` constrain the picker; `dobError` is the hard
+                      // stop for anything typed past them (KAN-37).
+                      min={MIN_DOB_ISO}
+                      max={todayIsoDate()}
+                      onChange={(e) => {
+                        setFormData({ ...formData, birthdate: e.target.value });
+                        clearError("birthdate");
+                      }}
+                      className={`w-full px-3 py-1.5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm ${
+                        showDobError ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                      }`}
                     />
+                    {showDobError && (
+                      <p className="text-xs text-[#EF4444] mt-1">{dobError}</p>
+                    )}
                   </div>
 
                   {/* Age - takes 1 column, read-only */}

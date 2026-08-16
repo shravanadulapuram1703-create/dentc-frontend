@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { fetchProviders, type Provider } from '@/services/schedulerApi';
 import { useDefinitions } from '@/hooks/useDefinitions';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { createInsuranceClaim } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import { getPatientBalances, type BalancesResponse } from '@/services/ledgerApi';
@@ -115,6 +116,18 @@ export default function AccountLedgerPage() {
   const [creatingClaim, setCreatingClaim] = useState(false);
 
   const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  // Freeze the ledger behind any open overlay, and let Esc close the Balance
+  // Statistics popup so the keyboard isn't stranded on a locked page (KAN-104).
+  useBodyScrollLock(showBalanceStat || txModal !== null);
+  useEffect(() => {
+    if (!showBalanceStat) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowBalanceStat(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showBalanceStat]);
 
   // ---- Loaders ----
   useEffect(() => {
@@ -524,13 +537,22 @@ export default function AccountLedgerPage() {
 
       {/* Balance Stat modal */}
       {showBalanceStat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowBalanceStat(false)}>
-          <div className="w-full max-w-3xl rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between rounded-t-lg px-4 py-2 text-white" style={{ background: HEADER_BG }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Balance Statistics"
+          onClick={() => setShowBalanceStat(false)}
+        >
+          {/* Capped at 90vh with the body scrolling inside, so a tall balance
+              list scrolls within the popup instead of pushing past the viewport
+              and inviting a scroll of the page behind it (KAN-104). */}
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex shrink-0 items-center justify-between rounded-t-lg px-4 py-2 text-white" style={{ background: HEADER_BG }}>
               <span className="text-sm font-semibold">Balance Statistics — {patientName}</span>
               <button onClick={() => setShowBalanceStat(false)} className="rounded p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>
             </div>
-            <div className="p-4">
+            <div className="overflow-y-auto p-4">
               <BalancesPanel balances={balances} />
             </div>
           </div>

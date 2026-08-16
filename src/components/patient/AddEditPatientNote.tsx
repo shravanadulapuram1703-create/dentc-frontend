@@ -18,6 +18,7 @@ import {
   useUpdatePatientNote,
 } from '@/api/generated/endpoints/patients/patients';
 import type { PatientNoteCreate, PatientNoteUpdate } from '@/api/generated/model';
+import { useUserNames } from '@/services/userDirectory';
 
 interface PatientData {
   id: string;
@@ -58,6 +59,10 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // "Modified By" shows a name, not a raw id (KAN-75). Declared with the other
+  // hooks, above the loading/error early-returns further down.
+  const { resolve: resolveUser } = useUserNames();
+
   const numericPatientId = Number(patientId);
   const numericNoteId = Number(noteId);
   const numericOfficeId = patient.officeId ? Number(patient.officeId) : undefined;
@@ -75,11 +80,20 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     query: { enabled: isExistingNote },
   });
 
+  // What the form looked like when it was last hydrated from the server. The
+  // discard prompt compares against this rather than against "is there any text
+  // at all", so opening a note and closing it without touching anything is
+  // silent (KAN-83).
+  const pristineRef = useRef({ noteType: 'Patient Notes', noteContent: '' });
+
   useEffect(() => {
     const note = noteQuery.data;
     if (!note) return;
-    setNoteType(note.note_type || 'Patient Notes');
-    setNoteContent(note.notes ?? '');
+    const hydratedType = note.note_type || 'Patient Notes';
+    const hydratedContent = note.notes ?? '';
+    setNoteType(hydratedType);
+    setNoteContent(hydratedContent);
+    pristineRef.current = { noteType: hydratedType, noteContent: hydratedContent };
   }, [noteQuery.data]);
 
   const createMutation = useCreatePatientNote();
@@ -204,14 +218,24 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     }
   };
 
+  const isReadOnly = mode === 'view';
+
+  // Only a real edit counts as unsaved work. The guard used to fire whenever the
+  // body was non-empty, so closing a note opened from the list always warned —
+  // in view mode the content is hydrated from the server and can never have been
+  // edited, and in edit mode simply opening a note tripped it too (KAN-83).
+  const hasUnsavedChanges =
+    !isReadOnly &&
+    (noteContent !== pristineRef.current.noteContent ||
+      noteType !== pristineRef.current.noteType ||
+      selectedFile !== null);
+
   const handleCancel = () => {
-    if ((noteContent.trim() || selectedFile) && !window.confirm('Discard unsaved changes?')) {
+    if (hasUnsavedChanges && !window.confirm('Discard unsaved changes?')) {
       return;
     }
     navigate(`/patient/${patientId}/notes`);
   };
-
-  const isReadOnly = mode === 'view';
   const isDocumentType = noteType === 'Document (Upload)' || noteType === 'Document (Scan)';
 
   if (isExistingNote && noteQuery.isLoading) {
@@ -255,9 +279,7 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
           <div className="flex items-center justify-end gap-10 px-6 py-2.5 bg-[#F1F5F9] border-b border-[#E2E8F0] text-sm">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-[#475569]">Modified By:</span>
-              <span className="text-[#1E293B]">
-                {modifiedBy != null ? `User #${modifiedBy}` : '—'}
-              </span>
+              <span className="text-[#1E293B]">{resolveUser(modifiedBy)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-[#475569]">Modified On:</span>
