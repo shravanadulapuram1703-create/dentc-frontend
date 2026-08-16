@@ -8,6 +8,7 @@
 // docs/messaging/MESSAGING_BACKEND_REQUIREMENTS.md.
 
 import type { UserRead } from "@/api/generated/model";
+import { userDisplayName } from "@/services/userDirectory";
 
 /** Per-message delivery lifecycle, from the sender's point of view. */
 export type DeliveryStatus =
@@ -125,11 +126,14 @@ export interface PresenceInfo {
 // Mappers / helpers
 // ---------------------------------------------------------------------------
 
-/** Best-effort display name from a `UserRead` (falls back to username/email). */
-export function userDisplayName(u: UserRead): string {
-  const full = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
-  return full || u.username || u.email || `User ${u.id}`;
-}
+/**
+ * Best-effort display name from a `UserRead` (falls back to username/email).
+ * Re-exported from the shared user directory so messaging and the audit columns
+ * that resolve `created_by` ids render a user identically. Imported at the top
+ * of the file as well, since a bare re-export would not bind it for the local
+ * callers below.
+ */
+export { userDisplayName };
 
 /** Derive up-to-two-letter initials from a display name. */
 export function initialsOf(name: string): string {

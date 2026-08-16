@@ -168,6 +168,18 @@
      * brittle hard-coded pixel offsets. SINGLE SOURCE OF TRUTH.
      */
     --app-nav-height: 120px;
+
+    /*
+     * Brand accent for native form-control chrome (KAN-37). Without this,
+     * `accent-color` resolves to `auto` and Chrome paints the select popup's
+     * highlighted option — plus checkboxes, radios, and range thumbs — in the
+     * Windows accent blue, which reads as a foreign colour next to the navy
+     * toolbar. Declared on :root because `accent-color` inherits, so one
+     * declaration themes every control in the app.
+     */
+    --color-brand-primary: #3A6EA5;
+    --color-brand-dark: #1F3A5F;
+    accent-color: var(--color-brand-primary);
   }
 
   html {
@@ -422,6 +434,20 @@
   select.hdr-filter-select option {
     background: #ffffff !important;
     color: var(--color-text-primary) !important;
+  }
+
+  /*
+   * Highlighted row in a native <select> popup (KAN-37). `accent-color` on
+   * :root handles Chrome 121+; these rules keep older Chrome and Firefox on the
+   * brand navy too. Declared last in the layer so they win over the white
+   * `option` backgrounds set for the scheduler header filters above.
+   */
+  select option:checked,
+  select option:hover,
+  select.hdr-filter-select option:checked,
+  select.hdr-filter-select option:hover {
+    background: var(--color-brand-primary) !important;
+    color: var(--color-white) !important;
   }
 
   /* Textarea */

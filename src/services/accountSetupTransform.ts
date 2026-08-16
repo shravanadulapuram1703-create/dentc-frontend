@@ -8,7 +8,7 @@
  * A few current UI fields don't line up 1:1 with the new backend shape; these are
  * mapped best-effort and documented in ACCOUNT_INFO_BACKEND_MAPPING_v2.md:
  *   - Required-field toggles (bool) ↔ *_required_mode (enum) — derived.
- *   - xvwebEnabled / cloud9Enabled (bool) ↔ xvweb_url / cloud9_url (string) — read-only derive; not written.
+ *   - xvwebUrl / cloud9Url map straight to xvweb_url / cloud9_url (were booleans; see KAN-14).
  *   - patientAddressRequired / responsiblePartyRequired — no backend column (not persisted).
  */
 
@@ -131,10 +131,13 @@ function mapAdvancedSnakeToCamel(row: Record<string, unknown>) {
     patientAddressRequired: false,
     responsiblePartyRequired: false,
     ediVendor: row.edi_vendor != null ? String(row.edi_vendor) : "",
-    // bool ↔ url shape mismatch — derive presence for display (not written back).
     transworldEnabled: Boolean(row.transworld_all_offices),
-    xvwebEnabled: Boolean(row.xvweb_url),
-    cloud9Enabled: Boolean(row.cloud9_url),
+    // XVWeb / Cloud 9 are URLs, matching the backend columns and the production
+    // screens (e.g. https://2829.dentiray.net). They were previously rendered as
+    // checkboxes derived from URL presence, which could not be written back — a
+    // boolean carries no URL — so toggling one silently saved nothing (KAN-14).
+    xvwebUrl: row.xvweb_url != null ? String(row.xvweb_url) : "",
+    cloud9Url: row.cloud9_url != null ? String(row.cloud9_url) : "",
     paymentPortalPostingOffice:
       row.payment_portal_posting_office != null ? String(row.payment_portal_posting_office) : "",
     postPaymentToResponsibleParty: Boolean(row.payment_portal_post_to_rp),
@@ -181,10 +184,12 @@ export function mapAdvancedFormToPutPayload(form: Record<string, unknown>) {
     payment_portal_post_to_rp: form.postPaymentToResponsibleParty,
     ai_assist_org_id: form.aiAssistOrgId || null,
     ai_assist_client_id: form.aiAssistClientId || null,
+    // Now that the UI edits the URLs directly, these round-trip (KAN-14). An
+    // emptied field clears the integration, so send null rather than "".
+    xvweb_url: String(form.xvwebUrl ?? "").trim() || null,
+    cloud9_url: String(form.cloud9Url ?? "").trim() || null,
   };
-  // xvweb_url / cloud9_url intentionally NOT written from boolean toggles (shape
-  // mismatch — see v2); patientAddressRequired / responsiblePartyRequired have no
-  // backend column.
+  // patientAddressRequired / responsiblePartyRequired have no backend column.
   if (typeof secret === "string" && secret.trim().length > 0) {
     base.ai_assist_client_secret = secret;
   }
