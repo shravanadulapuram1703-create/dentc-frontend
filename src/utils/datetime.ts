@@ -44,6 +44,18 @@ export function formatUsDateTime(
 /** Earliest birth date the practice accepts. */
 export const MIN_DOB_ISO = "1900-01-01";
 
+/**
+ * Split a `YYYY-MM-DD` string into numeric parts. Read from fixed offsets rather
+ * than `split("-")` so each part is a plain `number` for callers.
+ */
+function dobParts(dob: string): { year: number; month: number; day: number } {
+  return {
+    year: Number(dob.slice(0, 4)),
+    month: Number(dob.slice(5, 7)),
+    day: Number(dob.slice(8, 10)),
+  };
+}
+
 /** `YYYY-MM-DD` for today in the viewer's local timezone. */
 export function todayIsoDate(): string {
   const now = new Date();
@@ -72,7 +84,7 @@ export function validateDob(
     return "Enter a valid birth date (MM/DD/YYYY)";
   }
 
-  const [year, month, day] = dob.split("-").map(Number);
+  const { year, month, day } = dobParts(dob);
   const parsed = new Date(year, month - 1, day);
   if (
     parsed.getFullYear() !== year ||
@@ -96,7 +108,7 @@ export function validateDob(
 export function ageFromDob(dob: string): string {
   if (validateDob(dob)) return "";
 
-  const [year, month, day] = dob.split("-").map(Number);
+  const { year, month, day } = dobParts(dob);
   const today = new Date();
   let age = today.getFullYear() - year;
   const monthDiff = today.getMonth() - (month - 1);
