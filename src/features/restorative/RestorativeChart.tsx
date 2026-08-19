@@ -23,7 +23,7 @@ import {
   useCreateTreatmentPlanItem,
   getListTreatmentPlanItemsQueryKey,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
-import { useListProviders } from '@/api/generated/endpoints/organization/organization';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import type { ChartConditionRead, ChartMaterialRead, PatientProcedureRead, ProviderRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import AddAdaCodeModal, { type AdaEntry } from './AddAdaCodeModal';
 import InsuranceBenefitsModal from './InsuranceBenefitsModal';
@@ -107,9 +107,9 @@ export default function RestorativeChart() {
   const createPlanItem = useCreateTreatmentPlanItem();
 
   const plansQuery = useListTreatmentPlans({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
-  const providersQuery = useListProviders({ size: 200 });
   const plans = useMemo(() => plansQuery.data?.items ?? [], [plansQuery.data]);
-  const providers = useMemo<ProviderRead[]>(() => providersQuery.data?.items ?? [], [providersQuery.data]);
+  // Shared provider directory — same list, order and labels as every other screen.
+  const { providerRows: providers } = useProviderDirectory();
 
   // Timeline filter: when a from/to range is set, every charted source (conditions,
   // procedures, plan items, progress notes) is limited to that window.

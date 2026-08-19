@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { Loader2, Printer, BookOpen, FilePlus2 } from 'lucide-react';
-import { fetchProviders, type Provider } from '@/services/schedulerApi';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { providerOptionLabel } from '@/services/providerDirectory';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import type { PatientProcedureRead, PatientBalance } from '@/api/generated/model';
 import { createInsuranceClaim, getPatientBalance } from '@/api/generated/endpoints/billing/billing';
@@ -18,7 +19,6 @@ import {
   money,
   num,
   fmtDate,
-  providerLabelResolver,
   todayDisplay,
   toIsoDate,
   HEADER_GRADIENT,
@@ -61,9 +61,14 @@ export default function TransactionsEntryPage() {
   const [appliedIso, setAppliedIso] = useState(toIsoDate(todayDisplay()));
   const [tab, setTab] = useState<Tab>('add');
 
-  const [providers, setProviders] = useState<Provider[]>([]);
   const [providerId, setProviderId] = useState('');
   const [hygienistId, setHygienistId] = useState('');
+
+  // One shared provider directory for the whole app — scoped to this patient's
+  // office, but never empty (many offices have no provider rows on the legacy
+  // `office_id` scalar) and labels resolve against every provider so historical
+  // rows show a name instead of a raw "PRV-138".
+  const { providers, providerLabel } = useProviderDirectory(patient?.officeId);
 
   const [raw, setRaw] = useState<RawTransactions>({ procs: [], pays: [], adjs: [] });
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
@@ -77,7 +82,6 @@ export default function TransactionsEntryPage() {
   const { definitions: paymentDefs } = useDefinitions('payment_method');
   const { definitions: adjustmentDefs } = useDefinitions('adjustment');
 
-  const providerLabel = useMemo(() => providerLabelResolver(providers), [providers]);
   const paymentLabel = useMemo(() => {
     const m = new Map(paymentDefs.map((d) => [d.key1, d.description]));
     return (code: string | null | undefined) => (code ? m.get(code) || code : '');
@@ -86,17 +90,6 @@ export default function TransactionsEntryPage() {
     const m = new Map(adjustmentDefs.map((d) => [d.key1, d.description]));
     return (code: string | null | undefined) => (code ? m.get(code) || code : '');
   }, [adjustmentDefs]);
-
-  // Providers (office-scoped).
-  useEffect(() => {
-    let alive = true;
-    fetchProviders(patient?.officeId)
-      .then((list) => alive && setProviders(list))
-      .catch(() => alive && setProviders([]));
-    return () => {
-      alive = false;
-    };
-  }, [patient?.officeId]);
 
   // Network load keyed ONLY on stable primitives (patient, date, manual reloads).
   // Label resolvers are deliberately NOT deps — they change identity every render
@@ -277,7 +270,7 @@ export default function TransactionsEntryPage() {
             <option value="">-- Select Provider --</option>
             {providers.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.id} : {p.name}
+                {providerOptionLabel(p)}
               </option>
             ))}
           </select>
@@ -289,7 +282,7 @@ export default function TransactionsEntryPage() {
             <option value="">-- Preferred Hygienist --</option>
             {providers.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.id} : {p.name}
+                {providerOptionLabel(p)}
               </option>
             ))}
           </select>
@@ -407,6 +400,8 @@ export default function TransactionsEntryPage() {
             transactionDateIso={appliedIso}
             patientName={patientName}
             outstanding={outstanding}
+            providers={providers}
+            defaultProviderId={providerId}
             providerLabel={providerLabel}
             codeDescription={codeDescription}
             onApplied={refresh}

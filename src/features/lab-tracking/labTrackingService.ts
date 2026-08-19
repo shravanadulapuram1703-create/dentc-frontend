@@ -11,7 +11,7 @@ import {
   listAppointments,
   updateAppointment,
 } from '@/api/generated/endpoints/appointments/appointments';
-import { listProviders } from '@/api/generated/endpoints/organization/organization';
+import { fetchProviderDirectory } from '@/services/providerDirectory';
 import { listDefinitions } from '@/api/generated/endpoints/metadata/metadata';
 import type { AppointmentUpdate } from '@/api/generated/model';
 import { mapAppointmentToLabCase, type LabCase } from './labModel';
@@ -21,8 +21,8 @@ const PAGE = 200;
 /** id -> "Last, First" provider name map (capped at 200; sufficient per office). */
 async function resolveProviderNames(): Promise<Map<string, string>> {
   try {
-    const res = await listProviders({ size: PAGE });
-    return new Map((res.items ?? []).map((p) => [String(p.id), p.name]));
+    const rows = await fetchProviderDirectory();
+    return new Map(rows.map((p) => [p.id, p.name]));
   } catch {
     return new Map();
   }

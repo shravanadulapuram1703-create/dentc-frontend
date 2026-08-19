@@ -12,7 +12,14 @@ import {
   getListTreatmentPlansQueryKey,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
 import { useCreatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
-import { useListProviders, getOffice } from '@/api/generated/endpoints/organization/organization';
+import { getOffice } from '@/api/generated/endpoints/organization/organization';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import {
+  EMPTY_FEE_CONTEXT,
+  loadFeeScheduleContext,
+  resolveProcedureFee,
+  type FeeScheduleContext,
+} from '@/services/feeScheduleResolver';
 import { useGetPatient, uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
 import type { ProcedureCodeRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import {
@@ -21,9 +28,7 @@ import {
   encodePhase,
   decodePhase,
   genId,
-  num,
   planNameForTid,
-  providerLabelResolver,
   type TxStatus,
   type TxRow,
 } from './txModel';
@@ -72,8 +77,22 @@ export default function TreatmentPlanPage() {
   });
   const items: TreatmentPlanItemRead[] = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
 
-  const providersQuery = useListProviders({ size: 200 });
-  const providers = useMemo(() => providersQuery.data?.items ?? [], [providersQuery.data]);
+  // Shared provider directory — same list, order and labels as every other screen.
+  const { providerRows: providers, providerLabel } = useProviderDirectory();
+
+  // Fee schedules from Setup → Insurance → Fee Schedules, used to price added
+  // procedures instead of falling back to the code's default fee.
+  const [feeCtx, setFeeCtx] = useState<FeeScheduleContext>(EMPTY_FEE_CONTEXT);
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    loadFeeScheduleContext({ patient_id: numericId, office_id: officeId })
+      .then((ctx) => alive && setFeeCtx(ctx))
+      .catch(() => alive && setFeeCtx(EMPTY_FEE_CONTEXT));
+    return () => {
+      alive = false;
+    };
+  }, [validId, numericId, officeId]);
 
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
 
@@ -94,8 +113,6 @@ export default function TreatmentPlanPage() {
     for (const [planId, tid] of tidByPlan) m.set(tid, planId);
     return m;
   }, [tidByPlan]);
-
-  const providerLabel = useMemo(() => providerLabelResolver(providers), [providers]);
 
   const allRows = useMemo(
     () => buildRows(items, tidByPlan, providerLabel, codeMap),
@@ -232,14 +249,18 @@ export default function TreatmentPlanPage() {
   const onAdd = (code: ProcedureCodeRead) =>
     run('Add procedure', async () => {
       const plan_id = await ensurePlanForTid(entry.tid);
+      // Price from the fee schedule that applies to this patient/office/provider,
+      // so a planned procedure carries the same patient/insurance split the
+      // charge will (Setup → Insurance → Fee Schedules).
+      const priced = await resolveProcedureFee(feeCtx, code.code, { default_fee: code.default_fee });
       await createItem.mutateAsync({
         data: {
           id: genId(),
           plan_id,
           procedure_code: code.code,
           description: code.description,
-          fee: num(code.default_fee),
-          insurance_estimate: 0,
+          fee: priced.fee,
+          insurance_estimate: priced.insurance_estimate,
           priority: entry.order,
           phase_id: entry.phase,
           billing_order: encodePhase(entry.phase),
@@ -344,14 +365,19 @@ export default function TreatmentPlanPage() {
       if (args.use_new_fees) {
         const map = await loadProcedureCodes();
         for (const it of targets) {
-          const fee = num(map.get(it.procedure_code)?.default_fee);
-          await updateItem.mutateAsync({ itemId: it.id, data: { fee } });
+          const priced = await resolveProcedureFee(feeCtx, it.procedure_code, {
+            default_fee: map.get(it.procedure_code)?.default_fee,
+          });
+          await updateItem.mutateAsync({
+            itemId: it.id,
+            data: { fee: priced.fee, insurance_estimate: priced.insurance_estimate },
+          });
         }
-        toast.success(`Refreshed fees on ${targets.length} procedure(s)`);
+        toast.success(`Refreshed fees on ${targets.length} procedure(s) from the current fee schedules`);
       }
-      // Insurance benefit re-estimation requires a backend coverage/estimate
-      // endpoint that does not exist yet (see PLAN-3 in the dev report).
-      toast.info('Insurance benefit re-estimation is not yet available (backend gap PLAN-3).');
+      // The insurance figure above is the fee schedule's stated insurance portion.
+      // Re-estimating against plan coverage %, deductibles and annual maximums
+      // still needs a backend estimate endpoint (see PLAN-3 in the dev report).
     });
 
   // ---- Edit Treatment modal (click Diag Date) -----------------------------

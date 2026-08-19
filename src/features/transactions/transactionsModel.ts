@@ -220,6 +220,7 @@ export function paymentRow(
   p: PatientPaymentRead,
   patientName: string,
   codeLabel: (code: string | null | undefined) => string,
+  providerLabel: (id: string | null | undefined) => string,
 ): EntryRow {
   return {
     id: p.id,
@@ -234,7 +235,7 @@ export function paymentRow(
     surface: '',
     description: codeLabel(p.payment_method) || 'Payment',
     bill: '',
-    provider: '',
+    provider: p.provider_name || providerLabel(p.provider_id),
     est_pat: 0,
     est_ins: 0,
     amount: -num(p.amount),
@@ -245,6 +246,7 @@ export function adjustmentRow(
   a: PatientAdjustmentRead,
   patientName: string,
   codeLabel: (code: string | null | undefined) => string,
+  providerLabel: (id: string | null | undefined) => string,
 ): EntryRow {
   return {
     id: String(a.id),
@@ -259,7 +261,7 @@ export function adjustmentRow(
     surface: '',
     description: codeLabel(a.adjustment_type) || 'Adjustment',
     bill: '',
-    provider: '',
+    provider: providerLabel(a.provider_id),
     est_pat: 0,
     est_ins: 0,
     amount: -num(a.amount),

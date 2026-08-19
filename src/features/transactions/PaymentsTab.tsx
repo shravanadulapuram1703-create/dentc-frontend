@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Check, XCircle } from 'lucide-react';
 import type { PatientProcedureRead, AllocationLine } from '@/api/generated/model';
 import { createPatientPayment, allocatePayment } from '@/api/generated/endpoints/billing/billing';
 import { useDefinitions } from '@/hooks/useDefinitions';
+import { providerOptionLabel, type ProviderOption } from '@/services/providerDirectory';
 import { fmtDate, genId, money, num, HEADER_GRADIENT, ACCENT_BLUE, type EntryKind } from './transactionsModel';
 
 interface Props {
@@ -11,6 +12,9 @@ interface Props {
   transactionDateIso: string;
   patientName: string;
   outstanding: PatientProcedureRead[];
+  providers: ProviderOption[];
+  /** Provider chosen in the page toolbar — seeds the payment's provider. */
+  defaultProviderId: string;
   providerLabel: (id: string | null | undefined) => string;
   codeDescription: (code: string) => string;
   onApplied: () => void;
@@ -22,6 +26,8 @@ export default function PaymentsTab({
   transactionDateIso,
   patientName,
   outstanding,
+  providers,
+  defaultProviderId,
   providerLabel,
   codeDescription,
   onApplied,
@@ -38,7 +44,11 @@ export default function PaymentsTab({
   const [checkNumber, setCheckNumber] = useState('');
   const [bankNumber, setBankNumber] = useState('');
   const [applyTo, setApplyTo] = useState<'patient' | 'insurance'>('patient');
+  const [providerId, setProviderId] = useState(defaultProviderId);
   const [notes, setNotes] = useState('');
+
+  // Follow the toolbar provider until the user overrides it here.
+  useEffect(() => setProviderId(defaultProviderId), [defaultProviderId]);
 
   const [allocAmounts, setAllocAmounts] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -62,6 +72,7 @@ export default function PaymentsTab({
     setBankNumber('');
     setNotes('');
     setMethod('');
+    setProviderId(defaultProviderId);
     setAllocAmounts({});
     setSelected(new Set());
   };
@@ -91,6 +102,7 @@ export default function PaymentsTab({
         amount: amt.toFixed(2),
         payment_type: applyTo,
         payment_method: method,
+        ...(providerId ? { provider_id: providerId } : {}),
         ...(checkNumber ? { check_number: checkNumber } : {}),
         ...(notes ? { notes } : {}),
       });
@@ -193,16 +205,33 @@ export default function PaymentsTab({
               />
             </Labeled>
           </div>
-          <Labeled label="Apply To">
-            <select
-              value={applyTo}
-              onChange={(e) => setApplyTo(e.target.value as 'patient' | 'insurance')}
-              className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
-            >
-              <option value="patient">Responsible Party</option>
-              <option value="insurance">Insurance</option>
-            </select>
-          </Labeled>
+          <div className="grid grid-cols-2 gap-3">
+            <Labeled label="Apply To">
+              <select
+                value={applyTo}
+                onChange={(e) => setApplyTo(e.target.value as 'patient' | 'insurance')}
+                className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+              >
+                <option value="patient">Responsible Party</option>
+                <option value="insurance">Insurance</option>
+              </select>
+            </Labeled>
+            <Labeled label="Provider">
+              <select
+                value={providerId}
+                onChange={(e) => setProviderId(e.target.value)}
+                className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+                title="Provider credited with this payment"
+              >
+                <option value="">-- No Provider --</option>
+                {providers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {providerOptionLabel(p)}
+                  </option>
+                ))}
+              </select>
+            </Labeled>
+          </div>
           <Labeled label="Notes">
             <input
               value={notes}

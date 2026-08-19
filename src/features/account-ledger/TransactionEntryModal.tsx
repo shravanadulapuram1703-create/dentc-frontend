@@ -4,9 +4,10 @@
 // payments and adjustments without leaving the ledger, fully end-to-end. The
 // ledger refreshes after every post via onChanged().
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
-import { fetchProviders, type Provider } from '@/services/schedulerApi';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { providerOptionLabel } from '@/services/providerDirectory';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import type { PatientProcedureRead } from '@/api/generated/model';
 import {
@@ -14,7 +15,6 @@ import {
   codeDescription,
 } from '@/features/transactions/transactionsService';
 import {
-  providerLabelResolver,
   todayDisplay,
   toIsoDate,
 } from '@/features/transactions/transactionsModel';
@@ -48,16 +48,17 @@ export default function TransactionEntryModal({
   const [tab, setTab] = useState<Tab>(initialTab);
   const [transactionDate, setTransactionDate] = useState(todayDisplay());
   const [appliedIso, setAppliedIso] = useState(toIsoDate(todayDisplay()));
-  const [providers, setProviders] = useState<Provider[]>([]);
   const [providerId, setProviderId] = useState('');
+
+  // Shared provider directory — same list, order and labels as the full-page
+  // Transactions Entry screen and every other provider picker.
+  const { providers, providerLabel } = useProviderDirectory(officeId);
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
 
   const { definitions: paymentDefs } = useDefinitions('payment_method');
   const { definitions: adjustmentDefs } = useDefinitions('adjustment');
-
-  const providerLabel = useMemo(() => providerLabelResolver(providers), [providers]);
 
   // Lock body scroll while open.
   useEffect(() => {
@@ -66,17 +67,6 @@ export default function TransactionEntryModal({
       document.body.style.overflow = '';
     };
   }, []);
-
-  // Providers (office-scoped).
-  useEffect(() => {
-    let alive = true;
-    fetchProviders(officeId != null ? String(officeId) : undefined)
-      .then((list) => alive && setProviders(list))
-      .catch(() => alive && setProviders([]));
-    return () => {
-      alive = false;
-    };
-  }, [officeId]);
 
   // Outstanding (claim/payment-eligible) procedures for the Payments/Adjustments grids.
   useEffect(() => {
@@ -146,7 +136,7 @@ export default function TransactionEntryModal({
               <option value="">-- Select Provider --</option>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.id} : {p.name}
+                  {providerOptionLabel(p)}
                 </option>
               ))}
             </select>
@@ -195,6 +185,8 @@ export default function TransactionEntryModal({
               transactionDateIso={appliedIso}
               patientName={patientName}
               outstanding={outstanding}
+              providers={providers}
+              defaultProviderId={providerId}
               providerLabel={providerLabel}
               codeDescription={codeDescription}
               onApplied={handlePosted}

@@ -18,14 +18,13 @@ import {
   useCreatePrescription,
   useUpdatePrescription,
 } from '@/api/generated/endpoints/clinical/clinical';
-import { useListProviders } from '@/api/generated/endpoints/organization/organization';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import type { PrescriptionLibraryRead } from '@/api/generated/model';
 import { loadRxLibrary } from './prescriptionsService';
 import {
   applyLibraryDrug,
   blankDraft,
   isToday,
-  providerLabelResolver,
   sortRows,
   toCreateBody,
   type RxDraft,
@@ -52,9 +51,8 @@ export default function PrescriptionsPage() {
   );
   const rows = useMemo(() => sortRows(rxQuery.data?.items ?? []), [rxQuery.data]);
 
-  const providersQuery = useListProviders({ size: 200 });
-  const providers = useMemo(() => providersQuery.data?.items ?? [], [providersQuery.data]);
-  const providerLabel = useMemo(() => providerLabelResolver(providers), [providers]);
+  // Shared provider directory — same list, order and labels as every other screen.
+  const { providerRows: providers, providerLabel } = useProviderDirectory();
 
   const [library, setLibrary] = useState<PrescriptionLibraryRead[]>([]);
   useEffect(() => {
