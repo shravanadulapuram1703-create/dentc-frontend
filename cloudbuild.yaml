@@ -16,6 +16,12 @@ substitutions:
   _REGION: "us-central1"
   _REPO: "dentc"
   _IMAGE: "dentc-frontend"
+  # Help Center → Jira. `proxy` routes tickets through the backend (which holds the
+  # Jira secret); the project key MUST exist on the configured Jira site. Leaving
+  # these unset makes the bundle fall back to `demo` — tickets go to localStorage
+  # and never reach Jira.
+  _JIRA_MODE: "proxy"
+  _JIRA_PROJECT_KEY: "KAN"
 
 steps:
   - name: gcr.io/cloud-builders/docker
@@ -25,6 +31,10 @@ steps:
       - VITE_API_BASE_URL=${_API_BASE_URL}
       - --build-arg
       - VITE_APP_ENV=production
+      - --build-arg
+      - VITE_JIRA_MODE=${_JIRA_MODE}
+      - --build-arg
+      - VITE_JIRA_PROJECT_KEY=${_JIRA_PROJECT_KEY}
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
       - .
