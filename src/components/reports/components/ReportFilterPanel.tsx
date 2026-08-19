@@ -3,7 +3,8 @@
 // the ReportShell commits on "Run report".
 import { Play, RotateCcw, Loader2 } from "lucide-react";
 import { PRESET_LABELS, type RangePreset } from "../lib/reportRange";
-import { useOffices, useProviders, officeName, providerName } from "../lib/useReportRefData";
+import { useOffices, useProviders, officeName } from "../lib/useReportRefData";
+import { providerOptionLabel } from "@/services/providerDirectory";
 import type { AnyReportDefinition } from "../types";
 
 export interface DraftFilters {
@@ -131,7 +132,7 @@ export default function ReportFilterPanel({ def, draft, onChange, onRun, onReset
               <option value="">All providers</option>
               {(providersQ.data ?? []).map((p) => (
                 <option key={p.id} value={p.id}>
-                  {providerName(p)}
+                  {providerOptionLabel(p)}
                 </option>
               ))}
             </select>

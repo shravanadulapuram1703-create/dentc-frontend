@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X, Info } from "lucide-react";
 import {
-  listProviders,
   listOfficeGroups,
 } from "@/api/generated/endpoints/organization/organization";
+import { fetchProviderDirectory } from "@/services/providerDirectory";
 import {
   listFeeSchedules,
   createFeeSchedule,
@@ -95,8 +95,11 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
         setUcrFeeSchedules([]);
       });
 
-    listProviders({ size: 200 })
-      .then((res) => setProviders((res.items ?? []).map((p) => ({ id: String(p.id), name: p.name }))))
+    // Shared provider directory (active, name-sorted) — same list as every other screen.
+    fetchProviderDirectory()
+      .then((rows) =>
+        setProviders(rows.filter((p) => p.is_active).map((p) => ({ id: p.id, name: p.name }))),
+      )
       .catch(() => setProviders([]));
 
     listOfficeGroups({ size: 200 })

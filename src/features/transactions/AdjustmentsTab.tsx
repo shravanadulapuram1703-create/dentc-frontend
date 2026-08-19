@@ -4,6 +4,7 @@ import type { PatientProcedureRead, PatientAdjustmentCreate } from '@/api/genera
 import { createPatientAdjustment } from '@/api/generated/endpoints/billing/billing';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import { ACCENT_BLUE } from './transactionsModel';
+import { providerOptionLabel, type ProviderOption } from '@/services/providerDirectory';
 import { ProceduresToPost } from './PaymentsTab';
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
   transactionDateIso: string;
   patientName: string;
   outstanding: PatientProcedureRead[];
-  providers: { id: string; name: string }[];
+  providers: ProviderOption[];
   providerLabel: (id: string | null | undefined) => string;
   codeDescription: (code: string) => string;
   onApplied: () => void;
@@ -197,7 +198,7 @@ export default function AdjustmentsTab({
                 <option value="">All Providers</option>
                 {providers.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.id} — {p.name}
+                    {providerOptionLabel(p)}
                   </option>
                 ))}
               </select>

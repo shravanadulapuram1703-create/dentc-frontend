@@ -723,3 +723,49 @@
     }
   }
 }
+/* ---------------------------------------------------------------------------
+   Letters — on-screen "paper sheet" preview (features/letters).
+   The markup is rebuilt from the whitelisted block structure produced by
+   letterHtml.blocks_to_html, so only these four classes ever appear.
+   --------------------------------------------------------------------------- */
+.letter-sheet {
+  color: #111827;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.letter-sheet .ltr-para,
+.letter-sheet .ltr-item,
+.letter-sheet .ltr-from,
+.letter-sheet .ltr-to {
+  min-height: 1.45em;
+}
+
+.letter-sheet .ltr-from,
+.letter-sheet .ltr-to {
+  white-space: pre-wrap;
+}
+
+.letter-sheet .ltr-to {
+  margin-top: 0.4em;
+}
+
+.letter-sheet .ltr-item {
+  display: flex;
+  gap: 0.5em;
+  margin: 0.15em 0;
+}
+
+.letter-sheet .ltr-marker {
+  flex: 0 0 auto;
+  min-width: 1.4em;
+}
+
+.letter-sheet strong {
+  font-weight: 700;
+}
+
+.letter-sheet u {
+  text-decoration: underline;
+}

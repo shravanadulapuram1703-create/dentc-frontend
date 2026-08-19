@@ -24,7 +24,8 @@ import {
   deletePatientSecInsPaymentPlan,
   getPatientBalance,
 } from "@/api/generated/endpoints/billing/billing";
-import { listProviders, listOffices } from "@/api/generated/endpoints/organization/organization";
+import { listOffices } from "@/api/generated/endpoints/organization/organization";
+import { fetchProviderRows } from "@/services/providerDirectory";
 import { listTreatmentPlans } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listPatientInsurance } from "@/api/generated/endpoints/patients/patients";
 import { getInsurancePlan, getInsuranceCarrier } from "@/api/generated/endpoints/insurance/insurance";
@@ -251,8 +252,8 @@ export async function loadPlanContext(patient_id: number): Promise<PlanContext> 
     listTreatmentPlans({ patient_id, size: 200 })
       .then((r) => r.items ?? [])
       .catch(() => [] as TreatmentPlanRead[]),
-    listProviders({ size: 200, is_active: true })
-      .then((r) => r.items ?? [])
+    fetchProviderRows()
+      .then((rows) => rows.filter((p) => p.is_active))
       .catch(() => [] as ProviderRead[]),
     loadProcedureCodes().catch(() => new Map<string, ProcedureCodeRead>()),
     listPatientInsurance({ patient_id, size: 50 })

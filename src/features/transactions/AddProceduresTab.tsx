@@ -3,7 +3,14 @@ import { Loader2, Plus } from 'lucide-react';
 import type { ProcedureCodeRead, PatientProcedureCreate } from '@/api/generated/model';
 import { createPatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import ToothSurfaceEnforcement from '@/components/patient/ToothSurfaceEnforcement';
-import { PROC_CATEGORIES, genId, num, HEADER_GRADIENT, ACCENT_BLUE, type ProcCategory } from './transactionsModel';
+import {
+  EMPTY_FEE_CONTEXT,
+  loadFeeScheduleContext,
+  resolveProcedureFee,
+  type FeeScheduleContext,
+  type ResolvedProcedureFee,
+} from '@/services/feeScheduleResolver';
+import { PROC_CATEGORIES, genId, money, num, HEADER_GRADIENT, ACCENT_BLUE, type ProcCategory } from './transactionsModel';
 import { codesInCategory, filterCodes } from './transactionsService';
 
 interface Props {
@@ -65,6 +72,42 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fee schedules configured in Setup → Insurance → Fee Schedules. Loaded once
+  // per patient/office/provider, then every code is priced from it.
+  const [feeCtx, setFeeCtx] = useState<FeeScheduleContext>(EMPTY_FEE_CONTEXT);
+  const [quote, setQuote] = useState<ResolvedProcedureFee | null>(null);
+  const [quoting, setQuoting] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    loadFeeScheduleContext({ patient_id: patientId, office_id: officeId, provider_id: providerId || null })
+      .then((ctx) => alive && setFeeCtx(ctx))
+      .catch(() => alive && setFeeCtx(EMPTY_FEE_CONTEXT));
+    return () => {
+      alive = false;
+    };
+  }, [patientId, officeId, providerId]);
+
+  // Price the highlighted code so the fee split is visible before it is posted.
+  useEffect(() => {
+    if (!selected) {
+      setQuote(null);
+      return;
+    }
+    let alive = true;
+    setQuoting(true);
+    resolveProcedureFee(feeCtx, selected.code, {
+      default_fee: selected.default_fee,
+      on_date: transactionDateIso,
+    })
+      .then((q) => alive && setQuote(q))
+      .catch(() => alive && setQuote(null))
+      .finally(() => alive && setQuoting(false));
+    return () => {
+      alive = false;
+    };
+  }, [selected, feeCtx, transactionDateIso]);
+
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -101,7 +144,12 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
       setError('Missing office context for this patient.');
       return;
     }
-    const fee = num(code.default_fee);
+    // Price from the applicable fee schedule. Resolve at post time rather than
+    // trusting the preview — the selection may have changed since it was shown.
+    const priced = await resolveProcedureFee(feeCtx, code.code, {
+      default_fee: code.default_fee,
+      on_date: transactionDateIso,
+    });
     const body: PatientProcedureCreate = {
       id: genId(),
       patient_id: patientId,
@@ -112,11 +160,12 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
       tooth: extras.tooth || null,
       surface: extras.surface || null,
       quadrant: extras.quadrant || null,
-      fee,
-      // patient/insurance estimates are client-supplied until the backend derives
-      // them from coverage + fee schedule (backend gap CHG-1).
-      patient_estimate: fee,
-      insurance_estimate: 0,
+      fee: priced.fee,
+      // The fee schedule entry already stores the segregation (Setup's "Patient
+      // Fee" / "Insurance Fee" columns), so the estimates come straight from it.
+      patient_estimate: priced.patient_estimate,
+      insurance_estimate: priced.insurance_estimate,
+      ...(priced.ucr_fee != null ? { ucr_fee: priced.ucr_fee } : {}),
       apply_to: 'P',
     };
     setPosting(true);
@@ -215,6 +264,8 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
 
         {error && <div className="mb-2 rounded bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{error}</div>}
 
+        {selected && <FeeBreakdown code={selected.code} quote={quote} loading={quoting} />}
+
         <div className="max-h-72 overflow-y-auto rounded border border-slate-200">
           <table className="w-full text-xs">
             <thead className="sticky top-0 text-white" style={{ background: HEADER_GRADIENT }}>
@@ -273,6 +324,72 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
         />
       )}
     </div>
+  );
+}
+
+/**
+ * The fee split the selected code will post with, read from the fee schedule
+ * that applies to this patient/office/provider. Shown before posting so the
+ * front desk can see the patient vs insurance segregation, and which schedule
+ * produced it.
+ */
+function FeeBreakdown({
+  code,
+  quote,
+  loading,
+}: {
+  code: string;
+  quote: ResolvedProcedureFee | null;
+  loading: boolean;
+}) {
+  const priced = quote?.source === 'fee_schedule';
+  return (
+    <div className="mb-2 rounded border border-slate-200 bg-[#F7F9FC] px-3 py-2">
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-[#16406e]">{code} fee</span>
+        {loading || !quote ? (
+          <span className="text-xs text-slate-400">Pricing…</span>
+        ) : (
+          <>
+            <Amount label="Fee" value={quote.fee} className="text-slate-900" strong />
+            <Amount label="Est Ins" value={quote.insurance_estimate} className="text-blue-700" />
+            <Amount label="Est Pat" value={quote.patient_estimate} className="text-slate-900" />
+            {quote.ucr_fee != null && <Amount label="UCR" value={quote.ucr_fee} className="text-slate-500" />}
+          </>
+        )}
+      </div>
+      {!loading && quote && (
+        <div className={`mt-1 text-[11px] ${priced ? 'text-slate-500' : 'text-amber-700'}`}>
+          {priced ? 'Fee schedule: ' : ''}
+          {quote.reason}
+        </div>
+      )}
+      {!loading && quote?.conflict && (
+        <div className="mt-1 text-[11px] font-semibold text-amber-700">
+          Conflicting fee schedule assignment — {quote.conflict}. Check Setup → Insurance → Fee
+          Schedules → Assignments.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Amount({
+  label,
+  value,
+  className,
+  strong,
+}: {
+  label: string;
+  value: number;
+  className: string;
+  strong?: boolean;
+}) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span className="text-[11px] font-semibold text-slate-500">{label}</span>
+      <span className={`tabular-nums text-xs ${strong ? 'font-bold' : ''} ${className}`}>{money(value)}</span>
+    </span>
   );
 }
 

@@ -31,6 +31,7 @@ import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedu
 import { listTreatmentPlans } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
 import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
+import { fetchProvidersForOffice } from "@/services/providerDirectory";
 import {
   getPatient,
   getPatientContext,
@@ -807,22 +808,32 @@ export const fetchOperatories = async (
   }));
 };
 
+/**
+ * Providers to offer for an office. Delegates to the shared provider directory
+ * (`src/services/providerDirectory.ts`) so this and every other screen show the
+ * same list in the same order under the same labels.
+ *
+ * It used to filter on the `office_id` scalar alone, which is a provider's single
+ * home office — providers are multi-office, so most offices came back EMPTY
+ * (office 10 has 0 rows while 92 of 97 providers sit on office 1) and every screen
+ * built on this returned an unusable picker. The directory unions the real
+ * office-assignment join with that scalar and falls back to the full list when the
+ * office resolves to nobody.
+ */
 export const fetchProviders = async (
   officeId?: string,
 ): Promise<Provider[]> => {
-  const oid = officeIdNum(officeId);
-  const res = await listProviders({
-    ...(oid != null ? { office_id: oid } : {}),
-    ...PAGE,
-  });
-  return (res.items ?? []).map((p) => ({
-    id: String(p.id),
-    name: p.name,
-    office: p.office_id != null ? String(p.office_id) : undefined,
-    scheduler_color: p.scheduler_color ?? null,
-    role: p.role ?? undefined,
-    title: p.title ?? null,
-  }));
+  const scoped = await fetchProvidersForOffice(officeId);
+  return scoped
+    .filter((p) => p.is_active)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      office: p.office_id != null ? String(p.office_id) : undefined,
+      scheduler_color: p.scheduler_color,
+      role: p.role ?? undefined,
+      title: p.title,
+    }));
 };
 
 /** True when the provider's role marks them as a hygienist. */

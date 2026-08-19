@@ -16,13 +16,12 @@ import {
   Paperclip,
   X,
 } from 'lucide-react';
-import { fetchProviders, type Provider } from '@/services/schedulerApi';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { createInsuranceClaim } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import { getPatientBalances, type BalancesResponse } from '@/services/ledgerApi';
-import { providerLabelResolver } from '@/features/transactions/transactionsModel';
 import PatientLedger from '@/components/pages/PatientLedger';
 import TransactionEntryModal from './TransactionEntryModal';
 import {
@@ -90,7 +89,6 @@ export default function AccountLedgerPage() {
   });
   const [plans, setPlans] = useState<PaymentPlans>({ regular: null, orthoIns: null, secIns: null });
   const [balances, setBalances] = useState<BalancesResponse | null>(null);
-  const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -154,14 +152,6 @@ export default function AccountLedgerPage() {
     return () => { alive = false; };
   }, [validId, patientId, reloadKey]);
 
-  useEffect(() => {
-    let alive = true;
-    fetchProviders(patient?.officeId)
-      .then((list) => alive && setProviders(list))
-      .catch(() => alive && setProviders([]));
-    return () => { alive = false; };
-  }, [patient?.officeId]);
-
   // Close the Sort-By menu on outside click.
   useEffect(() => {
     if (!showSortMenu) return;
@@ -187,7 +177,9 @@ export default function AccountLedgerPage() {
     return (id: number | null | undefined) => (id != null ? m.get(id) || String(id) : '-');
   }, [data.users]);
 
-  const providerFn = useMemo(() => providerLabelResolver(providers), [providers]);
+  // Resolve provider ids against the WHOLE directory, not the office-scoped subset —
+  // a ledger row can be posted by a provider who no longer works at this office.
+  const { providerLabel: providerFn } = useProviderDirectory();
   const paymentFn = useMemo(() => {
     const m = new Map(paymentDefs.map((d) => [d.key1, d.description]));
     return (code: string | null | undefined) => (code ? m.get(code) || code : '');

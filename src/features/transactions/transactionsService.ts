@@ -95,8 +95,8 @@ export function buildEntryRows(
 ): EntryRow[] {
   return [
     ...raw.procs.map((p) => procedureRow(p, patientName, providerLabel, codeDescription)),
-    ...raw.pays.map((p) => paymentRow(p, patientName, paymentLabel)),
-    ...raw.adjs.map((a) => adjustmentRow(a, patientName, adjustmentLabel)),
+    ...raw.pays.map((p) => paymentRow(p, patientName, paymentLabel, providerLabel)),
+    ...raw.adjs.map((a) => adjustmentRow(a, patientName, adjustmentLabel, providerLabel)),
   ];
 }
 

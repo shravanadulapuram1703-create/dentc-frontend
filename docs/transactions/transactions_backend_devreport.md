@@ -340,3 +340,109 @@ desk can confirm at a glance what the patient owes before setting the appointmen
   visit and its appointment, so it cannot flip the status. **Suggested:** surface the day's
   appointment id on the patient/visit context (or a `…/patients/{id}/todays-appointment`) so a
   "Check Out" button here can PATCH the status.
+
+## Provider list unification — SHIPPED 2026-08-18
+Two defects reported against the Payments tab, both fixed on the frontend.
+
+**1. The provider list differed on every screen.** Each screen issued its own `listProviders(...)` with
+a different filter set. The damaging variant was `fetchProviders(officeId)` (Scheduler / Transactions
+Entry / Account Ledger / Add Procedure / Edit Patient / Add New Patient / Operatories / report
+filters), which filtered on the **`office_id` scalar** — a provider's single *home* office. Providers
+are multi-office, so most offices returned an **empty** list:
+
+| query | live result (tenant 1) |
+| --- | --- |
+| `GET /providers?size=200` | 97 (95 active) |
+| `GET /providers?office_id=1` | 92 |
+| `GET /providers?office_id=9` | 2 |
+| `GET /providers?office_id=10` | **0** |
+
+Office 10 is the office in the reported screenshot: the toolbar provider dropdown was empty, and the
+grid's PROVIDER column fell back to raw ids (`PRV-138`) because the *label resolver* was built from
+the same empty office-scoped list.
+
+Fixed by `src/services/providerDirectory.ts` + `src/hooks/useProviderDirectory.ts`, now the single
+source for every provider picker and every id→name resolution:
+- one canonical, fully-paged, name-sorted directory of all providers;
+- office scoping = `GET /offices/{id}/providers` (the real many-to-many join) ∪ the legacy `office_id`
+  scalar, **falling back to the tenant list when that union is empty**;
+- labels always resolve against the *full* directory, so a row posted by an out-of-office or
+  deactivated provider still renders a name;
+- one option format everywhere: `Name (short_id)`.
+
+**2. Payments had no provider selection.** `PatientPaymentCreate.provider_id` already exists, so the
+Payments tab now has a **Provider** select (seeded from the toolbar provider) and posts `provider_id`.
+Payment and adjustment rows in the grid now render the PROVIDER column (previously always blank);
+payments use the backend's `provider_name` when present. Verified live: payment posted with
+`provider_id: prov-23423-9`, returned `provider_name: "TEST PROVIDER"`, rendered in the grid.
+
+### PROV-1 — office↔provider assignment table is effectively unseeded 🟡
+`GET /offices/{id}/providers` returns 1 row for office 1, 0 for office 9, and 1 (an **inactive**
+provider) for office 10, while `/providers` holds 97. Until this join is backfilled, office scoping
+cannot be trusted and the frontend falls back to the tenant-wide list. **Suggested:** backfill
+office-providers from the legacy home office plus historical `patient_procedures.provider_id` usage.
+
+### PROV-2 — `bank_number` exists on the live API but not in `openapi.json` 🟡
+`GET/PATCH /patient-payments/{id}` returns and accepts `bank_number`, but the field is absent from the
+generated client, so the Payments tab's **Bank #** input still cannot be persisted (see CHG-5). This
+looks like a stale spec rather than a missing feature — re-running `npm run api:sync` against the
+current backend should close CHG-5.
+
+## Fee schedules applied to charges — SHIPPED 2026-08-18
+Adding a procedure posted `fee = procedure_code.default_fee`, `patient_estimate = fee`,
+`insurance_estimate = 0`. Since `default_fee` is `0.00` on every migrated code, every charge posted as
+**0.00** — visible all over the Transactions grid, the Ledger and Procedures-To-Post. The fee schedules
+built in **Setup → Insurance → Fee Schedules** (40 schedules, 13,491 entries) were never consulted.
+
+`src/services/feeScheduleResolver.ts` now prices a charge from those schedules, and is used by
+Transactions Entry → Add Procedures (and therefore the Account Ledger's entry modal) and by Treatment
+Plans (both adding an item and *Use New Fees*).
+
+### Which schedule applies
+`fee_schedule_assignments` binds a schedule to any mix of plan / carrier / provider / office / office
+group / specialty. A row is a candidate when **every key it sets matches** the charge; specificity is
+the number of keys it sets, so the most specific matching row wins (ties → newest row). Below that sit
+the office's `default_fee_schedule_id`, then the code's `default_fee`. Inactive schedules are excluded.
+When two equally-specific assignments price a code differently the UI says so instead of silently
+picking one.
+
+### How the split is read — settled from migrated data, not assumed
+`fee = entry.patient_fee`, `insurance_estimate = entry.insurance_fee`,
+`patient_estimate = fee − insurance_estimate`, `ucr_fee` = the office UCR schedule's `patient_fee`.
+The legacy charges already in this database line up column-for-column:
+
+| posted charge | entry that produced it |
+| --- | --- |
+| office 14 `D0120` fee 44.00, ucr 50.00 | fs 24 `patient_fee` 44.00 / fs 34 (UCR) 50.00 |
+| office 4 `D0120` fee 47.00, ucr 145.00 | fs 25 `patient_fee` 47.00 / fs 4 (UCR) 145.00 |
+| office 3 `D0120` fee 25.41, ucr 145.00 | fs 28 `patient_fee` 25.41 / fs 4 (UCR) 145.00 |
+
+So `patient_fee` is the schedule's fee for the code; `insurance_fee` is a separate payer-side amount
+(`0.00` in every migrated schedule — only staff-entered rows set it). Verified live: `D0120` for a
+patient in office 9 now posts **fee 28.00 / est ins 0.00 / est pat 28.00** sourced from *Delta Dental
+Premier - Excel*, where it previously posted 0.00.
+
+### FEE-1 — percentage-based insurance estimates are still not possible 🔴
+Legacy rows carry a coverage-derived estimate (`D2393` fee 131.00 → `insurance_estimate` 104.80 =
+80%). `insurance_coverage_rules` holds the percentages (876k rows, `coverage_pct`), but its
+`start_code`/`end_code` are legacy **coverage-category** codes (`01`, `01A`, `11B`, `62B`) and no
+endpoint maps an ADA code to a coverage category — `ProcedureCodeRead.category` is a display label
+("Other"), not the category code. **Suggested:** expose the ADA→coverage-category mapping, or return a
+computed estimate from the server (`POST /patients/{id}/estimate`). This is the same blocker as CHG-1
+and treatment-plan PLAN-3. Until then the insurance figure is whatever the fee schedule states.
+
+### FEE-2 — offices are not linked to their fee schedules 🟡
+The migrated charges show each office charging from its own schedule (office 3 → fs 28, office 4 → fs
+25, office 14 → fs 24), but **none of that is represented**: those offices have no
+`default_fee_schedule_id` and there are no office-scoped assignment rows. Only 9 assignment rows exist
+tenant-wide, 8 of them with every key null. The practical result is that two conflicting practice-wide
+defaults (fs 26 at 28.00 and fs 4 at 145.00 for `D0120`) are all most patients resolve to.
+**Suggested:** backfill `fee_schedule_assignments` (or `offices.default_fee_schedule_id`) from the
+legacy office→schedule linkage that produced the historical charges.
+
+### FEE-3 — no server-side pricing endpoint 🟡
+Resolution is done client-side over `/fee-schedules`, `/fee-schedule-assignments` and
+`/fee-schedule-entries`. It is cheap (schedules and assignments are one page each; entries are fetched
+per code and cached), but two clients can disagree, and nothing stops a charge being posted with an
+arbitrary fee. **Suggested:** `GET /patients/{id}/fee?procedure_code=&office_id=&provider_id=` returning
+the resolved fee, split and source, with the server applying the same rules on write.

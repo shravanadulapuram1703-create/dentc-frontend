@@ -4,7 +4,8 @@
 // the shell can gate the Run button.
 import { useMemo } from "react";
 import { Loader2, Upload } from "lucide-react";
-import { useOffices, useProviders, officeName, providerName } from "../../reports/lib/useReportRefData";
+import { useOffices, useProviders, officeName } from "../../reports/lib/useReportRefData";
+import { providerOptionLabel } from "@/services/providerDirectory";
 import type { ParamValues, UtilityDefinition, UtilityParamField } from "../types";
 
 interface Props {
@@ -36,7 +37,7 @@ function Field({ field, values, onChange, disabled }: { field: UtilityParamField
             <option value="">All providers</option>
             {(providersQ.data ?? []).map((p) => (
               <option key={p.id} value={p.id}>
-                {providerName(p)}
+                {providerOptionLabel(p)}
               </option>
             ))}
           </select>

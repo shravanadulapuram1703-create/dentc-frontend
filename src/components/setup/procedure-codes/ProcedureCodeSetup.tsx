@@ -22,7 +22,7 @@ import {
   listChartMaterials,
   listNoteMacros,
 } from "@/api/generated/endpoints/procedures/procedures";
-import { listProviders } from "@/api/generated/endpoints/organization/organization";
+import { fetchProviderRows } from "@/services/providerDirectory";
 import type {
   ProcedureCodeRead,
   ProcedureCodeStats,
@@ -157,7 +157,7 @@ export default function ProcedureCodeSetup() {
       const [first, statsRes, provRes, macroRes, matRes] = await Promise.all([
         listProcedureCodes({ size: PAGE_SIZE, page: 1, sort: "code", order: "asc" }),
         getProcedureCodeStats().catch(() => null),
-        listProviders({ size: 200, sort: "name", order: "asc" }).catch(() => null),
+        fetchProviderRows().catch(() => null),
         listNoteMacros({ size: 200 }).catch(() => null),
         listChartMaterials({ size: 200 }).catch(() => null),
       ]);
@@ -173,7 +173,7 @@ export default function ProcedureCodeSetup() {
       }
       setCodes(all);
       setStats(statsRes);
-      setProviders(provRes?.items ?? []);
+      setProviders((provRes ?? []).filter((p) => p.is_active));
       setNoteMacros(macroRes?.items ?? []);
       setMaterials(matRes?.items ?? []);
     } catch (e: unknown) {
