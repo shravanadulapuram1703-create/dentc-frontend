@@ -40,9 +40,19 @@ app.use((req, res, next) => {
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Content Security Policy (adjust as needed)
+  // connect-src includes http://127.0.0.1:8765 AND ws://127.0.0.1:8765 for
+  // the local DentC Imaging Agent (see imaging-agent/agent/config.py +
+  // agent/server.py's /ws route) — a browser can't reach a USB X-ray sensor
+  // directly, so the page talks to this loopback-only helper over plain
+  // HTTP/WS (not HTTPS/WSS — it's never leaving the machine). `wss:` alone
+  // only covers *secure* websockets, so without the explicit `ws:` entry the
+  // agent's plain-`ws://` connection gets silently CSP-blocked and every
+  // session falls back to slower HTTP polling with no visible error (the
+  // fallback in imagingDevice.ts masks it) — easy to miss since nothing
+  // actually breaks, it just never gets the low-latency push path.
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: http://127.0.0.1:8765 ws://127.0.0.1:8765;"
   );
   next();
 });

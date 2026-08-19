@@ -23,6 +23,11 @@ ENV VITE_APP_ENV=$VITE_APP_ENV
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
 ENV VITE_JIRA_MODE=$VITE_JIRA_MODE
 ENV VITE_JIRA_PROJECT_KEY=$VITE_JIRA_PROJECT_KEY
+# Relative path — served from public/downloads/ (see .dockerignore/COPY . .
+# above) via the same domain this build ends up deployed to, so it works
+# without needing to know that domain ahead of time.
+ARG VITE_IMAGING_AGENT_DOWNLOAD_URL=/downloads/Imaging-agent-Setup.exe
+ENV VITE_IMAGING_AGENT_DOWNLOAD_URL=$VITE_IMAGING_AGENT_DOWNLOAD_URL
 RUN npm run build
 
 # ---- Runtime stage: serve dist/ with the existing Express server ----

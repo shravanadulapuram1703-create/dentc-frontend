@@ -19,11 +19,18 @@ import {
  * retrieve bytes) mirrors the desktop-bridge prototype, but persistence is NOT
  * handled here: a completed scan returns a `File` that the caller funnels into
  * the same backend upload path as a manual upload.
+ *
+ * `runScan` prefers the agent's `/ws` push endpoint over polling `pollScan`
+ * (see agent/README.md's "Websocket contract" section) and falls back to the
+ * plain HTTP start/poll below whenever the socket isn't available, so this
+ * works unchanged against every agent build already installed on clinic PCs,
+ * not just ones updated to the websocket-capable version.
  */
 
 const HEALTH_TIMEOUT_MS = 2000;
 const POLL_INTERVAL_MS = 2000;
 const SCAN_TIMEOUT_MS = 5 * 60 * 1000; // sensor positioning + exposure can take minutes
+const WS_CONNECT_TIMEOUT_MS = 1500;
 
 interface BridgeScanStatus {
   status: 'pending' | 'scanning' | 'completed' | 'failed';
@@ -125,7 +132,122 @@ export const imagingDevice: ImagingDevice = {
     }
     throw new Error('Scan timed out — no image received from the device');
   },
+
+  async runScan(input: DeviceScanInput): Promise<DeviceScanResult> {
+    const base = requireBridge();
+    try {
+      return await runScanViaSocket(base, input);
+    } catch (err) {
+      if (!(err instanceof WsUnavailableError)) throw err;
+      // Socket never came up (older agent build, or something blocking ws://
+      // on this workstation) — fall back to the polling path unchanged.
+      const { scan_id } = await imagingDevice.startScan(input);
+      return imagingDevice.pollScan(scan_id);
+    }
+  },
 };
+
+/** Thrown only when the `/ws` endpoint itself couldn't be used — never for a
+ * real scan failure/timeout reported over an open socket. Callers use this
+ * to decide whether to fall back to HTTP polling. */
+class WsUnavailableError extends Error {}
+
+const wsUrl = (base: string): string => `${base.replace(/^http/, 'ws')}/ws`;
+
+interface BridgeWsMessage {
+  type: string;
+  scan_id?: string;
+  image_path?: string;
+  content_type?: string;
+  error?: string;
+  ok?: boolean;
+}
+
+/**
+ * WS-first scan path: one socket carries `start_scan` → `scan_completed`/
+ * `scan_failed`, so the browser learns about a capture the instant the
+ * agent's own detector (folder watcher or Vatech REST poll) sees it, instead
+ * of waiting up to `POLL_INTERVAL_MS` for the next poll tick. Image bytes are
+ * still fetched with a plain `GET /scan/{id}/image` — the socket only
+ * replaces finding out *when* they're ready.
+ */
+const runScanViaSocket = (base: string, input: DeviceScanInput): Promise<DeviceScanResult> =>
+  new Promise((resolve, reject) => {
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(wsUrl(base));
+    } catch {
+      reject(new WsUnavailableError());
+      return;
+    }
+
+    let settled = false;
+    const connectTimer = setTimeout(() => finish(() => reject(new WsUnavailableError())), WS_CONNECT_TIMEOUT_MS);
+    const scanTimer = setTimeout(
+      () => finish(() => reject(new Error('Scan timed out — no image received from the device'))),
+      SCAN_TIMEOUT_MS,
+    );
+
+    function finish(fn: () => void): void {
+      if (settled) return;
+      settled = true;
+      clearTimeout(connectTimer);
+      clearTimeout(scanTimer);
+      try {
+        ws.close();
+      } catch {
+        // already closing/closed
+      }
+      fn();
+    }
+
+    ws.onopen = () => {
+      clearTimeout(connectTimer);
+      // No frontend config carries a real agent token today (the HTTP routes
+      // don't send `X-DentC-Agent-Token` either) — this mirrors that as-is.
+      ws.send(JSON.stringify({ type: 'auth', token: '' }));
+    };
+
+    ws.onerror = () => finish(() => reject(new WsUnavailableError()));
+    ws.onclose = () => finish(() => reject(new WsUnavailableError()));
+
+    ws.onmessage = (event) => {
+      let msg: BridgeWsMessage;
+      try {
+        msg = JSON.parse(event.data as string) as BridgeWsMessage;
+      } catch {
+        return;
+      }
+      switch (msg.type) {
+        case 'auth_result':
+          if (msg.ok) {
+            ws.send(
+              JSON.stringify({ type: 'start_scan', patient_id: input.patient_id, scan_type: input.scan_type }),
+            );
+          } else {
+            finish(() => reject(new Error('Imaging agent rejected the connection token')));
+          }
+          break;
+        case 'scan_failed':
+          finish(() => reject(new Error(msg.error || 'Scan failed on the device')));
+          break;
+        case 'scan_completed':
+          finish(() => {
+            retrieveScan(base, msg.scan_id!, {
+              status: 'completed',
+              image_path: msg.image_path,
+              content_type: msg.content_type,
+            }).then(resolve, reject);
+          });
+          break;
+        case 'error':
+          finish(() => reject(new Error(msg.error || 'Imaging agent error')));
+          break;
+        default:
+          break; // scan_started / status / pong — no action needed
+      }
+    };
+  });
 
 /** Download the captured bytes from the bridge and wrap them as a File. */
 const retrieveScan = async (

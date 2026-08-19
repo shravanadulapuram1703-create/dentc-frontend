@@ -22,6 +22,10 @@ substitutions:
   # and never reach Jira.
   _JIRA_MODE: "auto"
   _JIRA_PROJECT_KEY: "KAN"
+  # Relative path — served from this same deployment's public/downloads/, so
+  # it works without hardcoding a domain. Override only if the installer is
+  # ever hosted somewhere else instead.
+  _IMAGING_AGENT_DOWNLOAD_URL: "/downloads/Imaging-agent-Setup.exe"
 
 steps:
   - name: gcr.io/cloud-builders/docker
@@ -35,6 +39,7 @@ steps:
       - VITE_JIRA_MODE=${_JIRA_MODE}
       - --build-arg
       - VITE_JIRA_PROJECT_KEY=${_JIRA_PROJECT_KEY}
+      - VITE_IMAGING_AGENT_DOWNLOAD_URL=${_IMAGING_AGENT_DOWNLOAD_URL}
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
       - .
