@@ -2,17 +2,16 @@
 //
 // A letter is a `LetterTemplateRead` row from /api/v1/letter-templates. The
 // legacy dialog splits them into "Letter Groups" via the single-character
-// `letter_type` code the migration carried over. There is no /definitions group
-// that labels those codes (gap LTR-2), so the map below is the frontend's
-// source of truth; unknown codes fall through to an "Other Letters" bucket
-// instead of disappearing from the picker.
+// `letter_type` code the migration carried over.
 //
-// Live tenant-1 distribution at time of writing (153 templates):
-//   C 79 · I 23 · F 17 · E 13 · S 8 · A 7 · M 4 · D 2
+// Since LTR-2 those codes are labelled by the seeded `LETTERTYPE` definitions
+// group, which is the source of truth; the table below is only the fallback for
+// an unseeded tenant, and unknown codes still land in an "Other Letters" bucket
+// rather than disappearing from the picker.
 
-import type { LetterTemplateRead } from '@/api/generated/model';
+import type { DefinitionRead, LetterTemplateRead } from '@/api/generated/model';
 
-/** Ordered group catalog. `code` is the backend `letter_type` value. */
+/** Fallback catalog — used only when the LETTERTYPE group is unseeded. */
 export const LETTER_GROUPS = [
   { code: 'C', label: 'Patient Consent' },
   { code: 'M', label: 'Marketing Letters' },
@@ -24,30 +23,58 @@ export const LETTER_GROUPS = [
   { code: 'E', label: 'Email Templates' },
 ] as const;
 
-export type LetterGroupCode = (typeof LETTER_GROUPS)[number]['code'] | 'OTHER';
+export type LetterGroupCode = string;
 
-const GROUP_LABEL = new Map<string, string>(
+/** code -> label, plus the order the picker should list them in. */
+export interface LetterGroupCatalog {
+  label: (code: LetterGroupCode) => string;
+  order: (code: LetterGroupCode) => number;
+  /** True when the labels came from /definitions rather than the fallback. */
+  seeded: boolean;
+}
+
+const FALLBACK_LABEL = new Map<string, string>(
   LETTER_GROUPS.map((g) => [g.code, g.label]),
 );
+const FALLBACK_ORDER = new Map<string, number>(
+  LETTER_GROUPS.map((g, i) => [g.code, i]),
+);
+
+/** Build the catalog from the LETTERTYPE definitions rows (LTR-2). */
+export function build_group_catalog(defs: DefinitionRead[] | undefined): LetterGroupCatalog {
+  const rows = (defs ?? []).filter((d) => d.key1);
+  if (rows.length === 0) {
+    return {
+      label: (c) => FALLBACK_LABEL.get(c) ?? 'Other Letters',
+      order: (c) => FALLBACK_ORDER.get(c) ?? 99,
+      seeded: false,
+    };
+  }
+  const by_code = new Map<string, DefinitionRead>(
+    rows.map((d) => [String(d.key1).trim().toUpperCase(), d]),
+  );
+  return {
+    label: (c) => by_code.get(c)?.description || FALLBACK_LABEL.get(c) || 'Other Letters',
+    order: (c) => by_code.get(c)?.sort_order ?? FALLBACK_ORDER.get(c) ?? 99,
+    seeded: true,
+  };
+}
+
+/** Bucket for a `letter_type` the tenant has no definition row for. */
+export const OTHER_GROUP = 'OTHER';
 
 /** Groups whose letters are consent forms — these get a Signature Type and a
  *  patient-consent record on save. */
-export const CONSENT_GROUP: LetterGroupCode = 'C';
+export const CONSENT_GROUP = 'C';
 
 export function group_code_of(t: LetterTemplateRead): LetterGroupCode {
-  const raw = (t.letter_type ?? '').trim().toUpperCase();
-  return (GROUP_LABEL.has(raw) ? raw : 'OTHER') as LetterGroupCode;
-}
-
-export function group_label(code: LetterGroupCode): string {
-  return GROUP_LABEL.get(code) ?? 'Other Letters';
+  return (t.letter_type ?? '').trim().toUpperCase() || OTHER_GROUP;
 }
 
 /**
  * Signature Type — the legacy consent dialog's third dropdown. It selects who
  * countersigns the printed consent; the patient signature line is always
- * printed. `provider_role` filters the provider picker used to resolve
- * `#DOC_LAST_NAME#`.
+ * printed. The selected provider also fills `#DOC_LAST_NAME#`.
  */
 export const SIGNATURE_TYPES = [
   { value: 'dentist', label: 'Dentist', line: 'Dentist' },
@@ -63,19 +90,35 @@ export function signature_line(t: SignatureType): string {
   return SIGNATURE_TYPES.find((s) => s.value === t)?.line ?? '';
 }
 
+/**
+ * Consent status vocabulary, published by
+ * `GET /api/v1/patient-consents/statuses` (LTR-10). Mirrored here for labels
+ * and for the badge colours; the endpoint stays authoritative for what is
+ * accepted.
+ */
+export const CONSENT_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pending',
+  printed: 'Printed',
+  signed: 'Signed',
+  declined: 'Declined',
+  voided: 'Voided',
+};
+
+export const SIGNATURE_METHOD_LABEL: Record<string, string> = {
+  drawn: 'Signed on screen',
+  scanned: 'Scanned copy',
+  verbal: 'Verbal consent',
+};
+
+/** A consent that has not been signed/declined/voided can still be signed. */
+export function is_signable(status: string): boolean {
+  const s = status.toLowerCase();
+  return s === 'pending' || s === 'printed';
+}
+
 /** Document type recorded on /patient-documents for a generated letter. */
 export const DOC_TYPE_CONSENT = 'consent-form';
 export const DOC_TYPE_LETTER = 'patient-letter';
-
-/**
- * Cloud-storage prefix the practice keeps consent forms under
- * (`gs://reco-documents/consent-forms/…`). The frontend cannot address the
- * bucket directly — every binary goes through POST /api/v1/patient-documents —
- * so this is the folder hint sent alongside the upload and the value the
- * backend is expected to key its storage path off. See gap LTR-1.
- */
-export const CONSENT_BUCKET = 'reco-documents';
-export const CONSENT_PREFIX = 'consent-forms';
 
 /** Filename used for both the browser download and the stored object. */
 export function letter_file_name(
@@ -97,17 +140,3 @@ export function sort_templates(rows: LetterTemplateRead[]): LetterTemplateRead[]
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 }
-
-export interface LetterSelection {
-  group: LetterGroupCode;
-  template_id: number | null;
-  envelope_printing: boolean;
-  signature_type: SignatureType;
-}
-
-export const BLANK_SELECTION: LetterSelection = {
-  group: CONSENT_GROUP,
-  template_id: null,
-  envelope_printing: false,
-  signature_type: 'dentist',
-};

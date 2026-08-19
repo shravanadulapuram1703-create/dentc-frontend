@@ -69,10 +69,10 @@ export default function PatientDocuments() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const docsQuery = useListPatientDocuments(
-    { patient_id: numericPatientId },
+    { patient_id: numericPatientId, size: 200 },
     { query: { enabled: validId } },
   );
-  const documents = (docsQuery.data ?? []).filter((d) => !d.is_deleted);
+  const documents = (docsQuery.data?.items ?? []).filter((d) => !d.is_deleted);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ['/api/v1/patient-documents'] });

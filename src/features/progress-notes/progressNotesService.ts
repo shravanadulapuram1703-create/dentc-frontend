@@ -242,6 +242,11 @@ export function uploadAttachment(
 }
 
 export async function listPatientAttachments(patientId: number): Promise<PatientDocumentRead[]> {
-  const docs = await listPatientDocuments({ patient_id: patientId });
-  return (docs ?? []).filter((d) => !d.is_deleted && d.document_type === 'progress_note');
+  // LTR-12: the list endpoint filters by document_type server-side now.
+  const res = await listPatientDocuments({
+    patient_id: patientId,
+    document_type: 'progress_note',
+    size: 200,
+  });
+  return (res.items ?? []).filter((d) => !d.is_deleted);
 }
