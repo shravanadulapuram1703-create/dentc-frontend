@@ -8,7 +8,11 @@ export const fmt_date = (value?: string | null, dash = "-"): string => {
   if (!value) return dash;
   // A plain YYYY-MM-DD must be formatted from its parts — `new Date("YYYY-MM-DD")`
   // parses as UTC midnight and shifts back a day in negative-offset timezones.
-  const date_only = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  // The anchor must cover the WHOLE string: a timestamp also starts with
+  // YYYY-MM-DD, and taking its parts would print the UTC calendar day instead
+  // of the local one — an 8pm-Eastern record showing as tomorrow. Backend
+  // datetimes carry an offset now, so they parse correctly below.
+  const date_only = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   if (date_only) {
     const [, y, m, d] = date_only;
     return `${m}/${d}/${y}`;

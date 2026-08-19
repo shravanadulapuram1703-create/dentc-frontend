@@ -16,7 +16,7 @@ ARG VITE_APP_ENV=production
 ARG VITE_APP_VERSION=4.3.0
 # Help Center → Jira. The proxy URL defaults to $VITE_API_BASE_URL/api/v1/support/tickets
 # (see src/shared/config/env.ts), so only the mode and project key are passed here.
-ARG VITE_JIRA_MODE=proxy
+ARG VITE_JIRA_MODE=auto
 ARG VITE_JIRA_PROJECT_KEY=KAN
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_ENV=$VITE_APP_ENV

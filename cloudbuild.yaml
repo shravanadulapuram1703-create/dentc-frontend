@@ -20,7 +20,7 @@ substitutions:
   # Jira secret); the project key MUST exist on the configured Jira site. Leaving
   # these unset makes the bundle fall back to `demo` — tickets go to localStorage
   # and never reach Jira.
-  _JIRA_MODE: "proxy"
+  _JIRA_MODE: "auto"
   _JIRA_PROJECT_KEY: "KAN"
 
 steps:

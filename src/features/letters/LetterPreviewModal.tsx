@@ -23,6 +23,8 @@ export interface GeneratedLetter {
   blocks: LetterBlock[];
   doc: jsPDF;
   unresolved: string[];
+  /** Placeholders that are not in the backend merge catalog — the drift alarm. */
+  unknown: string[];
   file_name: string;
   envelope_printing: boolean;
   signature_type: SignatureType;
@@ -146,6 +148,15 @@ export default function LetterPreviewModal({
           <div className="border-b border-[#FDE68A] bg-[#FFFBEB] px-4 py-2 text-[11px] text-[#92400E]">
             <strong>{letter.unresolved.length} merge field(s) printed blank:</strong>{' '}
             {letter.unresolved.join(', ')}
+          </div>
+        )}
+
+        {/* A placeholder the backend catalog does not know at all means the
+            template and the merge engine have drifted — louder than a blank. */}
+        {letter.unknown.length > 0 && (
+          <div className="border-b border-[#FECACA] bg-[#FEF2F2] px-4 py-2 text-[11px] text-[#991B1B]">
+            <strong>{letter.unknown.length} unrecognised placeholder(s) removed:</strong>{' '}
+            {letter.unknown.join(', ')} — not in the backend merge-field catalog.
           </div>
         )}
 
