@@ -100,9 +100,22 @@ class Config:
     # to every desktop running the agent — only this default (or the env var,
     # for a one-off override) needs to change. Mirrors the backend's
     # CORS_ORIGIN_REGEX (see dentc-backend app/core/config.py).
+    #
+    # Three alternatives:
+    #  1. reckondental.com (+ subdomains) — production.
+    #  2. dev-reckondental.com (+ subdomains) — a genuinely separate domain
+    #     from #1, not a subdomain of it, hence its own alternative.
+    #  3. reckondental-frontend*.a.run.app — the Cloud Run dev/staging
+    #     deployment (e.g. reckondental-frontend-dev-45iizv6d6q-uk.a.run.app).
+    #     Scoped to hostnames *starting with* "reckondental-frontend" —
+    #     deliberately not a blanket `.*\.a\.run\.app`, since Cloud Run's
+    #     a.run.app is a shared hosting surface with countless unrelated
+    #     projects on it that this must not trust.
     allowed_origin_regex: str | None = os.environ.get(
         "DENTC_AGENT_ORIGIN_REGEX",
-        r"^https://([a-z0-9-]+\.)*reckondental\.com$",
+        r"^https://(([a-z0-9-]+\.)*reckondental\.com"
+        r"|([a-z0-9-]+\.)*dev-reckondental\.com"
+        r"|reckondental-frontend[a-z0-9-]*\.a\.run\.app)$",
     ) or None
     # Optional shared token; when set, requests must send `X-DentC-Agent-Token`.
     token: str | None = os.environ.get("DENTC_AGENT_TOKEN") or None
