@@ -14,12 +14,18 @@ import {
   getListPerioExamsQueryKey,
   getListPerioExamDetailsQueryKey,
 } from '@/api/generated/endpoints/clinical/clinical';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { PerioExamRead, PerioChartTemplateRead } from '@/api/generated/model';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { providerOptionLabel } from '@/services/providerDirectory';
 import { PERMANENT_UPPER, PERMANENT_LOWER } from '@/features/restorative/dentition';
+import { Printer } from 'lucide-react';
 import PerioGrid from './PerioGrid';
 import PerioDataEntryPanel from './PerioDataEntryPanel';
 import PerioGraphicalView from './PerioGraphicalView';
 import { ExamDetailsModal, NewExamPrompt } from './ExamDetailsModal';
+import { perioPrintHeader, printPerioExam } from './perioPrint';
 import { CompareDatesModal, PerioComparison, type CompareSeries } from './CompareDatesModal';
 import {
   MEASURES,
@@ -36,11 +42,12 @@ import {
   type PerioDetailDraft,
 } from './perioModel';
 import {
-  loadPerioPrefs, savePerioPrefs, resolveTemplate, prefsFromTemplate, examDateLabel, type PerioPrefs,
+  loadPerioPrefs, savePerioPrefs, resolveTemplate, prefsFromTemplate, examDateLabel,
+  loadExamProvider, saveExamProvider, type PerioPrefs,
 } from './perioService';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number };
+  patient: { id: string; name: string; officeId?: string; age?: number; dob?: string; chartNo?: string };
 }
 
 const MAX_TEETH = PERMANENT_UPPER;          // 1..16
@@ -66,6 +73,13 @@ export default function PerioChart() {
   const createDetail = useCreatePerioExamDetail();
   const updateDetail = useUpdatePerioExamDetail();
 
+  // Sources for the printed record's header only: the patient row carries the
+  // mailing address + chart number, and office/provider fill the right-hand
+  // "Provider" block (Tax ID / License#) the legacy report prints for claims.
+  const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
+  const officesQuery = useListOffices({ size: 200 });
+  const { providers, providerRows, providerLabel } = useProviderDirectory(officeId);
+
   const exams = useMemo<PerioExamRead[]>(
     () => [...(examsQuery.data?.items ?? [])].sort((a, b) => b.exam_date.localeCompare(a.exam_date)),
     [examsQuery.data],
@@ -80,6 +94,7 @@ export default function PerioChart() {
   const [showDetails, setShowDetails] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   const [comparison, setComparison] = useState<CompareSeries[] | null>(null);
+  const [providerId, setProviderId] = useState('');
   const [, setDraftsVersion] = useState(0); // re-render trigger for the mutable draft map
 
   const updatePrefs = useCallback((patch: Partial<PerioPrefs>) => {
@@ -307,6 +322,71 @@ export default function PerioChart() {
     queryClient.invalidateQueries({ queryKey: getListPerioExamsQueryKey(examsParams) });
   };
 
+  // ---- Provider (printed in the record's Provider block) ------------------
+  const office = useMemo(
+    () => officesQuery.data?.items.find((o) => o.id === (patientQuery.data?.home_office_id ?? officeId)),
+    [officesQuery.data, patientQuery.data, officeId],
+  );
+
+  // Seed for an exam nobody has picked a provider for: the patient's preferred
+  // provider, else the office's billing provider. Only ids that are actually in
+  // the directory qualify, so a stale legacy id can't select a blank option.
+  const defaultProviderId = useMemo(() => {
+    const known = (id: string | null | undefined) =>
+      !!id && providerRows.some((r) => String(r.id) === String(id)) ? String(id) : '';
+    return known(patientQuery.data?.preferred_provider_id) || known(office?.billing_provider_id);
+  }, [patientQuery.data, office, providerRows]);
+
+  // Apply the stored pick on an exam switch; otherwise fill a still-empty pick
+  // once the directory resolves (it lands a tick after the first render).
+  const providerExamRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (selectedExamId == null) { providerExamRef.current = null; setProviderId(''); return; }
+    const stored = loadExamProvider(selectedExamId);
+    if (providerExamRef.current !== selectedExamId) {
+      providerExamRef.current = selectedExamId;
+      setProviderId(stored ?? defaultProviderId);
+    } else if (stored == null) {
+      setProviderId((cur) => cur || defaultProviderId);
+    }
+  }, [selectedExamId, defaultProviderId]);
+
+  const onProviderChange = (id: string) => {
+    setProviderId(id);
+    if (selectedExamId != null) saveExamProvider(selectedExamId, id);
+  };
+
+  // Print — the legacy "Periodontal Examination Record" sheet. Pending edits are
+  // flushed first so a chart printed straight after probing can never show less
+  // than what was charted.
+  const onPrint = async () => {
+    if (!selectedExam) return;
+    await flushDirty();
+    const provider = providerRows.find((r) => String(r.id) === providerId);
+
+    printPerioExam(
+      perioPrintHeader({
+        exam: selectedExam,
+        patient: patientQuery.data,
+        patientName: patient?.name ?? '',
+        patientDob: patient?.dob ?? '',
+        office,
+        provider,
+        providerName: provider ? providerLabel(provider.id) : '',
+      }),
+      {
+        maxTeeth: MAX_TEETH,
+        mandTeeth: MAND_TEETH,
+        getDraft,
+        numberingSystem: prefs.numbering_system,
+        showMgj: prefs.show_mgj,
+        showLingual: prefs.show_lingual,
+        pdWarn: prefs.pd_warning_level,
+        calWarn: prefs.cal_warning_level,
+      },
+    );
+  };
+
   // Compare: fetch details for each chosen exam and build read-only series.
   const runCompare = async (examIds: number[]) => {
     setShowCompare(false);
@@ -342,11 +422,31 @@ export default function PerioChart() {
             {exams.map((ex) => <option key={ex.id} value={ex.id}>{examDateLabel(ex.exam_date)}{ex.is_voided ? ' (voided)' : ''}</option>)}
           </select>
         </label>
+        <label className="flex items-center gap-1.5 font-medium">Provider
+          <select
+            value={providerId}
+            onChange={(e) => onProviderChange(e.target.value)}
+            disabled={!selectedExam}
+            title="Provider printed on the Periodontal Examination Record"
+            className="max-w-[190px] rounded border border-slate-300 bg-white px-2 py-1 disabled:opacity-50"
+          >
+            <option value="">— Select Provider —</option>
+            {providers.map((p) => <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>)}
+          </select>
+        </label>
         <button onClick={onNewExam} disabled={!validId || createExam.isPending} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">New Exam</button>
         <button onClick={() => setShowDetails(true)} disabled={!selectedExam} className="flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">
           Exam Details{selectedExam?.notes ? <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> : null}
         </button>
         <button onClick={deleteTodaysExam} disabled={!selectedExam} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Delete Exam</button>
+        <button
+          onClick={() => { void onPrint(); }}
+          disabled={!selectedExam}
+          title="Print the Periodontal Examination Record"
+          className="flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50"
+        >
+          <Printer className="h-3.5 w-3.5" />Print
+        </button>
         <button onClick={() => setShowCompare(true)} disabled={exams.length === 0} className="ml-auto rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Compare by Dates</button>
         {readOnly && <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-700">Voided — read only</span>}
       </div>

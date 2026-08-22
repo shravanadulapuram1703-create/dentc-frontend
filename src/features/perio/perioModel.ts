@@ -86,7 +86,13 @@ export function numAt(draft: PerioDetailDraft | undefined, measure: MeasureType,
   const f = fieldName(measure, site);
   if (!f) return null;
   const v = draft[f];
-  return typeof v === 'number' ? v : null;
+  if (typeof v === 'number') return v;
+  // `mobility_buccal` / `mobility_lingual` come back from the backend as STRINGS
+  // (PerioExamDetailRead types them `string | null`), so a saved mobility grade
+  // read blank on the grid — and on the print — until the next edit put a number
+  // back in the draft. Coerce numeric strings rather than dropping them.
+  if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
+  return null;
 }
 
 /** Read a boolean cell (BLD/SUP). */

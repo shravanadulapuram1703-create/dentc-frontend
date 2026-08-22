@@ -86,10 +86,12 @@ export function useExecutiveSummary(currentOffice: string | undefined, range: Da
         ),
         fetchAllPages((page, size) => listInsuranceClaims({ is_active: true, page, size })),
         fetchAllPages((page, size) =>
+          // Deleted appointments are only archived (gap SCHED-DEL-1).
           listAppointments({
             date_from: range.from,
             date_to: range.to,
             office_id: office ?? null,
+            is_archived: false,
             page,
             size,
           }),

@@ -30,8 +30,10 @@ async function resolveProviderNames(): Promise<Map<string, string>> {
 
 /** Every lab case (has_lab appointment) for one patient, newest first. */
 export async function fetchPatientLabCases(patientId: number): Promise<LabCase[]> {
+  // Deleted appointments are only archived (gap SCHED-DEL-1) — exclude them.
   const first = await listAppointments({
     patient_id: patientId,
+    is_archived: false,
     size: PAGE,
     sort: 'date',
     order: 'desc',
@@ -43,6 +45,7 @@ export async function fetchPatientLabCases(patientId: number): Promise<LabCase[]
       Array.from({ length: pages - 1 }, (_, i) =>
         listAppointments({
           patient_id: patientId,
+          is_archived: false,
           size: PAGE,
           page: i + 2,
           sort: 'date',

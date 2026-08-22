@@ -55,6 +55,51 @@ export function savePerioPrefs(prefs: PerioPrefs): void {
   }
 }
 
+// ---- Per-exam provider (client-side until PERIO-BE-14) ---------------------
+// A PerioExam has no provider column, but the printed Periodontal Examination
+// Record names the clinician in its Provider block (with their Tax ID / License#),
+// so the choice has to survive a reload — a record reprinted next week must name
+// the same provider it named today. Until the backend adds `provider_id`, the
+// pick is remembered here, keyed by exam.
+//
+// An empty string is a REAL stored value ("no provider"), distinct from `null`
+// ("never chosen"), which is what lets the screen seed a default exactly once.
+
+const PROVIDER_KEY = 'perio:exam_provider';
+/** Cap the map so a long-lived browser profile can't grow it without bound. */
+const PROVIDER_LIMIT = 200;
+
+function readProviderMap(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(PROVIDER_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** The provider chosen for this exam, or null if none has ever been chosen. */
+export function loadExamProvider(examId: number): string | null {
+  const v = readProviderMap()[String(examId)];
+  return typeof v === 'string' ? v : null;
+}
+
+export function saveExamProvider(examId: number, providerId: string): void {
+  try {
+    const map = readProviderMap();
+    map[String(examId)] = providerId;
+    // Newest wins: drop the oldest insertions once over the cap.
+    const keys = Object.keys(map);
+    const trimmed = keys.length > PROVIDER_LIMIT
+      ? Object.fromEntries(keys.slice(keys.length - PROVIDER_LIMIT).map((k) => [k, map[k] as string]))
+      : map;
+    localStorage.setItem(PROVIDER_KEY, JSON.stringify(trimmed));
+  } catch {
+    /* storage unavailable — the pick simply won't survive a reload */
+  }
+}
+
 // ---- Template / setting resolution ----------------------------------------
 /** Pick the active template by saved name, else the first available. */
 export function resolveTemplate(

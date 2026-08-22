@@ -80,6 +80,21 @@ import {
   type PatientEditSnapshot,
 } from "../../features/add-patient/editMode";
 
+import {
+  applyCoverageChange,
+  applyStatusChange,
+  applyPatientTypeChange,
+  coverageLockReason,
+  statusLockReason,
+  patientTypeConflict,
+  reconcileStatusWithCoverage,
+  normalizeLoadedFlags,
+  normalizeLoadedPatientTypes,
+  pickCoverage,
+  pickStatus,
+  type CoverageField,
+  type StatusField,
+} from "../../features/add-patient/patientFlagRules";
 /** Step-1 required fields that an existing record may already be missing. */
 interface PreexistingGaps {
   sex: boolean;
@@ -351,6 +366,28 @@ export default function AddNewPatient({
     SS: false, // Spanish Speaking
     UP: false, // Update Information
   });
+
+  // ── Checkbox-group consistency ──────────────────────────────────────────
+  // Patient Status / Coverage Type / Patient Type were independent checkboxes,
+  // so the form accepted impossible combinations (every coverage ticked next to
+  // "No Coverage"; a patient marked both Child and Senior Citizen). Every click
+  // now goes through the rules in features/add-patient/patientFlagRules, which
+  // tick what a choice implies and clear what it contradicts.
+  const setCoverageFlag = (field: CoverageField, checked: boolean) =>
+    setFormData((prev) => {
+      const coverage = applyCoverageChange(pickCoverage(prev), field, checked);
+      const status = reconcileStatusWithCoverage(pickStatus(prev), coverage);
+      return { ...prev, ...coverage, ...status };
+    });
+
+  const setStatusFlag = (field: StatusField, checked: boolean) =>
+    setFormData((prev) => ({
+      ...prev,
+      ...applyStatusChange(pickStatus(prev), pickCoverage(prev), field, checked),
+    }));
+
+  const setPatientTypeFlag = (code: keyof typeof patientTypes, checked: boolean) =>
+    setPatientTypes((prev) => applyPatientTypeChange(prev, code, checked));
 
   // Fee Schedule state
   const [feeSchedules, setFeeSchedules] = useState<FeeSchedule[]>([]);
@@ -658,9 +695,13 @@ export default function AddNewPatient({
             preferredProvider: !hydrated.preferredProvider,
             referralType: !hydrated.referralType,
           };
-          return hydrated;
+          // Stored records predate the checkbox rules and can carry impossible
+          // combinations; settle them before the form renders.
+          return { ...hydrated, ...normalizeLoadedFlags(hydrated) };
         });
-        setPatientTypes((prev) => ({ ...prev, ...snapshot.patient_types }));
+        setPatientTypes((prev) =>
+          normalizeLoadedPatientTypes({ ...prev, ...snapshot.patient_types }),
+        );
         setAudit(snapshot.audit);
         setFirstVisit(snapshot.first_visit);
         setLastVisit(snapshot.last_visit);
@@ -1780,9 +1821,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.active}
-                        onChange={(e) =>
-                          setFormData({ ...formData, active: e.target.checked })
-                        }
+                        onChange={(e) => setStatusFlag("active", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1794,15 +1833,18 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.assignBenefits}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            assignBenefits: e.target.checked,
-                          })
-                        }
+                        disabled={!!statusLockReason(formData, formData, "assignBenefits")}
+                        title={statusLockReason(formData, formData, "assignBenefits")}
+                        onChange={(e) => setStatusFlag("assignBenefits", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
-                      <span className="text-sm text-[#1E293B] font-normal">
+                      <span
+                        className={`text-sm font-normal ${
+                          statusLockReason(formData, formData, "assignBenefits")
+                            ? "text-[#94A3B8]"
+                            : "text-[#1E293B]"
+                        }`}
+                      >
                         Assign Benefits to Patient
                       </span>
                     </label>
@@ -1811,12 +1853,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.hipaaAgreement}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            hipaaAgreement: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("hipaaAgreement", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1828,12 +1865,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noCorrespondence}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noCorrespondence: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("noCorrespondence", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1845,12 +1877,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noAutoEmail}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noAutoEmail: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("noAutoEmail", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1862,12 +1889,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noAutoSMS}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noAutoSMS: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("noAutoSMS", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1879,15 +1901,18 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.addToQuickFill}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            addToQuickFill: e.target.checked,
-                          })
-                        }
+                        disabled={!!statusLockReason(formData, formData, "addToQuickFill")}
+                        title={statusLockReason(formData, formData, "addToQuickFill")}
+                        onChange={(e) => setStatusFlag("addToQuickFill", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
-                      <span className="text-sm text-[#1E293B] font-normal">
+                      <span
+                        className={`text-sm font-normal ${
+                          statusLockReason(formData, formData, "addToQuickFill")
+                            ? "text-[#94A3B8]"
+                            : "text-[#1E293B]"
+                        }`}
+                      >
                         Add Patient to Quick-Fill List
                       </span>
                     </label>
@@ -1919,19 +1944,8 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noCoverage}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noCoverage: e.target.checked,
-                            // "No Coverage" is exclusive with any selected coverage.
-                            ...(e.target.checked && {
-                              primaryDental: false,
-                              secondaryDental: false,
-                              primaryMedical: false,
-                              secondaryMedical: false,
-                            }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("noCoverage", e.target.checked)}
+                        title={coverageLockReason(formData, "noCoverage")}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1943,13 +1957,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.primaryDental}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            primaryDental: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("primaryDental", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1961,13 +1969,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.secondaryDental}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            secondaryDental: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("secondaryDental", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1979,13 +1981,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.primaryMedical}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            primaryMedical: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("primaryMedical", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1997,13 +1993,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.secondaryMedical}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            secondaryMedical: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("secondaryMedical", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -2581,12 +2571,8 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.CH}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          CH: e.target.checked,
-                        })
-                      }
+                      title={`Clears ${patientTypeConflict("CH")} — a patient cannot be both.`}
+                      onChange={(e) => setPatientTypeFlag("CH", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2599,12 +2585,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.CP}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          CP: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("CP", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2617,12 +2598,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.EF}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          EF: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("EF", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2635,12 +2611,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.OR}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          OR: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("OR", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2653,12 +2624,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.SN}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          SN: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("SN", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2671,12 +2637,8 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.SR}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          SR: e.target.checked,
-                        })
-                      }
+                      title={`Clears ${patientTypeConflict("SR")} — a patient cannot be both.`}
+                      onChange={(e) => setPatientTypeFlag("SR", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2689,12 +2651,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.SS}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          SS: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("SS", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2707,12 +2664,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.UP}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          UP: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("UP", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />

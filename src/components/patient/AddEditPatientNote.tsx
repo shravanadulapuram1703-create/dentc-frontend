@@ -19,6 +19,7 @@ import {
 } from '@/api/generated/endpoints/patients/patients';
 import type { PatientNoteCreate, PatientNoteUpdate } from '@/api/generated/model';
 import { useUserNames } from '@/services/userDirectory';
+import NoteMacroPickerModal from './NoteMacroPickerModal';
 
 interface PatientData {
   id: string;
@@ -58,6 +59,7 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
   const { patient } = useOutletContext<OutletContext>();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
 
   // "Modified By" shows a name, not a raw id (KAN-75). Declared with the other
   // hooks, above the loading/error early-returns further down.
@@ -100,18 +102,6 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
   const updateMutation = useUpdatePatientNote();
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  // Common note macros (legacy "Add Notes Macro" snippets).
-  const noteMacros = [
-    'Patient called to confirm appointment...',
-    'Responsible Party contacted regarding...',
-    'Payment plan discussed and approved...',
-    'Insurance eligibility verified...',
-    'Document received and scanned...',
-    'Follow-up scheduled for...',
-    'Financial policy explained to patient...',
-    'Consent form signed and filed...',
-  ];
-
   const documentTypes = [
     'Consent Form (CF)',
     'Anesthesia Record',
@@ -135,8 +125,26 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     setNoteContent((prev) => prev + dateStamp);
   };
 
+  // Macro text lands at the caret (falling back to the end of the note when the
+  // textarea was never focused), so a macro can be dropped mid-sentence.
   const handleInsertMacro = (macro: string) => {
-    setNoteContent((prev) => prev + (prev ? '\n\n' : '') + macro);
+    const el = noteRef.current;
+    setNoteContent((prev) => {
+      const start = el?.selectionStart ?? prev.length;
+      const end = el?.selectionEnd ?? prev.length;
+      const before = prev.slice(0, start);
+      const after = prev.slice(end);
+      const lead = before && !before.endsWith('\n') ? '\n\n' : '';
+      const next = before + lead + macro + after;
+      const caret = (before + lead + macro).length;
+      // Put the caret after the inserted text once React has re-rendered.
+      requestAnimationFrame(() => {
+        if (!el) return;
+        el.focus();
+        el.setSelectionRange(caret, caret);
+      });
+      return next;
+    });
     setMacroOpen(false);
   };
 
@@ -308,6 +316,10 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                         setSelectedFile(null);
                       }
                       setNoteType(next);
+                      // Picking a document type is the user asking to attach a
+                      // file — open the picker instead of making them find the
+                      // "Show File Details" toggle first.
+                      if (nextIsDoc) setShowFileDetails(true);
                     }}
                     disabled={isReadOnly}
                     className="min-w-[200px] px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all disabled:bg-[#F7F9FC] disabled:text-[#94A3B8] disabled:cursor-not-allowed cursor-pointer"
@@ -356,40 +368,13 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                       Insert Date Stamp
                     </button>
 
-                    <div className="relative">
-                      <button
-                        onClick={() => setMacroOpen((v) => !v)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#3A6EA5] hover:bg-[#2f5a8c] text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
-                      >
-                        <Plus className="w-4 h-4" strokeWidth={2.5} />
-                        Add Notes Macro
-                      </button>
-
-                      {macroOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setMacroOpen(false)}
-                          />
-                          <div className="absolute top-full right-0 mt-1 w-96 bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
-                            <div className="p-2">
-                              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide px-3 py-2">
-                                Common Macros
-                              </div>
-                              {noteMacros.map((macro, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => handleInsertMacro(macro)}
-                                  className="w-full text-left px-3 py-2 text-sm text-[#1E293B] hover:bg-[#3A6EA5]/10 hover:text-[#3A6EA5] rounded-lg transition-colors"
-                                >
-                                  {macro}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => setMacroOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#3A6EA5] hover:bg-[#2f5a8c] text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" strokeWidth={2.5} />
+                      Add Notes Macro
+                    </button>
                   </div>
                 )}
               </div>
@@ -472,6 +457,7 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
             </div>
             <div className="px-4 py-4">
               <textarea
+                ref={noteRef}
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
                 disabled={isReadOnly}
@@ -513,6 +499,13 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
           </button>
         </div>
       </div>
+
+      {macroOpen && (
+        <NoteMacroPickerModal
+          onInsert={handleInsertMacro}
+          onClose={() => setMacroOpen(false)}
+        />
+      )}
     </div>
   );
 }

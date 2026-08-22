@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { Loader2, Printer, BookOpen, FilePlus2 } from 'lucide-react';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import { providerOptionLabel } from '@/services/providerDirectory';
@@ -59,7 +59,21 @@ export default function TransactionsEntryPage() {
 
   const [transactionDate, setTransactionDate] = useState(todayDisplay());
   const [appliedIso, setAppliedIso] = useState(toIsoDate(todayDisplay()));
-  const [tab, setTab] = useState<Tab>('add');
+
+  // The open tab lives in the URL so other screens can deep-link into it — the
+  // dashboard's "Collect Payment" quick action opens ?tab=payments directly.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab: Tab =
+    tabParam === 'payments' || tabParam === 'adjustments' || tabParam === 'add'
+      ? tabParam
+      : 'add';
+  const setTab = (next: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'add') params.delete('tab');
+    else params.set('tab', next);
+    setSearchParams(params, { replace: true });
+  };
 
   const [providerId, setProviderId] = useState('');
   const [hygienistId, setHygienistId] = useState('');

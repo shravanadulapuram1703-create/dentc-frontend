@@ -16,7 +16,11 @@ import AddEditGroupModal from "./AddEditGroupModal";
 
 export default function GroupSetup() {
   const queryClient = useQueryClient();
-  const groupsQ = useListUserGroups({ size: 200 });
+  // Backend DELETE /user-groups/{id} is a SOFT delete (sets is_active=false) and
+  // the list endpoint does not exclude soft-deleted rows, so an unfiltered list
+  // re-renders the just-deleted group and Delete looks like a no-op. Ask for
+  // active groups only (same guard AddEditUserModal's group picker already uses).
+  const groupsQ = useListUserGroups({ size: 200, is_active: true });
   const groups: UserGroupRead[] = useMemo(
     () => groupsQ.data?.items ?? [],
     [groupsQ.data],

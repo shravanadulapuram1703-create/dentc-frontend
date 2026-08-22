@@ -1,4 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import {
+  fetchOfficeSchedule,
+  type OfficeScheduleDayUi,
+} from "../../services/officeScheduleApi";
+import SendEmailModal from "../modals/SendEmailModal";
+import SendSmsModal from "../modals/SendSmsModal";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -35,6 +41,7 @@ import {
   fetchOperatories,
   fetchProviders,
   fetchSchedulerConfig,
+  officeIdNum,
   fetchAppointmentStatuses,
   fetchPatientAlerts,
   fetchPatientBalance,
@@ -76,6 +83,29 @@ type ViewMode = "daily" | "weekly" | "monthly";
  *  office's slot interval; appointment blocks are positioned against this). */
 const SLOT_PX = 40;
 const MINUTES_PER_DAY = 24 * 60;
+
+/** "HH:MM[:SS]" -> minutes past midnight; null when absent/unparseable. */
+const parseTimeMinutes = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+  const parts = value.split(":").map(Number);
+  const h = parts[0];
+  const mm = parts[1] ?? 0;
+  if (h == null || Number.isNaN(h) || Number.isNaN(mm)) return null;
+  return h * 60 + mm;
+};
+
+/** minutes past midnight -> "HH:MM". */
+const minutesToTime = (mins: number): string =>
+  `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+
+/** The grid rows between two minute marks, at the office's slot interval. */
+const buildTimeSlots = (startMin: number, endMin: number, interval: number): string[] => {
+  const step = interval > 0 ? interval : 10;
+  const slots: string[] = [];
+  for (let m = startMin; m < endMin; m += step) slots.push(minutesToTime(m));
+  return slots;
+};
+
 
 const fmtYMD = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -249,22 +279,6 @@ export default function Scheduler({
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
 
-  // Generate the FULL 24-hour timeline at the office's slot interval. The office
-  // start/end hours (from Office Setup) no longer clip the rows — instead the
-  // whole day renders and slots outside office hours are grayed out and made
-  // non-interactive (see isOutsideOfficeHours + the slot render).
-  const generateTimeSlots = (config: SchedulerConfig): string[] => {
-    const interval = config.slotInterval > 0 ? config.slotInterval : 10;
-    const slots: string[] = [];
-    for (let minutes = 0; minutes < MINUTES_PER_DAY; minutes += interval) {
-      const hour = Math.floor(minutes / 60);
-      const minute = minutes % 60;
-      slots.push(
-        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-      );
-    }
-    return slots;
-  };
 
   // Default scheduler config
   const defaultConfig: SchedulerConfig = {
@@ -284,7 +298,8 @@ export default function Scheduler({
   const [filterProvider, setFilterProvider] = useState("");
   const [filterOperatory, setFilterOperatory] = useState("");
   const [schedulerConfig, setSchedulerConfig] = useState<SchedulerConfig>(defaultConfig);
-  const [timeSlots, setTimeSlots] = useState<string[]>(() => generateTimeSlots(defaultConfig));
+  /** The office's weekly hours (Office Setup -> Schedule), 0=Mon … 6=Sun. */
+  const [officeSchedule, setOfficeSchedule] = useState<OfficeScheduleDayUi[] | null>(null);
 
   // Loading and error states
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
@@ -562,38 +577,27 @@ export default function Scheduler({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appointments, selectedDate, viewMode]);
 
-  // Update time slots when config changes - only if config is valid
+  // Load the office's weekly hours; the day grid's range comes from the row for
+  // whichever weekday is on screen.
   useEffect(() => {
-    if (isValidConfig(schedulerConfig)) {
-      const newTimeSlots = generateTimeSlots(schedulerConfig);
-      // Only update if we get valid time slots
-      if (newTimeSlots.length > 0) {
-        setTimeSlots(newTimeSlots);
-      }
+    const oid = officeIdNum(currentOffice);
+    if (oid == null) {
+      setOfficeSchedule(null);
+      return;
     }
-  }, [schedulerConfig]);
-
-  // The grid renders a full 24h; auto-scroll to the office start hour so the
-  // day view opens on the working hours instead of the grayed midnight slots.
-  useEffect(() => {
-    if (viewMode !== "daily") return;
-    const el = gridScrollRef.current;
-    if (!el) return;
-    const interval = schedulerConfig.slotInterval > 0 ? schedulerConfig.slotInterval : 10;
-    const startMinutes = schedulerConfig.startHour * 60;
-    // Small delay so the 24h grid / operatory columns have finished laying out.
-    const id = window.setTimeout(() => {
-      el.scrollTop = Math.max(0, (startMinutes * SLOT_PX) / interval - SLOT_PX);
-    }, 150);
-    return () => window.clearTimeout(id);
-  }, [
-    viewMode,
-    schedulerConfig.startHour,
-    schedulerConfig.slotInterval,
-    timeSlots.length,
-    operatories.length,
-    currentOffice,
-  ]);
+    let cancelled = false;
+    void fetchOfficeSchedule(oid)
+      .then((rows) => {
+        if (!cancelled) setOfficeSchedule(rows);
+      })
+      .catch((err) => {
+        console.error("Error loading office schedule:", err);
+        if (!cancelled) setOfficeSchedule(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOffice]);
 
   // ===== TIME BLOCKING & OVERLAP LOGIC =====
 
@@ -668,28 +672,90 @@ export default function Scheduler({
   const slotInterval = schedulerConfig.slotInterval > 0 ? schedulerConfig.slotInterval : 10;
   const pxPerMinute = SLOT_PX / slotInterval;
 
-  // Position a block against the midnight-anchored 24h timeline.
+  /**
+   * The selected office's opening hours for the weekday on screen, taken from
+   * Office Setup -> Schedule. `day_of_week` there is 0=Monday … 6=Sunday, while
+   * JS `getDay()` is 0=Sunday — hence the shift.
+   *
+   * Falls back to the office's schedule_start_hour / schedule_end_hour (Info
+   * tab) when that day has no row, and to the 8-5 default when neither exists.
+   * A day marked Closed keeps the fallback window so the grid still renders
+   * something to schedule into.
+   */
+  const officeHours = useMemo(() => {
+    const fallback = {
+      startMin: schedulerConfig.startHour * 60,
+      endMin: schedulerConfig.endHour * 60,
+      closed: false,
+    };
+    if (!officeSchedule) return fallback;
+
+    const dow = (selectedDate.getDay() + 6) % 7; // Sun-first -> Mon-first
+    const row = officeSchedule.find((r) => r.day_of_week === dow);
+    if (!row) return fallback;
+
+    const startMin = parseTimeMinutes(row.start_time);
+    const endMin = parseTimeMinutes(row.end_time);
+    if (row.is_closed || startMin == null || endMin == null || endMin <= startMin) {
+      return { ...fallback, closed: Boolean(row.is_closed) };
+    }
+    return { startMin, endMin, closed: false };
+  }, [officeSchedule, selectedDate, schedulerConfig.startHour, schedulerConfig.endHour]);
+
+  /** Appointments on the day the grid is showing. */
+  const dayAppointments = useMemo(() => {
+    const ymd = formatDateYYYYMMDD(selectedDate);
+    return appointments.filter((a) => a.date === ymd);
+  }, [appointments, selectedDate]);
+
+  /**
+   * The window the grid actually draws: the office's hours for that day,
+   * widened to cover any appointment booked outside them.
+   *
+   * This is the fix for appointments vanishing — a 5:20 PM booking at an office
+   * that closes at 4 PM used to fall outside the drawn rows. The extension is
+   * still painted as out-of-hours (see isOutsideOfficeHours), so it reads as
+   * "booked outside opening hours" rather than silently widening the day.
+   */
+  const gridRange = useMemo(() => {
+    let startMin = officeHours.startMin;
+    let endMin = officeHours.endMin;
+
+    for (const appt of dayAppointments) {
+      const s = parseTimeMinutes(appt.start_time);
+      if (s == null) continue;
+      const e = s + (appt.duration || slotInterval);
+      if (s < startMin) startMin = s;
+      if (e > endMin) endMin = e;
+    }
+
+    // Snap outwards to whole slot boundaries so rows line up with the interval.
+    startMin = Math.max(0, Math.floor(startMin / slotInterval) * slotInterval);
+    endMin = Math.min(MINUTES_PER_DAY, Math.ceil(endMin / slotInterval) * slotInterval);
+    if (endMin <= startMin) endMin = Math.min(MINUTES_PER_DAY, startMin + slotInterval);
+    return { startMin, endMin };
+  }, [officeHours, dayAppointments, slotInterval]);
+
+  const timeSlots = useMemo(
+    () => buildTimeSlots(gridRange.startMin, gridRange.endMin, slotInterval),
+    [gridRange, slotInterval],
+  );
+
+  // Position a block against the top of the drawn window.
   const getAppointmentPosition = (appointment: Appointment) => {
-    const parts = appointment.start_time.split(":").map(Number);
-    const hours = parts[0] ?? 0;
-    const minutes = parts[1] ?? 0;
-    const startMinutes = hours * 60 + minutes;
-    const top = startMinutes * pxPerMinute;
+    const startMinutes = parseTimeMinutes(appointment.start_time) ?? 0;
+    const top = (startMinutes - gridRange.startMin) * pxPerMinute;
     const height = (appointment.duration || slotInterval) * pxPerMinute;
     return { top, height };
   };
 
-  // Is this HH:MM slot outside the selected office's configured hours? Such
-  // slots are visible but grayed out and non-interactive (Office Setup drives
-  // startHour/endHour via fetchSchedulerConfig).
+  // Is this HH:MM slot outside the office's hours for the day on screen? Such
+  // slots stay visible but grayed out and non-interactive — including the rows
+  // the grid added to reach an out-of-hours appointment.
   const isOutsideOfficeHours = (time: string): boolean => {
-    const parts = time.split(":").map(Number);
-    const hour = parts[0] ?? 0;
-    const minute = parts[1] ?? 0;
-    const mins = hour * 60 + minute;
-    const startMins = schedulerConfig.startHour * 60;
-    const endMins = schedulerConfig.endHour * 60;
-    return mins < startMins || mins >= endMins;
+    const mins = parseTimeMinutes(time);
+    if (mins == null) return false;
+    return mins < officeHours.startMin || mins >= officeHours.endMin;
   };
 
   // Handle right-click on empty slot
@@ -1089,6 +1155,17 @@ export default function Scheduler({
   };
 
   // Navigate to patient module
+  // Email / Text Message from the Go To menu. Both need the patient's contact
+  // details, which only arrive with the patient-context fetch below.
+  const [commTarget, setCommTarget] = useState<{
+    kind: "email" | "sms";
+    patient_id: number | null;
+    appointment_id: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null>(null);
+
   const handleGoToPatient = async (
     module: string,
     appointment: Appointment,
@@ -1143,22 +1220,39 @@ export default function Scheduler({
       }),
     );
 
-    switch (module) {
-      case "overview":
-        navigate(`/patient/${numericPatientId}/overview`);
-        break;
-      case "ledger":
-        navigate(`/patient/${numericPatientId}/ledger`);
-        break;
-      case "transactions":
-        navigate(`/patient/${numericPatientId}/transaction`);
-        break;
-      case "charting":
-        navigate(`/patient/${numericPatientId}/restorative`);
-        break;
-      default:
-        break;
+    // Email / Text Message open a dialog instead of navigating — they need the
+    // contact details we just resolved.
+    if (module === "email" || module === "sms") {
+      setCommTarget({
+        kind: module,
+        patient_id: appointment.patient_id ?? null,
+        appointment_id: appointment.id,
+        name: resolvedName || appointment.patient_name,
+        email: patient?.email ?? "",
+        phone: patient?.cell_phone || patient?.phone || "",
+      });
+      return;
     }
+
+    if (!numericPatientId) {
+      alert("This appointment has no patient linked, so there is nothing to open.");
+      return;
+    }
+
+    // Every entry maps to a real patient route (see App.tsx `/patient/:id/*`).
+    const ROUTES: Record<string, string> = {
+      overview: "overview",
+      treatment: "treatment",
+      transactions: "transaction",
+      ledger: "ledger",
+      "progress-notes": "progress-notes",
+      notes: "notes",
+      charting: "restorative",
+      perio: "perio",
+      imaging: "imaging",
+    };
+    const path = ROUTES[module];
+    if (path) navigate(`/patient/${numericPatientId}/${path}`);
   };
 
   // Set appointment status (applies immediately via PATCH /appointments/{id}/status).
@@ -1896,6 +1990,29 @@ export default function Scheduler({
           </div>
         )}
 
+        {/* Go To -> Email (hands the draft to the user's mail client) */}
+        {commTarget?.kind === "email" && (
+          <SendEmailModal
+            isOpen
+            onClose={() => setCommTarget(null)}
+            patientEmail={commTarget.email}
+            patientName={commTarget.name}
+          />
+        )}
+
+        {/* Go To -> Text Message (records an sms-messages row) */}
+        {commTarget?.kind === "sms" && (
+          <SendSmsModal
+            isOpen
+            onClose={() => setCommTarget(null)}
+            patientName={commTarget.name}
+            patientId={commTarget.patient_id}
+            officeId={officeIdNum(currentOffice) ?? null}
+            appointmentId={commTarget.appointment_id}
+            defaultPhone={commTarget.phone}
+          />
+        )}
+
         {/* New Appointment Modal */}
         {showNewAppointment && (
           <NewAppointmentModal
@@ -1993,25 +2110,25 @@ export default function Scheduler({
                     <>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "overview",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("overview", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
                       >
                         Patient Overview
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("treatment", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Treatment Plans
                       </button>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "transactions",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("transactions", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
@@ -2020,44 +2137,74 @@ export default function Scheduler({
                       </button>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "ledger",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("ledger", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
                       >
                         Ledger
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("progress-notes", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Progress Notes
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("notes", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Notes
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("email", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Email
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("sms", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Text Message
                       </button>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "charting",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("charting", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
                       >
                         Restorative Chart
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("perio", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Perio Chart
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("imaging", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Imaging System
                       </button>
                     </>

@@ -367,3 +367,31 @@ The backend deployed the endpoints (spec grew 856,127 → 897,270 bytes; probes 
 - **#23** operatory `default_provider_id` — not in operatory models; provider dropdown populates (backend-driven) but the choice can't persist.
 - **#10/#11 (Info tab) — DONE (2026-06-02):** the Info tab now reads/writes the billing FKs (`tax_id`, `billing_provider_id`, `use_billing_license`, `office_group_id`, `opening_date`, `default_fee_schedule_id`, `default_ucr_fee_schedule_id`) via `buildOfficeBody` → `OfficeUpdate`; Office Group is a `listOfficeGroups` select. Office Setup was also migrated to the snake_case generated models (the camelCase `Office` form shape + `mapOfficeListItem` adapter were removed).
 - **Backend to confirm** the value vocabularies the UI assumed: `logo_option`/`address_source` strings, `accepted_cards` tokens (`AMEX,MC,VISA,DISC`), SmartAssist `item_code`s, and `frequency`/`sms_template_id` constraints.
+
+---
+
+## Contact-field validation (frontend, 2026-08-20)
+
+`src/components/setup/offices/tabs/InfoTab.tsx` + `OfficeSetup.tsx`
+
+**Reported:** on Add Office, Phone 1 accepted `1234567890kjkjhkj` (letters, and
+more than ten digits) and Email accepted `trm`.
+
+Both were unconstrained inputs. `type="tel"` carries no format rule at all, and
+`type="email"` is only enforced by the browser during a *native* form submit —
+which this screen does not use — so the value went to the backend and returned an
+opaque 422 (the API models it as `EmailStr`).
+
+| Field | Now |
+|-------|-----|
+| Phone 1 / Phone 2 / Fax | Formatted as typed via `src/utils/phone.ts` — letters dropped, capped at ten digits, rendered `(555) 123-4567`, `maxLength` 14. A half-typed number shows an inline error and blocks Save (naming which field). Stored as the raw ten digits; existing records are formatted on load. |
+| Email | Validated via `src/utils/email.ts` — inline error while it is not a valid address, and Save is blocked. Trimmed before it is sent. |
+
+**No backend gap.** Both were frontend-only.
+
+**Not addressed — worth a decision:** the Info tab marks twelve fields required
+with a red `*` (Office ID, Office Name, Short ID, Address Line 1, City, State,
+ZIP, Time Zone, Phone 1, Email, Tax ID, Insurance Billing Provider, Default Fee
+Schedule, Scheduler Time Interval) but `handleSave` only enforces **Office Name**
+and **Short ID**. Enforcing the rest would block saves that succeed today, so it
+was left alone — either enforce them or drop the asterisks.

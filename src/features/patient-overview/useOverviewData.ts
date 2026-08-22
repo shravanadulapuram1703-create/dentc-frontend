@@ -274,7 +274,14 @@ export function useOverviewData(patient_id: number) {
         member_ids.map(async (id) => {
           const [balance, appts, member_recalls] = await Promise.all([
             getPatientBalance(id).catch(() => undefined),
-            listAppointments({ patient_id: id, size: 200, sort: "date", order: "desc" }).catch(
+            // Deleted appointments are only archived (gap SCHED-DEL-1).
+            listAppointments({
+              patient_id: id,
+              is_archived: false,
+              size: 200,
+              sort: "date",
+              order: "desc",
+            }).catch(
               () => undefined,
             ),
             listPatientRecalls({ patient_id: id, is_active: true, size: 50 }).catch(() => undefined),

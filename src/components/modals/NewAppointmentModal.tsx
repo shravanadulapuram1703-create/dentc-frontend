@@ -56,6 +56,8 @@ interface PatientSearchResult {
   cellPhone?: string;
   workPhone?: string;
   homePhone?: string;
+  /** PatientRead.home_office_id — the patient's own office. */
+  homeOfficeId?: number | null;
 }
 
 export default function NewAppointmentModal({
@@ -80,6 +82,10 @@ export default function NewAppointmentModal({
       // If editing, seed the patient shell from the appointment's snake_case
       // read-model fields (real demographics load in the edit form).
       if (editingAppointment) {
+        // Identity only. Every demographic field stays blank until the edit form
+        // loads the real patient record — this shell used to carry placeholders
+        // ("01/01/1990", "(555) 000-0000", "CH-001") that were never replaced,
+        // so editing an appointment displayed invented demographics.
         return {
           patientId:
             editingAppointment.patient_id != null
@@ -87,14 +93,14 @@ export default function NewAppointmentModal({
               : "",
           numericId: editingAppointment.patient_id ?? undefined,
           name: editingAppointment.patient_name ?? "",
-          gender: "U",
-          ssn: "***-**-****",
-          phone: "(555) 000-0000",
-          birthdate: "01/01/1990",
-          age: 34,
-          respId: "R-001",
-          chartNumber: "CH-001",
-          patientType: "General",
+          gender: "",
+          ssn: "",
+          phone: "",
+          birthdate: "",
+          age: 0,
+          respId: "",
+          chartNumber: "",
+          patientType: "",
           office: currentOffice,
         };
       }
@@ -344,8 +350,15 @@ export default function NewAppointmentModal({
       respId: p.responsible_party_id ?? "",
       chartNumber: p.chart_no || "",
       patientType: p.patient_type ?? "",
-      office: currentOffice,
+      // The patient's own home office, not the office currently selected in the
+      // header (which made every search result look like it lived here).
+      office: p.home_office_code || p.home_office_name || currentOffice,
+      homeOfficeId: p.home_office_id ?? null,
       ...(p.email && { email: p.email }),
+      // PatientRead has no home_phone column: `phone` is the home number.
+      ...(p.cell_phone && { cellPhone: p.cell_phone }),
+      ...(p.work_phone && { workPhone: p.work_phone }),
+      ...(p.phone && { homePhone: p.phone }),
     };
   };
 
