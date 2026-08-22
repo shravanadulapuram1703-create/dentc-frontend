@@ -7,11 +7,11 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import SendEmailModal from "./SendEmailModal";
 import TxPlansTab from "./TxPlansTab";
 import DatePickerCalendar from "./DatePickerCalendar";
-import AddProcedure from "../patient/AddProcedure";
+import AppointmentProcedurePicker from "./AppointmentProcedurePicker";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   fetchProviders,
@@ -24,6 +24,7 @@ import {
   fetchAppointment,
   createAppointment,
   updateAppointment,
+  officeIdNum,
   type Provider,
   type Operatory,
   type ProcedureType,
@@ -32,8 +33,26 @@ import {
   type ProcedureCategory,
   type TreatmentPlan,
 } from "../../services/schedulerApi";
-import { createPatient as createPatientApi } from "@/api/generated/endpoints/patients/patients";
-import type { PatientCreate } from "@/api/generated/model";
+import {
+  createPatient as createPatientApi,
+  getPatient,
+  listPatients,
+  updatePatient,
+} from "@/api/generated/endpoints/patients/patients";
+import type { PatientCreate, PatientRead, PatientUpdate } from "@/api/generated/model";
+import {
+  loadAppointmentProcedures,
+  syncAppointmentProcedures,
+  newRowId,
+  type AppointmentProcedureLine,
+} from "../../services/appointmentProceduresApi";
+import {
+  loadFeeScheduleContext,
+  resolveProcedureFee,
+  EMPTY_FEE_CONTEXT,
+  type FeeScheduleContext,
+} from "../../services/feeScheduleResolver";
+import { loadProcedureCodes } from "@/components/setup/insurance/procedureCodeService";
 
 interface PatientSearchResult {
   patientId: string;
@@ -54,6 +73,8 @@ interface PatientSearchResult {
   cellPhone?: string;
   workPhone?: string;
   homePhone?: string;
+  /** PatientRead.home_office_id — the patient's own office, not the selected one. */
+  homeOfficeId?: number | null;
 }
 
 interface AddEditAppointmentFormProps {
@@ -75,21 +96,30 @@ interface AddEditAppointmentFormProps {
   };
 }
 
-interface Treatment {
-  id: string;
-  status: string;
-  code: string;
-  th: string;
-  surf: string;
-  description: string;
-  bill: string;
-  duration: number;
-  provider: string;
-  providerUnits: number;
-  estPatient: number;
-  estInsurance: number;
-  fee: number;
-}
+/** "1978-01-05" (or an ISO timestamp) -> "01/05/1978". Pure string work — never
+ *  `new Date(...)`, which parses a bare YYYY-MM-DD as UTC and shifts the day. */
+const isoToMMDDYYYY = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return y && m && d ? `${m}/${d}/${y}` : "";
+};
+
+/** "01/05/1978" -> "1978-01-05" (blank when not a complete date). */
+const mmddyyyyToIso = (value: string | null | undefined): string => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const [m, d, y] = value.split("/");
+  if (!m || !d || !y || y.length !== 4) return "";
+  return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+};
+
+/** Strip formatting from a phone before sending it to the backend. */
+const digitsOnly = (value: string | null | undefined): string =>
+  (value ?? "").replace(/\D/g, "");
+
+/** One row of the TREATMENTS grid. Bound directly to the backend
+ *  appointment_procedures shape (snake_case) so it round-trips unchanged. */
+type Treatment = AppointmentProcedureLine;
 
 export default function AddEditAppointmentForm({
   patient,
@@ -240,29 +270,10 @@ export default function AddEditAppointmentForm({
           campaignId: appointment.campaignId || appointment.campaign_id || "",
         }));
         
-        // Load treatments if available
-        // Handle both camelCase (procedureCode) and snake_case (procedure_code)
-        if (fullAppointment.treatments && Array.isArray(fullAppointment.treatments)) {
-          const transformedTreatments: Treatment[] = fullAppointment.treatments.map((t: any) => ({
-            id: t.id || Date.now().toString() + Math.random(),
-            status: t.status || "TP",
-            code: t.procedureCode || t.procedure_code || "",
-            th: t.tooth || t.th || "",
-            surf: t.surface || t.surf || "",
-            description: t.description || "",
-            bill: t.billTo || t.bill_to || t.bill || "Patient",
-            duration: t.duration || 0,
-            provider: t.provider || "",
-            providerUnits: t.providerUnits || t.provider_units || 1,
-            estPatient: t.estPatient || t.est_patient || 0,
-            estInsurance: t.estInsurance || t.est_insurance || 0,
-            fee: t.fee || 0,
-          }));
-          setTreatments(transformedTreatments);
-          console.log("Loaded treatments:", transformedTreatments);
-          console.log("Treatment procedure codes:", transformedTreatments.map(t => t.code));
-        }
-        
+        // Procedure lines are their own resource (/appointment-procedures) and
+        // are loaded by a dedicated effect — AppointmentRead carries no
+        // `treatments` array (the code that read one here never fired).
+
         // Mark appointment as loaded - form can now be shown
         setAppointmentLoaded(true);
         console.log("✅ Appointment details fully loaded, form can be displayed");
@@ -279,6 +290,79 @@ export default function AddEditAppointmentForm({
     loadAppointmentDetails();
   }, [editingAppointment?.id]);
 
+  // ---------------------------------------------------------------------
+  // Patient record
+  //
+  // The form used to render whatever the caller happened to put in the thin
+  // PatientSearchResult: the search grid supplies no work/home phone, and the
+  // edit path seeded a placeholder shell (birthdate "01/01/1990", phone
+  // "(555) 000-0000") that was never replaced — which is why Birthdate and the
+  // contact fields looked wrong or empty. We now load the real patient once and
+  // drive every Personal / Contact field from it.
+  // ---------------------------------------------------------------------
+  const [patientRecord, setPatientRecord] = useState<PatientRead | null>(null);
+  const [patientNumericId, setPatientNumericId] = useState<number | null>(
+    patient.numericId ?? null,
+  );
+  const [isLoadingPatient, setIsLoadingPatient] = useState(false);
+  const [patientError, setPatientError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPatient = async () => {
+      // A brand-new patient has not been created yet — nothing to load.
+      if ((patient.patientId ?? "").startsWith("NEW-")) return;
+
+      // patient.patientId is the chart_no (display only). Only patient.numericId
+      // is the backend key; fall back to a chart_no lookup when it is absent.
+      let id = patient.numericId ?? null;
+      setIsLoadingPatient(true);
+      setPatientError(null);
+      try {
+        if (id == null && patient.chartNumber) {
+          const hit = await listPatients({ chart_no: patient.chartNumber, size: 1 });
+          id = hit.items?.[0]?.id ?? null;
+        }
+        if (id == null) {
+          setPatientError("This patient has no backend id — demographics could not be loaded.");
+          return;
+        }
+        const record = await getPatient(id);
+        if (cancelled) return;
+        setPatientNumericId(id);
+        setPatientRecord(record);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.error("Error loading patient record:", err);
+        setPatientError(
+          err?.response?.data?.detail || err?.message || "Failed to load patient details",
+        );
+      } finally {
+        if (!cancelled) setIsLoadingPatient(false);
+      }
+    };
+    void loadPatient();
+    return () => {
+      cancelled = true;
+    };
+  }, [patient.numericId, patient.patientId, patient.chartNumber]);
+
+  // Seed Personal + Contact information from the loaded record. Home phone maps
+  // to PatientRead.phone (the backend has no separate home_phone column).
+  useEffect(() => {
+    if (!patientRecord) return;
+    setFormData((prev) => ({
+      ...prev,
+      birthdate: isoToMMDDYYYY(patientRecord.dob) || prev.birthdate,
+      lastName: patientRecord.last_name ?? prev.lastName,
+      firstName: patientRecord.first_name ?? prev.firstName,
+      email: patientRecord.email ?? "",
+      cellPhone: patientRecord.cell_phone ?? "",
+      workPhone: patientRecord.work_phone ?? "",
+      homePhone: patientRecord.phone ?? "",
+    }));
+  }, [patientRecord]);
+
   // Fetch all metadata on component mount
   useEffect(() => {
     const loadMetadata = async () => {
@@ -293,7 +377,6 @@ export default function AddEditAppointmentForm({
           procedureTypesData,
           statusesData,
           categoriesData,
-          treatmentPlansData,
         ] = await Promise.all([
           fetchProviders(currentOfficeId),
           fetchOperatories(currentOfficeId),
@@ -301,10 +384,6 @@ export default function AddEditAppointmentForm({
           fetchAppointmentStatuses(),
           fetchProcedureCategories().catch((err) => {
             console.error("Error fetching procedure categories:", err);
-            return [];
-          }),
-          fetchTreatmentPlans(patient.patientId).catch((err) => {
-            console.error("Error fetching treatment plans:", err);
             return [];
           }),
         ]);
@@ -326,7 +405,6 @@ export default function AddEditAppointmentForm({
         setProcedureTypes(procedureTypesData);
         setStatusOptions(statusesData);
         setProcedureCategories(Array.isArray(categoriesData) ? categoriesData : []);
-        setTreatmentPlans(Array.isArray(treatmentPlansData) ? treatmentPlansData : []);
         
         console.log("Metadata loaded:", {
           providers: providersData.length,
@@ -334,9 +412,7 @@ export default function AddEditAppointmentForm({
           procedureTypes: procedureTypesData.length,
           statuses: statusesData.length,
           categories: Array.isArray(categoriesData) ? categoriesData.length : 0,
-          treatmentPlans: Array.isArray(treatmentPlansData) ? treatmentPlansData.length : 0,
         });
-        console.log("Treatment plans data:", treatmentPlansData);
         console.log("Procedure types with colors:", procedureTypesData.map(t => ({ name: t.name, color: t.color })));
         console.log("Procedure categories:", categoriesData);
 
@@ -364,7 +440,44 @@ export default function AddEditAppointmentForm({
     };
 
     loadMetadata();
-  }, [currentOfficeId, patient.patientId]);
+  }, [currentOfficeId]);
+
+  // ---------------------------------------------------------------------
+  // Treatment plans
+  //
+  // Keyed on the *numeric* patient id. This used to pass patient.patientId —
+  // the chart_no — so the tree showed a different patient's plans (or none),
+  // and the plans arrived with no phases because the items were never fetched.
+  // ---------------------------------------------------------------------
+  const [isLoadingTreatmentPlans, setIsLoadingTreatmentPlans] = useState(false);
+  const [treatmentPlanReloadKey, setTreatmentPlanReloadKey] = useState(0);
+  const reloadTreatmentPlans = useCallback(
+    () => setTreatmentPlanReloadKey((k) => k + 1),
+    [],
+  );
+
+  useEffect(() => {
+    if (patientNumericId == null) {
+      setTreatmentPlans([]);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingTreatmentPlans(true);
+    void fetchTreatmentPlans(patientNumericId)
+      .then((plans) => {
+        if (!cancelled) setTreatmentPlans(plans);
+      })
+      .catch((err) => {
+        console.error("Error fetching treatment plans:", err);
+        if (!cancelled) setTreatmentPlans([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingTreatmentPlans(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [patientNumericId, treatmentPlanReloadKey]);
 
   // Update formData when metadata loads (only once when metadata finishes loading)
   useEffect(() => {
@@ -419,13 +532,15 @@ export default function AddEditAppointmentForm({
     return byOp || (providers.length > 0 ? providers[0]?.name || "" : "");
   };
 
-  // Available providers list (for simple selects) - from API
-  const availableProviders = providers.map((p) => p.name);
+  /** The appointment form binds the provider *name*; procedure lines carry the
+   *  backend provider_id. These two translate between them. */
+  const providerIdByName = (name: string): string =>
+    providers.find((p) => p.name === name)?.id ?? "";
+  const providerNameById = (id: string): string =>
+    providers.find((p) => p.id === id)?.name ?? "";
 
-  // ✅ STEP 2: Default provider for new treatments
-  const getDefaultProviderForTreatment = () => {
-    return formData.provider; // Appointment-level provider
-  };
+  /** Same-day visits post as completed ("C"); anything else is treatment-planned. */
+  const defaultLineStatus = editingAppointment ? "C" : "TP";
 
   // Appointment form state
   const [formData, setFormData] = useState({
@@ -434,9 +549,12 @@ export default function AddEditAppointmentForm({
     lastName: patient.name.split(", ")[0],
     firstName: patient.name.split(", ")[1] || "",
 
-    // Contact Information
-    email: patient.email || "john.smith@email.com",
-    cellPhone: patient.cellPhone || patient.phone,
+    // Contact Information — placeholders only; the real values arrive from the
+    // patient record fetch above. (This used to default the e-mail to the
+    // literal string "john.smith@email.com", which is what every appointment
+    // showed for a patient with no e-mail on file.)
+    email: patient.email || "",
+    cellPhone: patient.cellPhone || patient.phone || "",
     workPhone: patient.workPhone || "",
     homePhone: patient.homePhone || "",
     bypassPhone: false,
@@ -485,6 +603,18 @@ export default function AddEditAppointmentForm({
     notes: initialAppointmentData?.notes || "",
     campaignId: "",
   });
+
+  /** A brand-new patient the caller has not persisted yet. */
+  const isNewPatientShell = (patient.patientId ?? "").startsWith("NEW-");
+
+  // Personal fields are read-only when the patient record already holds a value
+  // (the record is the source of truth); when the backend has none, the field
+  // stays open so it can be filled in here and written back to the patient.
+  const personalLocked = {
+    birthdate: !isNewPatientShell && (isLoadingPatient || !!patientRecord?.dob),
+    lastName: !isNewPatientShell && (isLoadingPatient || !!patientRecord?.last_name),
+    firstName: !isNewPatientShell && (isLoadingPatient || !!patientRecord?.first_name),
+  };
 
   // Handle operatory change — auto-fill the provider from the operatory's
   // assigned provider (backend Gap 1).
@@ -566,16 +696,16 @@ export default function AddEditAppointmentForm({
   >("txplans");
 
   const normalizeCategory = (value: string) =>
-    value.replace(/\s+/g, "").toUpperCase();
+    (value ?? "").replace(/\s+/g, "").toUpperCase();
 
-  // ✅ STEP 1: Multi-select state for Quick Add (informational only)
+  // Quick Add multi-select (rows toggle; "Add Selected" prices and appends).
   const [selectedProcedures, setSelectedProcedures] = useState<
     ApiProcedureCode[]
   >([]);
 
-  // 🔹 NEW: Quick Add state (procedure browser → AddProcedure modal)
-  const [showAddProcedure, setShowAddProcedure] =
-    useState(false);
+  // The Add Procedure picker (also used by a Quick Add row click so the code's
+  // tooth/surface/quadrant requirements are enforced before the line is added).
+  const [showAddProcedure, setShowAddProcedure] = useState(false);
   const [selectedProcedureForAdd, setSelectedProcedureForAdd] =
     useState<ApiProcedureCode | null>(null);
   const [searchCodeFilter, setSearchCodeFilter] = useState("");
@@ -584,37 +714,103 @@ export default function AddEditAppointmentForm({
   const [searchDescriptionFilter, setSearchDescriptionFilter] =
     useState("");
 
-  // ✅ STEP 2: Toggle selection helper
   const toggleProcedureSelection = (proc: ApiProcedureCode) => {
     setSelectedProcedures((prev) => {
       const isSelected = prev.some((p) => p.code === proc.code);
-      if (isSelected) {
-        return prev.filter((p) => p.code !== proc.code);
-      } else {
-        return [...prev, proc];
-      }
+      return isSelected
+        ? prev.filter((p) => p.code !== proc.code)
+        : [...prev, proc];
     });
   };
 
-  // 🔹 Mapping function: AddProcedure → Treatment
-  const mapProcedureToTreatment = (proc: any): Treatment => {
-    return {
-      id: proc.id,
-      status: editingAppointment ? "C" : "TP", // FIX 3: C if same-day appointment, TP if planning
-      code: proc.code,
-      th: proc.tooth || "",
-      surf: proc.surfaces || "",
-      description: proc.description,
-      bill: "Patient",
-      duration: proc.duration
-        ? Number(proc.duration)
-        : proc.defaultDuration || 30, // FIX 4: User override → default → fallback
-      provider: proc.provider || getDefaultProviderForTreatment(), // ✅ STEP 4: Use default provider logic
-      providerUnits: 1,
-      estPatient: proc.estPatient,
-      estInsurance: proc.estInsurance,
-      fee: proc.fee,
+  // ---------------------------------------------------------------------
+  // Pricing
+  //
+  // Quick Add used to invent the split (30% patient / 70% insurance) off the
+  // code's default fee. Lines are now priced against the fee schedule that
+  // applies to this patient/office/provider — the same resolver the Treatment
+  // Plan and Transactions screens use.
+  // ---------------------------------------------------------------------
+  const [feeContext, setFeeContext] = useState<FeeScheduleContext>(EMPTY_FEE_CONTEXT);
+
+  useEffect(() => {
+    if (patientNumericId == null) return;
+    let cancelled = false;
+    void loadFeeScheduleContext({
+      patient_id: patientNumericId,
+      office_id: officeIdNum(currentOfficeId ?? currentOffice) ?? null,
+      provider_id: providerIdByName(formData.provider) || null,
+    })
+      .then((ctx) => {
+        if (!cancelled) setFeeContext(ctx);
+      })
+      .catch((err) => {
+        console.error("Fee schedule context failed to load:", err);
+      });
+    return () => {
+      cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patientNumericId, currentOfficeId, currentOffice, formData.provider, providers.length]);
+
+  /** Existing lines for the appointment being edited. */
+  useEffect(() => {
+    if (!editingAppointment?.id) return;
+    let cancelled = false;
+    void (async () => {
+      const [lines, codeMap] = await Promise.all([
+        loadAppointmentProcedures(editingAppointment.id),
+        loadProcedureCodes().catch(() => new Map()),
+      ]);
+      if (cancelled) return;
+      // appointment_procedures has no duration column (backend gap
+      // APPT-PROC-1) — fall back to the code's default so Calc Time works.
+      setTreatments(
+        lines.map((l) => ({
+          ...l,
+          duration:
+            l.duration ||
+            codeMap.get(l.procedure_code)?.default_duration_minutes ||
+            0,
+          description:
+            l.description || codeMap.get(l.procedure_code)?.description || "",
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editingAppointment?.id]);
+
+  /** Append a code as a treatment line, priced from the fee schedule. */
+  const addProcedureLine = async (
+    proc: ApiProcedureCode,
+    overrides: Partial<Treatment> = {},
+  ) => {
+    const priced = await resolveProcedureFee(feeContext, proc.code, {
+      default_fee: proc.defaultFee,
+    }).catch(() => null);
+    const fee = priced?.fee ?? proc.defaultFee;
+    const est_insurance = priced?.insurance_estimate ?? 0;
+    setTreatments((prev) => [
+      ...prev,
+      {
+        row_id: newRowId(),
+        status: defaultLineStatus,
+        procedure_code: proc.code,
+        tooth: "",
+        surface: "",
+        description: proc.description,
+        bill_to: "Patient",
+        duration: proc.defaultDuration ?? 30,
+        provider_id: providerIdByName(formData.provider),
+        provider_units: 1,
+        est_patient: priced?.patient_estimate ?? Math.max(fee - est_insurance, 0),
+        est_insurance,
+        fee,
+        ...overrides,
+      },
+    ]);
   };
 
   // Procedure categories for Quick Add (from API, with "All" option)
@@ -709,54 +905,17 @@ export default function AddEditAppointmentForm({
         return timeStr;
       };
 
-      // Transform treatments to API format
-      // IMPORTANT: Always include procedure_code - use "UNKNOWN" as fallback if missing
-      const transformTreatments = treatments.map((t: any) => {
-        const procedureCode = t.code || t.procedure_code || "UNKNOWN";
-        
-        // Log warning if treatment doesn't have a valid procedure code
-        if (!t.code && !t.procedure_code) {
-          console.warn(`Treatment "${t.description || 'Unknown'}" is missing procedure_code, using "UNKNOWN" as fallback`);
-        }
-        
-        return {
-          procedure_code: procedureCode, // Always include, never empty
-          status: t.status || "TP", // Default to "Treatment Planned"
-          tooth: t.th || t.tooth || undefined,
-          surface: t.surf || t.surface || undefined,
-          description: t.description || "",
-          bill_to: t.bill || t.bill_to || "Patient",
-          duration: t.duration || 0,
-          provider: t.provider || formData.provider || "",
-          provider_units: t.providerUnits || t.provider_units || 1,
-          est_patient: t.estPatient || t.est_patient || undefined,
-          est_insurance: t.estInsurance || t.est_insurance || undefined,
-          fee: t.fee || 0,
-        };
-      });
-
       // For new patients (patientId starts with "NEW-"), create patient first.
       // The appointment patient_id contract is numeric, so we resolve to a
       // number here and never forward a chart_no/"NEW-" string.
-      const isNewPatient = (patient.patientId ?? "").startsWith("NEW-");
-      let patientIdNum: number | null =
-        patient.numericId ??
-        (Number.isFinite(Number(patient.patientId))
-          ? Number(patient.patientId)
-          : null);
+      const isNewPatient = isNewPatientShell;
+      // patient.patientId is a chart_no — never a backend id. Use the id we
+      // resolved when the patient record loaded.
+      let patientIdNum: number | null = patientNumericId;
       if (isNewPatient) {
         console.log("Creating new patient before saving appointment...");
         
-        // Convert birthdate from MM/DD/YYYY to YYYY-MM-DD
-        let dobFormatted: string | undefined;
-        if (formData.birthdate) {
-          const parts = formData.birthdate.split("/");
-          if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
-            dobFormatted = `${parts[2]}-${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
-          } else {
-            dobFormatted = formData.birthdate;
-          }
-        }
+        const dobFormatted = mmddyyyyToIso(formData.birthdate) || undefined;
         
         // Extract office ID from currentOffice string or use currentOfficeId from auth
         const extractOfficeId = (officeStr: string | undefined): number | undefined => {
@@ -791,15 +950,18 @@ export default function AddEditAppointmentForm({
           last_name: formData.lastName,
           ...(dobFormatted && { dob: dobFormatted }),
           ...(formData.cellPhone && {
-            cell_phone: formData.cellPhone.replace(/\D/g, ""),
+            cell_phone: digitsOnly(formData.cellPhone),
             preferred_contact: "cell_phone",
           }),
+          ...(formData.workPhone && { work_phone: digitsOnly(formData.workPhone) }),
+          ...(formData.homePhone && { phone: digitsOnly(formData.homePhone) }),
           ...(formData.email && { email: formData.email }),
           home_office_id: currentOfficeId ? parseInt(String(currentOfficeId), 10) : extractOfficeId(currentOffice),
         };
 
-        // Only add gender if it's valid
-        if (patient.gender && (patient.gender === "M" || patient.gender === "F" || patient.gender === "O")) {
+        // Gender is free-text on this backend ("Male"/"Female"/"M"/…); forward
+        // whatever the caller supplied rather than dropping anything but M/F/O.
+        if (patient.gender && patient.gender !== "U") {
           patientData.gender = patient.gender;
         }
 
@@ -859,52 +1021,72 @@ export default function AddEditAppointmentForm({
         
         // Additional fields
         campaign_id: formData.campaignId || undefined,
-        
-        // Treatments - always include procedure_code (never empty, defaults to "UNKNOWN" if missing)
-        treatments: transformTreatments.length > 0 ? transformTreatments : undefined,
       };
 
-      // Remove undefined fields (but keep treatments array - backend handles empty arrays)
-      Object.keys(appointmentPayload).forEach(key => {
-        if (appointmentPayload[key] === undefined && key !== 'treatments') {
-          delete appointmentPayload[key];
+      Object.keys(appointmentPayload).forEach((key) => {
+        if (appointmentPayload[key] === undefined) delete appointmentPayload[key];
+      });
+
+      // Contact / demographic edits belong to the patient record, not the
+      // appointment. Previously every edit made here was silently discarded for
+      // an existing patient (the values were only used when creating one).
+      if (!isNewPatient) {
+        const patch: PatientUpdate = {};
+        const dobIso = mmddyyyyToIso(formData.birthdate);
+        if (dobIso && dobIso !== (patientRecord?.dob ?? "").slice(0, 10)) patch.dob = dobIso;
+        if (!personalLocked.lastName && formData.lastName && formData.lastName !== patientRecord?.last_name)
+          patch.last_name = formData.lastName;
+        if (!personalLocked.firstName && formData.firstName && formData.firstName !== patientRecord?.first_name)
+          patch.first_name = formData.firstName;
+        if ((formData.email || "") !== (patientRecord?.email ?? "")) patch.email = formData.email || null;
+        if (digitsOnly(formData.cellPhone) !== digitsOnly(patientRecord?.cell_phone))
+          patch.cell_phone = digitsOnly(formData.cellPhone) || null;
+        if (digitsOnly(formData.workPhone) !== digitsOnly(patientRecord?.work_phone))
+          patch.work_phone = digitsOnly(formData.workPhone) || null;
+        if (digitsOnly(formData.homePhone) !== digitsOnly(patientRecord?.phone))
+          patch.phone = digitsOnly(formData.homePhone) || null;
+        if (Object.keys(patch).length > 0) {
+          const updated = await updatePatient(patientIdNum, patch);
+          setPatientRecord(updated);
         }
-      });
-      
-      // Log treatment details for debugging
-      if (transformTreatments.length > 0) {
-        console.log("📋 Treatments being saved:", transformTreatments.map(t => ({
-          procedure_code: t.procedure_code,
-          description: t.description,
-          fee: t.fee
-        })));
       }
 
-      console.log("📤 Saving appointment with payload:", appointmentPayload);
-
-      // Call API to save appointment
+      // Save the appointment, then reconcile its procedure lines. The
+      // `treatments` array used to be attached to this payload and dropped on
+      // the floor — appointment procedures are their own resource.
+      let appointmentId: string;
       if (editingAppointment?.id) {
-        // Update existing appointment
-        await updateAppointment({
-          id: editingAppointment.id,
-          ...appointmentPayload,
-        });
-        alert("✅ Appointment updated successfully!");
+        await updateAppointment({ id: editingAppointment.id, ...appointmentPayload });
+        appointmentId = editingAppointment.id;
       } else {
-        // Create new appointment
-        await createAppointment(appointmentPayload);
-    alert("✅ Appointment saved successfully!");
+        const created = await createAppointment(appointmentPayload);
+        appointmentId = created.id;
       }
 
-      // Call onSave callback for parent component to refresh
-      // Pass a flag to indicate appointment was already saved via API
-      onSave({ 
-        _alreadySaved: true, // Flag to indicate appointment was already saved
-        formData, 
-        patient, 
-        treatments 
+      let procedureWarning = "";
+      try {
+        const saved = await syncAppointmentProcedures(appointmentId, treatments);
+        setTreatments(saved);
+      } catch (err: any) {
+        console.error("Error saving appointment procedures:", err);
+        procedureWarning =
+          "\n\n⚠️ The appointment saved, but its procedures could not be stored: " +
+          (err?.response?.data?.detail || err?.message || "unknown error");
+      }
+
+      alert(
+        (editingAppointment?.id
+          ? "✅ Appointment updated successfully!"
+          : "✅ Appointment saved successfully!") + procedureWarning,
+      );
+
+      onSave({
+        _alreadySaved: true, // the appointment is already persisted via the API
+        formData,
+        patient,
+        treatments,
       });
-    onClose(); // ✅ Close modal after successful save
+      onClose();
     } catch (error: any) {
       console.error("Error saving appointment:", error);
       const errorMessage = error.response?.data?.detail || error.message || "Failed to save appointment";
@@ -923,37 +1105,26 @@ export default function AddEditAppointmentForm({
     );
   };
 
+  /** Open the procedure picker. (This button used to append a hardcoded
+   *  D0120 "Periodic Oral Evaluation" row on tooth 1 for $50.) */
   const handleAddTreatment = () => {
-    const newTreatment: Treatment = {
-      id: Date.now().toString(),
-      status: "TP",
-      code: "D0120",
-      th: "1",
-      surf: "",
-      description: "Periodic Oral Evaluation",
-      bill: "Patient",
-      duration: 15,
-      provider: getDefaultProviderForTreatment(), // ✅ STEP 4: Use default provider logic
-      providerUnits: 1,
-      estPatient: 50,
-      estInsurance: 0,
-      fee: 50,
-    };
-    setTreatments([...treatments, newTreatment]);
+    setSelectedProcedureForAdd(null);
+    setShowAddProcedure(true);
   };
 
-  const handleDeleteTreatment = (id: string) => {
-    setTreatments(treatments.filter((t) => t.id !== id));
+  const handleDeleteTreatment = (rowId: string) => {
+    setTreatments(treatments.filter((t) => t.row_id !== rowId));
   };
 
-  const totalEstPatient = treatments.reduce(
-    (sum, t) => sum + t.estPatient,
-    0,
-  );
-  const totalFee = treatments.reduce(
-    (sum, t) => sum + t.fee,
-    0,
-  );
+  const patchTreatment = (rowId: string, patch: Partial<Treatment>) => {
+    setTreatments((prev) =>
+      prev.map((t) => (t.row_id === rowId ? { ...t, ...patch } : t)),
+    );
+  };
+
+  const totalEstPatient = treatments.reduce((sum, t) => sum + t.est_patient, 0);
+  const totalEstInsurance = treatments.reduce((sum, t) => sum + t.est_insurance, 0);
+  const totalFee = treatments.reduce((sum, t) => sum + t.fee, 0);
 
   // Progressive loading: Show form immediately, load data in background
   // No blocking loader - form opens instantly with placeholders
@@ -1018,6 +1189,13 @@ export default function AddEditAppointmentForm({
             </p>
           </div>
         )}
+        {patientError && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded mb-4">
+            <p className="text-sm text-red-700">
+              &#9888; Could not load this patient&apos;s details: {patientError}
+            </p>
+          </div>
+        )}
         {metadataError && (
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-4">
             <p className="text-sm text-yellow-700">
@@ -1040,8 +1218,21 @@ export default function AddEditAppointmentForm({
               <input
                 type="text"
                 value={formData.birthdate}
-                disabled
-                className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg bg-gray-100 text-[#64748B] cursor-not-allowed text-sm"
+                onChange={(e) =>
+                  setFormData({ ...formData, birthdate: e.target.value })
+                }
+                disabled={personalLocked.birthdate}
+                placeholder={isLoadingPatient ? "Loading…" : "MM/DD/YYYY"}
+                title={
+                  personalLocked.birthdate
+                    ? "From the patient record"
+                    : "Not on the patient record — entering it here updates the patient"
+                }
+                className={`w-full px-3 py-1.5 border-2 rounded-lg text-sm ${
+                  personalLocked.birthdate
+                    ? "border-[#CBD5E1] bg-gray-100 text-[#64748B] cursor-not-allowed"
+                    : "border-[#F59E0B] bg-white focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                }`}
               />
             </div>
             <div>
@@ -1052,8 +1243,16 @@ export default function AddEditAppointmentForm({
               <input
                 type="text"
                 value={formData.lastName}
-                disabled
-                className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg bg-gray-100 text-[#64748B] cursor-not-allowed text-sm"
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
+                }
+                disabled={personalLocked.lastName}
+                placeholder={isLoadingPatient ? "Loading…" : ""}
+                className={`w-full px-3 py-1.5 border-2 rounded-lg text-sm ${
+                  personalLocked.lastName
+                    ? "border-[#CBD5E1] bg-gray-100 text-[#64748B] cursor-not-allowed"
+                    : "border-[#F59E0B] bg-white focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                }`}
               />
             </div>
             <div>
@@ -1064,8 +1263,16 @@ export default function AddEditAppointmentForm({
               <input
                 type="text"
                 value={formData.firstName}
-                disabled
-                className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg bg-gray-100 text-[#64748B] cursor-not-allowed text-sm"
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
+                disabled={personalLocked.firstName}
+                placeholder={isLoadingPatient ? "Loading…" : ""}
+                className={`w-full px-3 py-1.5 border-2 rounded-lg text-sm ${
+                  personalLocked.firstName
+                    ? "border-[#CBD5E1] bg-gray-100 text-[#64748B] cursor-not-allowed"
+                    : "border-[#F59E0B] bg-white focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                }`}
               />
             </div>
           </div>
@@ -1723,82 +1930,138 @@ export default function AddEditAppointmentForm({
                   ) : (
                     treatments.map((treatment, index) => (
                       <tr
-                        key={treatment.id}
+                        key={treatment.row_id}
                         className={`border-b border-[#E2E8F0] ${index % 2 === 0 ? "bg-white" : "bg-[#F7F9FC]"}`}
                       >
                         <td className="px-2 py-2">
-                          {treatment.status}
+                          <select
+                            value={treatment.status}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, { status: e.target.value })
+                            }
+                            className="w-full rounded border border-[#CBD5E1] bg-white px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                          >
+                            <option value="TP">TP</option>
+                            <option value="C">C</option>
+                            <option value="EX">EX</option>
+                            <option value="RF">RF</option>
+                          </select>
                         </td>
-                        <td className="px-2 py-2 text-[#3A6EA5] font-semibold">
-                          {treatment.code}
+                        <td className="px-2 py-2 font-semibold text-[#3A6EA5]">
+                          {treatment.procedure_code}
                         </td>
                         <td className="px-2 py-2">
-                          {treatment.th}
+                          <input
+                            value={treatment.tooth}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, { tooth: e.target.value })
+                            }
+                            className="w-12 rounded border border-[#CBD5E1] px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                          />
                         </td>
                         <td className="px-2 py-2">
-                          {treatment.surf}
+                          <input
+                            value={treatment.surface}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, {
+                                surface: e.target.value.toUpperCase(),
+                              })
+                            }
+                            className="w-14 rounded border border-[#CBD5E1] px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                          />
+                        </td>
+                        <td className="px-2 py-2">{treatment.description}</td>
+                        <td className="px-2 py-2">
+                          <select
+                            value={treatment.bill_to}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, { bill_to: e.target.value })
+                            }
+                            title="Captured here but not stored by the backend yet (gap APPT-PROC-3)"
+                            className="rounded border border-[#CBD5E1] bg-white px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                          >
+                            <option value="Patient">Patient</option>
+                            <option value="Insurance">Insurance</option>
+                          </select>
                         </td>
                         <td className="px-2 py-2">
-                          {treatment.description}
-                        </td>
-                        <td className="px-2 py-2">
-                          {treatment.bill}
-                        </td>
-                        <td className="px-2 py-2">
-                          {treatment.duration}
+                          <input
+                            type="number"
+                            min={0}
+                            value={treatment.duration}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, {
+                                duration: Number(e.target.value) || 0,
+                              })
+                            }
+                            className="w-14 rounded border border-[#CBD5E1] px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                          />
                         </td>
                         <td className="px-1 py-1">
-                          {/* ✅ Compact Provider dropdown */}
                           <select
-                            value={treatment.provider}
-                            onChange={(e) => {
-                              const updated = [...treatments];
-                              const current = updated[index];
-                              if (current) {
-                                updated[index] = {
-                                  ...current,
-                                  id: current.id || `temp-${Date.now()}-${index}`, // Ensure id is always present
-                                  provider: e.target.value,
-                                };
-                              }
-                              setTreatments(updated);
-                            }}
-                            className="w-full px-1.5 py-0.5 border border-[#CBD5E1] rounded text-[11px] bg-white focus:outline-none focus:border-[#3A6EA5] leading-tight"
-                            style={{ minWidth: '140px', maxWidth: '160px' }}
+                            value={treatment.provider_id}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, {
+                                provider_id: e.target.value,
+                              })
+                            }
+                            className="w-full rounded border border-[#CBD5E1] bg-white px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                            style={{ minWidth: "140px", maxWidth: "160px" }}
                           >
                             {providers.length === 0 ? (
                               <option value="">No providers available</option>
                             ) : (
-                              providers.map((provider) => (
-                              <option
-                                key={provider.id}
-                                value={provider.name}
-                              >
-                                {provider.name}
-                              </option>
-                              ))
+                              <>
+                                <option value="">&mdash; None &mdash;</option>
+                                {providers.map((provider) => (
+                                  <option key={provider.id} value={provider.id}>
+                                    {provider.name}
+                                  </option>
+                                ))}
+                              </>
                             )}
                           </select>
                         </td>
                         <td className="px-2 py-2">
-                          {treatment.providerUnits}
+                          <input
+                            type="number"
+                            min={1}
+                            value={treatment.provider_units}
+                            onChange={(e) =>
+                              patchTreatment(treatment.row_id, {
+                                provider_units: Number(e.target.value) || 1,
+                              })
+                            }
+                            title="Captured here but not stored by the backend yet (gap APPT-PROC-2)"
+                            className="w-12 rounded border border-[#CBD5E1] px-1.5 py-0.5 text-[11px] leading-tight focus:border-[#3A6EA5] focus:outline-none"
+                          />
+                        </td>
+                        <td className="px-2 py-2 tabular-nums">
+                          ${treatment.est_patient.toFixed(2)}
+                        </td>
+                        <td className="px-2 py-2 tabular-nums">
+                          ${treatment.est_insurance.toFixed(2)}
                         </td>
                         <td className="px-2 py-2">
-                          ${treatment.estPatient.toFixed(2)}
-                        </td>
-                        <td className="px-2 py-2">
-                          ${treatment.estInsurance.toFixed(2)}
-                        </td>
-                        <td className="px-2 py-2 font-semibold">
-                          ${treatment.fee.toFixed(2)}
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={treatment.fee}
+                            onChange={(e) => {
+                              const fee = Number(e.target.value) || 0;
+                              patchTreatment(treatment.row_id, {
+                                fee,
+                                est_patient: Math.max(fee - treatment.est_insurance, 0),
+                              });
+                            }}
+                            className="w-20 rounded border border-[#CBD5E1] px-1.5 py-0.5 text-right text-[11px] font-semibold leading-tight tabular-nums focus:border-[#3A6EA5] focus:outline-none"
+                          />
                         </td>
                         <td className="px-2 py-2">
                           <button
-                            onClick={() =>
-                              handleDeleteTreatment(
-                                treatment.id,
-                              )
-                            }
+                            onClick={() => handleDeleteTreatment(treatment.row_id)}
+                            title="Remove this procedure"
                             className="text-[#EF4444] hover:text-[#DC2626]"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1842,30 +2105,37 @@ export default function AddEditAppointmentForm({
             {treatmentTab === "txplans" ? (
               <TxPlansTab
                 treatmentPlans={treatmentPlans}
-                isLoading={isLoadingMetadata}
+                isLoading={isLoadingMetadata || isLoadingTreatmentPlans}
+                patientId={patientNumericId}
+                officeId={officeIdNum(currentOfficeId ?? currentOffice) ?? null}
+                providers={providers}
+                defaultProviderId={providerIdByName(formData.provider)}
+                procedureCodes={safeProcedureCodes}
+                feeContext={feeContext}
+                onRefresh={reloadTreatmentPlans}
+                providerLabel={providerNameById}
                 onSelectProcedures={(procedures) => {
-                  // Convert Tx Plan procedures to treatments
-                  const newTreatments: Treatment[] =
-                    procedures.map((proc) => ({
-                      id: Date.now().toString() + Math.random(),
-                      status: "TP",
-                      code: proc.code,
-                      th: proc.tooth || "",
-                      surf: proc.surface || "",
-                      description: proc.description,
-                      bill: "Patient",
-                      duration: 30,
-                      provider: proc.diagnosedProvider,
-                      providerUnits: 1,
-                      estPatient:
-                        proc.fee - proc.insuranceEstimate,
-                      estInsurance: proc.insuranceEstimate,
-                      fee: proc.fee,
-                    }));
-                  setTreatments([
-                    ...treatments,
-                    ...newTreatments,
-                  ]);
+                  // Selected plan procedures become appointment procedure lines,
+                  // carrying their plan link, tooth/surface and real estimates.
+                  const newTreatments: Treatment[] = procedures.map((proc) => ({
+                    row_id: newRowId(),
+                    status: "TP",
+                    procedure_code: proc.code,
+                    tooth: proc.tooth || "",
+                    surface: proc.surface || "",
+                    description: proc.description,
+                    bill_to: "Patient",
+                    duration:
+                      safeProcedureCodes.find((c) => c.code === proc.code)
+                        ?.defaultDuration ?? 30,
+                    provider_id: proc.diagnosedProvider || providerIdByName(formData.provider),
+                    provider_units: 1,
+                    est_patient: Math.max(proc.fee - proc.insuranceEstimate, 0),
+                    est_insurance: proc.insuranceEstimate,
+                    fee: proc.fee,
+                    treatment_plan_id: proc.planId ?? null,
+                  }));
+                  setTreatments((prev) => [...prev, ...newTreatments]);
                 }}
               />
             ) : (
@@ -1897,7 +2167,7 @@ export default function AddEditAppointmentForm({
                     ))
                   )}
                 </div>
-                <div className="grid grid-cols-4 gap-2 text-sm">
+                <div className="grid grid-cols-3 gap-2 text-sm">
                   <input
                     type="text"
                     placeholder="By Code"
@@ -1925,11 +2195,6 @@ export default function AddEditAppointmentForm({
                     }
                     className="px-3 py-2 border border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
                   />
-                  <input
-                    type="text"
-                    placeholder="By Explosion Code"
-                    className="px-3 py-2 border border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5]"
-                  />
                 </div>
 
                 {/* ✅ STEP 4: Add Selected to Treatments Button */}
@@ -1939,27 +2204,14 @@ export default function AddEditAppointmentForm({
                       {selectedProcedures.length} procedure(s) selected
                     </span>
                     <button
-                      onClick={() => {
-                        // Map selected procedures to treatments with TP status
-                        const plannedTreatments = selectedProcedures.map(
-                          (proc) => ({
-                            id: Date.now().toString() + Math.random(),
-                            status: "TP", // Treatment Planned
-                            code: proc.code,
-                            th: "",
-                            surf: "",
-                            description: proc.description,
-                            bill: "Patient",
-                            duration: 30, // Default duration
-                            provider: getDefaultProviderForTreatment(), // ✅ STEP 4: Use default provider logic
-                            providerUnits: 1,
-                            estPatient: proc.defaultFee * 0.3,
-                            estInsurance: proc.defaultFee * 0.7,
-                            fee: proc.defaultFee,
-                          }),
-                        );
-                        setTreatments([...treatments, ...plannedTreatments]);
-                        setSelectedProcedures([]); // Clear selection
+                      onClick={async () => {
+                        // Each line is priced against the patient's fee schedule
+                        // (this used to invent a 30/70 patient/insurance split).
+                        const picked = selectedProcedures;
+                        setSelectedProcedures([]);
+                        for (const proc of picked) {
+                          await addProcedureLine(proc);
+                        }
                       }}
                       className="bg-[#3A6EA5] text-white px-4 py-2 rounded-lg hover:bg-[#1F3A5F] transition-colors flex items-center gap-2 font-semibold text-sm"
                     >
@@ -2055,9 +2307,12 @@ export default function AddEditAppointmentForm({
                             return (
                               <tr
                                 key={proc.code}
-                                onClick={() =>
-                                  toggleProcedureSelection(proc)
-                                }
+                                onClick={() => toggleProcedureSelection(proc)}
+                                onDoubleClick={() => {
+                                  setSelectedProcedureForAdd(proc);
+                                  setShowAddProcedure(true);
+                                }}
+                                title="Click to select · double-click to add with tooth / surface details"
                                 className={`border-b border-[#E2E8F0] hover:bg-[#E8F4F8] cursor-pointer transition-colors ${
                                   isSelected
                                     ? "bg-[#D1E9F6] border-l-4 border-l-[#3A6EA5]"
@@ -2091,6 +2346,14 @@ export default function AddEditAppointmentForm({
           {/* Totals */}
           <div className="mt-3 bg-[#E8EFF7] border-2 border-[#3A6EA5] rounded-lg p-3">
             <div className="flex justify-end gap-8 font-semibold">
+              <div>
+                <span className="text-[#64748B]">
+                  Total Est. Insurance:
+                </span>
+                <span className="ml-2 text-[#1F3A5F]">
+                  ${totalEstInsurance.toFixed(2)}
+                </span>
+              </div>
               <div>
                 <span className="text-[#64748B]">
                   Total Est. Patient:
@@ -2192,38 +2455,23 @@ export default function AddEditAppointmentForm({
         </div>
       )}
 
-      {/* Add Procedure Modal (NEW INTEGRATION) */}
-      {showAddProcedure && selectedProcedureForAdd && (
-        <AddProcedure
+      {/* Add Procedure -> appointment procedure line (never a ledger charge) */}
+      {showAddProcedure && (
+        <AppointmentProcedurePicker
           isOpen={showAddProcedure}
           onClose={() => {
             setShowAddProcedure(false);
             setSelectedProcedureForAdd(null);
           }}
-          patientName={patient.name}
-          patientId={patient.patientId}
-          office={currentOffice}
-          initialProcedure={{
-            code: selectedProcedureForAdd.code,
-            userCode: selectedProcedureForAdd.userCode || "",
-            description: selectedProcedureForAdd.description,
-            category: selectedProcedureForAdd.category,
-            requirements: {
-              tooth: selectedProcedureForAdd.requirements?.tooth ?? false,
-              surface: selectedProcedureForAdd.requirements?.surface ?? false,
-              quadrant: selectedProcedureForAdd.requirements?.quadrant ?? false,
-              materials: selectedProcedureForAdd.requirements?.materials ?? false,
-            },
-            defaultFee: 0,
-            defaultDuration: undefined,
-          }}
-          onSave={(procedure) => {
-            const newTreatment =
-              mapProcedureToTreatment(procedure);
-            setTreatments([...treatments, newTreatment]);
-            setShowAddProcedure(false);
-            setSelectedProcedureForAdd(null);
-          }}
+          patientName={`${formData.firstName} ${formData.lastName}`.trim()}
+          procedureCodes={safeProcedureCodes}
+          categories={procedureCategories}
+          providers={providers}
+          defaultProviderId={providerIdByName(formData.provider)}
+          feeContext={feeContext}
+          defaultStatus={defaultLineStatus}
+          initialCode={selectedProcedureForAdd}
+          onAdd={(line) => setTreatments((prev) => [...prev, line])}
         />
       )}
     </>

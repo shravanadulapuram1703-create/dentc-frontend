@@ -153,6 +153,19 @@ macro body ← `content`.
    only validates non-empty `name`/`content`. Confirm whether duplicate names should
    be rejected server-side.
 
+6. **NM-6 — `GET /api/v1/note-macros` ignores `sort` / `order`.** The request
+   `?page=1&size=200&sort=name&order=asc` comes back in `id` order (page 1 starts at
+   id 1 "Comprehensive Evalua", page 2 at id 201, page 3 at id 401). Both the Setup
+   screen and the Patient Notes "Add Notes Macro" picker therefore sort client-side.
+   Honour the documented `sort`/`order` params, or drop them from the schema.
+
+7. **NM-7 — Seeded macros are duplicated ~4× (data, not schema).** The tenant used for
+   UAT holds 481 macro rows for roughly 125 distinct names — e.g. "Cold Sensitivity"
+   (category 179) appears four times with four different ids. Every macro list in the
+   app (Setup, Progress Notes, Patient Notes) shows each entry four times. Looks like
+   the migration ran more than once; needs a de-dupe pass on the seed/migration, and
+   ideally the uniqueness call in NM-5.
+
 ### Notes
 
 - `NoteMacroCreate` requires `name` + `content`; `category` is nullable-optional. The
@@ -160,6 +173,12 @@ macro body ← `content`.
 - Office-scoped assignment of macros already exists
   (`GET/PUT /api/v1/offices/{office_id}/note-macros`) and is handled separately by
   Office Assignment — this screen manages the global catalog only.
+- Consumers of this catalog: Progress Notes editor (left macro panel) and Patient
+  Notes → **Add Notes Macro** (`src/components/patient/NoteMacroPickerModal.tsx`).
+  The Patient Notes picker used to render a hard-coded list of eight sample
+  sentences and showed nothing configured in Setup; it now reads this endpoint
+  (all pages), filters by category/name, previews the body, and fills `@@…@@` /
+  `{{…}}` tokens through the shared macro questionnaire.
 
 ---
 

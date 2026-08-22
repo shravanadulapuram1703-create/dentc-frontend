@@ -28,7 +28,11 @@ import {
   getOffice,
 } from "@/api/generated/endpoints/organization/organization";
 import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
-import { listTreatmentPlans } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
+import { loadProcedureCodes } from "@/components/setup/insurance/procedureCodeService";
+import {
+  listTreatmentPlans,
+  listTreatmentPlanItems,
+} from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
 import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
 import { fetchProvidersForOffice } from "@/services/providerDirectory";
@@ -41,6 +45,7 @@ import type {
   AppointmentRead,
   AppointmentSchedulerRead,
   AppointmentProcedureRead,
+  ProcedureCodeRead,
   SchedulerPatientRead,
   PatientAlertRead,
   PatientBalance,
@@ -125,7 +130,6 @@ export interface Appointment {
   campaign_id?: string;
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
-  treatments?: AppointmentTreatment[];
 }
 
 export interface Operatory {
@@ -163,21 +167,6 @@ export interface SchedulerConfig {
   slotInterval: number;
 }
 
-export interface AppointmentTreatment {
-  procedure_code: string;
-  status: string;
-  tooth?: string;
-  surface?: string;
-  description: string;
-  bill_to?: string;
-  duration: number;
-  provider: string;
-  provider_units?: number;
-  est_patient?: number;
-  est_insurance?: number;
-  fee: number;
-}
-
 export interface AppointmentCreateRequest {
   /** Numeric patient_id per the backend contract (AppointmentCreate.patient_id
    *  is number | null). null is only valid for a not-yet-created patient — the
@@ -202,7 +191,6 @@ export interface AppointmentCreateRequest {
   campaign_id?: string;
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
-  treatments?: AppointmentTreatment[];
 }
 
 export interface AppointmentUpdateRequest {
@@ -227,7 +215,6 @@ export interface AppointmentUpdateRequest {
   campaign_id?: string;
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
-  treatments?: AppointmentTreatment[];
 }
 
 // ===== HELPERS =====
@@ -388,6 +375,43 @@ const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
   checked_out_on: a.checked_out_on ?? null,
 });
 
+/**
+ * Ids of appointments that have been deleted (soft-deleted) in a date range.
+ *
+ * `DELETE /appointments/{id}` only sets `is_archived` (204, row survives), and
+ * the calendar feed `GET /appointments/scheduler` neither filters archived rows
+ * nor exposes `is_archived` on AppointmentSchedulerRead — so a deleted
+ * appointment comes straight back on the next refetch. `GET /appointments`
+ * *does* support `is_archived`, so we ask it for the tombstones and subtract
+ * them from the feed. Backend gap SCHED-DEL-1 (see docs/scheduler).
+ */
+export const fetchArchivedAppointmentIds = async (
+  startDate: string,
+  endDate: string,
+  officeId?: number,
+): Promise<Set<string>> => {
+  const ids = new Set<string>();
+  const query = {
+    date_from: startDate,
+    date_to: endDate,
+    ...(officeId != null ? { office_id: officeId } : {}),
+    is_archived: true,
+  };
+  const first = await listAppointments({ ...query, page: 1, ...PAGE }).catch(() => null);
+  if (!first) return ids;
+  for (const a of first.items ?? []) ids.add(a.id);
+  const pages = first.meta?.pages ?? 1;
+  if (pages > 1) {
+    const rest = await Promise.all(
+      Array.from({ length: pages - 1 }, (_, i) =>
+        listAppointments({ ...query, page: i + 2, ...PAGE }).catch(() => null),
+      ),
+    );
+    for (const res of rest) for (const a of res?.items ?? []) ids.add(a.id);
+  }
+  return ids;
+};
+
 export const fetchAppointments = async (
   startDate: string,
   endDate?: string,
@@ -395,16 +419,24 @@ export const fetchAppointments = async (
   filters?: AppointmentFilters,
 ): Promise<Appointment[]> => {
   const oid = officeIdNum(officeId);
+  const to = endDate ?? startDate;
   // Use the denormalized calendar feed: names resolved server-side (no N+1),
   // uncapped range (works for day/week/month). It only filters by date/office,
   // so status/provider/operatory filters are applied client-side below.
-  const rows = await listSchedulerAppointments({
-    date_from: startDate,
-    date_to: endDate ?? startDate,
-    ...(oid != null ? { office_id: oid } : {}),
-  });
+  // The archived-id lookup runs in parallel and removes deleted appointments
+  // the feed still returns (gap SCHED-DEL-1).
+  const [rows, archivedIds] = await Promise.all([
+    listSchedulerAppointments({
+      date_from: startDate,
+      date_to: to,
+      ...(oid != null ? { office_id: oid } : {}),
+    }),
+    fetchArchivedAppointmentIds(startDate, to, oid),
+  ]);
 
-  let mapped = (rows ?? []).map(mapSchedulerAppointment);
+  let mapped = (rows ?? [])
+    .filter((a) => !archivedIds.has(a.id))
+    .map(mapSchedulerAppointment);
   if (filters?.status)
     mapped = mapped.filter((a) => a.status === filters.status);
   if (filters?.provider_id)
@@ -468,6 +500,10 @@ export const createAppointment = async (
     end_time: data.end_time ?? addMinutes(startTime, duration),
     duration,
     status: data.status,
+    // is_missed / is_cancelled were dropped here, so the form's Missed and
+    // Cancelled checkboxes never reached the backend on create.
+    is_missed: data.missed ?? data.is_missed ?? undefined,
+    is_cancelled: data.cancelled ?? data.is_cancelled ?? undefined,
     procedure_label: data.procedure_type ?? data.procedureType ?? null,
     notes: data.notes ?? null,
     has_lab: data.lab ?? undefined,
@@ -694,7 +730,12 @@ export const fetchAppointmentDetails = async (
   const providerNames = namesMap(providersRes?.items);
   const operatoryNames = namesMap(operatoriesRes?.items);
 
-  const procedures = (proceduresRes?.items ?? []).map(mapProcedureLine);
+  // DELETE on appointment-procedures only sets is_archived and the list
+  // endpoint has no is_archived filter (gap APPT-PROC-4) — drop archived rows
+  // so removed procedures do not reappear in the details pop-out.
+  const procedures = (proceduresRes?.items ?? [])
+    .filter((p) => !p.is_archived)
+    .map(mapProcedureLine);
   const est_patient_total = procedures.reduce((s, p) => s + p.est_patient, 0);
   const fee_total = procedures.reduce((s, p) => s + p.fee, 0);
 
@@ -710,6 +751,8 @@ export const fetchAppointmentDetails = async (
     const up = await listAppointments({
       patient_id: appt.patient_id,
       date_from: today,
+      // Deleted appointments are only archived (gap SCHED-DEL-1) — exclude them.
+      is_archived: false,
       sort: "date",
       order: "asc",
       size: 25,
@@ -955,63 +998,153 @@ export const fetchAppointmentTypes = async (): Promise<AppointmentType[]> => {
   }));
 };
 
+const toProcedureCode = (c: ProcedureCodeRead): ProcedureCode => ({
+  code: c.code,
+  userCode: c.legacy_code ?? "",
+  description: c.description ?? "",
+  category: c.category ?? "",
+  requirements: {
+    tooth: c.requires_tooth ?? false,
+    surface: c.requires_surface ?? false,
+    quadrant: c.requires_quadrant ?? false,
+    materials: c.requires_lab ?? false,
+  },
+  defaultFee: c.default_fee != null ? Number(c.default_fee) : 0,
+  defaultDuration: c.default_duration_minutes ?? undefined,
+});
+
+/**
+ * Procedure codes for the Quick Add picker.
+ *
+ * The catalogue holds ~1,100 codes and every list endpoint caps `size` at 200,
+ * so a single page silently hid ~900 codes from Quick Add (which filters
+ * client-side). We reuse the shared paged+cached loader instead, and only fall
+ * back to a server query when a category/search filter is supplied.
+ */
 export const fetchProcedureCodes = async (
   category?: string,
   search?: string,
 ): Promise<ProcedureCode[]> => {
-  const res = await listProcedureCodes({
-    ...(category ? { category } : {}),
-    ...(search ? { search } : {}),
-    ...PAGE,
-  });
-  return (res.items ?? []).map((c) => ({
-    code: c.code,
-    userCode: c.legacy_code ?? "",
-    description: c.description ?? "",
-    category: c.category ?? "",
-    requirements: {
-      tooth: c.requires_tooth ?? false,
-      surface: c.requires_surface ?? false,
-      quadrant: c.requires_quadrant ?? false,
-      materials: false,
-    },
-    defaultFee: c.default_fee != null ? Number(c.default_fee) : 0,
-    defaultDuration: c.default_duration_minutes ?? undefined,
-  }));
+  if (category || search) {
+    const res = await listProcedureCodes({
+      ...(category ? { category } : {}),
+      ...(search ? { search } : {}),
+      ...PAGE,
+    });
+    return (res.items ?? []).map(toProcedureCode);
+  }
+  const map = await loadProcedureCodes();
+  return [...map.values()]
+    .filter((c) => c.is_active !== false)
+    .sort((a, b) => a.code.localeCompare(b.code))
+    .map(toProcedureCode);
 };
 
 export const fetchProcedureCategories = async (): Promise<
   ProcedureCategory[]
 > => {
-  // Distinct categories from procedure codes (no dedicated categories endpoint).
-  const res = await listProcedureCodes(PAGE);
+  // Distinct categories across the whole catalogue (no categories endpoint).
+  const map = await loadProcedureCodes();
   const seen = new Set<string>();
   const cats: ProcedureCategory[] = [];
-  for (const c of res.items ?? []) {
+  for (const c of map.values()) {
     const name = c.category;
     if (name && !seen.has(name)) {
       seen.add(name);
       cats.push({ id: name, name, displayName: name });
     }
   }
-  return cats;
+  return cats.sort((a, b) => a.displayName.localeCompare(b.displayName));
 };
 
+/** Treatment-plan item status -> the three states the appointment tree shows. */
+const planProcedureStatus = (
+  raw: string | null | undefined,
+): TreatmentPlanProcedure["status"] => {
+  const s = (raw ?? "").toLowerCase();
+  if (s.includes("complete")) return "Completed";
+  if (s.includes("schedul")) return "Scheduled";
+  return "Planned";
+};
+
+/**
+ * A patient's treatment plans with their real procedures, grouped into phases.
+ *
+ * `patientId` MUST be the numeric backend patient id — the chart_no the search
+ * grid displays is a different number and silently loaded another patient's
+ * plans. Phases come from `treatment_plan_items.phase_id` (falling back to the
+ * legacy `billing_order` encoding); items are sorted phase → priority → code to
+ * match the Treatment Plan screen.
+ */
 export const fetchTreatmentPlans = async (
-  patientId: string,
+  patientId: number | string | null | undefined,
 ): Promise<TreatmentPlan[]> => {
-  const pid = Number(String(patientId).match(/(\d+)/)?.[1]);
-  const res = await listTreatmentPlans({
-    ...(Number.isFinite(pid) ? { patient_id: pid } : {}),
-    ...PAGE,
-  });
-  // Phases/procedures live in /treatment-plan-items (compose as a follow-up).
-  return (res.items ?? []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    patientId: String(p.patient_id),
-    phases: [],
-    createdDate: p.created_at ?? "",
-    status: (p.status as TreatmentPlan["status"]) ?? "Active",
-  }));
+  const pid =
+    typeof patientId === "number"
+      ? patientId
+      : Number(String(patientId ?? "").match(/(\d+)/)?.[1]);
+  if (!Number.isFinite(pid)) return [];
+
+  const res = await listTreatmentPlans({ patient_id: pid, ...PAGE });
+  const plans = res.items ?? [];
+  if (plans.length === 0) return [];
+
+  // Item descriptions fall back to the procedure-code catalogue when the row
+  // stored none (legacy-migrated items frequently have a null description).
+  const codeMap = await loadProcedureCodes().catch(
+    () => new Map<string, { description: string }>(),
+  );
+
+  const withItems = await Promise.all(
+    plans.map(async (p) => {
+      const itemsRes = await listTreatmentPlanItems({
+        plan_id: p.id,
+        is_archived: false,
+        ...PAGE,
+      }).catch(() => null);
+
+      const byPhase = new Map<number, TreatmentPlanProcedure[]>();
+      const sorted = [...(itemsRes?.items ?? [])].sort(
+        (a, b) =>
+          (a.phase_id ?? 1) - (b.phase_id ?? 1) ||
+          (a.priority ?? 1) - (b.priority ?? 1) ||
+          a.procedure_code.localeCompare(b.procedure_code),
+      );
+      for (const it of sorted) {
+        const phase = it.phase_id ?? (Number(it.billing_order) || 1);
+        const fee = num(it.fee);
+        const ins = num(it.insurance_estimate);
+        const bucket = byPhase.get(phase) ?? [];
+        bucket.push({
+          id: it.id,
+          code: it.procedure_code,
+          description:
+            it.description || codeMap.get(it.procedure_code)?.description || "",
+          tooth: it.tooth ?? "",
+          surface: it.surface ?? "",
+          diagnosedProvider: it.provider_id ?? it.diagnosed_by ?? "",
+          fee,
+          insuranceEstimate: ins,
+          status: planProcedureStatus(it.status),
+        });
+        byPhase.set(phase, bucket);
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        patientId: String(p.patient_id),
+        phases: [...byPhase.entries()]
+          .sort((a, b) => a[0] - b[0])
+          .map(([phase, procedures]) => ({
+            id: `${p.id}-phase-${phase}`,
+            name: `Phase ${phase}`,
+            procedures,
+          })),
+        createdDate: p.created_at ?? "",
+        status: (p.status as TreatmentPlan["status"]) ?? "Active",
+      } satisfies TreatmentPlan;
+    }),
+  );
+  return withItems;
 };

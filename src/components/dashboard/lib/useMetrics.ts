@@ -189,7 +189,16 @@ export function useAnalyticsSeries(
       const [appts, pays, pats] = await Promise.all([
         fetchAllPages(
           (page, size) =>
-            listAppointments({ date_from: start, date_to: end, office_id: office ?? null, page, size }),
+            // Deleted appointments are only archived, and the list endpoint returns
+            // them unless asked not to (gap SCHED-DEL-1).
+            listAppointments({
+              date_from: start,
+              date_to: end,
+              office_id: office ?? null,
+              is_archived: false,
+              page,
+              size,
+            }),
           { maxPages: 3 },
         ),
         fetchAllPages(
