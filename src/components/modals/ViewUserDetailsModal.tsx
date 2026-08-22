@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, UserCheck, Shield, Clock, Settings, Wifi, RefreshCw, AlertCircle } from "lucide-react";
+import { X, UserCheck, Shield, Clock, Settings, Wifi, RefreshCw, AlertCircle, UserCircle2 } from "lucide-react";
 import { ReadOnlyField } from "../ReadOnlyField";
 import { fetchUserDetails, type UserDetails } from "../../services/userApi";
 import {
@@ -33,6 +33,9 @@ export default function ViewUserDetailsModal({
   userId,
 }: ViewUserDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<number>(1);
+  // Set when the stored image URL fails to load, so we fall back to initials
+  // instead of leaving a broken image in the header.
+  const [avatarFailed, setAvatarFailed] = useState<boolean>(false);
   const [user, setUser] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +80,7 @@ export default function ViewUserDetailsModal({
       setUser(null);
       setError(null);
       setActiveTab(1);
+      setAvatarFailed(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, userId]);
@@ -121,6 +125,18 @@ export default function ViewUserDetailsModal({
     return o ? `${o.name} (OID: ${o.office_code})` : `Office ${officeId}`;
   };
 
+  /** "SA" from "Shravan Adulapuram", falling back to the username. Plain
+   *  const, not a hook — this runs after the `!isOpen` early return. */
+  const initials = (() => {
+    const first = user?.first_name?.trim() ?? "";
+    const last = user?.last_name?.trim() ?? "";
+    const fromName = `${first.charAt(0)}${last.charAt(0)}`.trim();
+    if (fromName) return fromName.toUpperCase();
+    return (user?.username ?? "").slice(0, 2).toUpperCase();
+  })();
+
+  const avatarSrc = user?.image_url ? apiAssetUrl(user.image_url) : "";
+
   const tabs = [
     { id: 1, label: "Login Info & Office Access", icon: UserCheck },
     { id: 2, label: "Permitted IPs", icon: Wifi },
@@ -132,18 +148,35 @@ export default function ViewUserDetailsModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {user?.image_url && (
+        {/* Header — shrink-0 so a tall tab body cannot squash it (see below). */}
+        <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Always render an avatar: the stored photo when there is one that
+                loads, otherwise the user's initials — never a blank gap. */}
+            {avatarSrc && !avatarFailed ? (
               <img
-                src={apiAssetUrl(user.image_url)}
-                alt={user.username}
-                className="w-12 h-12 rounded-full object-cover border-2 border-white/40"
+                src={avatarSrc}
+                alt={user?.username ?? "User"}
+                onError={() => setAvatarFailed(true)}
+                className="w-12 h-12 shrink-0 rounded-full object-cover border-2 border-white/40 bg-white/10"
               />
+            ) : (
+              <div
+                title={user ? "No profile photo on file" : undefined}
+                className="w-12 h-12 shrink-0 rounded-full border-2 border-white/40 bg-white/15 flex items-center justify-center"
+              >
+                {initials ? (
+                  <span className="text-base font-bold tracking-wide">{initials}</span>
+                ) : (
+                  <UserCircle2 className="w-7 h-7 text-white/80" />
+                )}
+              </div>
             )}
-            <div>
-              <h2 className="text-xl font-bold">View User Details</h2>
+            <div className="min-w-0">
+              {/* text-white is explicit: globals.css sets a dark `color` on every
+                  h1-h6 in the base layer, which beats the header's inherited
+                  text-white and left this title navy-on-navy. */}
+              <h2 className="text-xl font-bold text-white">View User Details</h2>
               {user ? (
                 <p className="text-sm text-[#E2E8F0]">
                   {user.first_name} {user.last_name} (@{user.username}) — Read Only
@@ -153,7 +186,7 @@ export default function ViewUserDetailsModal({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {user && (
               <button
                 onClick={handleRefresh}
@@ -170,15 +203,16 @@ export default function ViewUserDetailsModal({
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-[#F7F9FC] border-b border-[#E2E8F0] flex overflow-x-auto">
+        {/* Tabs — shrink-0 keeps the row at full height; whitespace-nowrap stops
+            the labels wrapping when the strip scrolls horizontally. */}
+        <div className="bg-[#F7F9FC] border-b border-[#E2E8F0] flex overflow-x-auto shrink-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-4 transition-colors ${
+                className={`flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-bold border-b-4 transition-colors ${
                   activeTab === tab.id
                     ? "border-[#3A6EA5] text-[#3A6EA5] bg-white"
                     : "border-transparent text-[#64748B] hover:text-[#1F3A5F]"
@@ -191,8 +225,10 @@ export default function ViewUserDetailsModal({
           })}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Content — min-h-0 is required next to flex-1: without it this pane
+            keeps its content height, pushes the dialog past max-h-[90vh] and
+            squashes the header/tabs instead of scrolling. */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {/* Loading State */}
           {loading && !user && (
             <div className="flex items-center justify-center py-12">
@@ -535,7 +571,7 @@ export default function ViewUserDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#E2E8F0] p-4 bg-[#F7F9FC] flex justify-end">
+        <div className="border-t border-[#E2E8F0] p-4 bg-[#F7F9FC] flex justify-end shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2 bg-[#64748B] text-white rounded-lg hover:bg-[#475569]"

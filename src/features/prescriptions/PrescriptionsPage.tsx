@@ -18,8 +18,11 @@ import {
   useCreatePrescription,
   useUpdatePrescription,
 } from '@/api/generated/endpoints/clinical/clinical';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
-import type { PrescriptionLibraryRead } from '@/api/generated/model';
+import { formatProviderName } from '@/services/providerDirectory';
+import type { PrescriptionLibraryRead, ProviderRead } from '@/api/generated/model';
 import { loadRxLibrary } from './prescriptionsService';
 import {
   applyLibraryDrug,
@@ -29,10 +32,18 @@ import {
   toCreateBody,
   type RxDraft,
 } from './rxModel';
-import { printPrescriptions, type RxPrintHeader } from './rxPrint';
+import {
+  fmtSlipDate,
+  printPrescriptions,
+  type RxPrintOffice,
+  type RxPrintPatient,
+  type RxPrintPrescriber,
+  type RxSlip,
+} from './rxPrint';
 import RxList from './RxList';
 import RxEditPanel from './RxEditPanel';
 import RxToolbar from './RxToolbar';
+import RxPrintDialog, { type RxPrintRequest, type RxPrintScope } from './RxPrintDialog';
 
 interface OutletContext {
   patient: { id: string; name: string; officeId?: string; age?: number; dob?: string };
@@ -149,29 +160,91 @@ export default function PrescriptionsPage() {
   };
 
   // ---- Printing ----
-  const printHeader: RxPrintHeader = {
-    officeName: '',
-    officeLine: '',
-    patientName: patient.name,
-    dob: patient.dob ?? '',
+  // The slip carries the practice letterhead and the prescriber's DEA / NPI /
+  // License, so the print pulls the office and patient records the list itself
+  // doesn't need (the shell context has neither an address nor an office row).
+  const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
+  const officesQuery = useListOffices({ size: 200 });
+
+  const office = useMemo<RxPrintOffice>(() => {
+    const o = officesQuery.data?.items.find(
+      (x) => x.id === (patientQuery.data?.home_office_id ?? officeId),
+    );
+    return {
+      name: o?.name ?? '',
+      addressLine: [o?.address_line1, o?.address_line2].filter(Boolean).join(', '),
+      cityStateZip: [o?.city, [o?.state, o?.zip].filter(Boolean).join(' ').trim()]
+        .filter(Boolean)
+        .join(', '),
+      phone: o?.phone ?? '',
+      fax: o?.fax ?? '',
+    };
+  }, [officesQuery.data, patientQuery.data, officeId]);
+
+  const printPatient = useMemo<RxPrintPatient>(() => {
+    const p = patientQuery.data;
+    const street = [p?.address_line1, p?.address_line2].filter(Boolean).join(', ');
+    const region = [p?.city, [p?.state, p?.zip].filter(Boolean).join(' ').trim()]
+      .filter(Boolean)
+      .join(', ');
+    return {
+      name: patient.name,
+      dob: fmtSlipDate(p?.dob) || patient.dob || '',
+      addressLines: [street, region].filter((l) => l.trim() !== ''),
+    };
+  }, [patientQuery.data, patient.name, patient.dob]);
+
+  const prescriberFor = (providerId: string | null | undefined): RxPrintPrescriber => {
+    const p: ProviderRead | undefined = providers.find((r) => String(r.id) === String(providerId ?? ''));
+    return {
+      name: p ? formatProviderName(p) : providerLabel(providerId),
+      phone: p?.phone || office.phone,
+      dea: p?.dea_id ?? '',
+      npi: p?.npi ?? '',
+      license: p?.license ?? '',
+    };
   };
-  const doPrint = (list: typeof rows, emptyMsg: string) => {
+
+  const todaysRx = () => rows.filter((r) => isToday(r.rx_date) && r.is_active !== false);
+  const scopeRows = (scope: RxPrintScope) => {
+    if (scope === 'highlighted') return selected ? [selected] : [];
+    if (scope === 'checked') return rows.filter((r) => checkedIds.has(r.id));
+    return todaysRx();
+  };
+
+  const [printOpen, setPrintOpen] = useState(false);
+  const printCounts = useMemo(
+    () => ({
+      highlighted: selected ? 1 : 0,
+      checked: rows.filter((r) => checkedIds.has(r.id)).length,
+      today: rows.filter((r) => isToday(r.rx_date) && r.is_active !== false).length,
+    }),
+    [rows, selected, checkedIds],
+  );
+
+  const runPrint = (list: typeof rows, opts: Parameters<typeof printPrescriptions>[3]) => {
+    const slips: RxSlip[] = list.map((rx) => ({ rx, prescriber: prescriberFor(rx.provider_id) }));
+    printPrescriptions(slips, office, printPatient, opts);
+  };
+
+  const handlePrintToday = () => {
+    const list = todaysRx();
     if (!list.length) {
-      toast.info(emptyMsg);
+      toast.info('No prescriptions entered today.');
       return;
     }
-    printPrescriptions(list, printHeader, providerLabel);
+    runPrint(list, undefined);
   };
-  const todaysRx = () => rows.filter((r) => isToday(r.rx_date) && r.is_active !== false);
-  const handleQuickPrint = () => doPrint(todaysRx(), 'No prescriptions entered today.');
-  const handlePrintToday = () => doPrint(todaysRx(), 'No prescriptions entered today.');
-  const handlePrintHighlighted = () =>
-    doPrint(selected ? [selected] : [], 'Select a prescription to print.');
-  const handlePrintChecked = () =>
-    doPrint(
-      rows.filter((r) => checkedIds.has(r.id)),
-      'Check at least one prescription to print.',
-    );
+
+  const handleDialogPrint = ({ scope, ...opts }: RxPrintRequest) => {
+    const list = scopeRows(scope);
+    if (!list.length) {
+      toast.info('Nothing to print for that option.');
+      return;
+    }
+    setPrintOpen(false);
+    runPrint(list, opts);
+  };
 
   const handleEprescribe = () => {
     if (!ePrescribeEnabled) return;
@@ -216,20 +289,24 @@ export default function PrescriptionsPage() {
         mode={mode}
         canStrikeOff={canStrikeOff}
         canSave={canSave}
-        hasChecked={checkedIds.size > 0}
-        hasSelected={!!selected}
         saving={createRx.isPending}
         ePrescribeEnabled={ePrescribeEnabled}
         onStrikeOff={handleStrikeOff}
-        onQuickPrint={handleQuickPrint}
-        onPrintHighlighted={handlePrintHighlighted}
-        onPrintChecked={handlePrintChecked}
         onPrintToday={handlePrintToday}
+        onOpenPrintDialog={() => setPrintOpen(true)}
         onAddNew={handleAddNew}
         onSave={handleSave}
         onCancel={handleCancel}
         onEprescribe={handleEprescribe}
       />
+
+      {printOpen && (
+        <RxPrintDialog
+          counts={printCounts}
+          onPrint={handleDialogPrint}
+          onClose={() => setPrintOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,10 @@
 import { useEffect, useState } from "react";
+import {
+  formatUSPhone,
+  isPartialUSPhone,
+  US_PHONE_MAX_LENGTH,
+} from "@/utils/phone";
+import { emailError } from "@/utils/email";
 import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X, Info } from "lucide-react";
 import {
   listOfficeGroups,
@@ -326,11 +332,22 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             </label>
             <input
               type="tel"
+              inputMode="tel"
+              maxLength={US_PHONE_MAX_LENGTH}
               value={formData.phone ?? ""}
-              onChange={(e) => updateFormData({ phone: e.target.value })}
+              // Formats as typed: letters are dropped and anything past ten
+              // digits is ignored, so the field cannot take "1234567890kjkjhkj".
+              onChange={(e) => updateFormData({ phone: formatUSPhone(e.target.value) })}
               placeholder="(555) 123-4567"
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm ${
+                isPartialUSPhone(formData.phone) ? "border-[#DC2626] bg-[#FEF2F2]" : "border-[#CBD5E1]"
+              }`}
             />
+            {isPartialUSPhone(formData.phone) && (
+              <p className="text-xs text-[#DC2626] mt-1">
+                Enter all 10 digits, e.g. (555) 123-4567.
+              </p>
+            )}
           </div>
 
           <div>
@@ -348,11 +365,22 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             <label className="block text-xs font-bold text-[#1E293B] mb-2">Phone 2</label>
             <input
               type="tel"
+              inputMode="tel"
+              maxLength={US_PHONE_MAX_LENGTH}
               value={formData.phone_2 ?? ""}
-              onChange={(e) => updateFormData({ phone_2: e.target.value })}
+              // Formats as typed: letters are dropped and anything past ten
+              // digits is ignored, so the field cannot take "1234567890kjkjhkj".
+              onChange={(e) => updateFormData({ phone_2: formatUSPhone(e.target.value) })}
               placeholder="(555) 123-4568"
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm ${
+                isPartialUSPhone(formData.phone_2) ? "border-[#DC2626] bg-[#FEF2F2]" : "border-[#CBD5E1]"
+              }`}
             />
+            {isPartialUSPhone(formData.phone_2) && (
+              <p className="text-xs text-[#DC2626] mt-1">
+                Enter all 10 digits, e.g. (555) 123-4568.
+              </p>
+            )}
           </div>
 
           <div>
@@ -364,19 +392,35 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
               value={formData.email ?? ""}
               onChange={(e) => updateFormData({ email: e.target.value })}
               placeholder="contact@example.com"
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm ${
+                emailError(formData.email) ? "border-[#DC2626] bg-[#FEF2F2]" : "border-[#CBD5E1]"
+              }`}
             />
+            {emailError(formData.email) && (
+              <p className="text-xs text-[#DC2626] mt-1">{emailError(formData.email)}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-xs font-bold text-[#1E293B] mb-2">Fax</label>
             <input
               type="tel"
+              inputMode="tel"
+              maxLength={US_PHONE_MAX_LENGTH}
               value={formData.fax ?? ""}
-              onChange={(e) => updateFormData({ fax: e.target.value })}
+              // Formats as typed: letters are dropped and anything past ten
+              // digits is ignored, so the field cannot take "1234567890kjkjhkj".
+              onChange={(e) => updateFormData({ fax: formatUSPhone(e.target.value) })}
               placeholder="(555) 123-4569"
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+              className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm ${
+                isPartialUSPhone(formData.fax) ? "border-[#DC2626] bg-[#FEF2F2]" : "border-[#CBD5E1]"
+              }`}
             />
+            {isPartialUSPhone(formData.fax) && (
+              <p className="text-xs text-[#DC2626] mt-1">
+                Enter all 10 digits, e.g. (555) 123-4569.
+              </p>
+            )}
           </div>
         </div>
       </div>

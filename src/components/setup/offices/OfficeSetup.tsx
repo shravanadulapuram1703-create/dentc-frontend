@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
+import { formatUSPhone, phoneDigits, isPartialUSPhone } from "@/utils/phone";
+import { isValidEmail } from "@/utils/email";
 import { Building2, Search, Plus, Save, X, Construction } from "lucide-react";
 import {
   listOffices,
@@ -246,11 +248,11 @@ export default function OfficeSetup() {
       zip: o.zip ?? null,
       timezone: o.timezone ?? null,
 
-      // Contact
-      phone: o.phone ?? null,
-      phone_2: o.phone_2 ?? null,
+      // Contact — stored raw, shown formatted.
+      phone: formatUSPhone(o.phone) || null,
+      phone_2: formatUSPhone(o.phone_2) || null,
       phone_ext: o.phone_ext ?? null,
-      fax: o.fax ?? null,
+      fax: formatUSPhone(o.fax) || null,
       email: o.email ?? null,
 
       // Scheduler
@@ -311,11 +313,11 @@ const buildOfficeBody = (data: Partial<OfficeForm>): OfficeUpdate => ({
   city: data.city ?? null,
   state: data.state ?? null,
   zip: data.zip ?? null,
-  phone: data.phone ?? null,
-  phone_2: data.phone_2 ?? null,
+  phone: phoneDigits(data.phone) || null,
+  phone_2: phoneDigits(data.phone_2) || null,
   phone_ext: data.phone_ext ?? null,
-  fax: data.fax ?? null,
-  email: data.email ?? null,
+  fax: phoneDigits(data.fax) || null,
+  email: data.email?.trim() || null,
   timezone: data.timezone ?? null,
   slot_interval_minutes: data.slot_interval_minutes ?? null,
   schedule_start_hour: data.schedule_start_hour ?? null,
@@ -380,6 +382,24 @@ const persistOperatories = async (officeId: number) => {
 const handleSave = async () => {
   if (!formData.name || !formData.short_id) {
     alert("Office Name and Short ID are required");
+    return;
+  }
+
+  // The inputs stop a phone growing past ten digits, but a half-typed number is
+  // still not a number — and the backend takes the email as an EmailStr, so an
+  // invalid one comes back as an opaque 422.
+  const partialPhone = ([
+    ["Phone 1", formData.phone],
+    ["Phone 2", formData.phone_2],
+    ["Fax", formData.fax],
+  ] as const).find(([, value]) => isPartialUSPhone(value));
+  if (partialPhone) {
+    alert(`${partialPhone[0]} must be a 10-digit US number, e.g. (555) 123-4567`);
+    return;
+  }
+
+  if (formData.email && !isValidEmail(formData.email)) {
+    alert("Please enter a valid email address (e.g., contact@example.com)");
     return;
   }
 
