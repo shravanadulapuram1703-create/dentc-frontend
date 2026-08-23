@@ -86,7 +86,14 @@ export default function PatientInformationPanel({
               <Cake className="w-4 h-4 text-[#3A6EA5] shrink-0" />
               <span className="font-semibold text-[#1E293B]">{fmt_date(p?.dob)}</span>
             </div>
-            <LabelValue label="ID" value={p?.legacy_id || (p ? String(p.id) : "-")} />
+            {/* Both identifiers are shown side by side: the current DentC id is
+                what every API call and the header chip use, while migrated
+                patients also carry the legacy Denticon id staff search by.
+                Showing only one of them reads as a mismatch. */}
+            <LabelValue label="ID" value={p ? String(p.id) : "-"} title="DentC patient id" />
+            {p?.legacy_id ? (
+              <LabelValue label="Legacy ID" value={p.legacy_id} title="Legacy (migrated) patient id" />
+            ) : null}
             <LabelValue label="Chart" value={p?.chart_no || "-"} />
           </div>
 
@@ -161,9 +168,17 @@ export default function PatientInformationPanel({
   );
 }
 
-function LabelValue({ label, value }: { label: string; value: string }) {
+function LabelValue({
+  label,
+  value,
+  title,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+}) {
   return (
-    <div className="flex gap-1.5 min-w-0">
+    <div className="flex gap-1.5 min-w-0" title={title}>
       <span className="text-[#64748B] shrink-0">{label}</span>
       <span className="font-semibold text-[#1E293B] truncate">{value}</span>
     </div>

@@ -18,6 +18,7 @@ interface PatientShellLayoutProps {
 
 interface PatientDisplayData {
   id: string;
+  legacyId?: string; // Migrated Denticon id, when the patient carries one
   chartNo: string;
   name: string;
   age: number;
@@ -184,6 +185,7 @@ export default function PatientShellLayout({
 
     return {
       id: String(p.id),
+      legacyId: p.legacy_id || undefined,
       chartNo: p.chart_no || `CH-${p.id}`,
       name: p.preferred_name
         ? `${p.last_name}, ${p.first_name} (${p.preferred_name})`
@@ -285,9 +287,23 @@ export default function PatientShellLayout({
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h2 className="text-xl font-bold text-slate-900">{patient.name}</h2>
-                    <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-                    ID: {patient.id}
+                    <span
+                      className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold"
+                      title="DentC patient id"
+                    >
+                      ID: {patient.id}
                     </span>
+                    {/* Migrated patients also carry the legacy Denticon id —
+                        show it next to the DentC id so the two numbers on the
+                        page can't be mistaken for a mismatch. */}
+                    {patient.legacyId && patient.legacyId !== patient.id && (
+                      <span
+                        className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold"
+                        title="Legacy (migrated) patient id"
+                      >
+                        Legacy ID: {patient.legacyId}
+                      </span>
+                    )}
                     {patient.age > -1 && (
                       <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
                         {patient.age}y • {patient.gender}
