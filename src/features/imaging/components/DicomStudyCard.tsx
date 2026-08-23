@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ChevronDown, Calendar, Layers, AlertTriangle, ShieldCheck } from 'lucide-react';
 import type { DicomImage, DicomStudyOut } from '../types';
 import {
@@ -12,7 +11,9 @@ import DicomInstanceThumbnail from './DicomInstanceThumbnail';
 
 interface DicomStudyCardProps {
   study: DicomStudyOut;
-  defaultOpen?: boolean;
+  /** Controlled by the parent so Expand All / Collapse All can drive every card. */
+  open: boolean;
+  onToggle: (studyInstanceUid: string) => void;
   onOpen: (image: DicomImage) => void;
 }
 
@@ -21,8 +22,7 @@ interface DicomStudyCardProps {
  * description, modality + image-count chips and provenance badges, and a grid of
  * its instance thumbnails.
  */
-export default function DicomStudyCard({ study, defaultOpen = false, onOpen }: DicomStudyCardProps) {
-  const [open, setOpen] = useState(defaultOpen);
+export default function DicomStudyCard({ study, open, onToggle, onOpen }: DicomStudyCardProps) {
   const images = flattenStudy(study);
   const time = formatStudyTime(study.study_time);
   const imageCount = study.image_count ?? images.length;
@@ -31,7 +31,7 @@ export default function DicomStudyCard({ study, defaultOpen = false, onOpen }: D
     <section className="bg-white rounded-lg border border-[#E2E8F0] overflow-hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => onToggle(study.study_instance_uid)}
         aria-expanded={open}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#F8FAFC] transition-colors"
       >

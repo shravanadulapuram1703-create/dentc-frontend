@@ -13,9 +13,8 @@ import Scheduler from './components/pages/Scheduler';
 import Patient from './components/pages/Patient';
 import PatientShellLayout from './components/PatientShellLayout';
 import PatientOverview from './features/patient-overview/PatientOverviewPage';
-import PatientLedger from './components/pages/PatientLedger';
 import TransactionsEntryPage from './features/transactions/TransactionsEntryPage';
-import AccountLedgerPage from './features/account-ledger/AccountLedgerPage';
+import LedgerPage from './features/account-ledger/LedgerPage';
 import RestorativeChart from './features/restorative/RestorativeChart';
 import PerioChart from './features/perio/PerioChart';
 import TreatmentPlanPage from './features/treatment-plans/TreatmentPlanPage';
@@ -177,8 +176,8 @@ function AppRoutes() {
       >
         {/* Patient Pages */}
         <Route path="overview" element={<PatientOverview />} />
-        <Route path="ledger" element={<PatientLedger />} />
-        <Route path="account-ledger" element={<AccountLedgerPage />} />
+        <Route path="ledger" element={<LedgerPage defaultScope="patient" />} />
+        <Route path="account-ledger" element={<LedgerPage defaultScope="account" />} />
         <Route path="transaction" element={<TransactionsEntryPage />} />
         <Route path="restorative" element={<RestorativeChart />} />
         
