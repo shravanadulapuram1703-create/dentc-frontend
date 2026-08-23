@@ -12,6 +12,8 @@ import {
   ChevronsRight,
   FileText,
   AlertCircle,
+  Paperclip,
+  Download,
   DollarSign,
   Calendar,
   User,
@@ -23,8 +25,13 @@ import {
   useListPatientNotes,
   useDeletePatientNote,
 } from '@/api/generated/endpoints/patients/patients';
-import type { PatientNoteRead } from '@/api/generated/model';
 import { useUserNames } from '@/services/userDirectory';
+import { openAsset, downloadAsset } from '@/services/documentAccess';
+import {
+  formatFileSize,
+  type NoteDocument,
+  type PatientNoteWithDocument,
+} from '@/features/patient-notes/noteDocumentsService';
 
 // Display shape used by the table, mapped from the backend PatientNoteRead.
 interface PatientNote {
@@ -33,6 +40,8 @@ interface PatientNote {
   content: string;
   createdDate: string;
   createdBy: string;
+  /** Embedded document block from the note read (NOTE-DOC-1); null when none. */
+  document: NoteDocument | null;
 }
 
 interface PatientData {
@@ -62,7 +71,7 @@ function formatNoteDate(iso?: string | null): string {
 // companion — so the name is resolved against the tenant user directory
 // (KAN-75; backend parity requested in patients_backend_devreport.md).
 function mapNote(
-  note: PatientNoteRead,
+  note: PatientNoteWithDocument,
   resolveUser: (id?: number | null, nameFromApi?: string | null) => string,
 ): PatientNote {
   return {
@@ -70,7 +79,9 @@ function mapNote(
     type: note.note_type || 'Patient Notes',
     content: note.notes,
     createdDate: formatNoteDate(note.created_at),
-    createdBy: resolveUser(note.created_by),
+    createdBy: resolveUser(note.created_by, note.created_by_name),
+    document:
+      note.document && note.document.id != null ? (note.document as NoteDocument) : null,
   };
 }
 
@@ -114,7 +125,7 @@ export default function PatientNotesListing() {
   // hands the callback (item, index, array), so the index would land in the
   // resolver slot.
   const allNotes: PatientNote[] = (notesQuery.data?.items ?? []).map((note) =>
-    mapNote(note, resolveUser),
+    mapNote(note as PatientNoteWithDocument, resolveUser),
   );
 
   // Filter patient notes by type (client-side over the loaded page).
@@ -152,6 +163,24 @@ export default function PatientNotesListing() {
 
   const handleViewNote = (noteId: number) => {
     navigate(`/patient/${patientId}/notes/view/${noteId}`);
+  };
+
+  // Documents are no longer served from a public /uploads path (NOTE-DOC-3), so
+  // a bare <a href> would 401. Both actions go through the authenticated fetch.
+  const handleOpenDocument = async (doc: NoteDocument) => {
+    try {
+      await openAsset(doc.file_url);
+    } catch {
+      alert('Could not open the file. Please try again.');
+    }
+  };
+
+  const handleDownloadDocument = async (doc: NoteDocument) => {
+    try {
+      await downloadAsset(doc.file_url, doc.file_name);
+    } catch {
+      alert('Could not download the file. Please try again.');
+    }
   };
 
   const handleAddNote = () => {
@@ -256,6 +285,8 @@ export default function PatientNotesListing() {
                 <option>Responsible Party Notes</option>
                 <option>Financial Notes</option>
                 <option>Appointment Notes</option>
+                <option value="Document (Upload)">Documents (Upload)</option>
+                <option value="Document (Scan)">Documents (Scan)</option>
               </select>
             </div>
 
@@ -391,6 +422,28 @@ export default function PatientNotesListing() {
                         <td className="px-4 py-3">
                           <div className="max-w-2xl">
                             <p className="text-sm text-slate-900 line-clamp-2">{note.content}</p>
+                            {note.document && (
+                              <div className="mt-1.5 inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1">
+                                <Paperclip className="w-3.5 h-3.5 text-blue-700" strokeWidth={2} />
+                                <button
+                                  onClick={() => handleOpenDocument(note.document!)}
+                                  className="text-xs font-semibold text-blue-700 hover:underline"
+                                  title="View file"
+                                >
+                                  {note.document.file_name}
+                                </button>
+                                <span className="text-[11px] text-slate-500">
+                                  {formatFileSize(note.document.file_size)}
+                                </span>
+                                <button
+                                  onClick={() => handleDownloadDocument(note.document!)}
+                                  className="p-1 text-blue-700 hover:bg-blue-100 rounded transition-colors"
+                                  title="Download file"
+                                >
+                                  <Download className="w-3.5 h-3.5" strokeWidth={2} />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
 

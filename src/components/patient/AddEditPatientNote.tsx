@@ -8,17 +8,34 @@ import {
   Clock,
   Upload,
   Scan,
-  File,
+  File as FileIcon,
   AlertCircle,
+  Download,
+  Eye,
+  Paperclip,
   Loader2,
 } from 'lucide-react';
 import {
   useGetPatientNote,
   useCreatePatientNote,
   useUpdatePatientNote,
+  getPatientDocument,
+  deletePatientDocument,
 } from '@/api/generated/endpoints/patients/patients';
-import type { PatientNoteCreate, PatientNoteUpdate } from '@/api/generated/model';
 import { useUserNames } from '@/services/userDirectory';
+import { openAsset, downloadAsset } from '@/services/documentAccess';
+import {
+  documentErrorMessage,
+  formatFileSize,
+  uploadNoteDocument,
+  useDocumentLimits,
+  useDocumentTypeOptions,
+  validateDocumentFile,
+  type NoteDocument,
+  type PatientNoteCreateWithDocument,
+  type PatientNoteUpdateWithDocument,
+  type PatientNoteWithDocument,
+} from '@/features/patient-notes/noteDocumentsService';
 import NoteMacroPickerModal from './NoteMacroPickerModal';
 
 interface PatientData {
@@ -65,6 +82,11 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
   // hooks, above the loading/error early-returns further down.
   const { resolve: resolveUser } = useUserNames();
 
+  // Upload rules and the document sub-type vocabulary both come from the
+  // backend (NOTE-DOC-4/5) with a local fallback, so nothing is hardcoded here.
+  const limits = useDocumentLimits();
+  const documentTypeOptions = useDocumentTypeOptions();
+
   const numericPatientId = Number(patientId);
   const numericNoteId = Number(noteId);
   const numericOfficeId = patient.officeId ? Number(patient.officeId) : undefined;
@@ -72,15 +94,21 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
 
   const [noteType, setNoteType] = useState<string>('Patient Notes');
   const [noteContent, setNoteContent] = useState<string>('');
-  const [documentType, setDocumentType] = useState<string>('Consent Form (CF)');
+  const [documentType, setDocumentType] = useState<string>('CF');
+  const [documentDescription, setDocumentDescription] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [attachedDoc, setAttachedDoc] = useState<NoteDocument | null>(null);
+  const [removeExisting, setRemoveExisting] = useState<boolean>(false);
   const [showFileDetails, setShowFileDetails] = useState<boolean>(false);
   const [macroOpen, setMacroOpen] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<boolean>(false);
 
   // Load the existing note for edit/view and hydrate the form once it arrives.
   const noteQuery = useGetPatientNote(numericNoteId, {
     query: { enabled: isExistingNote },
   });
+  const loadedNote = noteQuery.data as PatientNoteWithDocument | undefined;
 
   // What the form looked like when it was last hydrated from the server. The
   // discard prompt compares against this rather than against "is there any text
@@ -89,35 +117,52 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
   const pristineRef = useRef({ noteType: 'Patient Notes', noteContent: '' });
 
   useEffect(() => {
-    const note = noteQuery.data;
+    const note = loadedNote;
     if (!note) return;
     const hydratedType = note.note_type || 'Patient Notes';
     const hydratedContent = note.notes ?? '';
     setNoteType(hydratedType);
     setNoteContent(hydratedContent);
     pristineRef.current = { noteType: hydratedType, noteContent: hydratedContent };
-  }, [noteQuery.data]);
+  }, [loadedNote]);
+
+  // Hydrate the attached file. The backend embeds a `document` block on the read
+  // so a list of notes doesn't fan out into one GET per file (NOTE-DOC-1); the
+  // `document_id`-only path covers a server that returns the id without it.
+  useEffect(() => {
+    const note = loadedNote;
+    if (!note) return;
+    if (note.document && note.document.id != null) {
+      setAttachedDoc(note.document as NoteDocument);
+      if (note.document.document_type) setDocumentType(note.document.document_type);
+      if (note.document.description) setDocumentDescription(note.document.description);
+      return;
+    }
+    if (note.document_id == null) {
+      setAttachedDoc(null);
+      return;
+    }
+    let cancelled = false;
+    getPatientDocument(note.document_id)
+      .then((doc) => {
+        if (cancelled) return;
+        setAttachedDoc(doc);
+        if (doc.document_type) setDocumentType(doc.document_type);
+        if (doc.description) setDocumentDescription(doc.description);
+      })
+      .catch(() => {
+        // The row is gone (or this build has no such document) — the note still
+        // opens; the attachment area just shows nothing.
+        if (!cancelled) setAttachedDoc(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadedNote]);
 
   const createMutation = useCreatePatientNote();
   const updateMutation = useUpdatePatientNote();
-  const isSaving = createMutation.isPending || updateMutation.isPending;
-
-  const documentTypes = [
-    'Consent Form (CF)',
-    'Anesthesia Record',
-    'Diagnostic Report',
-    'Dental Models (DDA)',
-    'Insurance Document',
-    'Eligibility Verification',
-    'X-Ray / Radiograph',
-    'Treatment Plan',
-    'Financial Agreement',
-    'Medical History Form',
-    'Prescription',
-    'Referral Letter',
-    'Lab Report',
-    'Patient Registration Form',
-  ];
+  const isSaving = busy || createMutation.isPending || updateMutation.isPending;
 
   const handleInsertDateStamp = () => {
     const now = new Date();
@@ -150,25 +195,19 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10 MB');
-        return;
-      }
-      const allowedTypes = [
-        'application/pdf',
-        'image/gif',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        alert('Only GIF, JPG, JPEG, PNG, and PDF files are allowed');
-        return;
-      }
-      setSelectedFile(file);
-      setShowFileDetails(true);
+    if (!file) return;
+    const problem = validateDocumentFile(file, limits);
+    if (problem) {
+      setFormError(problem);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
+    setFormError(null);
+    setSelectedFile(file);
+    setRemoveExisting(false);
+    // The note body doubles as the document's caption in the legacy screen, so
+    // seed an empty note with the file name rather than making the user retype it.
+    setNoteContent((prev) => (prev.trim() ? prev : file.name));
   };
 
   const handleRemoveFile = () => {
@@ -176,53 +215,151 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleScan = () => {
-    alert('Scanner interface would open here. This feature requires hardware integration.');
+  // Detaching also deletes the file: a note-context document exists for this
+  // note, and the backend never cascades a note delete onto it (NOTE-DOC-1).
+  const handleRemoveAttachment = () => {
+    if (
+      !window.confirm(
+        'Remove this file from the note? It will also be deleted from Patient Documents when you save.',
+      )
+    ) {
+      return;
+    }
+    setRemoveExisting(true);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleScan = () => {
+    alert(
+      'Scanner capture requires the local imaging agent. Scan to a file, then choose it here with "Choose File".',
+    );
+  };
+
+  const handleViewAttachment = async (doc: NoteDocument) => {
+    try {
+      await openAsset(doc.file_url);
+    } catch (err) {
+      setFormError(documentErrorMessage(err, 'Could not open the file.'));
+    }
+  };
+
+  const handleDownloadAttachment = async (doc: NoteDocument) => {
+    try {
+      await downloadAsset(doc.file_url, doc.file_name);
+    } catch (err) {
+      setFormError(documentErrorMessage(err, 'Could not download the file.'));
+    }
+  };
+
+  const isDocumentType = noteType === 'Document (Upload)' || noteType === 'Document (Scan)';
+  const visibleAttachment = removeExisting ? null : attachedDoc;
+
   const handleSave = async () => {
+    setFormError(null);
     if (!noteType) {
-      alert('Please select a note type.');
+      setFormError('Please select a note type.');
       return;
     }
     if (!noteContent.trim()) {
-      alert('Please enter note content.');
+      setFormError('Please enter note content.');
       return;
     }
     if (!Number.isFinite(numericPatientId)) {
-      alert('Missing patient context. Please reopen this patient and try again.');
+      setFormError('Missing patient context. Please reopen this patient and try again.');
+      return;
+    }
+    // A brand-new document note without a file is the bug this screen exists to
+    // fix — don't let it save as an empty shell. Existing notes can still be
+    // edited text-only (some predate document support).
+    if (mode === 'add' && isDocumentType && !selectedFile) {
+      setFormError('Choose a file to attach to this document note.');
       return;
     }
 
-    const goBackToList = () => {
+    setBusy(true);
+
+    // `documentId` is what the note will point at; `staleDocId` is a file this
+    // note used to own and no longer does, deleted after the note is saved.
+    let documentId: number | null = attachedDoc?.id ?? null;
+    let staleDocId: number | null = null;
+
+    try {
+      if (isDocumentType && selectedFile) {
+        const uploaded = await uploadNoteDocument({
+          file: selectedFile,
+          patient_id: numericPatientId,
+          office_id: numericOfficeId ?? null,
+          document_type: documentType,
+          description: documentDescription.trim() || noteContent.trim().slice(0, 255) || null,
+        });
+        documentId = uploaded.id;
+        if (attachedDoc) staleDocId = attachedDoc.id;
+      } else if (attachedDoc && (removeExisting || !isDocumentType)) {
+        // Either detached explicitly, or the note was switched to a non-document
+        // type — the link is cleared and the file goes with it.
+        documentId = null;
+        staleDocId = attachedDoc.id;
+      }
+    } catch (err) {
+      setBusy(false);
+      setFormError(documentErrorMessage(err, 'The file could not be uploaded. Please try again.'));
+      return;
+    }
+
+    try {
+      let saved: PatientNoteWithDocument;
+      if (mode === 'edit' && isExistingNote) {
+        const body: PatientNoteUpdateWithDocument = {
+          note_type: noteType,
+          notes: noteContent.trim(),
+          document_id: documentId,
+        };
+        saved = (await updateMutation.mutateAsync({
+          itemId: numericNoteId,
+          data: body,
+        })) as PatientNoteWithDocument;
+      } else {
+        const body: PatientNoteCreateWithDocument = {
+          patient_id: numericPatientId,
+          office_id: numericOfficeId,
+          note_type: noteType,
+          notes: noteContent.trim(),
+          note_date: new Date().toISOString().slice(0, 10),
+          document_id: documentId,
+        };
+        saved = (await createMutation.mutateAsync({ data: body })) as PatientNoteWithDocument;
+      }
+
+      if (staleDocId != null) {
+        // Best effort: a failure here leaves an orphan the user can still find
+        // and delete on the Documents tab. It must not fail the save.
+        try {
+          await deletePatientDocument(staleDocId);
+        } catch {
+          /* ignore */
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['/api/v1/patient-notes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/patient-documents'] });
+
+      // A server that predates NOTE-DOC-1 ignores `document_id` silently. Say so
+      // rather than letting the file vanish from the note with no explanation —
+      // it is still on the Documents tab.
+      if (documentId != null && saved && saved.document_id == null) {
+        window.alert(
+          'The file was uploaded and is available on the patient\'s Documents tab, but this ' +
+            'server build does not yet store the note-to-document link, so it will not show ' +
+            'on the note itself.',
+        );
+      }
+
       navigate(`/patient/${patientId}/notes`);
-    };
-
-    const onError = (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      alert(detail || 'Failed to save the note. Please try again.');
-    };
-
-    if (mode === 'edit' && isExistingNote) {
-      const body: PatientNoteUpdate = {
-        note_type: noteType,
-        notes: noteContent.trim(),
-      };
-      updateMutation.mutate(
-        { itemId: numericNoteId, data: body },
-        { onSuccess: goBackToList, onError },
-      );
-    } else {
-      const body: PatientNoteCreate = {
-        patient_id: numericPatientId,
-        office_id: numericOfficeId,
-        note_type: noteType,
-        notes: noteContent.trim(),
-        note_date: new Date().toISOString().slice(0, 10),
-      };
-      createMutation.mutate({ data: body }, { onSuccess: goBackToList, onError });
+    } catch (err) {
+      setFormError(documentErrorMessage(err, 'Failed to save the note. Please try again.'));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -236,7 +373,8 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     !isReadOnly &&
     (noteContent !== pristineRef.current.noteContent ||
       noteType !== pristineRef.current.noteType ||
-      selectedFile !== null);
+      selectedFile !== null ||
+      removeExisting);
 
   const handleCancel = () => {
     if (hasUnsavedChanges && !window.confirm('Discard unsaved changes?')) {
@@ -244,7 +382,6 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     }
     navigate(`/patient/${patientId}/notes`);
   };
-  const isDocumentType = noteType === 'Document (Upload)' || noteType === 'Document (Scan)';
 
   if (isExistingNote && noteQuery.isLoading) {
     return (
@@ -275,9 +412,12 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
     );
   }
 
-  const modifiedBy = noteQuery.data?.updated_by ?? noteQuery.data?.created_by;
-  const modifiedOn = noteQuery.data?.updated_at ?? noteQuery.data?.created_at;
+  const modifiedBy = loadedNote?.updated_by ?? loadedNote?.created_by;
+  const modifiedByName = loadedNote?.updated_by_name ?? loadedNote?.created_by_name;
+  const modifiedOn = loadedNote?.updated_at ?? loadedNote?.created_at;
   const primaryLabel = mode === 'edit' ? 'Update' : 'Save';
+  const acceptAttr = limits.allowed_extensions.join(',');
+  const extensionHint = limits.allowed_extensions.join(', ');
 
   return (
     <div className="flex-1 overflow-auto bg-[#F7F9FC]">
@@ -287,7 +427,7 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
           <div className="flex items-center justify-end gap-10 px-6 py-2.5 bg-[#F1F5F9] border-b border-[#E2E8F0] text-sm">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-[#475569]">Modified By:</span>
-              <span className="text-[#1E293B]">{resolveUser(modifiedBy)}</span>
+              <span className="text-[#1E293B]">{resolveUser(modifiedBy, modifiedByName)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-[#475569]">Modified On:</span>
@@ -309,17 +449,17 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                     onChange={(e) => {
                       const next = e.target.value;
                       const nextIsDoc = next.includes('Document');
-                      if (nextIsDoc !== isDocumentType && selectedFile) {
-                        if (!window.confirm('Changing note type will remove attached file. Continue?')) {
+                      if (!nextIsDoc && isDocumentType && (selectedFile || visibleAttachment)) {
+                        if (
+                          !window.confirm('Changing note type will remove the attached file. Continue?')
+                        ) {
                           return;
                         }
                         setSelectedFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
                       }
                       setNoteType(next);
-                      // Picking a document type is the user asking to attach a
-                      // file — open the picker instead of making them find the
-                      // "Show File Details" toggle first.
-                      if (nextIsDoc) setShowFileDetails(true);
+                      setFormError(null);
                     }}
                     disabled={isReadOnly}
                     className="min-w-[200px] px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all disabled:bg-[#F7F9FC] disabled:text-[#94A3B8] disabled:cursor-not-allowed cursor-pointer"
@@ -337,17 +477,18 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                       value={documentType}
                       onChange={(e) => setDocumentType(e.target.value)}
                       disabled={isReadOnly}
+                      title="Document type"
                       className="min-w-[180px] px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all disabled:bg-[#F7F9FC] disabled:text-[#94A3B8] disabled:cursor-not-allowed cursor-pointer"
                     >
-                      {documentTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
+                      {documentTypeOptions.map((opt) => (
+                        <option key={opt.code} value={opt.code}>
+                          {opt.label} ({opt.code})
                         </option>
                       ))}
                     </select>
                   )}
 
-                  {isDocumentType && !isReadOnly && (
+                  {isDocumentType && (
                     <button
                       onClick={() => setShowFileDetails((v) => !v)}
                       className="text-sm font-semibold text-[#3A6EA5] hover:text-[#2f5a8c] hover:underline"
@@ -379,76 +520,167 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                 )}
               </div>
 
-              {/* File constraints hint + uploader (document types) */}
+              {/* File constraints hint (limits come from the backend) */}
               {isDocumentType && (
-                <>
-                  <p className="mt-2 text-xs font-semibold text-[#DC2626]">
-                    (Max File Size: 10 MB. Allowed File Extensions: .Gif, .Jpg, .Jpeg, .Png &amp; .Pdf)
-                  </p>
+                <p className="mt-2 text-xs font-semibold text-[#DC2626]">
+                  (Max File Size: {limits.max_megabytes} MB. Allowed File Extensions:{' '}
+                  {extensionHint})
+                </p>
+              )}
+            </div>
+          </div>
 
+          {/* Upload File row — always visible for a document note, so the file
+              picker is never hidden behind a toggle. */}
+          {isDocumentType && (
+            <div className="grid grid-cols-[140px_1fr] border-b border-[#E2E8F0]">
+              <div className="flex items-start px-4 py-4 bg-[#F7F9FC] border-r border-[#E2E8F0] font-semibold text-[#1E293B]">
+                Upload File
+              </div>
+              <div className="px-4 py-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={acceptAttr}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+
+                <div className="flex flex-wrap items-center gap-3">
                   {!isReadOnly && (
-                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-[#F59E0B]/40 bg-[#F59E0B]/10 p-2.5">
-                      <AlertCircle className="w-4 h-4 text-[#D97706] mt-0.5 shrink-0" strokeWidth={2} />
-                      <p className="text-xs font-medium text-[#92400E]">
-                        Document storage is pending backend support. The note text and type will be
-                        saved, but the attached file and document sub-type are not persisted yet.
-                      </p>
-                    </div>
-                  )}
+                    <>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#475569] hover:bg-[#334155] text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                      >
+                        <Upload className="w-4 h-4" strokeWidth={2} />
+                        {selectedFile || visibleAttachment ? 'Choose Another File' : 'Choose File'}
+                      </button>
 
-                  {showFileDetails && !isReadOnly && (
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".gif,.jpg,.jpeg,.png,.pdf"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                      />
-                      {noteType === 'Document (Scan)' ? (
+                      {noteType === 'Document (Scan)' && (
                         <button
                           onClick={handleScan}
-                          className="flex items-center gap-2 px-4 py-2 bg-[#475569] hover:bg-[#334155] text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#F1F5F9] text-[#475569] border-2 border-[#E2E8F0] rounded-lg font-semibold text-sm transition-colors"
                         >
                           <Scan className="w-4 h-4" strokeWidth={2} />
                           Open Scanner
                         </button>
-                      ) : (
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex items-center gap-2 px-4 py-2 bg-[#475569] hover:bg-[#334155] text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
-                        >
-                          <Upload className="w-4 h-4" strokeWidth={2} />
-                          Choose File
-                        </button>
                       )}
+                    </>
+                  )}
 
-                      {selectedFile && (
-                        <div className="flex items-center gap-3 px-3 py-2 bg-[#2FB9A7]/10 border border-[#2FB9A7]/40 rounded-lg">
-                          <File className="w-4 h-4 text-[#259688]" strokeWidth={2} />
-                          <div>
-                            <div className="text-sm font-semibold text-[#1E293B]">
-                              {selectedFile.name}
-                            </div>
-                            <div className="text-xs text-[#475569]">
-                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                            </div>
-                          </div>
-                          <button
-                            onClick={handleRemoveFile}
-                            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                            title="Remove file"
-                          >
-                            <X className="w-4 h-4" strokeWidth={2} />
-                          </button>
+                  {/* Newly picked file, not uploaded until Save */}
+                  {selectedFile && (
+                    <div className="flex items-center gap-3 px-3 py-2 bg-[#2FB9A7]/10 border border-[#2FB9A7]/40 rounded-lg">
+                      <FileIcon className="w-4 h-4 text-[#259688]" strokeWidth={2} />
+                      <div>
+                        <div className="text-sm font-semibold text-[#1E293B]">
+                          {selectedFile.name}
                         </div>
+                        <div className="text-xs text-[#475569]">
+                          {formatFileSize(selectedFile.size)} · uploads when you save
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleRemoveFile}
+                        className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                        title="Remove file"
+                      >
+                        <X className="w-4 h-4" strokeWidth={2} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* File already stored on this note */}
+                  {!selectedFile && visibleAttachment && (
+                    <div className="flex items-center gap-3 px-3 py-2 bg-[#3A6EA5]/5 border border-[#3A6EA5]/30 rounded-lg">
+                      <Paperclip className="w-4 h-4 text-[#3A6EA5]" strokeWidth={2} />
+                      <div>
+                        <div className="text-sm font-semibold text-[#1E293B]">
+                          {visibleAttachment.file_name}
+                        </div>
+                        <div className="text-xs text-[#475569]">
+                          {formatFileSize(visibleAttachment.file_size)}
+                          {visibleAttachment.content_type ? ` · ${visibleAttachment.content_type}` : ''}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleViewAttachment(visibleAttachment)}
+                        className="p-1.5 text-[#3A6EA5] hover:bg-[#3A6EA5]/10 rounded-lg transition-colors"
+                        title="View file"
+                      >
+                        <Eye className="w-4 h-4" strokeWidth={2} />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadAttachment(visibleAttachment)}
+                        className="p-1.5 text-[#3A6EA5] hover:bg-[#3A6EA5]/10 rounded-lg transition-colors"
+                        title="Download file"
+                      >
+                        <Download className="w-4 h-4" strokeWidth={2} />
+                      </button>
+                      {!isReadOnly && (
+                        <button
+                          onClick={handleRemoveAttachment}
+                          className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Remove file from this note"
+                        >
+                          <X className="w-4 h-4" strokeWidth={2} />
+                        </button>
                       )}
                     </div>
                   )}
-                </>
-              )}
+
+                  {!selectedFile && !visibleAttachment && (
+                    <span className="text-sm text-[#64748B]">
+                      {isReadOnly ? 'No file attached to this note.' : 'No file chosen.'}
+                    </span>
+                  )}
+
+                  {removeExisting && attachedDoc && (
+                    <button
+                      onClick={() => setRemoveExisting(false)}
+                      className="text-sm font-semibold text-[#3A6EA5] hover:underline"
+                    >
+                      Undo remove
+                    </button>
+                  )}
+                </div>
+
+                {/* Optional metadata, behind the legacy "Show File Details" toggle */}
+                {showFileDetails && (
+                  <div className="mt-3 rounded-lg border border-[#E2E8F0] bg-[#F7F9FC] p-3">
+                    <label className="block text-xs font-bold text-[#475569] mb-1">
+                      File Description <span className="font-normal">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={documentDescription}
+                      onChange={(e) => setDocumentDescription(e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="e.g. Signed consent, front and back"
+                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all disabled:bg-[#F1F5F9]"
+                    />
+                    {visibleAttachment && (
+                      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-[#475569] sm:grid-cols-3">
+                        <div>
+                          <dt className="font-bold">Stored in</dt>
+                          <dd>{visibleAttachment.storage_backend || '—'}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-bold">Uploaded</dt>
+                          <dd>{formatTimestamp(visibleAttachment.created_at)}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-bold">Document ID</dt>
+                          <dd>{visibleAttachment.id}</dd>
+                        </div>
+                      </dl>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Notes row */}
           <div className="grid grid-cols-[140px_1fr]">
@@ -466,13 +698,20 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
                     ? 'Enter the file name or a description for this document...'
                     : 'Enter the note here...'
                 }
-                rows={18}
+                rows={isDocumentType ? 12 : 18}
                 className="w-full px-4 py-3 border-2 border-[#E2E8F0] rounded-lg text-sm text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all resize-y font-mono disabled:bg-[#F7F9FC] disabled:text-[#94A3B8] disabled:cursor-not-allowed"
               />
               <p className="mt-1 text-xs text-[#64748B]">{noteContent.length} characters</p>
             </div>
           </div>
         </div>
+
+        {formError && (
+          <div className="mt-4 flex items-start gap-2 rounded-lg border-2 border-red-200 bg-red-50 p-3">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" strokeWidth={2} />
+            <p className="text-sm font-medium text-red-700">{formError}</p>
+          </div>
+        )}
 
         {/* Footer action bar */}
         <div className="mt-4 flex items-center justify-end gap-3">
@@ -487,7 +726,7 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
               ) : (
                 <Save className="w-5 h-5" strokeWidth={2} />
               )}
-              {isSaving ? 'Saving…' : primaryLabel}
+              {isSaving ? (selectedFile ? 'Uploading…' : 'Saving…') : primaryLabel}
             </button>
           )}
           <button

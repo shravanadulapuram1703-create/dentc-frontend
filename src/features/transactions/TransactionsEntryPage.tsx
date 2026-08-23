@@ -162,9 +162,28 @@ export default function TransactionsEntryPage() {
   const handleGo = () => setAppliedIso(toIsoDate(transactionDate));
 
   const handleCreateClaim = async () => {
-    const billable = outstanding.filter((p) => !p.claim_id);
+    // A charge on Hold Claim is deliberately held back from billing, so it must
+    // never be swept onto a claim here either (the ledger enforces the same rule
+    // by disabling its Prn checkbox).
+    const unbilled = outstanding.filter((p) => !p.claim_id);
+    const billable = unbilled.filter((p) => !p.hold_claim);
+    const heldBack = unbilled.length - billable.length;
     if (billable.length === 0) {
-      alert('No unbilled procedures available to create a claim.');
+      alert(
+        heldBack > 0
+          ? `No unbilled procedures available to create a claim (${heldBack} on Hold Claim).`
+          : 'No unbilled procedures available to create a claim.',
+      );
+      return;
+    }
+    if (
+      heldBack > 0 &&
+      !confirm(
+        `${heldBack} procedure(s) are on Hold Claim and will be left off this claim.
+
+Create a claim for the remaining ${billable.length}?`,
+      )
+    ) {
       return;
     }
     setCreatingClaim(true);
