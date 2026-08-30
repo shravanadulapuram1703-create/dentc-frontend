@@ -22,9 +22,10 @@ import {
   getFeeSchedule,
   listFeeSchedules,
 } from "@/api/generated/endpoints/procedures/procedures";
-import type { InsurancePlanRead } from "@/api/generated/model";
+import type { InsurancePlanRead, InsuranceCarrierRead } from "@/api/generated/model";
 
 const carrierNames = new Map<number, string>();
+const carrierRecords = new Map<number, InsuranceCarrierRead>();
 const employerNames = new Map<number, string>();
 const providerNames = new Map<string, string>();
 const officeNames = new Map<number, string>();
@@ -53,6 +54,35 @@ export async function ensureCarrierNames(ids: number[]): Promise<void> {
   await resolve(ids, carrierNames, (id) => getInsuranceCarrier(id));
 }
 
+/**
+ * Like `ensureCarrierNames`, but keeps the WHOLE carrier record — callers that
+ * need `legacy_id` / `payer_id` / `is_dental` (the Copy-From-Existing grid) would
+ * otherwise have to re-fetch what the name lookup already threw away.
+ */
+export async function ensureCarrierRecords(ids: (number | null | undefined)[]): Promise<void> {
+  const missing = [...new Set(ids)].filter(
+    (id): id is number => id != null && !carrierRecords.has(id),
+  );
+  if (missing.length === 0) return;
+  const results = await Promise.all(
+    missing.map((id) =>
+      getInsuranceCarrier(id)
+        .then((c) => ({ id, carrier: c }))
+        .catch(() => ({ id, carrier: null })),
+    ),
+  );
+  for (const { id, carrier } of results) {
+    if (!carrier) continue;
+    carrierRecords.set(id, carrier);
+    carrierNames.set(id, carrier.name);
+  }
+}
+
+/** The cached carrier record, if `ensureCarrierRecords` has fetched it. */
+export function carrierRecord(id: number | null | undefined): InsuranceCarrierRead | undefined {
+  return id == null ? undefined : carrierRecords.get(id);
+}
+
 /** Ensure employer names for the given ids are cached. */
 export async function ensureEmployerNames(ids: number[]): Promise<void> {
   await resolve(ids, employerNames, (id) => getEmployer(id));
@@ -74,9 +104,24 @@ export interface PickerOption {
   sub?: string;
 }
 
-/** Debounced-search source for the carrier picker. */
-export async function searchCarriers(query: string): Promise<PickerOption[]> {
-  const res = await listInsuranceCarriers({ search: query || null, size: 20, sort: "name", order: "asc" });
+/**
+ * Debounced-search source for the carrier picker.
+ *
+ * `carrierType` scopes the result to one side of the Dental/Medical partition
+ * ("True" = Dental, "False" = Medical — see insuranceData.ts). Omit it to search
+ * every carrier.
+ */
+export async function searchCarriers(
+  query: string,
+  carrierType?: string | null,
+): Promise<PickerOption[]> {
+  const res = await listInsuranceCarriers({
+    search: query || null,
+    size: 20,
+    sort: "name",
+    order: "asc",
+    ...(carrierType ? { carrier_type: carrierType } : {}),
+  });
   for (const c of res.items ?? []) carrierNames.set(c.id, c.name);
   return (res.items ?? []).map((c) => ({
     id: c.id,

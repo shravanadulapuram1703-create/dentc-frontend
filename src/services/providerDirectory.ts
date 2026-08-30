@@ -1,5 +1,8 @@
 import { listProviders } from '@/api/generated/endpoints/organization/organization';
-import { listOfficeProviders } from '@/api/generated/endpoints/office-assignment/office-assignment';
+import {
+  listOfficeProviders,
+  listOfficeEffectiveProviders,
+} from '@/api/generated/endpoints/office-assignment/office-assignment';
 import type { ProviderRead } from '@/api/generated/model';
 
 /**
@@ -45,6 +48,45 @@ export interface ProviderOption {
   title: string | null;
   is_active: boolean;
   scheduler_color: string | null;
+  /** Normalised `role`/`title` — what a picker should filter on. */
+  kind: ProviderKind;
+}
+
+/**
+ * Normalised provider discipline.
+ *
+ * `ProviderRead.role` is free text and arrives from the migration in several
+ * spellings for the same thing — live tenant 1 holds `dentist` (78), `hygienist`
+ * (16), `Hygenist` (1, misspelled) and `staff` (2). `title` carries the licence
+ * (`DDS` / `DMD` / `RDH` / `DDH`) and is the only signal when `role` is blank.
+ * Screens must never string-compare `role` directly.
+ */
+export type ProviderKind = 'dentist' | 'hygienist' | 'staff' | 'other';
+
+const HYGIENE_ROLES = /^(hyg|rdh|rdhap|hygenist|hygienist)/;
+const DENTIST_ROLES = /^(dent|doct|dds|dmd|dr|prov)/;
+
+export function providerKind(p: Pick<ProviderRead, 'role' | 'title'>): ProviderKind {
+  const role = (p.role ?? '').toLowerCase().replace(/[^a-z]/g, '');
+  if (role) {
+    if (HYGIENE_ROLES.test(role)) return 'hygienist';
+    if (DENTIST_ROLES.test(role)) return 'dentist';
+    if (role.startsWith('staff') || role.startsWith('assist')) return 'staff';
+  }
+  // Fall back to the licence title (RDH / DDH are hygiene licences).
+  const title = (p.title ?? '').toLowerCase().replace(/[^a-z]/g, '');
+  if (title === 'rdh' || title === 'ddh') return 'hygienist';
+  if (title === 'dds' || title === 'dmd' || title === 'md' || title === 'do') return 'dentist';
+  return 'other';
+}
+
+/** Providers who can be the *treating* provider on a charge (everything but hygiene). */
+export function isTreatingProvider(p: ProviderOption): boolean {
+  return p.kind !== 'hygienist';
+}
+
+export function isHygienist(p: ProviderOption): boolean {
+  return p.kind === 'hygienist';
 }
 
 /** Human label for a provider row, tolerating the several ways a name can be stored. */
@@ -66,6 +108,7 @@ export function toProviderOption(p: ProviderRead): ProviderOption {
     title: p.title ?? null,
     is_active: p.is_active !== false,
     scheduler_color: p.scheduler_color ?? null,
+    kind: providerKind(p),
   };
 }
 
@@ -113,11 +156,21 @@ export async function fetchProviderDirectory(): Promise<ProviderOption[]> {
 }
 
 /**
- * Provider ids assigned to an office through the office-assignment join.
- * Returns null when the lookup fails so callers can tell "not assigned" from
- * "couldn't ask".
+ * Provider ids serving an office.
+ *
+ * Prefers `GET /offices/{id}/providers/effective`, which the backend added for
+ * PROV-1 and which already returns *assigned ∪ home office* (office 1: 93 rows
+ * vs 1 from the raw join). Falls back to the raw assignment join when that
+ * endpoint is unavailable. Returns null when neither lookup answers, so callers
+ * can tell "not assigned" from "couldn't ask".
  */
 async function fetchOfficeProviderIds(office_id: number): Promise<string[] | null> {
+  try {
+    const rows = await listOfficeEffectiveProviders(office_id, { include_inactive: true });
+    if (rows && rows.length > 0) return rows.map((p) => String(p.id));
+  } catch {
+    /* fall through to the raw join */
+  }
   try {
     const rows = await listOfficeProviders(office_id);
     return (rows ?? []).map((p) => String(p.id));

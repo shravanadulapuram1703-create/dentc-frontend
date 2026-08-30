@@ -7,12 +7,22 @@ import { listPatientProcedures } from '@/api/generated/endpoints/clinical/clinic
 import {
   listPatientPayments,
   listPatientAdjustments,
+  expandExplosionCode,
 } from '@/api/generated/endpoints/billing/billing';
+import { listExplosionCodes } from '@/api/generated/endpoints/procedures/procedures';
+import { listOffices } from '@/api/generated/endpoints/organization/organization';
+import { listPatientInsurance } from '@/api/generated/endpoints/patients/patients';
+import {
+  getInsurancePlan,
+  getInsuranceCarrier,
+} from '@/api/generated/endpoints/insurance/insurance';
 import type {
   ProcedureCodeRead,
   PatientProcedureRead,
   PatientPaymentRead,
   PatientAdjustmentRead,
+  ExplosionCodeRead,
+  ExpandedProcedure,
 } from '@/api/generated/model';
 import {
   codeInCategory,
@@ -92,11 +102,12 @@ export function buildEntryRows(
   providerLabel: (id: string | null | undefined) => string,
   paymentLabel: (code: string | null | undefined) => string,
   adjustmentLabel: (code: string | null | undefined) => string,
+  officeLabel: (id: number | null | undefined) => string,
 ): EntryRow[] {
   return [
-    ...raw.procs.map((p) => procedureRow(p, patientName, providerLabel, codeDescription)),
-    ...raw.pays.map((p) => paymentRow(p, patientName, paymentLabel, providerLabel)),
-    ...raw.adjs.map((a) => adjustmentRow(a, patientName, adjustmentLabel, providerLabel)),
+    ...raw.procs.map((p) => procedureRow(p, patientName, providerLabel, codeDescription, officeLabel)),
+    ...raw.pays.map((p) => paymentRow(p, patientName, paymentLabel, providerLabel, officeLabel)),
+    ...raw.adjs.map((a) => adjustmentRow(a, patientName, adjustmentLabel, providerLabel, officeLabel)),
   ];
 }
 
@@ -104,4 +115,123 @@ export function buildEntryRows(
 export async function loadOutstandingProcedures(patientId: number): Promise<PatientProcedureRead[]> {
   const res = await listPatientProcedures({ patient_id: patientId, is_void: false, size: 200 });
   return res.items ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Office directory — the grid's OFFICE column
+// ---------------------------------------------------------------------------
+
+export interface OfficeLabel {
+  id: number;
+  /** `short_id` when the office has one, else `office_code`. */
+  code: string;
+  name: string;
+}
+
+/**
+ * `id -> office` for every office in the tenant, so the grid can render
+ * "MOON" / "Excel Dental- Moon" instead of the raw `office_id` integer that
+ * `patient_procedures.office_id` carries.
+ */
+export async function loadOfficeDirectory(): Promise<Map<number, OfficeLabel>> {
+  const res = await listOffices({ size: 200 });
+  const map = new Map<number, OfficeLabel>();
+  for (const o of res.items ?? []) {
+    map.set(o.id, {
+      id: o.id,
+      code: (o.short_id || o.office_code || String(o.id)).trim(),
+      name: o.name,
+    });
+  }
+  return map;
+}
+
+// ---------------------------------------------------------------------------
+// Insurance summary — the check-out block's "Prim. Ins" / "Sec. Ins" (CHG-8)
+// ---------------------------------------------------------------------------
+
+export interface InsuranceSummaryEntry {
+  carrier_name: string;
+  plan_type: string | null;
+  group_number: string | null;
+  /** Remaining annual maximum / deductible from `patient_insurance`. */
+  max_remaining: string | null;
+  deductible_remaining: string | null;
+}
+
+export interface InsuranceSummary {
+  primary: InsuranceSummaryEntry | null;
+  secondary: InsuranceSummaryEntry | null;
+}
+
+const EMPTY_INSURANCE_SUMMARY: InsuranceSummary = { primary: null, secondary: null };
+
+/**
+ * The patient's dental carriers by rank.
+ *
+ * There is no `…/patients/{id}/insurance-summary` aggregate (CHG-8), so this is
+ * the same three-hop join the Patient Insurance screen does —
+ * `patient_insurance -> insurance_plans -> insurance_carriers` — but issued once
+ * for both ranks and tolerant of every hop being absent.
+ */
+export async function loadInsuranceSummary(patientId: number): Promise<InsuranceSummary> {
+  const res = await listPatientInsurance({ patient_id: patientId, size: 50 }).catch(() => null);
+  const records = (res?.items ?? []).filter(
+    (r) => r.is_active && (r.legacy_plan_type ?? '').trim().toUpperCase().startsWith('D'),
+  );
+  if (records.length === 0) return EMPTY_INSURANCE_SUMMARY;
+
+  const rank = (order: string) =>
+    records.find((r) => (r.insurance_type ?? '').trim().toLowerCase() === order) ?? null;
+
+  const entry = async (
+    record: (typeof records)[number] | null,
+  ): Promise<InsuranceSummaryEntry | null> => {
+    if (!record || record.ins_plan_id == null) return null;
+    const plan = await getInsurancePlan(record.ins_plan_id).catch(() => null);
+    const carrier =
+      plan?.carrier_id != null ? await getInsuranceCarrier(plan.carrier_id).catch(() => null) : null;
+    const carrier_name = (carrier?.name || carrier?.carrier_name || '').trim();
+    if (!carrier_name && !plan) return null;
+    return {
+      carrier_name: carrier_name || `Plan #${record.ins_plan_id}`,
+      plan_type: plan?.plan_type ?? null,
+      group_number: plan?.group_number || null,
+      max_remaining: record.max_remaining ?? null,
+      deductible_remaining: record.deductible_remaining ?? null,
+    };
+  };
+
+  const [primary, secondary] = await Promise.all([entry(rank('primary')), entry(rank('secondary'))]);
+  return { primary, secondary };
+}
+
+// ---------------------------------------------------------------------------
+// Explosion codes — Add Procedures "Explosion Codes" dropdown (CHG-4)
+// ---------------------------------------------------------------------------
+
+/**
+ * User-defined multi-procedure codes for an office. The resource exists now
+ * (`GET /explosion-codes`, `GET /explosion-codes/{code}/expand`) but is
+ * unseeded on tenant 1, so an empty list is the normal case — the picker
+ * disables itself rather than being hard-coded off.
+ */
+export async function loadExplosionCodes(officeId: number | null): Promise<ExplosionCodeRead[]> {
+  const res = await listExplosionCodes({
+    ...(officeId != null ? { office_id: officeId } : {}),
+    is_active: true,
+    size: 200,
+  }).catch(() => null);
+  return (res?.items ?? []).slice().sort((a, b) => a.code.localeCompare(b.code));
+}
+
+/** The procedures a single explosion code expands to, in display order. */
+export async function expandExplosion(
+  code: string,
+  officeId: number | null,
+): Promise<ExpandedProcedure[]> {
+  const res = await expandExplosionCode(code, officeId != null ? { office_id: officeId } : undefined);
+  return (res.procedures ?? [])
+    .slice()
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
 }

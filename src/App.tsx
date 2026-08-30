@@ -20,6 +20,7 @@ import PerioChart from './features/perio/PerioChart';
 import TreatmentPlanPage from './features/treatment-plans/TreatmentPlanPage';
 import PrescriptionsPage from './features/prescriptions/PrescriptionsPage';
 import LabTrackingPage from './features/lab-tracking/LabTrackingPage';
+import MedicalHistoryPage from './features/medical-history/MedicalHistoryPage';
 import LettersPage from './features/letters/LettersPage';
 import { InsurancePlanScreen } from './features/patient-insurance';
 import OrthoPaymentPlanPage from './features/payment-plans/OrthoPaymentPlanPage';
@@ -214,6 +215,7 @@ function AppRoutes() {
         <Route path="treatment" element={<TreatmentPlanPage />} />
         <Route path="prescriptions" element={<PrescriptionsPage />} />
         <Route path="lab-tracking" element={<LabTrackingPage />} />
+        <Route path="medical-history" element={<MedicalHistoryPage />} />
         <Route path="documents" element={<PatientDocuments />} />
         <Route path="letters" element={<LettersPage />} />
         <Route path="imaging" element={<ImagingWorkspace />} />

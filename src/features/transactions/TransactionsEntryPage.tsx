@@ -2,17 +2,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { Loader2, Printer, BookOpen, FilePlus2 } from 'lucide-react';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
-import { providerOptionLabel } from '@/services/providerDirectory';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import type { PatientProcedureRead, PatientBalance } from '@/api/generated/model';
 import { createInsuranceClaim, getPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import {
   loadRawTransactions,
   buildEntryRows,
   loadOutstandingProcedures,
+  loadOfficeDirectory,
+  loadInsuranceSummary,
   codeDescription,
   type RawTransactions,
+  type OfficeLabel,
+  type InsuranceSummary,
+  type InsuranceSummaryEntry,
 } from './transactionsService';
 import {
   genId,
@@ -21,10 +26,12 @@ import {
   fmtDate,
   todayDisplay,
   toIsoDate,
+  officeLabelResolver,
   HEADER_GRADIENT,
   ACCENT_BLUE,
   ACTION_TEAL,
 } from './transactionsModel';
+import ProviderSelect from './ProviderSelect';
 import AddProceduresTab from './AddProceduresTab';
 import PaymentsTab from './PaymentsTab';
 import AdjustmentsTab from './AdjustmentsTab';
@@ -78,16 +85,39 @@ export default function TransactionsEntryPage() {
   const [providerId, setProviderId] = useState('');
   const [hygienistId, setHygienistId] = useState('');
 
-  // One shared provider directory for the whole app — scoped to this patient's
-  // office, but never empty (many offices have no provider rows on the legacy
-  // `office_id` scalar) and labels resolve against every provider so historical
-  // rows show a name instead of a raw "PRV-138".
-  const { providers, providerLabel } = useProviderDirectory(patient?.officeId);
+  // One shared provider directory for the whole app. `providers` is the office
+  // roster (`/offices/{id}/providers/effective`), `allProviders` is the tenant
+  // list — ProviderSelect renders the roster first and keeps everyone else
+  // reachable, because the roster is genuinely sparse (PROV-1). Labels always
+  // resolve against the full directory, so a historical row posted by an
+  // out-of-office or deactivated provider still shows a name, not "PRV-138".
+  const { providers, allProviders, providerLabel } = useProviderDirectory(patient?.officeId);
+
+  // The patient's own record carries the defaults the legacy screen opens with.
+  // Same query key as the patient shell above, so this is a cache hit, not a
+  // second request.
+  const patientQuery = useGetPatient(patientId, { query: { enabled: validId } });
+  const preferred_provider_id = patientQuery.data?.preferred_provider_id ?? '';
+  const preferred_hygienist_id = patientQuery.data?.preferred_hygienist_id ?? '';
+
+  // Seed the toolbar from `patients.preferred_provider_id` /
+  // `preferred_hygienist_id` once they arrive, without clobbering a manual pick.
+  const [providerTouched, setProviderTouched] = useState(false);
+  const [hygienistTouched, setHygienistTouched] = useState(false);
+  useEffect(() => {
+    if (!providerTouched && preferred_provider_id) setProviderId(preferred_provider_id);
+  }, [preferred_provider_id, providerTouched]);
+  useEffect(() => {
+    if (!hygienistTouched && preferred_hygienist_id) setHygienistId(preferred_hygienist_id);
+  }, [preferred_hygienist_id, hygienistTouched]);
 
   const [raw, setRaw] = useState<RawTransactions>({ procs: [], pays: [], adjs: [] });
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
   const [balance, setBalance] = useState<PatientBalance | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
+  const [offices, setOffices] = useState<Map<number, OfficeLabel>>(new Map());
+  const [insurance, setInsurance] = useState<InsuranceSummary>({ primary: null, secondary: null });
+  const [insuranceLoading, setInsuranceLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const [creatingClaim, setCreatingClaim] = useState(false);
@@ -147,11 +177,39 @@ export default function TransactionsEntryPage() {
     };
   }, [validId, patientId, reloadKey]);
 
+  // Office names for the grid's OFFICE column. Tenant-level reference data —
+  // loaded once, independent of the patient/date.
+  useEffect(() => {
+    let alive = true;
+    loadOfficeDirectory()
+      .then((m) => alive && setOffices(m))
+      .catch(() => alive && setOffices(new Map()));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Primary/secondary carriers for the check-out block (CHG-8). Three-hop join,
+  // so it loads on its own and never blocks the grid.
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    setInsuranceLoading(true);
+    loadInsuranceSummary(patientId)
+      .then((s) => alive && setInsurance(s))
+      .catch(() => alive && setInsurance({ primary: null, secondary: null }))
+      .finally(() => alive && setInsuranceLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [validId, patientId]);
+
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
 
+  const officeLabel = useMemo(() => officeLabelResolver(offices), [offices]);
   const rows = useMemo(
-    () => buildEntryRows(raw, patientName, providerLabel, paymentLabel, adjustmentLabel),
-    [raw, patientName, providerLabel, paymentLabel, adjustmentLabel],
+    () => buildEntryRows(raw, patientName, providerLabel, paymentLabel, adjustmentLabel, officeLabel),
+    [raw, patientName, providerLabel, paymentLabel, adjustmentLabel, officeLabel],
   );
   const todayCharges = useMemo(() => raw.procs.reduce((s, p) => s + num(p.fee), 0), [raw.procs]);
   // Today's estimate split for the dashboard: insurance portion is the sum of the
@@ -251,12 +309,18 @@ Create a claim for the remaining ${billable.length}?`,
           <dd className="tabular-nums text-slate-800">{balanceLoading ? '…' : money(balance?.estimated_patient)}</dd>
         </dl>
 
-        {/* Insurance (carrier names not joined on this screen yet — see CHG-7) */}
+        {/* Insurance — carriers joined from patient_insurance → insurance_plans →
+            insurance_carriers, with the remaining annual max the front desk
+            quotes at check-out. */}
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 content-start">
           <dt className="font-semibold text-slate-500">Prim. Ins</dt>
-          <dd className="text-slate-400" title="Carrier name not joined on this screen yet (CHG-8)">—</dd>
+          <dd>
+            <CarrierCell entry={insurance.primary} loading={insuranceLoading} />
+          </dd>
           <dt className="font-semibold text-slate-500">Sec. Ins</dt>
-          <dd className="text-slate-400" title="Carrier name not joined on this screen yet (CHG-8)">—</dd>
+          <dd>
+            <CarrierCell entry={insurance.secondary} loading={insuranceLoading} />
+          </dd>
         </dl>
 
         {/* Today's charge split */}
@@ -294,31 +358,32 @@ Create a claim for the remaining ${billable.length}?`,
         </button>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <select
+          <ProviderSelect
+            kind="treating"
             value={providerId}
-            onChange={(e) => setProviderId(e.target.value)}
+            onChange={(id) => {
+              setProviderTouched(true);
+              setProviderId(id);
+            }}
+            officeProviders={providers}
+            allProviders={allProviders}
+            placeholder="-- Select Provider --"
             className="tx-select rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
-            title="Treating provider for procedures added on this screen"
-          >
-            <option value="">-- Select Provider --</option>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {providerOptionLabel(p)}
-              </option>
-            ))}
-          </select>
-          <select
+            title="Treating provider for procedures added on this screen (defaults to the patient's preferred provider)"
+          />
+          <ProviderSelect
+            kind="hygienist"
             value={hygienistId}
-            onChange={(e) => setHygienistId(e.target.value)}
+            onChange={(id) => {
+              setHygienistTouched(true);
+              setHygienistId(id);
+            }}
+            officeProviders={providers}
+            allProviders={allProviders}
+            placeholder="-- Preferred Hygienist --"
             className="tx-select rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
-          >
-            <option value="">-- Preferred Hygienist --</option>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {providerOptionLabel(p)}
-              </option>
-            ))}
-          </select>
+            title="Hygienist credited on procedures added here (posted as hygienist_id; defaults to the patient's preferred hygienist)"
+          />
           <button
             onClick={() => navigate(`/patient/${patientId}/ledger`)}
             className="flex items-center gap-1 rounded border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
@@ -422,6 +487,7 @@ Create a claim for the remaining ${billable.length}?`,
             patientId={patientId}
             officeId={officeId}
             providerId={providerId}
+            hygienistId={hygienistId}
             transactionDateIso={appliedIso}
             onPosted={refresh}
           />
@@ -434,6 +500,7 @@ Create a claim for the remaining ${billable.length}?`,
             patientName={patientName}
             outstanding={outstanding}
             providers={providers}
+            allProviders={allProviders}
             defaultProviderId={providerId}
             providerLabel={providerLabel}
             codeDescription={codeDescription}
@@ -448,6 +515,7 @@ Create a claim for the remaining ${billable.length}?`,
             patientName={patientName}
             outstanding={outstanding}
             providers={providers}
+            allProviders={allProviders}
             providerLabel={providerLabel}
             codeDescription={codeDescription}
             onApplied={refresh}
@@ -455,5 +523,33 @@ Create a claim for the remaining ${billable.length}?`,
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * One carrier line in the check-out block. Shows the carrier, the plan type and
+ * the remaining annual maximum — the three things asked for at the desk.
+ */
+function CarrierCell({
+  entry,
+  loading,
+}: {
+  entry: InsuranceSummaryEntry | null;
+  loading: boolean;
+}) {
+  if (loading) return <span className="text-slate-400">…</span>;
+  if (!entry) return <span className="text-slate-400">None on file</span>;
+  const max = num(entry.max_remaining);
+  return (
+    <span className="text-slate-800">
+      <span className="font-semibold">{entry.carrier_name}</span>
+      {entry.plan_type && <span className="text-slate-500"> · {entry.plan_type}</span>}
+      {entry.max_remaining != null && (
+        <span className="text-slate-500" title="Remaining annual maximum">
+          {' '}
+          · Max Rem {money(max)}
+        </span>
+      )}
+    </span>
   );
 }

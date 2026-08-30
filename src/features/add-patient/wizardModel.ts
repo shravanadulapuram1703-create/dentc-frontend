@@ -376,6 +376,12 @@ export function emptyQuestionnaires(): QuestionnairesForm {
 
 /** One row of the legacy "Add Recall Due Dates" grid. */
 export interface RecallEntry {
+  /**
+   * Backend `patient_recalls.id` when this row was loaded from an existing
+   * patient. Absent on the create flow's seeded rows and on rows the user adds,
+   * which is exactly what tells the edit save to POST rather than PATCH.
+   */
+  id?: number;
   procedure_code: string;
   /** Interval value (paired with interval_type Month/Year). */
   interval: string;
@@ -521,11 +527,26 @@ export function buildResponsiblePartyIn(form: ResponsiblePartyForm): Responsible
   if (isSelf) {
     return { is_self: true, relationship: "self" };
   }
+  return {
+    relationship: nz(form.relationship) ?? undefined,
+    person: buildResponsiblePartyPerson(form),
+  };
+}
+
+/**
+ * The guarantor's own fields, in the shape the backend uses everywhere a
+ * responsible party is written. `ResponsiblePartyCreate` / `ResponsiblePartyUpdate`
+ * are this same field set plus `home_office_id` / `is_active`, so the edit flow
+ * spreads this into its own bodies rather than re-listing 30 fields.
+ */
+export function buildResponsiblePartyPerson(
+  form: ResponsiblePartyForm,
+): ResponsiblePartyPersonIn {
   const num = (v: string) => {
     const n = parseInt(v, 10);
     return Number.isFinite(n) ? n : undefined;
   };
-  const person: ResponsiblePartyPersonIn = {
+  return {
     title: nz(form.title),
     preferred_name: nz(form.preferred_name),
     last_name: nz(form.last_name),
@@ -557,7 +578,6 @@ export function buildResponsiblePartyIn(form: ResponsiblePartyForm): Responsible
     financial_notes: nz(form.financial_notes),
     responsible_party_notes: nz(form.responsible_party_notes),
   };
-  return { relationship: nz(form.relationship) ?? undefined, person };
 }
 
 /** One MedicalAlertIn per answered alert, plus a comments-only row when present. */

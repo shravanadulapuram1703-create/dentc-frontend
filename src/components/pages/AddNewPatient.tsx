@@ -76,8 +76,12 @@ import {
 import {
   loadPatientForEdit,
   savePatientEdits,
+  loadPatientSections,
+  savePatientSections,
+  emptySectionsBaseline,
   type PatientAudit,
   type PatientEditSnapshot,
+  type PatientSectionsBaseline,
 } from "../../features/add-patient/editMode";
 
 import {
@@ -655,8 +659,15 @@ export default function AddNewPatient({
   // stored as a display name taken from the tenant's gender list.
   const [isLoadingPatient, setIsLoadingPatient] = useState(isEditMode);
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
-  const [loadedPatientId, setLoadedPatientId] = useState<number | null>(null);
+  /** Patient id whose hydrate is done or in flight — see the effect below. */
+  const loadingPatientRef = useRef<number | null>(null);
   const [audit, setAudit] = useState<PatientAudit | null>(null);
+  // Row ids behind Steps 2-5, so saving an edited patient reconciles the stored
+  // alert / answer / recall rows instead of appending a second copy of each.
+  const [sectionsBaseline, setSectionsBaseline] = useState<PatientSectionsBaseline>(
+    emptySectionsBaseline,
+  );
+  const [responsiblePartyId, setResponsiblePartyId] = useState<number | null>(null);
 
   // Required Step-1 fields the stored record was already missing when it loaded.
   // Only meaningful in edit mode; create starts with no record and enforces
@@ -671,9 +682,17 @@ export default function AddNewPatient({
   // Hydrate every step from the stored patient. Waits for metadata because
   // `sex` is held as the tenant's display label. Runs once per patient id; the
   // guard also stops a metadata refetch from discarding edits already typed in.
+  //
+  // The guard is a REF, not the `loadedPatientId` state. Keying it off state
+  // that the effect itself sets makes the effect cancel its own in-flight run
+  // the moment it succeeds — which left the "Loading…" banner up forever and
+  // discarded the later awaits' results.
   useEffect(() => {
-    if (!isEditMode || !metadata || loadedPatientId === editPatientId) return;
+    if (!isEditMode || !metadata) return;
+    if (loadingPatientRef.current === editPatientId) return;
+    loadingPatientRef.current = editPatientId;
     let cancelled = false;
+    let settled = false;
 
     (async () => {
       setIsLoadingPatient(true);
@@ -682,6 +701,7 @@ export default function AddNewPatient({
           editPatientId,
           metadata.genders,
         );
+        settled = true;
         if (cancelled) return;
 
         setFormData((prev) => {
@@ -705,8 +725,17 @@ export default function AddNewPatient({
         setAudit(snapshot.audit);
         setFirstVisit(snapshot.first_visit);
         setLastVisit(snapshot.last_visit);
-        setLoadWarnings(snapshot.warnings);
-        setLoadedPatientId(editPatientId);
+        // Responsible Party + Recall. Loaded from the patient record already in
+        // hand so the guarantor lookup does not refetch it. A section that fails
+        // to load reports a warning and falls back to the create flow's blank
+        // state, so the user can still fill in what the patient is missing.
+        const sections = await loadPatientSections(snapshot.patient);
+        if (cancelled) return;
+        setRespParty(sections.responsible_party);
+        setResponsiblePartyId(sections.responsible_party_id);
+        setRecalls(sections.recalls);
+        setSectionsBaseline(sections.baseline);
+        setLoadWarnings([...snapshot.warnings, ...sections.warnings]);
 
         // Keep the patient on their own home office rather than whatever the
         // global nav happens to have selected.
@@ -719,6 +748,9 @@ export default function AddNewPatient({
         }
       } catch (error: any) {
         console.error("Error loading patient for edit:", error);
+        // Let a failed hydrate be retried rather than latching the guard shut.
+        settled = true;
+        loadingPatientRef.current = null;
         if (!cancelled) {
           setSaveError(
             error?.response?.data?.detail || error?.message || "Failed to load this patient.",
@@ -731,8 +763,12 @@ export default function AddNewPatient({
 
     return () => {
       cancelled = true;
+      // A teardown before the fetch resolves (StrictMode's double mount, or the
+      // patient changing mid-flight) must release the claim, or the re-run is
+      // turned away by the guard while this run discards its own results.
+      if (!settled) loadingPatientRef.current = null;
     };
-  }, [isEditMode, editPatientId, metadata, loadedPatientId]);
+  }, [isEditMode, editPatientId, metadata]);
 
   // Resolve the fee-schedule display name once the list is available — edit
   // mode hydrates the id from the patient record, which alone renders blank.
@@ -764,10 +800,17 @@ export default function AddNewPatient({
       primary_medical: formData.primaryMedical,
       secondary_medical: formData.secondaryMedical,
     });
-    // Editing is entered from the Overview's PATIENT INFORMATION panel, so it
-    // edits that panel only — responsible party, insurance and recalls each
-    // have their own EDIT button on that screen.
-    return isEditMode ? all.slice(0, 1) : all;
+    // Editing walks the create flow's steps so a Quick-Saved patient can come
+    // back and complete what they skipped — minus the sections that now belong
+    // to a dedicated screen of their own:
+    //   • Medical Alerts / Questionnaires → /patient/:id/medical-history
+    //     (which also owns Signature and Copy Medical History)
+    //   • Insurance slots → /patient/:id/insurance/…, which read and write the
+    //     real patient_insurance rows; these wizard screens only build a *new*
+    //     link, so they would offer to re-enter coverage and drop it on save.
+    // Responsible Party and Recall stay here, reached from the Overview.
+    const ownedElsewhere = new Set(["medical-alerts", "questionnaires"]);
+    return isEditMode ? all.filter((s) => !s.slotKey && !ownedElsewhere.has(s.id)) : all;
   }, [
     isEditMode,
     formData.primaryDental,
@@ -1188,6 +1231,14 @@ export default function AddNewPatient({
       goToStep(0);
       return;
     }
+    // Same rule the create flow enforces: a non-self guarantor becomes a real
+    // record, so it needs at least a last name.
+    if (respParty.rp_source !== "Self" && !respParty.last_name.trim()) {
+      alert("The responsible party needs at least a last name.");
+      const rpIndex = steps.findIndex((s) => s.id === "responsible-party");
+      if (rpIndex >= 0) goToStep(rpIndex);
+      return;
+    }
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -1196,6 +1247,8 @@ export default function AddNewPatient({
         setSaveError("Invalid office ID");
         return;
       }
+      // Step 1 first — it owns the patient record every other section hangs
+      // off, and it is the only write whose failure aborts the save.
       const warnings = await savePatientEdits({
         patient_id: editPatientId,
         patient: buildPatientCreate(buildPatientPayload(officeIdNum)),
@@ -1207,6 +1260,27 @@ export default function AddNewPatient({
           over_120: formData.balanceOver120,
         }),
       });
+
+      // Responsible Party + Recall — the sections Quick Save skips that this
+      // screen still owns. Reconciled against the ids captured at load time and
+      // degraded to a warning on failure. Medical alerts and the questionnaires
+      // are NOT written here; the Medical History screen owns them.
+      const sections = await savePatientSections({
+        patient_id: editPatientId,
+        office_id: officeIdNum,
+        baseline: sectionsBaseline,
+        responsible_party: respParty,
+        responsible_party_id: responsiblePartyId,
+        recalls,
+      });
+      warnings.push(...sections.warnings);
+
+      // Adopt the post-save row ids. Without this a second save from the same
+      // open dialog would insert a duplicate of everything the first created.
+      setSectionsBaseline(sections.baseline);
+      setResponsiblePartyId(sections.responsible_party_id);
+      setRecalls(sections.recalls);
+
       if (warnings.length > 0) {
         alert(`Patient updated. Some items need attention:\n• ${warnings.join("\n• ")}`);
       }
@@ -1255,9 +1329,7 @@ export default function AddNewPatient({
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  {isEditMode
-                    ? "Patient Information"
-                    : `Step ${stepIndex + 1} of ${steps.length}: ${currentStep?.label}`}
+                  Step {stepIndex + 1} of {steps.length}: {currentStep?.label}
                 </h1>
                 <p className="text-sm text-white/80">
                   {isEditMode
@@ -1315,19 +1387,23 @@ export default function AddNewPatient({
           </div>
         </div>
 
-        {/* Wizard step indicator — a single-screen edit has nothing to step through. */}
-        {!isEditMode && (
-          <WizardStepper
-            steps={steps}
-            current={stepIndex}
-            maxReached={maxReached}
-            onStepClick={(i) => {
-              // Leaving Step 1 forward requires the required fields.
-              if (stepIndex === 0 && i > 0 && !validateStep1()) return;
-              setStepIndex(i);
-            }}
-          />
-        )}
+        {/* Wizard step indicator. Editing shows it too — that is the whole point
+            of the edit flow: reach the sections Quick Save skipped. An existing
+            patient has already been through Step 1, so every step is unlocked
+            once their record has actually arrived. */}
+        <WizardStepper
+          steps={steps}
+          current={stepIndex}
+          maxReached={isEditMode && !isLoadingPatient ? steps.length - 1 : maxReached}
+          onStepClick={(i) => {
+            // Stepping away mid-hydrate would validate a form that has not been
+            // filled in yet, flagging "required" on fields the patient has.
+            if (isLoadingPatient) return;
+            // Leaving Step 1 forward requires the required fields.
+            if (stepIndex === 0 && i > 0 && !validateStep1()) return;
+            setStepIndex(i);
+          }}
+        />
 
         <div className={isModal ? "p-6" : "max-w-[1600px] mx-auto p-6"}>
           {isLoadingPatient && (

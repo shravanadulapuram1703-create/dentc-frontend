@@ -7,6 +7,7 @@
  */
 
 import { lastPatientKeys } from "@/features/patient-context/lastPatientStorage";
+import { claimFillOutKeys } from "@/components/patient/claimFillOut";
 
 /** localStorage key holding the remembered username/email for login pre-fill. */
 export const REMEMBERED_IDENTIFIER_KEY = "remembered_identifier";
@@ -16,8 +17,10 @@ export const REMEMBERED_IDENTIFIER_KEY = "remembered_identifier";
  * PRESERVE keys that must outlive a session:
  *   - the "Remember me" identifier, so the login screen can still pre-fill it,
  *   - every per-user "last selected patient" key, so the app reopens the same
- *     patient after the user logs back in (persistent default patient).
- * Without this, `localStorage.clear()` would wipe both.
+ *     patient after the user logs back in (persistent default patient),
+ *   - every claim fill-out record, which the backend has nowhere to store yet
+ *     (CLM-FO-1) and would otherwise be destroyed by a session timeout.
+ * Without this, `localStorage.clear()` would wipe all three.
  */
 export function clearAuthStorageKeepRemembered(): void {
   const preserved = new Map<string, string>();
@@ -25,7 +28,7 @@ export function clearAuthStorageKeepRemembered(): void {
   const remembered = localStorage.getItem(REMEMBERED_IDENTIFIER_KEY);
   if (remembered !== null) preserved.set(REMEMBERED_IDENTIFIER_KEY, remembered);
 
-  for (const key of lastPatientKeys()) {
+  for (const key of [...lastPatientKeys(), ...claimFillOutKeys()]) {
     const value = localStorage.getItem(key);
     if (value !== null) preserved.set(key, value);
   }
