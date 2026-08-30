@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
-import { providerOptionLabel } from '@/services/providerDirectory';
+import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import type { PatientProcedureRead } from '@/api/generated/model';
 import {
@@ -49,10 +49,11 @@ export default function TransactionEntryModal({
   const [transactionDate, setTransactionDate] = useState(todayDisplay());
   const [appliedIso, setAppliedIso] = useState(toIsoDate(todayDisplay()));
   const [providerId, setProviderId] = useState('');
+  const [hygienistId, setHygienistId] = useState('');
 
   // Shared provider directory — same list, order and labels as the full-page
   // Transactions Entry screen and every other provider picker.
-  const { providers, providerLabel } = useProviderDirectory(officeId);
+  const { providers, allProviders, providerLabel } = useProviderDirectory(officeId);
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
@@ -127,19 +128,28 @@ export default function TransactionEntryModal({
             GO
           </button>
           {tab === 'add' && (
-            <select
-              value={providerId}
-              onChange={(e) => setProviderId(e.target.value)}
-              className="ml-auto rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
-              title="Treating provider for procedures added here"
-            >
-              <option value="">-- Select Provider --</option>
-              {providers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {providerOptionLabel(p)}
-                </option>
-              ))}
-            </select>
+            <div className="ml-auto flex items-center gap-2">
+              <ProviderSelect
+                kind="treating"
+                value={providerId}
+                onChange={setProviderId}
+                officeProviders={providers}
+                allProviders={allProviders}
+                placeholder="-- Select Provider --"
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
+                title="Treating provider for procedures added here"
+              />
+              <ProviderSelect
+                kind="hygienist"
+                value={hygienistId}
+                onChange={setHygienistId}
+                officeProviders={providers}
+                allProviders={allProviders}
+                placeholder="-- Hygienist --"
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
+                title="Hygienist credited on procedures added here (posted as hygienist_id)"
+              />
+            </div>
           )}
         </div>
 
@@ -175,6 +185,7 @@ export default function TransactionEntryModal({
               patientId={patientId}
               officeId={officeId}
               providerId={providerId}
+              hygienistId={hygienistId}
               transactionDateIso={appliedIso}
               onPosted={handlePosted}
             />
@@ -186,6 +197,7 @@ export default function TransactionEntryModal({
               patientName={patientName}
               outstanding={outstanding}
               providers={providers}
+              allProviders={allProviders}
               defaultProviderId={providerId}
               providerLabel={providerLabel}
               codeDescription={codeDescription}
@@ -199,6 +211,7 @@ export default function TransactionEntryModal({
               patientName={patientName}
               outstanding={outstanding}
               providers={providers}
+              allProviders={allProviders}
               providerLabel={providerLabel}
               codeDescription={codeDescription}
               onApplied={handlePosted}

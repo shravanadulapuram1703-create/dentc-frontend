@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { GapNotice, YesNoToggle } from "../stepUi";
+import { GapNotice } from "../stepUi";
+import TriStateToggle from "@/components/ui/TriStateToggle";
 import {
   DEFAULT_DENTAL_QUESTION_GROUPS,
   DEFAULT_MEDICAL_QUESTION_GROUPS,
@@ -215,7 +216,13 @@ function QuestionRow({
     >
       <span className="text-sm text-[#1E293B] flex-1 block mb-1">{question.label}</span>
       {question.kind === "yesno" && (
-        <YesNoToggle value={answer} onChange={(ans) => onAnswer(ans)} />
+        <TriStateToggle
+          label={question.label}
+          // Answers travel as free text; only the three legacy states are
+          // meaningful on a Yes/No row.
+          value={answer === "yes" || answer === "no" ? answer : ""}
+          onChange={(ans) => onAnswer(ans)}
+        />
       )}
       {question.kind === "text" && (
         <input

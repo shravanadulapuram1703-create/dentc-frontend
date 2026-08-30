@@ -6,8 +6,10 @@ import {
   Plus,
   Trash2,
   Loader2,
+  ClipboardList,
 } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import AddNewPatient from "../pages/AddNewPatient";
 import SendEmailModal from "./SendEmailModal";
 import TxPlansTab from "./TxPlansTab";
 import DatePickerCalendar from "./DatePickerCalendar";
@@ -306,6 +308,12 @@ export default function AddEditAppointmentForm({
   );
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
   const [patientError, setPatientError] = useState<string | null>(null);
+  // "Patient Information" — the full Add-Patient wizard in edit mode, so the
+  // sections a Quick Save skipped (responsible party, medical alerts,
+  // questionnaires, recall) can be completed without leaving the appointment.
+  const [showPatientDetails, setShowPatientDetails] = useState(false);
+  // Bumped after that dialog saves, to re-read the demographics it may have changed.
+  const [patientReloadKey, setPatientReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -345,7 +353,7 @@ export default function AddEditAppointmentForm({
     return () => {
       cancelled = true;
     };
-  }, [patient.numericId, patient.patientId, patient.chartNumber]);
+  }, [patient.numericId, patient.patientId, patient.chartNumber, patientReloadKey]);
 
   // Seed Personal + Contact information from the loaded record. Home phone maps
   // to PatientRead.phone (the backend has no separate home_phone column).
@@ -1206,9 +1214,33 @@ export default function AddEditAppointmentForm({
 
         {/* SECTION 1: PERSONAL INFORMATION */}
         <div className="bg-white border-2 border-[#E2E8F0] rounded-lg p-3">
-          <h3 className="font-bold text-[#1F3A5F] mb-2 uppercase tracking-wide border-b-2 border-[#E2E8F0] pb-1.5 text-sm">
-            Personal Information
-          </h3>
+          <div className="flex items-center justify-between gap-3 mb-2 border-b-2 border-[#E2E8F0] pb-1.5">
+            <h3 className="font-bold text-[#1F3A5F] uppercase tracking-wide text-sm">
+              Personal Information
+            </h3>
+            {/* The appointment form covers demographics only. Everything else the
+                new-patient wizard asks for — responsible party, medical alerts,
+                questionnaires, recall — lives behind this button, which is the
+                only way to complete a Quick-Saved patient from the Scheduler. */}
+            <button
+              type="button"
+              onClick={() => setShowPatientDetails(true)}
+              disabled={patientNumericId == null}
+              title={
+                patientNumericId == null
+                  ? "Save this patient first — there is no record to edit yet."
+                  : "Responsible party, medical alerts, questionnaires and recall"
+              }
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 text-xs font-semibold transition-colors ${
+                patientNumericId == null
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-[#3A6EA5] text-[#3A6EA5] hover:bg-[#EEF4FB]"
+              }`}
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              Patient Information
+            </button>
+          </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-[#1E293B] font-medium mb-1 text-sm">
@@ -2424,7 +2456,7 @@ export default function AddEditAppointmentForm({
 
       {/* Send SMS Modal (Placeholder) */}
       {showSMSModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg border-2 border-[#E2E8F0] p-6">
             <h3 className="font-bold text-[#1F3A5F] mb-4">
               SEND SMS
@@ -2472,6 +2504,23 @@ export default function AddEditAppointmentForm({
           defaultStatus={defaultLineStatus}
           initialCode={selectedProcedureForAdd}
           onAdd={(line) => setTreatments((prev) => [...prev, line])}
+        />
+      )}
+
+      {/* Patient Information — the create wizard in edit mode, all steps. It
+          renders its own overlay above this dialog. Saving refreshes the
+          demographics here, since Step 1 can change them. */}
+      {showPatientDetails && patientNumericId != null && (
+        <AddNewPatient
+          mode="edit"
+          variant="modal"
+          patientId={patientNumericId}
+          currentOffice={currentOffice}
+          onClose={() => setShowPatientDetails(false)}
+          onSaved={() => {
+            setShowPatientDetails(false);
+            setPatientReloadKey((k) => k + 1);
+          }}
         />
       )}
     </>

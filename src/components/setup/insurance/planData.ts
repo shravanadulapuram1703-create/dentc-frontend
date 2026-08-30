@@ -21,6 +21,25 @@ import type {
 export const COVERAGE_TYPE_OPTIONS = ["I", "F", "C"]; // Individual / Family / Combined
 
 // ---------------------------------------------------------------------------
+// Dental / Medical category
+// ---------------------------------------------------------------------------
+// `insurance_plans` has NO dental/medical column — the category lives on the
+// CARRIER (`carrier_type` "True" = Dental / "False" = Medical, surfaced as the
+// derived `is_dental`). The plan form still shows it as its first, mandatory
+// field (legacy parity) and uses it to scope the carrier picker.
+// Structurally identical to the patient module's `InsCategory` so the two
+// interoperate without a mapper.
+
+export type PlanCategory = "D" | "M";
+
+export const PLAN_CATEGORY_LABEL: Record<PlanCategory, string> = { D: "Dental", M: "Medical" };
+
+/** The category implied by a carrier record (unknown carrier → Dental). */
+export function categoryForCarrier(c: { is_dental?: boolean | null } | undefined | null): PlanCategory {
+  return c?.is_dental === false ? "M" : "D";
+}
+
+// ---------------------------------------------------------------------------
 // Plan form
 // ---------------------------------------------------------------------------
 
