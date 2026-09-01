@@ -3,8 +3,18 @@ import { Loader2, Check, XCircle } from 'lucide-react';
 import type { PatientProcedureRead, AllocationLine } from '@/api/generated/model';
 import { createPatientPayment, allocatePayment } from '@/api/generated/endpoints/billing/billing';
 import { useDefinitions } from '@/hooks/useDefinitions';
-import { providerOptionLabel, type ProviderOption } from '@/services/providerDirectory';
-import { fmtDate, genId, money, num, HEADER_GRADIENT, ACCENT_BLUE, type EntryKind } from './transactionsModel';
+import { type ProviderOption } from '@/services/providerDirectory';
+import ProviderSelect from './ProviderSelect';
+import {
+  fmtDate,
+  genId,
+  money,
+  cents,
+  procedureBalance,
+  HEADER_GRADIENT,
+  ACCENT_BLUE,
+  type EntryKind,
+} from './transactionsModel';
 
 interface Props {
   patientId: number;
@@ -12,7 +22,9 @@ interface Props {
   transactionDateIso: string;
   patientName: string;
   outstanding: PatientProcedureRead[];
+  /** Providers serving this office; `allProviders` keeps the rest reachable. */
   providers: ProviderOption[];
+  allProviders: ProviderOption[];
   /** Provider chosen in the page toolbar — seeds the payment's provider. */
   defaultProviderId: string;
   providerLabel: (id: string | null | undefined) => string;
@@ -27,6 +39,7 @@ export default function PaymentsTab({
   patientName,
   outstanding,
   providers,
+  allProviders,
   defaultProviderId,
   providerLabel,
   codeDescription,
@@ -52,22 +65,39 @@ export default function PaymentsTab({
 
   const [allocAmounts, setAllocAmounts] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  /** True once the user types an Amount by hand — from then on it stops tracking the grid. */
+  const [amountTouched, setAmountTouched] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const types = useMemo(() => ['All', ...new Set(codes.map((c) => c.type).filter(Boolean))], [codes]);
+  // `DefinitionRead.key2` is the payment code's type. It is blank on every
+  // seeded `payment_method` row today, so the filter renders only when the
+  // backend actually supplies types — an "All"-only dropdown is not metadata.
+  const types = useMemo(() => [...new Set(codes.map((c) => c.type).filter(Boolean))], [codes]);
+  const hasTypes = types.length > 0;
 
   const visibleCodes = codes.filter(
     (c) =>
       (!searchCode || c.code.toLowerCase().includes(searchCode.toLowerCase())) &&
-      (searchType === 'All' || c.type === searchType) &&
+      (!hasTypes || searchType === 'All' || c.type === searchType) &&
       (!searchDescription || c.description.toLowerCase().includes(searchDescription.toLowerCase())),
   );
 
-  const totalAllocated = Object.values(allocAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  const totalAllocated = cents(
+    Object.values(allocAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0),
+  );
+
+  // Selecting procedures drives the payment Amount (and deselecting recalculates it)
+  // until the user overrides it — the legacy screen's "post what's outstanding" flow.
+  useEffect(() => {
+    if (amountTouched) return;
+    const next = totalAllocated > 0 ? totalAllocated.toFixed(2) : '';
+    setAmount((prev) => (prev === next ? prev : next));
+  }, [totalAllocated, amountTouched]);
 
   const reset = () => {
     setAmount('');
+    setAmountTouched(false);
     setCheckNumber('');
     setBankNumber('');
     setNotes('');
@@ -104,6 +134,7 @@ export default function PaymentsTab({
         payment_method: method,
         ...(providerId ? { provider_id: providerId } : {}),
         ...(checkNumber ? { check_number: checkNumber } : {}),
+        ...(bankNumber ? { bank_number: bankNumber } : {}),
         ...(notes ? { notes } : {}),
       });
 
@@ -130,24 +161,30 @@ export default function PaymentsTab({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[420px_1fr]">
         {/* Payment code picker */}
         <div className="rounded border border-slate-200 bg-white">
-          <div className="grid grid-cols-[1fr_110px_1fr] gap-px border-b border-slate-200 bg-slate-50 p-2">
+          <div
+            className={`grid gap-px border-b border-slate-200 bg-slate-50 p-2 ${
+              hasTypes ? 'grid-cols-[1fr_110px_1fr]' : 'grid-cols-[1fr_1fr]'
+            }`}
+          >
             <input
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
               placeholder="Search code"
               className="rounded border border-[#2566a8] px-2 py-1.5 text-xs focus:outline-none"
             />
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="tx-select rounded border border-slate-300 px-2 py-1.5 text-xs"
-            >
-              {types.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            {hasTypes && (
+              <select
+                value={searchType}
+                onChange={(e) => setSearchType(e.target.value)}
+                className="tx-select rounded border border-slate-300 px-2 py-1.5 text-xs"
+              >
+                {['All', ...types].map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               value={searchDescription}
               onChange={(e) => setSearchDescription(e.target.value)}
@@ -163,12 +200,12 @@ export default function PaymentsTab({
                 <button
                   key={c.code}
                   onClick={() => setMethod(c.code)}
-                  className={`grid w-full grid-cols-[80px_1fr_1fr] items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition hover:bg-sky-50 ${
-                    method === c.code ? 'bg-sky-100' : ''
-                  }`}
+                  className={`grid w-full items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition hover:bg-sky-50 ${
+                    hasTypes ? 'grid-cols-[110px_1fr_1fr]' : 'grid-cols-[110px_1fr]'
+                  } ${method === c.code ? 'bg-sky-100' : ''}`}
                 >
                   <span className="font-semibold text-[#1d4ed8]">{c.code}</span>
-                  <span className="text-slate-700">{c.type}</span>
+                  {hasTypes && <span className="text-slate-700">{c.type}</span>}
                   <span className="text-slate-800">{c.description}</span>
                 </button>
               ))
@@ -184,7 +221,10 @@ export default function PaymentsTab({
                 type="number"
                 step="0.01"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  setAmountTouched(true);
+                }}
                 placeholder="0.00"
                 className="w-full rounded border border-slate-300 px-2 py-1.5 text-right text-xs focus:border-[#2566a8] focus:outline-none"
               />
@@ -200,7 +240,7 @@ export default function PaymentsTab({
               <input
                 value={bankNumber}
                 onChange={(e) => setBankNumber(e.target.value)}
-                title="Bank # is captured in the UI but not yet persisted by the backend — see CHG-5."
+                title="Deposit bank number — persisted on the payment"
                 className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#2566a8] focus:outline-none"
               />
             </Labeled>
@@ -217,19 +257,16 @@ export default function PaymentsTab({
               </select>
             </Labeled>
             <Labeled label="Provider">
-              <select
+              <ProviderSelect
+                kind="treating"
                 value={providerId}
-                onChange={(e) => setProviderId(e.target.value)}
+                onChange={setProviderId}
+                officeProviders={providers}
+                allProviders={allProviders}
+                placeholder="-- No Provider --"
                 className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
                 title="Provider credited with this payment"
-              >
-                <option value="">-- No Provider --</option>
-                {providers.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {providerOptionLabel(p)}
-                  </option>
-                ))}
-              </select>
+              />
             </Labeled>
           </div>
           <Labeled label="Notes">
@@ -273,6 +310,7 @@ export default function PaymentsTab({
         setSelected={setSelected}
         totalAllocated={totalAllocated}
         paymentAmount={parseFloat(amount) || 0}
+        capAmount={amountTouched ? parseFloat(amount) || 0 : undefined}
       />
     </div>
   );
@@ -303,6 +341,7 @@ export function ProceduresToPost({
   setSelected,
   totalAllocated,
   paymentAmount,
+  capAmount,
 }: {
   kind: EntryKind;
   outstanding: PatientProcedureRead[];
@@ -315,14 +354,51 @@ export function ProceduresToPost({
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>;
   totalAllocated: number;
   paymentAmount?: number;
+  /** Payment amount the user typed by hand — selections never allocate past it. */
+  capAmount?: number;
 }) {
-  const toggle = (id: string) =>
+  /** Sum of every row's New Amt except `skipId`. */
+  const allocatedExcept = (alloc: Record<string, string>, skipId: string) =>
+    Object.entries(alloc).reduce((s, [k, v]) => (k === skipId ? s : s + (parseFloat(v) || 0)), 0);
+
+  /** Checking a row posts its outstanding balance to New Amt; unchecking clears it. */
+  const toggle = (p: PatientProcedureRead) => {
+    const checked = !selected.has(p.id);
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (checked) next.add(p.id);
+      else next.delete(p.id);
       return next;
     });
+    setAllocAmounts((prev) => {
+      const next = { ...prev };
+      if (!checked) {
+        delete next[p.id];
+        return next;
+      }
+      const remaining = procedureBalance(p).remaining;
+      const room =
+        capAmount != null && capAmount > 0
+          ? Math.max(0, cents(capAmount - allocatedExcept(prev, p.id)))
+          : remaining;
+      next[p.id] = cents(Math.min(remaining, room)).toFixed(2);
+      return next;
+    });
+  };
+
+  /** Hand-editing New Amt keeps the Sel checkbox in step with the typed value. */
+  const editAmount = (id: string, value: string) => {
+    setAllocAmounts((prev) => ({ ...prev, [id]: value }));
+    setSelected((prev) => {
+      const has = prev.has(id);
+      const wanted = (parseFloat(value) || 0) > 0;
+      if (has === wanted) return prev;
+      const next = new Set(prev);
+      if (wanted) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   return (
     <div className="rounded border border-slate-200 bg-white">
@@ -363,13 +439,11 @@ export function ProceduresToPost({
               </tr>
             ) : (
               outstanding.map((p) => {
-                const fee = num(p.fee);
-                const estIns = num(p.insurance_estimate);
-                const rem = num(p.patient_estimate);
+                const { fee, est_ins, pat_paid, pat_adj, remaining } = procedureBalance(p);
                 return (
                   <tr key={p.id} className="hover:bg-slate-50">
                     <td className="px-2 py-1.5 text-center">
-                      <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="rounded" />
+                      <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p)} className="rounded" />
                     </td>
                     <td className="px-2 py-1.5 font-mono text-slate-700">{fmtDate(p.date_of_service)}</td>
                     <td className="px-2 py-1.5 text-slate-700">{patientName}</td>
@@ -381,16 +455,20 @@ export function ProceduresToPost({
                     <td className="px-2 py-1.5 text-slate-800">{codeDescription(p.procedure_code) || p.procedure_code}</td>
                     <td className="px-2 py-1.5 text-slate-700">{providerLabel(p.provider_id)}</td>
                     <td className="px-2 py-1.5 text-right text-slate-900">{money(fee)}</td>
-                    <td className="px-2 py-1.5 text-right text-blue-700">{money(estIns)}</td>
-                    <td className="px-2 py-1.5 text-right text-slate-400">{money(0)}</td>
-                    <td className="px-2 py-1.5 text-right text-slate-400">{money(0)}</td>
-                    <td className="px-2 py-1.5 text-right text-slate-900">{money(rem)}</td>
+                    <td className="px-2 py-1.5 text-right text-blue-700">{money(est_ins)}</td>
+                    <td className={`px-2 py-1.5 text-right ${pat_paid ? 'text-slate-700' : 'text-slate-400'}`}>
+                      {money(pat_paid)}
+                    </td>
+                    <td className={`px-2 py-1.5 text-right ${pat_adj ? 'text-slate-700' : 'text-slate-400'}`}>
+                      {money(pat_adj)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-semibold text-slate-900">{money(remaining)}</td>
                     <td className="px-2 py-1.5 text-right">
                       <input
                         type="number"
                         step="0.01"
                         value={allocAmounts[p.id] ?? ''}
-                        onChange={(e) => setAllocAmounts((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                        onChange={(e) => editAmount(p.id, e.target.value)}
                         placeholder="0.00"
                         className="w-20 rounded border border-slate-300 px-2 py-1 text-right"
                       />

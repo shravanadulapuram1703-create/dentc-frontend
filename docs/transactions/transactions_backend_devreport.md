@@ -278,29 +278,39 @@
 - **Current status:** `/procedure-codes` is seeded with ADA (`D####`) codes only; the ALL MEDICAL
   filter (codes without a leading letter) returns empty against current data.
 
-## CHG-4 — Explosion (multi-procedure) codes 🔴
+## CHG-4 — Explosion (multi-procedure) codes ✅ DELIVERED (integrated 2026-08-29)
 - **Screen:** Add Procedures → "Explosion Codes" dropdown + GO.
-- **Business requirement:** A single user-defined code that expands to a set of procedures (e.g. a
-  "NP Exam" bundle) posted together.
-- **Current status:** No explosion-code resource in `openapi.json`. The control is rendered disabled.
-- **Suggested endpoint:** `GET /api/v1/explosion-codes` + `…/{code}/expand` → `[{ procedure_code, … }]`.
+- **Delivered:** `GET /api/v1/explosion-codes` (+ `/explosion-code-items`) and
+  `GET /api/v1/explosion-codes/{code}/expand?office_id=` → `ExplosionExpandResult { explosion_code,
+  description, procedures: [{ procedure_code, description, default_fee, tooth, surface,
+  display_order }] }` — exactly the shape suggested.
+- **Frontend:** the dropdown is populated from the live resource, and GO expands the bundle and posts
+  every procedure, each priced through `feeScheduleResolver` (the expansion's own `default_fee` is
+  the code-table fee, `0.00` on migrated data).
+- **Remaining (data, not API):** `explosion_codes` / `explosion_code_items` are **empty** on tenant 1
+  and `GET /offices/{id}/exp-codes` returns `[]`, so the control renders disabled with
+  "No explosion codes are defined for this office yet." It lights up as soon as the table is seeded.
 
-## CHG-5 — Payment Bank #, and per-procedure Pat Paid / Pat Adj columns 🟡
+## CHG-5 — Payment Bank #, and per-procedure Pat Paid / Pat Adj columns ✅ DELIVERED (integrated 2026-08-29)
 - **Screen:** Payments tab (Bank # field); Payments/Adjustments "Procedures To Post" grid.
-- **Business requirement:** Persist a deposit **Bank #** on a payment; show **Pat Paid** and **Pat Adj**
-  already applied per procedure (to compute true **Rem Amt**).
-- **Current status:** `PatientPaymentCreate` has no `bank_number` field (Bank # is captured but not
-  saved). `PatientProcedureRead` carries no per-procedure paid/adjusted running totals, so the grid
-  shows Pat Paid / Pat Adj as `0.00` and Rem Amt = `patient_estimate`.
-- **Suggested:** add `bank_number` to payments; expose `paid_to_date` / `adjusted_to_date` on
-  `PatientProcedureRead` (or a `…/procedures/{id}/allocations-summary`).
+- **Delivered:** `bank_number` is on `PatientPaymentCreate` / `PatientPaymentRead`, and
+  `PatientProcedureRead` carries `paid_to_date` / `insurance_paid_to_date` / `adjusted_to_date` /
+  `remaining_amount`.
+- **Frontend:** the Bank # input now posts `bank_number`; the Procedures-To-Post grid already read
+  the enrichment fields. Verified live — a payment on patient 83433 stored
+  `check_number: "CHK-901", bank_number: "BANK-77"`.
+- Supersedes **PROV-2** below (a stale-spec report of the same field).
 
-## CHG-6 — Preferred Hygienist persistence 🟡
+## CHG-6 — Preferred Hygienist persistence ✅ DELIVERED (integrated 2026-08-29)
 - **Screen:** Toolbar "-- Preferred Hygienist --" dropdown.
-- **Business requirement:** Record a second (hygiene) provider alongside the treating provider on a
-  charge / visit.
-- **Current status:** `PatientProcedureCreate` has a single `provider_id`. The hygienist selection is
-  shown for parity but not persisted.
+- **Delivered:** `hygienist_id` on `PatientProcedureCreate` / `PatientProcedureRead`, and
+  `preferred_provider_id` / `preferred_hygienist_id` on `PatientRead`.
+- **Frontend:** the toolbar seeds both dropdowns from the patient's `preferred_provider_id` /
+  `preferred_hygienist_id`, and Add Procedures posts `hygienist_id` alongside `provider_id` (the
+  ledger's Transaction Entry modal gained the same hygienist picker). Verified live — a D0120 on
+  patient 83433 stored `provider_id: "PRV-152", hygienist_id: "PRV-141"`.
+- The hygienist dropdown is filtered to hygiene providers (see **PROV-3**), the provider dropdown to
+  everyone else.
 
 ## Patient Dashboard (check-out review) — SHIPPED 2026-07-31
 The legacy check-out review block was added to the top of the Transactions Entry screen so the front
@@ -323,13 +333,14 @@ desk can confirm at a glance what the patient owes before setting the appointmen
 - **Suggested:** return `estimated_deductible` on the balance/estimate payloads (per day and per
   procedure).
 
-## CHG-8 — Primary/Secondary insurance carrier names on the Transactions screen 🟡
+## CHG-8 — Primary/Secondary insurance carrier names on the Transactions screen 🟡 (frontend done 2026-08-29)
 - **Screen:** Patient Dashboard → "Prim. Ins" / "Sec. Ins".
-- **Business requirement:** Show the patient's primary/secondary carrier at check-out.
-- **Current status:** Rendered as `—`. Carrier names require joining `patient_insurance` →
-  `insurance_plans` → `carriers`; not fetched on this screen yet (data exists — see the Patient
-  Insurance phase). A small `GET /patients/{id}/insurance-summary` (carrier names by rank) would avoid
-  a 3-hop client join.
+- **Frontend:** now populated by the client-side join `patient_insurance → insurance_plans →
+  insurance_carriers`, rendering *carrier · plan type · remaining annual maximum* (from
+  `patient_insurance.max_remaining`), or "None on file". Verified live — patient 83433 shows
+  "Cigna · PPO · Max Rem 750.00".
+- **Still wanted:** `GET /patients/{id}/insurance-summary` returning carrier name / plan type /
+  remaining max + deductible by rank, so check-out costs one request instead of five.
 
 ## CHG-9 — "Checked Out" appointment status from the Transactions screen 🔴
 - **Screen:** Legacy check-out flow ends by setting the appointment status to **Checked Out**.
@@ -376,17 +387,38 @@ Payment and adjustment rows in the grid now render the PROVIDER column (previous
 payments use the backend's `provider_name` when present. Verified live: payment posted with
 `provider_id: prov-23423-9`, returned `provider_name: "TEST PROVIDER"`, rendered in the grid.
 
-### PROV-1 — office↔provider assignment table is effectively unseeded 🟡
-`GET /offices/{id}/providers` returns 1 row for office 1, 0 for office 9, and 1 (an **inactive**
-provider) for office 10, while `/providers` holds 97. Until this join is backfilled, office scoping
-cannot be trusted and the frontend falls back to the tenant-wide list. **Suggested:** backfill
-office-providers from the legacy home office plus historical `patient_procedures.provider_id` usage.
+### PROV-1 — office↔provider assignment table is still effectively unseeded 🟡 (partially addressed)
+**Delivered:** `GET /offices/{id}/providers/effective` ("assigned ∪ home office"). The frontend now
+prefers it over the raw join in `src/services/providerDirectory.ts`, and it is a large improvement —
+office 1 goes from **1** row to **93**.
 
-### PROV-2 — `bank_number` exists on the live API but not in `openapi.json` 🟡
-`GET/PATCH /patient-payments/{id}` returns and accepts `bank_number`, but the field is absent from the
-generated client, so the Payments tab's **Bank #** input still cannot be persisted (see CHG-5). This
-looks like a stale spec rather than a missing feature — re-running `npm run api:sync` against the
-current backend should close CHG-5.
+**Still open — the underlying data.** `effective` is only as good as the two columns it unions, and
+both are thin outside office 1:
+
+| office | `/providers?office_id=` (home-office scalar) | `/offices/{id}/providers` | `/offices/{id}/providers/effective` |
+| --- | --- | --- | --- |
+| 1 | 92 | 1 | 93 |
+| 4 | 1 | 0 | **1** |
+| 9 | 2 | 0 | 1 |
+| 10 | 0 | 1 | **0** |
+
+Office 4 is patient 83433's home office, and that patient's own charges were posted by **PRV-169
+(Neha Sharma)** *at office 4* — yet PRV-169 is not in office 4's effective roster. Strict office
+scoping therefore still hides real providers, so the Transactions pickers render the roster as a
+hint (a "This Office" optgroup) with every other provider under "All Providers" rather than
+excluding them. **Suggested (unchanged):** backfill `office_providers` from the legacy home office
+**plus** historical `patient_procedures.provider_id` × `office_id` usage.
+
+### PROV-2 — `bank_number` missing from `openapi.json` ✅ RESOLVED
+The field is in the spec and the generated client; see **CHG-5**.
+
+### PROV-3 — `providers.role` is free text with inconsistent spellings 🟡
+Live tenant 1: `dentist` (78), `hygienist` (16), `Hygenist` (1 — misspelled), `staff` (2). `title`
+carries the licence (`DDS` 14, `DMD` 23, `RDH` 2, `DDH` 1, blank 57) and `specialty` is blank on 96
+of 97 rows. Any screen that needs "doctors here, hygienists there" has to normalise, so the frontend
+added `providerKind()` in `src/services/providerDirectory.ts` (role first, licence title as a
+fallback). **Suggested:** constrain `role` to a seeded definition group (or an enum) and backfill the
+misspellings, so the split is data rather than a client-side heuristic.
 
 ## Fee schedules applied to charges — SHIPPED 2026-08-18
 Adding a procedure posted `fee = procedure_code.default_fee`, `patient_estimate = fee`,
@@ -446,3 +478,32 @@ Resolution is done client-side over `/fee-schedules`, `/fee-schedule-assignments
 per code and cached), but two clients can disagree, and nothing stops a charge being posted with an
 arbitrary fee. **Suggested:** `GET /patients/{id}/fee?procedure_code=&office_id=&provider_id=` returning
 the resolved fee, split and source, with the server applying the same rules on write.
+
+
+## Transactions Entry metadata pass — SHIPPED 2026-08-29
+Reported as "providers / hygienists and other metadata don't load correctly on this screen".
+Everything below is now sourced from the backend and live-verified on patient **83433** (office 4)
+at `:5173`.
+
+| Control | Before | Now |
+| --- | --- | --- |
+| Toolbar **Provider** | **1** option ("Test Den") out of 97 providers — the office roster was treated as authoritative and only fell back to the tenant list when it was *completely* empty | 80 treating providers, office roster first (`This Office` / `All Providers` optgroups); defaults to `patients.preferred_provider_id` |
+| Toolbar **Hygienist** | the same all-provider list, and the selection was never sent anywhere | the 17 hygiene providers only (`providerKind`), posted as `hygienist_id`; defaults to `patients.preferred_hygienist_id` |
+| Grid **OFFICE** | raw `office_id` integer on charges, blank on payments/adjustments | office `short_id` (e.g. `MOON`) resolved from `/offices`, on all three row kinds |
+| **Prim. / Sec. Ins** | hard-coded `—` | carrier · plan type · remaining annual max, or "None on file" (CHG-8) |
+| **Explosion Codes** | hard-coded disabled control | live `/explosion-codes`, disabled only when the office has none (CHG-4) |
+| Payments **Bank #** | captured, silently dropped | posted as `bank_number` (CHG-5) |
+| Payments **Type** filter, Adjustments **Group** + **Type** filters | an "All"-only dropdown, plus a second entirely hard-coded one on Adjustments | rendered only when `DefinitionRead.key2` actually carries a value — today it does not, so they are hidden rather than faked |
+
+**The definition groups themselves are fine.** `GET /definitions?group_code=payment_method` returns 5
+rows (cash / check / credit_card / eft / insurance) and `group_code=adjustment` returns 3 (write_off /
+courtesy / discount); both pickers populate. What is missing is `key2` — see CHG-10.
+
+### CHG-10 — `key2` (type / group) unset on `payment_method` and `adjustment` definitions 🟡
+- **Screen:** Payments code picker (Type column + filter); Adjustments code picker (Group column + filter).
+- **Business requirement:** the legacy pickers filter payment codes by *type* and adjustment codes by
+  *group* (Production / Collection).
+- **Current status:** all 5 `payment_method` and all 3 `adjustment` definitions have an empty `key2`,
+  so there is nothing to group by, and the filters are hidden.
+- **Suggested:** seed `key2` on both groups, and widen the seed itself — three adjustment codes is
+  far short of a real practice's expense-code list.

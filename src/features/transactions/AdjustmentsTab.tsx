@@ -4,7 +4,8 @@ import type { PatientProcedureRead, PatientAdjustmentCreate } from '@/api/genera
 import { createPatientAdjustment } from '@/api/generated/endpoints/billing/billing';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import { ACCENT_BLUE } from './transactionsModel';
-import { providerOptionLabel, type ProviderOption } from '@/services/providerDirectory';
+import { type ProviderOption } from '@/services/providerDirectory';
+import ProviderSelect from './ProviderSelect';
 import { ProceduresToPost } from './PaymentsTab';
 
 interface Props {
@@ -13,7 +14,9 @@ interface Props {
   transactionDateIso: string;
   patientName: string;
   outstanding: PatientProcedureRead[];
+  /** Providers serving this office; `allProviders` keeps the rest reachable. */
   providers: ProviderOption[];
+  allProviders: ProviderOption[];
   providerLabel: (id: string | null | undefined) => string;
   codeDescription: (code: string) => string;
   onApplied: () => void;
@@ -26,16 +29,23 @@ export default function AdjustmentsTab({
   patientName,
   outstanding,
   providers,
+  allProviders,
   providerLabel,
   codeDescription,
   onApplied,
 }: Props) {
   const { definitions: adjustmentDefs } = useDefinitions('adjustment');
-  const codes = adjustmentDefs.map((d) => ({ code: d.key1, group: d.key2 ?? 'Production', description: d.description }));
+  // `DefinitionRead.key2` is the adjustment code's group (Production /
+  // Collection in legacy). It is blank on the seeded `adjustment` rows, so the
+  // group filter renders only when the backend supplies groups.
+  const codes = adjustmentDefs.map((d) => ({
+    code: d.key1,
+    group: (d.key2 ?? '').trim(),
+    description: d.description,
+  }));
 
   const [searchCode, setSearchCode] = useState('');
   const [searchGroup, setSearchGroup] = useState('All');
-  const [searchType, setSearchType] = useState('All');
   const [searchDescription, setSearchDescription] = useState('');
   const [reason, setReason] = useState('');
 
@@ -49,12 +59,13 @@ export default function AdjustmentsTab({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const groups = ['All', ...new Set(codes.map((c) => c.group).filter(Boolean))];
+  const groups = [...new Set(codes.map((c) => c.group).filter(Boolean))];
+  const hasGroups = groups.length > 0;
 
   const visibleCodes = codes.filter(
     (c) =>
       (!searchCode || c.code.toLowerCase().includes(searchCode.toLowerCase())) &&
-      (searchGroup === 'All' || c.group === searchGroup) &&
+      (!hasGroups || searchGroup === 'All' || c.group === searchGroup) &&
       (!searchDescription || c.description.toLowerCase().includes(searchDescription.toLowerCase())),
   );
 
@@ -123,31 +134,30 @@ export default function AdjustmentsTab({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[460px_1fr]">
         {/* Adjustment code picker */}
         <div className="rounded border border-slate-200 bg-white">
-          <div className="grid grid-cols-[1fr_90px_90px_1fr] gap-1 border-b border-slate-200 bg-slate-50 p-2">
+          <div
+            className={`grid gap-1 border-b border-slate-200 bg-slate-50 p-2 ${
+              hasGroups ? 'grid-cols-[1fr_110px_1fr]' : 'grid-cols-[1fr_1fr]'
+            }`}
+          >
             <input
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
               placeholder="Search code"
               className="rounded border border-[#2566a8] px-2 py-1.5 text-xs focus:outline-none"
             />
-            <select
-              value={searchGroup}
-              onChange={(e) => setSearchGroup(e.target.value)}
-              className="tx-select rounded border border-slate-300 px-1 py-1.5 text-xs"
-            >
-              {groups.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="tx-select rounded border border-slate-300 px-1 py-1.5 text-xs"
-            >
-              <option value="All">All</option>
-            </select>
+            {hasGroups && (
+              <select
+                value={searchGroup}
+                onChange={(e) => setSearchGroup(e.target.value)}
+                className="tx-select rounded border border-slate-300 px-1 py-1.5 text-xs"
+              >
+                {['All', ...groups].map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               value={searchDescription}
               onChange={(e) => setSearchDescription(e.target.value)}
@@ -163,12 +173,12 @@ export default function AdjustmentsTab({
                 <button
                   key={c.code}
                   onClick={() => setReason(c.code)}
-                  className={`grid w-full grid-cols-[80px_90px_1fr] items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition hover:bg-sky-50 ${
-                    reason === c.code ? 'bg-sky-100' : ''
-                  }`}
+                  className={`grid w-full items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition hover:bg-sky-50 ${
+                    hasGroups ? 'grid-cols-[110px_110px_1fr]' : 'grid-cols-[110px_1fr]'
+                  } ${reason === c.code ? 'bg-sky-100' : ''}`}
                 >
                   <span className="font-semibold text-[#1d4ed8]">{c.code}</span>
-                  <span className="text-slate-600">{c.group}</span>
+                  {hasGroups && <span className="text-slate-600">{c.group}</span>}
                   <span className="text-slate-800">{c.description}</span>
                 </button>
               ))
@@ -190,18 +200,16 @@ export default function AdjustmentsTab({
               />
             </Labeled>
             <Labeled label="Provider">
-              <select
+              <ProviderSelect
+                kind="treating"
                 value={providerId}
-                onChange={(e) => setProviderId(e.target.value)}
+                onChange={setProviderId}
+                officeProviders={providers}
+                allProviders={allProviders}
+                placeholder="All Providers"
                 className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
-              >
-                <option value="">All Providers</option>
-                {providers.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {providerOptionLabel(p)}
-                  </option>
-                ))}
-              </select>
+                title="Provider the adjustment is booked against"
+              />
             </Labeled>
             <Labeled label="Ref #">
               <input

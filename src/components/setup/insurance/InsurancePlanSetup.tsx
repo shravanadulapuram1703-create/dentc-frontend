@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FileText,
   Search,
@@ -9,6 +9,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -21,23 +22,29 @@ import {
 import type { InsurancePlanRead } from "@/api/generated/model";
 import {
   type PlanForm,
+  type PlanCategory,
   emptyPlanForm,
   planToForm,
   buildPlanCreate,
   buildPlanUpdate,
-  COVERAGE_TYPE_OPTIONS,
+  categoryForCarrier,
 } from "./planData";
 import {
   ensureCarrierNames,
+  ensureCarrierRecords,
   ensureEmployerNames,
   carrierName,
+  carrierRecord,
   employerName,
   searchCarriers,
   searchEmployers,
 } from "./lookupService";
 import EntityPicker from "./EntityPicker";
 import CoverageRulesSection from "./CoverageRulesSection";
-import DefinitionField from "./DefinitionField";
+import PlanFormFields from "./PlanFormFields";
+import CopyFromExistingDialog from "./CopyFromExistingDialog";
+import DuplicatePlanDialog from "./DuplicatePlanDialog";
+import { findDuplicatePlansByGroup } from "./planDuplicates";
 
 // ============================================================================
 // Insurance Plan Setup — master-detail over /api/v1/insurance-plans.
@@ -46,6 +53,11 @@ import DefinitionField from "./DefinitionField";
 // carrier_id / employer_id / is_active / search. Carrier & employer names are
 // resolved lazily per visible page (lookupService). The detail embeds the
 // plan's coverage-rules sub-resource. Mirrors the ProviderSetup pattern.
+//
+// The add/edit FORM BODY is `PlanFormFields`, shared verbatim with the patient
+// module's "Add New Ins Plan" modal (src/features/patient-insurance) so both
+// hosts offer the same fields and behaviour — Dental/Medical selector,
+// carrier/employer pickers with + ADD NEW, Copy From Existing.
 // ============================================================================
 
 const PAGE_SIZE = 25;
@@ -73,8 +85,13 @@ export default function InsurancePlanSetup() {
   const [form, setForm] = useState<PlanForm>(() => emptyPlanForm());
   const [carrierLabel, setCarrierLabel] = useState("");
   const [employerLabel, setEmployerLabel] = useState("");
+  const [category, setCategory] = useState<PlanCategory>("D");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showCopy, setShowCopy] = useState(false);
+  const [copiedFrom, setCopiedFrom] = useState<number | null>(null);
+  // Active plans already on this group number — blocks the save until resolved.
+  const [duplicates, setDuplicates] = useState<InsurancePlanRead[] | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -123,6 +140,8 @@ export default function InsurancePlanSetup() {
     setForm(emptyPlanForm());
     setCarrierLabel("");
     setEmployerLabel("");
+    setCategory("D");
+    setCopiedFrom(null);
     setSelectedId(null);
     setMode("add");
     setShowList(false);
@@ -134,6 +153,10 @@ export default function InsurancePlanSetup() {
       setForm(planToForm(full));
       setCarrierLabel(carrierName(full.carrier_id));
       setEmployerLabel(full.employer_id != null ? employerName(full.employer_id) : "");
+      // Dental/Medical is a property of the carrier, not the plan.
+      await ensureCarrierRecords([full.carrier_id]);
+      setCategory(categoryForCarrier(carrierRecord(full.carrier_id)));
+      setCopiedFrom(null);
       setSelectedId(full.id);
       setMode("edit");
       setShowList(false);
@@ -142,18 +165,28 @@ export default function InsurancePlanSetup() {
     }
   };
 
+  // Seed the form from an existing plan (legacy "Copy From Existing"). Nothing is
+  // linked to the source — Create Plan still POSTs a brand-new plan.
+  const handleCopy = (plan: InsurancePlanRead) => {
+    const carrier = carrierRecord(plan.carrier_id);
+    setForm(planToForm(plan));
+    setCarrierLabel(carrier?.name ?? `#${plan.carrier_id}`);
+    setEmployerLabel(plan.employer_id == null ? "" : employerName(plan.employer_id));
+    setCategory(categoryForCarrier(carrier));
+    setCopiedFrom(plan.id);
+    setShowCopy(false);
+    toast.success(`Copied plan #${plan.id}`, { description: "Review the details, then save the new plan." });
+  };
+
   const handleCancel = () => {
     if (saving) return;
     setShowList(true);
     setSelectedId(null);
     setForm(emptyPlanForm());
+    setCopiedFrom(null);
   };
 
-  const handleSave = async () => {
-    if (form.carrier_id == null) {
-      toast.error("Validation Failed", { description: "Carrier is required" });
-      return;
-    }
+  const persistPlan = async () => {
     setSaving(true);
     try {
       if (selectedId == null) {
@@ -161,6 +194,7 @@ export default function InsurancePlanSetup() {
         toast.success("Plan created");
         setSelectedId(created.id);
         setMode("edit");
+        setCopiedFrom(null);
       } else {
         await updateInsurancePlan(selectedId, buildPlanUpdate(form));
         toast.success("Plan updated");
@@ -171,6 +205,31 @@ export default function InsurancePlanSetup() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (form.carrier_id == null) {
+      toast.error("Validation Failed", { description: "Carrier is required" });
+      return;
+    }
+    // Duplicate validation on the group number — on edits too, since renaming a
+    // plan onto an existing group creates the same duplicate. The plan being
+    // edited never flags itself.
+    setSaving(true);
+    let dupes: InsurancePlanRead[] = [];
+    try {
+      dupes = await findDuplicatePlansByGroup(form.group_number, selectedId);
+    } catch {
+      // A failed check must not block legitimate work — fall through and save.
+      dupes = [];
+    } finally {
+      setSaving(false);
+    }
+    if (dupes.length > 0) {
+      setDuplicates(dupes);
+      return;
+    }
+    await persistPlan();
   };
 
   const handleDelete = async (p: InsurancePlanRead) => {
@@ -397,6 +456,13 @@ export default function InsurancePlanSetup() {
               </div>
               <div className="flex gap-2">
                 <button
+                  onClick={() => setShowCopy(true)}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 border-2 border-[#3A6EA5] text-[#3A6EA5] rounded-lg hover:bg-[#E8EFF7] font-bold transition-all text-sm disabled:opacity-50"
+                >
+                  <Copy className="w-4 h-4" /> Copy From Existing
+                </button>
+                <button
                   onClick={handleCancel}
                   disabled={saving}
                   className="px-4 py-2 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#E8EFF7] font-bold transition-all text-sm disabled:opacity-50"
@@ -417,82 +483,34 @@ export default function InsurancePlanSetup() {
 
           {/* Form */}
           <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Carrier" required>
-                <EntityPicker
-                  valueId={form.carrier_id}
-                  valueLabel={carrierLabel}
-                  onChange={(id, label) => {
-                    updateForm({ carrier_id: id as number | null });
-                    setCarrierLabel(label);
-                  }}
-                  search={searchCarriers}
-                  placeholder="Select carrier…"
-                />
-              </Field>
-              <Field label="Employer">
-                <EntityPicker
-                  valueId={form.employer_id}
-                  valueLabel={employerLabel}
-                  onChange={(id, label) => {
-                    updateForm({ employer_id: id as number | null });
-                    setEmployerLabel(label);
-                  }}
-                  search={searchEmployers}
-                  placeholder="Select employer (optional)…"
-                  allowClear
-                />
-              </Field>
-              <Field label="Group Number">
-                <input type="text" value={form.group_number} onChange={(e) => updateForm({ group_number: e.target.value })} className={INPUT_CLS} />
-              </Field>
-              <Field label="Plan Type">
-                <input type="text" value={form.plan_type} onChange={(e) => updateForm({ plan_type: e.target.value })} className={INPUT_CLS} placeholder="e.g. PPO, HMO, Indemnity" />
-              </Field>
-              <Field label="Coverage Type">
-                <DefinitionField
-                  groupCode="coverage_type"
-                  value={form.coverage_type}
-                  onChange={(v) => updateForm({ coverage_type: v })}
-                  placeholder="e.g. I, P, F"
-                  hints={COVERAGE_TYPE_OPTIONS}
-                />
-              </Field>
-              <Field label="Anniversary Date">
-                <input type="date" value={form.anniversary_date} onChange={(e) => updateForm({ anniversary_date: e.target.value })} className={INPUT_CLS} />
-              </Field>
-            </div>
+            {copiedFrom != null && (
+              <p className="mb-4 rounded-lg border-2 border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-xs text-[#1F3A5F]">
+                Copied from plan <strong>#{copiedFrom}</strong>. Edit anything below —{" "}
+                {mode === "add" ? "Create Plan saves a new plan" : "saving updates this plan"}.
+              </p>
+            )}
 
-            <h3 className="text-sm font-bold text-[#3A6EA5] uppercase tracking-wide mt-6 mb-3">
-              Maximums &amp; Deductibles
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Field label="Individual Max">
-                <MoneyInput value={form.individual_max} onChange={(v) => updateForm({ individual_max: v })} />
-              </Field>
-              <Field label="Individual Deductible">
-                <MoneyInput value={form.individual_deductible} onChange={(v) => updateForm({ individual_deductible: v })} />
-              </Field>
-              <Field label="Ortho Max">
-                <MoneyInput value={form.ortho_max} onChange={(v) => updateForm({ ortho_max: v })} />
-              </Field>
-              <Field label="Family Max">
-                <MoneyInput value={form.family_max} onChange={(v) => updateForm({ family_max: v })} />
-              </Field>
-              <Field label="Family Deductible">
-                <MoneyInput value={form.family_deductible} onChange={(v) => updateForm({ family_deductible: v })} />
-              </Field>
-              <div className="flex items-end gap-4">
-                <label className="flex items-center gap-2 px-3 py-2 border-2 border-[#E2E8F0] rounded-lg cursor-pointer">
-                  <input type="checkbox" checked={form.is_prepaid} onChange={(e) => updateForm({ is_prepaid: e.target.checked })} className="w-4 h-4 accent-[#3A6EA5]" />
-                  <span className="text-sm font-bold text-[#1F3A5F]">Prepaid</span>
-                </label>
-                <label className="flex items-center gap-2 px-3 py-2 border-2 border-[#E2E8F0] rounded-lg cursor-pointer">
-                  <input type="checkbox" checked={form.is_active} onChange={(e) => updateForm({ is_active: e.target.checked })} className="w-4 h-4 accent-[#3A6EA5]" />
-                  <span className="text-sm font-bold text-[#1F3A5F]">{form.is_active ? "Active" : "Inactive"}</span>
-                </label>
-              </div>
-            </div>
+            <PlanFormFields
+              form={form}
+              onChange={updateForm}
+              category={category}
+              onCategoryChange={setCategory}
+              carrierLabel={carrierLabel}
+              onCarrierChange={(id, label) => {
+                updateForm({ carrier_id: id });
+                setCarrierLabel(label);
+              }}
+              employerLabel={employerLabel}
+              onEmployerChange={(id, label) => {
+                updateForm({ employer_id: id });
+                setEmployerLabel(label);
+              }}
+              showActive
+              disabled={saving}
+              excludePlanId={selectedId}
+              onUseExistingPlan={(plan) => void openPlan(plan)}
+              useExistingLabel="Open"
+            />
 
             {mode === "edit" && selectedId != null ? (
               <CoverageRulesSection insPlanId={selectedId} />
@@ -505,37 +523,29 @@ export default function InsurancePlanSetup() {
           </div>
         </div>
       </div>
+
+      {showCopy && <CopyFromExistingDialog onClose={() => setShowCopy(false)} onCopy={handleCopy} />}
+
+      {duplicates && (
+        <DuplicatePlanDialog
+          groupNumber={form.group_number.trim()}
+          duplicates={duplicates}
+          intent={selectedId == null ? "create" : "save"}
+          busy={saving}
+          onUse={(plan) => {
+            setDuplicates(null);
+            void openPlan(plan);
+          }}
+          useLabel="Open"
+          onProceed={() => {
+            setDuplicates(null);
+            void persistPlan();
+          }}
+          onCancel={() => setDuplicates(null)}
+        />
+      )}
     </div>
   );
 }
 
-const INPUT_CLS =
-  "w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20";
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
-  return (
-    <div>
-      <label className="block text-xs font-bold text-[#1F3A5F] mb-1 uppercase tracking-wide">
-        {label}
-        {required && <span className="text-[#DC2626] ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function MoneyInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#64748B]">$</span>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${INPUT_CLS} pl-7`}
-        placeholder="0.00"
-      />
-    </div>
-  );
-}

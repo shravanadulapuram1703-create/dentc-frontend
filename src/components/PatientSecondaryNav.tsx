@@ -26,6 +26,7 @@ import {
   UserSearch,
   Phone,
   FlaskConical,
+  HeartPulse,
   ShieldCheck,
 } from "lucide-react";
 
@@ -150,6 +151,13 @@ export default function PatientSecondaryNav({
       gradient: "from-sky-600 to-blue-600",
       path: "/lab-tracking",
       description: "Lab Case Tracking",
+    },
+    {
+      icon: HeartPulse,
+      label: "Medical Hx",
+      gradient: "from-rose-600 to-red-600",
+      path: "/medical-history",
+      description: "Medical Alerts, Questionnaires & Signature",
     },
     {
       icon: UserPlus,

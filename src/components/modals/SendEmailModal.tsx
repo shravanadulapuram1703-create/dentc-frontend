@@ -38,7 +38,7 @@ export default function SendEmailModal({ isOpen, onClose, patientEmail, patientN
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl border-2 border-[#E2E8F0]">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between border-b-2 border-[#162942]">

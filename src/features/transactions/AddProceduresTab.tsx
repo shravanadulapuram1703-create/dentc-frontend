@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Plus } from 'lucide-react';
-import type { ProcedureCodeRead, PatientProcedureCreate } from '@/api/generated/model';
+import type {
+  ProcedureCodeRead,
+  PatientProcedureCreate,
+  ExplosionCodeRead,
+} from '@/api/generated/model';
 import { createPatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import ToothSurfaceEnforcement from '@/components/patient/ToothSurfaceEnforcement';
 import {
@@ -11,12 +15,19 @@ import {
   type ResolvedProcedureFee,
 } from '@/services/feeScheduleResolver';
 import { PROC_CATEGORIES, genId, money, num, HEADER_GRADIENT, ACCENT_BLUE, type ProcCategory } from './transactionsModel';
-import { codesInCategory, filterCodes } from './transactionsService';
+import {
+  codesInCategory,
+  filterCodes,
+  loadExplosionCodes,
+  expandExplosion,
+} from './transactionsService';
 
 interface Props {
   patientId: number;
   officeId: number | null;
   providerId: string;
+  /** Toolbar hygienist — posted as `hygienist_id` alongside the treating provider. */
+  hygienistId: string;
   transactionDateIso: string;
   /** Refresh the top grid after a charge posts. */
   onPosted: () => void;
@@ -58,7 +69,14 @@ function toEnforcementProcedure(c: ProcedureCodeRead) {
   };
 }
 
-export default function AddProceduresTab({ patientId, officeId, providerId, transactionDateIso, onPosted }: Props) {
+export default function AddProceduresTab({
+  patientId,
+  officeId,
+  providerId,
+  hygienistId,
+  transactionDateIso,
+  onPosted,
+}: Props) {
   const [activeCat, setActiveCat] = useState<ProcCategory>(PROC_CATEGORIES[0]!);
   const [allCodes, setAllCodes] = useState<ProcedureCodeRead[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,6 +95,23 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
   const [feeCtx, setFeeCtx] = useState<FeeScheduleContext>(EMPTY_FEE_CONTEXT);
   const [quote, setQuote] = useState<ResolvedProcedureFee | null>(null);
   const [quoting, setQuoting] = useState(false);
+
+  // Explosion (multi-procedure) codes for this office. The resource is live but
+  // unseeded on tenant 1, so an empty list is expected — the control disables
+  // itself from the data instead of being hard-coded off.
+  const [explosionCodes, setExplosionCodes] = useState<ExplosionCodeRead[]>([]);
+  const [explosionCode, setExplosionCode] = useState('');
+  const [exploding, setExploding] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    loadExplosionCodes(officeId)
+      .then((rows) => alive && setExplosionCodes(rows))
+      .catch(() => alive && setExplosionCodes([]));
+    return () => {
+      alive = false;
+    };
+  }, [officeId]);
 
   useEffect(() => {
     let alive = true;
@@ -156,6 +191,7 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
       procedure_code: code.code,
       date_of_service: transactionDateIso,
       provider_id: providerId,
+      ...(hygienistId ? { hygienist_id: hygienistId } : {}),
       office_id: officeId,
       tooth: extras.tooth || null,
       surface: extras.surface || null,
@@ -180,6 +216,62 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
       setError(detail || 'Failed to add procedure. Please try again.');
     } finally {
       setPosting(false);
+    }
+  };
+
+  /**
+   * Expand the selected explosion code and post every procedure it contains.
+   * Fees still come from the fee-schedule resolver (the expansion's own
+   * `default_fee` is the code-table fee, which is 0.00 on migrated data);
+   * tooth/surface defaults carried by the bundle are posted as-is.
+   */
+  const runExplosion = async () => {
+    if (!explosionCode) return;
+    if (!providerId) {
+      setError('Select a treating provider (top of screen) before adding a procedure.');
+      return;
+    }
+    if (officeId == null) {
+      setError('Missing office context for this patient.');
+      return;
+    }
+    setExploding(true);
+    setError(null);
+    try {
+      const items = await expandExplosion(explosionCode, officeId);
+      if (items.length === 0) {
+        setError(`Explosion code ${explosionCode} expands to no procedures.`);
+        return;
+      }
+      for (const item of items) {
+        const priced = await resolveProcedureFee(feeCtx, item.procedure_code, {
+          default_fee: item.default_fee,
+          on_date: transactionDateIso,
+        });
+        await createPatientProcedure({
+          id: genId(),
+          patient_id: patientId,
+          procedure_code: item.procedure_code,
+          date_of_service: transactionDateIso,
+          provider_id: providerId,
+          ...(hygienistId ? { hygienist_id: hygienistId } : {}),
+          office_id: officeId,
+          tooth: item.tooth || null,
+          surface: item.surface || null,
+          fee: priced.fee,
+          patient_estimate: priced.patient_estimate,
+          insurance_estimate: priced.insurance_estimate,
+          ...(priced.ucr_fee != null ? { ucr_fee: priced.ucr_fee } : {}),
+          apply_to: 'P',
+        });
+      }
+      setExplosionCode('');
+      onPosted();
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(detail || `Failed to post explosion code ${explosionCode}.`);
+    } finally {
+      setExploding(false);
     }
   };
 
@@ -227,18 +319,31 @@ export default function AddProceduresTab({ patientId, officeId, providerId, tran
             <label className="mb-1 block text-[11px] font-semibold text-slate-600">Explosion Codes</label>
             <div className="flex gap-2">
               <select
-                disabled
-                className="tx-select min-w-0 flex-1 rounded border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-400"
-                title="Explosion (multi-procedure) codes are not yet provided by the backend — see CHG-4."
+                value={explosionCode}
+                onChange={(e) => setExplosionCode(e.target.value)}
+                disabled={explosionCodes.length === 0}
+                className="tx-select min-w-0 flex-1 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs disabled:bg-slate-50 disabled:text-slate-400"
+                title={
+                  explosionCodes.length === 0
+                    ? 'No explosion codes are defined for this office yet.'
+                    : 'Post every procedure in a multi-procedure bundle at once'
+                }
               >
-                <option>*Select Exp. Code*</option>
+                <option value="">*Select Exp. Code*</option>
+                {explosionCodes.map((c) => (
+                  <option key={c.id} value={c.code}>
+                    {c.code}
+                    {c.description ? ` — ${c.description}` : ''}
+                  </option>
+                ))}
               </select>
               <button
-                disabled
-                className="rounded bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-400"
-                title="Explosion codes — backend gap CHG-4"
+                onClick={runExplosion}
+                disabled={!explosionCode || exploding}
+                style={explosionCode && !exploding ? { background: ACCENT_BLUE } : undefined}
+                className="rounded bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-400 disabled:cursor-not-allowed enabled:text-white"
               >
-                GO
+                {exploding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'GO'}
               </button>
             </div>
           </div>

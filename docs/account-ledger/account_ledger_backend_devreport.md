@@ -239,6 +239,36 @@ office staff actually use — then `duration`, `eob_number` and the applied
   cheaply. Whether the backend *itself* excludes held procedures when a claim is built is
   unverified — the frontend currently enforces it by disabling selection.
 
+### AL-18 — Claim status is an unvalidated free-text column with hidden date side-effects
+- **Where:** `POST /api/v1/insurance-claims/{claim_id}/status`
+  (`app/services/patient_extra_service.py::set_claim_status`), used by the claim screen's
+  UPDATE STATUS button.
+- **Missing:** `insurance_claims.status` is `String(30)` with no enum and no server-side
+  validation, so any string is accepted and stored. The lifecycle dates are then derived
+  from an **exact lowercase match** on that string:
+  `"submitted"` → `submitted_date`, `"paid"` → `paid_date`,
+  `"closed"` → `close_date` + `is_active = false`.
+- **Impact:** a value the caller believes is valid — `"Submitted"`, `"SUBMITTED"`,
+  `"submited"` — saves the literal text and silently skips the date stamp. On the claim
+  screen the Claim Sent Date / Claim Close Date stay "-", which reads as "the status did
+  not update" even though the row changed. Reported as a bug against the frontend; the
+  frontend now sends only the five canonical lowercase values from a picker
+  (`src/components/patient/claimStatus.ts`) and reads the claim back after the POST to
+  confirm the write, but the column is still writable with anything by any other client.
+- **Suggested:** validate `ClaimStatusUpdate.status` against an enum
+  (`draft | submitted | paid | denied | closed`, plus whatever the clearinghouse
+  lifecycle needs) and reject the rest with 422; normalise case on the way in.
+- **Related:** the transitions only ever *set* dates. Moving a claim back to `draft`
+  leaves `submitted_date` populated (the screen keeps showing a Claim Sent Date for a
+  claim that is no longer sent), and reopening a closed claim (`ClaimDetailsModal` sets
+  the status back to `submitted`) never restores `is_active = true` nor clears
+  `close_date` — a claim closed once stays `is_active = false` forever and drops out of
+  any list filtered on it. The status transitions should own both directions.
+- **Verified:** with the frontend fix in place, `POST …/status {"status":"submitted"}`
+  → 200 in ~0.7 s, claim reads back `status "submitted"`, `submitted_date "2026-08-29"`,
+  and the Claim Status panel refreshes; the value survives a reload. Setting it back to
+  `draft` also round-trips, but `submitted_date` is left behind as described above.
+
 ### AL-3 — "Ortho - Patient Payment Plan" has no backend resource
 - **Missing:** the Contracts tab has three panels - Regular-Patient, Ortho-Patient,
   Ortho-Insurance. The backend exposes `patient-payment-plans` (maps cleanly to
