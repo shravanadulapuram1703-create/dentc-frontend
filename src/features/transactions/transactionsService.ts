@@ -191,7 +191,7 @@ export async function loadInsuranceSummary(patientId: number): Promise<Insurance
     const plan = await getInsurancePlan(record.ins_plan_id).catch(() => null);
     const carrier =
       plan?.carrier_id != null ? await getInsuranceCarrier(plan.carrier_id).catch(() => null) : null;
-    const carrier_name = (carrier?.name || carrier?.carrier_name || '').trim();
+    const carrier_name = (carrier?.name || '').trim();
     if (!carrier_name && !plan) return null;
     return {
       carrier_name: carrier_name || `Plan #${record.ins_plan_id}`,
