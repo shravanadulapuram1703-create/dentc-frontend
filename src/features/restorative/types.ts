@@ -34,6 +34,8 @@ export interface GridRow {
   surface: string;
   provider: string;
   est_ins: string;
+  /** Patient portion (fee − est. insurance). */
+  est_pat: string;
   fee: string;
   office: string;
   notes?: string;

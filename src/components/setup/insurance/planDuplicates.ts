@@ -5,7 +5,7 @@
 // identically:
 //
 //   1. ADVISORY, while typing — `PossiblePlanMatches` lists partial matches from
-//      four characters so staff can adopt an existing plan (see PlanFormFields).
+//      four characters so staff can adopt an existing plan (see the INSURANCE DETAILS wizard PlanStep).
 //   2. BLOCKING, on save — `findDuplicatePlansByGroup` below re-checks for an
 //      EXACT group-number collision and the host refuses to save until the user
 //      resolves it. This catches the case the advisory layer can't: a dismissed

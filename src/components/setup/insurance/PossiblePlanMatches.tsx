@@ -3,7 +3,7 @@
 // exists to stop staff creating a duplicate plan for a group that is already on
 // file, so each row can be adopted outright instead of re-keyed.
 //
-// Rendered by PlanFormFields, and therefore shown on BOTH hosts (Setup →
+// Rendered by the INSURANCE DETAILS wizard PlanStep, and therefore shown on BOTH hosts (Setup →
 // Insurance → Plans and the patient Add New Ins Plan modal).
 
 import { Loader2, X, CornerDownLeft } from "lucide-react";

@@ -14,6 +14,7 @@ import jsPDF from 'jspdf';
 import type { OfficeRead, PatientRead, PerioExamRead, ProviderRead } from '@/api/generated/model';
 import { toothLabel, type NumberingSystem } from '@/features/restorative/numbering';
 import { isPrimaryId } from '@/features/restorative/dentition';
+import { cellEnabled, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
 import { examDateLabel } from './perioService';
 import {
   MEASURES,
@@ -43,6 +44,8 @@ export interface PerioPrintChart {
   maxTeeth: string[];
   mandTeeth: string[];
   getDraft: (tooth: string) => PerioDetailDraft | undefined;
+  /** Restorative-chart tooth status: missing teeth print as X'd columns, implants as "Nⁱ". */
+  getStatus?: (tooth: string) => ToothClinicalStatus | undefined;
   numberingSystem: NumberingSystem;
   showMgj: boolean;
   showLingual: boolean;
@@ -136,6 +139,8 @@ const LABEL_BG: [number, number, number] = [241, 245, 249];
 const SURF_BG: [number, number, number] = [226, 232, 240];
 const LINE: [number, number, number] = [176, 184, 192];
 const DERIVED_BG: [number, number, number] = [248, 250, 252];
+const LOCKED_BG: [number, number, number] = [226, 232, 240];
+const ABSENT_NAVY: [number, number, number] = [100, 116, 139];
 const WARN: [number, number, number] = [200, 30, 30];
 const BLEED: [number, number, number] = [200, 30, 30];
 const SUPP: [number, number, number] = [190, 130, 10];
@@ -308,6 +313,17 @@ function drawArch(doc: jsPDF, arch: ArchSpec, chart: PerioPrintChart, top: numbe
       teeth.forEach((tooth, ti) => {
         const tx = GRID_X + ti * toothW;
         const draft = chart.getDraft(tooth);
+        const status = chart.getStatus?.(tooth);
+
+        // Locked by the restorative chart (missing tooth / implant furcation):
+        // a shaded cell with an X, never a value.
+        if (!cellEnabled(status, measure)) {
+          cell(doc, tx, ry, toothW, rowH, LOCKED_BG);
+          doc.setFont('helvetica', 'normal').setFontSize(6).setTextColor(...MUTED);
+          centered(doc, status && !status.present ? 'X' : '–', tx, toothW, ry, rowH);
+          doc.setTextColor(0, 0, 0);
+          return;
+        }
 
         // Mobility is one value for the whole surface, spanning the tooth width.
         if (meta.kind === 'mobility') {
@@ -358,9 +374,12 @@ function drawArch(doc: jsPDF, arch: ArchSpec, chart: PerioPrintChart, top: numbe
     doc.setFont('helvetica', 'bold').setFontSize(7);
     teeth.forEach((tooth, ti) => {
       const tx = GRID_X + ti * toothW;
-      cell(doc, tx, ty, toothW, rowH, NAVY);
+      const status = chart.getStatus?.(tooth);
+      const absent = !!status && !status.present;
+      cell(doc, tx, ty, toothW, rowH, absent ? ABSENT_NAVY : NAVY);
       doc.setTextColor(255, 255, 255);
-      const label = isPrimaryId(tooth) ? tooth : toothLabel(Number(tooth), chart.numberingSystem);
+      const base = isPrimaryId(tooth) ? tooth : toothLabel(Number(tooth), chart.numberingSystem);
+      const label = status?.implant ? `${base}i` : absent ? `(${base})` : base;
       centered(doc, label, tx, toothW, ty, rowH);
     });
     doc.setTextColor(0, 0, 0);
@@ -387,6 +406,11 @@ function drawFooter(doc: jsPDF, header: PerioPrintHeader, chart: PerioPrintChart
     'MGJ = mucogingival junction   B = bleeding on probing   S = suppuration   ' +
     `Values in red: PD >= ${chart.pdWarn} mm, CAL >= ${chart.calWarn} mm`;
   doc.text(doc.splitTextToSize(legend, PAGE.w - MARGIN * 2)[0], MARGIN, y);
+  y += 9;
+  const legend2 =
+    'Tooth status from the Restorative Chart: (N) shaded / X = missing, extracted or pontic (not probed)   ' +
+    'Ni = implant (peri-implant probing; furcation not applicable)';
+  doc.text(doc.splitTextToSize(legend2, PAGE.w - MARGIN * 2)[0], MARGIN, y);
   doc.setTextColor(0, 0, 0);
   y += 12;
 

@@ -121,6 +121,8 @@ export function CrownMarks({ glyphs }: { glyphs?: ToothGlyph[] }) {
         if (/OPEN_MARGIN_MESIAL/.test(c)) return <path key={i} d="M64,48 L76,58 L64,68 Z" fill="none" stroke={col} strokeWidth="2.5" />;
         if (/OPEN_MARGIN_DISTAL/.test(c)) return <path key={i} d="M36,48 L24,58 L36,68 Z" fill="none" stroke={col} strokeWidth="2.5" />;
         if (/(ORTHO|BRACES|SPLINT|SPACER)/.test(c)) return <g key={i} stroke={col} strokeWidth="2.5" fill="none"><rect x={42} y={50} width={16} height={14} rx={2} /><line x1={30} y1={57} x2={70} y2={57} /></g>;
+        // Mobility grade badge (m1/m2/m3) — mirrored from the Perio Chart's Mobility row.
+        if (/MOBILITY/.test(c)) return <Badge key={i} text={`M${gradeDigit(g.grade)}`} color={col} />;
         if (/(INTRUSION|SUPER_ERUPT)/.test(c)) return <Arrow key={i} dir="down" color={col} />;
         if (/(DRIFT_DISTAL|IMPACTED_DISTAL)/.test(c)) return <ArrowH key={i} dir="r" color={col} />;
         if (/(DRIFT_MESIAL|IMPACTED_MESIAL)/.test(c)) return <ArrowH key={i} dir="l" color={col} />;
@@ -151,9 +153,59 @@ export function RootMarks({ glyphs, cx, tipY }: { glyphs?: ToothGlyph[]; cx: num
         if (/(ROOT_TIP|TIP)/.test(c)) return <circle key={i} cx={cx} cy={tipY - 6} r="5" fill={g.color} />;
         if (/PULP_STONE/.test(c)) return <circle key={i} cx={cx} cy={130} r="3.5" fill={g.color} />;
         if (/PIN/.test(c)) return <line key={i} x1={cx} y1={104} x2={cx} y2={tipY - 20} stroke={g.color} strokeWidth="2.5" strokeDasharray="4 2" />;
+        // Furcation involvement: a triangle at the furcation entrance (below the
+        // CEJ) with the class digit — mirrored from the Perio Chart's Furcation row.
+        if (/FURCATION/.test(c)) return (
+          <g key={i}>
+            <path d={`M${cx - 9},122 L${cx + 9},122 L${cx},108 Z`} fill={/f[3-4]/i.test(g.grade ?? '') ? g.color : '#fff'} stroke={g.color} strokeWidth="2" strokeLinejoin="round" />
+            <text x={cx} y={134} fontSize="10" fontWeight="700" textAnchor="middle" fill={g.color}>{gradeDigit(g.grade) ? `F${gradeDigit(g.grade)}` : 'F'}</text>
+          </g>
+        );
         return null;
       })}
     </>
+  );
+}
+
+/** Junction / CEJ marks (recession, abfraction). Geometry: band ≈ y86–104. */
+export function JunctionMarks({ glyphs }: { glyphs?: ToothGlyph[] }) {
+  if (!glyphs?.length) return null;
+  return (
+    <>
+      {glyphs.map((g, i) => {
+        const c = norm(g.code);
+        // Recession: the gingival margin drawn apical to the CEJ (the further the
+        // margin has moved, the more of the root is exposed) with the mm depth
+        // when the Perio Chart supplied one.
+        if (/RECESSION/.test(c)) {
+          const mm = parseInt((g.grade ?? '').replace(/\D/g, ''), 10);
+          const depth = Number.isFinite(mm) ? Math.min(20, mm * 3) : 8;
+          return (
+            <g key={i}>
+              <path d={`M22,${100 + depth} C40,${106 + depth} 60,${106 + depth} 78,${100 + depth}`} fill="none" stroke={g.color} strokeWidth="3" strokeLinecap="round" />
+              {Number.isFinite(mm) && <text x={50} y={96 + depth} fontSize="9" fontWeight="700" textAnchor="middle" fill={g.color}>{mm}mm</text>}
+            </g>
+          );
+        }
+        if (/ABFRACTION/.test(c)) return <path key={i} d="M40,94 L50,102 L60,94" fill="none" stroke={g.color} strokeWidth="2.5" strokeLinecap="round" />;
+        return null;
+      })}
+    </>
+  );
+}
+
+/** Numeric part of a grade like `m2` / `f3` / `4mm`, or '' when absent. */
+function gradeDigit(grade?: string | null): string {
+  const m = (grade ?? '').match(/\d+/);
+  return m ? m[0] : '';
+}
+
+function Badge({ text, color }: { text: string; color: string }) {
+  return (
+    <g>
+      <rect x={31} y={40} width={38} height={20} rx={5} fill="#fff" stroke={color} strokeWidth="2.5" />
+      <text x={50} y={55} fontSize="14" fontWeight="700" textAnchor="middle" fill={color}>{text}</text>
+    </g>
   );
 }
 

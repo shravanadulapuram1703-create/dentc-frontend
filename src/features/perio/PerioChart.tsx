@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useListPerioExams,
@@ -10,16 +10,23 @@ import {
   useCreatePerioExamDetail,
   useUpdatePerioExamDetail,
   useListPerioChartTemplates,
+  useListChartConditions,
+  useListPatientProcedures,
+  useCreateChartCondition,
+  useUpdateChartCondition,
   listPerioExamDetails,
   getListPerioExamsQueryKey,
   getListPerioExamDetailsQueryKey,
+  getListChartConditionsQueryKey,
 } from '@/api/generated/endpoints/clinical/clinical';
 import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
-import type { PerioExamRead, PerioChartTemplateRead } from '@/api/generated/model';
+import type { ChartConditionRead, PerioExamRead, PerioChartTemplateRead } from '@/api/generated/model';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import { providerOptionLabel } from '@/services/providerDirectory';
-import { PERMANENT_UPPER, PERMANENT_LOWER } from '@/features/restorative/dentition';
+import { PERMANENT_UPPER, PERMANENT_LOWER, upperTeeth, lowerTeeth } from '@/features/restorative/dentition';
+import { loadChartSettings } from '@/features/restorative/restorativeService';
+import { deriveToothStatuses, cellEnabled, planPerioSync, ABSENCE_LABEL, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
 import { Printer } from 'lucide-react';
 import PerioGrid from './PerioGrid';
 import PerioDataEntryPanel from './PerioDataEntryPanel';
@@ -73,6 +80,48 @@ export default function PerioChart() {
   const createDetail = useCreatePerioExamDetail();
   const updateDetail = useUpdatePerioExamDetail();
 
+  // ---- Restorative chart integration -------------------------------------
+  // The restorative chart's persisted rows (chart_conditions + completed
+  // procedures) decide which teeth can be probed here; the perio findings on the
+  // latest exam are written back as MOBILITY / FURCATION / RECESSION conditions.
+  const conditionsParams = { patient_id: numericId, size: 200 };
+  const conditionsQuery = useListChartConditions(conditionsParams, { query: { enabled: validId } });
+  const proceduresQuery = useListPatientProcedures({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
+  const createCondition = useCreateChartCondition();
+  const updateCondition = useUpdateChartCondition();
+  // Chart-level settings (dentition band / edentulous) are the restorative
+  // chart's per-patient localStorage seam (REST-3) — read once per patient.
+  const chartSettings = useMemo(() => loadChartSettings(numericId), [numericId]);
+  const toothStatus = useMemo(() => {
+    const band = new Set([...upperTeeth(chartSettings.dentition), ...lowerTeeth(chartSettings.dentition)]);
+    return deriveToothStatuses({
+      conditions: conditionsQuery.data?.items ?? [],
+      procedures: proceduresQuery.data?.items ?? [],
+      edentulous: chartSettings.edentulous,
+      // Full-permanent is the default band; only a narrower (mixed / primary)
+      // selection hides teeth, so an untouched chart never locks anything.
+      dentitionTeeth: chartSettings.dentition === 'permanent-17' ? null : band,
+    });
+  }, [conditionsQuery.data, proceduresQuery.data, chartSettings]);
+  const getStatus = useCallback((tooth: string): ToothClinicalStatus | undefined => toothStatus.get(tooth), [toothStatus]);
+  const statusSummary = useMemo(() => {
+    let absent = 0; let implants = 0;
+    for (const s of toothStatus.values()) { if (!s.present) absent++; if (s.implant) implants++; }
+    return { absent, implants };
+  }, [toothStatus]);
+  // Conditions for the write-back planner = the server list overlaid with rows
+  // this screen wrote (overlay wins), so a second flush that lands before the
+  // list refetches still sees the finding it just created and updates it
+  // instead of creating a duplicate.
+  const conditionsOverlay = useRef<Map<number, ChartConditionRead>>(new Map());
+  const currentConditions = useCallback((): ChartConditionRead[] => {
+    const byId = new Map<number, ChartConditionRead>();
+    for (const c of conditionsQuery.data?.items ?? []) byId.set(c.id, c);
+    for (const [id, c] of conditionsOverlay.current) byId.set(id, c);
+    return [...byId.values()];
+  }, [conditionsQuery.data]);
+  const [syncError, setSyncError] = useState(false);
+
   // Sources for the printed record's header only: the patient row carries the
   // mailing address + chart number, and office/provider fill the right-hand
   // "Provider" block (Tax ID / License#) the legacy report prints for claims.
@@ -117,6 +166,11 @@ export default function PerioChart() {
 
   const selectedExam = useMemo(() => exams.find((e) => e.id === selectedExamId) ?? null, [exams, selectedExamId]);
   const readOnly = !!selectedExam?.is_voided;
+  // Only the most recent live exam represents the patient's CURRENT periodontal
+  // state, so only its findings are mirrored onto the restorative chart —
+  // editing an old exam must never overwrite newer findings.
+  const latestExam = useMemo(() => exams.find((e) => !e.is_voided) ?? null, [exams]);
+  const syncsToRestorative = !!selectedExam && !readOnly && latestExam?.id === selectedExam.id;
 
   // ---- Per-tooth drafts (mutable map + version bump) ----------------------
   const detailsParams = { exam_id: selectedExamId ?? undefined, size: 200 };
@@ -156,10 +210,29 @@ export default function PerioChart() {
   // Persist every dirty tooth. Serialized by flushBusy so two flushes can't both
   // create a row for the same tooth before the first returns an id; the while-loop
   // drains teeth dirtied while a create/update was in flight.
+  // Mirror one tooth's findings (mobility / furcation / recession) onto the
+  // restorative chart as chart_conditions. Best-effort: a failure here never
+  // blocks the probing save, it just flags the toolbar.
+  const syncToothToRestorative = useCallback(async (tooth: string, examDate: string) => {
+    const ops = planPerioSync({
+      tooth, draft: draftsRef.current.get(tooth), conditions: currentConditions(),
+      patient_id: numericId, office_id: officeId, exam_date: examDate,
+    });
+    if (!ops.length) return false;
+    for (const op of ops) {
+      const row = op.kind === 'create'
+        ? await createCondition.mutateAsync({ data: op.data })
+        : await updateCondition.mutateAsync({ itemId: op.id, data: op.data });
+      conditionsOverlay.current.set(row.id, row);
+    }
+    return true;
+  }, [numericId, officeId, createCondition, updateCondition, currentConditions]);
+
   const flushDirty = useCallback(async () => {
     const examId = selectedExamId;
     if (examId == null || flushBusy.current) return;
     flushBusy.current = true;
+    const saved: string[] = [];
     try {
       // `guard` caps the drain loop; on a persistent server rejection we re-mark
       // the failed teeth and BREAK (no same-flush retry) so a 4xx can't spin.
@@ -182,6 +255,7 @@ export default function PerioChart() {
               d.id = created.id; // keep in place so the next edit routes to update
               idByTooth.current.set(tooth, created.id);
             }
+            saved.push(tooth);
           } catch {
             failed.push(tooth);
           }
@@ -192,7 +266,19 @@ export default function PerioChart() {
       flushBusy.current = false;
     }
     queryClient.invalidateQueries({ queryKey: getListPerioExamDetailsQueryKey(detailsParams) });
-  }, [selectedExamId, createDetail, updateDetail, queryClient]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Write-back to the restorative chart (latest live exam only).
+    if (saved.length && syncsToRestorative && selectedExam) {
+      let changed = false;
+      try {
+        for (const tooth of saved) changed = (await syncToothToRestorative(tooth, selectedExam.exam_date.slice(0, 10))) || changed;
+        setSyncError(false);
+      } catch {
+        setSyncError(true);
+      }
+      if (changed) queryClient.invalidateQueries({ queryKey: getListChartConditionsQueryKey(conditionsParams) });
+    }
+  }, [selectedExamId, createDetail, updateDetail, queryClient, syncsToRestorative, selectedExam, syncToothToRestorative]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pin the latest flush in a ref so the unmount/exam-switch effect can call it
   // without re-subscribing every render (flushDirty's identity changes often).
@@ -209,15 +295,23 @@ export default function PerioChart() {
 
   const editCell = useCallback((cell: Cell, value: number | boolean | null) => {
     if (readOnly) return;
+    // A tooth the restorative chart says is missing (or an implant's furcation)
+    // takes no value — the grid locks the cell, this guards the keyboard path.
+    if (!cellEnabled(toothStatus.get(cell.tooth), cell.measure)) return;
     const cur = draftsRef.current.get(cell.tooth) ?? emptyDraft(cell.tooth, selectedExamId ?? undefined);
     draftsRef.current.set(cell.tooth, setCell(cur, cell.measure, cell.site, value));
     dirtyRef.current.add(cell.tooth);
     setDraftsVersion((v) => v + 1);
     scheduleFlush();
-  }, [readOnly, selectedExamId, scheduleFlush]);
+  }, [readOnly, selectedExamId, scheduleFlush, toothStatus]);
 
   // ---- Cell navigation ----------------------------------------------------
-  const cellOrder = useMemo(() => buildCellOrder(prefs.active_measure, [MAX_TEETH, MAND_TEETH]), [prefs.active_measure]);
+  // Auto-advance skips teeth that cannot take the active measure (missing teeth;
+  // implants on the Furcation row), exactly as the legacy "skip missing teeth".
+  const cellOrder = useMemo(
+    () => buildCellOrder(prefs.active_measure, [MAX_TEETH, MAND_TEETH], (t, m) => !cellEnabled(toothStatus.get(t), m)),
+    [prefs.active_measure, toothStatus],
+  );
   const advance = useCallback((dir: 1 | -1) => {
     setActive((cur) => {
       if (!cur) return cellOrder[0] ?? null;
@@ -251,17 +345,19 @@ export default function PerioChart() {
   }, [active, readOnly, editCell, prefs.auto_advance, advance]);
 
   const onCellClick = useCallback((cell: Cell) => {
+    if (!cellEnabled(toothStatus.get(cell.tooth), cell.measure)) return;
     setActive(cell);
     if (cell.measure !== prefs.active_measure) updatePrefs({ active_measure: cell.measure });
-  }, [prefs.active_measure, updatePrefs]);
+  }, [prefs.active_measure, updatePrefs, toothStatus]);
 
   const onToggleBool = useCallback((cell: Cell) => {
+    if (!cellEnabled(toothStatus.get(cell.tooth), cell.measure)) return;
     setActive(cell);
     if (cell.measure !== prefs.active_measure) updatePrefs({ active_measure: cell.measure });
     const cur = draftsRef.current.get(cell.tooth);
     const on = !!(cur && cur[`${MEASURES[cell.measure].prefix}${cell.site + 1}`] === true);
     editCell(cell, !on);
-  }, [editCell, prefs.active_measure, updatePrefs]);
+  }, [editCell, prefs.active_measure, updatePrefs, toothStatus]);
 
   const onMeasure = useCallback((m: MeasureType) => {
     updatePrefs({ active_measure: m });
@@ -283,7 +379,18 @@ export default function PerioChart() {
     setShowNewExam(false);
     if (!validId) return;
     const today = new Date().toISOString().slice(0, 10);
-    const carried = carry ? carryForward([...draftsRef.current.values()]) : [];
+    // Carry-forward never copies readings onto teeth the restorative chart has
+    // since marked missing, nor a furcation onto a tooth that is now an implant.
+    const carried = carry
+      ? carryForward([...draftsRef.current.values()])
+          .filter((d) => toothStatus.get(d.tooth_no)?.present !== false)
+          .map((d) => {
+            if (!toothStatus.get(d.tooth_no)?.implant) return d;
+            const next = { ...d };
+            for (let i = 1; i <= 6; i++) delete next[`furc${i}`];
+            return next;
+          })
+      : [];
     try {
       const exam = await createExam.mutateAsync({ data: { patient_id: numericId, office_id: officeId, exam_date: today, is_voided: false } });
       if (carry) {
@@ -378,6 +485,7 @@ export default function PerioChart() {
         maxTeeth: MAX_TEETH,
         mandTeeth: MAND_TEETH,
         getDraft,
+        getStatus,
         numberingSystem: prefs.numbering_system,
         showMgj: prefs.show_mgj,
         showLingual: prefs.show_lingual,
@@ -451,10 +559,37 @@ export default function PerioChart() {
         {readOnly && <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-700">Voided — read only</span>}
       </div>
 
+      {/* Restorative-chart link strip: which teeth are locked and why, and
+          whether this exam's findings are being mirrored back. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-200 bg-white px-4 py-1 text-[11px] text-slate-600">
+        <span className="font-semibold text-slate-700">Restorative Chart:</span>
+        {statusSummary.absent === 0 && statusSummary.implants === 0 ? (
+          <span>all teeth present</span>
+        ) : (
+          <>
+            {statusSummary.absent > 0 && (
+              <span className="rounded bg-slate-200 px-1.5 py-0.5" title={absentTeethTitle(toothStatus)}>
+                {statusSummary.absent} not probeable (missing / extracted / pontic)
+              </span>
+            )}
+            {statusSummary.implants > 0 && (
+              <span className="rounded bg-sky-100 px-1.5 py-0.5 text-sky-800">{statusSummary.implants} implant{statusSummary.implants === 1 ? '' : 's'} (marked ⁱ, furcation locked)</span>
+            )}
+          </>
+        )}
+        {selectedExam && (
+          syncsToRestorative
+            ? <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">Mobility · Furcation · Recession from this exam are mirrored to the Restorative Chart</span>
+            : <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Older / voided exam — findings are not mirrored (only the latest exam is)</span>
+        )}
+        {syncError && <span className="text-rose-600">Failed to update the Restorative Chart; it will retry on the next edit.</span>}
+        <Link to={`/patient/${patientId}/restorative`} className="ml-auto text-blue-700 underline-offset-2 hover:underline">Open Restorative Chart</Link>
+      </div>
+
       <div className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1 overflow-auto p-3">
           {comparison ? (
-            <PerioComparison series={comparison} maxTeeth={MAX_TEETH} mandTeeth={MAND_TEETH} numberingSystem={prefs.numbering_system} onClose={() => setComparison(null)} />
+            <PerioComparison series={comparison} maxTeeth={MAX_TEETH} mandTeeth={MAND_TEETH} numberingSystem={prefs.numbering_system} getStatus={getStatus} onClose={() => setComparison(null)} />
           ) : selectedExam == null ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-500">
               <p>No periodontal exam on file for {patient?.name}.</p>
@@ -465,6 +600,7 @@ export default function PerioChart() {
               maxTeeth={MAX_TEETH}
               mandTeeth={MAND_TEETH}
               getDraft={getDraft}
+              getStatus={getStatus}
               numberingSystem={prefs.numbering_system}
               showLingual={prefs.show_lingual}
               showMgj={prefs.show_mgj}
@@ -479,6 +615,7 @@ export default function PerioChart() {
               maxTeeth={MAX_TEETH}
               mandTeeth={MAND_TEETH}
               getDraft={getDraft}
+              getStatus={getStatus}
               active={active}
               activeMeasure={prefs.active_measure}
               numberingSystem={prefs.numbering_system}
@@ -519,4 +656,13 @@ export default function PerioChart() {
       {showCompare && <CompareDatesModal exams={exams} onCompare={runCompare} onClose={() => setShowCompare(false)} />}
     </div>
   );
+}
+
+/** Tooltip listing the locked teeth and why (e.g. "#3 Extracted, #19 Missing"). */
+function absentTeethTitle(statuses: Map<string, ToothClinicalStatus>): string {
+  return [...statuses.values()]
+    .filter((s) => !s.present && s.reason)
+    .sort((a, b) => Number(a.tooth) - Number(b.tooth))
+    .map((s) => `#${s.tooth} ${ABSENCE_LABEL[s.reason!]}`)
+    .join(', ');
 }

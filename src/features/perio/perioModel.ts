@@ -137,17 +137,23 @@ export function cellKey(c: Cell): string {
 
 // Probing order for auto-advance: per arch, sweep the facial band of every tooth
 // (3 sites each) left→right, then the lingual band. Mobility = one cell/surface.
-export function buildCellOrder(measure: MeasureType, arches: string[][]): Cell[] {
+// `skip(tooth)` drops teeth that cannot take this measure (missing / extracted /
+// pontic teeth for everything; implants for Furcation) so auto-advance never
+// parks the cursor on a locked cell — the same "skip missing teeth" behaviour
+// Open Dental / Dentrix apply from their tooth chart.
+export function buildCellOrder(
+  measure: MeasureType,
+  arches: string[][],
+  skip?: (tooth: string, measure: MeasureType) => boolean,
+): Cell[] {
   const out: Cell[] = [];
   const kind = MEASURES[measure].kind;
   for (const arch of arches) {
     for (const surf of [0, SITES_PER_SURFACE]) {
-      if (kind === 'mobility') {
-        for (const tooth of arch) out.push({ tooth, measure, site: surf });
-      } else {
-        for (const tooth of arch) {
-          for (let s = 0; s < SITES_PER_SURFACE; s++) out.push({ tooth, measure, site: surf + s });
-        }
+      for (const tooth of arch) {
+        if (skip?.(tooth, measure)) continue;
+        if (kind === 'mobility') out.push({ tooth, measure, site: surf });
+        else for (let s = 0; s < SITES_PER_SURFACE; s++) out.push({ tooth, measure, site: surf + s });
       }
     }
   }
@@ -170,13 +176,13 @@ function range6(prefix: string): string[] {
 export function detailBody(draft: PerioDetailDraft, examId: number): PerioExamDetailCreate {
   const body: Record<string, unknown> = { exam_id: examId, tooth_no: draft.tooth_no };
   // Send numbers/booleans; send explicit null for fields cleared via Reset so the
-  // clear persists. Undefined (never-touched) fields are omitted. The backend
-  // numeric columns are INTEGER (e.g. mobility_buccal), so non-integer values
-  // (legacy half-grade mobility 0.5/1.5/2.5) are kept on screen but not sent —
-  // they 422 otherwise. Backend gap PERIO-8: widen mobility columns to decimal.
+  // clear persists. Undefined (never-touched) fields are omitted. Mobility columns
+  // now accept decimals (PERIO-BE-2 delivered — verified `mobility_buccal: 0.5`
+  // → 200 on 2026-09-04), so legacy half-grades persist; the per-site columns
+  // (pd/fgm/mgj/furc) are still INTEGER and non-integers are held back.
   for (const f of NUMERIC_FIELDS) {
     const v = draft[f];
-    if (typeof v === 'number') { if (Number.isInteger(v)) body[f] = v; }
+    if (typeof v === 'number') { if (Number.isInteger(v) || f.startsWith('mobility_')) body[f] = v; }
     else if (v === null) body[f] = null;
   }
   for (const f of BOOL_FIELDS) {

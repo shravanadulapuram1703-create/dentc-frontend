@@ -128,6 +128,9 @@ const ROOT: ConditionDef[] = [
   { code: 'PARL', label: 'PARL (Periapical Radiolucency)', area: 'root', drawable: true, color: RED },
   { code: 'PULP_STONES', label: 'Pulp Stones', area: 'root', drawable: true, color: GREY },
   { code: 'RESORPTION_INTERNAL', label: 'Resorption Internal', area: 'root', drawable: true, color: RED },
+  // Furcation involvement (Glickman class I–IV). Grade `f1`..`f4`. Written by the
+  // Perio Chart from the exam's furcation row and chartable by hand here.
+  { code: 'FURCATION', label: 'Furcation Involvement', area: 'root', drawable: true, color: RED, grade_aware: true },
   { code: 'RESORPTION_EXTERNAL', label: 'Resorption External', area: 'root', drawable: true, color: RED },
 ];
 

@@ -8,6 +8,8 @@ interface WeekViewProps {
   appointments: Appointment[];
   /** Jump to the day view for a specific date. */
   onSelectDay: (date: Date) => void;
+  /** Office Setup -> Schedule: is this weekday marked Closed? */
+  isDayClosed?: (date: Date) => boolean;
   /** Open the edit modal for an appointment. */
   onEditAppointment: (appointment: Appointment) => void;
   /** Resolve an appointment's provider color (matches the day view / legend). */
@@ -30,6 +32,7 @@ export default function WeekView({
   onSelectDay,
   onEditAppointment,
   getProviderColor,
+  isDayClosed,
 }: WeekViewProps) {
   // Build the 7 days of the week containing selectedDate (Sunday first).
   const weekStart = new Date(selectedDate);
@@ -58,8 +61,15 @@ export default function WeekView({
         const ymd = fmtYMD(day);
         const dayAppts = byDate.get(ymd) ?? [];
         const isToday = ymd === todayYMD;
+        const closed = isDayClosed?.(day) ?? false;
         return (
-          <div key={ymd} className="border-r border-[#E2E8F0] last:border-r-0 min-h-[200px]">
+          <div
+            key={ymd}
+            className={`border-r border-[#E2E8F0] last:border-r-0 min-h-[200px] ${
+              closed ? "bg-slate-200" : ""
+            }`}
+            title={closed ? "Office closed" : undefined}
+          >
             <button
               onClick={() => onSelectDay(day)}
               className={`w-full sticky top-0 z-10 px-2 py-2 border-b-2 border-[#16293B] text-left transition-colors ${
@@ -76,6 +86,11 @@ export default function WeekView({
             </button>
 
             <div className="p-1.5 space-y-1">
+              {closed && (
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1 pt-1">
+                  Office closed
+                </div>
+              )}
               {dayAppts.length === 0 ? (
                 <div className="text-[11px] text-[#94A3B8] px-1 py-2">No appointments</div>
               ) : (
