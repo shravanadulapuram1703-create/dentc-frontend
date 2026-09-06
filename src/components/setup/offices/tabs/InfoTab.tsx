@@ -5,7 +5,7 @@ import {
   US_PHONE_MAX_LENGTH,
 } from "@/utils/phone";
 import { emailError } from "@/utils/email";
-import { Building2, MapPin, Phone, DollarSign, Clock, Plus, X, Info } from "lucide-react";
+import { Building2, MapPin, Phone, DollarSign, Plus, X, Info } from "lucide-react";
 import {
   listOfficeGroups,
 } from "@/api/generated/endpoints/organization/organization";
@@ -687,66 +687,6 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
             )}
 
             <p className="text-xs text-[#64748B] mt-1">Used for new patients, ledger posting, clinical estimates</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Scheduler Configuration Section */}
-      <div>
-        <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-3 pb-2 border-b-2 border-[#E2E8F0]">
-          <Clock className="w-4 h-4 text-[#3A6EA5]" />
-          Scheduler Configuration
-        </h3>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
-              Scheduler Time Interval (minutes) <span className="text-[#DC2626]">*</span>
-            </label>
-            <select
-              value={formData.slot_interval_minutes ?? 10}
-              onChange={(e) => updateFormData({ slot_interval_minutes: parseInt(e.target.value, 10) })}
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-            >
-              <option value={5}>5 minutes</option>
-              <option value={10}>10 minutes</option>
-              <option value={15}>15 minutes</option>
-              <option value={20}>20 minutes</option>
-              <option value={30}>30 minutes</option>
-            </select>
-            <p className="text-xs text-[#64748B] mt-1">Defines appointment grid resolution</p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">Schedule Start Hour</label>
-            <input
-              type="number"
-              min={0}
-              max={23}
-              value={formData.schedule_start_hour ?? ""}
-              onChange={(e) =>
-                updateFormData({ schedule_start_hour: e.target.value === "" ? null : parseInt(e.target.value, 10) })
-              }
-              placeholder="8"
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-            />
-            <p className="text-xs text-[#64748B] mt-1">First bookable hour (0–23)</p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">Schedule End Hour</label>
-            <input
-              type="number"
-              min={0}
-              max={23}
-              value={formData.schedule_end_hour ?? ""}
-              onChange={(e) =>
-                updateFormData({ schedule_end_hour: e.target.value === "" ? null : parseInt(e.target.value, 10) })
-              }
-              placeholder="18"
-              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-            />
-            <p className="text-xs text-[#64748B] mt-1">Last bookable hour (0–23)</p>
           </div>
         </div>
       </div>

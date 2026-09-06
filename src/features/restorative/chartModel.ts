@@ -48,6 +48,12 @@ export interface RegionQualifiers {
   wy?: number | null;
   /** specific root label (anatomical) a root-area condition applies to. */
   root?: string | null;
+  /**
+   * Originating module when a row is MANAGED by another chart — `perio` marks a
+   * Mobility / Furcation / Recession row the Perio Chart writes and keeps in sync
+   * with the latest exam (see `src/features/charting/toothStatusBridge.ts`).
+   */
+  src?: string | null;
 }
 
 export interface ToothState {
@@ -73,6 +79,7 @@ export function encodeRegion(opts: RegionQualifiers): string | null {
   if (opts.wx != null) parts.push(`wx=${Math.round(opts.wx)}`);
   if (opts.wy != null) parts.push(`wy=${Math.round(opts.wy)}`);
   if (opts.root) parts.push(`root=${opts.root}`);
+  if (opts.src) parts.push(`src=${opts.src}`);
   return parts.length ? parts.join(SEP) : null;
 }
 export function decodeRegion(region: string | null | undefined): RegionQualifiers {
@@ -90,6 +97,7 @@ export function decodeRegion(region: string | null | undefined): RegionQualifier
     else if (k === 'wx') out.wx = Number(v);
     else if (k === 'wy') out.wy = Number(v);
     else if (k === 'root') out.root = v;
+    else if (k === 'src') out.src = v;
   }
   return out;
 }
@@ -134,7 +142,10 @@ export function toToothStates(
         if ('MDBLOIF'.includes(ch)) st.surfaces.add(ch as SurfaceKey);
       }
     }
-    const { group_id, grade, sub, dir, wx, wy, root } = decodeRegion(c.region);
+    const region = decodeRegion(c.region);
+    const { group_id, sub, dir, wx, wy, root } = region;
+    // Grade: first-class column (REST-1 delivered) wins over the region encoding.
+    const grade = c.grade ?? region.grade;
     if (group_id) st.groups.add(group_id);
 
     if (code) {

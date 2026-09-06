@@ -136,6 +136,17 @@ interface AddNewPatientProps {
    * with the patient it just created.
    */
   onSaved?: (patientId: number) => void;
+  /**
+   * Create mode only — seed Step 1 with values captured earlier (the Scheduler's
+   * quick New Patient Appointment form hands its name / birthdate / contact
+   * fields here when the user picks CONTINUE instead of QUICK SAVE).
+   */
+  initialValues?: Partial<
+    Pick<
+      PatientFormData,
+      "birthdate" | "lastName" | "firstName" | "email" | "phone" | "cellPhone" | "workPhone"
+    >
+  >;
 }
 
 interface PatientFormData {
@@ -254,6 +265,7 @@ export default function AddNewPatient({
   patientId: propPatientId,
   onClose,
   onSaved,
+  initialValues,
 }: AddNewPatientProps) {
   const navigate = useNavigate();
   const { patientId: routePatientId } = useParams<{ patientId?: string }>();
@@ -270,11 +282,11 @@ export default function AddNewPatient({
   const calculateAge = ageFromDob;
 
   // Form data state
-  const [formData, setFormData] = useState<PatientFormData>({
-    // Identity Gate
-    birthdate: "",
-    lastName: "",
-    firstName: "",
+  const [formData, setFormData] = useState<PatientFormData>(() => ({
+    // Identity Gate (seeded from the Scheduler's quick form when present)
+    birthdate: initialValues?.birthdate ?? "",
+    lastName: initialValues?.lastName ?? "",
+    firstName: initialValues?.firstName ?? "",
 
     // Additional Details
     title: "",
@@ -289,10 +301,10 @@ export default function AddNewPatient({
     zip: "",
 
     // Contact
-    phone: "",
-    cellPhone: "",
-    workPhone: "",
-    email: "",
+    phone: initialValues?.phone ?? "",
+    cellPhone: initialValues?.cellPhone ?? "",
+    workPhone: initialValues?.workPhone ?? "",
+    email: initialValues?.email ?? "",
 
     // SSN
     ssn: "",
@@ -357,7 +369,7 @@ export default function AddNewPatient({
     balanceOver60: "0.00",
     balanceOver90: "0.00",
     balanceOver120: "0.00",
-  });
+  }));
 
   // Patient Types state
   const [patientTypes, setPatientTypes] = useState({

@@ -8,6 +8,8 @@ interface MonthViewProps {
   appointments: Appointment[];
   /** Jump to the day view for a specific date. */
   onSelectDay: (date: Date) => void;
+  /** Office Setup -> Schedule: is this weekday marked Closed? */
+  isDayClosed?: (date: Date) => boolean;
   /** Resolve an appointment's provider color (matches the day view / legend). */
   getProviderColor: (appointment: Appointment) => ProviderColor;
 }
@@ -28,6 +30,7 @@ export default function MonthView({
   appointments,
   onSelectDay,
   getProviderColor,
+  isDayClosed,
 }: MonthViewProps) {
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
@@ -77,6 +80,7 @@ export default function MonthView({
           const ymd = fmtYMD(day);
           const inMonth = day.getMonth() === month;
           const isToday = ymd === todayYMD;
+          const closed = isDayClosed?.(day) ?? false;
           const dayAppts = byDate.get(ymd) ?? [];
           const visible = dayAppts.slice(0, MAX_VISIBLE_PER_DAY);
           const overflow = dayAppts.length - visible.length;
@@ -86,9 +90,9 @@ export default function MonthView({
               key={ymd}
               onClick={() => onSelectDay(day)}
               className={`text-left border-b border-r border-[#E2E8F0] min-h-[96px] p-1.5 align-top transition-colors hover:bg-[#F7F9FC] ${
-                inMonth ? "bg-white" : "bg-[#F8FAFC]"
+                closed ? "bg-slate-200" : inMonth ? "bg-white" : "bg-[#F8FAFC]"
               }`}
-              title="Open day view"
+              title={closed ? "Office closed — open day view" : "Open day view"}
             >
               <div
                 className={`text-xs font-semibold mb-1 inline-flex items-center justify-center w-6 h-6 rounded-full ${
@@ -101,6 +105,11 @@ export default function MonthView({
               >
                 {day.getDate()}
               </div>
+              {closed && (
+                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+                  Closed
+                </div>
+              )}
               <div className="space-y-0.5">
                 {visible.map((appt) => {
                   const c = getProviderColor(appt);

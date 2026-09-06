@@ -24,6 +24,25 @@ The new-appointment flow was reworked so it reads as one coherent path:
 4. **Save** — the appointment is persisted via `POST /appointments` (create) /
    `PUT /appointments/{id}` (edit); the grid refreshes.
 
+**2026-09-04 update (UAT feedback):**
+
+5. **Quick "New Patient Appointment" form** (`QuickNewPatientAppointment.tsx`) now sits
+   *one level above* the full wizard. Choosing *New Patient* opens a minimal legacy-parity
+   dialog (Birthdate / Last / First, slot details with Provider picker, Email, Phone +
+   Cell/Home/Work + **BYPASS**, Duration, Prod. Type, Appt. Notes + **ADD NOTES MACRO**,
+   Explosion Codes). **QUICK SAVE** registers the patient via `POST /patients/register`
+   with just those fields and books the slot through the Scheduler's normal save path
+   (double-booking / office-hours checks, `is_new_patient: true` → "NP" badge).
+   **CONTINUE** carries the same values into the full Add New Patient wizard
+   (`initialValues` prop) and then the complete appointment form. If the booking is
+   rejected after the patient was created, the form stays open and a retry reuses the
+   patient id (no duplicates).
+6. **Drag-and-drop reschedule** on the day grid: drag a block onto any free slot (same or
+   another operatory). Blue highlight = free, red = conflict / lunch / closed. The move is
+   applied optimistically and persisted with `PATCH /appointments/{id}` (`start_time`,
+   `end_time`, `duration`, `operatory_id` when the column changed; provider untouched),
+   reverting on failure. Cancelled appointments are not draggable.
+
 Everything below is what the flow *surfaced* as still missing. Nothing is silently dropped —
 each item degrades gracefully in the UI.
 
@@ -41,6 +60,8 @@ Each gap: **what the UI wants → what the backend exposes today → FE behavior
 | **NA-B4** | P2 | **Family / same-account same-day** scheduling feed (dup of consolidated **G4**) | *Family Appointment* card disabled (“coming soon”) |
 | **NA-B5** | P3 | Confirm whether appointment **`treatments[]` post to the account ledger** (patient-procedures) on save, or need an explicit **Post** call | *Post* action removed; treatments are sent on the appointment payload only |
 | **NA-B6** | P2 | **Offices with operatories but no office-scoped providers** — `GET /providers?office_id={id}` returns `[]` for many offices (e.g. office 38) even though the office schedules patients | appointment form now falls back to the **full** provider list; **Add-Patient wizard still hard-blocks** (see NA-F6) |
+| **NA-B7** | P3 | **Explosion codes** (legacy "Exp. Code" = a named bundle of procedure codes expanded onto the appointment) — no resource exists (`/explosion-codes` or similar) | quick New Patient Appointment form shows the *Explosion Codes* select **disabled** ("Not available yet"); procedures are added on the full form instead |
+| **NA-B8** | P3 | **Reschedule audit** — `PATCH /appointments/{id}` from drag-and-drop stores no "moved from / moved by" history | none; the move is silent beyond `updated_at` |
 
 ### NA-B1 — Block / placeholder appointments
 **UI:** legacy lets staff drop a non-patient “block” on the grid (lunch, staff meeting,
@@ -107,6 +128,16 @@ These are FE-side, either intentionally deferred or dependent on the Part-A back
   its required *Preferred Provider* shows "No providers for this office", which blocks Quick
   Save/registration for a new patient in such an office. Follow-up: apply the same fallback in
   `AddNewPatient`, or (better) fix the backend provider→office assignment (NA-B6).
+- **NA-F7 — Quick New Patient Appointment form (2026-09-04).** Quick Save sends only
+  name / DOB / one phone / email / home office / `patient_type: "General"` — no responsible
+  party, sex, or address (the wizard's `requiredHere` rules are not applied here, matching
+  legacy Quick Save). The **BYPASS** flag is UI-only (legacy also stored nothing). The
+  *Explosion Codes* select is disabled pending NA-B7. Duration choices are multiples of the
+  office slot interval up to 240 min.
+- **NA-F8 — Drag-and-drop scope (2026-09-04).** Day view only (week/month cards open the
+  edit form instead); moves within the same day; no keyboard alternative yet (double-click
+  → edit form remains the accessible path). Provider is kept when dropping into another
+  operatory — the operatory's default provider is *not* applied.
 
 ---
 

@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X } from "lucide-react";
+import { Loader2, UserPlus, X } from "lucide-react";
 import StatusIconBar from "./StatusIconBar";
 import {
   fetchAppointmentDetails,
@@ -160,7 +160,18 @@ export default function AppointmentDetailsPopover({
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-2 rounded-t-md flex items-start justify-between">
         <div>
-          <div className="font-bold leading-tight">{headerName}</div>
+          <div className="font-bold leading-tight flex items-center gap-2">
+            {headerName}
+            {a.is_new_patient && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white px-2 py-px text-[10px] font-extrabold uppercase tracking-wide"
+                title="New patient — first visit"
+              >
+                <UserPlus className="w-3 h-3" strokeWidth={3} aria-hidden />
+                New patient
+              </span>
+            )}
+          </div>
           {headerMeta && <div className="text-xs text-white/80">{headerMeta}</div>}
         </div>
         <button onClick={onClose} className="text-white/80 hover:text-white p-0.5" aria-label="Close">

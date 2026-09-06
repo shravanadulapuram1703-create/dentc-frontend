@@ -44,6 +44,10 @@ export const LEGEND_PROCEDURES: LegendEntry[] = [
   { label: 'Supernumerary', sample: (_u, c) => <circle cx="18" cy="18" r="7" fill={c} /> },
   { label: 'Impacted', sample: (_u, c) => <g stroke={c} strokeWidth="3" fill="none" strokeLinecap="round"><line x1="18" y1="8" x2="18" y2="27" /><polyline points="11,20 18,28 25,20" /></g> },
   { label: 'Watch', sample: () => <g stroke="#dc2626" strokeWidth="3" fill="none" strokeLinecap="round"><line x1="18" y1="29" x2="18" y2="9" /><polyline points="11,16 18,8 25,16" /></g> },
+  // Periodontal findings mirrored from the Perio Chart (latest exam).
+  { label: 'Mobility (Perio, grade M1–M3)', sample: (_u, c) => <g><rect x="5" y="10" width="26" height="16" rx="4" fill="#fff" stroke={c} strokeWidth="2" /><text x="18" y="22" fontSize="11" fontWeight="700" textAnchor="middle" fill={c}>M2</text></g> },
+  { label: 'Furcation (Perio, class F1–F4)', sample: (_u, c) => <g><path d="M8,24 L28,24 L18,8 Z" fill="#fff" stroke={c} strokeWidth="2" strokeLinejoin="round" /><text x="18" y="33" fontSize="8" fontWeight="700" textAnchor="middle" fill={c}>F2</text></g> },
+  { label: 'Recession (Perio, mm)', sample: (_u, c) => <g><path d="M6,12 C12,15 24,15 30,12" fill="none" stroke="#c0a577" strokeWidth="1.2" /><path d="M6,22 C12,26 24,26 30,22" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" /></g> },
 ];
 
 const lettered = (ch: string) => (_u: string, c: string): ReactNode =>
