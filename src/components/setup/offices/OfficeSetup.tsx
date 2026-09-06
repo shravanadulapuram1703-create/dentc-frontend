@@ -718,7 +718,10 @@ const tabs: { id: TabName; label: string }[] = [
               )}
               {activeTab === "schedule" && (
                 OFFICE_SCHEDULE_BACKEND_READY && selectedOfficeId != null ? (
-                  <ScheduleTab officeId={selectedOfficeId} />
+                  <ScheduleTab
+                    officeId={selectedOfficeId}
+                    onConfigSaved={(cfg) => updateFormData(cfg)}
+                  />
                 ) : (
                   <TabNotAvailable title="Schedule" gap="gap #14" />
                 )

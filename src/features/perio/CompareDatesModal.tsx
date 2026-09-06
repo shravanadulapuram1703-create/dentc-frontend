@@ -4,6 +4,7 @@ import { toothLabel, type NumberingSystem } from '@/features/restorative/numberi
 import { isPrimaryId } from '@/features/restorative/dentition';
 import { SITES_PER_SURFACE, numAt, type PerioDetailDraft } from './perioModel';
 import { examDateLabel } from './perioService';
+import { statusTooltip, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
 
 // Compare by Dates: pick up to three exam dates, then render the legacy
 // "Pocket Depth Comparison" — PD values per tooth/site across the chosen dates,
@@ -66,10 +67,12 @@ interface ComparisonProps {
   maxTeeth: string[];
   mandTeeth: string[];
   numberingSystem: NumberingSystem;
+  /** Restorative-chart status: teeth missing TODAY are greyed in the header. */
+  getStatus?: (tooth: string) => ToothClinicalStatus | undefined;
   onClose: () => void;
 }
 
-export function PerioComparison({ series, maxTeeth, mandTeeth, numberingSystem, onClose }: ComparisonProps) {
+export function PerioComparison({ series, maxTeeth, mandTeeth, numberingSystem, getStatus, onClose }: ComparisonProps) {
   const sections: { title: string; teeth: string[]; offset: number }[] = [
     { title: 'Upper Facial', teeth: maxTeeth, offset: 0 },
     { title: 'Upper Lingual', teeth: maxTeeth, offset: SITES_PER_SURFACE },
@@ -95,11 +98,15 @@ export function PerioComparison({ series, maxTeeth, mandTeeth, numberingSystem, 
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-10 border border-slate-300 bg-slate-100 px-2 py-1 text-left">Date</th>
-                      {sec.teeth.map((t) => (
-                        <th key={t} className="border border-slate-300 bg-slate-100 px-1.5 py-1">
-                          {isPrimaryId(t) ? t : toothLabel(Number(t), numberingSystem)}
-                        </th>
-                      ))}
+                      {sec.teeth.map((t) => {
+                        const s = getStatus?.(t);
+                        const absent = !!s && !s.present;
+                        return (
+                          <th key={t} title={statusTooltip(s) || undefined} className="border border-slate-300 px-1.5 py-1" style={{ background: absent ? '#cbd5e1' : '#f1f5f9', color: absent ? '#64748b' : undefined, textDecoration: absent ? 'line-through' : undefined }}>
+                            {isPrimaryId(t) ? t : toothLabel(Number(t), numberingSystem)}{s?.implant ? <sup className="text-[8px] text-sky-700">i</sup> : null}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>

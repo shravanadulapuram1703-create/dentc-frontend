@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DentC End-to-End Test Workflows</title>
+<style>
+  :root{
+    --bg:#f6f7f9;--panel:#ffffff;--ink:#1c2430;--muted:#5b6673;--line:#dfe3e8;
+    --accent:#0f6fff;--accent-soft:#e8f0ff;--ok:#1a8f4a;--ok-soft:#e3f5ea;--fail:#c62828;--fail-soft:#fde8e8;
+    --blk:#b26a00;--blk-soft:#fff3df;--na:#6b7280;--na-soft:#eceef1;--gap:#7a3fd1;--gap-soft:#f1e9fc;
+    --setup:#0b7285;--setup-soft:#e0f4f8;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:12.5px;background:#eef1f5;border:1px solid #e1e5ea;border-radius:4px;padding:1px 5px;white-space:nowrap}
+  h1{font-size:26px;margin:0 0 4px}h2{font-size:20px;margin:36px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px}h4{font-size:14px;margin:16px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+  nav.side{position:sticky;top:0;height:100vh;overflow:auto;background:#101827;color:#cbd5e1;padding:18px 14px;font-size:13px}
+  nav.side .brand{color:#fff;font-weight:700;font-size:15px;margin-bottom:12px}
+  nav.side .grp{margin-top:14px;color:#8b98ab;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  nav.side a{display:block;color:#cbd5e1;padding:4px 8px;border-radius:5px;margin:1px 0;line-height:1.3}
+  nav.side a:hover{background:#1e293b;color:#fff;text-decoration:none}
+  nav.side a .pct{float:right;color:#8b98ab;font-family:var(--mono);font-size:11px}
+  nav.side a.done .pct{color:#4ade80}nav.side a.bad .pct{color:#f87171}
+  main{padding:26px 40px 80px;max-width:1280px}
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px 26px}
+  .hero .meta{color:var(--muted);font-size:13px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .toolbar{position:sticky;top:0;z-index:5;background:rgba(246,247,249,.96);backdrop-filter:blur(4px);padding:10px 0;margin:14px 0 6px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;user-select:none}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .toolbar input[type=search]{padding:6px 10px;border:1px solid var(--line);border-radius:6px;min-width:220px}
+  .toolbar .sp{flex:1}
+  button.btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 11px;font-size:12.5px;cursor:pointer}
+  button.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button.btn.danger{color:var(--fail);border-color:#f3c2c2}
+  .progress{height:8px;background:#e6e9ee;border-radius:99px;overflow:hidden}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#37c46f)}
+  table{border-collapse:collapse;width:100%;background:#fff}
+  th,td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+  th{background:#f1f3f6;font-size:12.5px}
+  td.n{width:34px;text-align:center;font-family:var(--mono);color:var(--muted)}
+  .badge{display:inline-block;font-size:11px;font-weight:600;border-radius:4px;padding:1px 6px;margin-right:4px;vertical-align:middle}
+  .b-role{background:var(--accent-soft);color:var(--accent)}
+  .b-gap{background:var(--gap-soft);color:var(--gap)}
+  .b-setup{background:var(--setup-soft);color:var(--setup)}
+  .b-trace{background:#fff7d6;color:#8a6d00}
+  .b-neg{background:var(--fail-soft);color:var(--fail)}
+  .b-ok{background:var(--ok-soft);color:var(--ok)}
+  .b-warn{background:var(--blk-soft);color:var(--blk)}
+  .wf{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:18px 0}
+  .wf header{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+  .wf header h3{margin:0;font-size:18px}
+  .wf header .id{font-family:var(--mono);color:var(--muted)}
+  .wf .desc{color:var(--muted);margin:6px 0 10px}
+  .wf .pre{background:#fbfcfd;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:13px}
+  .wf .pre b{color:var(--ink)}
+  .steps td.act{width:34%}.steps td.exp{width:36%}
+  .steps td.st{width:150px;white-space:nowrap}
+  .steps td.notes{width:16%}
+  .st label{display:inline-block;margin-right:5px;font-size:12px;cursor:pointer}
+  .st input{margin:0 2px 0 0;vertical-align:middle}
+  textarea.note{width:100%;min-height:34px;border:1px solid var(--line);border-radius:5px;padding:4px 6px;font:12px/1.4 inherit;resize:vertical}
+  tr.s-pass td{background:#f4fbf6}tr.s-fail td{background:#fff5f5}tr.s-blocked td{background:#fff9ef}tr.s-na td{background:#f7f7f8;color:#6b7280}
+  tr.gaprow td.exp{border-left:3px solid var(--gap)}
+  tr.negrow td.exp{border-left:3px solid var(--fail)}
+  tr.tracerow td.exp{border-left:3px solid #e0b400}
+  .path{font-family:var(--mono);font-size:12px;color:var(--setup);display:block;margin-top:3px;white-space:normal;word-break:break-all}
+  .legend span{margin-right:14px}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+  .callout.warn{border-color:var(--blk);background:var(--blk-soft)}
+  .callout.gap{border-color:var(--gap);background:var(--gap-soft)}
+  .callout.bad{border-color:var(--fail);background:var(--fail-soft)}
+  .kv{display:grid;grid-template-columns:230px 1fr;gap:6px 12px;font-size:13px}
+  .kv input{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font:13px var(--mono)}
+  .small{font-size:12.5px;color:var(--muted)}
+  ul.tight{margin:6px 0;padding-left:20px}ul.tight li{margin:2px 0}
+  .wfsummary{display:flex;gap:16px;align-items:center;margin:8px 0 12px;font-size:12.5px;color:var(--muted)}
+  .wfsummary .progress{flex:1;max-width:340px}
+  .matrix td.y{color:var(--ok);font-weight:600}.matrix td.no{color:var(--fail);font-weight:600}.matrix td.part{color:var(--blk);font-weight:600}
+  details.gaps{margin-top:12px}details.gaps summary{cursor:pointer;font-weight:600}
+  .hidden{display:none!important}
+  @media print{
+    nav.side,.toolbar,button,.noprint{display:none!important}
+    .layout{display:block}main{max-width:none;padding:0}
+    .wf{break-inside:avoid;border:1px solid #999}
+    textarea.note{border:1px solid #bbb;min-height:24px}
+    body{font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="side" id="toc">
+  <div class="brand">DentC E2E Test Workflows</div>
+  <a href="#top">Overview &amp; how to use</a>
+  <a href="#env">Environment &amp; test data</a>
+  <a href="#roles">Roles &amp; what is enforced</a>
+  <a href="#matrix">Setup → Module traceability</a>
+  <a href="#deadlinks">Known dead links</a>
+  <div id="tocwf"></div>
+  <div class="grp">Appendix</div>
+  <a href="#gaps">Known backend gaps</a>
+  <a href="#export">Export / import results</a>
+</nav>
+
+<main id="top">
+  <div class="hero">
+    <h1>DentC (Reckon Dental PMS) — End-to-End Test Workflows</h1>
+    <div class="meta">Role-based, setup-to-module test playbook &nbsp;·&nbsp; Document version <b>1.0</b> &nbsp;·&nbsp; Generated 2026-09-02 from branch <code>feature/uat-realse-v2</code> &nbsp;·&nbsp; Standalone file: works offline, results are saved in this browser (localStorage) and can be exported below.</div>
+    <div class="grid2" style="margin-top:16px">
+      <div>
+        <h4>What this document is</h4>
+        <p>A complete set of <b>37 ordered workflows</b> covering every implemented module of the application. Workflows are grouped by <b>phase</b> and tagged by <b>role</b>. The core question this playbook answers is: <i>does what we configure in Setup actually show up and get enforced in the day-to-day modules (Scheduler, Patient, Charting, Transactions, Ledger, Claims, Reports, Utilities, My Page)?</i></p>
+        <p>Run the phases <b>in order</b>. Phase 1 (Administrator foundation) creates the offices, providers, users, codes, fees, plans and clinical catalogs that every later workflow depends on. Each later step that verifies a Setup value is tagged <span class="badge b-trace">TRACE</span>.</p>
+      </div>
+      <div>
+        <h4>How to use it</h4>
+        <ol class="tight">
+          <li>Enter your name in <a href="#env">Environment &amp; test data</a>; fill the Test Data Ledger as you create records (IDs are reused later).</li>
+          <li>Filter by your role using the chips in the toolbar, or run everything as Administrator.</li>
+          <li>For each step choose <b>Pass / Fail / Blocked / N/A</b> and add a note (bug ID, screenshot name, actual behaviour).</li>
+          <li>Steps tagged <span class="badge b-gap">GAP</span> are <b>known backend gaps</b>: the expected result describes today's documented behaviour. Mark <b>Pass</b> if it behaves exactly as described, <b>Fail</b> if it behaves differently.</li>
+          <li>Steps tagged <span class="badge b-neg">NEGATIVE</span> verify that something is <i>blocked</i>. If the app lets you through, that is a Fail.</li>
+          <li>Use <b>Export JSON</b> at the bottom to hand results back; Print (Ctrl+P) produces a clean paper copy.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="legend small" style="margin-top:10px">
+      <b>Legend:</b>
+      <span><span class="badge b-setup">SETUP</span> creates configuration data</span>
+      <span><span class="badge b-trace">TRACE</span> verifies Setup data in another module</span>
+      <span><span class="badge b-gap">GAP</span> known backend gap (id in Appendix)</span>
+      <span><span class="badge b-neg">NEGATIVE</span> must be blocked</span>
+      <span><span class="badge b-role">ROLE</span> intended persona</span>
+    </div>
+  </div>
+
+  <div class="toolbar noprint">
+    <span class="small">Filter role:</span>
+    <span class="chip on" data-role="all">All</span>
+    <span class="chip" data-role="owner">Org Owner</span>
+    <span class="chip" data-role="admin">System Admin</span>
+    <span class="chip" data-role="manager">Office Manager</span>
+    <span class="chip" data-role="front_desk">Front Desk</span>
+    <span class="chip" data-role="doctor">Dentist</span>
+    <span class="chip" data-role="hygienist">Hygienist</span>
+    <span class="chip" data-role="billing">Billing / Insurance</span>
+    <span class="chip" data-role="patient">Patient (public)</span>
+    <input type="search" id="q" placeholder="Search steps, paths, gap ids…">
+    <span class="sp"></span>
+    <span class="small" id="overall">0 / 0 steps recorded</span>
+    <div class="progress" style="width:180px"><i id="overallbar" style="width:0%"></i></div>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+
+  <h2 id="env">Environment &amp; test data</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>Prerequisites</h4>
+      <ul class="tight">
+        <li><b>Frontend</b>: Vite dev server on <code>http://localhost:5173</code> (backend CORS only allows this origin).</li>
+        <li><b>Backend</b>: FastAPI on <code>http://127.0.0.1:8000</code> (or the Cloud Run URL set in <code>VITE_API_BASE_URL</code>). Some list endpoints are slow on the 61k-patient tenant (login ≈10 s, lists 5–55 s) — wait, do not double-submit.</li>
+        <li><b>Default local admin</b>: username <code>admin</code> / password <code>admin</code> (tenant 1). Replace with the credentials issued for your environment.</li>
+        <li><b>Browser</b>: Chrome/Edge latest, desktop width ≥ 1280px. Open DevTools → Console and Network; note any red errors in step notes.</li>
+        <li><b>Two browsers/profiles</b> are needed for Messaging (WF-33) and for role comparison (WF-04, WF-35).</li>
+        <li><b>Optional env flags</b> (in <code>.env</code>): <code>VITE_MESSAGING_BACKEND=api</code> (real messaging; currently blocked), <code>VITE_APPOINTNOW_BACKEND</code> (default local simulation), <code>VITE_JIRA_MODE</code>/<code>VITE_JIRA_PROJECT_KEY=KAN</code>.</li>
+      </ul>
+      <h4>Naming convention for test data</h4>
+      <p class="small">Prefix everything you create with <code>QA-&lt;initials&gt;-&lt;MMDD&gt;</code> (e.g. <code>QA-SA-0902 Office</code>, patient <code>QA-SA-0902 Testpatient</code>). This makes records easy to find and clean up, and prevents collisions between testers sharing one tenant.</p>
+    </div>
+    <div class="card">
+      <h4>Test Data Ledger (fill as you go — saved in this browser)</h4>
+      <div class="kv" id="ledger">
+        <label>Tester name</label><input data-k="tester" placeholder="Your name">
+        <label>Environment URL</label><input data-k="env" placeholder="http://localhost:5173">
+        <label>Tenant / Organization</label><input data-k="tenant">
+        <label>QA Office name → id</label><input data-k="office" placeholder="QA-XX-0902 Office → 12">
+        <label>Operatory names</label><input data-k="ops" placeholder="QA-Op1, QA-Op2">
+        <label>Dentist provider id</label><input data-k="dds" placeholder="PRV-… / short id">
+        <label>Hygienist provider id</label><input data-k="hyg">
+        <label>Users created (role → username)</label><input data-k="users" placeholder="admin→qa_admin, front_desk→qa_fd …">
+        <label>Procedure code created</label><input data-k="code" placeholder="D9QA1">
+        <label>Fee schedule name → id</label><input data-k="fee">
+        <label>Carrier / Plan created</label><input data-k="plan">
+        <label>Employer created</label><input data-k="employer">
+        <label>Referral source</label><input data-k="ref">
+        <label>Patient A (adult) id</label><input data-k="patA">
+        <label>Patient B (family member) id</label><input data-k="patB">
+        <label>Appointment ids</label><input data-k="appts">
+        <label>Claim id</label><input data-k="claim">
+      </div>
+    </div>
+  </div>
+
+  <h2 id="roles">Roles &amp; what the application actually enforces</h2>
+  <div class="callout warn"><b>Read this before testing roles.</b> The backend stores a single free-text <code>role</code> per user (catalog from <code>GET /roles</code>) plus security groups with rights. The frontend only <b>enforces</b> the six items in the table below. Everything else (security-group rights, patient access level, login-time restrictions, IP rules, assigned offices, HIPAA-compliant scheduler preference) is <b>stored and displayed but not enforced by the UI</b>. Any denial you observe beyond these six comes from the backend and should be recorded as such.</div>
+  <table>
+    <thead><tr><th>Persona used in this playbook</th><th>role value</th><th>Typical duties tested</th><th>What the UI actually gates for this role</th></tr></thead>
+    <tbody>
+      <tr><td>Org Owner / Super Admin</td><td><code>owner</code> (or email containing "superadmin")</td><td>Tenant, Account Info, all Setup</td><td>Only role that sees <b>Setup → Tenant</b> and can open <code>/setup/tenant</code>. Can run all 38 utilities.</td></tr>
+      <tr><td>System Administrator</td><td><code>admin</code></td><td>Offices, providers, users, groups, codes, fees, insurance, clinical catalogs</td><td>Utilities: 7 owner/admin-only utilities + 22 manager-level. Dashboard layout "admin".</td></tr>
+      <tr><td>Office Manager</td><td><code>manager</code></td><td>Daily ops, reports, utilities, scheduling oversight</td><td>Utilities: ~22 manager-level (no owner/admin-only ones). Dashboard layout "manager".</td></tr>
+      <tr><td>Front Desk</td><td><code>front_desk</code></td><td>Patient registration, scheduling, check-in, AppointNow inbox, letters, documents</td><td>Utilities: 5 front-desk utilities only. Dashboard layout "front_desk". No Tenant.</td></tr>
+      <tr><td>Dentist (Provider)</td><td><code>doctor</code> or <code>provider</code>, linked to a provider</td><td>Charting, perio, progress notes, treatment plans, prescriptions, lab</td><td>Utilities: 3 clinical utilities. Dashboard layout "dentist". My Page schedule scoped by <code>report_access_provider_id</code>.</td></tr>
+      <tr><td>Hygienist</td><td><code>provider</code> (provider record role <code>hygienist</code>)</td><td>Perio, progress notes, recalls</td><td>Same as Dentist. Provider role string is normalized (tenant data has a misspelt <code>Hygenist</code>).</td></tr>
+      <tr><td>Billing / Insurance Coordinator</td><td><code>staff</code></td><td>Transactions, ledger, claims, insurance payments, payment plans, patient insurance</td><td>Utilities: only the 2 all-role utilities. Dashboard layout "front_desk" bucket. <b>Can still open every Setup screen except Tenant.</b></td></tr>
+      <tr><td>Patient (public)</td><td>none</td><td>AppointNow online booking</td><td>Public <code>/book/:office_code</code> route without login or app shell.</td></tr>
+    </tbody>
+  </table>
+  <p class="small">Source: <code>src/contexts/AuthContext.tsx</code> (role union), <code>src/components/utilities/lib/rbac.ts</code>, <code>src/components/pages/setup/TenantSetup.tsx</code>, <code>src/components/dashboard/lib/dashboardUtils.ts</code>, <code>src/components/my-page/lib/useMyDay.ts</code>.</p>
+
+  <h2 id="matrix">Setup → Module traceability matrix</h2>
+  <p class="small">What each Setup screen writes, where it is <i>supposed</i> to show up, and whether the current build actually reads it. "No" rows are pre-documented gaps; the workflows still include them so the behaviour is confirmed, not assumed.</p>
+  <table class="matrix">
+    <thead><tr><th>Setup screen</th><th>Data created</th><th>Consumed by</th><th>Flows through today?</th><th>Verified in</th></tr></thead>
+    <tbody>
+      <tr><td>Account Info</td><td>Tenant settings, holidays, communications, consents, logo</td><td>Office Setup lookups, Letters consent forms</td><td class="part">Partial</td><td>WF-01, WF-15</td></tr>
+      <tr><td>Office Setup — Info</td><td>Office, default fee schedule, office group</td><td>Office switcher, Scheduler, Patient search, Reports filter, Utilities office param, fee pricing fallback</td><td class="y">Yes</td><td>WF-02, WF-07, WF-13, WF-30</td></tr>
+      <tr><td>Office Setup — Operatories</td><td>Operatories</td><td>Scheduler columns, AppointNow slots, Overview appointment labels</td><td class="y">Yes</td><td>WF-02, WF-13, WF-14</td></tr>
+      <tr><td>Office Setup — Schedule</td><td>Start/end hour, slot interval</td><td>Scheduler grid hours &amp; gray-out</td><td class="y">Yes (office-level only)</td><td>WF-02, WF-13</td></tr>
+      <tr><td>Office Setup — Holidays / Statement / Integration / Advanced / SmartAssist</td><td>Per-office settings</td><td>Nothing outside Setup</td><td class="no">No (write-only)</td><td>WF-02</td></tr>
+      <tr><td>Office Groups</td><td>Groups</td><td>Office Info dropdown, fee resolver key</td><td class="part">Partial (no membership endpoint, #18/FEE-3)</td><td>WF-02</td></tr>
+      <tr><td>Provider Setup — Info / Works At</td><td>Provider, office membership</td><td>Scheduler, Transactions provider dropdown, Ledger, Tx Plans, Rx, Perio, Lab, Reports, Utilities (via providerDirectory)</td><td class="y">Yes (with full-directory fallback)</td><td>WF-03, WF-13, WF-24</td></tr>
+      <tr><td>Provider Setup — Operatories</td><td>operatory.provider_id</td><td>Scheduler operatory→provider default</td><td class="part">Partial (SCHED-1)</td><td>WF-03, WF-13</td></tr>
+      <tr><td>Provider Setup — Insurance IDs / Route Slips / Watermarks / Carrier Login / Referral Offices / Holidays / Schedules</td><td>Per-provider extras</td><td>Nothing outside Setup</td><td class="no">No (write-only)</td><td>WF-03</td></tr>
+      <tr><td>Provider Setup — User tab</td><td>provider ↔ user link</td><td>None (My Page uses user.report_access_provider_id instead)</td><td class="no">No (MP-7)</td><td>WF-03, WF-32</td></tr>
+      <tr><td>Users</td><td>User, role, offices, report-access provider, prefs, restrictions</td><td>Login, Utilities RBAC, Dashboard layout, My Page schedule scope, note author names, messaging directory</td><td class="part">Partial (role only)</td><td>WF-04, WF-31, WF-32, WF-35</td></tr>
+      <tr><td>Security Groups + rights</td><td>Groups, rights</td><td>Nothing (rights not enforced; group rights partly localStorage)</td><td class="no">No (Groups Gap 2/4)</td><td>WF-04, WF-35</td></tr>
+      <tr><td>Office Assignment</td><td>Office ↔ users/providers/codes/macros/rx/letters</td><td>Providers + letter templates only</td><td class="part">Partial (OA-24..30)</td><td>WF-05</td></tr>
+      <tr><td>Procedure Codes</td><td>ADA codes, fees, charting flags, insurance rules</td><td>Restorative Add ADA, Transactions Add Procedures, Tx Plans, Appointment procedures, Fee Schedule picker, Payment plans</td><td class="y">Yes (tenant-wide, not office-scoped)</td><td>WF-06, WF-17, WF-24</td></tr>
+      <tr><td>Explosion Codes (bundles)</td><td>Code bundles</td><td>Restorative palette, Transactions Add Procedures</td><td class="y">Yes</td><td>WF-06, WF-17</td></tr>
+      <tr><td>ICD / Modifier / Place of Service / Type of Service</td><td>Auxiliary codes</td><td>ICD → Claim fill-out only; others none</td><td class="no">Mostly no (AUX-1..4)</td><td>WF-06, WF-26</td></tr>
+      <tr><td>Fee Schedules + Assignments</td><td>Schedules, entries, assignments</td><td>feeScheduleResolver → Restorative, Transactions, Tx Plans, Appointments</td><td class="y">Yes (assignments unseeded in migrated data, FEE-2)</td><td>WF-07, WF-17, WF-20, WF-24</td></tr>
+      <tr><td>Insurance Carriers / Plans / Employers</td><td>Carriers, plans, employers</td><td>Add Patient insurance steps, Patient Insurance slots, Claim detail, Overview RP</td><td class="y">Yes</td><td>WF-08, WF-11, WF-28</td></tr>
+      <tr><td>Plan Coverage Rules</td><td>% by category / code range</td><td>coverageResolver → Restorative Add ADA est. insurance, Post to Ledger</td><td class="part">Partial (FEE-1: no deductible/max/frequency)</td><td>WF-08, WF-17</td></tr>
+      <tr><td>Custom Coverage</td><td>ins-custom-coverage</td><td>Nothing</td><td class="no">No</td><td>WF-08</td></tr>
+      <tr><td>Referrals</td><td>Referred By / To</td><td>Add Patient referral pickers, Overview Referrals tab</td><td class="part">Partial (PO-6, LEG-15)</td><td>WF-09, WF-11</td></tr>
+      <tr><td>Medical Alerts / Questionnaires</td><td>definitions MEDALERT/MEDQUEST/DENTQUEST</td><td>Add Patient steps, Medical History screen, Scheduler alert badge, Overview alerts</td><td class="part">Yes only if ≥10 items per group (legacy fallback otherwise)</td><td>WF-10, WF-16, WF-13</td></tr>
+      <tr><td>Notes Macros + Pick Lists</td><td>Macros, questionnaire headers/options</td><td>Progress Notes editor (with pick-list prompts), Patient Notes, Restorative Watch, Claim fill-out notes, Procedure Code Charting tab</td><td class="y">Yes</td><td>WF-10, WF-19</td></tr>
+      <tr><td>Prescriptions Library</td><td>Drugs, sig, dispense</td><td>Patient Prescriptions Add panel</td><td class="y">Yes (session cache — reload)</td><td>WF-10, WF-21</td></tr>
+      <tr><td>Charting Materials</td><td>chart-materials</td><td>Restorative material pickers</td><td class="y">Yes</td><td>WF-10, WF-17</td></tr>
+      <tr><td>Charting Colors</td><td>chart-colors</td><td>Nothing (chart paints from constants)</td><td class="no">No</td><td>WF-10, WF-17</td></tr>
+      <tr><td>Perio Templates</td><td>perio-chart-templates</td><td>Perio chart</td><td class="y">Yes</td><td>WF-10, WF-18</td></tr>
+      <tr><td>Custom Toolbar</td><td>definition-groups TOOLBAR</td><td>Nothing</td><td class="no">No (TB-1..5)</td><td>WF-10</td></tr>
+      <tr><td>Scheduler setup (appt statuses/types/colors)</td><td>definitions appt_status / appt_type</td><td>Scheduler status bar, Dashboard schedule widget</td><td class="part">No Setup screen; seeded data only (D1)</td><td>WF-13</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="deadlinks">Known dead links &amp; navigation defects (record, don't re-discover)</h2>
+  <div class="callout bad">
+    <ul class="tight">
+      <li>There is <b>no 404 page</b>. A mistyped URL renders a blank page inside the shell.</li>
+      <li>Patient icon strip: <b>Messages, SMS/Email, Referrals, Members, Recent</b> point at routes that do not exist (blank patient content); <b>Websites, Print, Search RP</b> show "Coming Soon" alerts.</li>
+      <li>Transactions menu: <b>Insurance Payment, Capitation Payment, Treatment Plan (wrong path), Pre-Authorization List, Batch Patient Payment, Batch Insurance Payment</b> have no route.</li>
+      <li>Utilities menu: Office Specific → <b>Universal (6 items) and DCA (2 items)</b> have no route.</li>
+      <li><code>/setup</code> landing grid buttons and toggles are decorative (no navigation). Use the Setup ▾ menu.</li>
+      <li>Placeholder ("Coming Soon") routes: Vendor API Settings ×2, Assign Offices to Groups, Provider Per-Office Settings, Employees, Custom Demographics, CDT↔CPT↔ICD maps ×3, Custom Pick Lists, Scheduler View/Template setup, Insurance Forms (dental/medical), 10 Reports sub-reports.</li>
+      <li><code>/patient-overview</code> and <code>/patient-ledger</code> redirect to hard-coded patient 12345 even when logged out.</li>
+    </ul>
+  </div>
+
+  <div id="workflows"></div>
+
+  <h2 id="gaps">Appendix — known backend gaps referenced in this playbook</h2>
+  <p class="small">Full detail: <code>docs/CONSOLIDATED_BACKEND_GAPS.md</code> and the per-module <code>docs/&lt;module&gt;/*_backend_devreport.md</code> files in the repository.</p>
+  <table id="gaptable"><thead><tr><th style="width:140px">Gap id</th><th>Summary</th></tr></thead><tbody></tbody></table>
+
+  <h2 id="export">Export / import results</h2>
+  <div class="card noprint">
+    <p class="small">Results (step statuses, notes, test-data ledger) are stored in this browser under key <code>dentc_e2e_results_v1</code>. Export to share; import to continue on another machine.</p>
+    <button class="btn primary" id="btnExport">Export JSON</button>
+    <button class="btn" id="btnCsv">Export CSV</button>
+    <button class="btn" id="btnCopy">Copy summary to clipboard</button>
+    <label class="btn" style="display:inline-block">Import JSON <input type="file" id="fileImport" accept="application/json" style="display:none"></label>
+    <button class="btn danger" id="btnReset">Reset all results</button>
+    <pre id="summary" class="small" style="white-space:pre-wrap;margin-top:12px"></pre>
+  </div>
+</main>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// DATA — workflows. Step = [action, path, expected, opts]
+// opts: {gap:"FEE-2", trace:true, neg:true, setup:true}
+// ---------------------------------------------------------------------------
+const ROLE_LABEL={owner:"Org Owner",admin:"System Admin",manager:"Office Manager",front_desk:"Front Desk",doctor:"Dentist",hygienist:"Hygienist",billing:"Billing / Insurance",patient:"Patient (public)"};
+const PHASES={
+ "0":"Phase 0 — Smoke & authentication",
+ "1":"Phase 1 — Administrator foundation (Setup)",
+ "2":"Phase 2 — Front desk: patients & scheduling",
+ "3":"Phase 3 — Clinical: dentist & hygienist",
+ "4":"Phase 4 — Billing & insurance",
+ "5":"Phase 5 — Management, reporting, self-service",
+ "6":"Phase 6 — Cross-cutting, security & data-integrity checks"
+};
+const S=(a,p,e,o)=>({a,p,e,o:o||{}});
+const gx=g=>typeof g==="object"&&g?g:{gap:g};
+const G=(a,p,e,gap)=>({a,p,e,o:gx(gap)});
+const T=(a,p,e,gap)=>({a,p,e,o:{trace:true,...gx(gap)}});
+const N=(a,p,e,gap)=>({a,p,e,o:{neg:true,...gx(gap)}});
+const U=(a,p,e)=>({a,p,e,o:{setup:true}});
+
+const WORKFLOWS=[
+// ---------------------------------------------------------------- PHASE 0
+{id:"WF-00",phase:"0",roles:["admin","owner","manager","front_desk","doctor","hygienist","billing"],est:"20 min",
+ title:"Smoke test & authentication",
+ goal:"Confirm the app boots against the backend, login/logout work for the seeded admin, route protection is in place and the global shell renders.",
+ pre:"Backend and frontend running. Seeded admin credentials available. Use a fresh browser profile (empty localStorage).",
+ steps:[
+  S("Open the app root while logged out","/","Redirects to /login. Login page shows identifier + password + Remember me; no test credentials or sign-up link shown."),
+  N("Deep-link to a protected page while logged out","/dashboard","Redirected to /login. Repeat for /scheduler, /setup/security/users, /patient/1/overview — all redirect."),
+  S("Login with a wrong password","/login","Structured inline error (invalid credentials). No console stack trace. Field values preserved."),
+  S("Login with the seeded admin (Remember me ON)","/login","Lands on /dashboard within ~10 s. Top bar shows logo, AppointNow bell, organization + office switcher, menu row: Scheduler · Patient · Transactions · Charting · Reports · Utilities · Setup · Help · My Page · Logout."),
+  S("Check the office switcher","top bar","Current office = the user's primary office. Dropdown lists offices (all tenant offices — see WF-35 for the scoping gap)."),
+  S("Open every top-level menu and hover every sub-menu","top bar","All menus open; items listed in the Route map match this document (see 'Known dead links'). Note any item missing."),
+  S("Reload the page (F5)","/dashboard","Session restored from localStorage; no re-login; same office selected."),
+  S("Logout, then use browser Back","Logout","Back button cannot re-enter a protected page (redirects to /login). 'remembered identifier' is pre-filled on the login page."),
+  G("Click 'Forgot password' and submit an email","/forgot-password","Friendly 'not available yet' message (backend endpoint 404). No crash.","AUTH-2.1"),
+  G("Open the legacy activation wizard","/activate-legacy","4-step wizard renders; verify step fails gracefully with 'not available yet'.","AUTH-2.4"),
+  S("Open Help → Help Center and each tab","/help?tab=guides","Help Center renders with All / Guides / FAQs / Troubleshooting / Release Notes / Contact tabs; unknown tab falls back to All."),
+  S("Console/network sweep","DevTools","No repeating errors (in particular no WebSocket reconnect storm). Record any 4xx/5xx URLs."),
+ ]},
+
+// ---------------------------------------------------------------- PHASE 1
+{id:"WF-01",phase:"1",roles:["owner","admin"],est:"30 min",
+ title:"Account Info & Tenant (organization-level configuration)",
+ goal:"Configure organization-wide settings and verify the super-admin-only Tenant page gate.",
+ pre:"Logged in as Org Owner (role owner). A second account with role admin is available for the negative test.",
+ steps:[
+  U("Open Setup → Account Info","/setup/account-info","Tabs render (Account/General, Holidays, Communications, Online Registration/Consents). Existing tenant values load (no blank form)."),
+  U("Edit a general field (e.g. practice display name / address) and Save","/setup/account-info","Success toast; reload shows the saved value."),
+  U("Holidays tab: add a custom holiday 'QA Holiday' on a future date; seed federal holidays for the year","/setup/account-info","Rows appear; reload persists; bulk delete removes the federal set only."),
+  U("Communications tab: edit telecom settings; run 'verify'","/setup/account-info","Form saves. Verify action returns a result or a clear 'not configured' message — record which."),
+  U("Online Registration / Consents: create consent 'QA Consent v1', preview it, mark active","/setup/account-info","Preview renders; active flag persists on reload."),
+  T("Upload an organization logo","/setup/account-info","Logo saved and displayed after reload. Note whether it is used anywhere else (statements/letters).","ACCT-4"),
+  S("Setup menu shows 'Tenant' entry for the owner","Setup ▾","'Tenant' item visible."),
+  S("Open Tenant setup and edit a tenant field","/setup/tenant","Page renders for owner; edit saves and persists."),
+  N("Login as the admin (non-owner) user; open Setup ▾","Setup ▾","'Tenant' entry is NOT shown."),
+  N("Deep-link /setup/tenant as the admin user","/setup/tenant","Redirected to /dashboard (component-level guard)."),
+  G("Login as any user whose email contains 'superadmin' but role ≠ owner; open /setup/tenant","/setup/tenant","Page opens — this is an email-substring backdoor in the guard. Record as a security finding if such an account exists.","SEC-BACKDOOR"),
+  T("Consent created above appears in Patient → Letters consent list (verify later in WF-15 step 'Sign consent')","/patient/:id/letters","Consent 'QA Consent v1' is offered for signing."),
+ ]},
+
+{id:"WF-02",phase:"1",roles:["admin","owner"],est:"45 min",
+ title:"Office Setup — create the QA office, operatories, hours",
+ goal:"Create an office end-to-end and prove it is picked up by the office switcher, scheduler, patient search, reports and pricing fallback.",
+ pre:"Logged in as System Admin. Record the new office id in the Test Data Ledger.",
+ steps:[
+  U("Open Office Setup; list loads","/setup/offices/office-setup","Master list shows existing offices with columns populated (no blank rows). Search filters by name."),
+  U("Add office 'QA-XX-MMDD Office' with address, phone, short code","/setup/offices/office-setup","Info tab required-field validation fires; save returns new id; office appears in list."),
+  U("Info tab: create a Standard fee schedule inline ('QA Standard Fees') and a UCR schedule; set them as the office defaults; set an office group","/setup/offices/office-setup","Both schedules created and selected as default_fee_schedule / default_ucr_fee_schedule; persists on reload."),
+  U("Operatories tab: add 'QA-Op1' and 'QA-Op2' (set display order, active)","/setup/offices/office-setup","Both saved; edit a name and confirm it persists; deactivate/reactivate one."),
+  U("Schedule tab: set hours 08:00–17:00 and slot interval 15 min","/setup/offices/office-setup","Saved; reload shows values."),
+  U("Holidays tab: add an office holiday next month","/setup/offices/office-setup","Row saved. (Write-only: no downstream consumer — record that the scheduler does not block the day.)"),
+  U("Statement / Integration / Advanced / SmartAssist tabs: change one field each and Save","/setup/offices/office-setup","Each saves and reloads. These are write-only settings (nothing outside Setup reads them) — note that for the record."),
+  T("Office switcher (top bar) now lists the QA office; select it","top bar","QA office selectable; selection persists across reload (localStorage current_office)."),
+  T("Scheduler with QA office selected","/scheduler","Columns = QA-Op1, QA-Op2 only; grid runs 08:00–17:00 in 15-min slots; no 'Loading operatories…' hang."),
+  T("Deactivate QA-Op2 in Office Setup, return to Scheduler","/scheduler","QA-Op2 column disappears (or is flagged inactive). Reactivate afterwards."),
+  T("Patient search → 'Current Office' radio with QA office selected","/patient?switch=1","Only patients whose home office is the QA office (initially none). 'All Offices' returns the tenant."),
+  T("Reports → any report → Office filter","/reports/run/production","Office filter defaults to the current office and lists the QA office; '' = All offices also offered."),
+  T("Utilities → open a utility with an office parameter (e.g. Change Patient Home Office)","/utilities/run/pgid-change-patient-home-office","Office dropdown includes the QA office and defaults to the current one."),
+  T("Add New Patient → Home Office dropdown","/patient/new","QA office is offered as home office."),
+  G("Office Groups: open Office Groups setup (not in the menu — deep link) and 'Assign offices to groups'","/setup/office-groups/manage , /setup/office-groups/assign","Manage page works (CRUD); Assign page is a 'Coming Soon' placeholder (no membership endpoint).","#18"),
+  G("Scheduler on the office holiday date","/scheduler","Day is NOT blocked/greyed (office holidays are write-only today). Record.","OFFICE-15"),
+ ]},
+
+{id:"WF-03",phase:"1",roles:["admin","owner"],est:"45 min",
+ title:"Provider Setup — dentist & hygienist, works-at, operatories, extras",
+ goal:"Create two providers, attach them to the QA office and operatories, and verify every downstream provider picker shows them with the correct name.",
+ pre:"WF-02 done (QA office + operatories). Note the provider ids in the ledger.",
+ steps:[
+  U("Open Provider Setup","/setup/providers/provider-setup","Master list loads all tenant providers (not office-filtered) with names, not raw ids."),
+  U("Add provider 'QA Dentist' (role dentist, specialty, NPI, license, scheduler colour, active) with home office = QA office","/setup/providers/provider-setup","Saved; provider id assigned (note: id is client-supplied — record the value). Appears in list."),
+  U("Add provider 'QA Hygienist' with role hygienist","/setup/providers/provider-setup","Saved."),
+  U("Works At tab: add the QA office (and one existing office) for both providers","/setup/providers/provider-setup","Assignment saved via /offices/{id}/providers; reload shows both offices."),
+  U("Operatories tab: assign QA-Op1 → QA Dentist, QA-Op2 → QA Hygienist","/setup/providers/provider-setup","Saved (writes operatory.provider_id)."),
+  U("Insurance IDs tab: add a carrier-specific provider id; Route Slips tab: add a route slip; Watermarks; Carrier Login; Referral Offices; Holidays; Schedules","/setup/providers/provider-setup","Each tab saves and reloads. All are write-only today (no consumer) — record any tab that errors."),
+  U("User tab: link QA Dentist to the user that will be created in WF-04 (come back after WF-04) ","/setup/providers/provider-setup","Link saves; linked user's role/is_active badges shown; unlink works."),
+  T("Scheduler (QA office): provider filter dropdown and appointment colour legend","/scheduler","QA Dentist and QA Hygienist listed with their scheduler colours."),
+  T("Scheduler: click an empty slot in QA-Op1 → New Appointment → provider default","/scheduler","Provider defaults to QA Dentist (operatory→provider). If blank, record gap SCHED-1.","SCHED-1"),
+  T("Transactions Entry → Add Procedures → Provider dropdown (any patient)","/patient/:id/transaction","QA Dentist and QA Hygienist appear by NAME (not PRV-xxx)."),
+  T("Treatment Plan page → provider column/picker","/patient/:id/treatment","Both QA providers selectable."),
+  T("Prescriptions page → prescriber picker; Perio chart → examiner picker; Lab Tracking → provider column","/patient/:id/prescriptions","Both QA providers selectable / rendered by name."),
+  T("Reports → Provider filter","/reports/run/production","Both QA providers listed (report ref data is deliberately unscoped by office)."),
+  T("Users → Add/Edit user → 'Report Access Provider' dropdown","/setup/security/users","QA Dentist selectable."),
+  G("Switch to an office that has NO providers assigned (a migrated office) and open Transactions provider dropdown","/patient/:id/transaction","Dropdown shows the FULL tenant directory (scoped list empty → fallback). Record: scoping silently widens.","NA-B6"),
+  G("Deactivate QA Hygienist; open a historical screen that references them","/setup/providers/provider-setup","Name still resolves (labels come from the full directory). Reactivate afterwards.","PROV-3"),
+ ]},
+
+{id:"WF-04",phase:"1",roles:["admin","owner"],est:"60 min",
+ title:"Users & Security — one user per role, offices, groups, passwords",
+ goal:"Create the role accounts used by every later workflow and confirm what each role can see.",
+ pre:"WF-02/WF-03 done. Prepare 7 usernames: qa_owner, qa_admin, qa_manager, qa_fd, qa_dds, qa_hyg, qa_billing. Record them in the ledger.",
+ steps:[
+  U("Open Security → Users; grid loads","/setup/security/users","Grid shows username, name, role, home office, security group, active. Filters: office (OID), role, search work server-side."),
+  U("Add user qa_admin: role admin, email, phone, assigned offices = QA office + one more, home office = QA office, password (≥8), must_change_password OFF","/setup/security/users","Validation: at least one role, 8-char password, 10-digit phone, email format. Save creates the user (POST /users/complete)."),
+  N("Try to save with Home Office NOT among Assigned Offices","/setup/security/users","Blocked with 'Home Office must be one of the assigned offices'."),
+  U("Add qa_manager (manager), qa_fd (front_desk), qa_billing (staff) — assigned/home office = QA office","/setup/security/users","All created."),
+  U("Add qa_dds (role doctor) with Report Access Provider = QA Dentist; add qa_hyg (role provider) with Report Access Provider = QA Hygienist","/setup/security/users","Created; report_access_provider_id visible in View details."),
+  U("Add qa_owner with role owner and must_change_password ON","/setup/security/users","Created."),
+  U("Edit qa_fd: set login restrictions (Mon–Fri 08:00–18:00), an IP rule, time-clock config, preference 'HIPAA compliant scheduler' ON","/setup/security/users","Saved; View details shows them. (Displayed only — enforcement checked in WF-35.)"),
+  U("Upload a user image and signature for qa_dds","/setup/security/users","Both saved and displayed after reload."),
+  U("Security → Groups: create group 'QA Clinical' with a subset of rights; create 'QA Full' via 'Save with Full Access'; copy 'QA Clinical' to 'QA Clinical Copy'","/setup/security/groups","Groups created; rights list persisted; copy contains identical rights."),
+  U("Assign qa_dds and qa_hyg to 'QA Clinical'; qa_admin to 'QA Full'","/setup/security/users","Users grid shows the group name (+N when multiple)."),
+  G("Delete 'QA Clinical Copy'; reopen the list","/setup/security/groups","Row disappears (list is requested with is_active=true). If it reappears, record.","GRP-SOFTDEL"),
+  S("Users grid: filter by role 'front_desk' and by office = QA office","/setup/security/users","Only qa_fd returned; office filter narrows correctly."),
+  S("Users grid: 'Home Office Only' scope toggle","/setup/security/users","Record behaviour — known to compare a name to an OFF-id and may return nothing."),
+  S("Login as qa_owner (must_change_password ON)","/login","Redirected to /setup/security/change-my-password. Change password succeeds; next login goes to /dashboard."),
+  N("While on change-my-password (before changing), navigate to /dashboard","/dashboard","Expected: blocked until password changed. Actual today: navigation is allowed (one-shot redirect only). Record result.","AUTH-MCP"),
+  T("Login as each of the 7 users in turn; note Dashboard widget order, Setup ▾ items, Utilities dashboard card count","/dashboard","Dashboard order differs by bucket (front_desk / dentist / manager / admin) but all widgets present. Only qa_owner sees Setup → Tenant. Utilities card counts: owner/admin 38 · manager ~31 · front_desk ~9 · doctor/provider ~5 · staff 2 (record actual)."),
+  T("Login as qa_dds → My Page","/my-page","'My Schedule' is scoped to QA Dentist's appointments (scoped label). Login as qa_fd → My Page shows the whole office feed labelled as unscoped."),
+  S("Deactivate qa_billing (is_active OFF) and try to login","/login","Login rejected by the backend with a clear message. Reactivate afterwards."),
+  S("Change My Password as qa_fd (wrong current password, then correct)","/setup/security/change-my-password","Wrong current → inline error; correct → success and re-login works."),
+  T("Provider Setup → QA Dentist → User tab: link qa_dds","/setup/providers/provider-setup","Link saved. Note: this link is NOT what scopes My Page (report_access_provider_id is)."),
+ ]},
+
+{id:"WF-05",phase:"1",roles:["admin"],est:"30 min",
+ title:"Office Assignment — attach catalogs to the QA office",
+ goal:"Exercise all assignment tabs and confirm which assignments are honoured downstream (expected: providers and letter templates only).",
+ pre:"WF-02..04 done; at least one letter template, note macro and Rx library item exist (create in WF-10 if needed and revisit).",
+ steps:[
+  U("Open Office Assignment; select the QA office","/setup/offices/office-assignment","Tabs: Procedures, Exp Codes, Prod Types, Users, Providers, Notes Macros, RX, Ortho Misc Setup (gated), Letters."),
+  U("Users tab: assign qa_fd, qa_dds, qa_hyg, qa_billing via the dual-list picker; use 'Copy from office' once","/setup/offices/office-assignment","Assignments save (PUT full replace); reload shows the same set."),
+  U("Providers tab: confirm QA Dentist/Hygienist present; add one more provider","/setup/offices/office-assignment","Saved; Provider Setup → Works At for that provider now lists the QA office."),
+  U("Procedures tab: assign only 5 codes (e.g. D0120, D0140, D0150, D1110, your QA code)","/setup/offices/office-assignment","Saved."),
+  U("Notes Macros, RX, Exp Codes, Prod Types tabs: assign a small subset each","/setup/offices/office-assignment","Each saves and reloads."),
+  U("Letters tab: assign one letter template","/setup/offices/office-assignment","Saved; 'effective' list shows it."),
+  G("Ortho Misc Setup tab","/setup/offices/office-assignment","Shows 'not available' (no backend endpoint).","OA-32"),
+  T("Transactions Entry → Add Procedures (QA office active): code list","/patient/:id/transaction","Shows the FULL tenant catalog, not the 5 assigned codes (assignment not consumed).","OA-24"),
+  T("Progress Note editor → macro list; Patient Rx → drug list","/patient/:id/progress-notes/new","Full tenant lists (assignment not consumed).","OA-29"),
+  T("Patient → Letters → New letter → template list","/patient/:id/letters","Only the office-effective templates offered (assignment IS consumed)."),
+  T("Scheduler / Transactions provider pickers","/scheduler","Providers assigned here appear (assignment IS consumed via providerDirectory union)."),
+ ]},
+
+{id:"WF-06",phase:"1",roles:["admin"],est:"45 min",
+ title:"Procedure Codes, Explosion Codes & auxiliary code tables",
+ goal:"Create/modify ADA codes and bundles and prove they surface in every code picker; document the auxiliary tables that have no consumer.",
+ pre:"Logged in as admin. Choose a unique QA code such as D9QA1 (record it).",
+ steps:[
+  U("Open Procedure Codes; KPI strip + list load","/setup/procedure-codes/procedure-codes","≈1100 codes load; search by code and description works; category dropdown populated (derived)."),
+  U("Add code D9QA1: description 'QA Test Procedure', category, default fee 123.00, default duration 20, Charting tab: requires tooth + surface, default material, default note macro; Insurance tab: add an insurance rule","/setup/procedure-codes/procedure-codes","Saved. Code is the id (locked on edit). Fee Schedules tab (read-only) shows no entries yet."),
+  U("Edit an existing code (D0120): change description suffix ' (QA)'; then revert","/setup/procedure-codes/procedure-codes","Edit persists; revert persists."),
+  U("Explosion Codes: create bundle 'QAEXP' containing D0120 + D1110 + D9QA1","/setup/procedure-codes/explosion-codes","Bundle and items saved; included-codes list resolves descriptions."),
+  U("ICD Codes: add ICD 'K02.9 QA'; Modifier Codes: add 'QA'; Place of Service: add '11 QA'; Type of Service: add 'QA'","/setup/procedure-codes/icd-codes …","Each saves. Note: modifier/TOS ride on /definitions; ICD list was empty before (AUX-4)."),
+  T("Restorative chart → Add ADA Code modal → search D9QA1","/patient/:id/restorative","D9QA1 found with description; price shown (from fee schedule or default fee 123.00). Explosion tab lists QAEXP and expands to its 3 codes."),
+  T("Transactions Entry → Add Procedures → search D9QA1 and QAEXP","/patient/:id/transaction","Code found; explosion expands; tooth/surface prompt appears for D9QA1 (requires flags set)."),
+  T("Scheduler → New/Edit appointment → procedure picker → D9QA1","/scheduler","Found; duration 20 used for Calc Time; fee shown."),
+  T("Treatment Plan → add procedure D9QA1","/patient/:id/treatment","Found and priced."),
+  T("Fee Schedule Setup → entry picker → D9QA1","/setup/fee-schedules/fee-schedule-setup","Found."),
+  G("Existing catalog code D2391 → Add Procedures: does the tooth/surface prompt fire?","/patient/:id/transaction","No — requires_* flags are false for all migrated codes; only the manual override is offered.","APPT-8"),
+  T("Claim Fill-Out modal → diagnosis code picker","/patient/:id/claim/:claimId","ICD 'K02.9 QA' selectable (ICD IS consumed)."),
+  G("Claim Fill-Out → Place of Treatment dropdown","/patient/:id/claim/:claimId","Hard-coded CMS list; '11 QA' is NOT offered (POS table not consumed). Modifier/TOS have no consumer either.","AUX-1"),
+  S("Deactivate D9QA1, then reopen pickers","/setup/procedure-codes/procedure-codes","Inactive code hidden from Add ADA / Add Procedures (or clearly flagged). Reactivate afterwards."),
+ ]},
+
+{id:"WF-07",phase:"1",roles:["admin"],est:"60 min",
+ title:"Fee Schedules & Assignments — pricing that must flow everywhere",
+ goal:"Prove the resolver: office default → assignment (office/provider/plan/carrier) → most-specific wins; verify prices in all four priced surfaces.",
+ pre:"WF-02 (QA Standard Fees is the QA office default), WF-03, WF-06 (D9QA1). Keep a calculator handy.",
+ steps:[
+  U("Open Fee Schedule Setup; view by Schedule and by Codes","/setup/fee-schedules/fee-schedule-setup","Lists load (active schedules only). Both views work; search filters."),
+  U("In 'QA Standard Fees' add entries: D0120 patient_fee 65 / insurance_fee 50; D9QA1 patient_fee 150 / insurance_fee 100; D1110 90/70","/setup/fee-schedules/fee-schedule-setup","Entries saved; reload shows them; effective dates default to today."),
+  U("Create schedule 'QA PPO Fees' with D9QA1 = 120/95; create 'QA Provider Fees' with D9QA1 = 200/150","/setup/fee-schedules/fee-schedule-setup","Both created."),
+  U("Bulk increase 'QA Standard Fees' by 10% then bulk decrease 10%","/setup/fee-schedules/fee-schedule-setup","Values change and revert (rounding recorded)."),
+  U("Fee Schedule Assignments: assign 'QA PPO Fees' → insurance plan (the QA plan from WF-08, or any plan); assign 'QA Provider Fees' → provider QA Hygienist","/setup/fee-schedules/fee-schedule-assignments","Rows saved; lineage grid shows them."),
+  T("Transactions Entry (QA office, patient with NO insurance, provider QA Dentist) → add D9QA1","/patient/:id/transaction","Fee = 150.00 (office default schedule). Ins est 100 / patient est 50 if shown."),
+  T("Same, provider = QA Hygienist","/patient/:id/transaction","Fee = 200.00 (provider assignment beats office default)."),
+  T("Same, patient WITH the QA plan (after WF-11/28), provider QA Dentist","/patient/:id/transaction","Fee = 120.00 (plan assignment). With provider QA Hygienist → resolver picks most specific / flags a conflict string — record which."),
+  T("Restorative chart → Add ADA Code D9QA1 → price","/patient/:id/restorative","Same price as Transactions for the same patient/provider."),
+  T("Treatment Plan → add D9QA1 → fee; press Re-Estimate","/patient/:id/treatment","Same price; Re-Estimate keeps it."),
+  T("Scheduler → appointment → procedures → D9QA1 → fee","/scheduler","Same price."),
+  T("Change D9QA1 in 'QA Standard Fees' to 155 and go straight back to Transactions WITHOUT reload","/patient/:id/transaction","Record: stale 150 may still show (module cache). After F5 → 155.","CACHE"),
+  G("Open a migrated (non-QA) office and price D0120","/patient/:id/transaction","Falls back to office default_fee_schedule or code default_fee (assignments unseeded).","FEE-2"),
+  G("Delete 'QA Provider Fees' then reopen the list","/setup/fee-schedules/fee-schedule-setup","Schedule disappears from list (soft-delete filtered client-side). Assignments referencing it are hard-deleted — record.","FEE-1(ins)"),
+  S("Utilities → Fee Schedule Excel Template: download","/utilities/run/fee-schedule-excel","Real .xlsx downloads; upload validation reports errors on a bad file."),
+ ]},
+
+{id:"WF-08",phase:"1",roles:["admin","billing"],est:"60 min",
+ title:"Insurance Setup — carriers, plans, coverage rules, custom coverage, employers",
+ goal:"Create the insurance chain used by patients and claims and verify coverage % drives the restorative insurance estimate.",
+ pre:"WF-06/07 done. Record carrier, plan and employer ids.",
+ steps:[
+  U("Insurance Dashboard loads with KPIs and quick actions","/setup/insurance/dashboard","KPIs render (carriers/plans/pending verifications — pending is 'unknown' per INS-11). Quick action links open the right screens."),
+  U("Dental Carriers: add 'QA Dental Carrier' (payer id, address, phone, claim type, electronic flag)","/setup/insurance/dental-carriers","Saved; list shows it; edit persists."),
+  U("Medical Carriers: add 'QA Medical Carrier'","/setup/insurance/medical-carriers","Saved."),
+  G("Page through the dental carriers list to the end","/setup/insurance/dental-carriers","Count check: known unstable pagination may drop/duplicate rows (1,340 → 1,338 unique). Record the total shown vs expected.","INS-8"),
+  U("Employers: add 'QA Employer'","/setup/insurance/employers","Saved."),
+  U("Insurance Plans: add plan for QA Dental Carrier + QA Employer (group #, plan type PPO, deductible 50, annual max 1500, fee schedule = QA PPO Fees)","/setup/insurance/insurance-plans","Saved (plans have no name — identified by carrier/employer/group). Duplicate-plan dialog does not fire for a unique group #."),
+  N("Add the same plan again (same carrier/employer/group)","/setup/insurance/insurance-plans","Duplicate dialog / possible matches warns before save."),
+  U("Coverage rules on the QA plan: Diagnostic 100%, Preventive 100%, Basic 80%, Major 50%; plus a code-range rule D9QA1–D9QA1 at 60%","/setup/insurance/insurance-plans","Rules saved and reloaded."),
+  U("Copy From Existing: create a second plan by copying the QA plan","/setup/insurance/insurance-plans","Copy created with rules."),
+  U("Custom Coverage: add a custom coverage row for the QA plan","/setup/insurance/custom-coverage","Saved (no downstream consumer — record)."),
+  T("Add New Patient → insurance step → carrier/plan search","/patient/new","QA Dental Carrier and its plan found by carrier/employer/group; employer 'QA Employer' selectable in Responsible Party step."),
+  T("Patient Insurance slot (WF-28) → plan search","/patient/:id/insurance/dental/primary","QA plan found and attachable."),
+  T("Restorative → Add ADA Code D0120 for a patient carrying the QA plan","/patient/:id/restorative","Est. insurance = fee × 100% (Diagnostic); D9QA1 → 60% (code-range rule beats category)."),
+  T("Restorative → Add ADA Code D2391 (Basic) → est. insurance","/patient/:id/restorative","fee × 80%. Deductible/annual max are NOT applied (documented).","FEE-1"),
+  T("Claim Detail → carrier block","/patient/:id/claim/:claimId","Carrier name/payer id resolved from Setup."),
+  G("Definitions-backed dropdowns on plan form (coverage_type, plan category)","/setup/insurance/insurance-plans","Show raw codes or empty lists (groups unseeded).","INS-10"),
+ ]},
+
+{id:"WF-09",phase:"1",roles:["admin","front_desk"],est:"15 min",
+ title:"Referrals Setup — referred-by and referred-to sources",
+ goal:"Create both referral directions and verify the Add Patient pickers and Overview Referrals tab.",
+ pre:"Logged in as admin.",
+ steps:[
+  U("Open Referrals setup; list loads with search rail","/setup/referrals/referral-sources","List renders; type filter 0 = Referred By, 1 = Referred To."),
+  U("Add 'QA Dr Referrer' (Referred By) with demographics; add 'QA Specialist' (Referred To)","/setup/referrals/referral-sources","Both saved; demographics tab persists."),
+  T("Add New Patient → Referred By picker","/patient/new","'QA Dr Referrer' selectable."),
+  T("Add New Patient → Referred To picker","/patient/new","'QA Specialist' selectable (previously empty tenant-wide — LEG-15)."),
+  T("Patient Overview → Referrals tab for the patient created in WF-11","/patient/:id/overview","Shows the referral with type label from REFTYPE definitions.","PO-6"),
+  G("Open a migrated patient's Overview → Referrals tab","/patient/:id/overview","Empty for virtually all migrated patients (referrals not linked).","PO-6"),
+ ]},
+
+{id:"WF-10",phase:"1",roles:["admin","doctor"],est:"75 min",
+ title:"Clinical catalogs — medical alerts, questionnaires, macros, pick lists, Rx library, charting colors/materials, perio templates, custom toolbar",
+ goal:"Populate every clinical catalog and confirm which downstream screens pick them up (and which do not).",
+ pre:"Logged in as admin. IMPORTANT: create at least 10 medical alerts and 10 questions per questionnaire — with fewer than 10 the app silently uses a built-in legacy catalog instead of yours.",
+ steps:[
+  U("Medical Alerts: add 10+ alerts including 'QA Latex Allergy' (flash alert ON, blocks charges ON) and 'QA Penicillin'","/setup/medical/medical-alerts","All saved; flags persist; reorder/edit/delete work (immediate modal CRUD)."),
+  U("Medical Questionnaire: add 10+ questions (mixed yes/no, text, date input types); Dental Questionnaire: add 10+","/setup/medical/medical-questionnaire","Saved; input type persists (rides in key1)."),
+  U("Pick List: create 'QA Materials' with items Amalgam/Composite/Gold (reorder, deactivate one)","/setup/pick-list/manage","Header + options saved; diff-on-save works; list shows (N) = id."),
+  U("Notes Macros: create category 'QA', macro 'QA Exam' containing text with a pick-list token {{QA Materials}} and a prompt @@Tooth condition@@","/setup/notes-macros/create","Saved; content preserved verbatim."),
+  U("Prescriptions library: add 'QA Amoxicillin 500mg' (dispense 21, sig, refills 0, as written)","/setup/prescriptions/prescription-setup","Saved; Sig counter caps at 240; sort by drug / RX id works."),
+  U("Charting → Materials: add material 'QA Zirconia' (colour/pattern); Colors: change the colour for one condition","/setup/charting/materials , /setup/charting/colors","Material created; colour updated (read/update only — no create/delete)."),
+  U("Charting → Perio Setup Templates: create 'QA Perio' template with auto-advance settings; set as default if offered","/setup/charting/per-use-templates","Saved; JSON auto_advance persists."),
+  U("Custom Toolbar: create toolbar 'QA Toolbar' with 5 functions, reorder, copy to 'QA Toolbar 2'","/setup/custom-toolbar/configure","Saved; copy creates a second group (N calls — check for partial failure)."),
+  T("Add New Patient → Medical Alerts step and Questionnaires step","/patient/new","YOUR alerts/questions are listed (not the legacy 88/29/22 list). If the legacy list shows, you have <10 items.","LEG-1"),
+  T("Patient → Medical Hx screen","/patient/:id/medical-history","Same catalogs appear; tri-state answers save."),
+  T("Progress Note editor → Category 'QA' → macro 'QA Exam' → insert","/patient/:id/progress-notes/new","Questionnaire prompts: pick list offers Amalgam/Composite/Gold (inactive item hidden); prompt asks for tooth condition; text inserted with answers."),
+  T("Patient Notes → Add → macro picker; Restorative → Watch editor macro list","/patient/:id/notes/new","'QA Exam' offered in both."),
+  T("Patient Prescriptions → Add → drug dropdown","/patient/:id/prescriptions","'QA Amoxicillin 500mg' offered; selecting copies dispense/sig/refills/as-written. (If missing: reload page — session cache.)"),
+  T("Restorative → place a filling → material picker","/patient/:id/restorative","'QA Zirconia' offered; condition description includes it."),
+  T("Restorative chart colours after the colour change","/patient/:id/restorative","Chart still paints from built-in constants — the colour change does NOT appear.","CHART-COLORS"),
+  T("Perio chart → template picker","/patient/:id/perio","'QA Perio' offered and its auto-advance applies to the number pad."),
+  T("Look for 'QA Toolbar' anywhere in the app shell / patient screens","any","Not rendered anywhere (custom toolbar has no consumer).","TB-1"),
+  G("Notes Macros list category column","/setup/notes-macros/manage","Migrated macros show numeric category codes and ~4× duplicates.","NM-2"),
+ ]},
+
+// ---------------------------------------------------------------- PHASE 2
+{id:"WF-11",phase:"2",roles:["front_desk"],est:"45 min",
+ title:"Register a new patient (full wizard) and a family member",
+ goal:"Create Patient A with responsible party, insurance, alerts, questionnaire and recall; then Patient B as a family member on the same account.",
+ pre:"Login as qa_fd with QA office selected. WF-08/09/10 catalogs exist.",
+ steps:[
+  S("Patient ▾ → Add New Patient","/patient/new","Wizard rail: Patient Information → Responsible Party → coverage slots (as enabled) → Medical Alerts → Questionnaires → Recall Information."),
+  S("Step 1: leave required fields empty and press Next","/patient/new","Inline required-field validation (legacy parity); no alert() popups."),
+  S("Step 1: fill Patient A (name 'QA-XX-MMDD Testpatient', DOB 1985-03-15, gender, home office = QA office, patient type, provider = QA Dentist, hygienist = QA Hygienist, fee schedule = QA Standard Fees, referred by 'QA Dr Referrer', referred to 'QA Specialist', phone/email/address, medicaid id)","/patient/new","Duplicate check runs (no match). Chart number auto-generated. Next enabled."),
+  S("Step 2: Responsible Party = self; employer = QA Employer; billing flags; statement message","/patient/new","Fields save in step state."),
+  S("Step 3: Primary Dental = QA plan (subscriber = self, relationship, effective date)","/patient/new","Plan found via carrier/employer/group; benefits block shows deductible 50 / max 1500 from Setup.",{trace:true}),
+  S("Medical Alerts step: tick 'QA Latex Allergy'; Questionnaire step: answer several YES/NO/text","/patient/new","Selections retained when moving back/forward."),
+  S("Recall step: prophy recall 6 months from today","/patient/new","Saved."),
+  S("Save","/patient/new","Patient created (composite register). Redirect to /patient/{id}/overview. Record id as Patient A."),
+  T("Overview: Patient Information panel","/patient/:id/overview","Name, DOB (1985-03-15 — no off-by-one), age, home office name, provider/hygienist names, patient type label, referral shown."),
+  T("Overview: Responsible Party panel, Insurance panel, Recalls panel, Alerts tab","/patient/:id/overview","RP = self with employer; Primary dental = QA carrier/plan; recall date; alert 'QA Latex Allergy' flagged (flash)."),
+  S("Duplicate check: start Add New Patient with the same name + DOB","/patient/new","Duplicate warning lists Patient A. Cancel."),
+  S("Patient icon strip → New Member (Members/family)","/patient/:id","Opens Add Patient with RP prefilled to Patient A's account. Create 'QA-XX-MMDD Child' (DOB 2016-06-01). Record id as Patient B."),
+  T("Patient A Overview → Account Members panel","/patient/:id/overview","Patient B listed; Patient B's overview shows RP = Patient A."),
+  S("Edit Patient A (Overview → Edit): change phone and marital status, save","/patient/:id/overview","3-step edit wizard opens (no alerts/questionnaires steps — moved to Medical Hx). Changes persist; ortho/flags not wiped.",{gap:"PE-1"}),
+  G("Overview → Referrals tab","/patient/:id/overview","Shows 'QA Dr Referrer' for this NEW patient (linked at registration).","PO-6"),
+ ]},
+
+{id:"WF-12",phase:"2",roles:["front_desk","billing"],est:"20 min",
+ title:"Patient search, patient context & persistence",
+ goal:"Verify search scopes, the persistent active patient, and the patient-scoped menu resolution.",
+ pre:"Patient A and B exist. Login as qa_fd.",
+ steps:[
+  S("Patient ▾ → Search Patient","/patient?switch=1","Search screen; radio Current Office / All Offices; search by name, chart #, phone."),
+  S("Search 'QA-' with Current Office = QA office","/patient?switch=1","Patients A and B returned; columns populated (name, chart #, DOB, phone, home office)."),
+  S("Switch to another office and search again with Current Office","/patient?switch=1","A/B NOT returned; 'All Offices' returns them."),
+  G("Search by an ambiguous chart number that exists on two patients (e.g. 818)","/patient?switch=1","Both rows returned — you must open by row, never trust chart_no as a key.","APPT-12"),
+  S("Open Patient A → then click Patient ▾ → Patient Overview / Transactions ▾ → Ledger / Charting ▾ → Restorative","top bar","Each resolves to /patient/{A}/… (menu substitutes the active patient)."),
+  S("Logout, login again as qa_fd, click Patient ▾ → Patient Overview","top bar","Opens Patient A directly (persistent per-user last patient)."),
+  S("Login as a different user (qa_billing) and click Patient ▾ → Patient Overview","top bar","Prompted to search (no patient for this user) → /patient?switch=1."),
+  S("Navigate directly to /patient (no id)","/patient","Auto-resumes the last patient unless ?switch=1."),
+  N("Navigate to /patient/abc/overview","/patient/abc/overview","Invalid id handled: prompt to search; no crash / no infinite spinner."),
+  S("Patient icon strip: click each of the 28 icons","/patient/:id","Working: Scheduler(new tab), Overview, Transaction, Ledger, Insurance, Restorative, Perio, X-Ray, Progress, Treatment, Prescriptions, Lab Tracking, Medical Hx, New Patient(new tab), New Member, Notes, Documents, Emergency, Letters, Search. Dead: Messages, SMS/Email, Referrals, Members, Recent (blank); alerts: Websites, Print, Search RP. Record any difference."),
+ ]},
+
+{id:"WF-13",phase:"2",roles:["front_desk","manager"],est:"75 min",
+ title:"Scheduler — book, move, status, cancel, alerts, procedures",
+ goal:"Full appointment lifecycle in the QA office using QA providers/operatories, with pricing and medical-alert badges flowing from Setup.",
+ pre:"QA office selected; Patients A/B exist; Patient A has 'QA Latex Allergy'. Login as qa_fd.",
+ steps:[
+  S("Open Scheduler (Day view, today)","/scheduler","Columns QA-Op1/QA-Op2; hours 08:00–17:00; 15-min rows; status legend bar S·C·U·L·R·A·O·H; provider filter lists QA providers."),
+  S("Week and Month views; navigate ±1 week/month; Today button","/scheduler","Views render; appointments persist across views."),
+  S("Click 09:00 in QA-Op1 → New Appointment → Existing patient → search Patient A","/scheduler","Chooser: Existing / New (Family, Block, Quick-Fill disabled 'coming soon'). Details form seeded with date/time/operatory; provider defaults to QA Dentist (or record SCHED-1).",{gap:"SCHED-1"}),
+  T("Add procedures D0120 + D9QA1; Calc Time","/scheduler","Fees from QA fee schedule; duration = sum of code durations (20 + default)."),
+  S("Save appointment","/scheduler","201 created; block appears in QA-Op1 09:00 with patient name, provider colour, procedure summary. Record appointment id."),
+  T("Block shows the medical-alert ✚ badge; click it","/scheduler","Badge present for Patient A; popover lists 'QA Latex Allergy' (from Setup via Medical Hx)."),
+  S("Left-click the block → Details pop-out","/scheduler","Shows patient context (age, phone, balance, insurance), procedures, notes; 'Go to patient' opens Patient A overview with correct data."),
+  S("Quick status bar: set Confirmed → Checked-in (Arrived) → In Chair → Completed","/scheduler","Each PATCH updates icon/colour immediately; Dashboard 'Today's schedule' reflects the status."),
+  S("Set-Status submenu → Missed","/scheduler","Block rendered with strikethrough."),
+  S("Cancel dialog: cancel with reason + 'add to call list'","/scheduler","Status = Cancelled. Note: reason/call-list flag are NOT persisted (record).",{gap:"SCHED-APPT-2"}),
+  S("New appointment → New patient path: create 'QA-XX-MMDD Walkin' inline","/scheduler","Embedded Add Patient saves and returns to the details form; appointment created for the new patient."),
+  S("Drag/move an appointment to QA-Op2 10:30; edit duration","/scheduler","Move persists after reload; overlapping booking is warned or allowed consistently (record)."),
+  S("Edit appointment → 'Patient Information' button","/scheduler","Opens patient edit wizard for the right patient."),
+  S("Provider filter = QA Hygienist only","/scheduler","Only hygienist appointments shown."),
+  G("Delete an appointment, then create any other appointment","/scheduler","Deleted appointment must NOT reappear. Known blocker: soft-delete + feed returns archived rows (FE now re-filters). Record.","SCHED-DEL-1"),
+  S("Go To → Email / SMS from an appointment","/scheduler","Email opens the mail client (mailto); SMS shows 'queued' (no gateway).",{gap:"SCHED-EMAIL-1"}),
+  S("Switch office to a migrated office","/scheduler","Columns/hours change to that office; appointments of the QA office are not shown."),
+  T("Status colours: if appt_status definitions are seeded, colours from Setup; otherwise built-in letters","/scheduler","Record which applies (no Setup screen exists for statuses).","D1"),
+  S("Print (browser) the day view","/scheduler","Printable output; note there is no routing slip / day sheet report.",{gap:"SCHED-CONS-G9"}),
+ ]},
+
+{id:"WF-14",phase:"2",roles:["patient","front_desk"],est:"25 min",
+ title:"AppointNow — public online booking → staff inbox → real appointment",
+ goal:"Book as an anonymous patient, approve as staff, and see the appointment on the scheduler.",
+ pre:"QA office code known. VITE_APPOINTNOW_BACKEND unset (local simulation) or 'api'. Use a private window for the patient.",
+ steps:[
+  S("Patient (private window, not logged in): open the public booking page","/book/<office_code>","Page renders WITHOUT the app shell (no nav), office header with name/address/hours; embeddable in an iframe."),
+  T("Pick a reason, date, and a slot","/book/<office_code>","Slots derived from QA office hours/operatories; booked slots excluded."),
+  S("Enter patient details with an invalid phone, then valid; submit","/book/<office_code>","Phone validation strips non-digits and rejects short numbers; confirmation screen with reference id."),
+  S("Staff (qa_fd): AppointNow bell in the top bar","top bar","Badge count increments (pending requests)."),
+  S("Open the request inbox","/appointnow/requests","Request listed with patient details/slot; filters (pending/approved/declined)."),
+  S("Approve the request (match to Patient A or create new)","/appointnow/requests","Approve BOOKS a real appointment via the scheduler API; status becomes approved; badge decrements."),
+  T("Scheduler at the requested date/time","/scheduler","Appointment present in the requested operatory with the right patient."),
+  S("Decline a second request with a reason","/appointnow/requests","Status declined; nothing booked."),
+  S("Utilities ▾ → Launch → AppointNow","top bar","Navigates to /appointnow/requests (not a legacy utility)."),
+  G("Verify persistence across browsers (staff on a second machine)","/appointnow/requests","With the local simulation the request is only visible in the SAME browser (localStorage). Record as expected until AN-1..6 ship.","AN-1"),
+ ]},
+
+{id:"WF-15",phase:"2",roles:["front_desk"],est:"45 min",
+ title:"Front-desk patient services — overview, recalls, emergency contacts, notes & documents, letters & consents",
+ goal:"Exercise the non-clinical patient screens that the front desk owns.",
+ pre:"Patient A open; qa_fd logged in; WF-01 consent and a letter template assigned to the QA office (WF-05).",
+ steps:[
+  S("Overview: Balances panel and aging","/patient/:id/overview","Balance panel renders (may take up to ~25 s on cold cache — the screen must not block).",{gap:"PP-5"}),
+  S("Overview: Appointments panel → Future family appointments modal","/patient/:id/overview","Patient A's appointments listed with operatory/provider names; family modal opens (may be empty — SCHED-APPT-3)."),
+  S("Overview: Recalls → edit recall date/interval","/patient/:id/overview","Saved and reflected."),
+  S("Emergency Contacts: add, edit, delete a contact","/patient/:id/emergency-contacts","CRUD persists."),
+  S("Patient Notes: add a note using macro 'QA Exam'; attach a PDF document","/patient/:id/notes/new","Note saved; document uploaded; author shows the user's NAME (via user directory), not an id."),
+  S("Documents: list, open/download the uploaded PDF","/patient/:id/documents","File opens via authenticated /content path (not a public /uploads URL).",{gap:"NOTE-DOC-3"}),
+  T("Letters: New letter → pick the office-assigned template → preview with merge fields → generate PDF","/patient/:id/letters","Merge fields (name, DOB, office name/address from Setup) render correctly; PDF downloads; letter recorded in the list."),
+  T("Letters: Sign consent 'QA Consent v1'","/patient/:id/letters","Consent from Account Info appears; signature pad; signed record stored (storage_backend flag shown if local)."),
+  S("Letters: Report Viewer / print","/patient/:id/letters","Print preview renders."),
+  S("Patient Prescriptions → Quick Print (as front desk)","/patient/:id/prescriptions","Prints existing Rx list (client PDF)."),
+  S("Dashboard → Quick actions → Add patient / Schedule","/dashboard","Quick actions navigate to the right screens."),
+ ]},
+
+// ---------------------------------------------------------------- PHASE 3
+{id:"WF-16",phase:"3",roles:["doctor","hygienist","front_desk"],est:"25 min",
+ title:"Medical History — alerts, questionnaires, signature, copy",
+ goal:"Record clinical history from the Setup catalogs and confirm alerts propagate to the scheduler and overview.",
+ pre:"Login as qa_dds; Patient A open; WF-10 catalogs (≥10 items).",
+ steps:[
+  S("Open Medical Hx","/patient/:id/medical-history","Tabs: Medical Alerts, Medical Questionnaire, Dental Questionnaire, Signature, Copy Medical History."),
+  T("Alerts tab lists the Setup alerts; tick 'QA Penicillin' in addition to 'QA Latex Allergy'; save","/patient/:id/medical-history","Saved; both alerts flagged; flash-alert flag visible."),
+  T("Medical Questionnaire: answer tri-state NO / NOT ANSWERED / YES + a text and a date question; save","/patient/:id/medical-history","Answers persist on reload; unanswered stays 'Not answered'."),
+  S("Signature tab: sign and save","/patient/:id/medical-history","Signature stored and rendered."),
+  S("Copy Medical History from Patient A to Patient B","/patient/:id/medical-history","Patient B now has the same alerts/answers."),
+  T("Scheduler → Patient A's appointment badge → popover","/scheduler","Both alerts listed."),
+  T("Overview → Alerts tab","/patient/:id/overview","Both alerts listed with flash indicator."),
+  T("Transactions Entry for Patient A (alert with 'blocks charges')","/patient/:id/transaction","Record whether a blocking alert warns/blocks posting — expected today: warning only or nothing (gap)."),
+  N("Open Medical Hx twice quickly / React StrictMode","/patient/:id/medical-history","No deadlock / infinite loading."),
+ ]},
+
+{id:"WF-17",phase:"3",roles:["doctor"],est:"60 min",
+ title:"Restorative Charting — conditions, ADA codes, pricing, post to ledger",
+ goal:"Chart existing and planned work, price it from Setup, post to the ledger and verify the ledger/treatment plan pick it up.",
+ pre:"qa_dds logged in; Patient A (has QA plan) open; QA fee schedule/coverage rules exist.",
+ steps:[
+  S("Open Restorative chart","/patient/:id/restorative","Anatomical SVG teeth + gum band, 5-region surface selector, palette Pre-existing / Completed / TxPlans, legend, numbering toggle (Universal/FDI)."),
+  S("Pre-existing: mark tooth 3 MO amalgam; tooth 14 crown (material QA Zirconia); tooth 30 missing","/patient/:id/restorative","Glyphs render on correct surfaces; material shows in description; saved (chart-conditions)."),
+  S("Whole-tooth menu: bridge preset across 18–20; watch arrow on 8 with note via macro","/patient/:id/restorative","Bridge template renders; watch arrow + note saved."),
+  S("Draw layer: freehand annotation → Save","/patient/:id/restorative","Drawing persists on reload."),
+  S("Tooth history popup on tooth 3","/patient/:id/restorative","Shows the condition with date/provider."),
+  T("Add ADA Code: D9QA1 on tooth 19 MOD (TxPlan)","/patient/:id/restorative","Fee 150 (or per provider/plan), coverage 60% → Est. Ins 90, Patient est 60. Tooth/surface required by the code's charting flags."),
+  T("Add ADA Code: explosion 'QAEXP'","/patient/:id/restorative","Expands into D0120/D1110/D9QA1 each priced with its own coverage %."),
+  S("Insurance Benefits modal","/patient/:id/restorative","Shows QA plan benefits (deductible/max) — informational."),
+  S("Edit condition modal: change surfaces/material on tooth 3","/patient/:id/restorative","Edit persists."),
+  S("Post to Ledger: tick D0120 and D9QA1 → Post","/patient/:id/restorative","Charges created as patient-procedures with fee/provider/tooth/surface; dialog shows per-line result."),
+  T("Ledger for Patient A","/patient/:id/ledger","Two charge rows with correct fee, tooth 19 MOD, provider QA Dentist, running balance increases."),
+  T("Treatment Plan page","/patient/:id/treatment","Un-posted TxPlan items from the chart appear as planned procedures (or record the expected linkage)."),
+  G("Delete a condition, reload","/patient/:id/restorative","Condition gone from chart (soft delete is_inactive filtered client-side). Record.","REST-SOFTDEL"),
+  G("Chart view settings (numbering, legend) after logout/login on another browser","/patient/:id/restorative","Settings NOT carried (localStorage only).","REST-3"),
+  S("Login as qa_hyg and open the same chart","/patient/:id/restorative","Same data visible; hygienist can chart (no role restriction — record)."),
+ ]},
+
+{id:"WF-18",phase:"3",roles:["hygienist","doctor"],est:"40 min",
+ title:"Periodontal Charting — exam entry, compare, graphical, print",
+ goal:"Enter a full perio exam using the QA template and verify persistence, comparison and printing.",
+ pre:"qa_hyg logged in; Patient A open; 'QA Perio' template exists.",
+ steps:[
+  S("Open Perio chart; start a new exam with template 'QA Perio', examiner QA Hygienist","/patient/:id/perio","Max/Mand arches, Facial/Lingual bands; rows Mobility / CAL / FGM / MGJ / Furcation / Suppuration / Bleeding / Pocket; number pad."),
+  T("Enter pocket depths for teeth 2–5 using the number pad; auto-advance follows the template","/patient/:id/perio","Cursor advances per template auto_advance; values shown per site (1–3 facial, 4–6 lingual)."),
+  S("Enter FGM on tooth 3; CAL computed","/patient/:id/perio","CAL = PD + FGM displayed."),
+  S("Toggle bleeding/suppuration on several sites; mobility 2 on tooth 8; furcation on 3","/patient/:id/perio","Indicators render."),
+  S("Navigate away mid-entry then return","/patient/:id/perio","All values persisted (debounced flush on unmount; no duplicate rows)."),
+  S("Create a second exam next day (or edit date) with slightly different values; Compare Dates","/patient/:id/perio","Compare modal shows deltas between the two exams."),
+  S("Graphical view","/patient/:id/perio","Pocket-depth line chart per arch renders."),
+  S("Exam details modal (notes, examiner)","/patient/:id/perio","Saves. Note: no provider on exam backend-side — record how examiner is shown.",{gap:"PERIO-BE-14"}),
+  S("Print","/patient/:id/perio","Landscape 'Periodontal Examination Record' PDF generated client-side with all rows."),
+  G("Delete an exam; reload","/patient/:id/perio","Deleted exam not listed (soft delete filtered). Record.","PERIO-BE-3"),
+ ]},
+
+{id:"WF-19",phase:"3",roles:["doctor","hygienist"],est:"35 min",
+ title:"Progress Notes — macros, tooth numbers, sign, strike-off",
+ goal:"Author, sign and strike a progress note using Setup macros and pick lists.",
+ pre:"qa_dds logged in; Patient A open; macro 'QA Exam' with pick-list token.",
+ steps:[
+  S("Open Progress Notes list","/patient/:id/progress-notes","Grid with date, provider, tooth, note preview, signed status; author names resolved."),
+  T("New note → Category 'QA' → Macro 'QA Exam' → answer prompts (pick list Composite, tooth condition 'fractured')","/patient/:id/progress-notes/new","Rich text inserted with answers substituted."),
+  S("Tooth # picker → 19; rich-text bold/list; Save","/patient/:id/progress-notes/new","Saved as notes_html; appears in list unsigned."),
+  S("Sign the note with the signature pad","/patient/:id/progress-notes/edit/:noteId","Signed; note becomes read-only; signed-by = qa_dds name."),
+  N("Try to edit the signed note text","/patient/:id/progress-notes/edit/:noteId","Editing blocked (view only)."),
+  S("Strike-Off the note with a reason; then Restore","/patient/:id/progress-notes","Note shown struck (never deleted); Restore reinstates."),
+  S("List refresh after save (cache invalidation)","/patient/:id/progress-notes","New/edited note visible without hard reload."),
+  T("Provider column shows QA Dentist by name","/patient/:id/progress-notes","Name, not id."),
+  S("Attach a document to the note","/patient/:id/progress-notes/edit/:noteId","Attachment listed and opens."),
+ ]},
+
+{id:"WF-20",phase:"3",roles:["doctor","billing"],est:"45 min",
+ title:"Treatment Plans — build, phase, price, print, post",
+ goal:"Create a multi-phase plan with QA codes, verify pricing/estimates, print the report, and post to chart/ledger.",
+ pre:"qa_dds logged in; Patient A open (QA plan); WF-17 planned items optional.",
+ steps:[
+  S("Open Treatment Plan","/patient/:id/treatment","Grid with TID (plan), Order, code, tooth/surface, provider, fee, ins est, patient est, status, phase; toolbar."),
+  T("Add procedures D9QA1 (tooth 19 MOD, phase 1, provider QA Dentist) and D2740 (tooth 14, phase 2, provider QA Hygienist)","/patient/:id/treatment","Fees from resolver (150 vs hygienist 200 for D9QA1); estimates via coverage %; provider names shown."),
+  S("Discount 10% on D2740; diagnosed date today; start/end dates","/patient/:id/treatment","Saved to real item columns; totals update."),
+  S("Click Diag Date hyperlink → Edit Treatment modal → Amend fee to 175","/patient/:id/treatment","Fee overridden; grid updates; persisted after reload."),
+  S("Re-Estimate","/patient/:id/treatment","Estimates recomputed; no duplicate rows."),
+  S("Change provider on an item to a provider outside the eligibility list","/patient/:id/treatment","Allowed (eligibility allow-list is empty tenant-wide → unrestricted). Record.",{gap:"PLAN-16"}),
+  S("Print report → PDF; 'Save PDF to Notes'","/patient/:id/treatment","jsPDF report with phases/totals; a patient note with the PDF attachment is created."),
+  S("Accept plan / set status; schedule date","/patient/:id/treatment","Status persists (free-text status — check exact casing)."),
+  S("Post D9QA1 to chart/ledger (Completed)","/patient/:id/treatment","Patient procedure created; Ledger shows the charge; item marked completed."),
+  T("Reports → Treatment Plan report for the QA office","/reports/run/treatment-plans","The plan/items appear with correct amounts."),
+  S("Archive an item","/patient/:id/treatment","Hidden from the default grid (is_archived)."),
+ ]},
+
+{id:"WF-21",phase:"3",roles:["doctor"],est:"20 min",
+ title:"Patient Prescriptions — add from library, print, strike-off",
+ goal:"Prescribe from the Setup library and verify immutability and printing.",
+ pre:"qa_dds logged in; Patient A open; 'QA Amoxicillin 500mg' in the library.",
+ steps:[
+  S("Open Prescriptions","/patient/:id/prescriptions","Grid + Add panel + footer (Strike-off, Quick Print, Print, Add New, Save, Cancel, ePrescribe)."),
+  T("Add New → drug dropdown = library only → pick QA Amoxicillin","/patient/:id/prescriptions","Dispense 21, sig, refills 0, as-written copied from the library; prescriber QA Dentist."),
+  S("Save","/patient/:id/prescriptions","Rx row created with date; fields become read-only (saved Rx immutable)."),
+  N("Try to edit the saved Rx","/patient/:id/prescriptions","Not editable."),
+  S("Print selected → PDF","/patient/:id/prescriptions","Client PDF with practice/provider/patient/drug details."),
+  S("Strike-off the Rx","/patient/:id/prescriptions","Marked inactive/struck (PATCH is_active false); still listed as struck."),
+  S("ePrescribe button","/patient/:id/prescriptions","Disabled / 'not integrated' message.",{gap:"RX-P3"}),
+  S("Internal Note field","/patient/:id/prescriptions","Gated/disabled (single notes field backend).",{gap:"RX-P1"}),
+ ]},
+
+{id:"WF-22",phase:"3",roles:["doctor","front_desk"],est:"25 min",
+ title:"Lab Tracking — lab case on an appointment, check-in, reports",
+ goal:"Track lab work attached to an appointment through sent → overdue → received.",
+ pre:"Patient A has a future appointment (WF-13). qa_dds logged in.",
+ steps:[
+  S("Open Lab Tracking","/patient/:id/lab-tracking","List of appointments with lab work (a 'lab case' IS an appointment); toolbar; statuses derived."),
+  S("Add/edit lab case on the appointment: has_lab ON, lab cost 120, sent on today, due on yesterday (to force overdue), vendor, short-notice flag","/patient/:id/lab-tracking","Saved to the appointment (has_lab/lab_cost/lab_sent_on/lab_due_on). Vendor + short-notice are shown but NOT persisted (record).",{gap:"LAB-1"}),
+  S("Status column","/patient/:id/lab-tracking","Shows Overdue (due date passed, not received)."),
+  S("Check-in (received today)","/patient/:id/lab-tracking","Status → Received; appointment PATCHed."),
+  T("Scheduler → the appointment's details popover","/scheduler","Lab fields visible (sent/due/received)."),
+  S("Print lab report (PDF)","/patient/:id/lab-tracking","Client PDF lists the case."),
+  T("Lab vendor dropdown source","/patient/:id/lab-tracking","Populated from definitions group LAB if seeded, else free text — record."),
+ ]},
+
+{id:"WF-23",phase:"3",roles:["doctor","hygienist"],est:"25 min",
+ title:"Imaging (X-Ray) — upload, annotate, DICOM viewer",
+ goal:"Store an image against the patient, tag tooth/notes, and confirm the DICOM boundary state.",
+ pre:"qa_dds logged in; Patient A open; a sample JPG/PNG available.",
+ steps:[
+  S("Open X-Ray / Imaging workspace","/patient/:id/imaging","Workspace renders with image groups/tiles; capture device panel hidden or labelled disabled (env-gated)."),
+  S("Upload an image (JPG)","/patient/:id/imaging","Stored as a patient document; tile appears; reload keeps it."),
+  S("Set tooth number(s) and notes on the tile","/patient/:id/imaging","Saved via image-details (joined by tile id); reload keeps them."),
+  S("Open the image full size","/patient/:id/imaging","Loads through the authenticated path (not a public /uploads URL). Record if it 401s/404s.",{gap:"NOTE-DOC-3"}),
+  G("Open the DICOM viewer (study → series → instance)","/patient/:id/imaging","Shows 'not available' — DICOM endpoints not deployed (blocker).","DICOM-1"),
+  S("Delete the uploaded image","/patient/:id/imaging","Removed from the tile list; document gone from Documents."),
+ ]},
+
+// ---------------------------------------------------------------- PHASE 4
+{id:"WF-24",phase:"4",roles:["billing","front_desk"],est:"45 min",
+ title:"Transactions Entry — procedures, payments, adjustments",
+ goal:"Post charges, payments and adjustments and prove provider, fee and enforcement come from Setup.",
+ pre:"qa_billing logged in; Patient A open (balance from WF-17 posts). QA office selected.",
+ steps:[
+  S("Open Transaction Entry","/patient/:id/transaction","Tabs: Add Procedures, Payments, Adjustments; date defaults today; provider select."),
+  T("Add Procedures: D0120 (no tooth) + D9QA1 tooth 3 MO, provider QA Dentist","/patient/:id/transaction","Fees from QA fee schedule; D9QA1 demands tooth+surface (charting flags); D0120 does not."),
+  N("Try to post D9QA1 without a tooth","/patient/:id/transaction","Blocked with an inline message (or manual override recorded)."),
+  S("Post both","/patient/:id/transaction","Charges created; grid shows them with provider NAME; balance increases by the sum."),
+  S("Payments tab: cash 50, check 100 with check #, card 25 — allocate across the open charges; provider selection","/patient/:id/transaction","Allocation modal distributes; payment rows appear; balance decreases. Payment methods come from definitions group payment_method."),
+  S("Adjustments tab: courtesy discount −20 with adjustment type","/patient/:id/transaction","Adjustment posted; only ~3 adjustment codes seeded (record).",{gap:"CHG-10"}),
+  T("Ledger running balance","/patient/:id/ledger","Balance = charges − payments − adjustments. Known: payments stored negative, so a raw feed shows reversed signs — the UI must show charge − |credit|.",{gap:"AL-9"}),
+  S("Change the transaction date to yesterday and post a charge","/patient/:id/transaction","Row dated yesterday (no UTC off-by-one)."),
+  S("Post using provider QA Hygienist","/patient/:id/transaction","Fee 200 (provider assignment) and provider name correct."),
+  T("Reports → Production for today / QA office / QA Dentist","/reports/run/production","Today's charges appear with matching totals."),
+  T("Reports → Collections for today","/reports/run/collections","Payments 175 total appear."),
+ ]},
+
+{id:"WF-25",phase:"4",roles:["billing"],est:"35 min",
+ title:"Ledger — patient vs account scope, drill-down edit/delete, create claim",
+ goal:"Verify the unified ledger, its scope toggle, edit/delete of transactions and claim creation from unbilled charges.",
+ pre:"WF-24 posted; Patient B has one charge too (post one). qa_billing logged in.",
+ steps:[
+  S("Open Ledger (patient scope)","/patient/:id/ledger","Rows: charges, payments, adjustments, claims (CLM-P rows); balances table; Prn checkbox column."),
+  S("Toggle to Account scope","/patient/:id/account-ledger","Rows for Patient A AND Patient B (same responsible party) with a patient column."),
+  S("Click a charge's Date → Edit Transaction modal → change fee to 160 → save","/patient/:id/ledger","PATCH succeeds; row updates; balance recomputed."),
+  S("Edit a payment (amount/method) → save","/patient/:id/ledger","Persists."),
+  S("Delete the adjustment","/patient/:id/ledger","Row removed; balance updates."),
+  S("Prn: tick the two insured charges → CREATE CLAIM","/patient/:id/ledger","Claim created for the QA plan; CLM-P row appears; charges marked billed. Record claim id."),
+  N("Try CREATE CLAIM with an already-billed charge ticked","/patient/:id/ledger","Blocked / not offered."),
+  S("Click the claim row Code/Description","/patient/:id/ledger","Opens Claim Detail route (WF-26)."),
+  S("Date filter / paging","/patient/:id/ledger","Date range narrows rows; sort by date works (only date/page/size supported server-side).",{gap:"LED-1"}),
+  S("Overview → Balances panel after edits","/patient/:id/overview","Matches the ledger balance."),
+ ]},
+
+{id:"WF-26",phase:"4",roles:["billing"],est:"40 min",
+ title:"Claims — detail, fill-out form, attachments, status, insurance payment",
+ goal:"Process a claim end-to-end and verify carrier/provider/ICD data from Setup.",
+ pre:"Claim from WF-25; ICD 'K02.9 QA' exists.",
+ steps:[
+  S("Open Claim Detail","/patient/:id/claim/:claimId","Header: patient, carrier (QA Dental Carrier), plan, provider, status, dates; procedures list with fees."),
+  S("CLAIM FILL-OUT → legacy ADA form modal: first visit, student status, school, assignment of benefits, place of treatment, diagnosis codes (K02.9 QA), remarks via macro","/patient/:id/claim/:claimId","Saves: patient fields PATCH the patient; the rest is localStorage (record). Reopen shows values.",{gap:"CLM-FO-1"}),
+  T("Provider block → billing provider NPI/license","/patient/:id/claim/:claimId","Values from Provider Setup Info. Provider Insurance IDs (carrier-specific) are NOT used — record.",{gap:"PROV-INSID"}),
+  S("Add an attachment (PDF) to the claim","/patient/:id/claim/:claimId","Uploaded and listed; opens."),
+  S("Update Claim Status → Submitted (with date)","/patient/:id/claim/:claimId","Status updates; sent date set. Try a casing variant (e.g. 'submitted') — record whether the date side-effect fires.",{gap:"AL-18"}),
+  S("Insurance Payment: post 90.00 by EFT with trace #, EOB #, per-procedure allocation, write-off 10","/patient/:id/claim/:claimId","Payment recorded (ledger-insurance-details); ledger shows insurance payment + write-off; claim status → Paid/partial."),
+  T("Ledger for Patient A","/patient/:id/ledger","Insurance payment and write-off rows present; patient balance reduced accordingly."),
+  S("Validate / Submit electronically","/patient/:id/claim/:claimId","Not available (no clearinghouse endpoints) — clear message.",{gap:"PATIENTS-8"}),
+  T("Reports → Insurance Claims report","/reports/run/insurance-claims","Claim listed with carrier, amount, status."),
+  S("Transactions ▾ → Insurance Payment / Batch Insurance Payment menu items","top bar","Both are dead links (no route) — record."),
+ ]},
+
+{id:"WF-27",phase:"4",roles:["billing"],est:"35 min",
+ title:"Payment Plans — regular and ortho contracts",
+ goal:"Set up both contract types, generate installments/coupons and confirm ledger and overview reflect them.",
+ pre:"Patient A has a balance; qa_billing logged in.",
+ steps:[
+  S("Open Regular payment plan","/patient/:id/payment-plan/regular","Form: total, down payment, #installments, interest, first due date; contract maths preview."),
+  S("Create plan: 600 total, 100 down, 5 monthly installments","/patient/:id/payment-plan/regular","Plan saved (plan_type regular); installment schedule generated; amounts sum correctly."),
+  S("Print contract PDF and coupons","/patient/:id/payment-plan/regular","Both PDFs generate."),
+  S("Open Ortho plan","/patient/:id/payment-plan/ortho","Single-row form with patient / primary ins / secondary ins portions."),
+  S("Create ortho plan: 3000 total, patient 1800 over 18 months, ins 1200 billed quarterly","/patient/:id/payment-plan/ortho","Saved; insurance billing schedule written to patient-ins-payment-plans."),
+  T("Overview → Billing/Contract panels","/patient/:id/overview","Both contracts summarised."),
+  S("Balance panel timing","/patient/:id/payment-plan/regular","Screen usable before balance loads (may take ~23 s cold).",{gap:"PP-5"}),
+  G("Delete the regular plan; reload the list","/patient/:id/payment-plan/regular","Deleted plan does not reappear (soft delete filtered client-side).","PP-1"),
+  S("Utilities → Generate Contract Charges → Regular Payment Plan","/utilities/run/generate-charges-regular","Runs as a LABELLED simulation; no real charges posted.",{gap:"UTIL-1"}),
+ ]},
+
+{id:"WF-28",phase:"4",roles:["billing","front_desk"],est:"35 min",
+ title:"Patient Insurance slots — dental/medical primary…quaternary",
+ goal:"Attach, edit and verify plans per slot with subscriber and eligibility data.",
+ pre:"Patient B open (no insurance yet); QA plan + a copied plan exist.",
+ steps:[
+  S("Open Insurance → Dental Primary","/patient/:id/insurance/dental/primary","Tabs Dental P/S/T/Q and Medical P/S/T; empty slot with plan search."),
+  T("Plan search by carrier 'QA Dental Carrier' → attach the QA plan; subscriber = Patient A (relationship child); benefits shown","/patient/:id/insurance/dental/primary","Plan attached; benefits from Setup (deductible 50 / max 1500); subscriber info saved."),
+  S("Dental Secondary: 'New plan' modal → create a new plan inline for QA Medical Carrier (wrong type) — then correct","/patient/:id/insurance/dental/secondary","Inline creation works; duplicate detection warns on an identical plan.",{gap:"INS-PT-19"}),
+  S("Eligibility section → Update status → Eligible with date","/patient/:id/insurance/dental/primary","Status saved and shown."),
+  S("View plan modal","/patient/:id/insurance/dental/primary","Plan details incl. coverage rules render."),
+  S("Remove the secondary plan","/patient/:id/insurance/dental/secondary","Slot empties; primary unaffected."),
+  T("Overview → Insurance panel","/patient/:id/overview","Primary dental for Patient B shows QA carrier/plan and subscriber."),
+  T("Restorative → Add ADA for Patient B","/patient/:id/restorative","Coverage % applied from the attached plan."),
+  S("Medical Primary: attach a medical plan","/patient/:id/insurance/medical/primary","Works; medical has no quaternary tab (by design)."),
+  S("Insurance Forms (dental/medical)","/patient/:id/insurance-forms/dental","Placeholder 'Coming Soon'."),
+ ]},
+
+// ---------------------------------------------------------------- PHASE 5
+{id:"WF-29",phase:"5",roles:["manager","admin"],est:"25 min",
+ title:"Dashboard — KPIs, schedule, activity, search, quick actions",
+ goal:"Confirm the dashboard reflects the QA office's day and the role layout.",
+ pre:"Appointments and transactions exist for today in the QA office. Login as qa_manager.",
+ steps:[
+  S("Open Dashboard with QA office selected","/dashboard","Header greeting with user name; KPI tiles (patients, revenue, production/collection, today's appointments); Today's schedule; Patient activity; Analytics; Global search; Quick actions."),
+  T("Today's appointments KPI and schedule widget","/dashboard","Count and rows match the scheduler for the QA office (statuses/colours consistent)."),
+  T("Production / collection KPI","/dashboard","Matches today's posted charges/payments from WF-24 (client-side computed; may be truncated on large tenants).",{gap:"DASH-1"}),
+  S("Switch office → dashboard recomputes","/dashboard","Numbers change to the other office."),
+  S("Global search: 'QA-' → patients; 'QA Dentist' → providers; 'QA Dental' → carriers","/dashboard","Fan-out search returns all three entity types; clicking a patient opens its overview."),
+  S("Quick actions: Add patient, Open scheduler, New appointment","/dashboard","Navigate correctly."),
+  S("Compare widget ORDER between qa_fd, qa_dds, qa_manager, qa_admin","/dashboard","Different order per bucket; no widget hidden."),
+  S("Notifications / alerts area","/dashboard","No notifications feed exists — record what is shown.",{gap:"DASH-4"}),
+ ]},
+
+{id:"WF-30",phase:"5",roles:["manager","admin","billing"],est:"60 min",
+ title:"Reports — all six reports, filters, exports, saved views",
+ goal:"Run each report with office/provider/date filters and reconcile against the transactions you created.",
+ pre:"WF-24..27 data exists. Login as qa_manager.",
+ steps:[
+  S("Reports dashboard","/reports","Executive dashboard renders; catalog cards for Production, Collections, Patient List, Appointments, Treatment Plans, Insurance Claims."),
+  T("Production report: office = QA, provider = QA Dentist, date = today → Preview","/reports/run/production","Rows = today's charges by QA Dentist; totals reconcile with the ledger."),
+  S("Production: office = All offices","/reports/run/production","Rows widen to the tenant (no scoping)."),
+  T("Collections: today","/reports/run/collections","Patient payments (175) + insurance payment (90) appear with methods."),
+  T("Patient List: home office = QA","/reports/run/patient-list","Patients A, B, Walk-in listed with provider/hygienist names."),
+  T("Appointments report: QA office, this week","/reports/run/appointments","Appointments with status, operatory, provider names."),
+  T("Treatment Plans report; Insurance Claims report","/reports/run/treatment-plans","QA plan items and the QA claim appear."),
+  S("Export CSV, Excel (.xls), PDF and Print for one report","/reports/run/production","All four produce files/print preview with the same rows."),
+  S("Save a view ('QA prod today'), reload, apply the saved view","/reports/run/production","Filters restored."),
+  S("Menu: Reports ▾ → each sub item","top bar","All resolve to /reports/run/… (legacy paths redirect)."),
+  S("Placeholder reports (Responsible Party List, Provider List, Security List, Setup List, Unsigned Progress Notes, Eligibility Verification, office reports)","/reports/lists/provider-list","'Coming Soon' placeholders."),
+  G("AR / aging report","/reports","Not available (no aggregation endpoints).","DASH-3"),
+ ]},
+
+{id:"WF-31",phase:"5",roles:["owner","admin","manager","front_desk","doctor","billing"],est:"40 min",
+ title:"Utilities — RBAC per role, real vs simulated utilities, audit",
+ goal:"Verify the only real frontend RBAC, the labelled simulations, and the live fee-schedule utility.",
+ pre:"All 7 QA users exist.",
+ steps:[
+  S("As qa_admin open Utilities dashboard","/utilities","9 categories; cards only for authorized utilities; recents list."),
+  S("Run 'Consolidate Duplicate Carriers' (simulated)","/utilities/run/consolidate-duplicate-carriers","Shell: params → confirm → progress → result, clearly LABELLED as simulation; audit entry recorded (localStorage).",{gap:"UTIL-1"}),
+  S("Run Fee Schedule Excel Template (live)","/utilities/run/fee-schedule-excel","Real download; validation of an uploaded file reports row errors."),
+  N("As qa_fd: deep-link an owner/admin-only utility (e.g. /utilities/run/pgid-data-conversion-mapping)","/utilities/run/pgid-data-conversion-mapping","'Access restricted' panel with allowed roles; not runnable."),
+  S("As qa_fd: dashboard card count","/utilities","Only front-desk-permitted utilities (record count)."),
+  S("As qa_billing (staff): dashboard","/utilities","Only the all-roles utilities (2)."),
+  S("As qa_dds: dashboard","/utilities","Clinical utilities only (record)."),
+  S("Office-scoped utility param defaults to current office","/utilities/run/pgid-change-patient-home-office","Office pre-selected; editable."),
+  S("Utilities ▾ menu → Launch → external items","top bar","Open third-party URLs in a new tab."),
+  S("Utilities ▾ → Office Specific → Universal / DCA items","top bar","Dead links (no route) — record."),
+  G("Audit log visibility from another browser","/utilities","Empty (localStorage only).","UTIL-2"),
+ ]},
+
+{id:"WF-32",phase:"5",roles:["doctor","front_desk","manager"],est:"20 min",
+ title:"My Page — profile, my schedule, tasks, quick links, password",
+ goal:"Verify the personal dashboard and the provider scoping from the user record.",
+ pre:"qa_dds (report_access_provider_id = QA Dentist) and qa_fd (none).",
+ steps:[
+  S("As qa_dds open My Page","/my-page","Hero with name/role/office; stats strip; My Schedule; Tasks; Alerts; Quick links; Account settings."),
+  T("My Schedule","/my-page","Only QA Dentist's appointments for today in the current office; label indicates provider-scoped; stats (total/remaining/checked-in/completed) match."),
+  S("As qa_fd open My Page","/my-page","Whole-office schedule; label indicates unscoped."),
+  S("Add / complete / delete a task; add a quick link; collapse a section; reload","/my-page","Persist (localStorage) in this browser only.",{gap:"MP-3"}),
+  S("Alerts widget","/my-page","No-shows / unconfirmed / recall alerts for the office (not provider-scoped)."),
+  S("Change password from My Page","/my-page","Works; re-login with the new password."),
+  G("Edit profile fields (name/phone)","/my-page","Not persisted / disabled (no PATCH /users/me).","MP-1"),
+  T("Provider Setup user-link vs report_access_provider_id","/my-page","Unlink qa_dds in Provider Setup → My Page still scoped (link not used). Set report_access_provider_id to None → unscoped.",{gap:"MP-7"}),
+ ]},
+
+{id:"WF-33",phase:"5",roles:["front_desk","doctor"],est:"20 min",
+ title:"Messaging — direct messages between two users",
+ goal:"Verify the DM overlay and full page. Note: runs on a local simulation unless VITE_MESSAGING_BACKEND=api.",
+ pre:"Two browser windows on the SAME machine (simulation uses localStorage + BroadcastChannel): qa_fd and qa_dds.",
+ steps:[
+  S("qa_fd: open the chat overlay (launcher) and the full page","/messages","User directory lists real users (qa_dds present); conversation list; composer."),
+  S("qa_fd → qa_dds: send 'Hello from QA'","/messages","Message appears with tick; qa_dds window receives it live (BroadcastChannel)."),
+  S("qa_dds replies; presence and read receipts","/messages","Reply shown; receipts/presence are SIMULATED (record).",{gap:"MSG-5"}),
+  S("Overlay panel open while navigating pages","any","App content shifts (inline right offset); panel stays open across routes."),
+  G("Second machine / different browser","/messages","Messages NOT shared (simulation is per-browser).","MSG-1"),
+  S("Attachment send","/messages","Simulated only.",{gap:"MSG-6"}),
+ ]},
+
+{id:"WF-34",phase:"5",roles:["front_desk","manager"],est:"15 min",
+ title:"Help Center & Report an Issue (Jira)",
+ goal:"Verify help content and the support-ticket pipeline.",
+ pre:"VITE_JIRA_MODE=auto with backend proxy configured (project KAN) or demo mode.",
+ steps:[
+  S("Help ▾ → Help Center; search 'schedule'","/help","Search filters guides/FAQs."),
+  S("Help ▾ → Report an Issue (also the floating FAB) from the Scheduler","/scheduler","Dialog opens with auto-context (route, office, user, browser); attach a screenshot; submit."),
+  S("Submission result","/help?tab=contact","Ticket id shown (KAN-n via proxy, SUP-n in demo). My Tickets lists it with status."),
+  G("Status sync after changing the ticket in Jira","/help?tab=contact","Status refresh depends on HELP-2; record behaviour.","HELP-2"),
+  S("Release Notes and Troubleshooting tabs","/help?tab=release-notes","Content renders."),
+ ]},
+
+// ---------------------------------------------------------------- PHASE 6
+{id:"WF-35",phase:"6",roles:["admin","owner"],est:"45 min",
+ title:"Security & role enforcement — what should be blocked but is not",
+ goal:"Systematically record the enforcement state of every security-related setting so product can decide what must be fixed before UAT sign-off.",
+ pre:"All QA users; two browsers.",
+ steps:[
+  N("qa_billing (staff): deep-link /setup/security/users and create a user","/setup/security/users","Expected: blocked. Actual today: page renders; record whether the BACKEND rejects the write (403) or accepts it."),
+  N("qa_fd: deep-link /setup/security/groups and change rights; /setup/offices/office-assignment; /setup/fee-schedules/fee-schedule-setup","/setup/security/groups","Same — record UI (renders) vs backend response."),
+  N("qa_fd assigned ONLY to the QA office: office switcher","top bar","Expected: only QA office. Actual today: all tenant offices selectable. Record."),
+  N("qa_fd with login restriction Mon–Fri 08–18: login outside the window","/login","Record whether the backend rejects; UI does not."),
+  N("qa_fd with an IP rule excluding this machine: login","/login","Record backend behaviour."),
+  N("qa_fd with 'HIPAA compliant scheduler' preference ON → Scheduler","/scheduler","Expected: patient names masked. Actual today: not masked. Record."),
+  N("User with patient_access_level restricted → open any patient","/patient/:id/overview","Record whether anything is restricted (UI ignores it)."),
+  N("Security group 'QA Clinical' lacking financial rights → qa_dds opens Ledger and posts a payment","/patient/:id/ledger","Expected: blocked. Actual today: allowed (rights not enforced). Record."),
+  N("Change qa_fd's role to manager server-side (Users screen in another browser) → in qa_fd's already-open session press F5","/dashboard","Role stays stale (session restore skips /me-full while localStorage is warm). Logout/login picks it up. Record."),
+  N("Token tampering: set localStorage access_token to 'x' and reload","/dashboard","UI treats any token string as authenticated until the first API 401 → redirect to /login. Record."),
+  N("Logged out: open /patient-overview","/patient-overview","Redirects to /patient/12345/overview then to /login — record."),
+  S("Organization switcher visible to non-owners","top bar","Renders for all roles (gate commented out); 'Manage all' / 'Add organization' are stubs."),
+ ]},
+
+{id:"WF-36",phase:"6",roles:["admin","manager"],est:"40 min",
+ title:"Data integrity & UX sweep — soft deletes, pagination, caching, dates, responsiveness",
+ goal:"Confirm the documented landmines behave as documented and catch regressions in cross-cutting behaviour.",
+ pre:"Data from all previous workflows.",
+ steps:[
+  G("Soft-delete leakage sweep: delete one of each — appointment, appointment procedure, fee schedule, payment plan, perio exam, chart condition, insurance plan, security group — then reload each list","various","None of the deleted rows reappear in the default list. Record any that do.","T9"),
+  G("Pagination: a list > 200 rows (procedure codes 1108, carriers 1340) — scroll to the end and compare count with the KPI/total","/setup/procedure-codes/procedure-codes","Totals agree; no duplicates/skips (known INS-8 risk).","INS-8"),
+  G("Cache: edit a fee, macro, Rx library item in Setup, then open the consumer screen in the SAME tab without reload","various","Record which consumers show stale data until F5 (fee resolver, procedure codes, Rx library, carriers).","CACHE"),
+  S("Dates: patient DOB, appointment date, transaction date, letter date, claim sent date — enter and re-read each","various","No off-by-one day in any screen (UTC parsing)."),
+  S("Responsive: shrink the window to 1024px and 768px on Dashboard, Scheduler, Patient Overview, Setup Users","various","Nav collapses/wraps; sticky headers stay; no horizontal page scroll; tables scroll inside their container."),
+  S("Long lists performance: open Procedure Codes and Users lists; note time to interactive","various","Record seconds; flag > 10 s."),
+  S("Console sweep at the end of the session","DevTools","List distinct errors/warnings with counts."),
+  S("Cleanup: deactivate (not delete) QA users/providers; leave QA office and data for the next tester or delete per team policy","various","Document what was left in place."),
+ ]},
+];
+
+// ---------------------------------------------------------------------------
+const GAPS={
+ "AUTH-2.1":"Forgot/Reset password endpoints missing (login link is a dead end with a friendly message).",
+ "AUTH-2.4":"Legacy-user activation verify/create-password endpoints missing.",
+ "AUTH-MCP":"must_change_password only triggers a one-shot redirect; no route guard afterwards.",
+ "SEC-BACKDOOR":"Tenant page guard also passes any account whose email contains 'superadmin'.",
+ "ACCT-4":"Logo upload/delete endpoint contract unconfirmed.",
+ "#18":"No office↔office-group membership model; 'Assign Offices to Groups' is a placeholder.",
+ "OFFICE-15":"Office holidays saved but not consumed by the scheduler.",
+ "SCHED-1":"OperatoryRead has no provider_id; operatory→provider auto-fill may be blank.",
+ "NA-B6":"GET /providers?office_id returns [] for many offices; providerDirectory falls back to the full directory.",
+ "PROV-3":"providers.role is free text with migration spelling drift (Hygenist).",
+ "GRP-SOFTDEL":"user-groups DELETE is a soft delete; list must be requested with is_active=true.",
+ "OA-24":"Office↔procedure-code assignment exists but downstream pickers read the tenant-wide catalog.",
+ "OA-29":"Office↔note-macro / RX assignments not consumed downstream.",
+ "OA-32":"Ortho Misc Setup undefined at backend; tab gated.",
+ "APPT-8":"requires_tooth/surface/quadrant/lab are false across the migrated catalogue; enforcement never fires.",
+ "AUX-1":"Modifier / Type-of-Service / Place-of-Service tables have no consumer; claim form uses a hard-coded POS list. ICD resource was unseeded (AUX-4).",
+ "CACHE":"Setup writes use imperative calls; downstream module caches (fee resolver, procedure codes, Rx library, carriers) may serve stale data until reload.",
+ "FEE-2":"Offices not linked to fee schedules in migrated data; resolver falls back to office default / code default_fee.",
+ "FEE-1":"No ADA→coverage-category map server-side; client hardcodes legacy CDT ranges; deductible/max/frequency/age limits not applied; /estimate returns 0%.",
+ "FEE-1(ins)":"Fee-schedule DELETE soft-deletes while entries/assignments hard-delete.",
+ "INS-8":"Unstable pagination drops/duplicates rows on every paginated endpoint (1,340 carriers → 1,338 unique).",
+ "INS-10":"Insurance definition groups (coverage_type/category) unseeded → raw codes.",
+ "PO-6":"Referrals not linked to migrated patients; patients.referred_by holds a raw legacy id.",
+ "LEG-1":"MEDALERT/MEDQUEST/DENTQUEST catalogs unseeded; FE falls back to a hard-coded legacy list when a group has <10 items.",
+ "CHART-COLORS":"Chart colours setup is write-only; restorative chart paints from constants.",
+ "TB-1":"Custom Toolbar has no backend resource and no consumer in the app.",
+ "NM-2":"Note-macro category stored as numeric codes; seeded macros duplicated ~4×.",
+ "PE-1":"patient_flags booleans have no columns; reading them back once wiped ortho state.",
+ "APPT-12":"chart_no is not unique; only the numeric patient id is a safe key.",
+ "SCHED-APPT-2":"Cancellation note/reason/call-list flag not persisted (status PATCH accepts only status).",
+ "SCHED-DEL-1":"Appointment DELETE is soft, and the scheduler feed returns archived rows (deleted appointments reappear unless re-filtered).",
+ "SCHED-EMAIL-1":"No email-send endpoint (mailto handoff); SMS dispatch undocumented.",
+ "D1":"appt_status definitions unseeded; FE falls back to built-in S·C·U·L·R·A·O·H letters/colours.",
+ "SCHED-CONS-G9":"No routing slip / walkout / day sheet report endpoint.",
+ "AN-1":"AppointNow backend (AN-1..12) not built; local simulation is per-browser.",
+ "PP-5":"/patients/{id}/balance takes ~23 s cold.",
+ "NOTE-DOC-3":"Public /uploads mount removed; documents must resolve via authenticated /content path.",
+ "PERIO-BE-14":"No provider/examiner column on perio exam.",
+ "PERIO-BE-3":"Perio exam soft delete not filtered by the list endpoint.",
+ "REST-SOFTDEL":"chart-conditions DELETE sets is_inactive; list must filter it out client-side.",
+ "REST-3":"Restorative chart view settings live in localStorage (chart-settings endpoint unused).",
+ "PLAN-16":"GET /providers/{id}/procedure-codes returns [] for all providers → provider eligibility unrestricted.",
+ "RX-P3":"ePrescribe (DoseSpot) not integrated.",
+ "RX-P1":"Single notes field; Internal Note gated.",
+ "LAB-1":"No lab vendor resource; vendor + short-notice shown but not persisted.",
+ "DICOM-1":"DICOM study/series/instance endpoints not deployed (blocker).",
+ "CHG-10":"Only three adjustment codes seeded; key2 unset on payment_method/adjustment definitions.",
+ "AL-9":"Payment amounts stored negative; balance/feed signs reversed — UI computes charge − |credit|.",
+ "LED-1":"Ledger endpoint accepts only date/page/size (no sort/type filter).",
+ "CLM-FO-1":"Claim resource has no fill-out columns; split persistence (patient PATCH + localStorage).",
+ "PROV-INSID":"Provider carrier-specific insurance IDs are not read by claims.",
+ "AL-18":"Claim status is free text with hidden exact-match side effects (submitted/paid dates).",
+ "PATIENTS-8":"Claim validate/submit/status-refresh endpoints missing.",
+ "PP-1":"Payment-plan DELETE is soft and the list ignores is_active; FE filters client-side.",
+ "UTIL-1":"No utility execution/job API; 31 utilities run as a labelled simulation.",
+ "UTIL-2":"Utility audit log persisted in localStorage only.",
+ "INS-PT-19":"Insurance plan duplicate prevention is client-side only.",
+ "DASH-1":"No office financial-summary / collections / AR aggregation endpoints; KPIs computed client-side.",
+ "DASH-3":"No AR / aging endpoints; no AR report possible.",
+ "DASH-4":"No notifications feed / tasks resource / unified search endpoint.",
+ "MP-3":"My Page tasks, quick links, prefs in localStorage.",
+ "MP-1":"No PATCH /users/me for profile edits.",
+ "MP-7":"Weak user→provider link; My Page scopes on report_access_provider_id only.",
+ "MSG-1":"Messaging backend not migrated; whole feature runs on a local simulation.",
+ "MSG-5":"Delivery/read receipts and presence simulated.",
+ "MSG-6":"No real attachment upload in messaging.",
+ "HELP-2":"No list-my-tickets / status sync endpoint.",
+ "T9":"Soft-delete vs hard-delete inconsistency across resources; deleted rows can reappear in default lists."
+};
+
+// ---------------------------------------------------------------------------
+const KEY="dentc_e2e_results_v1";
+let STATE=(()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){return{}}})();
+STATE.steps=STATE.steps||{};STATE.ledger=STATE.ledger||{};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(STATE))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function stepRow(wf,i,st){
+  const k=wf.id+"#"+(i+1);const rec=STATE.steps[k]||{};
+  const o=st.o||{};const cls=[];if(o.gap)cls.push("gaprow");if(o.neg)cls.push("negrow");if(o.trace)cls.push("tracerow");
+  if(rec.s)cls.push("s-"+rec.s);
+  const badges=(o.setup?'<span class="badge b-setup">SETUP</span>':'')+(o.trace?'<span class="badge b-trace">TRACE</span>':'')+(o.neg?'<span class="badge b-neg">NEGATIVE</span>':'')+(o.gap?'<span class="badge b-gap" title="'+esc(GAPS[o.gap]||"")+'">GAP '+esc(o.gap)+'</span>':'');
+  const radios=["pass","fail","blocked","na"].map(v=>'<label><input type="radio" name="'+k+'" value="'+v+'"'+(rec.s===v?" checked":"")+'>'+({pass:"Pass",fail:"Fail",blocked:"Blocked",na:"N/A"}[v])+'</label>').join("");
+  return '<tr class="'+cls.join(" ")+'" data-k="'+k+'"><td class="n">'+(i+1)+'</td><td class="act">'+badges+(badges?'<br>':'')+esc(st.a)+(st.p?'<span class="path">'+esc(st.p)+'</span>':'')+'</td><td class="exp">'+esc(st.e)+'</td><td class="st"><div class="st">'+radios+'</div></td><td class="notes"><textarea class="note" placeholder="notes / bug id">'+esc(rec.n||"")+'</textarea></td></tr>';
+}
+function wfHtml(wf){
+  const roles=wf.roles.map(r=>'<span class="badge b-role">'+esc(ROLE_LABEL[r]||r)+'</span>').join("");
+  return '<section class="wf" id="'+wf.id+'" data-roles="'+wf.roles.join(" ")+'"><header><span class="id">'+wf.id+'</span><h3>'+esc(wf.title)+'</h3>'+roles+'<span class="small">⏱ '+esc(wf.est)+'</span></header>'+
+   '<div class="desc">'+esc(wf.goal)+'</div><div class="pre"><b>Preconditions:</b> '+esc(wf.pre)+'</div>'+
+   '<div class="wfsummary"><span class="cnt"></span><div class="progress"><i style="width:0%"></i></div><button class="btn noprint" data-allpass="'+wf.id+'">Mark remaining as Pass</button><button class="btn noprint" data-clear="'+wf.id+'">Clear</button></div>'+
+   '<table class="steps"><thead><tr><th>#</th><th>Action &amp; where</th><th>Expected result</th><th>Result</th><th>Notes</th></tr></thead><tbody>'+wf.steps.map((s,i)=>stepRow(wf,i,s)).join("")+'</tbody></table></section>';
+}
+function render(){
+  let html="";let lastPhase=null;
+  WORKFLOWS.forEach(wf=>{if(wf.phase!==lastPhase){html+='<h2 class="phase" data-phase="'+wf.phase+'">'+esc(PHASES[wf.phase])+'</h2>';lastPhase=wf.phase;}html+=wfHtml(wf);});
+  document.getElementById("workflows").innerHTML=html;
+  // TOC
+  let toc="";lastPhase=null;
+  WORKFLOWS.forEach(wf=>{if(wf.phase!==lastPhase){toc+='<div class="grp">'+esc(PHASES[wf.phase].replace(/ — .*/,""))+'</div>';lastPhase=wf.phase;}toc+='<a href="#'+wf.id+'" data-toc="'+wf.id+'">'+wf.id+' '+esc(wf.title.split(" — ")[0])+'<span class="pct"></span></a>';});
+  document.getElementById("tocwf").innerHTML=toc;
+  // gaps table
+  document.querySelector("#gaptable tbody").innerHTML=Object.keys(GAPS).map(k=>'<tr><td><code>'+esc(k)+'</code></td><td>'+esc(GAPS[k])+'</td></tr>').join("");
+  // ledger
+  document.querySelectorAll("#ledger input").forEach(inp=>{inp.value=STATE.ledger[inp.dataset.k]||"";inp.addEventListener("input",()=>{STATE.ledger[inp.dataset.k]=inp.value;save();});});
+  updateAll();
+}
+function updateAll(){
+  let total=0,done=0;
+  WORKFLOWS.forEach(wf=>{
+    let d=0,f=0;wf.steps.forEach((s,i)=>{const r=STATE.steps[wf.id+"#"+(i+1)];if(r&&r.s){d++;if(r.s==="fail")f++;}});
+    total+=wf.steps.length;done+=d;
+    const sec=document.getElementById(wf.id);const pct=Math.round(100*d/wf.steps.length);
+    sec.querySelector(".cnt").textContent=d+" / "+wf.steps.length+" recorded"+(f?" · "+f+" failed":"");
+    sec.querySelector(".progress i").style.width=pct+"%";
+    const t=document.querySelector('[data-toc="'+wf.id+'"]');t.querySelector(".pct").textContent=pct+"%";t.classList.toggle("done",pct===100&&!f);t.classList.toggle("bad",f>0);
+  });
+  document.getElementById("overall").textContent=done+" / "+total+" steps recorded";
+  document.getElementById("overallbar").style.width=Math.round(100*done/total)+"%";
+}
+document.addEventListener("change",e=>{
+  if(e.target.matches('input[type=radio]')){const k=e.target.name;STATE.steps[k]=STATE.steps[k]||{};STATE.steps[k].s=e.target.value;save();
+    const tr=e.target.closest("tr");tr.className=tr.className.replace(/\bs-\w+/g,"")+" s-"+e.target.value;updateAll();}
+});
+document.addEventListener("input",e=>{if(e.target.matches("textarea.note")){const k=e.target.closest("tr").dataset.k;STATE.steps[k]=STATE.steps[k]||{};STATE.steps[k].n=e.target.value;save();}});
+document.addEventListener("click",e=>{
+  const ap=e.target.dataset.allpass,cl=e.target.dataset.clear;
+  if(ap){const wf=WORKFLOWS.find(w=>w.id===ap);wf.steps.forEach((s,i)=>{const k=ap+"#"+(i+1);if(!(STATE.steps[k]&&STATE.steps[k].s)){STATE.steps[k]={...(STATE.steps[k]||{}),s:"pass"};}});save();rerender();}
+  if(cl){const wf=WORKFLOWS.find(w=>w.id===cl);wf.steps.forEach((s,i)=>{delete STATE.steps[cl+"#"+(i+1)];});save();rerender();}
+  if(e.target.classList.contains("chip")){document.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));e.target.classList.add("on");applyFilter();}
+});
+function rerender(){const y=window.scrollY;render();applyFilter();window.scrollTo(0,y);}
+function applyFilter(){
+  const role=document.querySelector(".chip.on").dataset.role;const q=document.getElementById("q").value.trim().toLowerCase();
+  document.querySelectorAll("section.wf").forEach(sec=>{
+    const roleOk=role==="all"||sec.dataset.roles.split(" ").includes(role);
+    let any=false;
+    sec.querySelectorAll("tbody tr").forEach(tr=>{const ok=!q||tr.textContent.toLowerCase().includes(q);tr.classList.toggle("hidden",!ok);if(ok)any=true;});
+    sec.classList.toggle("hidden",!(roleOk&&(any||!q)));
+  });
+  document.querySelectorAll("h2.phase").forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.matches("h2")){if(n.matches("section.wf")&&!n.classList.contains("hidden"))vis=true;n=n.nextElementSibling;}h.classList.toggle("hidden",!vis);});
+}
+document.getElementById("q").addEventListener("input",applyFilter);
+
+// export / import
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();}
+function summaryText(){
+  const lines=["DentC E2E results — tester: "+(STATE.ledger.tester||"?")+" — "+new Date().toISOString()];
+  WORKFLOWS.forEach(wf=>{const c={pass:0,fail:0,blocked:0,na:0};const fails=[];wf.steps.forEach((s,i)=>{const r=STATE.steps[wf.id+"#"+(i+1)];if(r&&r.s){c[r.s]++;if(r.s==="fail")fails.push("   #"+(i+1)+" "+s.a+(r.n?" — "+r.n:""));}});
+    lines.push(wf.id+" "+wf.title+": pass "+c.pass+" / fail "+c.fail+" / blocked "+c.blocked+" / na "+c.na+" of "+wf.steps.length);lines.push(...fails);});
+  return lines.join("\n");
+}
+document.getElementById("btnExport").onclick=()=>dl("dentc_e2e_results_"+(STATE.ledger.tester||"tester").replace(/\W+/g,"_")+".json",JSON.stringify({version:1,exported:new Date().toISOString(),...STATE},null,2),"application/json");
+document.getElementById("btnCsv").onclick=()=>{const rows=[["workflow","step","action","path","expected","status","notes","gap"]];WORKFLOWS.forEach(wf=>wf.steps.forEach((s,i)=>{const r=STATE.steps[wf.id+"#"+(i+1)]||{};rows.push([wf.id,i+1,s.a,s.p||"",s.e,r.s||"",r.n||"",(s.o&&s.o.gap)||""]);}));dl("dentc_e2e_results.csv",rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n"),"text/csv");};
+document.getElementById("btnCopy").onclick=()=>{const t=summaryText();document.getElementById("summary").textContent=t;navigator.clipboard&&navigator.clipboard.writeText(t);};
+document.getElementById("fileImport").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);STATE={steps:d.steps||{},ledger:d.ledger||{}};save();rerender();}catch(err){alert("Invalid file");}};r.readAsText(f);};
+document.getElementById("btnReset").onclick=()=>{if(confirm("Clear all recorded results and ledger in this browser?")){STATE={steps:{},ledger:{}};save();rerender();}};
+
+render();
+</script>
+</body>
+</html>

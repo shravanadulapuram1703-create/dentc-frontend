@@ -21,6 +21,7 @@ const COLS: { key: keyof GridRow | 'n'; label: string; w: string; align?: 'right
   { key: 'surface', label: 'Surf', w: '70px', align: 'center' },
   { key: 'provider', label: 'Prdr', w: '70px' },
   { key: 'est_ins', label: 'Est. Ins.', w: '80px', align: 'right' },
+  { key: 'est_pat', label: 'Pat. Est.', w: '80px', align: 'right' },
   { key: 'fee', label: 'Fee', w: '80px', align: 'right' },
   { key: 'office', label: 'Office', w: '70px' },
   { key: 'n', label: 'N', w: '34px', align: 'center' },

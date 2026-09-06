@@ -188,6 +188,7 @@ export interface AppointmentCreateRequest {
   lab_recvd_on?: string;
   missed?: boolean;
   cancelled?: boolean;
+  is_new_patient?: boolean;
   campaign_id?: string;
   treatment_plan_id?: string;
   treatment_plan_phase_id?: string;
@@ -389,17 +390,50 @@ export const fetchArchivedAppointmentIds = async (
   startDate: string,
   endDate: string,
   officeId?: number,
+): Promise<Set<string>> =>
+  collectAppointmentIds(
+    {
+      date_from: startDate,
+      date_to: endDate,
+      ...(officeId != null ? { office_id: officeId } : {}),
+      is_archived: true,
+    },
+    () => true,
+  );
+
+/**
+ * Ids of appointments flagged `is_new_patient` in a date range.
+ *
+ * The calendar feed (`AppointmentSchedulerRead`) does not expose
+ * `is_new_patient`, so the day grid could never show the legacy "NP" marker for
+ * anything loaded from the feed. `GET /appointments` (AppointmentRead) does
+ * carry the flag, so we page through it and overlay the ids onto the feed.
+ * Backend gap SCHED-NP-1 (see docs/scheduler): add `is_new_patient` to the
+ * scheduler feed and this lookup can be dropped.
+ */
+export const fetchNewPatientAppointmentIds = async (
+  startDate: string,
+  endDate: string,
+  officeId?: number,
+): Promise<Set<string>> =>
+  collectAppointmentIds(
+    {
+      date_from: startDate,
+      date_to: endDate,
+      ...(officeId != null ? { office_id: officeId } : {}),
+    },
+    (a) => a.is_new_patient === true,
+  );
+
+/** Page through GET /appointments for `query`, collecting ids that pass `keep`. */
+const collectAppointmentIds = async (
+  query: Record<string, unknown>,
+  keep: (a: AppointmentRead) => boolean,
 ): Promise<Set<string>> => {
   const ids = new Set<string>();
-  const query = {
-    date_from: startDate,
-    date_to: endDate,
-    ...(officeId != null ? { office_id: officeId } : {}),
-    is_archived: true,
-  };
   const first = await listAppointments({ ...query, page: 1, ...PAGE }).catch(() => null);
   if (!first) return ids;
-  for (const a of first.items ?? []) ids.add(a.id);
+  for (const a of first.items ?? []) if (keep(a)) ids.add(a.id);
   const pages = first.meta?.pages ?? 1;
   if (pages > 1) {
     const rest = await Promise.all(
@@ -407,7 +441,7 @@ export const fetchArchivedAppointmentIds = async (
         listAppointments({ ...query, page: i + 2, ...PAGE }).catch(() => null),
       ),
     );
-    for (const res of rest) for (const a of res?.items ?? []) ids.add(a.id);
+    for (const res of rest) for (const a of res?.items ?? []) if (keep(a)) ids.add(a.id);
   }
   return ids;
 };
@@ -425,18 +459,24 @@ export const fetchAppointments = async (
   // so status/provider/operatory filters are applied client-side below.
   // The archived-id lookup runs in parallel and removes deleted appointments
   // the feed still returns (gap SCHED-DEL-1).
-  const [rows, archivedIds] = await Promise.all([
+  // The new-patient lookup also runs in parallel: the feed omits
+  // `is_new_patient` (gap SCHED-NP-1), so the flag is overlaid from the plain list.
+  const [rows, archivedIds, newPatientIds] = await Promise.all([
     listSchedulerAppointments({
       date_from: startDate,
       date_to: to,
       ...(oid != null ? { office_id: oid } : {}),
     }),
     fetchArchivedAppointmentIds(startDate, to, oid),
+    fetchNewPatientAppointmentIds(startDate, to, oid),
   ]);
 
   let mapped = (rows ?? [])
     .filter((a) => !archivedIds.has(a.id))
-    .map(mapSchedulerAppointment);
+    .map((a) => ({
+      ...mapSchedulerAppointment(a),
+      is_new_patient: newPatientIds.has(a.id) || undefined,
+    }));
   if (filters?.status)
     mapped = mapped.filter((a) => a.status === filters.status);
   if (filters?.provider_id)
@@ -513,6 +553,9 @@ export const createAppointment = async (
     lab_received_on: data.lab_recvd_on ?? undefined,
     campaign_id: data.campaign_id ?? undefined,
     treatment_plan_id: data.treatment_plan_id ?? undefined,
+    // Set by the Scheduler's Quick Save (patient registered moments ago) so
+    // the block carries the legacy "NP" badge.
+    is_new_patient: data.is_new_patient ?? undefined,
   } as any);
   return enrichOne(created);
 };
@@ -971,7 +1014,11 @@ const definitionsAsList = async (groupCode: string) => {
 
 export const fetchProcedureTypes = async (): Promise<ProcedureType[]> => {
   const defs = await definitionsAsList("procedure_type");
-  return defs.map((d) => ({ id: d.key1 ?? String(d.id), name: d.description }));
+  return defs.map((d) => ({
+    id: d.key1 ?? String(d.id),
+    name: d.description,
+    color: d.color ?? undefined,
+  }));
 };
 
 export const fetchAppointmentStatuses = async (): Promise<

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Clock, Copy, Loader2, Save } from "lucide-react";
+import { Clock, Copy, Loader2, Save, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { components } from "../../../../styles/theme";
 import {
@@ -7,6 +7,7 @@ import {
   saveOfficeSchedule,
   type OfficeScheduleDayUi,
 } from "../../../../services/officeScheduleApi";
+import { getOffice, updateOffice } from "../../../../api/generated/endpoints/organization/organization";
 
 /**
  * Office → Schedule tab. A weekly office-hours grid (Day | Day Start | Day Stop
@@ -82,20 +83,69 @@ function toApi(days: UiDay[]): OfficeScheduleDayUi[] {
   });
 }
 
-type ScheduleTabProps = {
-  officeId: number;
+/**
+ * Office-level scheduler settings (OfficeRead.slot_interval_minutes /
+ * schedule_start_hour / schedule_end_hour). Saved with the weekly grid via
+ * PATCH /offices/{id}. The scheduler draws its grid from Start Hour to End
+ * Hour at the slot interval; the weekly rows below narrow the bookable hours
+ * inside that window.
+ */
+export type SchedulerConfigForm = {
+  slot_interval_minutes: number;
+  schedule_start_hour: number;
+  schedule_end_hour: number;
 };
 
-export default function ScheduleTab({ officeId }: ScheduleTabProps) {
+const SLOT_INTERVAL_OPTIONS = [5, 10, 15, 20, 30] as const;
+const DEFAULT_CONFIG: SchedulerConfigForm = {
+  slot_interval_minutes: 10,
+  schedule_start_hour: 8,
+  schedule_end_hour: 17,
+};
+
+/** Validate the config; returns an error message or null. */
+function configError(cfg: SchedulerConfigForm): string | null {
+  const { slot_interval_minutes: interval, schedule_start_hour: start, schedule_end_hour: end } = cfg;
+  if (!Number.isInteger(interval) || interval <= 0 || 60 % interval !== 0) {
+    return "Time interval must divide an hour evenly (5, 10, 15, 20 or 30 minutes).";
+  }
+  if (!Number.isInteger(start) || start < 0 || start > 23) return "Start hour must be between 0 and 23.";
+  if (!Number.isInteger(end) || end < 1 || end > 24) return "End hour must be between 1 and 24.";
+  if (end <= start) return "End hour must be after the start hour.";
+  return null;
+}
+
+/** "HH:MM" -> minutes, or null. */
+function toMinutes(t: string): number | null {
+  if (!t) return null;
+  const parts = t.split(":").map(Number);
+  const h = parts[0] ?? NaN;
+  const m = parts[1] ?? NaN;
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+}
+
+type ScheduleTabProps = {
+  officeId: number;
+  /** Lets the parent keep its office form in sync after the config is saved. */
+  onConfigSaved?: (config: SchedulerConfigForm) => void;
+};
+
+export default function ScheduleTab({ officeId, onConfigSaved }: ScheduleTabProps) {
   const [days, setDays] = useState<UiDay[]>(() => buildDays([]));
+  const [config, setConfig] = useState<SchedulerConfigForm>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const rows = await fetchOfficeSchedule(officeId);
+      const [rows, office] = await Promise.all([fetchOfficeSchedule(officeId), getOffice(officeId)]);
       setDays(buildDays(rows));
+      setConfig({
+        slot_interval_minutes: office.slot_interval_minutes ?? DEFAULT_CONFIG.slot_interval_minutes,
+        schedule_start_hour: office.schedule_start_hour ?? DEFAULT_CONFIG.schedule_start_hour,
+        schedule_end_hour: office.schedule_end_hour ?? DEFAULT_CONFIG.schedule_end_hour,
+      });
     } catch (e: unknown) {
       const msg =
         e && typeof e === "object" && "message" in e
@@ -150,11 +200,52 @@ export default function ScheduleTab({ officeId }: ScheduleTabProps) {
     toast.success("Copied Monday hours to weekdays");
   };
 
+  // Weekly rows that fall outside the Start/End Hour window would never be
+  // bookable on the scheduler, so flag them before saving.
+  const hoursOutsideWindow = (): string[] => {
+    const winStart = config.schedule_start_hour * 60;
+    const winEnd = config.schedule_end_hour * 60;
+    return days
+      .filter((d) => !d.closed)
+      .filter((d) => {
+        const s = toMinutes(d.start);
+        const e = toMinutes(d.stop);
+        return (s != null && s < winStart) || (e != null && e > winEnd);
+      })
+      .map((d) => d.label);
+  };
+
   const handleSave = async () => {
+    const err = configError(config);
+    if (err) {
+      toast.error("Check the scheduler configuration", { description: err });
+      return;
+    }
+    const outside = hoursOutsideWindow();
+    if (
+      outside.length > 0 &&
+      !window.confirm(
+        `${outside.join(", ")}: the day hours extend past the scheduler window (` +
+          `${config.schedule_start_hour}:00–${config.schedule_end_hour}:00). ` +
+          "Hours outside the window will not be bookable. Save anyway?"
+      )
+    ) {
+      return;
+    }
     setSaving(true);
     try {
-      await saveOfficeSchedule(officeId, toApi(days));
-      toast.success("Schedule saved", { description: "Office hours updated successfully." });
+      await Promise.all([
+        saveOfficeSchedule(officeId, toApi(days)),
+        updateOffice(officeId, {
+          slot_interval_minutes: config.slot_interval_minutes,
+          schedule_start_hour: config.schedule_start_hour,
+          schedule_end_hour: config.schedule_end_hour,
+        }),
+      ]);
+      onConfigSaved?.(config);
+      toast.success("Schedule saved", {
+        description: "Office hours and scheduler configuration updated successfully.",
+      });
     } catch (e: unknown) {
       const msg =
         e && typeof e === "object" && "message" in e
@@ -189,11 +280,78 @@ export default function ScheduleTab({ officeId }: ScheduleTabProps) {
         <div className="text-sm text-blue-800">
           <p className="font-bold">Office Schedule Guidelines:</p>
           <ul className="list-disc list-inside mt-1 space-y-1">
-            <li>Defines working hours for the office</li>
+            <li>Time interval sets the scheduler grid resolution; Start/End Hour set the hours the grid draws</li>
+            <li>Day hours below define when the office is open inside that window</li>
             <li>Scheduler blocks bookings outside these hours</li>
             <li>Lunch time blocks availability</li>
-            <li>Mark a day "Closed" (or leave it blank) for non-working days</li>
+            <li>Mark a day "Closed" (or leave it blank) for non-working days — the scheduler greys the whole day</li>
           </ul>
+        </div>
+      </div>
+
+      {/* Scheduler Configuration (moved here from the Info tab) */}
+      <div className="bg-white rounded-lg border-2 border-[#E2E8F0] p-4">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-3 pb-2 border-b-2 border-[#E2E8F0]">
+          <SlidersHorizontal className="w-4 h-4 text-[#3A6EA5]" />
+          Scheduler Configuration
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="slot_interval_minutes" className="block text-xs font-bold text-[#1E293B] mb-2">
+              Scheduler Time Interval (minutes) <span className="text-[#DC2626]">*</span>
+            </label>
+            <select
+              id="slot_interval_minutes"
+              value={config.slot_interval_minutes}
+              onChange={(e) =>
+                setConfig((c) => ({ ...c, slot_interval_minutes: parseInt(e.target.value, 10) }))
+              }
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            >
+              {SLOT_INTERVAL_OPTIONS.map((m) => (
+                <option key={m} value={m}>
+                  {m} minutes
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-[#64748B] mt-1">Defines appointment grid resolution</p>
+          </div>
+
+          <div>
+            <label htmlFor="schedule_start_hour" className="block text-xs font-bold text-[#1E293B] mb-2">
+              Schedule Start Hour
+            </label>
+            <input
+              id="schedule_start_hour"
+              type="number"
+              min={0}
+              max={23}
+              value={config.schedule_start_hour}
+              onChange={(e) =>
+                setConfig((c) => ({ ...c, schedule_start_hour: parseInt(e.target.value || "0", 10) }))
+              }
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            />
+            <p className="text-xs text-[#64748B] mt-1">First bookable hour (0–23); the grid starts here</p>
+          </div>
+
+          <div>
+            <label htmlFor="schedule_end_hour" className="block text-xs font-bold text-[#1E293B] mb-2">
+              Schedule End Hour
+            </label>
+            <input
+              id="schedule_end_hour"
+              type="number"
+              min={1}
+              max={24}
+              value={config.schedule_end_hour}
+              onChange={(e) =>
+                setConfig((c) => ({ ...c, schedule_end_hour: parseInt(e.target.value || "0", 10) }))
+              }
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            />
+            <p className="text-xs text-[#64748B] mt-1">Last bookable hour (1–24); the grid ends here</p>
+          </div>
         </div>
       </div>
 

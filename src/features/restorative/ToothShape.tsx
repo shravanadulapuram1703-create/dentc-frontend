@@ -3,7 +3,7 @@ import type { Arch } from './toothLayout';
 import type { ToothType } from './toothLayout';
 import type { ToothGlyph } from './chartModel';
 import { rgba } from './txPlanModel';
-import { CrownMarks, RootMarks, WholeMarks, PatternDefs } from './chartGlyphs';
+import { CrownMarks, RootMarks, WholeMarks, JunctionMarks, PatternDefs } from './chartGlyphs';
 import { fillDefsFor, segmentFillUrl, isUnknownCode } from './glyphFills';
 
 // Parametric inline vector tooth. Crown / junction / each root are grouped
@@ -134,6 +134,7 @@ export default function ToothShape({
         <g id={`${uid}-junction`} {...segProps('junction')}>
           <title>{tooltips.get('junction') || 'Cervical / neck (CEJ)'}</title>
           <path d="M24,86 C40,92 60,92 76,86 L76,98 C60,104 40,104 24,98 Z" fill={fillFor('junction', '#e7d9bf')} stroke="#c0a577" strokeWidth="0.8" />
+          <JunctionMarks glyphs={segmentGlyphs.get('junction')} />
           <path d="M24,86 C40,92 60,92 76,86 L76,98 C60,104 40,104 24,98 Z" {...overlayStyle('junction')} pointerEvents="none" />
         </g>
 

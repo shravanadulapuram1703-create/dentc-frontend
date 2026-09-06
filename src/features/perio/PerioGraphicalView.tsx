@@ -4,6 +4,7 @@ import { isPrimaryId } from '@/features/restorative/dentition';
 import { toothAnatomy } from '@/features/restorative/toothAnatomy';
 import ToothShape, { type SegmentKey } from '@/features/restorative/ToothShape';
 import type { ToothGlyph } from '@/features/restorative/chartModel';
+import { cellEnabled, statusTooltip, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
 import {
   MEASURES, SITES_PER_SURFACE, numAt, boolAt, cellKey,
   type Cell, type MeasureType, type PerioDetailDraft,
@@ -27,9 +28,14 @@ const STRIP_H = 17;     // editable value-strip row height
 const ARCH_LABEL_W = 20;
 const MIN_COL = 42;     // below this the chart scrolls instead of shrinking
 
-// ToothShape is rendered read-only here (no selection / condition glyphs).
+// ToothShape is rendered read-only here (no selection). The only condition glyph
+// it carries is the implant post, so an implant site reads as one (as the
+// restorative chart draws it); a missing tooth renders faded/greyed.
 const EMPTY_KEYS: Set<SegmentKey> = new Set();
 const EMPTY_GLYPHS: Map<SegmentKey, ToothGlyph[]> = new Map();
+const IMPLANT_GLYPHS: Map<SegmentKey, ToothGlyph[]> = new Map([
+  ['whole', [{ area: 'whole', code: 'IMPLANT', color: '#1d4ed8', drawable: true }]],
+]);
 const EMPTY_TIPS: Map<SegmentKey, string> = new Map();
 const NOOP = () => {};
 
@@ -37,6 +43,8 @@ interface Props {
   maxTeeth: string[];
   mandTeeth: string[];
   getDraft: (tooth: string) => PerioDetailDraft | undefined;
+  /** Restorative-chart derived status (missing / implant / …). */
+  getStatus?: (tooth: string) => ToothClinicalStatus | undefined;
   numberingSystem: NumberingSystem;
   showLingual: boolean;
   showMgj?: boolean;
@@ -91,7 +99,7 @@ function ArchBlock(props: ArchProps) {
       <div>
         <GraphBand {...props} offset={topOffset} gumAtTop surfLabel={topIsFacial ? 'Facial' : 'Lingual'} />
         <ValueStrip {...props} offset={topOffset} />
-        <ToothNumberRow teeth={teeth} numberingSystem={numberingSystem} col={col} />
+        <ToothNumberRow teeth={teeth} numberingSystem={numberingSystem} col={col} getStatus={props.getStatus} />
         {showLingual && (
           <>
             <ValueStrip {...props} offset={bottomOffset} />
@@ -103,14 +111,24 @@ function ArchBlock(props: ArchProps) {
   );
 }
 
-function ToothNumberRow({ teeth, numberingSystem, col }: { teeth: string[]; numberingSystem: NumberingSystem; col: number }) {
+function ToothNumberRow({ teeth, numberingSystem, col, getStatus }: { teeth: string[]; numberingSystem: NumberingSystem; col: number; getStatus?: (tooth: string) => ToothClinicalStatus | undefined }) {
   return (
     <div className="flex">
-      {teeth.map((t) => (
-        <div key={t} className="flex items-center justify-center border border-slate-300 bg-[#1f4e79] py-0.5 text-[10px] font-semibold text-white" style={{ width: col }}>
-          {isPrimaryId(t) ? t : toothLabel(Number(t), numberingSystem)}
-        </div>
-      ))}
+      {teeth.map((t) => {
+        const s = getStatus?.(t);
+        const absent = !!s && !s.present;
+        return (
+          <div
+            key={t}
+            title={statusTooltip(s) || undefined}
+            className="flex items-center justify-center border border-slate-300 py-0.5 text-[10px] font-semibold"
+            style={{ width: col, background: absent ? '#64748b' : '#1f4e79', color: absent ? '#cbd5e1' : '#fff', textDecoration: absent ? 'line-through' : undefined }}
+          >
+            {isPrimaryId(t) ? t : toothLabel(Number(t), numberingSystem)}
+            {s?.implant && <sup className="text-[8px] font-bold text-sky-200">i</sup>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -120,13 +138,21 @@ function ToothNumberRow({ teeth, numberingSystem, col }: { teeth: string[]; numb
 // routes clicks + the number pad through the same handlers as the grid, so data
 // entered here persists identically.
 function ValueStrip(props: ArchProps & { offset: number }) {
-  const { teeth, offset, activeMeasure, active, getDraft, readOnly, col, onCellClick, onToggleBool } = props;
+  const { teeth, offset, activeMeasure, active, getDraft, getStatus, readOnly, col, onCellClick, onToggleBool } = props;
   const meta = MEASURES[activeMeasure];
 
   return (
     <div className="flex border-y border-slate-200 bg-slate-50">
       {teeth.map((tooth) => {
         const d = getDraft(tooth);
+        const status = getStatus?.(tooth);
+        // Locked by the restorative chart (missing tooth / implant furcation).
+        if (!cellEnabled(status, activeMeasure)) {
+          return (
+            <div key={tooth} className="border-r border-slate-200" title={statusTooltip(status) || undefined}
+              style={{ width: col, height: STRIP_H, background: 'repeating-linear-gradient(135deg,#e2e8f0 0 3px,#f1f5f9 3px 7px)' }} />
+          );
+        }
         if (meta.kind === 'mobility') {
           const cell: Cell = { tooth, measure: activeMeasure, site: offset };
           const isAct = !!active && cellKey(active) === cellKey(cell);
@@ -174,7 +200,7 @@ function ValueStrip(props: ArchProps & { offset: number }) {
 
 // ---- Graphical band (anatomical teeth + measurement overlay) ---------------
 function GraphBand(props: ArchProps & { offset: number; gumAtTop: boolean; surfLabel: string }) {
-  const { teeth, offset, gumAtTop, getDraft, showMgj = true, surfLabel, col } = props;
+  const { teeth, offset, gumAtTop, getDraft, getStatus, showMgj = true, surfLabel, col } = props;
   const width = teeth.length * col;
   const toothW = col * 0.72;
   const siteDx = col * 0.2;
@@ -188,21 +214,30 @@ function GraphBand(props: ArchProps & { offset: number; gumAtTop: boolean; surfL
   const siteX = (i: number, s: number) => i * col + col / 2 + (s - 1) * siteDx;
   const midX = (teeth.length / 2) * col;
 
-  const fgmPts: string[] = [];
-  const mgjPts: string[] = [];
+  // The gingival-margin / MGJ lines are drawn as RUNS that break at every
+  // missing tooth — a line across an edentulous space would draw gum where
+  // there is none to probe.
+  const fgmRuns: string[][] = [[]];
+  const mgjRuns: string[][] = [[]];
   const dots: { x: number; y: number; c: string }[] = [];
   const badges: { x: number; v: number; warn: boolean }[] = [];
 
   teeth.forEach((tooth, i) => {
+    const status = getStatus?.(tooth);
+    if (status && !status.present) {
+      if (fgmRuns[fgmRuns.length - 1]!.length) fgmRuns.push([]);
+      if (mgjRuns[mgjRuns.length - 1]!.length) mgjRuns.push([]);
+      return;
+    }
     const d = getDraft(tooth);
     for (let s = 0; s < SITES_PER_SURFACE; s++) {
       const site = offset + s;
       const x = siteX(i, s);
       const fgm = numAt(d, 'FGM', site) ?? 0;
-      fgmPts.push(`${x},${marginBase + apical * fgm * PXMM}`);
+      fgmRuns[fgmRuns.length - 1]!.push(`${x},${marginBase + apical * fgm * PXMM}`);
 
       const mgj = numAt(d, 'MGJ', site);
-      if (mgj != null) mgjPts.push(`${x},${marginBase + apical * mgj * PXMM}`);
+      if (mgj != null) mgjRuns[mgjRuns.length - 1]!.push(`${x},${marginBase + apical * mgj * PXMM}`);
 
       const pd = numAt(d, 'PD', site);
       if (pd != null) badges.push({ x, v: pd, warn: pd >= 4 });
@@ -221,17 +256,18 @@ function GraphBand(props: ArchProps & { offset: number; gumAtTop: boolean; surfL
       <div className="absolute inset-0 flex">
         {teeth.map((tooth) => {
           const a = toothAnatomy(tooth);
+          const status = getStatus?.(tooth);
           return (
-            <div key={tooth} className="flex justify-center" style={{ width: col }}>
+            <div key={tooth} className="flex justify-center" style={{ width: col }} title={statusTooltip(status) || undefined}>
               <ToothShape
                 uid={`pg-${tooth}-${gumAtTop ? 't' : 'b'}`}
                 type={a.type}
                 arch={gumAtTop ? 'upper' : 'lower'}
                 rootLabels={a.rootLabels}
                 selectedKeys={EMPTY_KEYS}
-                segmentGlyphs={EMPTY_GLYPHS}
+                segmentGlyphs={status?.implant ? IMPLANT_GLYPHS : EMPTY_GLYPHS}
                 tooltips={EMPTY_TIPS}
-                missing={false}
+                missing={!!status && !status.present}
                 onSelect={NOOP}
                 width={toothW}
                 height={BAND_H}
@@ -245,8 +281,8 @@ function GraphBand(props: ArchProps & { offset: number; gumAtTop: boolean; surfL
       <svg className="pointer-events-none absolute inset-0" width={width} height={BAND_H}>
         {/* green dental midline */}
         <line x1={midX} y1={0} x2={midX} y2={BAND_H} stroke="#16a34a" strokeWidth={2} />
-        {showMgj && mgjPts.length > 1 && <polyline points={mgjPts.join(' ')} fill="none" stroke="#16a34a" strokeWidth={1.5} />}
-        <polyline points={fgmPts.join(' ')} fill="none" stroke="#dc2626" strokeWidth={2} />
+        {showMgj && mgjRuns.map((run, k) => run.length > 1 && <polyline key={`m${k}`} points={run.join(' ')} fill="none" stroke="#16a34a" strokeWidth={1.5} />)}
+        {fgmRuns.map((run, k) => run.length > 1 && <polyline key={`f${k}`} points={run.join(' ')} fill="none" stroke="#dc2626" strokeWidth={2} />)}
         {dots.map((dt, k) => <circle key={k} cx={dt.x} cy={dt.y} r={2.4} fill={dt.c} stroke="#fff" strokeWidth={0.5} />)}
         {badges.map((b, k) => (
           <g key={k}>
