@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { STATUS_ORDER, STATUS_LABEL, type TxStatus } from './txModel';
+import { SETTABLE_STATUSES, STATUS_LABEL, type TxStatus } from './txModel';
 import { DISCLOSURES, type ReportOptions } from './txReport';
 
 interface TxPlanReportModalProps {
@@ -139,7 +139,7 @@ export default function TxPlanReportModal({ availableTids, defaultTid, busy, onC
           <div>
             <div className="mb-1 font-semibold text-slate-600">Include Statuses</div>
             <div className="grid grid-cols-3 gap-2">
-              {STATUS_ORDER.map((s) => (
+              {SETTABLE_STATUSES.map((s) => (
                 <label key={s} className="flex items-center gap-1 text-slate-700">
                   <input type="checkbox" checked={statuses.has(s)} onChange={() => toggleStatus(s)} /> {STATUS_LABEL[s]}
                 </label>

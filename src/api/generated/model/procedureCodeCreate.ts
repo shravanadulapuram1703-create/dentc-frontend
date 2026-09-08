@@ -11,6 +11,7 @@ export interface ProcedureCodeCreate {
   legacy_code?: string | null;
   description: string;
   category: string;
+  coverage_category?: string | null;
   default_fee?: number | string | null;
   default_duration_minutes?: number | null;
   requires_tooth?: boolean | null;

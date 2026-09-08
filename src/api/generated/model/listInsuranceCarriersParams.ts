@@ -21,6 +21,18 @@ carrier_type?: string | null;
  */
 insurance_type?: string | null;
 /**
+ * Filter by payer_id
+ */
+payer_id?: string | null;
+/**
+ * Filter by is_dental
+ */
+is_dental?: boolean | null;
+/**
+ * Comma-separated list of ids to return (batch lookup)
+ */
+ids?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

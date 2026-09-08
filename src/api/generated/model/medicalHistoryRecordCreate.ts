@@ -9,5 +9,13 @@
 export interface MedicalHistoryRecordCreate {
   patient_id: number;
   signature_id?: number | null;
+  scope?: string | null;
+  content_hash?: string | null;
+  item_count?: number | null;
+  comments?: string | null;
+  completed_at?: string | null;
+  completed_by?: number | null;
+  source_patient_id?: number | null;
+  copied_at?: string | null;
   is_archived?: boolean | null;
 }

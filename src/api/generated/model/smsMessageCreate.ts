@@ -19,4 +19,16 @@ export interface SmsMessageCreate {
   reply_received_on?: string | null;
   message_type?: string | null;
   is_read?: boolean | null;
+  from_phone?: string | null;
+  direction?: string | null;
+  sent_at?: string | null;
+  error_code?: number | null;
+  error_message?: string | null;
+  segments?: number | null;
+  client_id?: string | null;
+  template_id?: number | null;
+  reply_intent?: string | null;
+  needs_attention?: boolean | null;
+  candidate_patient_ids?: unknown | null;
+  reminder_lead_hours?: number | null;
 }

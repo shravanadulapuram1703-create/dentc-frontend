@@ -39,6 +39,7 @@ import PatientNotesListing from './components/patient/PatientNotesListing';
 import PatientDocuments from './components/patient/PatientDocuments';
 import { ImagingWorkspace } from './features/imaging';
 import EmergencyContacts from './components/patient/EmergencyContacts';
+import { PatientMessagesPage, PatientCommunicationPage } from './features/sms';
 import AddEditPatientNote from './components/patient/AddEditPatientNote';
 import ProgressNotesList from './features/progress-notes/ProgressNotesList';
 import ProgressNoteEditor from './features/progress-notes/ProgressNoteEditor';
@@ -220,6 +221,9 @@ function AppRoutes() {
         <Route path="letters" element={<LettersPage />} />
         <Route path="imaging" element={<ImagingWorkspace />} />
         <Route path="emergency-contacts" element={<EmergencyContacts />} />
+        {/* Patient SMS — two-way texting inbox + SMS/Email log (src/features/sms) */}
+        <Route path="messages" element={<PatientMessagesPage />} />
+        <Route path="communication" element={<PatientCommunicationPage />} />
         
         {/* Default - Redirect to Overview */}
         <Route index element={<Navigate to="overview" replace />} />

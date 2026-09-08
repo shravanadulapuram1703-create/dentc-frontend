@@ -69,6 +69,7 @@ import type {
   ListNoteMacrosParams,
   ListPlaceOfServiceCodesParams,
   ListPrescriptionLibraryParams,
+  ListProcedureCodeCategoriesParams,
   ListProcedureCodesParams,
   NewFeeScheduleVersionRequest,
   NoteMacroCategory,
@@ -94,6 +95,7 @@ import type {
   PrescriptionLibraryCreate,
   PrescriptionLibraryRead,
   PrescriptionLibraryUpdate,
+  ProcedureCodeCategory,
   ProcedureCodeCreate,
   ProcedureCodeRead,
   ProcedureCodeStats,
@@ -704,6 +706,101 @@ export const useDeleteProcedureInsuranceRule = <TError = ErrorType<ErrorResponse
       return useMutation(getDeleteProcedureInsuranceRuleMutationOptions(options), queryClient);
     }
     /**
+ * Renders the Quick Add / picker category buttons without paging the whole
+ * ~1,100-code catalog first.
+ * @summary Procedure-code categories with code counts
+ */
+export const listProcedureCodeCategories = (
+    params?: ListProcedureCodeCategoriesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureCodeCategory[]>(
+      {url: `/api/v1/procedure-code-categories`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProcedureCodeCategoriesQueryKey = (params?: ListProcedureCodeCategoriesParams,) => {
+    return [
+    `/api/v1/procedure-code-categories`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListProcedureCodeCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: ListProcedureCodeCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProcedureCodeCategoriesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProcedureCodeCategories>>> = ({ signal }) => listProcedureCodeCategories(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProcedureCodeCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listProcedureCodeCategories>>>
+export type ListProcedureCodeCategoriesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListProcedureCodeCategories<TData = Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  ListProcedureCodeCategoriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProcedureCodeCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listProcedureCodeCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProcedureCodeCategories<TData = Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListProcedureCodeCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProcedureCodeCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listProcedureCodeCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProcedureCodeCategories<TData = Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListProcedureCodeCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Procedure-code categories with code counts
+ */
+
+export function useListProcedureCodeCategories<TData = Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListProcedureCodeCategoriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProcedureCodeCategoriesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Activate/deactivate many ICD codes at once
  */
 export const bulkSetIcdCodeStatus = (

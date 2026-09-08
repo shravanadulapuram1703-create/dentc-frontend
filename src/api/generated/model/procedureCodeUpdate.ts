@@ -10,6 +10,7 @@ export interface ProcedureCodeUpdate {
   legacy_code?: string | null;
   description?: string | null;
   category?: string | null;
+  coverage_category?: string | null;
   default_fee?: number | string | null;
   default_duration_minutes?: number | null;
   requires_tooth?: boolean | null;

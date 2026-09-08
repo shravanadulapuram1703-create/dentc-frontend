@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ProviderRead, TreatmentPlanItemRead, TreatmentPlanItemUpdate } from '@/api/generated/model';
-import { STATUS_ORDER, STATUS_LABEL, num, type TxStatus, normalizeStatus } from './txModel';
+import { SETTABLE_STATUSES, STATUS_LABEL, num, type SettableTxStatus, normalizeStatus } from './txModel';
 
 // Legacy Denticon M08 "Edit Treatment" window — the per-procedure detail editor
 // opened by clicking a row's hyperlinked Diagnosed Date. On the
@@ -64,7 +64,7 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   const [fee, setFee] = useState<string>(item.fee ?? '0');
   const [estIns, setEstIns] = useState<string>(item.insurance_estimate ?? '0');
   const [discount, setDiscount] = useState<string>(item.discount ?? '');
-  const [status, setStatus] = useState<TxStatus>(normalizeStatus(item.status));
+  const [status, setStatus] = useState<SettableTxStatus>(normalizeStatus(item.status) as SettableTxStatus);
   const [diagnosedDate, setDiagnosedDate] = useState<string>(toDateInput(item.diagnosed_date ?? item.created_at));
   const [startDate, setStartDate] = useState<string>(toDateInput(item.start_date));
   const [endDate, setEndDate] = useState<string>(toDateInput(item.end_date));
@@ -267,14 +267,15 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
               <fieldset className="rounded border border-slate-200 p-2">
                 <legend className="px-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">Status</legend>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                  {STATUS_ORDER.map((s) => (
+                  {SETTABLE_STATUSES.map((s) => (
                     <label key={s} className="flex items-center gap-1 text-xs text-slate-700">
                       <input type="radio" name="edit-status" checked={status === s} onChange={() => setStatus(s)} />
                       {STATUS_LABEL[s]}
                     </label>
                   ))}
-                  {/* Legacy-only statuses with no backend enum value */}
-                  {['Scheduled', 'Completed', 'Internal Referral', 'External Referral'].map((s) => (
+                  {/* Legacy-only statuses with no backend enum value ("Completed" is
+                      derived from Post to Ledger — see txModel) */}
+                  {['Scheduled', 'Internal Referral', 'External Referral'].map((s) => (
                     <label key={s} className="flex items-center gap-1 text-xs text-slate-400" title="Not in backend status enum">
                       <input type="radio" name="edit-status" disabled />
                       {s} †

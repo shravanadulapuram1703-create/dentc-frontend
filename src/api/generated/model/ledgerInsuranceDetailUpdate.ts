@@ -18,18 +18,28 @@ export interface LedgerInsuranceDetailUpdate {
   prim_ins_paid?: number | string | null;
   prim_ins_adjust?: number | string | null;
   sec_estimated?: number | string | null;
+  sec_deductible?: number | string | null;
   sec_ins_paid?: number | string | null;
   sec_ins_adjust?: number | string | null;
+  ter_estimated?: number | string | null;
+  ter_deductible?: number | string | null;
   ter_ins_paid?: number | string | null;
+  ter_ins_adjust?: number | string | null;
   prim_ins_plan_id?: number | null;
   sec_ins_plan_id?: number | null;
   ter_ins_plan_id?: number | null;
   prim_posted?: boolean | null;
   sec_posted?: boolean | null;
+  ter_posted?: boolean | null;
   payment_date?: string | null;
   payment_method?: string | null;
   check_number?: string | null;
   bank_number?: string | null;
   eob_number?: string | null;
   eft_trace_number?: string | null;
+  notes?: string | null;
+  is_void?: boolean | null;
+  void_reason?: string | null;
+  voided_at?: string | null;
+  voided_by?: number | null;
 }

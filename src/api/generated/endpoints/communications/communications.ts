@@ -25,9 +25,19 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CampaignCreate,
+  CampaignRead,
+  CampaignUpdate,
   ConsentFormList,
+  EmailGatewayStatus,
+  EmailMessageCreate,
+  EmailMessageRead,
+  EmailMessageUpdate,
+  EmailMetadata,
+  EmailSendRequest,
   ErrorResponse,
   GetPatientLetterContextParams,
+  GetSmsInboxSummaryParams,
   HTTPValidationError,
   LetterBatchRequest,
   LetterBatchResponse,
@@ -37,22 +47,43 @@ import type {
   LetterTemplateCreate,
   LetterTemplateRead,
   LetterTemplateUpdate,
+  ListCampaignsParams,
   ListConsentFormsParams,
+  ListEmailMessagesParams,
   ListLetterBatchesParams,
   ListLetterTemplatesParams,
   ListPostcardTemplatesParams,
   ListSmsMessagesParams,
+  ListSmsTemplatesParams,
   MergeFieldCatalog,
+  PaginatedResponseCampaignRead,
+  PaginatedResponseEmailMessageRead,
   PaginatedResponseLetterBatchRunRead,
   PaginatedResponseLetterTemplateRead,
   PaginatedResponsePostcardTemplateRead,
   PaginatedResponseSmsMessageRead,
+  PaginatedResponseSmsTemplateRead,
   PostcardTemplateCreate,
   PostcardTemplateRead,
   PostcardTemplateUpdate,
+  ResolveSmsSenderParams,
+  SmsGatewayStatus,
+  SmsInboxSummary,
+  SmsMarkReadRequest,
+  SmsMarkReadResult,
   SmsMessageCreate,
   SmsMessageRead,
-  SmsMessageUpdate
+  SmsMessageUpdate,
+  SmsMetadata,
+  SmsReminderRunRequest,
+  SmsReminderRunResult,
+  SmsRenderRequest,
+  SmsRenderResult,
+  SmsSendRequest,
+  SmsSenderResolution,
+  SmsTemplateCreate,
+  SmsTemplateRead,
+  SmsTemplateUpdate
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -660,6 +691,875 @@ export function useListConsentForms<TData = Awaited<ReturnType<typeof listConsen
 
 
 /**
+ * @summary Send a text to a patient via Twilio (SMS-1)
+ */
+export const sendSms = (
+    smsSendRequest: BodyType<SmsSendRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsMessageRead>(
+      {url: `/api/v1/sms/send`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: smsSendRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getSendSmsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendSms>>, TError,{data: BodyType<SmsSendRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendSms>>, TError,{data: BodyType<SmsSendRequest>}, TContext> => {
+
+const mutationKey = ['sendSms'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendSms>>, {data: BodyType<SmsSendRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendSms(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendSmsMutationResult = NonNullable<Awaited<ReturnType<typeof sendSms>>>
+    export type SendSmsMutationBody = BodyType<SmsSendRequest>
+    export type SendSmsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Send a text to a patient via Twilio (SMS-1)
+ */
+export const useSendSms = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendSms>>, TError,{data: BodyType<SmsSendRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendSms>>,
+        TError,
+        {data: BodyType<SmsSendRequest>},
+        TContext
+      > => {
+      return useMutation(getSendSmsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Is Twilio configured (live) or is the gateway in log-only mode?
+ */
+export const getSmsGatewayStatus = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsGatewayStatus>(
+      {url: `/api/v1/sms/gateway`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetSmsGatewayStatusQueryKey = () => {
+    return [
+    `/api/v1/sms/gateway`
+    ] as const;
+    }
+
+
+export const getGetSmsGatewayStatusQueryOptions = <TData = Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmsGatewayStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmsGatewayStatus>>> = ({ signal }) => getSmsGatewayStatus(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmsGatewayStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getSmsGatewayStatus>>>
+export type GetSmsGatewayStatusQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetSmsGatewayStatus<TData = Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsGatewayStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsGatewayStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsGatewayStatus<TData = Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsGatewayStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsGatewayStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsGatewayStatus<TData = Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Is Twilio configured (live) or is the gateway in log-only mode?
+ */
+
+export function useGetSmsGatewayStatus<TData = Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmsGatewayStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Which From number / Messaging Service an office sends from (SMS-7)
+ */
+export const resolveSmsSender = (
+    params?: ResolveSmsSenderParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsSenderResolution>(
+      {url: `/api/v1/sms/sender`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getResolveSmsSenderQueryKey = (params?: ResolveSmsSenderParams,) => {
+    return [
+    `/api/v1/sms/sender`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getResolveSmsSenderQueryOptions = <TData = Awaited<ReturnType<typeof resolveSmsSender>>, TError = ErrorType<ErrorResponse>>(params?: ResolveSmsSenderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveSmsSender>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getResolveSmsSenderQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof resolveSmsSender>>> = ({ signal }) => resolveSmsSender(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof resolveSmsSender>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ResolveSmsSenderQueryResult = NonNullable<Awaited<ReturnType<typeof resolveSmsSender>>>
+export type ResolveSmsSenderQueryError = ErrorType<ErrorResponse>
+
+
+export function useResolveSmsSender<TData = Awaited<ReturnType<typeof resolveSmsSender>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ResolveSmsSenderParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveSmsSender>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resolveSmsSender>>,
+          TError,
+          Awaited<ReturnType<typeof resolveSmsSender>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useResolveSmsSender<TData = Awaited<ReturnType<typeof resolveSmsSender>>, TError = ErrorType<ErrorResponse>>(
+ params?: ResolveSmsSenderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveSmsSender>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resolveSmsSender>>,
+          TError,
+          Awaited<ReturnType<typeof resolveSmsSender>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useResolveSmsSender<TData = Awaited<ReturnType<typeof resolveSmsSender>>, TError = ErrorType<ErrorResponse>>(
+ params?: ResolveSmsSenderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveSmsSender>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Which From number / Messaging Service an office sends from (SMS-7)
+ */
+
+export function useResolveSmsSender<TData = Awaited<ReturnType<typeof resolveSmsSender>>, TError = ErrorType<ErrorResponse>>(
+ params?: ResolveSmsSenderParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveSmsSender>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getResolveSmsSenderQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Render {{merge_fields}} for one patient (SMS-5)
+ */
+export const renderSms = (
+    smsRenderRequest: BodyType<SmsRenderRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsRenderResult>(
+      {url: `/api/v1/sms/render`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: smsRenderRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getRenderSmsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renderSms>>, TError,{data: BodyType<SmsRenderRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof renderSms>>, TError,{data: BodyType<SmsRenderRequest>}, TContext> => {
+
+const mutationKey = ['renderSms'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renderSms>>, {data: BodyType<SmsRenderRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  renderSms(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenderSmsMutationResult = NonNullable<Awaited<ReturnType<typeof renderSms>>>
+    export type RenderSmsMutationBody = BodyType<SmsRenderRequest>
+    export type RenderSmsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Render {{merge_fields}} for one patient (SMS-5)
+ */
+export const useRenderSms = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renderSms>>, TError,{data: BodyType<SmsRenderRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof renderSms>>,
+        TError,
+        {data: BodyType<SmsRenderRequest>},
+        TContext
+      > => {
+      return useMutation(getRenderSmsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Unread / needs-attention / unmatched / failed counts per office (SMS-6)
+ */
+export const getSmsInboxSummary = (
+    params?: GetSmsInboxSummaryParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsInboxSummary>(
+      {url: `/api/v1/sms/inbox/summary`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetSmsInboxSummaryQueryKey = (params?: GetSmsInboxSummaryParams,) => {
+    return [
+    `/api/v1/sms/inbox/summary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSmsInboxSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getSmsInboxSummary>>, TError = ErrorType<ErrorResponse>>(params?: GetSmsInboxSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsInboxSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmsInboxSummaryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmsInboxSummary>>> = ({ signal }) => getSmsInboxSummary(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmsInboxSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmsInboxSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getSmsInboxSummary>>>
+export type GetSmsInboxSummaryQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetSmsInboxSummary<TData = Awaited<ReturnType<typeof getSmsInboxSummary>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  GetSmsInboxSummaryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsInboxSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsInboxSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsInboxSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsInboxSummary<TData = Awaited<ReturnType<typeof getSmsInboxSummary>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetSmsInboxSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsInboxSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsInboxSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsInboxSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsInboxSummary<TData = Awaited<ReturnType<typeof getSmsInboxSummary>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetSmsInboxSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsInboxSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Unread / needs-attention / unmatched / failed counts per office (SMS-6)
+ */
+
+export function useGetSmsInboxSummary<TData = Awaited<ReturnType<typeof getSmsInboxSummary>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetSmsInboxSummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsInboxSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmsInboxSummaryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Mark every unread reply read (per patient and/or office)
+ */
+export const markSmsRepliesRead = (
+    smsMarkReadRequest: BodyType<SmsMarkReadRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsMarkReadResult>(
+      {url: `/api/v1/sms/inbox/mark-read`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: smsMarkReadRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getMarkSmsRepliesReadMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markSmsRepliesRead>>, TError,{data: BodyType<SmsMarkReadRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof markSmsRepliesRead>>, TError,{data: BodyType<SmsMarkReadRequest>}, TContext> => {
+
+const mutationKey = ['markSmsRepliesRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markSmsRepliesRead>>, {data: BodyType<SmsMarkReadRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  markSmsRepliesRead(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkSmsRepliesReadMutationResult = NonNullable<Awaited<ReturnType<typeof markSmsRepliesRead>>>
+    export type MarkSmsRepliesReadMutationBody = BodyType<SmsMarkReadRequest>
+    export type MarkSmsRepliesReadMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Mark every unread reply read (per patient and/or office)
+ */
+export const useMarkSmsRepliesRead = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markSmsRepliesRead>>, TError,{data: BodyType<SmsMarkReadRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markSmsRepliesRead>>,
+        TError,
+        {data: BodyType<SmsMarkReadRequest>},
+        TContext
+      > => {
+      return useMutation(getMarkSmsRepliesReadMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Send every due automated appointment reminder for this tenant (SMS-9)
+ */
+export const runSmsReminders = (
+    smsReminderRunRequestNull?: BodyType<SmsReminderRunRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsReminderRunResult>(
+      {url: `/api/v1/sms/reminders/run`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: smsReminderRunRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getRunSmsRemindersMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runSmsReminders>>, TError,{data?: BodyType<SmsReminderRunRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof runSmsReminders>>, TError,{data?: BodyType<SmsReminderRunRequest | null>}, TContext> => {
+
+const mutationKey = ['runSmsReminders'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof runSmsReminders>>, {data?: BodyType<SmsReminderRunRequest | null>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  runSmsReminders(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RunSmsRemindersMutationResult = NonNullable<Awaited<ReturnType<typeof runSmsReminders>>>
+    export type RunSmsRemindersMutationBody = BodyType<SmsReminderRunRequest | null> | undefined
+    export type RunSmsRemindersMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Send every due automated appointment reminder for this tenant (SMS-9)
+ */
+export const useRunSmsReminders = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runSmsReminders>>, TError,{data?: BodyType<SmsReminderRunRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof runSmsReminders>>,
+        TError,
+        {data?: BodyType<SmsReminderRunRequest | null>},
+        TContext
+      > => {
+      return useMutation(getRunSmsRemindersMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Message-type / status / intent vocabularies + merge fields
+ */
+export const getSmsMetadata = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsMetadata>(
+      {url: `/api/v1/sms/metadata`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetSmsMetadataQueryKey = () => {
+    return [
+    `/api/v1/sms/metadata`
+    ] as const;
+    }
+
+
+export const getGetSmsMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getSmsMetadata>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmsMetadataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmsMetadata>>> = ({ signal }) => getSmsMetadata(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmsMetadata>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmsMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getSmsMetadata>>>
+export type GetSmsMetadataQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetSmsMetadata<TData = Awaited<ReturnType<typeof getSmsMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsMetadata>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsMetadata<TData = Awaited<ReturnType<typeof getSmsMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsMetadata>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsMetadata<TData = Awaited<ReturnType<typeof getSmsMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Message-type / status / intent vocabularies + merge fields
+ */
+
+export function useGetSmsMetadata<TData = Awaited<ReturnType<typeof getSmsMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmsMetadataQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Send an e-mail to a patient via SendGrid (EMAIL-1)
+ */
+export const sendEmail = (
+    emailSendRequest: BodyType<EmailSendRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EmailMessageRead>(
+      {url: `/api/v1/email/send`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: emailSendRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getSendEmailMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendEmail>>, TError,{data: BodyType<EmailSendRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendEmail>>, TError,{data: BodyType<EmailSendRequest>}, TContext> => {
+
+const mutationKey = ['sendEmail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendEmail>>, {data: BodyType<EmailSendRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendEmail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendEmailMutationResult = NonNullable<Awaited<ReturnType<typeof sendEmail>>>
+    export type SendEmailMutationBody = BodyType<EmailSendRequest>
+    export type SendEmailMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Send an e-mail to a patient via SendGrid (EMAIL-1)
+ */
+export const useSendEmail = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendEmail>>, TError,{data: BodyType<EmailSendRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendEmail>>,
+        TError,
+        {data: BodyType<EmailSendRequest>},
+        TContext
+      > => {
+      return useMutation(getSendEmailMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Is SendGrid configured (live) or is the gateway in log-only mode?
+ */
+export const getEmailGatewayStatus = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EmailGatewayStatus>(
+      {url: `/api/v1/email/gateway`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetEmailGatewayStatusQueryKey = () => {
+    return [
+    `/api/v1/email/gateway`
+    ] as const;
+    }
+
+
+export const getGetEmailGatewayStatusQueryOptions = <TData = Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEmailGatewayStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmailGatewayStatus>>> = ({ signal }) => getEmailGatewayStatus(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEmailGatewayStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getEmailGatewayStatus>>>
+export type GetEmailGatewayStatusQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetEmailGatewayStatus<TData = Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmailGatewayStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getEmailGatewayStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEmailGatewayStatus<TData = Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmailGatewayStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getEmailGatewayStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEmailGatewayStatus<TData = Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Is SendGrid configured (live) or is the gateway in log-only mode?
+ */
+
+export function useGetEmailGatewayStatus<TData = Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailGatewayStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEmailGatewayStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Email Metadata
+ */
+export const getEmailMetadata = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EmailMetadata>(
+      {url: `/api/v1/email/metadata`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetEmailMetadataQueryKey = () => {
+    return [
+    `/api/v1/email/metadata`
+    ] as const;
+    }
+
+
+export const getGetEmailMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getEmailMetadata>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEmailMetadataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmailMetadata>>> = ({ signal }) => getEmailMetadata(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEmailMetadata>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEmailMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getEmailMetadata>>>
+export type GetEmailMetadataQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetEmailMetadata<TData = Awaited<ReturnType<typeof getEmailMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMetadata>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmailMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getEmailMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEmailMetadata<TData = Awaited<ReturnType<typeof getEmailMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMetadata>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmailMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getEmailMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEmailMetadata<TData = Awaited<ReturnType<typeof getEmailMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Email Metadata
+ */
+
+export function useGetEmailMetadata<TData = Awaited<ReturnType<typeof getEmailMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEmailMetadataQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List sms messages
  */
 export const listSmsMessages = (
@@ -1031,6 +1931,752 @@ export const useDeleteSmsMessage = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteSmsMessageMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List sms templates
+ */
+export const listSmsTemplates = (
+    params?: ListSmsTemplatesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseSmsTemplateRead>(
+      {url: `/api/v1/sms-templates`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListSmsTemplatesQueryKey = (params?: ListSmsTemplatesParams,) => {
+    return [
+    `/api/v1/sms-templates`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSmsTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof listSmsTemplates>>, TError = ErrorType<ErrorResponse>>(params?: ListSmsTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSmsTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSmsTemplatesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSmsTemplates>>> = ({ signal }) => listSmsTemplates(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSmsTemplates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSmsTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listSmsTemplates>>>
+export type ListSmsTemplatesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListSmsTemplates<TData = Awaited<ReturnType<typeof listSmsTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListSmsTemplatesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSmsTemplates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSmsTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listSmsTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSmsTemplates<TData = Awaited<ReturnType<typeof listSmsTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListSmsTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSmsTemplates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSmsTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listSmsTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSmsTemplates<TData = Awaited<ReturnType<typeof listSmsTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListSmsTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSmsTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List sms templates
+ */
+
+export function useListSmsTemplates<TData = Awaited<ReturnType<typeof listSmsTemplates>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListSmsTemplatesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSmsTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSmsTemplatesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create sms template
+ */
+export const createSmsTemplate = (
+    smsTemplateCreate: BodyType<SmsTemplateCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsTemplateRead>(
+      {url: `/api/v1/sms-templates`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: smsTemplateCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateSmsTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSmsTemplate>>, TError,{data: BodyType<SmsTemplateCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSmsTemplate>>, TError,{data: BodyType<SmsTemplateCreate>}, TContext> => {
+
+const mutationKey = ['createSmsTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSmsTemplate>>, {data: BodyType<SmsTemplateCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSmsTemplate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSmsTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createSmsTemplate>>>
+    export type CreateSmsTemplateMutationBody = BodyType<SmsTemplateCreate>
+    export type CreateSmsTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create sms template
+ */
+export const useCreateSmsTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSmsTemplate>>, TError,{data: BodyType<SmsTemplateCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createSmsTemplate>>,
+        TError,
+        {data: BodyType<SmsTemplateCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateSmsTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get sms template by id
+ */
+export const getSmsTemplate = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsTemplateRead>(
+      {url: `/api/v1/sms-templates/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetSmsTemplateQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/sms-templates/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetSmsTemplateQueryOptions = <TData = Awaited<ReturnType<typeof getSmsTemplate>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmsTemplateQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmsTemplate>>> = ({ signal }) => getSmsTemplate(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmsTemplate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmsTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getSmsTemplate>>>
+export type GetSmsTemplateQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetSmsTemplate<TData = Awaited<ReturnType<typeof getSmsTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsTemplate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsTemplate<TData = Awaited<ReturnType<typeof getSmsTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsTemplate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmsTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getSmsTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmsTemplate<TData = Awaited<ReturnType<typeof getSmsTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get sms template by id
+ */
+
+export function useGetSmsTemplate<TData = Awaited<ReturnType<typeof getSmsTemplate>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmsTemplate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmsTemplateQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update sms template
+ */
+export const updateSmsTemplate = (
+    itemId: number,
+    smsTemplateUpdate: BodyType<SmsTemplateUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmsTemplateRead>(
+      {url: `/api/v1/sms-templates/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: smsTemplateUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateSmsTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSmsTemplate>>, TError,{itemId: number;data: BodyType<SmsTemplateUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSmsTemplate>>, TError,{itemId: number;data: BodyType<SmsTemplateUpdate>}, TContext> => {
+
+const mutationKey = ['updateSmsTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSmsTemplate>>, {itemId: number;data: BodyType<SmsTemplateUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateSmsTemplate(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSmsTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateSmsTemplate>>>
+    export type UpdateSmsTemplateMutationBody = BodyType<SmsTemplateUpdate>
+    export type UpdateSmsTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update sms template
+ */
+export const useUpdateSmsTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSmsTemplate>>, TError,{itemId: number;data: BodyType<SmsTemplateUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateSmsTemplate>>,
+        TError,
+        {itemId: number;data: BodyType<SmsTemplateUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateSmsTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete sms template
+ */
+export const deleteSmsTemplate = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/sms-templates/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteSmsTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSmsTemplate>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSmsTemplate>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteSmsTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSmsTemplate>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteSmsTemplate(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSmsTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSmsTemplate>>>
+
+    export type DeleteSmsTemplateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete sms template
+ */
+export const useDeleteSmsTemplate = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSmsTemplate>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSmsTemplate>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteSmsTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List email messages
+ */
+export const listEmailMessages = (
+    params?: ListEmailMessagesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseEmailMessageRead>(
+      {url: `/api/v1/email-messages`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListEmailMessagesQueryKey = (params?: ListEmailMessagesParams,) => {
+    return [
+    `/api/v1/email-messages`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListEmailMessagesQueryOptions = <TData = Awaited<ReturnType<typeof listEmailMessages>>, TError = ErrorType<ErrorResponse>>(params?: ListEmailMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmailMessages>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListEmailMessagesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEmailMessages>>> = ({ signal }) => listEmailMessages(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEmailMessages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListEmailMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof listEmailMessages>>>
+export type ListEmailMessagesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListEmailMessages<TData = Awaited<ReturnType<typeof listEmailMessages>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListEmailMessagesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmailMessages>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEmailMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listEmailMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListEmailMessages<TData = Awaited<ReturnType<typeof listEmailMessages>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListEmailMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmailMessages>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEmailMessages>>,
+          TError,
+          Awaited<ReturnType<typeof listEmailMessages>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListEmailMessages<TData = Awaited<ReturnType<typeof listEmailMessages>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListEmailMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmailMessages>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List email messages
+ */
+
+export function useListEmailMessages<TData = Awaited<ReturnType<typeof listEmailMessages>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListEmailMessagesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmailMessages>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListEmailMessagesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create email message
+ */
+export const createEmailMessage = (
+    emailMessageCreate: BodyType<EmailMessageCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EmailMessageRead>(
+      {url: `/api/v1/email-messages`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: emailMessageCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateEmailMessageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEmailMessage>>, TError,{data: BodyType<EmailMessageCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createEmailMessage>>, TError,{data: BodyType<EmailMessageCreate>}, TContext> => {
+
+const mutationKey = ['createEmailMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEmailMessage>>, {data: BodyType<EmailMessageCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createEmailMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateEmailMessageMutationResult = NonNullable<Awaited<ReturnType<typeof createEmailMessage>>>
+    export type CreateEmailMessageMutationBody = BodyType<EmailMessageCreate>
+    export type CreateEmailMessageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create email message
+ */
+export const useCreateEmailMessage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEmailMessage>>, TError,{data: BodyType<EmailMessageCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createEmailMessage>>,
+        TError,
+        {data: BodyType<EmailMessageCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateEmailMessageMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get email message by id
+ */
+export const getEmailMessage = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EmailMessageRead>(
+      {url: `/api/v1/email-messages/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetEmailMessageQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/email-messages/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetEmailMessageQueryOptions = <TData = Awaited<ReturnType<typeof getEmailMessage>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMessage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEmailMessageQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmailMessage>>> = ({ signal }) => getEmailMessage(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEmailMessage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEmailMessageQueryResult = NonNullable<Awaited<ReturnType<typeof getEmailMessage>>>
+export type GetEmailMessageQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetEmailMessage<TData = Awaited<ReturnType<typeof getEmailMessage>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMessage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmailMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getEmailMessage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEmailMessage<TData = Awaited<ReturnType<typeof getEmailMessage>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMessage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmailMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getEmailMessage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEmailMessage<TData = Awaited<ReturnType<typeof getEmailMessage>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMessage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get email message by id
+ */
+
+export function useGetEmailMessage<TData = Awaited<ReturnType<typeof getEmailMessage>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmailMessage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEmailMessageQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update email message
+ */
+export const updateEmailMessage = (
+    itemId: number,
+    emailMessageUpdate: BodyType<EmailMessageUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EmailMessageRead>(
+      {url: `/api/v1/email-messages/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: emailMessageUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateEmailMessageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEmailMessage>>, TError,{itemId: number;data: BodyType<EmailMessageUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateEmailMessage>>, TError,{itemId: number;data: BodyType<EmailMessageUpdate>}, TContext> => {
+
+const mutationKey = ['updateEmailMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEmailMessage>>, {itemId: number;data: BodyType<EmailMessageUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateEmailMessage(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateEmailMessageMutationResult = NonNullable<Awaited<ReturnType<typeof updateEmailMessage>>>
+    export type UpdateEmailMessageMutationBody = BodyType<EmailMessageUpdate>
+    export type UpdateEmailMessageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update email message
+ */
+export const useUpdateEmailMessage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEmailMessage>>, TError,{itemId: number;data: BodyType<EmailMessageUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateEmailMessage>>,
+        TError,
+        {itemId: number;data: BodyType<EmailMessageUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateEmailMessageMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete email message
+ */
+export const deleteEmailMessage = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/email-messages/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteEmailMessageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmailMessage>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteEmailMessage>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteEmailMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEmailMessage>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteEmailMessage(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteEmailMessageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEmailMessage>>>
+
+    export type DeleteEmailMessageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete email message
+ */
+export const useDeleteEmailMessage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmailMessage>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteEmailMessage>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteEmailMessageMutationOptions(options), queryClient);
     }
     /**
  * @summary List letter templates
@@ -1777,4 +3423,377 @@ export const useDeletePostcardTemplate = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeletePostcardTemplateMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List campaigns
+ */
+export const listCampaigns = (
+    params?: ListCampaignsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseCampaignRead>(
+      {url: `/api/v1/campaigns`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListCampaignsQueryKey = (params?: ListCampaignsParams,) => {
+    return [
+    `/api/v1/campaigns`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListCampaignsQueryOptions = <TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>(params?: ListCampaignsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCampaignsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCampaigns>>> = ({ signal }) => listCampaigns(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListCampaignsQueryResult = NonNullable<Awaited<ReturnType<typeof listCampaigns>>>
+export type ListCampaignsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListCampaigns<TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListCampaignsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCampaigns>>,
+          TError,
+          Awaited<ReturnType<typeof listCampaigns>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCampaigns<TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListCampaignsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCampaigns>>,
+          TError,
+          Awaited<ReturnType<typeof listCampaigns>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCampaigns<TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListCampaignsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List campaigns
+ */
+
+export function useListCampaigns<TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListCampaignsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListCampaignsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create campaign
+ */
+export const createCampaign = (
+    campaignCreate: BodyType<CampaignCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CampaignRead>(
+      {url: `/api/v1/campaigns`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: campaignCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateCampaignMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCampaign>>, TError,{data: BodyType<CampaignCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCampaign>>, TError,{data: BodyType<CampaignCreate>}, TContext> => {
+
+const mutationKey = ['createCampaign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCampaign>>, {data: BodyType<CampaignCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCampaign(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof createCampaign>>>
+    export type CreateCampaignMutationBody = BodyType<CampaignCreate>
+    export type CreateCampaignMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create campaign
+ */
+export const useCreateCampaign = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCampaign>>, TError,{data: BodyType<CampaignCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createCampaign>>,
+        TError,
+        {data: BodyType<CampaignCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateCampaignMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get campaign by id
+ */
+export const getCampaign = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CampaignRead>(
+      {url: `/api/v1/campaigns/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetCampaignQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/campaigns/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetCampaignQueryOptions = <TData = Awaited<ReturnType<typeof getCampaign>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCampaign>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCampaignQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCampaign>>> = ({ signal }) => getCampaign(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCampaign>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCampaignQueryResult = NonNullable<Awaited<ReturnType<typeof getCampaign>>>
+export type GetCampaignQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetCampaign<TData = Awaited<ReturnType<typeof getCampaign>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCampaign>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCampaign>>,
+          TError,
+          Awaited<ReturnType<typeof getCampaign>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCampaign<TData = Awaited<ReturnType<typeof getCampaign>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCampaign>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCampaign>>,
+          TError,
+          Awaited<ReturnType<typeof getCampaign>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCampaign<TData = Awaited<ReturnType<typeof getCampaign>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCampaign>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get campaign by id
+ */
+
+export function useGetCampaign<TData = Awaited<ReturnType<typeof getCampaign>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCampaign>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCampaignQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update campaign
+ */
+export const updateCampaign = (
+    itemId: number,
+    campaignUpdate: BodyType<CampaignUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CampaignRead>(
+      {url: `/api/v1/campaigns/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: campaignUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateCampaignMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCampaign>>, TError,{itemId: number;data: BodyType<CampaignUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCampaign>>, TError,{itemId: number;data: BodyType<CampaignUpdate>}, TContext> => {
+
+const mutationKey = ['updateCampaign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCampaign>>, {itemId: number;data: BodyType<CampaignUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateCampaign(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof updateCampaign>>>
+    export type UpdateCampaignMutationBody = BodyType<CampaignUpdate>
+    export type UpdateCampaignMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update campaign
+ */
+export const useUpdateCampaign = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCampaign>>, TError,{itemId: number;data: BodyType<CampaignUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCampaign>>,
+        TError,
+        {itemId: number;data: BodyType<CampaignUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateCampaignMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete campaign
+ */
+export const deleteCampaign = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/campaigns/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteCampaignMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCampaign>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCampaign>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteCampaign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCampaign>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteCampaign(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCampaign>>>
+
+    export type DeleteCampaignMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete campaign
+ */
+export const useDeleteCampaign = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCampaign>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCampaign>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteCampaignMutationOptions(options), queryClient);
     }

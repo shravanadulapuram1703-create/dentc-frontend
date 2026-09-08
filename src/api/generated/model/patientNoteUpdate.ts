@@ -13,6 +13,7 @@ export interface PatientNoteUpdate {
   note_type?: string | null;
   notes?: string | null;
   notes_html?: string | null;
+  document_id?: number | null;
   is_archived?: boolean | null;
   is_deleted?: boolean | null;
 }

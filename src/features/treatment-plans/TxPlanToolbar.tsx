@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ProviderRead } from '@/api/generated/model';
-import { STATUS_ORDER, STATUS_LABEL, type TxStatus } from './txModel';
+import { STATUS_ORDER, SETTABLE_STATUSES, STATUS_LABEL, type TxStatus, type SettableTxStatus } from './txModel';
 
 export interface IdChange {
   tid?: number;
@@ -31,7 +31,7 @@ interface TxPlanToolbarProps {
   onTranDate: (v: string) => void;
   onChangeProvider: (providerId: string) => void;
   onDelete: () => void;
-  onChangeStatus: (status: TxStatus) => void;
+  onChangeStatus: (status: SettableTxStatus) => void;
   onChangeIds: (change: IdChange) => void;
   onCopyAsNewPlan: (newTid: number) => void;
   onReEstimate: (args: ReEstimateArgs) => void;
@@ -70,7 +70,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
 
   // local form state for the inline bars
   const [provId, setProvId] = useState('');
-  const [status, setStatus] = useState<TxStatus>('accepted');
+  const [status, setStatus] = useState<SettableTxStatus>('accepted');
   const [idChange, setIdChange] = useState<IdChange>({});
   const [newPlanTid, setNewPlanTid] = useState<number>(2);
   const [reTid, setReTid] = useState<number>(1);
@@ -246,7 +246,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
       {panel === 'status' && (
         <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 bg-white px-3 py-2">
           <span className="text-xs font-semibold text-slate-600">Status:</span>
-          {STATUS_ORDER.map((s) => (
+          {SETTABLE_STATUSES.map((s) => (
             <label key={s} className="flex items-center gap-1 text-xs text-slate-700">
               <input type="radio" name="tx-status" checked={status === s} onChange={() => setStatus(s)} />
               {STATUS_LABEL[s]}

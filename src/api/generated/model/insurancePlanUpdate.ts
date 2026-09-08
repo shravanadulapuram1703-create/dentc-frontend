@@ -18,7 +18,22 @@ export interface InsurancePlanUpdate {
   family_max?: number | string | null;
   family_deductible?: number | string | null;
   anniversary_date?: string | null;
+  anniversary_month?: number | null;
+  anniversary_day?: number | null;
   anniversary_expiry_date?: string | null;
   coverage_type?: string | null;
+  fees_to_print?: string | null;
+  claim_option?: string | null;
+  form_to_print?: string | null;
+  reporting_subtype?: string | null;
+  network_type?: string | null;
+  noa_only?: boolean | null;
+  per_visit_copay?: number | string | null;
+  lifetime_ortho_benefits?: boolean | null;
+  plan_notes?: string | null;
+  created_on?: string | null;
+  modified_on?: string | null;
+  modified_by?: string | null;
   is_active?: boolean | null;
+  allow_duplicate_group?: boolean;
 }

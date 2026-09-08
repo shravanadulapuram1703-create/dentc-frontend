@@ -7,8 +7,10 @@
 //
 // Two controls legacy did not have, each because a legacy binding does not
 // exist here:
-//   · Signing Provider — the consent bodies interpolate `#DOC_LAST_NAME#`, which
-//     legacy took from the workstation's logged-in dentist.
+//   · Signing Provider — the consent bodies name the doctor via `#APPT_PRDR#`
+//     (most of them) or `#DOC_LAST_NAME#`, which legacy took from the
+//     workstation's logged-in dentist. The picker offers every active provider
+//     in the tenant and overrides both tokens — see mergeFields.ts.
 //   · Treatment Plan — shown only for the one template that interpolates
 //     `#TX_PLAN_TH_NUMBER#`, which the backend binds from `treatment_plan_id`
 //     (LTR-4) and otherwise prints blank rather than guessing a tooth.
@@ -154,9 +156,21 @@ export default function LetterDialog({
     staleTime: 60 * 1000,
   });
 
+  // Every active provider in the tenant is a valid signer — a consent form is
+  // frequently signed by a dentist who is not assigned to the office the patient
+  // is being seen in. The office's own providers are listed first so the
+  // default matches the office, but nobody is hidden.
+  const signer_groups = useMemo(() => {
+    const office_ids = new Set(providers.map((p) => p.id));
+    const active = allProviders.filter((p) => p.is_active);
+    const in_office = active.filter((p) => office_ids.has(p.id));
+    const others = active.filter((p) => !office_ids.has(p.id));
+    return { in_office, others };
+  }, [providers, allProviders]);
+
   const default_signer = useMemo(
-    () => providers[0]?.id ?? allProviders[0]?.id ?? '',
-    [providers, allProviders],
+    () => signer_groups.in_office[0]?.id ?? signer_groups.others[0]?.id ?? '',
+    [signer_groups],
   );
   useEffect(() => {
     if (!signer_id && default_signer) setSignerId(default_signer);
@@ -188,6 +202,7 @@ export default function LetterDialog({
         {
           context,
           signer_name: signature_type === 'none' ? '' : (signer?.name ?? ''),
+          signer_is_dentist: signature_type === 'dentist',
           provider_label: providerLabel,
           local_today: fmt_local_today(),
         },
@@ -309,11 +324,30 @@ export default function LetterDialog({
                 disabled={signature_type === 'none'}
               >
                 <option value="">— none —</option>
-                {(providers.length ? providers : allProviders).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
+                {signer_groups.in_office.length > 0 && signer_groups.others.length > 0 ? (
+                  <>
+                    <optgroup label="This office">
+                      {signer_groups.in_office.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="All providers">
+                      {signer_groups.others.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </>
+                ) : (
+                  [...signer_groups.in_office, ...signer_groups.others].map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))
+                )}
               </select>
             </Field>
           </div>

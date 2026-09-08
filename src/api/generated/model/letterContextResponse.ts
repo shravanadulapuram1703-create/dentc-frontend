@@ -10,6 +10,7 @@ import type { LetterContextOfficeRead } from './letterContextOfficeRead';
 import type { LetterContextProviderRead } from './letterContextProviderRead';
 import type { LetterContextReferralRead } from './letterContextReferralRead';
 import type { LetterContextResponseBalance } from './letterContextResponseBalance';
+import type { LetterContextResponseFallbackTokens } from './letterContextResponseFallbackTokens';
 import type { LetterContextResponseMergeFields } from './letterContextResponseMergeFields';
 import type { LetterContextResponsiblePartyRead } from './letterContextResponsiblePartyRead';
 import type { LetterContextTreatmentPlanRead } from './letterContextTreatmentPlanRead';
@@ -27,13 +28,22 @@ export interface LetterContextResponse {
   next_appointment?: LetterContextAppointmentRead | null;
   next_appointment_provider?: LetterContextProviderRead | null;
   last_appointment?: LetterContextAppointmentRead | null;
+  last_appointment_provider?: LetterContextProviderRead | null;
   treatment_plan?: LetterContextTreatmentPlanRead | null;
   treatment_plan_teeth?: string[];
   /** Only present when include_balance=true (the slow aggregate) */
   balance?: LetterContextResponseBalance;
+  /** Today in the printing office's timezone (LTR-14) */
   today: string;
+  timezone?: string | null;
   /** Every catalog token resolved for this patient */
   merge_fields?: LetterContextResponseMergeFields;
   /** Catalog tokens with no value in this context */
   unresolved_tokens?: string[];
+  /** Which appointment fed #APPT_DATE#/#APPT_DATETIME#: 'next' (upcoming), 'last' (most recent past), or null (none on file) */
+  appointment_source?: string | null;
+  /** Which tier fed #APPT_PRDR#: 'next', 'last', 'preferred' (the patient's preferred provider — no appointment on file), or null */
+  appointment_provider_source?: string | null;
+  /** {token: tier} for tokens answered by a *degraded* tier. Empty when everything resolved from the upcoming appointment. A token the caller overrode is never listed. */
+  fallback_tokens?: LetterContextResponseFallbackTokens;
 }

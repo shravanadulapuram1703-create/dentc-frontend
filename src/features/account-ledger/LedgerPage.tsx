@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { useProcedureSync } from '@/features/procedures/procedureSync';
 import { createInsuranceClaim } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import { getPatientBalances, type BalancesResponse } from '@/services/ledgerApi';
@@ -193,6 +194,9 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   }, [showSortMenu]);
 
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
+  // Charges posted from the chart, the treatment plan, the Transactions Entry
+  // page or another browser tab appear here without a manual reload.
+  useProcedureSync(validId ? patientId : null, refresh);
 
   // ---- Resolvers ----
   const officeLabel = useMemo(() => {

@@ -13,6 +13,22 @@ export type ListMedicalHistoryRecordsParams = {
  */
 patient_id?: number | null;
 /**
+ * Filter by signature_id
+ */
+signature_id?: number | null;
+/**
+ * Filter by scope
+ */
+scope?: string | null;
+/**
+ * Filter by content_hash
+ */
+content_hash?: string | null;
+/**
+ * Filter by source_patient_id
+ */
+source_patient_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

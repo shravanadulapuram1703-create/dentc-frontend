@@ -7,11 +7,22 @@
  */
 
 export interface MedicalHistoryRecordRead {
+  tenant_id?: number | null;
   patient_id: number;
   legacy_id?: string | null;
   signature_id?: number | null;
+  scope?: string | null;
+  content_hash?: string | null;
+  item_count?: number | null;
+  comments?: string | null;
+  completed_at?: string | null;
+  completed_by?: number | null;
+  source_patient_id?: number | null;
+  copied_at?: string | null;
   is_archived: boolean;
   created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

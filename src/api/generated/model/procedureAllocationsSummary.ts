@@ -36,10 +36,15 @@ export interface ProcedureAllocationsSummary {
      */
   adjusted_to_date: string;
   /**
-     * patient_estimate − paid − adjusted
+     * AL-15: the patient's share still owed — patient_estimate (or fee − insurance_estimate when none was recorded) − paid − adjusted
      * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
      */
   remaining_amount: string;
+  /**
+     * AL-15: fee − paid − insurance_paid − adjusted (the legacy Outstanding line)
+     * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+     */
+  outstanding_amount?: string;
   allocations?: AppSchemasBillingPaymentAllocationRead[];
   adjustments?: PatientAdjustmentSummary[];
 }

@@ -25,6 +25,10 @@ is_ortho?: boolean | null;
  */
 chart_category?: string | null;
 /**
+ * Filter by coverage_category
+ */
+coverage_category?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

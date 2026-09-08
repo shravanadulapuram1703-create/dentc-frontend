@@ -12,4 +12,12 @@ export interface PatientSignatureUpdate {
   signature_len?: number | null;
   device_source?: string | null;
   is_user_sig?: boolean | null;
+  signature_type?: string | null;
+  signed_at?: string | null;
+  signed_by_user_id?: number | null;
+  content_hash?: string | null;
+  is_active?: boolean | null;
+  superseded_by_id?: number | null;
+  voided_at?: string | null;
+  voided_by?: number | null;
 }

@@ -25,6 +25,74 @@ message_type?: string | null;
  */
 is_read?: boolean | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
+ * Filter by direction
+ */
+direction?: string | null;
+/**
+ * Filter by send_status
+ */
+send_status?: string | null;
+/**
+ * Filter by needs_attention
+ */
+needs_attention?: boolean | null;
+/**
+ * Filter by reply_intent
+ */
+reply_intent?: string | null;
+/**
+ * Filter by template_id
+ */
+template_id?: number | null;
+/**
+ * Filter by twilio_sid
+ */
+twilio_sid?: string | null;
+/**
+ * Filter by client_id
+ */
+client_id?: string | null;
+/**
+ * Filter by date_from
+ */
+date_from?: string | null;
+/**
+ * Filter by date_to
+ */
+date_to?: string | null;
+/**
+ * Filter by unmatched
+ */
+unmatched?: boolean | null;
+/**
+ * Filter by has_reply
+ */
+has_reply?: boolean | null;
+/**
+ * Filter by unread_replies
+ */
+unread_replies?: boolean | null;
+/**
+ * sent_at >= (inclusive lower bound)
+ */
+sent_at_from?: string | null;
+/**
+ * sent_at <= (inclusive upper bound)
+ */
+sent_at_to?: string | null;
+/**
+ * reply_received_on >= (inclusive lower bound)
+ */
+reply_received_on_from?: string | null;
+/**
+ * reply_received_on <= (inclusive upper bound)
+ */
+reply_received_on_to?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

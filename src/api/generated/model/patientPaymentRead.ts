@@ -23,6 +23,11 @@ export interface PatientPaymentRead {
   notes?: string | null;
   is_void: boolean;
   created_by?: number | null;
+  created_by_legacy?: string | null;
+  updated_at?: string | null;
+  updated_by?: number | null;
+  eob_number?: string | null;
+  eft_trace_number?: string | null;
   created_at: string;
   patient_name?: string | null;
   provider_name?: string | null;

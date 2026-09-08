@@ -7,7 +7,6 @@
  */
 
 export interface PatientQuestionnaireResponseUpdate {
-  patient_id?: number | null;
   questionnaire_type?: string | null;
   question_code?: string | null;
   question_text?: string | null;

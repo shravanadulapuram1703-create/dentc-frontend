@@ -5,12 +5,15 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { LetterBatchRequestOverrides } from './letterBatchRequestOverrides';
 
 export interface LetterBatchRequest {
   template_id: number;
   /** @minItems 1 */
   patient_ids: number[];
   office_id?: number | null;
+  signing_provider_id?: string | null;
+  overrides?: LetterBatchRequestOverrides;
   /** Retain each rendered body on the run (off by default — a batch is normally consumed as one print stream) */
   store_html?: boolean;
 }

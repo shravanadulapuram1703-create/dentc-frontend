@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AccountBalance,
   AccountLedgerResponse,
   AdjustmentSummary,
   AllocateAdjustmentRequest,
@@ -43,25 +44,32 @@ import type {
   ClaimSubmitResult,
   CollectionsSummary,
   ContractResponse,
+  CoverageCategoryRead,
   ErrorResponse,
   EstimatePatientChargesParams,
   EstimateRequest,
   EstimateResult,
   ExpandExplosionCodeParams,
   ExplosionExpandResult,
+  FeeQuote,
   GenerateScheduleRequest,
   GetOfficeAdjustmentSummaryParams,
   GetOfficeCollectionsParams,
   GetOfficeTransactionsParams,
   GetPatientAccountLedgerParams,
   GetPatientLedgerParams,
+  GetPatientProcedureFeeParams,
   GetRefundPolicyParams,
   HTTPValidationError,
   InsuranceClaimCreate,
   InsuranceClaimRead,
   InsuranceClaimUpdate,
+  InsurancePaymentBatchCreate,
+  InsurancePaymentBatchResult,
   InsurancePaymentCreate,
   InsurancePaymentRead,
+  InsurancePaymentReverseRequest,
+  InsurancePaymentReverseResult,
   InsuranceReceivables,
   LedgerInsuranceDetailCreate,
   LedgerInsuranceDetailRead,
@@ -71,6 +79,7 @@ import type {
   ListInsuranceClaimsParams,
   ListLedgerInsuranceDetailsParams,
   ListOrthoPlansParams,
+  ListOutstandingClaimsParams,
   ListPatientAdjustmentsParams,
   ListPatientInsPaymentPlansParams,
   ListPatientPaymentPlansParams,
@@ -85,6 +94,7 @@ import type {
   OrthoPlanFullCreate,
   OrthoPlanFullUpdate,
   OrthoPlanRead,
+  OutstandingClaim,
   PaginatedResponseClaimSubmissionRead,
   PaginatedResponseInsuranceClaimRead,
   PaginatedResponseLedgerInsuranceDetailRead,
@@ -593,6 +603,249 @@ export const useRecordInsurancePayment = <TError = ErrorType<ErrorResponse | HTT
       return useMutation(getRecordInsurancePaymentMutationOptions(options), queryClient);
     }
     /**
+ * One cheque covering four procedures used to be four POSTs, and a failure
+ * on the third left the claim half-paid with nothing able to roll it back.
+ *
+ * Every line lands or none does. When ``payment_amount`` is supplied it is
+ * reconciled against the sum of the lines to the cent **before** anything is
+ * written (422 ``remittance_not_reconciled``), so the window's reconciliation
+ * rule is enforced server-side rather than only in the browser. ``close_claim``
+ * and the INS-PAY-4 write-off intent are applied in the same transaction.
+ * @summary Post one remittance across several procedures in a single transaction (INS-PAY-3)
+ */
+export const recordInsurancePaymentBatch = (
+    insurancePaymentBatchCreate: BodyType<InsurancePaymentBatchCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsurancePaymentBatchResult>(
+      {url: `/api/v1/ledger-insurance-details/payment-batch`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: insurancePaymentBatchCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getRecordInsurancePaymentBatchMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordInsurancePaymentBatch>>, TError,{data: BodyType<InsurancePaymentBatchCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordInsurancePaymentBatch>>, TError,{data: BodyType<InsurancePaymentBatchCreate>}, TContext> => {
+
+const mutationKey = ['recordInsurancePaymentBatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordInsurancePaymentBatch>>, {data: BodyType<InsurancePaymentBatchCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordInsurancePaymentBatch(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordInsurancePaymentBatchMutationResult = NonNullable<Awaited<ReturnType<typeof recordInsurancePaymentBatch>>>
+    export type RecordInsurancePaymentBatchMutationBody = BodyType<InsurancePaymentBatchCreate>
+    export type RecordInsurancePaymentBatchMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Post one remittance across several procedures in a single transaction (INS-PAY-3)
+ */
+export const useRecordInsurancePaymentBatch = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordInsurancePaymentBatch>>, TError,{data: BodyType<InsurancePaymentBatchCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordInsurancePaymentBatch>>,
+        TError,
+        {data: BodyType<InsurancePaymentBatchCreate>},
+        TContext
+      > => {
+      return useMutation(getRecordInsurancePaymentBatchMutationOptions(options), queryClient);
+    }
+    /**
+ * The counterpart to ``/patient-payments/{id}/reverse``, which insurance
+ * payments never had. The row is kept and marked void with a reason and an
+ * actor — a ``DELETE`` destroyed the evidence and, worse, left the claim's
+ * ``total_paid`` holding money no row backed.
+ * @summary Reverse a posted insurance payment and re-derive the claim (INS-PAY-2)
+ */
+export const reverseInsurancePayment = (
+    detailId: number,
+    insurancePaymentReverseRequest: BodyType<InsurancePaymentReverseRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsurancePaymentReverseResult>(
+      {url: `/api/v1/ledger-insurance-details/${detailId}/reverse`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: insurancePaymentReverseRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getReverseInsurancePaymentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reverseInsurancePayment>>, TError,{detailId: number;data: BodyType<InsurancePaymentReverseRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof reverseInsurancePayment>>, TError,{detailId: number;data: BodyType<InsurancePaymentReverseRequest>}, TContext> => {
+
+const mutationKey = ['reverseInsurancePayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reverseInsurancePayment>>, {detailId: number;data: BodyType<InsurancePaymentReverseRequest>}> = (props) => {
+          const {detailId,data} = props ?? {};
+
+          return  reverseInsurancePayment(detailId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReverseInsurancePaymentMutationResult = NonNullable<Awaited<ReturnType<typeof reverseInsurancePayment>>>
+    export type ReverseInsurancePaymentMutationBody = BodyType<InsurancePaymentReverseRequest>
+    export type ReverseInsurancePaymentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Reverse a posted insurance payment and re-derive the claim (INS-PAY-2)
+ */
+export const useReverseInsurancePayment = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reverseInsurancePayment>>, TError,{detailId: number;data: BodyType<InsurancePaymentReverseRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reverseInsurancePayment>>,
+        TError,
+        {detailId: number;data: BodyType<InsurancePaymentReverseRequest>},
+        TContext
+      > => {
+      return useMutation(getReverseInsurancePaymentMutationOptions(options), queryClient);
+    }
+    /**
+ * Charges / est ins / deductible used / ins paid / ins adj / remaining per
+ * claim, aggregated server-side. Building this client-side meant one
+ * ``/insurance-claims/{id}/detail`` call per claim, because neither roll-up
+ * exists on ``GET /insurance-claims``.
+ * @summary Every outstanding claim for a patient with its money roll-ups (INS-PAY-7)
+ */
+export const listOutstandingClaims = (
+    patientId: number,
+    params?: ListOutstandingClaimsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OutstandingClaim[]>(
+      {url: `/api/v1/patients/${patientId}/outstanding-claims`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOutstandingClaimsQueryKey = (patientId: number,
+    params?: ListOutstandingClaimsParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/outstanding-claims`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOutstandingClaimsQueryOptions = <TData = Awaited<ReturnType<typeof listOutstandingClaims>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: ListOutstandingClaimsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOutstandingClaims>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOutstandingClaimsQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOutstandingClaims>>> = ({ signal }) => listOutstandingClaims(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOutstandingClaims>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOutstandingClaimsQueryResult = NonNullable<Awaited<ReturnType<typeof listOutstandingClaims>>>
+export type ListOutstandingClaimsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOutstandingClaims<TData = Awaited<ReturnType<typeof listOutstandingClaims>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  ListOutstandingClaimsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOutstandingClaims>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOutstandingClaims>>,
+          TError,
+          Awaited<ReturnType<typeof listOutstandingClaims>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOutstandingClaims<TData = Awaited<ReturnType<typeof listOutstandingClaims>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListOutstandingClaimsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOutstandingClaims>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOutstandingClaims>>,
+          TError,
+          Awaited<ReturnType<typeof listOutstandingClaims>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOutstandingClaims<TData = Awaited<ReturnType<typeof listOutstandingClaims>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListOutstandingClaimsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOutstandingClaims>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Every outstanding claim for a patient with its money roll-ups (INS-PAY-7)
+ */
+
+export function useListOutstandingClaims<TData = Awaited<ReturnType<typeof listOutstandingClaims>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListOutstandingClaimsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOutstandingClaims>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOutstandingClaimsQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Submit a claim (records sent_date/batch/method) (SVC-1)
  */
 export const submitClaim = (
@@ -1099,6 +1352,208 @@ export function useExpandExplosionCode<TData = Awaited<ReturnType<typeof expandE
 
 
 /**
+ * The fee the server would apply, plus **which** schedule produced it.
+ *
+ * Fee resolution used to live only in the frontend, so two clients could
+ * disagree and nothing stopped a charge posting with an arbitrary amount.
+ * ``conflicts`` is non-empty when two equally-specific assignments price the
+ * code differently — the UI should say so rather than pick one silently.
+ * @summary Resolve a procedure's fee for this patient/office/provider (FEE-3)
+ */
+export const getPatientProcedureFee = (
+    patientId: number,
+    params: GetPatientProcedureFeeParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<FeeQuote>(
+      {url: `/api/v1/patients/${patientId}/fee`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientProcedureFeeQueryKey = (patientId: number,
+    params?: GetPatientProcedureFeeParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/fee`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientProcedureFeeQueryOptions = <TData = Awaited<ReturnType<typeof getPatientProcedureFee>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params: GetPatientProcedureFeeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureFee>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientProcedureFeeQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientProcedureFee>>> = ({ signal }) => getPatientProcedureFee(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureFee>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientProcedureFeeQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientProcedureFee>>>
+export type GetPatientProcedureFeeQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientProcedureFee<TData = Awaited<ReturnType<typeof getPatientProcedureFee>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetPatientProcedureFeeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureFee>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientProcedureFee>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientProcedureFee>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientProcedureFee<TData = Awaited<ReturnType<typeof getPatientProcedureFee>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetPatientProcedureFeeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureFee>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientProcedureFee>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientProcedureFee>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientProcedureFee<TData = Awaited<ReturnType<typeof getPatientProcedureFee>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetPatientProcedureFeeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureFee>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Resolve a procedure's fee for this patient/office/provider (FEE-3)
+ */
+
+export function useGetPatientProcedureFee<TData = Awaited<ReturnType<typeof getPatientProcedureFee>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetPatientProcedureFeeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureFee>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientProcedureFeeQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Published so a practice can audit *why* a code was priced at a given
+ * percentage, and override the classification per code
+ * (``PATCH /procedure-codes/{code} {"coverage_category": "03A"}``) when the
+ * CDT-range default is wrong for their plans.
+ * @summary The ADA/CDT -> insurance coverage-category mapping the estimate engine uses (FEE-1)
+ */
+export const listCoverageCategories = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CoverageCategoryRead[]>(
+      {url: `/api/v1/metadata/coverage-categories`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListCoverageCategoriesQueryKey = () => {
+    return [
+    `/api/v1/metadata/coverage-categories`
+    ] as const;
+    }
+
+
+export const getListCoverageCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listCoverageCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCoverageCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCoverageCategoriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCoverageCategories>>> = ({ signal }) => listCoverageCategories(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCoverageCategories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListCoverageCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listCoverageCategories>>>
+export type ListCoverageCategoriesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListCoverageCategories<TData = Awaited<ReturnType<typeof listCoverageCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCoverageCategories>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCoverageCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listCoverageCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCoverageCategories<TData = Awaited<ReturnType<typeof listCoverageCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCoverageCategories>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCoverageCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listCoverageCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCoverageCategories<TData = Awaited<ReturnType<typeof listCoverageCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCoverageCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The ADA/CDT -> insurance coverage-category mapping the estimate engine uses (FEE-1)
+ */
+
+export function useListCoverageCategories<TData = Awaited<ReturnType<typeof listCoverageCategories>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCoverageCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListCoverageCategoriesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Get a patient's computed account balance
  */
 export const getPatientBalance = (
@@ -1179,6 +1634,101 @@ export function useGetPatientBalance<TData = Awaited<ReturnType<typeof getPatien
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPatientBalanceQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * One call for the whole account. The per-member entries are exactly what
+ * ``GET /patients/{id}/balance`` returns, so the ledger's BALANCES panel no longer
+ * needs one request per family member.
+ * @summary AL-11: the legacy BALANCES table — account aggregate + one row per member
+ */
+export const getPatientAccountBalance = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountBalance>(
+      {url: `/api/v1/patients/${patientId}/account-balance`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientAccountBalanceQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/account-balance`
+    ] as const;
+    }
+
+
+export const getGetPatientAccountBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getPatientAccountBalance>>, TError = ErrorType<HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientAccountBalanceQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientAccountBalance>>> = ({ signal }) => getPatientAccountBalance(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountBalance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientAccountBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientAccountBalance>>>
+export type GetPatientAccountBalanceQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPatientAccountBalance<TData = Awaited<ReturnType<typeof getPatientAccountBalance>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountBalance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientAccountBalance>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientAccountBalance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientAccountBalance<TData = Awaited<ReturnType<typeof getPatientAccountBalance>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountBalance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientAccountBalance>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientAccountBalance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientAccountBalance<TData = Awaited<ReturnType<typeof getPatientAccountBalance>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary AL-11: the legacy BALANCES table — account aggregate + one row per member
+ */
+
+export function useGetPatientAccountBalance<TData = Awaited<ReturnType<typeof getPatientAccountBalance>>, TError = ErrorType<HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccountBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientAccountBalanceQueryOptions(patientId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1291,7 +1841,7 @@ export function useGetPatientLedger<TData = Awaited<ReturnType<typeof getPatient
 
 
 /**
- * @summary Denormalised account-ledger feed (charges+payments+adjustments) with running balance (AL-1/2/4/5/7)
+ * @summary Denormalised account-ledger feed (charges+payments+adjustments+claims) with running balance (AL-1/2/4/5/7/8/9/11)
  */
 export const getPatientAccountLedger = (
     patientId: number,
@@ -1369,7 +1919,7 @@ export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof get
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Denormalised account-ledger feed (charges+payments+adjustments) with running balance (AL-1/2/4/5/7)
+ * @summary Denormalised account-ledger feed (charges+payments+adjustments+claims) with running balance (AL-1/2/4/5/7/8/9/11)
  */
 
 export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof getPatientAccountLedger>>, TError = ErrorType<HTTPValidationError>>(
@@ -4037,6 +4587,108 @@ export const useUploadClaimAttachment = <TError = ErrorType<ErrorResponse | HTTP
       return useMutation(getUploadClaimAttachmentMutationOptions(options), queryClient);
     }
     /**
+ * Claim attachments used to be handed back as a public ``/uploads/...`` URL,
+ * readable with no token and no tenant check. That mount is gone; this is the
+ * read path.
+ * @summary Stream a claim attachment with the caller's tenant checks applied (NOTE-DOC-3)
+ */
+export const getClaimAttachmentContent = (
+    claimId: string,
+    attachmentId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/insurance-claims/${claimId}/attachments/${attachmentId}/content`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetClaimAttachmentContentQueryKey = (claimId: string,
+    attachmentId: number,) => {
+    return [
+    `/api/v1/insurance-claims/${claimId}/attachments/${attachmentId}/content`
+    ] as const;
+    }
+
+
+export const getGetClaimAttachmentContentQueryOptions = <TData = Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(claimId: string,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClaimAttachmentContentQueryKey(claimId,attachmentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClaimAttachmentContent>>> = ({ signal }) => getClaimAttachmentContent(claimId,attachmentId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: claimId !== null && claimId !== undefined && attachmentId !== null && attachmentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetClaimAttachmentContentQueryResult = NonNullable<Awaited<ReturnType<typeof getClaimAttachmentContent>>>
+export type GetClaimAttachmentContentQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetClaimAttachmentContent<TData = Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    attachmentId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimAttachmentContent>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimAttachmentContent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimAttachmentContent<TData = Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimAttachmentContent>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimAttachmentContent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimAttachmentContent<TData = Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Stream a claim attachment with the caller's tenant checks applied (NOTE-DOC-3)
+ */
+
+export function useGetClaimAttachmentContent<TData = Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimAttachmentContent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetClaimAttachmentContentQueryOptions(claimId,attachmentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Delete Claim Attachment
  */
 export const deleteClaimAttachment = (

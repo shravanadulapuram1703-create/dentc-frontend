@@ -18,4 +18,8 @@ provider_id?: string | null;
  * Scope to one appointment status
  */
 status?: string | null;
+/**
+ * SCHED-DEL-1: include soft-deleted (archived) appointments. Off by default — the calendar wants live appointments only.
+ */
+include_archived?: boolean;
 };

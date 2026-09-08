@@ -18,6 +18,7 @@ export interface InsuranceClaimCreate {
   date_of_service_to?: string | null;
   total_billed?: number | string | null;
   total_paid?: number | string | null;
+  opening_paid?: number | string | null;
   est_insurance?: number | string | null;
   submitted_date?: string | null;
   paid_date?: string | null;
@@ -28,5 +29,8 @@ export interface InsuranceClaimCreate {
   ins_plan_id?: number | null;
   is_preauth?: boolean | null;
   notes?: string | null;
+  write_off_amount?: number | string | null;
+  write_off_mode?: string | null;
+  write_off_value?: number | string | null;
   is_active?: boolean | null;
 }

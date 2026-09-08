@@ -11,7 +11,7 @@ import {
   listTreatmentPlanItems,
   getListTreatmentPlansQueryKey,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
-import { useCreatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
+import { useListPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
 import { getOffice } from '@/api/generated/endpoints/organization/organization';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import {
@@ -20,6 +20,17 @@ import {
   resolveProcedureFee,
   type FeeScheduleContext,
 } from '@/services/feeScheduleResolver';
+import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
+import { priceProcedure } from '@/services/procedurePricing';
+import {
+  planProcedure,
+  postPlanItemToLedger,
+  postedProcedureKeys,
+  todayIso,
+} from '@/features/procedures/procedureEntryService';
+import { announceProcedureChange, invalidateProcedureQueries, useProcedureSync } from '@/features/procedures/procedureSync';
+import { needsProcedureDetails } from '@/features/procedures/procedureRequirements';
+import ProcedureDetailsDialog, { type ProcedureDetailsHeader, type ProcedureDetailsRowResult } from '@/features/procedures/ProcedureDetailsDialog';
 import { useGetPatient, uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
 import type { ProcedureCodeRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import {
@@ -30,6 +41,7 @@ import {
   genId,
   planNameForTid,
   type TxStatus,
+  type SettableTxStatus,
   type TxRow,
 } from './txModel';
 import {
@@ -50,7 +62,8 @@ interface OutletCtx {
 }
 
 const TX_ITEMS_KEY = 'tx-plan-items';
-const today = () => new Date().toISOString().slice(0, 10);
+// Local calendar date — `toISOString()` is UTC and reads a day ahead in the US evening.
+const today = todayIso;
 
 export default function TreatmentPlanPage() {
   const { patient } = useOutletContext<OutletCtx>();
@@ -77,6 +90,16 @@ export default function TreatmentPlanPage() {
   });
   const items: TreatmentPlanItemRead[] = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
 
+  // Charges on the ledger that were posted from a plan (any screen). A planned
+  // item they fulfil shows here as Completed — the same rule the Restorative
+  // Chart uses to swap its red TX-PLAN glyph for a green COMPLETED one.
+  const proceduresQuery = useListPatientProcedures({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
+  const postedKeys = useMemo(() => postedProcedureKeys(proceduresQuery.data?.items ?? []), [proceduresQuery.data]);
+
+  // Procedures added / posted on the chart, the ledger, the Transactions Entry
+  // page or another browser tab land in this grid without a manual reload.
+  useProcedureSync(validId ? numericId : null);
+
   // Shared provider directory — same list, order and labels as every other screen.
   const { providerRows: providers, providerLabel } = useProviderDirectory();
 
@@ -93,6 +116,19 @@ export default function TreatmentPlanPage() {
       alive = false;
     };
   }, [validId, numericId, officeId]);
+  // Primary plan coverage rules — Est Ins on a planned item then matches what
+  // the chart and the Transactions Entry screen quote for the same code.
+  const [coverageCtx, setCoverageCtx] = useState<CoverageContext>(EMPTY_COVERAGE_CONTEXT);
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    loadCoverageContext({ patient_id: numericId })
+      .then((ctx) => alive && setCoverageCtx(ctx))
+      .catch(() => alive && setCoverageCtx(EMPTY_COVERAGE_CONTEXT));
+    return () => {
+      alive = false;
+    };
+  }, [validId, numericId]);
 
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
 
@@ -115,8 +151,8 @@ export default function TreatmentPlanPage() {
   }, [tidByPlan]);
 
   const allRows = useMemo(
-    () => buildRows(items, tidByPlan, providerLabel, codeMap),
-    [items, tidByPlan, providerLabel, codeMap],
+    () => buildRows(items, tidByPlan, providerLabel, codeMap, postedKeys),
+    [items, tidByPlan, providerLabel, codeMap, postedKeys],
   );
 
   // ---- UI state -----------------------------------------------------------
@@ -135,6 +171,11 @@ export default function TreatmentPlanPage() {
   const [sortByTooth, setSortByTooth] = useState(false);
   // Edit Treatment modal — the item id being edited (legacy: click Diag Date).
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  // Code waiting in the legacy "Add Procedure Details" pop-up for its tooth /
+  // surfaces / quadrant / material — the same dialog the Transactions Entry,
+  // Ledger and chart screens use, so a planned procedure carries everything
+  // its code requires and the Restorative Chart can draw it.
+  const [enforcing, setEnforcing] = useState<ProcedureCodeRead | null>(null);
   // Set once the user opens the Provider panel, so we only fetch provider
   // eligibility on demand (not on every page load).
   const [eligibilityWanted, setEligibilityWanted] = useState(false);
@@ -204,7 +245,6 @@ export default function TreatmentPlanPage() {
   const createItem = useCreateTreatmentPlanItem();
   const updateItem = useUpdateTreatmentPlanItem();
   const deleteItem = useDeleteTreatmentPlanItem();
-  const createProcedure = useCreatePatientProcedure();
 
   /** Guard for selection-dependent actions; toasts when nothing is checked. */
   const requireSelection = (): boolean => {
@@ -215,9 +255,10 @@ export default function TreatmentPlanPage() {
     return true;
   };
 
+  // Every plan / item / procedure cache for this patient — the chart's, the
+  // ledger's and this page's — so a change here is visible everywhere.
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: getListTreatmentPlansQueryKey({ patient_id: numericId, size: 200 }) });
-    await queryClient.invalidateQueries({ queryKey: [TX_ITEMS_KEY] });
+    await invalidateProcedureQueries(numericId);
   };
 
   const run = async (label: string, fn: () => Promise<void>) => {
@@ -245,32 +286,64 @@ export default function TreatmentPlanPage() {
     return id;
   };
 
-  // Add procedure (exact-match auto-add or pick-list selection)
-  const onAdd = (code: ProcedureCodeRead) =>
+  /** Plan a procedure through the shared entry service (details already collected/validated). */
+  const addPlannedProcedure = (
+    code: ProcedureCodeRead,
+    extras: { tooth?: string; surface?: string } = {},
+    head: EntryState = entry,
+  ) =>
     run('Add procedure', async () => {
-      const plan_id = await ensurePlanForTid(entry.tid);
-      // Price from the fee schedule that applies to this patient/office/provider,
-      // so a planned procedure carries the same patient/insurance split the
-      // charge will (Setup → Insurance → Fee Schedules).
-      const priced = await resolveProcedureFee(feeCtx, code.code, { default_fee: code.default_fee });
-      await createItem.mutateAsync({
-        data: {
-          id: genId(),
-          plan_id,
-          procedure_code: code.code,
-          description: code.description,
-          fee: priced.fee,
-          insurance_estimate: priced.insurance_estimate,
-          priority: entry.order,
-          phase_id: entry.phase,
-          billing_order: encodePhase(entry.phase),
-          status: 'diagnosed',
-          provider_id: entry.provider_id || null,
-          diagnosed_by: entry.provider_id || null,
-        },
+      const plan_id = await ensurePlanForTid(head.tid);
+      // Price from the fee schedule + plan coverage that apply to this patient/
+      // office/provider, so a planned procedure carries the same patient/
+      // insurance split the charge will — and the same one the chart quotes.
+      const priced = await priceProcedure(feeCtx, coverageCtx, code.code, {
+        default_fee: code.default_fee,
+        on_date: head.diag_date || null,
       });
+      await planProcedure({
+        patient_id: numericId,
+        office_id: officeId,
+        plan_id,
+        procedure_code: code.code,
+        description: code.description,
+        tooth: extras.tooth || null,
+        surface: extras.surface || null,
+        fee: priced.fee,
+        insurance_estimate: priced.insurance_estimate,
+        priority: head.order,
+        phase_id: head.phase,
+        provider_id: head.provider_id || null,
+        diagnosed_date: head.diag_date || null,
+      });
+      setEnforcing(null);
       toast.success(`Added ${code.code} — ${code.description}`);
     });
+
+  // Add procedure (exact-match auto-add or pick-list selection). Codes whose
+  // procedure_codes row requires a tooth / surfaces / quadrant / material open
+  // the legacy Add Procedure Details pop-up first, like every other screen.
+  const onAdd = (code: ProcedureCodeRead) => {
+    if (needsProcedureDetails(code)) setEnforcing(code);
+    else void addPlannedProcedure(code);
+  };
+
+  /** Pop-up SAVE: adopt the header (provider / date / TID / phase) into the entry panel, then plan. */
+  const onDetailsSave = (rows: ProcedureDetailsRowResult[], head: ProcedureDetailsHeader) => {
+    const next: EntryState = {
+      ...entry,
+      provider_id: head.provider_id,
+      diag_date: head.date,
+      tid: head.tid ?? entry.tid,
+      phase: head.phase ?? entry.phase,
+    };
+    setEntry(next);
+    const r = rows[0];
+    if (r) void addPlannedProcedure(r.code, { tooth: r.tooth, surface: r.surface }, next);
+    // NOTE: quadrant / material_id are validated here but treatment_plan_items
+    // has no column for them (PROC-INT-5) — they are carried by the charge when
+    // the item is posted through the same pop-up on the ledger side.
+  };
 
   const onChangeProvider = (providerId: string) => {
     if (!requireSelection()) return;
@@ -293,7 +366,7 @@ export default function TreatmentPlanPage() {
     });
   };
 
-  const onChangeStatus = (status: TxStatus) => {
+  const onChangeStatus = (status: SettableTxStatus) => {
     if (!requireSelection()) return;
     void run('Change status', async () => {
       for (const r of selectedRows) await updateItem.mutateAsync({ itemId: r.id, data: { status } });
@@ -338,7 +411,8 @@ export default function TreatmentPlanPage() {
             priority: r.order,
             phase_id: r.phase,
             billing_order: encodePhase(r.phase),
-            status: r.status,
+            // A completed (posted) procedure copied to a new plan is planned afresh.
+            status: r.status === 'completed' ? 'diagnosed' : r.status,
             provider_id: r.provider_id || null,
             diagnosed_by: r.provider_id || null,
           },
@@ -445,33 +519,38 @@ export default function TreatmentPlanPage() {
    */
   const onPostToLedger = () => {
     if (!requireSelection()) return;
-    if (!window.confirm(`Post ${selectedRows.length} selected procedure(s) to the ledger?`)) return;
+    const postable = selectedRows.filter((r) => r.status !== 'completed');
+    if (postable.length === 0) {
+      toast.info('The selected procedure(s) are already posted to the ledger');
+      return;
+    }
+    if (postable.length < selectedRows.length) {
+      toast.info(`${selectedRows.length - postable.length} already-completed procedure(s) skipped`);
+    }
+    if (!window.confirm(`Post ${postable.length} selected procedure(s) to the ledger?`)) return;
     void run('Post to ledger', async () => {
       let posted = 0;
-      for (const r of selectedRows) {
+      for (const r of postable) {
         const provider_id = r.provider_id || entry.provider_id;
         if (!provider_id) {
           toast.error(`${r.code}: assign a provider before posting to the ledger`);
           continue;
         }
-        await createProcedure.mutateAsync({
-          data: {
-            id: genId(),
-            patient_id: numericId,
-            office_id: officeId ?? 0,
-            procedure_code: r.code,
-            date_of_service: tranDate,
-            provider_id,
-            tooth: r.tooth || null,
-            surface: r.surface || null,
-            fee: r.fee,
-            insurance_estimate: r.est_ins,
-            patient_estimate: r.est_pat,
-          },
+        const item = items.find((it) => it.id === r.id);
+        if (!item) continue;
+        // Shared Post to Ledger: the charge is linked to the plan and the item
+        // is closed, so the chart shows it COMPLETED and this grid shows "C".
+        await postPlanItemToLedger({
+          patient_id: numericId,
+          office_id: officeId ?? 0,
+          item,
+          provider_id,
+          date_of_service: tranDate,
+          announce: false,
         });
-        await updateItem.mutateAsync({ itemId: r.id, data: { status: 'accepted' } });
         posted += 1;
       }
+      announceProcedureChange({ patient_id: numericId, kinds: ['procedure', 'plan_item'] });
       if (posted) toast.success(`Posted ${posted} procedure(s) to the ledger`);
     });
   };
@@ -618,6 +697,18 @@ export default function TreatmentPlanPage() {
         busy={busy}
         onAdd={onAdd}
       />
+
+      {enforcing && (
+        <ProcedureDetailsDialog
+          mode="plan"
+          office_id={officeId}
+          rows={[{ code: enforcing }]}
+          header={{ provider_id: entry.provider_id, date: entry.diag_date, tid: entry.tid, phase: entry.phase }}
+          busy={busy}
+          onSave={onDetailsSave}
+          onClose={() => setEnforcing(null)}
+        />
+      )}
 
       {editingItem && (
         <EditTreatmentModal

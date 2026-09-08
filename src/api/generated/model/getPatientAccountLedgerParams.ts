@@ -6,16 +6,29 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { GetPatientAccountLedgerOrder } from './getPatientAccountLedgerOrder';
+import type { GetPatientAccountLedgerScope } from './getPatientAccountLedgerScope';
 import type { GetPatientAccountLedgerSortBy } from './getPatientAccountLedgerSortBy';
 import type { GetPatientAccountLedgerTransactionType } from './getPatientAccountLedgerTransactionType';
 
 export type GetPatientAccountLedgerParams = {
+/**
+ * AL-11: 'patient' = this patient only; 'account' = every patient sharing the responsible_party_id, merged and server-paged
+ */
+scope?: GetPatientAccountLedgerScope;
 date_from?: string | null;
 date_to?: string | null;
 /**
- * Type filter (AL-4)
+ * Type filter (AL-4); 'claim' needs include_claims=true
  */
 transaction_type?: GetPatientAccountLedgerTransactionType;
+/**
+ * AL-8: interleave claim status events (Sent/Paid/Closed) as source_type='claim'. Informational — they never move the running balance
+ */
+include_claims?: boolean;
+/**
+ * Include rows from the legacy archive export (is_archived)
+ */
+include_archived?: boolean;
 /**
  * Sort column (AL-5)
  */

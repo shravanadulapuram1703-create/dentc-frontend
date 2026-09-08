@@ -25,6 +25,30 @@ is_active?: boolean | null;
  */
 group_number?: string | null;
 /**
+ * Filter by coverage_type
+ */
+coverage_type?: string | null;
+/**
+ * Filter by plan_type
+ */
+plan_type?: string | null;
+/**
+ * Filter by group_number_contains
+ */
+group_number_contains?: string | null;
+/**
+ * Filter by group_number_startswith
+ */
+group_number_startswith?: string | null;
+/**
+ * Filter by carrier_name
+ */
+carrier_name?: string | null;
+/**
+ * Filter by payer_id
+ */
+payer_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

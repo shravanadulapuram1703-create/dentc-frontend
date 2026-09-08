@@ -9,10 +9,12 @@
 export interface EmployerUpdate {
   name?: string | null;
   address?: string | null;
+  address2?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;
   phone?: string | null;
   salesrep?: string | null;
   contact_person?: string | null;
+  allow_duplicate_name?: boolean;
 }

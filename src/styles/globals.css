@@ -416,6 +416,23 @@
     border-width: 1px !important;
   }
 
+  /* Patient SMS composer selects — the wrapper draws the border, icon and
+     caption; the select itself is borderless. Class-qualified to beat the bare
+     `select` !important rule above (same trick as tx-select). */
+  select.sms-select {
+    padding: 0 1.5rem 0 0.25rem !important;
+    border: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    height: 100%;
+    max-width: 100%;
+    text-overflow: ellipsis;
+  }
+  select.sms-select:focus {
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
   /* Scheduler header filters — translucent-on-dark to match the slate toolbar.
      Class-qualified so it beats the bare `select` !important rule (same trick as
      tx-select above). The option list stays white-on-dark-text for readability. */

@@ -14,4 +14,5 @@ export const GetPatientAccountLedgerTransactionType = {
   charge: 'charge',
   payment: 'payment',
   adjustment: 'adjustment',
+  claim: 'claim',
 } as const;

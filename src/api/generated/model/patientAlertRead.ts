@@ -11,6 +11,8 @@ export interface PatientAlertRead {
   legacy_id?: string | null;
   alert: string;
   blocks_charges: boolean;
+  is_flash_alert: boolean;
+  source_medical_alert_id?: number | null;
   is_active: boolean;
   deactivated_on?: string | null;
   created_by?: number | null;

@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AppSchemasProviderSetupScheduleReplace,
   AssignedProviderProcedureCodeRead,
   AssignedReferralOfficeRead,
   BodyUploadProviderWatermarkImage,
@@ -45,7 +46,6 @@ import type {
   ProviderWatermarkRead,
   ProviderWatermarkUpdate,
   ReferralOfficesSet,
-  ScheduleReplace,
   UploadProviderWatermarkImageParams,
   UserRead
 } from '../../model';
@@ -155,7 +155,7 @@ export function useGetProviderSchedule<TData = Awaited<ReturnType<typeof getProv
  */
 export const setProviderSchedule = (
     providerId: string,
-    scheduleReplace: BodyType<ScheduleReplace>,
+    appSchemasProviderSetupScheduleReplace: BodyType<AppSchemasProviderSetupScheduleReplace>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -163,7 +163,7 @@ export const setProviderSchedule = (
       return customInstance<ProviderScheduleDayRead[]>(
       {url: `/api/v1/providers/${providerId}/schedule`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: scheduleReplace, signal
+      data: appSchemasProviderSetupScheduleReplace, signal
     },
       options);
     }
@@ -171,8 +171,8 @@ export const setProviderSchedule = (
 
 
 export const getSetProviderScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<ScheduleReplace>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}, TContext> => {
 
 const mutationKey = ['setProviderSchedule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -184,7 +184,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setProviderSchedule>>, {providerId: string;data: BodyType<ScheduleReplace>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setProviderSchedule>>, {providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}> = (props) => {
           const {providerId,data} = props ?? {};
 
           return  setProviderSchedule(providerId,data,requestOptions)
@@ -198,18 +198,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SetProviderScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof setProviderSchedule>>>
-    export type SetProviderScheduleMutationBody = BodyType<ScheduleReplace>
+    export type SetProviderScheduleMutationBody = BodyType<AppSchemasProviderSetupScheduleReplace>
     export type SetProviderScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
 
     /**
  * @summary Set Provider Schedule
  */
 export const useSetProviderSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSchedule>>, TError,{providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setProviderSchedule>>,
         TError,
-        {providerId: string;data: BodyType<ScheduleReplace>},
+        {providerId: string;data: BodyType<AppSchemasProviderSetupScheduleReplace>},
         TContext
       > => {
       return useMutation(getSetProviderScheduleMutationOptions(options), queryClient);

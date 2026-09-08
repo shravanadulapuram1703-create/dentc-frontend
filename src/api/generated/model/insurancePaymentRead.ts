@@ -18,9 +18,17 @@ export interface InsurancePaymentRead {
   bank_number?: string | null;
   eob_number?: string | null;
   eft_trace_number?: string | null;
+  notes?: string | null;
+  prim_deductible?: string | null;
   prim_ins_paid?: string | null;
   prim_ins_adjust?: string | null;
+  sec_deductible?: string | null;
   sec_ins_paid?: string | null;
   sec_ins_adjust?: string | null;
+  ter_deductible?: string | null;
+  ter_ins_paid?: string | null;
+  ter_ins_adjust?: string | null;
+  is_void?: boolean;
+  void_reason?: string | null;
   created_by?: number | null;
 }

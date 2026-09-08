@@ -25,6 +25,10 @@ is_deleted?: boolean | null;
  */
 is_archived?: boolean | null;
 /**
+ * Filter by document_id
+ */
+document_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

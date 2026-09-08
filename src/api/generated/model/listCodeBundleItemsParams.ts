@@ -13,6 +13,10 @@ export type ListCodeBundleItemsParams = {
  */
 bundle_id?: number | null;
 /**
+ * Filter by procedure_code
+ */
+procedure_code?: string | null;
+/**
  * @minimum 1
  */
 page?: number;
