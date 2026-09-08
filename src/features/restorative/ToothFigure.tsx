@@ -54,6 +54,10 @@ export default function ToothFigure({
   // as a generic segment glyph.
   const watchGlyphs = useMemo(() => glyphs.filter((g) => g.code === 'WATCH' && g.watch), [glyphs]);
 
+  // A missing tooth is hidden completely — unless an implant has since been
+  // placed in the space, in which case the implant hardware must stay visible.
+  const hidden = missing && !glyphs.some((g) => /IMPLANT/i.test(g.code));
+
   // Group the remaining condition glyphs by the segment they render on.
   const segmentGlyphs = useMemo(() => {
     const m = new Map<SegmentKey, ToothGlyph[]>();
@@ -114,7 +118,7 @@ export default function ToothFigure({
         selectedKeys={selectedKeys}
         segmentGlyphs={segmentGlyphs}
         tooltips={tooltips}
-        missing={missing}
+        missing={hidden}
         selColor={selColor}
         onSelect={onSelect}
         width={width}

@@ -13,6 +13,8 @@ export interface TreatmentPlanItemRead {
   description?: string | null;
   tooth?: string | null;
   surface?: string | null;
+  quadrant?: string | null;
+  material_id?: number | null;
   priority: number;
   phase_id?: number | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
@@ -30,4 +32,5 @@ export interface TreatmentPlanItemRead {
   is_archived: boolean;
   created_at: string;
   updated_at?: string | null;
+  procedure_id?: string | null;
 }

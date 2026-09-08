@@ -873,3 +873,102 @@ chart_status_templates · `REST-3` chart_settings · `REST-4` chart_tooth_notes 
 `REST-5` seed colors/materials · `REST-6` deferred FHIR) are documented in
 `docs/restorative/restorative_charting_backend_devreport.md`. Integration design +
 MIT attribution: `docs/restorative/ARCHITECTURE.md`.
+
+## Procedure entry integration (Transactions · Ledger · Restorative · Treatment Plan) — 2026-09-06
+One shared write path (`src/features/procedures/`) for charges and planned items, with cross-screen
+refresh and plan↔charge reconciliation. Gaps PROC-INT-1..4 in
+`docs/procedures/procedure_entry_integration.md`.
+
+---
+
+# Patient → Messages / SMS-Email (Twilio two-way texting)
+
+Screens: `src/features/sms/**` — `/patient/:id/messages` (conversation inbox) and
+`/patient/:id/communication` (SMS/Email log). Both read/write the existing `/api/v1/sms-messages`
+log (5,425 migrated legacy rows on the dev tenant). **Full report for the backend team:**
+[`docs/sms/SMS_BACKEND_DEVREPORT.md`](docs/sms/SMS_BACKEND_DEVREPORT.md); Twilio account
+prerequisites: [`docs/sms/TWILIO_ACCOUNT_CHECKLIST.md`](docs/sms/TWILIO_ACCOUNT_CHECKLIST.md).
+
+| Gap | Summary | Blocking? |
+|---|---|---|
+| SMS-1 | `POST /api/v1/sms/send` — Twilio outbound gateway (idempotent by `client_id`, returns the log row). Frontend calls it and falls back to `POST /sms-messages` with `send_status="queued"` while it 404s. | **Yes** |
+| SMS-2 | Twilio webhooks `POST /api/v1/sms/webhooks/inbound` + `/status` (signature-validated); match `From` → patient, store reply on the matching outbound row or as a stand-alone inbound row. **Reply protocol YES / NO / STOP:** YES → `PATCH /appointments/{id}/status {status:"confirmed"}`; NO → `{status:"cancelled", cancellation_reason:"Patient declined via SMS", add_to_call_list:true}` (or call-list only, per tenant setting); STOP → `PATCH /patients/{id} {no_auto_sms:true}`. `CANCEL` is a Twilio opt-out keyword, never a decline. Persist `reply_intent` + `action_taken`. | **Yes** (replies) |
+| SMS-3 | `sms_messages` columns: `twilio_sid`, `from_phone`, `direction`, `sent_at`, `error_code/message`, `segments`, `client_id`, `template_id`, `reply_intent`, `action_taken(_at/_error)`; `patients.sms_opt_out_at/sms_opt_in_at`; backfill `message_type`. | Yes (for 1/2) |
+| SMS-4 | Push (`sms.inbound` / `sms.status`) over the messaging WebSocket instead of 15 s polling. | No |
+| SMS-5 | `sms-templates` resource (practice templates live in localStorage `dentc:sms:templates` today). | No |
+| SMS-6 | Office-wide inbox filters (`office_id`, `direction`, `is_read`, date range) + denormalized patient name; unmatched-number rows. | No |
+| SMS-7 | Resolve the **From** number per office from `/tenants/{id}/phone-assignments`; store Messaging Service SID server-side. | Yes (multi-office) |
+| SMS-8 | Consent enforcement (`no_auto_sms`, STOP/START, quiet hours, rate limits). | Before GA |
+| SMS-9 | Scheduled automatic reminders (48 h / 2 h) with per-office settings + de-dupe. | Phase 2 |
+| SMS-10 | Audit + retention for message bodies (PHI-adjacent). | Before GA |
+| EMAIL-1 | No email log/send resource — the Email tab is a labelled placeholder. | No |
+
+**Status 2026-09-07 — backend shipped the SMS gateway.** `POST /api/v1/sms/send`, `/sms/gateway`, `/sms/sender`,
+`/sms/render`, `/sms/inbox/summary`, `/sms/inbox/mark-read`, `/sms/reminders/run`, `/sms/metadata` and the
+`sms-templates` resource now exist, and `SmsMessageRead` carries `twilio_sid`, `from_phone`, `direction`, `sent_at`,
+`error_code/error_message`, `segments`, `reply_intent`, `needs_attention`. Live test on patient 83433 from the UI:
+
+| Attempt | Result | Owner |
+|---|---|---|
+| Appt reminder at 00:30 ET | `422 sms_quiet_hours` (08:00–21:00 office time) — expected; UI now shows the reason + next allowed time | — |
+| Manual text, no phone assignment | `502` Twilio **21603** "No sender" — `/tenants/1/phone-assignments` was empty | Frontend: the Setup → Communications *Phone Number Assignment* block is hidden (`SHOW_PHONE_ASSIGNMENT=false`) and never sends `phone_number` — needs a real editor (see task chip) |
+| Manual text after `PUT /phone-assignments` (+17372583742, MULTI_OFFICE_SHARED) | `502` Twilio **70051** "Authorization Error: actor doesn't have any assertions" | **Backend/Twilio config:** the API Key SID/Secret does not belong to `TWILIO_ACCOUNT_SID` (or is a Restricted key without Messaging scope / a sub-account key). Verify in Twilio Console → Account → API keys, or fall back to Auth Token auth. |
+
+~~Also: regenerating the Orval client (`npm run api:sync`) now surfaces unrelated drift (insurance coverage-rule
+field types, `AppSchemasOfficeSetupScheduleReplace` renamed) — 10 type errors outside SMS; tracked separately.~~
+**Resolved 2026-09-07** — client regenerated and the frontend realigned; see
+[Orval client sync — 2026-09-07](#orval-client-sync--2026-09-07-contract-changes-absorbed) below.
+
+---
+
+# Orval client sync — 2026-09-07 (contract changes absorbed)
+
+`npm run api:sync` against the running backend (`openapi.json` 1.0.0, 140 new + 131 changed generated
+files). Twelve `tsc` errors surfaced; all were real contract changes, not generator noise. What changed
+and how the frontend now binds to it:
+
+| Contract change | Frontend impact / action taken |
+|---|---|
+| **`insurance_coverage_rules` limits are typed.** `freq_limit` is now `integer \| null` (was string) on `InsuranceCoverageRuleCreate/Update/Read`; new integer columns `age_min`, `age_max`, `wait_months` sit next to the legacy string mirrors `age_limit` ("min-max") and `wait_period`. The bulk-PUT docstring states *"Typed limits win over the legacy string mirrors."* Live rows (tenant 1) return `freq_limit` as an int and the typed age/wait columns as `null` for migrated data. | `planDetailsModel.ts` / `planData.ts`: reads prefer the typed column when non-null and fall back to parsing the mirror; writes send **both** (typed ints + mirrors) so legacy readers stay consistent. UI rows keep string values for the `<select>`/inputs; conversion happens only in the request builders (`freqLimitToApi`, `intOrNull`, `ageLimitToApi`). FREQGRP rows still overload `age_limit`/`wait_period` (see PLAN-DTL-2 below) and leave the typed columns null. |
+| **`ScheduleReplace` schemas swapped names.** `PUT /offices/{office_id}/schedule` now takes the plain `ScheduleReplace` (`days: ScheduleDayInput[]`, 1..7, no `effective_from`/`office_id`); `PUT /providers/{provider_id}/schedule` takes `app__schemas__provider_setup__ScheduleReplace` (renders as `AppSchemasProviderSetupScheduleReplace`, days ≤ 70 with `effective_from` + `office_id`). `app__schemas__office_setup__ScheduleReplace` no longer exists. | `src/services/officeScheduleApi.ts` imports `ScheduleReplace`. Body shape unchanged. |
+| **`SmsMessageRead` grew the gateway columns** (`twilio_sid`, `from_phone`, `direction`, `sent_at`, `error_code/error_message`, `segments`, `client_id`, `template_id`, `reply_intent`, `candidate_patient_ids`, `reminder_lead_hours`, payload hashes, `updated_at`) plus the SMS-6 denormalised names (`patient_first_name/last_name/name`, `patient_chart_no`, `office_name`, `template_name`, `created_by_name`). **`needs_attention` is `boolean` and required.** | The local `SmsMessageRead` extension type in `src/features/sms/smsModel.ts` is gone; every SMS file imports the generated type. `localSmsTransport.ts` (the labelled simulator) now stamps `needs_attention`/`direction`/`reply_intent` the way the backend does. |
+| `GET /sms-messages` gained the SMS-6 inbox filters: `office_id`, `direction`, `send_status`, `needs_attention`, `reply_intent`, `template_id`, `twilio_sid`, `client_id`, `date_from/to`, `sent_at_from/to`, `reply_received_on_from/to`, `unmatched`, `has_reply`, `unread_replies`. | Not wired yet — the patient inbox still filters client-side. Candidate for an office-wide inbox. |
+| `GET /insurance-coverage-rules` gained `category` + `start_code` filters. | Not wired yet; `loadAllRules` still pages the whole plan (200/page) and splits FREQGRP rows client-side. |
+| `GET /insurance-plans` gained `coverage_type`, `plan_type`, `group_number_contains`, `group_number_startswith`, `carrier_name`, `payer_id`. | Could replace the ~20 s `group_number` exact filter (PLAN-DTL-7) — not wired yet. |
+| `GET /patients/{id}/account-ledger` gained `scope`, `include_claims`, `include_archived`; `transaction_type`/`sort_by` enums changed. `GET /appointments/scheduler` gained `include_archived`. `GET /providers` gained `role`. `GET /procedure-codes` gained `coverage_category`. | No type errors; existing callers keep compiling. Review when those screens are next touched. |
+
+**New endpoints of interest** (not yet consumed by the frontend; they answer previously logged gaps):
+
+- `GET`/`PUT /insurance-plans/{plan_id}/coverage-rules` — atomic replace of rules **and** frequency groups
+  (`PlanCoverageReplaceRequest` → `PlanCoverageResponse`). Answers **PLAN-DTL-8**. `POST
+  /insurance-plans/{plan_id}/copy-from/{source_plan_id}`, `GET /insurance-plans/metadata`, `GET
+  /insurance-plans/group-availability` (answers PLAN-DTL-7 / INS-PT-20).
+- `insurance-plan-frequency-groups` CRUD (`InsurancePlanFrequencyGroupRead`: `code_group`, `freq_limit`,
+  `whole_mouth`, `per_day_quantity`) — a real resource for the FREQ LIMITATION CODE GRP tab. Answers
+  **PLAN-DTL-2**; the `category="FREQGRP"` convention should be migrated onto it.
+- `InsuranceCoverageRuleRead.updated_at/updated_by/created_by` — answers **PLAN-DTL-9** for rules.
+- `GET /metadata/coverage-categories`, `GET /procedure-code-categories`, `GET /patients/{id}/fee` (`FeeQuote`),
+  `GET /patients/{id}/account-balance`, `GET /patients/{id}/outstanding-claims`,
+  `POST /ledger-insurance-details/payment-batch` + `/{id}/reverse`, `POST /treatment-plan-items/{id}/post`,
+  `POST /appointments/{id}/restore`.
+- Medical history v2: `GET`/`PUT /patients/{id}/medical-history` (+ `/changes`, `/versions`, `/sign`, `/pdf`,
+  `/copy-from/{source}`), `GET /metadata/medical-history-rules`, `GET /metadata/patient-flag-rules`,
+  `GET /metadata/procedure-entry-rules`.
+- Email: `email-messages` CRUD, `POST /email/send`, `GET /email/gateway`, `GET /email/metadata` (answers
+  **EMAIL-1**); `campaigns` CRUD; `sms-templates` CRUD (answers **SMS-5**); `GET /sms/inbox/summary`,
+  `POST /sms/inbox/mark-read`, `POST /sms/reminders/run` (SMS-9), `GET /sms/gateway`, `GET /sms/sender`.
+- `GET /employers/name-availability`, `GET /insurance-carriers/name-availability`,
+  `GET /patient-documents/limits`, `POST /patient-signatures/{id}/void`, attachment `/content` routes for
+  claims and progress notes.
+
+Verification: `npx tsc -b` and `npx eslint src` clean on the files touched by this sync.
+
+## Progress Notes (`PN-*`) — 2026-09-07 DOS correction + lock drift
+Doctors write notes days after the visit and must be able to fix the **Date of Service after
+saving**, but `PATCH /progress-notes/{id}` treated `note_date` as a locked text field (409 once the
+note is signed or a day old). `PN-8` (P1): `note_date` removed from the lock scope in the local
+backend (`app/services/progress_notes_service.py`; signed notes still refuse a DOS change) —
+needs restart/deploy. Also found: `PN-9` lock "today" is UTC (notes lock at 8 PM Eastern),
+`PN-10` timestamps serialised without `Z` (parsed as local time by every client),
+`PN-11` no `updated_at/updated_by`. Details + acceptance criteria in
+`docs/progress-notes/progress_notes_backend_devreport.md` §PN-8..PN-11.

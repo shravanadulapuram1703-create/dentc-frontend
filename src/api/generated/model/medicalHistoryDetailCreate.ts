@@ -13,4 +13,6 @@ export interface MedicalHistoryDetailCreate {
   answer_code?: string | null;
   answer_text?: string | null;
   notes?: string | null;
+  answer_type?: string | null;
+  section?: string | null;
 }

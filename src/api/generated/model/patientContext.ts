@@ -8,6 +8,7 @@
 import type { PatientContextBalance } from './patientContextBalance';
 import type { PatientContextInsurance } from './patientContextInsurance';
 import type { PatientContextOpeningBalance } from './patientContextOpeningBalance';
+import type { PatientContextResponsibleParty } from './patientContextResponsibleParty';
 import type { PatientContextVisit } from './patientContextVisit';
 import type { SchedulerPatientRead } from './schedulerPatientRead';
 
@@ -15,6 +16,9 @@ export interface PatientContext {
   patient: SchedulerPatientRead;
   balance: PatientContextBalance;
   insurance: PatientContextInsurance[];
+  primary_insurance?: PatientContextInsurance | null;
+  responsible_party?: PatientContextResponsibleParty | null;
+  responsible_party_id?: string | null;
   visit: PatientContextVisit;
   opening_balance?: PatientContextOpeningBalance;
 }

@@ -13,4 +13,5 @@ export interface PatientMedicalAlertUpdate {
   response?: PatientMedicalAlertUpdateResponse;
   comments?: string | null;
   is_active?: boolean | null;
+  allow_contradictions?: boolean;
 }

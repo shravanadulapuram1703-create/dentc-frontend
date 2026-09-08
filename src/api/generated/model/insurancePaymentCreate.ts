@@ -7,23 +7,30 @@
  */
 
 export interface InsurancePaymentCreate {
-  patient_id: number;
-  claim_id?: string | null;
-  procedure_id?: string | null;
-  office_id?: number | null;
+  prim_ins_plan_id?: number | null;
+  prim_estimated?: number | string | null;
+  prim_deductible?: number | string | null;
+  prim_ins_paid?: number | string | null;
+  prim_ins_adjust?: number | string | null;
+  sec_ins_plan_id?: number | null;
+  sec_estimated?: number | string | null;
+  sec_deductible?: number | string | null;
+  sec_ins_paid?: number | string | null;
+  sec_ins_adjust?: number | string | null;
+  ter_ins_plan_id?: number | null;
+  ter_estimated?: number | string | null;
+  ter_deductible?: number | string | null;
+  ter_ins_paid?: number | string | null;
+  ter_ins_adjust?: number | string | null;
   payment_date?: string | null;
   payment_method?: string | null;
   check_number?: string | null;
   bank_number?: string | null;
   eob_number?: string | null;
   eft_trace_number?: string | null;
-  prim_ins_plan_id?: number | null;
-  sec_ins_plan_id?: number | null;
-  prim_estimated?: number | string | null;
-  prim_ins_paid?: number | string | null;
-  prim_ins_adjust?: number | string | null;
-  prim_deductible?: number | string | null;
-  sec_estimated?: number | string | null;
-  sec_ins_paid?: number | string | null;
-  sec_ins_adjust?: number | string | null;
+  notes?: string | null;
+  patient_id: number;
+  claim_id?: string | null;
+  procedure_id?: string | null;
+  office_id?: number | null;
 }

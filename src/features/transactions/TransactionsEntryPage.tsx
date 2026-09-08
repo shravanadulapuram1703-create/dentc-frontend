@@ -7,6 +7,7 @@ import type { PatientProcedureRead, PatientBalance } from '@/api/generated/model
 import { createInsuranceClaim, getPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
 import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { useProcedureSync } from '@/features/procedures/procedureSync';
 import {
   loadRawTransactions,
   buildEntryRows,
@@ -205,6 +206,9 @@ export default function TransactionsEntryPage() {
   }, [validId, patientId]);
 
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
+  // A procedure posted from the chart, the treatment plan, the ledger or another
+  // browser tab lands in this grid without a manual reload.
+  useProcedureSync(validId ? patientId : null, refresh);
 
   const officeLabel = useMemo(() => officeLabelResolver(offices), [offices]);
   const rows = useMemo(

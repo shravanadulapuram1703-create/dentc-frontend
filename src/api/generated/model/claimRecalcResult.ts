@@ -17,4 +17,11 @@ export interface ClaimRecalcResult {
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   est_insurance: string;
   procedure_count: number;
+  coverage_row_count?: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_adjusted?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  opening_paid?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  posted_paid?: string;
 }

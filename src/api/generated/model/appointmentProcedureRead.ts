@@ -21,6 +21,9 @@ export interface AppointmentProcedureRead {
   est_patient?: string | null;
   billing_order?: string | null;
   status: string;
+  duration_minutes?: number | null;
+  provider_units: number;
+  bill_to?: string | null;
   material_id?: number | null;
   notes?: string | null;
   is_archived: boolean;

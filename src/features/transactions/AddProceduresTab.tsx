@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Plus } from 'lucide-react';
-import type {
-  ProcedureCodeRead,
-  PatientProcedureCreate,
-  ExplosionCodeRead,
-} from '@/api/generated/model';
-import { createPatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
-import ToothSurfaceEnforcement from '@/components/patient/ToothSurfaceEnforcement';
+import type { ProcedureCodeRead, ExplosionCodeRead } from '@/api/generated/model';
+import { loadProcedureCodes } from '@/components/setup/insurance/procedureCodeService';
 import {
   EMPTY_FEE_CONTEXT,
   loadFeeScheduleContext,
-  resolveProcedureFee,
   type FeeScheduleContext,
-  type ResolvedProcedureFee,
 } from '@/services/feeScheduleResolver';
-import { PROC_CATEGORIES, genId, money, num, HEADER_GRADIENT, ACCENT_BLUE, type ProcCategory } from './transactionsModel';
+import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
+import { priceProcedure, type PricedProcedure } from '@/services/procedurePricing';
+import { postCompletedProcedure } from '@/features/procedures/procedureEntryService';
+import { needsProcedureDetails } from '@/features/procedures/procedureRequirements';
+import ProcedureDetailsDialog, {
+  type ProcedureDetailsHeader,
+  type ProcedureDetailsRowInput,
+  type ProcedureDetailsRowResult,
+} from '@/features/procedures/ProcedureDetailsDialog';
+import { PROC_CATEGORIES, money, HEADER_GRADIENT, ACCENT_BLUE, type ProcCategory } from './transactionsModel';
 import {
   codesInCategory,
   filterCodes,
@@ -33,40 +35,11 @@ interface Props {
   onPosted: () => void;
 }
 
-// Fabricate the structured rules ToothSurfaceEnforcement expects from the flat
-// requires_* booleans the backend exposes (same approach as AddProcedure — the
-// structured anatomy/surface/material rules are a backend gap, CHG-2).
-function toEnforcementProcedure(c: ProcedureCodeRead) {
-  return {
-    code: c.code,
-    userCode: c.legacy_code ?? '',
-    description: c.description,
-    category: c.category,
-    requirements: {
-      tooth: c.requires_tooth,
-      surface: c.requires_surface,
-      quadrant: c.requires_quadrant,
-      materials: c.requires_lab,
-    },
-    anatomyRules: {
-      mode: c.requires_quadrant ? ('QUADRANT' as const) : c.requires_tooth ? ('TOOTH' as const) : ('NONE' as const),
-      allowedToothSet: 'BOTH' as const,
-      allowMultipleTeeth: false,
-    },
-    surfaceRules: {
-      enabled: c.requires_surface,
-      min: c.requires_surface ? 1 : undefined,
-      max: c.requires_surface ? 5 : undefined,
-      allowedSurfaces: ['M', 'O', 'D', 'B', 'L', 'I', 'F'],
-    },
-    materialsRules: {
-      enabled: c.requires_lab,
-      options: ['High Noble Metal', 'Base Metal', 'Noble Metal', 'Titanium', 'Resin', 'Porcelain/Ceramic', 'Zirconia', 'E.max'],
-      min: c.requires_lab ? 1 : undefined,
-      max: undefined,
-    },
-    defaultFee: num(c.default_fee),
-  };
+/** One-line hint the UI shows after a charge completes a planned procedure. */
+function completedPlanHint(code: string, marked: boolean): string {
+  return marked
+    ? `${code} also completed the matching procedure on the treatment plan.`
+    : `${code} posted, but the matching treatment-plan procedure could not be marked completed.`;
 }
 
 export default function AddProceduresTab({
@@ -86,15 +59,22 @@ export default function AddProceduresTab({
   const [byDescription, setByDescription] = useState('');
 
   const [selected, setSelected] = useState<ProcedureCodeRead | null>(null);
-  const [enforcing, setEnforcing] = useState<ProcedureCodeRead | null>(null);
+  // Rows waiting in the legacy "Add Procedure Details" pop-up (tooth / quadrant /
+  // surfaces / material the code requires). One row for a single code, several
+  // for an explosion code.
+  const [details, setDetails] = useState<ProcedureDetailsRowInput[] | null>(null);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fee schedules configured in Setup → Insurance → Fee Schedules. Loaded once
   // per patient/office/provider, then every code is priced from it.
   const [feeCtx, setFeeCtx] = useState<FeeScheduleContext>(EMPTY_FEE_CONTEXT);
-  const [quote, setQuote] = useState<ResolvedProcedureFee | null>(null);
+  // Primary plan coverage rules, so Est Ins matches what the chart / treatment
+  // plan would quote for the same code (one pricing pipeline everywhere).
+  const [coverageCtx, setCoverageCtx] = useState<CoverageContext>(EMPTY_COVERAGE_CONTEXT);
+  const [quote, setQuote] = useState<PricedProcedure | null>(null);
   const [quoting, setQuoting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Explosion (multi-procedure) codes for this office. The resource is live but
   // unseeded on tenant 1, so an empty list is expected — the control disables
@@ -123,6 +103,16 @@ export default function AddProceduresTab({
     };
   }, [patientId, officeId, providerId]);
 
+  useEffect(() => {
+    let alive = true;
+    loadCoverageContext({ patient_id: patientId })
+      .then((ctx) => alive && setCoverageCtx(ctx))
+      .catch(() => alive && setCoverageCtx(EMPTY_COVERAGE_CONTEXT));
+    return () => {
+      alive = false;
+    };
+  }, [patientId]);
+
   // Price the highlighted code so the fee split is visible before it is posted.
   useEffect(() => {
     if (!selected) {
@@ -131,7 +121,7 @@ export default function AddProceduresTab({
     }
     let alive = true;
     setQuoting(true);
-    resolveProcedureFee(feeCtx, selected.code, {
+    priceProcedure(feeCtx, coverageCtx, selected.code, {
       default_fee: selected.default_fee,
       on_date: transactionDateIso,
     })
@@ -141,7 +131,7 @@ export default function AddProceduresTab({
     return () => {
       alive = false;
     };
-  }, [selected, feeCtx, transactionDateIso]);
+  }, [selected, feeCtx, coverageCtx, transactionDateIso]);
 
   useEffect(() => {
     let alive = true;
@@ -167,11 +157,24 @@ export default function AddProceduresTab({
     [allCodes, byCode, byUserCode, byDescription],
   );
 
-  const post = async (
-    code: ProcedureCodeRead,
-    extras: { tooth?: string; surface?: string; quadrant?: string } = {},
-  ) => {
-    if (!providerId) {
+  interface PostRow {
+    code: ProcedureCodeRead;
+    tooth?: string | null;
+    surface?: string | null;
+    quadrant?: string | null;
+    material_id?: number | null;
+  }
+
+  /**
+   * Post one or more charges through the shared entry path — the same charge the
+   * chart's Completed tab and the treatment plan's Post to Ledger create. If a
+   * code/tooth is still planned on the treatment plan, that item is completed too.
+   * `head` lets the Add Procedure Details pop-up override provider / date.
+   */
+  const postRows = async (rows: PostRow[], head?: Partial<ProcedureDetailsHeader>) => {
+    const provider_id = head?.provider_id ?? providerId;
+    const date = head?.date ?? transactionDateIso;
+    if (!provider_id) {
       setError('Select a treating provider (top of screen) before adding a procedure.');
       return;
     }
@@ -179,58 +182,70 @@ export default function AddProceduresTab({
       setError('Missing office context for this patient.');
       return;
     }
-    // Price from the applicable fee schedule. Resolve at post time rather than
-    // trusting the preview — the selection may have changed since it was shown.
-    const priced = await resolveProcedureFee(feeCtx, code.code, {
-      default_fee: code.default_fee,
-      on_date: transactionDateIso,
-    });
-    const body: PatientProcedureCreate = {
-      id: genId(),
-      patient_id: patientId,
-      procedure_code: code.code,
-      date_of_service: transactionDateIso,
-      provider_id: providerId,
-      ...(hygienistId ? { hygienist_id: hygienistId } : {}),
-      office_id: officeId,
-      tooth: extras.tooth || null,
-      surface: extras.surface || null,
-      quadrant: extras.quadrant || null,
-      fee: priced.fee,
-      // The fee schedule entry already stores the segregation (Setup's "Patient
-      // Fee" / "Insurance Fee" columns), so the estimates come straight from it.
-      patient_estimate: priced.patient_estimate,
-      insurance_estimate: priced.insurance_estimate,
-      ...(priced.ucr_fee != null ? { ucr_fee: priced.ucr_fee } : {}),
-      apply_to: 'P',
-    };
     setPosting(true);
     setError(null);
+    setNotice(null);
     try {
-      await createPatientProcedure(body);
+      let completedPlanned = 0;
+      let lastHint: string | null = null;
+      for (const r of rows) {
+        // Price from the applicable fee schedule + plan coverage. Resolve at post
+        // time rather than trusting the preview — the selection may have changed.
+        const priced = await priceProcedure(feeCtx, coverageCtx, r.code.code, {
+          default_fee: r.code.default_fee,
+          on_date: date,
+        });
+        const result = await postCompletedProcedure({
+          patient_id: patientId,
+          office_id: officeId,
+          procedure_code: r.code.code,
+          date_of_service: date,
+          provider_id,
+          hygienist_id: hygienistId || null,
+          tooth: r.tooth || null,
+          surface: r.surface || null,
+          quadrant: r.quadrant || null,
+          material_id: r.material_id ?? null,
+          fee: priced.fee,
+          patient_estimate: priced.patient_estimate,
+          insurance_estimate: priced.insurance_estimate,
+          ucr_fee: priced.ucr_fee,
+        });
+        if (result.plan_item) {
+          completedPlanned += 1;
+          lastHint = completedPlanHint(r.code.code, result.plan_item_marked);
+        }
+      }
+      setNotice(
+        completedPlanned === 0 ? null
+          : rows.length === 1 ? lastHint
+          : `${completedPlanned} planned procedure(s) on the treatment plan marked completed.`,
+      );
       setSelected(null);
-      setEnforcing(null);
+      setDetails(null);
+      setExplosionCode('');
       onPosted();
     } catch (err) {
-      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(detail || 'Failed to add procedure. Please try again.');
+      const detail = (err as { response?: { data?: { detail?: string } }; message?: string });
+      setError(detail?.response?.data?.detail || detail?.message || 'Failed to add procedure. Please try again.');
     } finally {
       setPosting(false);
     }
   };
 
+  /** Pop-up SAVE — every required detail has been validated by the dialog. */
+  const onDetailsSave = (rows: ProcedureDetailsRowResult[], head: ProcedureDetailsHeader) =>
+    postRows(rows.map((r) => ({ code: r.code, tooth: r.tooth, surface: r.surface, quadrant: r.quadrant, material_id: r.material_id })), head);
+
   /**
    * Expand the selected explosion code and post every procedure it contains.
    * Fees still come from the fee-schedule resolver (the expansion's own
-   * `default_fee` is the code-table fee, which is 0.00 on migrated data);
-   * tooth/surface defaults carried by the bundle are posted as-is.
+   * `default_fee` is the code-table fee, which is 0.00 on migrated data).
+   * Tooth/surface defaults carried by the bundle pre-fill the Add Procedure
+   * Details pop-up, which opens whenever any exploded code requires details.
    */
   const runExplosion = async () => {
     if (!explosionCode) return;
-    if (!providerId) {
-      setError('Select a treating provider (top of screen) before adding a procedure.');
-      return;
-    }
     if (officeId == null) {
       setError('Missing office context for this patient.');
       return;
@@ -243,30 +258,18 @@ export default function AddProceduresTab({
         setError(`Explosion code ${explosionCode} expands to no procedures.`);
         return;
       }
+      const codes = await loadProcedureCodes();
+      const rows: ProcedureDetailsRowInput[] = [];
       for (const item of items) {
-        const priced = await resolveProcedureFee(feeCtx, item.procedure_code, {
-          default_fee: item.default_fee,
-          on_date: transactionDateIso,
-        });
-        await createPatientProcedure({
-          id: genId(),
-          patient_id: patientId,
-          procedure_code: item.procedure_code,
-          date_of_service: transactionDateIso,
-          provider_id: providerId,
-          ...(hygienistId ? { hygienist_id: hygienistId } : {}),
-          office_id: officeId,
-          tooth: item.tooth || null,
-          surface: item.surface || null,
-          fee: priced.fee,
-          patient_estimate: priced.patient_estimate,
-          insurance_estimate: priced.insurance_estimate,
-          ...(priced.ucr_fee != null ? { ucr_fee: priced.ucr_fee } : {}),
-          apply_to: 'P',
-        });
+        const code = codes.get(item.procedure_code);
+        if (!code) {
+          setError(`Explosion code ${explosionCode} references unknown procedure ${item.procedure_code}.`);
+          return;
+        }
+        rows.push({ code, tooth: item.tooth, surface: item.surface });
       }
-      setExplosionCode('');
-      onPosted();
+      if (rows.some((r) => needsProcedureDetails(r.code))) setDetails(rows);
+      else await postRows(rows);
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       setError(detail || `Failed to post explosion code ${explosionCode}.`);
@@ -275,12 +278,11 @@ export default function AddProceduresTab({
     }
   };
 
+  // Codes whose procedure_codes row requires a tooth / surfaces / quadrant /
+  // material open the legacy Add Procedure Details pop-up; the rest post at once.
   const addProcedure = (code: ProcedureCodeRead) => {
-    if (code.requires_tooth || code.requires_surface || code.requires_quadrant || code.requires_lab) {
-      setEnforcing(code);
-    } else {
-      post(code);
-    }
+    if (needsProcedureDetails(code)) setDetails([{ code }]);
+    else void postRows([{ code }]);
   };
 
   return (
@@ -368,6 +370,7 @@ export default function AddProceduresTab({
         </div>
 
         {error && <div className="mb-2 rounded bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{error}</div>}
+        {notice && <div className="mb-2 rounded bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{notice}</div>}
 
         {selected && <FeeBreakdown code={selected.code} quote={quote} loading={quoting} />}
 
@@ -414,18 +417,15 @@ export default function AddProceduresTab({
         </div>
       </div>
 
-      {enforcing && (
-        <ToothSurfaceEnforcement
-          isOpen={!!enforcing}
-          onClose={() => setEnforcing(null)}
-          onSave={(data) =>
-            post(enforcing, {
-              tooth: data.tooth,
-              surface: data.surfaces.join(''),
-              quadrant: data.quadrant,
-            })
-          }
-          procedure={toEnforcementProcedure(enforcing) as never}
+      {details && (
+        <ProcedureDetailsDialog
+          mode="charge"
+          office_id={officeId}
+          rows={details}
+          header={{ provider_id: providerId, date: transactionDateIso }}
+          busy={posting}
+          onSave={onDetailsSave}
+          onClose={() => setDetails(null)}
         />
       )}
     </div>
@@ -444,10 +444,10 @@ function FeeBreakdown({
   loading,
 }: {
   code: string;
-  quote: ResolvedProcedureFee | null;
+  quote: PricedProcedure | null;
   loading: boolean;
 }) {
-  const priced = quote?.source === 'fee_schedule';
+  const priced = quote?.fee_source === 'fee_schedule';
   return (
     <div className="mb-2 rounded border border-slate-200 bg-[#F7F9FC] px-3 py-2">
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
@@ -466,12 +466,13 @@ function FeeBreakdown({
       {!loading && quote && (
         <div className={`mt-1 text-[11px] ${priced ? 'text-slate-500' : 'text-amber-700'}`}>
           {priced ? 'Fee schedule: ' : ''}
-          {quote.reason}
+          {quote.fee_reason}
+          {quote.coverage_pct > 0 && ` · Insurance ${quote.coverage_pct}% (${quote.coverage_reason})`}
         </div>
       )}
-      {!loading && quote?.conflict && (
+      {!loading && quote?.fee_conflict && (
         <div className="mt-1 text-[11px] font-semibold text-amber-700">
-          Conflicting fee schedule assignment — {quote.conflict}. Check Setup → Insurance → Fee
+          Conflicting fee schedule assignment — {quote.fee_conflict}. Check Setup → Insurance → Fee
           Schedules → Assignments.
         </div>
       )}

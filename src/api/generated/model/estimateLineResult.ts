@@ -18,6 +18,10 @@ export interface EstimateLineResult {
   patient_estimate?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   estimated_deductible?: string;
-  /** fee_schedule | code_default | override */
+  /** override | assignment | plan_schedule | office_default | code_default */
   fee_source?: string;
+  /** The schedule the fee came from (FEE-3) */
+  fee_schedule_id?: number | null;
+  coverage_category?: string | null;
+  coverage_category_description?: string | null;
 }

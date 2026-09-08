@@ -44,6 +44,7 @@ import type {
   ListPatientEmergencyContactsParams,
   ListPatientInsuranceParams,
   ListPatientMedicalAlertsParams,
+  ListPatientMedicalHistoryChangesParams,
   ListPatientNotesParams,
   ListPatientQuestionnaireResponsesParams,
   ListPatientRecallsParams,
@@ -53,12 +54,21 @@ import type {
   ListReferralDemogHeadersParams,
   ListReferralsParams,
   ListResponsiblePartiesParams,
+  MedicalHistoryChange,
+  MedicalHistoryCopyRequest,
   MedicalHistoryDetailCreate,
   MedicalHistoryDetailRead,
   MedicalHistoryDetailUpdate,
+  MedicalHistoryDocument,
   MedicalHistoryRecordCreate,
   MedicalHistoryRecordRead,
   MedicalHistoryRecordUpdate,
+  MedicalHistoryRules,
+  MedicalHistorySaveRequest,
+  MedicalHistorySignRequest,
+  MedicalHistorySignature,
+  MedicalHistoryVersion,
+  MedicalHistoryVersionDetail,
   OpeningBalanceIn,
   OpeningBalanceRead,
   PaginatedResponseAccountNoteRead,
@@ -92,6 +102,7 @@ import type {
   PatientEmergencyContactCreate,
   PatientEmergencyContactRead,
   PatientEmergencyContactUpdate,
+  PatientFlagRules,
   PatientInsuranceCreate,
   PatientInsuranceRead,
   PatientInsuranceUpdate,
@@ -127,7 +138,9 @@ import type {
   ResponsiblePartyCreate,
   ResponsiblePartyRead,
   ResponsiblePartyUpdate,
-  RosterPatientRead
+  RosterPatientRead,
+  SignatureVoidRequest,
+  UploadLimits
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -324,6 +337,11 @@ export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPa
 
 
 /**
+ * Upload a patient document.
+ *
+ * ``context`` is what puts a Notes upload in the notes folder. It has to come
+ * from the caller: the file is uploaded *before* the note row exists, so there
+ * is nothing on the server to infer it from.
  * @summary Upload Document
  */
 export const uploadPatientDocument = (
@@ -342,6 +360,9 @@ if(bodyUploadPatientDocument.document_type !== undefined && bodyUploadPatientDoc
  }
 if(bodyUploadPatientDocument.description !== undefined && bodyUploadPatientDocument.description !== null) {
  formData.append(`description`, bodyUploadPatientDocument.description);
+ }
+if(bodyUploadPatientDocument.context !== undefined && bodyUploadPatientDocument.context !== null) {
+ formData.append(`context`, bodyUploadPatientDocument.context);
  }
 
       return customInstance<PatientDocumentRead>(
@@ -399,6 +420,103 @@ export const useUploadPatientDocument = <TError = ErrorType<ErrorResponse | HTTP
       return useMutation(getUploadPatientDocumentMutationOptions(options), queryClient);
     }
     /**
+ * Published so the file picker states exactly the limits the API enforces,
+ * and knows which ``context`` values the upload accepts.
+ *
+ * Declared before ``/{document_id}`` so the literal path wins over the int
+ * parameter.
+ * @summary The upload size cap and content-type allow-list the API enforces (NOTE-DOC-5)
+ */
+export const getPatientDocumentLimits = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<UploadLimits>(
+      {url: `/api/v1/patient-documents/limits`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientDocumentLimitsQueryKey = () => {
+    return [
+    `/api/v1/patient-documents/limits`
+    ] as const;
+    }
+
+
+export const getGetPatientDocumentLimitsQueryOptions = <TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientDocumentLimitsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientDocumentLimits>>> = ({ signal }) => getPatientDocumentLimits(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientDocumentLimitsQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientDocumentLimits>>>
+export type GetPatientDocumentLimitsQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientDocumentLimits>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientDocumentLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientDocumentLimits>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientDocumentLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The upload size cap and content-type allow-list the API enforces (NOTE-DOC-5)
+ */
+
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientDocumentLimitsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Get Document
  */
 export const getPatientDocument = (
@@ -1351,6 +1469,953 @@ export function useListPatientAccountPlans<TData = Awaited<ReturnType<typeof lis
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListPatientAccountPlansQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Replaces the nine-plus request open (four row listings, the overview, three
+ * ``/definition-groups`` reads and one ``/definitions`` per group).
+ *
+ * ``catalog_sources`` says whether each catalog came from the tenant's seeded
+ * ``definitions`` or from the server's built-in legacy list, so a client never
+ * has to carry its own copy or guess whether a stray test group is real (MH-1).
+ * @summary Medical alerts, both questionnaires, emergency contacts, signatures and the resolved catalogs in one call (MH-2)
+ */
+export const getPatientMedicalHistory = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryDocument>(
+      {url: `/api/v1/patients/${patientId}/medical-history`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientMedicalHistoryQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-history`
+    ] as const;
+    }
+
+
+export const getGetPatientMedicalHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientMedicalHistoryQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientMedicalHistory>>> = ({ signal }) => getPatientMedicalHistory(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientMedicalHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientMedicalHistory>>>
+export type GetPatientMedicalHistoryQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientMedicalHistory<TData = Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistory<TData = Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistory<TData = Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Medical alerts, both questionnaires, emergency contacts, signatures and the resolved catalogs in one call (MH-2)
+ */
+
+export function useGetPatientMedicalHistory<TData = Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientMedicalHistoryQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * One transaction for the whole document — legacy's **NO TO ALL ALERTS**
+ * stops being ~90 sequential POSTs through a six-connection browser pool, and a
+ * tab closed mid-save can no longer leave a half-written medical history.
+ * @summary Save the whole medical-history document in one transaction (MH-3)
+ */
+export const savePatientMedicalHistory = (
+    patientId: number,
+    medicalHistorySaveRequest: BodyType<MedicalHistorySaveRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryDocument>(
+      {url: `/api/v1/patients/${patientId}/medical-history`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: medicalHistorySaveRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getSavePatientMedicalHistoryMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof savePatientMedicalHistory>>, TError,{patientId: number;data: BodyType<MedicalHistorySaveRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof savePatientMedicalHistory>>, TError,{patientId: number;data: BodyType<MedicalHistorySaveRequest>}, TContext> => {
+
+const mutationKey = ['savePatientMedicalHistory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof savePatientMedicalHistory>>, {patientId: number;data: BodyType<MedicalHistorySaveRequest>}> = (props) => {
+          const {patientId,data} = props ?? {};
+
+          return  savePatientMedicalHistory(patientId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SavePatientMedicalHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof savePatientMedicalHistory>>>
+    export type SavePatientMedicalHistoryMutationBody = BodyType<MedicalHistorySaveRequest>
+    export type SavePatientMedicalHistoryMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Save the whole medical-history document in one transaction (MH-3)
+ */
+export const useSavePatientMedicalHistory = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof savePatientMedicalHistory>>, TError,{patientId: number;data: BodyType<MedicalHistorySaveRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof savePatientMedicalHistory>>,
+        TError,
+        {patientId: number;data: BodyType<MedicalHistorySaveRequest>},
+        TContext
+      > => {
+      return useMutation(getSavePatientMedicalHistoryMutationOptions(options), queryClient);
+    }
+    /**
+ * Atomic and attributable. The client-side implementation was ~90 reads then
+ * ~90 writes with nothing recording where the answers came from; every copied
+ * row now lands in the change log naming the source chart, and the version row
+ * carries ``source_patient_id``/``copied_at``.
+ * @summary Copy another chart's medical history onto this patient (MH-4)
+ */
+export const copyPatientMedicalHistory = (
+    patientId: number,
+    sourcePatientId: number,
+    medicalHistoryCopyRequestNull?: BodyType<MedicalHistoryCopyRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryDocument>(
+      {url: `/api/v1/patients/${patientId}/medical-history/copy-from/${sourcePatientId}`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: medicalHistoryCopyRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getCopyPatientMedicalHistoryMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyPatientMedicalHistory>>, TError,{patientId: number;sourcePatientId: number;data?: BodyType<MedicalHistoryCopyRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof copyPatientMedicalHistory>>, TError,{patientId: number;sourcePatientId: number;data?: BodyType<MedicalHistoryCopyRequest | null>}, TContext> => {
+
+const mutationKey = ['copyPatientMedicalHistory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof copyPatientMedicalHistory>>, {patientId: number;sourcePatientId: number;data?: BodyType<MedicalHistoryCopyRequest | null>}> = (props) => {
+          const {patientId,sourcePatientId,data} = props ?? {};
+
+          return  copyPatientMedicalHistory(patientId,sourcePatientId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CopyPatientMedicalHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof copyPatientMedicalHistory>>>
+    export type CopyPatientMedicalHistoryMutationBody = BodyType<MedicalHistoryCopyRequest | null> | undefined
+    export type CopyPatientMedicalHistoryMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Copy another chart's medical history onto this patient (MH-4)
+ */
+export const useCopyPatientMedicalHistory = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyPatientMedicalHistory>>, TError,{patientId: number;sourcePatientId: number;data?: BodyType<MedicalHistoryCopyRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof copyPatientMedicalHistory>>,
+        TError,
+        {patientId: number;sourcePatientId: number;data?: BodyType<MedicalHistoryCopyRequest | null>},
+        TContext
+      > => {
+      return useMutation(getCopyPatientMedicalHistoryMutationOptions(options), queryClient);
+    }
+    /**
+ * Freezes the answers into a version (``medical_history_records`` +
+ * ``medical_history_details``) and stamps the same ``content_hash`` on the
+ * signature, so a later edit flips ``signature_status`` to ``stale`` instead of
+ * leaving a signature that silently no longer matches what it attests to.
+ * @summary Capture a signature over a frozen version of this medical history (MH-6)
+ */
+export const signPatientMedicalHistory = (
+    patientId: number,
+    medicalHistorySignRequest: BodyType<MedicalHistorySignRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryDocument>(
+      {url: `/api/v1/patients/${patientId}/medical-history/sign`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: medicalHistorySignRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getSignPatientMedicalHistoryMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signPatientMedicalHistory>>, TError,{patientId: number;data: BodyType<MedicalHistorySignRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof signPatientMedicalHistory>>, TError,{patientId: number;data: BodyType<MedicalHistorySignRequest>}, TContext> => {
+
+const mutationKey = ['signPatientMedicalHistory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signPatientMedicalHistory>>, {patientId: number;data: BodyType<MedicalHistorySignRequest>}> = (props) => {
+          const {patientId,data} = props ?? {};
+
+          return  signPatientMedicalHistory(patientId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignPatientMedicalHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof signPatientMedicalHistory>>>
+    export type SignPatientMedicalHistoryMutationBody = BodyType<MedicalHistorySignRequest>
+    export type SignPatientMedicalHistoryMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Capture a signature over a frozen version of this medical history (MH-6)
+ */
+export const useSignPatientMedicalHistory = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signPatientMedicalHistory>>, TError,{patientId: number;data: BodyType<MedicalHistorySignRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof signPatientMedicalHistory>>,
+        TError,
+        {patientId: number;data: BodyType<MedicalHistorySignRequest>},
+        TContext
+      > => {
+      return useMutation(getSignPatientMedicalHistoryMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Signed / completed versions of this medical history (MH-6/16)
+ */
+export const listPatientMedicalHistoryVersions = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryVersion[]>(
+      {url: `/api/v1/patients/${patientId}/medical-history/versions`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientMedicalHistoryVersionsQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-history/versions`
+    ] as const;
+    }
+
+
+export const getListPatientMedicalHistoryVersionsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientMedicalHistoryVersionsQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>> = ({ signal }) => listPatientMedicalHistoryVersions(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientMedicalHistoryVersionsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>>
+export type ListPatientMedicalHistoryVersionsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientMedicalHistoryVersions<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientMedicalHistoryVersions<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientMedicalHistoryVersions<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Signed / completed versions of this medical history (MH-6/16)
+ */
+
+export function useListPatientMedicalHistoryVersions<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryVersions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientMedicalHistoryVersionsQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary One frozen version with the answers as they stood when signed (MH-6)
+ */
+export const getPatientMedicalHistoryVersion = (
+    patientId: number,
+    versionId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryVersionDetail>(
+      {url: `/api/v1/patients/${patientId}/medical-history/versions/${versionId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientMedicalHistoryVersionQueryKey = (patientId: number,
+    versionId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-history/versions/${versionId}`
+    ] as const;
+    }
+
+
+export const getGetPatientMedicalHistoryVersionQueryOptions = <TData = Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError = ErrorType<ErrorResponse>>(patientId: number,
+    versionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientMedicalHistoryVersionQueryKey(patientId,versionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>> = ({ signal }) => getPatientMedicalHistoryVersion(patientId,versionId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined && versionId !== null && versionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientMedicalHistoryVersionQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>>
+export type GetPatientMedicalHistoryVersionQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientMedicalHistoryVersion<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    versionId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistoryVersion<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    versionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistoryVersion<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    versionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary One frozen version with the answers as they stood when signed (MH-6)
+ */
+
+export function useGetPatientMedicalHistoryVersion<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    versionId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryVersion>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientMedicalHistoryVersionQueryOptions(patientId,versionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * ``audit_logs`` records one row per request, which for the composite write
+ * is a single entry for a whole document. A medical record has to be able to
+ * answer "who changed *this answer* and when".
+ * @summary Append-only, field-level change log for this patient's answers (MH-8)
+ */
+export const listPatientMedicalHistoryChanges = (
+    patientId: number,
+    params?: ListPatientMedicalHistoryChangesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryChange[]>(
+      {url: `/api/v1/patients/${patientId}/medical-history/changes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientMedicalHistoryChangesQueryKey = (patientId: number,
+    params?: ListPatientMedicalHistoryChangesParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-history/changes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientMedicalHistoryChangesQueryOptions = <TData = Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError = ErrorType<ErrorResponse>>(patientId: number,
+    params?: ListPatientMedicalHistoryChangesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientMedicalHistoryChangesQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>> = ({ signal }) => listPatientMedicalHistoryChanges(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientMedicalHistoryChangesQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>>
+export type ListPatientMedicalHistoryChangesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientMedicalHistoryChanges<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    params: undefined |  ListPatientMedicalHistoryChangesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientMedicalHistoryChanges<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    params?: ListPatientMedicalHistoryChangesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientMedicalHistoryChanges<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    params?: ListPatientMedicalHistoryChangesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Append-only, field-level change log for this patient's answers (MH-8)
+ */
+
+export function useListPatientMedicalHistoryChanges<TData = Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number,
+    params?: ListPatientMedicalHistoryChangesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientMedicalHistoryChanges>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientMedicalHistoryChangesQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Server-rendered medical-history form (MH-15)
+ */
+export const getPatientMedicalHistoryPdf = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/patients/${patientId}/medical-history/pdf`, method: 'GET',
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientMedicalHistoryPdfQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-history/pdf`
+    ] as const;
+    }
+
+
+export const getGetPatientMedicalHistoryPdfQueryOptions = <TData = Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientMedicalHistoryPdfQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>> = ({ signal }) => getPatientMedicalHistoryPdf(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientMedicalHistoryPdfQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>>
+export type GetPatientMedicalHistoryPdfQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientMedicalHistoryPdf<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistoryPdf<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistoryPdf<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Server-rendered medical-history form (MH-15)
+ */
+
+export function useGetPatientMedicalHistoryPdf<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientMedicalHistoryPdfQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Signatures were append-only with no supersede, so a *cleared* signature
+ * could not be represented at all. Voiding keeps the row and its audit trail.
+ * @summary Void / clear a captured signature (MH-7)
+ */
+export const voidPatientSignature = (
+    signatureId: number,
+    signatureVoidRequestNull?: BodyType<SignatureVoidRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistorySignature>(
+      {url: `/api/v1/patient-signatures/${signatureId}/void`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: signatureVoidRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getVoidPatientSignatureMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voidPatientSignature>>, TError,{signatureId: number;data?: BodyType<SignatureVoidRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof voidPatientSignature>>, TError,{signatureId: number;data?: BodyType<SignatureVoidRequest | null>}, TContext> => {
+
+const mutationKey = ['voidPatientSignature'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof voidPatientSignature>>, {signatureId: number;data?: BodyType<SignatureVoidRequest | null>}> = (props) => {
+          const {signatureId,data} = props ?? {};
+
+          return  voidPatientSignature(signatureId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VoidPatientSignatureMutationResult = NonNullable<Awaited<ReturnType<typeof voidPatientSignature>>>
+    export type VoidPatientSignatureMutationBody = BodyType<SignatureVoidRequest | null> | undefined
+    export type VoidPatientSignatureMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Void / clear a captured signature (MH-7)
+ */
+export const useVoidPatientSignature = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voidPatientSignature>>, TError,{signatureId: number;data?: BodyType<SignatureVoidRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof voidPatientSignature>>,
+        TError,
+        {signatureId: number;data?: BodyType<SignatureVoidRequest | null>},
+        TContext
+      > => {
+      return useMutation(getVoidPatientSignatureMutationOptions(options), queryClient);
+    }
+    /**
+ * Published so the form can grey out the boxes from the same table the
+ * server validates against — a rule added in ``medical_history_rules`` reaches
+ * the UI without a frontend release.
+ * @summary Answer vocabulary (MH-5) and contradiction rules (MH-12) the API enforces
+ */
+export const getMedicalHistoryRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryRules>(
+      {url: `/api/v1/metadata/medical-history-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMedicalHistoryRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/medical-history-rules`
+    ] as const;
+    }
+
+
+export const getGetMedicalHistoryRulesQueryOptions = <TData = Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMedicalHistoryRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMedicalHistoryRules>>> = ({ signal }) => getMedicalHistoryRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMedicalHistoryRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getMedicalHistoryRules>>>
+export type GetMedicalHistoryRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetMedicalHistoryRules<TData = Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedicalHistoryRules>>,
+          TError,
+          Awaited<ReturnType<typeof getMedicalHistoryRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMedicalHistoryRules<TData = Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedicalHistoryRules>>,
+          TError,
+          Awaited<ReturnType<typeof getMedicalHistoryRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMedicalHistoryRules<TData = Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Answer vocabulary (MH-5) and contradiction rules (MH-12) the API enforces
+ */
+
+export function useGetMedicalHistoryRules<TData = Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMedicalHistoryRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMedicalHistoryRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Serves the same rule table the API enforces on write.
+ *
+ * The form needs this logic to tick and untick boxes as the user clicks;
+ * reading it from here keeps the two halves from drifting, so a rule added to
+ * ``patient_rules_service`` reaches the UI without a frontend release.
+ * @summary Mutual-exclusion / implication rules for the Patient Status, Coverage Type and Patient Type checkboxes
+ */
+export const getPatientFlagRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientFlagRules>(
+      {url: `/api/v1/metadata/patient-flag-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientFlagRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/patient-flag-rules`
+    ] as const;
+    }
+
+
+export const getGetPatientFlagRulesQueryOptions = <TData = Awaited<ReturnType<typeof getPatientFlagRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientFlagRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientFlagRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientFlagRules>>> = ({ signal }) => getPatientFlagRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientFlagRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientFlagRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientFlagRules>>>
+export type GetPatientFlagRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientFlagRules<TData = Awaited<ReturnType<typeof getPatientFlagRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientFlagRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientFlagRules>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientFlagRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientFlagRules<TData = Awaited<ReturnType<typeof getPatientFlagRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientFlagRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientFlagRules>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientFlagRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientFlagRules<TData = Awaited<ReturnType<typeof getPatientFlagRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientFlagRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mutual-exclusion / implication rules for the Patient Status, Coverage Type and Patient Type checkboxes
+ */
+
+export function useGetPatientFlagRules<TData = Awaited<ReturnType<typeof getPatientFlagRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientFlagRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientFlagRulesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

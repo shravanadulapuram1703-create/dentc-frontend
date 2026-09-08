@@ -21,6 +21,10 @@ claim_id?: string | null;
  */
 procedure_id?: string | null;
 /**
+ * Filter by is_void
+ */
+is_void?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

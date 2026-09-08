@@ -7,6 +7,8 @@
  */
 
 export interface InsuranceCarrierCreate {
+  is_dental?: boolean | null;
+  allow_duplicate_name?: boolean;
   name: string;
   carrier_type?: string | null;
   payer_id?: string | null;

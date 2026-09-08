@@ -2,6 +2,7 @@ import type { ProcedureCodeRead, TreatmentPlanItemRead, PatientProcedureRead, Tr
 import type { ToothGlyph } from './chartModel';
 import type { ToothArea } from './types';
 import { toothMeta } from './dentition';
+import { activeTreatmentPlan } from '@/features/procedures/procedureEntryService';
 
 // Tx-Plan / Completed support: ADA-code → tooth classification + enforcement,
 // procedure → overlay glyph mapping, source colours, plan resolution, estimates.
@@ -103,8 +104,7 @@ export function buildOverlayGlyphs(
 
 /** Active plan = highest by created_at (legacy "defaults to highest treatment plan ID"). */
 export function activePlan(plans: TreatmentPlanRead[]): TreatmentPlanRead | null {
-  if (!plans.length) return null;
-  return [...plans].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id))[0] ?? null;
+  return activeTreatmentPlan(plans);
 }
 
 export function estimateInsurance(fee: number, coveragePct: number | null | undefined): number {

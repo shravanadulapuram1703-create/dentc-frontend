@@ -31,5 +31,11 @@ export interface PatientProcedureUpdate {
   is_void?: boolean | null;
   material_id?: number | null;
   treatment_plan_id?: string | null;
+  treatment_plan_item_id?: string | null;
   notes?: string | null;
+  created_by_legacy?: string | null;
+  duration_minutes?: number | null;
+  pat_paid?: number | string | null;
+  pat_adjust?: number | string | null;
+  fee_schedule_id?: number | null;
 }

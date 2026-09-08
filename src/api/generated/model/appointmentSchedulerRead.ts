@@ -30,6 +30,7 @@ export interface AppointmentSchedulerRead {
   is_cancelled?: boolean;
   is_blocked?: boolean;
   is_posted?: boolean;
+  is_archived?: boolean;
   posted_on?: string | null;
   confirmed_on?: string | null;
   checked_in_on?: string | null;

@@ -10,6 +10,8 @@ export interface PatientAlertCreate {
   patient_id: number;
   alert: string;
   blocks_charges?: boolean | null;
+  is_flash_alert?: boolean | null;
+  source_medical_alert_id?: number | null;
   is_active?: boolean | null;
   deactivated_on?: string | null;
 }

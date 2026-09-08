@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { LetterRenderResponseFallbackTokens } from './letterRenderResponseFallbackTokens';
 import type { LetterRenderResponseMergeFields } from './letterRenderResponseMergeFields';
 
 export interface LetterRenderResponse {
@@ -19,4 +20,18 @@ export interface LetterRenderResponse {
   merge_fields?: LetterRenderResponseMergeFields;
   /** #TOKEN#s in the body that are not in the merge catalog at all */
   unknown_tokens?: string[];
+  /** Tokens whose value came from the caller (LTR-15) */
+  applied_overrides?: string[];
+  /** Override keys that are not catalog tokens and were ignored */
+  rejected_overrides?: string[];
+  /** Which appointment fed #APPT_DATE#/#APPT_DATETIME#: 'next' (upcoming), 'last' (most recent past), or null (none on file) */
+  appointment_source?: string | null;
+  /** Which tier fed #APPT_PRDR#: 'next', 'last', 'preferred' (the patient's preferred provider — no appointment on file), or null */
+  appointment_provider_source?: string | null;
+  /** {token: tier} for tokens answered by a *degraded* tier. Empty when everything resolved from the upcoming appointment. A token the caller overrode is never listed. */
+  fallback_tokens?: LetterRenderResponseFallbackTokens;
+  /** The office clock #TODAY_DATE# was computed in (LTR-14) */
+  timezone?: string | null;
+  /** That office's current date */
+  today?: string | null;
 }

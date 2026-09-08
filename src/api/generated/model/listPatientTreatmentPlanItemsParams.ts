@@ -8,4 +8,26 @@
 
 export type ListPatientTreatmentPlanItemsParams = {
 include_archived?: boolean;
+/**
+ * false = only open items (status != completed)
+ */
+include_completed?: boolean;
+/**
+ * Limit to one plan
+ */
+plan_id?: string | null;
+/**
+ * Exact item status
+ */
+status?: string | null;
+procedure_code?: string | null;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 500
+ */
+size?: number;
 };

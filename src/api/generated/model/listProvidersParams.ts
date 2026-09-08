@@ -17,6 +17,10 @@ office_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * Filter by role
+ */
+role?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

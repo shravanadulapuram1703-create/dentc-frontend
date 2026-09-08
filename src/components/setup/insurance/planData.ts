@@ -102,6 +102,39 @@ function money(v: string): string | null {
   return t === "" ? null : t;
 }
 
+// ---------------------------------------------------------------------------
+// Coverage-rule limits — typed columns (2026-09-07 spec)
+//
+// `insurance_coverage_rules` now carries typed limits (`freq_limit` integer
+// ordinal, `age_min` / `age_max` / `wait_months` integers) next to the legacy
+// string mirrors (`age_limit` "min-max", `wait_period` months). The backend
+// documents that the typed limits win over the mirrors, so every write sends
+// the typed values (plus the mirrors, so legacy readers stay consistent) and
+// every read prefers a typed value when it is non-null.
+// ---------------------------------------------------------------------------
+
+/** UI keeps the frequency ordinal as a string ("0" = No Limitation); the API stores an integer. */
+export function freqLimitToApi(v: string | number | null | undefined): number {
+  const n = typeof v === "number" ? v : Number.parseInt(String(v ?? "").trim(), 10);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+/** Whole non-negative integer from a form string; ""/junk → null. */
+export function intOrNull(v: string | number | null | undefined): number | null {
+  if (typeof v === "number") return Number.isFinite(v) && v >= 0 ? Math.trunc(v) : null;
+  const m = /^\d+/.exec(String(v ?? "").trim());
+  return m ? Number.parseInt(m[0], 10) : null;
+}
+
+/** Legacy `age_limit` mirror ("min", "min-max", "0"/"" = none) → typed columns. */
+export function ageLimitToApi(v: string | null | undefined): { age_min: number | null; age_max: number | null } {
+  const t = (v ?? "").trim();
+  if (t === "" || t === "0") return { age_min: null, age_max: null };
+  const m = /^(\d*)\s*-\s*(\d*)$/.exec(t);
+  if (m) return { age_min: m[1] ? Number(m[1]) : null, age_max: m[2] ? Number(m[2]) : null };
+  return { age_min: /^\d+$/.test(t) ? Number(t) : null, age_max: null };
+}
+
 function planCommonBody(f: PlanForm) {
   return {
     employer_id: f.employer_id,
@@ -166,7 +199,7 @@ export function coverageRuleToForm(r: InsuranceCoverageRuleRead): CoverageRuleFo
     description: r.description ?? "",
     coverage_pct: r.coverage_pct ?? "",
     ded_waived: r.ded_waived ?? false,
-    freq_limit: r.freq_limit ?? "",
+    freq_limit: r.freq_limit == null ? "" : String(r.freq_limit),
     age_limit: r.age_limit ?? "",
     wait_period: r.wait_period ?? "",
   };
@@ -180,7 +213,9 @@ function coverageRuleCommonBody(f: CoverageRuleForm) {
     description: f.description.trim() || null,
     coverage_pct: money(f.coverage_pct),
     ded_waived: f.ded_waived,
-    freq_limit: f.freq_limit.trim() || null,
+    freq_limit: f.freq_limit.trim() === "" ? null : freqLimitToApi(f.freq_limit),
+    ...ageLimitToApi(f.age_limit),
+    wait_months: intOrNull(f.wait_period),
     age_limit: f.age_limit.trim() || null,
     wait_period: f.wait_period.trim() || null,
   };

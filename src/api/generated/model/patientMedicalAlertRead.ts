@@ -14,8 +14,15 @@ export interface PatientMedicalAlertRead {
   alert_label?: string | null;
   response?: string | null;
   comments?: string | null;
+  answered_at?: string | null;
   is_active: boolean;
+  section?: string | null;
+  is_flash_alert?: boolean;
+  blocks_charges?: boolean;
   created_by?: number | null;
+  created_by_name?: string | null;
+  updated_by?: number | null;
+  updated_by_name?: string | null;
   created_at: string;
   updated_at?: string | null;
 }

@@ -224,6 +224,71 @@ export const useUpdateAppointmentStatus = <TError = ErrorType<ErrorResponse | HT
       return useMutation(getUpdateAppointmentStatusMutationOptions(options), queryClient);
     }
     /**
+ * SCHED-DEL-2: soft delete is intentional (HIPAA-adjacent history — an
+ * appointment that existed is a fact about the patient's record), so DELETE stays
+ * soft. This is the missing other half: the archived rows are listable via
+ * ``GET /appointments?is_archived=true`` and this puts one back on the calendar.
+ * @summary Un-archive a soft-deleted appointment (SCHED-DEL-2)
+ */
+export const restoreAppointment = (
+    appointmentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AppointmentSchedulerRead>(
+      {url: `/api/v1/appointments/${appointmentId}/restore`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getRestoreAppointmentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreAppointment>>, TError,{appointmentId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreAppointment>>, TError,{appointmentId: string}, TContext> => {
+
+const mutationKey = ['restoreAppointment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreAppointment>>, {appointmentId: string}> = (props) => {
+          const {appointmentId} = props ?? {};
+
+          return  restoreAppointment(appointmentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreAppointmentMutationResult = NonNullable<Awaited<ReturnType<typeof restoreAppointment>>>
+
+    export type RestoreAppointmentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Un-archive a soft-deleted appointment (SCHED-DEL-2)
+ */
+export const useRestoreAppointment = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreAppointment>>, TError,{appointmentId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreAppointment>>,
+        TError,
+        {appointmentId: string},
+        TContext
+      > => {
+      return useMutation(getRestoreAppointmentMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Appointments across every patient on an account (legacy VIEW FUTURE FAMILY APPT, PO-4)
  */
 export const listFamilyAppointments = (

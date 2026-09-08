@@ -10,5 +10,7 @@ export interface CodeBundleItemUpdate {
   bundle_id?: number | null;
   procedure_code?: string | null;
   tooth?: string | null;
+  surface?: string | null;
+  quadrant?: string | null;
   sort_order?: number | null;
 }

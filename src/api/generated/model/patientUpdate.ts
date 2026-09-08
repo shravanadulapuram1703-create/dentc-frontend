@@ -39,6 +39,8 @@ export interface PatientUpdate {
   send_collections?: boolean | null;
   no_auto_email?: boolean | null;
   no_auto_sms?: boolean | null;
+  sms_opt_out_at?: string | null;
+  sms_opt_in_at?: string | null;
   is_locked?: boolean | null;
   hipaa_agreement?: boolean | null;
   guardian_name?: string | null;

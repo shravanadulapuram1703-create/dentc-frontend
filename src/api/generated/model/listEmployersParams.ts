@@ -9,6 +9,14 @@ import type { ListEmployersOrder } from './listEmployersOrder';
 
 export type ListEmployersParams = {
 /**
+ * Filter by legacy_id
+ */
+legacy_id?: string | null;
+/**
+ * Comma-separated list of ids to return (batch lookup)
+ */
+ids?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

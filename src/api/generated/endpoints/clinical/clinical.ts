@@ -341,6 +341,108 @@ export const useUploadProgressNoteAttachment = <TError = ErrorType<ErrorResponse
       return useMutation(getUploadProgressNoteAttachmentMutationOptions(options), queryClient);
     }
     /**
+ * Note attachments used to be handed back as a public ``/uploads/...`` URL,
+ * readable with no token and no tenant check. That mount is gone; this is the
+ * read path — and it is what ``file_url`` now points at.
+ * @summary Stream a note attachment with the caller's tenant checks applied (NOTE-DOC-3)
+ */
+export const getProgressNoteAttachmentContent = (
+    noteId: number,
+    attachmentId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/progress-notes/${noteId}/attachments/${attachmentId}/content`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetProgressNoteAttachmentContentQueryKey = (noteId: number,
+    attachmentId: number,) => {
+    return [
+    `/api/v1/progress-notes/${noteId}/attachments/${attachmentId}/content`
+    ] as const;
+    }
+
+
+export const getGetProgressNoteAttachmentContentQueryOptions = <TData = Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError = ErrorType<ErrorResponse>>(noteId: number,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProgressNoteAttachmentContentQueryKey(noteId,attachmentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>> = ({ signal }) => getProgressNoteAttachmentContent(noteId,attachmentId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: noteId !== null && noteId !== undefined && attachmentId !== null && attachmentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProgressNoteAttachmentContentQueryResult = NonNullable<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>>
+export type GetProgressNoteAttachmentContentQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetProgressNoteAttachmentContent<TData = Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number,
+    attachmentId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>,
+          TError,
+          Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProgressNoteAttachmentContent<TData = Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>,
+          TError,
+          Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProgressNoteAttachmentContent<TData = Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Stream a note attachment with the caller's tenant checks applied (NOTE-DOC-3)
+ */
+
+export function useGetProgressNoteAttachmentContent<TData = Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError = ErrorType<ErrorResponse>>(
+ noteId: number,
+    attachmentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProgressNoteAttachmentContent>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProgressNoteAttachmentContentQueryOptions(noteId,attachmentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Remove a note attachment (PN-3)
  */
 export const deleteProgressNoteAttachment = (

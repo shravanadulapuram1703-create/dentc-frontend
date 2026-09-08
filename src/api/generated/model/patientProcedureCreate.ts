@@ -6,6 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * FEE-3: ``fee`` is **optional**.
+ *
+ * ``patient_procedures.fee`` is NOT NULL, so the factory made it required and
+ * every caller had to price the charge itself — which is exactly how charges
+ * ended up posting at ``0.00`` when a client fell back to the code's
+ * ``default_fee``. Omit it and ``PatientProcedureCRUD`` resolves it through
+ * the same server-side rules ``GET /patients/{id}/fee`` answers with. Sending
+ * a fee still wins, so no existing caller changes.
+ */
 export interface PatientProcedureCreate {
   id: string;
   patient_id: number;
@@ -19,7 +29,7 @@ export interface PatientProcedureCreate {
   surface?: string | null;
   quadrant?: string | null;
   hygienist_id?: string | null;
-  fee: number | string;
+  fee?: number | string | null;
   ucr_fee?: number | string | null;
   insurance_estimate?: number | string | null;
   patient_estimate?: number | string | null;
@@ -32,5 +42,11 @@ export interface PatientProcedureCreate {
   is_void?: boolean | null;
   material_id?: number | null;
   treatment_plan_id?: string | null;
+  treatment_plan_item_id?: string | null;
   notes?: string | null;
+  created_by_legacy?: string | null;
+  duration_minutes?: number | null;
+  pat_paid?: number | string | null;
+  pat_adjust?: number | string | null;
+  fee_schedule_id?: number | null;
 }

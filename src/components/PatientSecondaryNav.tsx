@@ -210,14 +210,14 @@ export default function PatientSecondaryNav({
       label: "Messages",
       gradient: "from-green-600 to-emerald-600",
       path: "/messages",
-      description: "Internal Messaging",
+      description: "Text Messages — two-way SMS inbox",
     },
     {
       icon: MessageSquare,
       label: "SMS/Email",
       gradient: "from-teal-600 to-cyan-600",
       path: "/communication",
-      description: "SMS & Email Communication",
+      description: "SMS & Email Log",
     },
     {
       icon: Share2,

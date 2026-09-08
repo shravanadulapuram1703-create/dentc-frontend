@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  AlertCircle,
   ChevronDown,
   Loader2,
   Paperclip,
@@ -31,6 +32,7 @@ import MacroQuestionnaire from './MacroQuestionnaire';
 import { macroHasFields, parseMacroFields, substituteMacro, type MacroField } from './macroTemplate';
 import {
   ATTACHMENT_ACCEPT,
+  apiErrorMessage,
   createNote,
   currentUser,
   isLocked as isLockedNote,
@@ -45,6 +47,7 @@ import {
   todayInputDate,
   toInputDate,
   updateNote,
+  updateNoteDate,
   uploadAttachment,
   validateAttachment,
 } from './progressNotesService';
@@ -60,8 +63,7 @@ interface OutletContext {
   patient: PatientData;
 }
 
-const errMsg = (err: unknown): string | undefined =>
-  (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+const errMsg = apiErrorMessage;
 
 /** Editor's own body colour — what "Default" resets a coloured run back to. */
 const DEFAULT_TEXT_COLOR = '#0f172a';
@@ -134,6 +136,9 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const [surface, setSurface] = useState('');
   const [region, setRegion] = useState('');
   const [dos, setDos] = useState<string>(todayInputDate());
+  // DOS as loaded from the server, so a locked note can still save a DOS-only
+  // correction (and we skip the request when nothing changed).
+  const [originalDos, setOriginalDos] = useState<string>('');
 
   const [colorOpen, setColorOpen] = useState(false);
   const [lastColor, setLastColor] = useState<string>(DEFAULT_TEXT_COLOR);
@@ -147,6 +152,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const [changePassword, setChangePassword] = useState('');
 
   const [locked, setLocked] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [signed, setSigned] = useState(false);
   const [struckOff, setStruckOff] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -229,7 +235,9 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     setTeeth(parseTeeth(n.tooth));
     setSurface(n.surface ?? '');
     setRegion(n.region ?? '');
-    setDos(toInputDate(n.note_date) || todayInputDate());
+    const loadedDos = toInputDate(n.note_date) || todayInputDate();
+    setDos(loadedDos);
+    setOriginalDos(loadedDos);
     const sig = isSignedNote(n);
     setSigned(sig);
     setLocked(isLockedNote(n));
@@ -237,9 +245,20 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     if (editorRef.current) {
       editorRef.current.innerHTML = n.notes_html || textToHtml(n.notes ?? '');
     }
+    setHydrated(true);
   }, [noteQuery.data]);
 
-  const readOnly = mode === 'view' || locked;
+  // Until the existing note has loaded, the form is an empty shell showing
+  // today's date — keep it read-only so a stray keystroke or Save can't
+  // overwrite the real note with a blank one (the fetch can take seconds).
+  const loadingNote = isExisting && !hydrated && !noteQuery.isError;
+  const loadFailed = isExisting && noteQuery.isError;
+  const readOnly = mode === 'view' || locked || loadingNote || loadFailed;
+  // DOS outlives the text lock (doctors fix a wrong visit date days later);
+  // only a signed or struck-off note freezes it.
+  const dosEditable = !loadingNote && !loadFailed && !signed && !struckOff;
+  const dosChanged = dos !== originalDos;
+  const canSave = !readOnly || (dosEditable && dosChanged);
 
   // ---- rich text ----------------------------------------------------------
   // Opening the picker moves focus out of the contentEditable, which collapses
@@ -417,18 +436,19 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
 
   const persist = async (): Promise<number | null> => {
     const body = collectBody();
-    if (!readOnly) {
-      if (!dos) {
-        window.alert('Please enter the Date of Service (DOS).');
-        return null;
-      }
-      if (!body.notes.trim()) {
-        window.alert('Please enter the progress note.');
-        return null;
-      }
+    if (!dos && (!readOnly || dosEditable)) {
+      window.alert('Please enter the Date of Service (DOS).');
+      return null;
     }
-    if (mode === 'edit' && isExisting) {
+    if (!readOnly && !body.notes.trim()) {
+      window.alert('Please enter the progress note.');
+      return null;
+    }
+    if (isExisting) {
       if (!readOnly) await updateNote(numericNoteId, body);
+      // Locked text: the only thing that can still change is the DOS, and the
+      // server's lock check only fires on the text fields, so send it alone.
+      else if (dosEditable && dosChanged) await updateNoteDate(numericNoteId, dos);
       return numericNoteId;
     }
     const created = await createNote({
@@ -527,7 +547,12 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
           )}
           {locked && !struckOff && (
             <span className="rounded bg-amber-500/90 px-2 py-0.5 text-xs font-semibold">
-              {signed ? 'Signed · Locked' : 'Locked'}
+              {signed ? 'Signed · Locked' : 'Locked · DOS still editable'}
+            </span>
+          )}
+          {loadingNote && (
+            <span className="flex items-center gap-1 text-xs font-normal text-white/80">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading note…
             </span>
           )}
         </div>
@@ -691,8 +716,15 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
               <input
                 type="date"
                 value={dos}
-                disabled={readOnly}
+                disabled={!dosEditable}
                 onChange={(e) => setDos(e.target.value)}
+                title={
+                  dosEditable
+                    ? 'Date of Service — editable even after the note locks'
+                    : signed
+                      ? 'Signed notes cannot change their DOS'
+                      : undefined
+                }
                 className="rounded border-2 border-slate-300 px-3 py-2 text-sm font-medium disabled:bg-slate-100"
               />
             </div>
@@ -770,14 +802,39 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
                 Select text, then pick a colour to code the note.
               </span>
             </div>
-            <div
-              ref={editorRef}
-              contentEditable={!readOnly}
-              suppressContentEditableWarning
-              className="min-h-[14rem] flex-1 overflow-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-900 focus:outline-none"
-              style={{ whiteSpace: 'pre-wrap' }}
-              data-placeholder="Type the note, or add a macro from the left panel…"
-            />
+            <div className="relative flex flex-1 flex-col">
+              <div
+                ref={editorRef}
+                contentEditable={!readOnly}
+                suppressContentEditableWarning
+                className="min-h-[14rem] flex-1 overflow-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-900 focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap' }}
+                data-placeholder={loadingNote ? '' : 'Type the note, or add a macro from the left panel…'}
+              />
+              {loadingNote && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center gap-2 bg-white/80 text-sm font-semibold text-slate-500"
+                  role="status"
+                >
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" /> Loading note…
+                </div>
+              )}
+              {loadFailed && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/90 text-sm">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                  <span className="font-semibold text-slate-700">
+                    {errMsg(noteQuery.error) || 'Could not load this note.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => noteQuery.refetch()}
+                    className="font-semibold text-blue-600 hover:underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Attachments */}
@@ -924,22 +981,27 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center justify-end gap-2 rounded-lg border border-slate-300 bg-white p-3">
-            {mode !== 'view' && (
+            {(!readOnly || dosEditable) && (
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || !canSave}
+                title={
+                  readOnly && !dosChanged
+                    ? 'Note text is locked — change the DOS to enable saving'
+                    : undefined
+                }
                 className="flex items-center gap-1.5 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Notes
+                {readOnly ? 'Save DOS' : 'Save Notes'}
               </button>
             )}
             {isExisting && (
               <button
                 type="button"
                 onClick={handleStrikeToggle}
-                disabled={busyAction != null}
+                disabled={busyAction != null || loadingNote || loadFailed}
                 className={`flex items-center gap-1.5 rounded-md px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${
                   struckOff ? 'bg-green-600 hover:bg-green-700' : 'bg-amber-600 hover:bg-amber-700'
                 }`}

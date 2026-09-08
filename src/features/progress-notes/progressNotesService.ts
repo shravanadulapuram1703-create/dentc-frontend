@@ -80,6 +80,33 @@ export function restoreNote(id: number): Promise<ProgressNoteRead> {
   return updateProgressNote(id, { is_struck_off: false });
 }
 
+/**
+ * DOS-only correction. Doctors often write the note days after the visit and
+ * forget to pick the right Date of Service, so `note_date` stays editable after
+ * the note has locked (prior-day) — only a signed or struck-off note freezes it.
+ * Sends nothing but `note_date`, so the server's text-lock check is not tripped.
+ */
+export function updateNoteDate(id: number, note_date: string): Promise<ProgressNoteRead> {
+  return updateProgressNote(id, { note_date });
+}
+
+// ---- API errors -----------------------------------------------------------
+
+/**
+ * Human-readable message from a failed request. The DentC backend wraps
+ * expected errors as `{ error: { code, message, details } }` (e.g. the 409
+ * "note is locked" ConflictError); FastAPI validation errors use `detail`.
+ */
+export function apiErrorMessage(err: unknown): string | undefined {
+  const data = (err as { response?: { data?: unknown } })?.response?.data as
+    | { error?: { message?: string }; detail?: unknown }
+    | undefined;
+  if (!data) return undefined;
+  if (data.error?.message) return data.error.message;
+  if (typeof data.detail === 'string') return data.detail;
+  return undefined;
+}
+
 // ---- Derived state --------------------------------------------------------
 
 export function isSigned(n: Pick<ProgressNoteRead, 'signed_by' | 'signed_at'>): boolean {
@@ -88,17 +115,25 @@ export function isSigned(n: Pick<ProgressNoteRead, 'signed_by' | 'signed_at'>): 
 
 /**
  * Legacy locking: a note becomes read-only once it is signed, OR after midnight
- * of the day it was created (created_at is before today). Locked notes can still
- * be signed.
+ * of the day it was created. The server computes this as `is_locked` (PN-7) and
+ * rejects text edits on a locked note with a 409, so trust its flag whenever it
+ * is present — the client-side fallback below can disagree with it around
+ * midnight because the server's day boundary is UTC (PN-9). Locked notes can
+ * still be signed, struck off, and have their DOS corrected (see canEditDos).
  */
 export function isLocked(n: ProgressNoteRead): boolean {
+  if (typeof n.is_locked === 'boolean') return n.is_locked;
   if (isSigned(n)) return true;
-  if (!n.created_at) return false;
-  const created = new Date(n.created_at);
-  if (Number.isNaN(created.getTime())) return false;
+  const created = parseServerDateTime(n.created_at);
+  if (!created) return false;
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   return created.getTime() < startOfToday.getTime();
+}
+
+/** DOS stays correctable after the note locks; only signing/strike-off freezes it. */
+export function canEditDos(n: Pick<ProgressNoteRead, 'signed_by' | 'signed_at' | 'is_struck_off'>): boolean {
+  return !isSigned(n) && !n.is_struck_off;
 }
 
 // ---- Tooth string <-> array ----------------------------------------------
@@ -113,6 +148,18 @@ export function joinTeeth(teeth: string[]): string | null {
 
 // ---- Date helpers ---------------------------------------------------------
 
+/**
+ * Backend timestamps (`created_at`, `signed_at`, …) are serialised WITHOUT a
+ * timezone designator but are UTC (PN-10). `new Date('…T21:31:35')` would read
+ * that as local time, so pin naive values to UTC before parsing.
+ */
+export function parseServerDateTime(value?: string | null): Date | null {
+  if (!value) return null;
+  const naive = /T\d{2}:\d{2}/.test(value) && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+  const d = new Date(naive ? `${value}Z` : value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /** ISO/date string → MM/DD/YYYY for display (— when missing/invalid). */
 export function fmtDos(value?: string | null): string {
   if (!value) return '—';
@@ -125,9 +172,13 @@ export function fmtDos(value?: string | null): string {
 /** Any date string → yyyy-MM-dd for <input type="date">. */
 export function toInputDate(value?: string | null): string {
   if (!value) return '';
-  const d = new Date(value.length <= 10 ? `${value}T00:00:00` : value);
+  // Date-only values pass through untouched: round-tripping through a local
+  // Date + toISOString shifts them a day for viewers east of UTC.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = parseServerDateTime(value) ?? new Date(value);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toISOString().slice(0, 10);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 10);
 }
 
 export function todayInputDate(): string {
@@ -137,9 +188,8 @@ export function todayInputDate(): string {
 }
 
 export function fmtCreatedAt(value?: string | null): string {
-  if (!value) return '';
-  const d = new Date(value);
-  return Number.isNaN(d.getTime())
+  const d = parseServerDateTime(value);
+  return !d
     ? ''
     : d.toLocaleString('en-US', {
         month: '2-digit',

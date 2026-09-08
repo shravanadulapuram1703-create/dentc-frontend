@@ -33,6 +33,8 @@ export interface PatientBalance {
   opening_balance?: number;
   /** Sum of non-void refunds (REF-1); folded into balance */
   total_refunded?: number;
+  /** AL-9: debit adjustments posted as payments; already inside total_charged */
+  total_payment_debits?: number;
   /** Refundable unapplied credit (REF-3); ≥0 */
   credit_balance?: number;
   aging?: BalanceAging;

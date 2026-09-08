@@ -41,6 +41,8 @@ export interface SchedulerPatientRead {
   send_collections: boolean;
   no_auto_email: boolean;
   no_auto_sms: boolean;
+  sms_opt_out_at?: string | null;
+  sms_opt_in_at?: string | null;
   is_locked: boolean;
   hipaa_agreement: boolean;
   guardian_name?: string | null;

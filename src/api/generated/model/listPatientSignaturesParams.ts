@@ -13,6 +13,22 @@ export type ListPatientSignaturesParams = {
  */
 patient_id?: number | null;
 /**
+ * Filter by signature_type
+ */
+signature_type?: string | null;
+/**
+ * Filter by is_user_sig
+ */
+is_user_sig?: boolean | null;
+/**
+ * Filter by is_active
+ */
+is_active?: boolean | null;
+/**
+ * Filter by content_hash
+ */
+content_hash?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

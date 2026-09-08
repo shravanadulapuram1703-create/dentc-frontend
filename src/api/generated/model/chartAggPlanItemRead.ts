@@ -13,6 +13,8 @@ export interface ChartAggPlanItemRead {
   description?: string | null;
   tooth?: string | null;
   surface?: string | null;
+  quadrant?: string | null;
+  material_id?: number | null;
   priority: number;
   phase_id?: number | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */

@@ -26,6 +26,7 @@ export interface AppointmentCreate {
   notes?: string | null;
   has_lab?: boolean | null;
   lab_cost?: number | string | null;
+  lab_dds?: string | null;
   lab_sent_on?: string | null;
   lab_due_on?: string | null;
   lab_received_on?: string | null;

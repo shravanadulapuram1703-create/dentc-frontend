@@ -11,6 +11,8 @@ export interface CodeBundleItemRead {
   legacy_id?: string | null;
   procedure_code: string;
   tooth?: string | null;
+  surface?: string | null;
+  quadrant?: string | null;
   sort_order: number;
   id: number;
   created_at: string;

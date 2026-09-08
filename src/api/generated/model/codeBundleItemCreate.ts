@@ -10,5 +10,7 @@ export interface CodeBundleItemCreate {
   bundle_id: number;
   procedure_code: string;
   tooth?: string | null;
+  surface?: string | null;
+  quadrant?: string | null;
   sort_order?: number | null;
 }

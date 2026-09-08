@@ -13,6 +13,7 @@ export interface ExplosionCodeItemRead {
   default_fee?: string | null;
   tooth?: string | null;
   surface?: string | null;
+  quadrant?: string | null;
   id: number;
   created_at: string;
 }

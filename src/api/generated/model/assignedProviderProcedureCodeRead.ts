@@ -11,6 +11,7 @@ export interface AssignedProviderProcedureCodeRead {
   legacy_code?: string | null;
   description: string;
   category: string;
+  coverage_category?: string | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   default_fee: string;
   default_duration_minutes?: number | null;

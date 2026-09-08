@@ -41,6 +41,18 @@ billing_status?: string | null;
  */
 treatment_plan_id?: string | null;
 /**
+ * Filter by treatment_plan_item_id
+ */
+treatment_plan_item_id?: string | null;
+/**
+ * Filter by hold_claim
+ */
+hold_claim?: boolean | null;
+/**
+ * Filter by fee_schedule_id
+ */
+fee_schedule_id?: number | null;
+/**
  * Filter by is_void
  */
 is_void?: boolean | null;

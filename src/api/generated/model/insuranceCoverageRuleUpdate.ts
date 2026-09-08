@@ -14,7 +14,10 @@ export interface InsuranceCoverageRuleUpdate {
   description?: string | null;
   coverage_pct?: number | string | null;
   ded_waived?: boolean | null;
-  freq_limit?: string | null;
+  freq_limit?: number | null;
+  age_min?: number | null;
+  age_max?: number | null;
+  wait_months?: number | null;
   age_limit?: string | null;
   wait_period?: string | null;
 }
