@@ -101,9 +101,19 @@ export default function ToothShape({
     : hover === key ? { fill: HOVER_FILL, stroke: SEL_RING, strokeWidth: 1 }
     : { fill: 'transparent', stroke: 'transparent', strokeWidth: 0 };
 
+  // A missing tooth is NOT drawn at all — the slot stays empty (same size, so the
+  // arch keeps its columns and the surround remains clickable for charting an
+  // implant / pontic into the space). No faded ghost, no outline.
+  if (missing) {
+    return (
+      <svg width={width} height={height} viewBox="0 0 100 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }} aria-label="Missing tooth">
+        <title>Missing tooth</title>
+      </svg>
+    );
+  }
+
   return (
-    <svg width={width} height={height} viewBox="0 0 100 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'block', opacity: missing ? 0.4 : 1, filter: missing ? 'grayscale(1)' : undefined }}>
+    <svg width={width} height={height} viewBox="0 0 100 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
       <defs>
         <linearGradient id={`${uid}-enamel`} x1="0" y1="0" x2="0.8" y2="1">
           <stop offset="0" stopColor="#ffffff" /><stop offset="0.5" stopColor="#f1f5f8" /><stop offset="1" stopColor="#d6dde3" />

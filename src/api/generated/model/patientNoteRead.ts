@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { PatientNoteDocumentRef } from './patientNoteDocumentRef';
 
 export interface PatientNoteRead {
   patient_id: number;
@@ -14,6 +15,7 @@ export interface PatientNoteRead {
   note_type?: string | null;
   notes: string;
   notes_html?: string | null;
+  document_id?: number | null;
   is_archived: boolean;
   is_deleted: boolean;
   created_by?: number | null;
@@ -21,4 +23,7 @@ export interface PatientNoteRead {
   id: number;
   created_at: string;
   updated_at?: string | null;
+  document?: PatientNoteDocumentRef | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
 }

@@ -38,6 +38,7 @@ import type {
   DefinitionRead,
   DefinitionUpdate,
   ErrorResponse,
+  GetProcedureEntryRules200,
   ImagingTemplateCreate,
   ImagingTemplateRead,
   ImagingTemplateUpdate,
@@ -71,6 +72,99 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * The canonical surface codes (M O I D B F L, Class V as B5/F5/L5), their storage order, the quadrant codes, Universal tooth numbering incl. supernumerary, which `procedure_codes` flags the server enforces with a 422 (and which are advisory), and the error codes a client can expect. Drive the ADD PROCEDURE DETAILS pop-up from this so every client renders what the API validates.
+ * @summary Surface / quadrant / tooth vocabulary and the enforcement contract (PROC-INT-6/8)
+ */
+export const getProcedureEntryRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetProcedureEntryRules200>(
+      {url: `/api/v1/metadata/procedure-entry-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetProcedureEntryRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/procedure-entry-rules`
+    ] as const;
+    }
+
+
+export const getGetProcedureEntryRulesQueryOptions = <TData = Awaited<ReturnType<typeof getProcedureEntryRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureEntryRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProcedureEntryRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProcedureEntryRules>>> = ({ signal }) => getProcedureEntryRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProcedureEntryRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProcedureEntryRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getProcedureEntryRules>>>
+export type GetProcedureEntryRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetProcedureEntryRules<TData = Awaited<ReturnType<typeof getProcedureEntryRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureEntryRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureEntryRules>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureEntryRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureEntryRules<TData = Awaited<ReturnType<typeof getProcedureEntryRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureEntryRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureEntryRules>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureEntryRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureEntryRules<TData = Awaited<ReturnType<typeof getProcedureEntryRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureEntryRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Surface / quadrant / tooth vocabulary and the enforcement contract (PROC-INT-6/8)
+ */
+
+export function useGetProcedureEntryRules<TData = Awaited<ReturnType<typeof getProcedureEntryRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureEntryRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProcedureEntryRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 

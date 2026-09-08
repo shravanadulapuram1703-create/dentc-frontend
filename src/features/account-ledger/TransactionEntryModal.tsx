@@ -9,6 +9,7 @@ import { Loader2, X } from 'lucide-react';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { useDefinitions } from '@/hooks/useDefinitions';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import type { PatientProcedureRead } from '@/api/generated/model';
 import {
   loadOutstandingProcedures,
@@ -50,6 +51,21 @@ export default function TransactionEntryModal({
   const [appliedIso, setAppliedIso] = useState(toIsoDate(todayDisplay()));
   const [providerId, setProviderId] = useState('');
   const [hygienistId, setHygienistId] = useState('');
+
+  // Seed the treating provider / hygienist from the patient record, exactly as
+  // the full-page Transactions Entry screen does, so "Add Proc" from the ledger
+  // does not fail on a blank provider. A manual pick is never overridden.
+  const patientQuery = useGetPatient(patientId, { query: { enabled: Number.isFinite(patientId) && patientId > 0 } });
+  const preferred_provider_id = patientQuery.data?.preferred_provider_id ?? '';
+  const preferred_hygienist_id = patientQuery.data?.preferred_hygienist_id ?? '';
+  const [providerTouched, setProviderTouched] = useState(false);
+  const [hygienistTouched, setHygienistTouched] = useState(false);
+  useEffect(() => {
+    if (!providerTouched && preferred_provider_id) setProviderId(preferred_provider_id);
+  }, [preferred_provider_id, providerTouched]);
+  useEffect(() => {
+    if (!hygienistTouched && preferred_hygienist_id) setHygienistId(preferred_hygienist_id);
+  }, [preferred_hygienist_id, hygienistTouched]);
 
   // Shared provider directory — same list, order and labels as the full-page
   // Transactions Entry screen and every other provider picker.
@@ -132,7 +148,10 @@ export default function TransactionEntryModal({
               <ProviderSelect
                 kind="treating"
                 value={providerId}
-                onChange={setProviderId}
+                onChange={(id) => {
+                  setProviderTouched(true);
+                  setProviderId(id);
+                }}
                 officeProviders={providers}
                 allProviders={allProviders}
                 placeholder="-- Select Provider --"
@@ -142,7 +161,10 @@ export default function TransactionEntryModal({
               <ProviderSelect
                 kind="hygienist"
                 value={hygienistId}
-                onChange={setHygienistId}
+                onChange={(id) => {
+                  setHygienistTouched(true);
+                  setHygienistId(id);
+                }}
                 officeProviders={providers}
                 allProviders={allProviders}
                 placeholder="-- Hygienist --"

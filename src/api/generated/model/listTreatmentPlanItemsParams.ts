@@ -33,6 +33,14 @@ provider_id?: string | null;
  */
 is_archived?: boolean | null;
 /**
+ * Filter by tooth
+ */
+tooth?: string | null;
+/**
+ * Filter by material_id
+ */
+material_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -16,8 +16,6 @@ import {
   getAccountCommunications,
   updateAccountCommunications,
   verifyAccountTelecom,
-  listPhoneAssignments,
-  setPhoneAssignments,
   listAccountHolidays,
   createAccountHoliday,
   updateAccountHoliday,
@@ -42,7 +40,9 @@ import { type LookupOption, parseLookupOptions } from "./accountSetupTransform";
  * tenant PK, so strip the `ORG-` prefix. Accepts a bare numeric string too.
  */
 const numericAccountId = (accountId: string): string => String(accountId ?? "").replace(/^ORG-/i, "");
-const tid = (accountId: string): number => Number(numericAccountId(accountId));
+/** Numeric tenant PK for `/tenants/{id}/...` paths (strips the `ORG-` display prefix). */
+export const tenantIdOf = (accountId: string): number => Number(numericAccountId(accountId));
+const tid = tenantIdOf;
 
 // ----------------------------------------------------------------------------
 // BASIC (tenant) + ADVANCED (account-settings)
@@ -316,34 +316,6 @@ export async function updateCommunications(accountId: string, body: Record<strin
 
 export async function verifyTelecom(accountId: string) {
   return verifyAccountTelecom(tid(accountId));
-}
-
-export type PhoneAssignmentApiRow = {
-  id: string;
-  account_id?: string;
-  office_id: string;
-  assignment_type: string;
-  phone_number?: string | null;
-  is_model_office?: boolean;
-};
-
-export async function fetchPhoneAssignments(accountId: string): Promise<PhoneAssignmentApiRow[]> {
-  const rows = await listPhoneAssignments(tid(accountId));
-  return (rows ?? []).map((a) => ({
-    id: String(a.id),
-    office_id: String(a.office_id),
-    assignment_type: a.assignment_type,
-    phone_number: a.phone_number ?? null,
-    is_model_office: Boolean(a.is_model_office),
-  }));
-}
-
-export async function updatePhoneAssignments(accountId: string, body: unknown) {
-  // Accept either a bare array or an already-shaped { assignments } payload.
-  const assignments = Array.isArray(body)
-    ? body
-    : (body as { assignments?: unknown[] })?.assignments ?? [];
-  return setPhoneAssignments(tid(accountId), { assignments } as never);
 }
 
 // ----------------------------------------------------------------------------

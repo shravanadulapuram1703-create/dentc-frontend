@@ -237,6 +237,85 @@ is rejected; signing and strike-off still succeed.
 
 ---
 
+### Status update — 2026-09-07 (openapi resync)
+
+The current `openapi.json` ships **PN-2** (`/sign` accepts `{username, password}`),
+**PN-3** (`/progress-notes/{id}/attachments` + `attachment_count`), **PN-4**
+(`struck_off_at`/`struck_off_by`), **PN-5** (`*_by_name`) and **PN-7**
+(`is_locked` + server-side 409 on locked text edits). PN-1 and PN-6 are still open.
+The frontend now trusts the server's `is_locked` flag instead of re-deriving it.
+PN-8..PN-11 below were found while fixing the "cannot edit a saved note" report.
+
+---
+
+### PN-8 — Date of Service is frozen by the prior-day lock (cannot correct DOS) — **P1**
+
+**Business need:** doctors usually write the note **days after** the visit and
+often leave the DOS at "today". The corrected DOS must be settable **after** the
+note has been saved — including after the note's text has locked at midnight.
+
+**Current behaviour (before this change):** `ProgressNoteCRUD.update` listed
+`note_date` in `_TEXT_FIELDS`, so once a note is `is_locked` (signed **or** created
+on a prior day) a `PATCH {note_date}` fails with
+`409 {"error":{"code":"conflict","message":"This note is locked (signed or from a prior day) and cannot be edited","details":{"locked_fields":["note_date"]}}}`.
+A note written yesterday for last week's visit can therefore never get the right DOS.
+
+**Change applied locally** (`app/services/progress_notes_service.py`, needs a
+backend restart + deploy): `note_date` removed from the lock's text-field list; a
+separate check rejects a DOS change only when the note is **signed**
+(`"This note is signed; its Date of Service can no longer be changed"`).
+Struck-off notes keep the DOS editable server-side (the FE disables it until
+restored). **Acceptance:** `PATCH /progress-notes/{id} {"note_date": "…"}` → 200
+on an unsigned prior-day note; still 409 on a signed note; text fields still 409
+on any locked note.
+
+**Open question for backend:** should a DOS correction be audited
+(`note_date_changed_by/at`, or an event row)? Legacy Denticon shows the change in
+the note's audit trail.
+
+---
+
+### PN-9 — Lock day boundary is UTC, not the office's local day — **P2**
+
+`_note_is_locked` compares `created_at.date()` with
+`datetime.now(timezone.utc).date()`. `created_at` is stored as a naive UTC
+timestamp, so for a US-Eastern office a note written at 3 PM locks at **8 PM
+local** (00:00 UTC), and a note written after 8 PM is reported as created
+"tomorrow". The FE used to compute the lock in local time and disagreed with the
+server inside that window: the editor opened as editable, and Save failed with
+the 409 above (surfacing as "Failed to save the progress note").
+
+**Requested change:** evaluate "today" in the office's (or tenant's) timezone —
+`offices.timezone` if present, else a tenant setting — and use the same zone
+when stamping `created_at`/`signed_at`. **Acceptance:** a note created at 3 PM
+office-local stays editable until office-local midnight.
+
+---
+
+### PN-10 — Timestamps are serialised without a timezone designator — **P2**
+
+`ProgressNoteRead.created_at`/`signed_at`/`struck_off_at` come back as
+`2026-09-07T21:31:35.890793` (UTC, no `Z`). `new Date()` in the browser parses
+that as **local** time, so the list showed "9:31 PM" for a note written at
+5:31 PM Eastern, and the client-side lock fallback drifted by the UTC offset.
+The FE now pins naive values to UTC before parsing (`parseServerDateTime`), but
+every other module that renders these timestamps has the same bug.
+
+**Requested change:** emit RFC 3339 with an explicit offset (`…Z` or
+`+00:00`) for all `datetime` fields — a `ORMModel` JSON encoder / tz-aware
+columns fixes it globally. **Acceptance:** `created_at` ends in `Z`.
+
+---
+
+### PN-11 — No `updated_at` / `updated_by` on progress notes — **P3**
+
+`ProgressNote` uses `CreatedAtMixin` only, so the legacy **Created / Modified**
+column can only show the creation stamp, and a DOS correction (PN-8) leaves no
+trace of who changed it or when. **Requested change:** add `updated_at` /
+`updated_by` (+ `updated_by_name`) to the model and `ProgressNoteRead`.
+
+---
+
 ## 3. Summary table
 
 | ID | Gap | Priority | Workaround today |
@@ -248,6 +327,10 @@ is rejected; signing and strike-off still succeed.
 | PN-5 | `created_by_name`/`signed_by_name` | P2 | resolve via `/users` list |
 | PN-6 | Macro category labels | P2 | show raw code |
 | PN-7 | Server-side lock enforcement | P2 | client-side disable only |
+| PN-8 | DOS (`note_date`) correctable after the prior-day lock | P1 | **patched locally** in backend service; needs restart/deploy |
+| PN-9 | Lock day boundary uses UTC, not office-local day | P2 | notes lock at 8 PM Eastern; FE trusts `is_locked` |
+| PN-10 | Naive (no-`Z`) timestamps parsed as local time | P2 | FE `parseServerDateTime` pins to UTC |
+| PN-11 | No `updated_at`/`updated_by` on notes | P3 | Created column only |
 
-Once PN-1/PN-2/PN-3 land, Progress Notes is fully end-to-end; PN-4..7 are
-correctness/quality follow-ups.
+PN-2..PN-5 and PN-7 have landed (2026-09-07 resync). PN-1 and PN-8 block legacy
+behaviour; PN-6, PN-9..PN-11 are correctness/quality follow-ups.

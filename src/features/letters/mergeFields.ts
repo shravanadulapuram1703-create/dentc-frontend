@@ -12,10 +12,10 @@
 // Why substitute here instead of using `POST /letters/render`'s `rendered_html`
 // directly: the render endpoint replaces an unresolved token with an empty
 // string, so by the time the HTML comes back the placeholder is gone and
-// `#DOC_LAST_NAME#` — which depends on the Signing Provider the user picks in
-// the dialog, something the server cannot know — can no longer be filled. Doing
-// the substitution client-side keeps that one UI-owned token working while
-// every *value* still comes from the backend. See LTR-15: once
+// `#DOC_LAST_NAME#` / `#APPT_PRDR#` — which depend on the Signing Provider the
+// user picks in the dialog, something the server cannot know — can no longer
+// be filled. Doing the substitution client-side keeps those UI-owned tokens
+// working while every *value* still comes from the backend. See LTR-15: once
 // `/letters/render` accepts caller overrides this module can shrink to nothing.
 
 import type { LetterContextResponse } from '@/api/generated/model';
@@ -42,6 +42,13 @@ export interface ResidualInput {
   context: LetterContextResponse | null;
   /** Signing Provider chosen in the dialog — the source for #DOC_LAST_NAME#. */
   signer_name: string;
+  /**
+   * True when the signer is countersigning *as the dentist*. Only then does the
+   * signer also become the doctor the consent names as performing the work
+   * (`#APPT_PRDR#`); a hygienist or assistant countersigning a surgical consent
+   * must not rename the surgeon.
+   */
+  signer_is_dentist: boolean;
   /** Shared provider directory, for ids the context returns unresolved. */
   provider_label: (id: string | null | undefined) => string;
   /** Today in the browser's local date, formatted MM/DD/YYYY. */
@@ -73,15 +80,40 @@ function server_dates_in_office_tz(context: LetterContextResponse | null): boole
   return TZ_KEYS.some((k) => typeof bag[k] === 'string' && (bag[k] as string).trim() !== '');
 }
 
-function residual_values(input: ResidualInput): Record<string, string> {
-  const { context, signer_name, provider_label, local_today } = input;
+interface Residuals {
+  /** Applied only when the server left the token empty. */
+  fills: Record<string, string>;
+  /** Applied even when the server resolved the token — user-owned choices. */
+  forced: Record<string, string>;
+}
+
+/**
+ * Tokens that name the doctor in a consent form. `#DOC_LAST_NAME#` is the
+ * legacy "logged-in dentist" token; `#APPT_PRDR#` is what most seeded consent
+ * bodies actually use ("request that Dr. #APPT_PRDR# and their assistants…"),
+ * and the server binds it to the next appointment's provider. When the signer
+ * signs as the dentist both must follow the Signing Provider the user picked,
+ * or the picker changes nothing on 5 of the 6 consent forms that name a doctor.
+ */
+function signer_values(signer_name: string, signer_is_dentist: boolean): Record<string, string> {
+  const name = signer_name.trim();
+  if (!name) return {};
   const out: Record<string, string> = {
-    // The dialog's Signing Provider. The server has no notion of who is about
-    // to countersign, so this token is unresolved by construction. (LTR-15 adds
-    // `overrides` to /letters/render, which will move this server-side too.)
-    DOC_LAST_NAME: signer_name.split(/[\s,]+/).filter(Boolean).slice(-1)[0] ?? '',
+    DOC_LAST_NAME: name.split(/[\s,]+/).filter(Boolean).slice(-1)[0] ?? '',
   };
-  if (!server_dates_in_office_tz(context)) out.TODAY_DATE = local_today;
+  if (signer_is_dentist) out.APPT_PRDR = name;
+  return out;
+}
+
+function residual_values(input: ResidualInput): Residuals {
+  const { context, signer_name, signer_is_dentist, provider_label, local_today } = input;
+  const fills: Record<string, string> = {};
+  // The dialog's Signing Provider. The server has no notion of who is about
+  // to countersign, so it always wins over whatever the context resolved.
+  // (LTR-15 adds `overrides` to /letters/render, which will move this
+  // server-side too.)
+  const forced: Record<string, string> = signer_values(signer_name, signer_is_dentist);
+  if (!server_dates_in_office_tz(context)) forced.TODAY_DATE = local_today;
 
   // LTR-13: the context returns `last_appointment` but leaves #APPT_PRDR# /
   // #APPT_DATE# blank when there is no *upcoming* appointment — so a consent
@@ -93,11 +125,11 @@ function residual_values(input: ResidualInput): Record<string, string> {
       context?.next_appointment_provider?.name?.trim() ||
       provider_label(appt.provider_id) ||
       '';
-    out.APPT_PRDR = name;
-    out.APPT_DATE = fmt_us_date(appt.date);
-    out.APPT_DATETIME = `${fmt_us_date(appt.date)} ${(appt.start_time ?? '').slice(0, 5)}`.trim();
+    fills.APPT_PRDR = name;
+    fills.APPT_DATE = fmt_us_date(appt.date);
+    fills.APPT_DATETIME = `${fmt_us_date(appt.date)} ${(appt.start_time ?? '').slice(0, 5)}`.trim();
   }
-  return out;
+  return { fills, forced };
 }
 
 /** YYYY-MM-DD -> MM/DD/YYYY, formatted from parts so it cannot shift a day. */
@@ -123,7 +155,7 @@ export function merge_letter(
   catalog: Set<string>,
   residual: ResidualInput,
 ): MergeResult {
-  const extras = residual_values(residual);
+  const { fills, forced } = residual_values(residual);
   const unresolved = new Set<string>();
   const unknown = new Set<string>();
 
@@ -136,15 +168,13 @@ export function merge_letter(
       return '';
     }
 
-    // The server is authoritative for every value it resolves; a residual only
-    // fills what came back empty, so each one retires itself the day the
-    // backend fills that token. TODAY_DATE is the single exception and it is
-    // gated on the version probe above, not asserted unconditionally.
+    // The server is authoritative for every value it resolves; a fill only
+    // covers what came back empty, so each one retires itself the day the
+    // backend fills that token. `forced` values are the exceptions: the
+    // user's Signing Provider (which the server cannot know) and TODAY_DATE,
+    // which is gated on the version probe above, not asserted unconditionally.
     const from_server = (server_values[key] ?? '').trim();
-    const override = extras[key];
-    const value = override !== undefined && (key === 'TODAY_DATE' || !from_server)
-      ? override
-      : from_server;
+    const value = forced[key] ?? (from_server || fills[key] || '');
 
     if (!value) unresolved.add(name);
     return escape_html(value);

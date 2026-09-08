@@ -81,6 +81,12 @@ const PRIMARY_TEETH = [
   "T",
 ];
 
+// Stable defaults. A fresh `[]` default parameter is a new array on every
+// render, and the reset effect below lists these in its deps — so it re-ran
+// (and wiped the user's surface picks) on each render, endlessly.
+const NO_SURFACES: string[] = [];
+const NO_MATERIALS: string[] = [];
+
 export default function ToothSurfaceEnforcement({
   isOpen,
   onClose,
@@ -88,8 +94,8 @@ export default function ToothSurfaceEnforcement({
   procedure,
   initialTooth = "",
   initialQuadrant = "",
-  initialSurfaces = [],
-  initialMaterials = [],
+  initialSurfaces = NO_SURFACES,
+  initialMaterials = NO_MATERIALS,
 }: Props) {
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>(
     initialTooth ? [initialTooth] : [],

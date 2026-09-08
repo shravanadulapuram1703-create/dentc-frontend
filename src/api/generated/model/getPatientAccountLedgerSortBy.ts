@@ -14,4 +14,5 @@ export const GetPatientAccountLedgerSortBy = {
   code: 'code',
   provider: 'provider',
   amount: 'amount',
+  patient: 'patient',
 } as const;

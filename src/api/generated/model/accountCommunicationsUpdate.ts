@@ -31,6 +31,13 @@ export interface AccountCommunicationsUpdate {
   business_industry?: string | null;
   telecom_status?: string | null;
   telecom_verified_at?: string | null;
+  messaging_service_sid?: string | null;
+  sms_from_phone?: string | null;
+  sms_quiet_hours_start?: number | null;
+  sms_quiet_hours_end?: number | null;
+  sms_reminders_enabled?: boolean | null;
+  sms_reminder_lead_hours?: unknown | null;
+  sms_reminder_template_id?: number | null;
   /** Write-only; encrypted at rest, returned masked */
   ein?: string | null;
 }

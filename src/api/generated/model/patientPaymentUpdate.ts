@@ -19,4 +19,7 @@ export interface PatientPaymentUpdate {
   provider_id?: string | null;
   notes?: string | null;
   is_void?: boolean | null;
+  created_by_legacy?: string | null;
+  eob_number?: string | null;
+  eft_trace_number?: string | null;
 }

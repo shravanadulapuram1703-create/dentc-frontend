@@ -15,12 +15,15 @@
 //     category — plus optional per-procedure "exception" rows keyed by the ADA
 //     code (`D0120`).
 //   • `freq_limit` stores the 1-based ORDINAL of the legacy FREQUENCYLIMITATIONS
-//     list (`"1"` = Once every 6 months … `"12"` = Once per Lifetime,
-//     `"0"`/null = No Limitation). Definitions group FREQUENCYLIMITATIONS holds
-//     the labels in that order (legacy_id 325…337).
-//   • `age_limit` is ONE string column; legacy has Min and Max. Encoded here as
-//     `"min"` or `"min-max"` (`"0"` = none).
-//   • `wait_period` is a string; stored as whole months.
+//     list (`1` = Once every 6 months … `12` = Once per Lifetime, `0`/null = No
+//     Limitation). Definitions group FREQUENCYLIMITATIONS holds the labels in
+//     that order (legacy_id 325…337). Since the 2026-09-07 spec it is an
+//     INTEGER; the UI keeps the string form for its <select>.
+//   • Age / waiting limits: the backend now has typed `age_min` / `age_max` /
+//     `wait_months` integer columns next to the legacy string mirrors
+//     `age_limit` (`"min"` or `"min-max"`, `"0"` = none) and `wait_period`
+//     (whole months). Typed values win server-side; migrated rows only carry
+//     the mirrors, so reads prefer typed-when-present and writes send both.
 //   • Definitions group DEFCOVERAGE (key1 = category code, key2 = default %)
 //     is the legacy "Basic, Major, Ortho" default coverage table.
 //   • There is NO resource for the FREQ LIMITATION CODE GRP tab. Its rows are
@@ -30,7 +33,7 @@
 //     table and the estimate resolver.
 
 import type { InsuranceCoverageRuleRead, InsuranceCoverageRuleCreate, InsuranceCoverageRuleUpdate } from "@/api/generated/model";
-import { type PlanForm, emptyPlanForm } from "../planData";
+import { type PlanForm, emptyPlanForm, freqLimitToApi, intOrNull } from "../planData";
 
 // ---------------------------------------------------------------------------
 // PLAN tab — fields with no backend column ("extras")
@@ -168,8 +171,9 @@ export const FREQUENCY_FALLBACK: FrequencyOption[] = [
   { code: "13", label: "Other - See plan notes" },
 ];
 
-export function normaliseFreq(v: string | null | undefined): string {
-  const t = (v ?? "").trim();
+/** API integer / legacy string → the UI's string ordinal ("0" = No Limitation). */
+export function normaliseFreq(v: string | number | null | undefined): string {
+  const t = String(v ?? "").trim();
   return t === "" ? "0" : t;
 }
 
@@ -324,10 +328,15 @@ export function formatAgeLimit(age_min: string, age_max: string): string {
   return `${lo}-${hi}`;
 }
 
-function digits(v: string | null | undefined): string {
-  const t = (v ?? "").trim();
+function digits(v: string | number | null | undefined): string {
+  const t = String(v ?? "").trim();
   const m = /^\d+/.exec(t);
   return m ? m[0] : t === "" ? "0" : t;
+}
+
+/** Typed integer column when present, else the legacy string mirror. */
+function typedOrMirror(typed: number | null | undefined, mirror: string | null | undefined): string {
+  return typed == null ? digits(mirror) : String(typed);
 }
 
 function pctText(v: string | null | undefined): string {
@@ -341,7 +350,10 @@ function pctText(v: string | null | undefined): string {
 export function ruleToCoverageRow(r: InsuranceCoverageRuleRead, categoryLabel: (code: string) => string): CoverageRow {
   const code = (r.start_code ?? "").trim().toUpperCase();
   const isCode = isAdaCode(code);
-  const { age_min, age_max } = parseAgeLimit(r.age_limit);
+  const legacyAge = parseAgeLimit(r.age_limit);
+  const hasTypedAge = r.age_min != null || r.age_max != null;
+  const age_min = hasTypedAge ? String(r.age_min ?? 0) : legacyAge.age_min;
+  const age_max = hasTypedAge ? String(r.age_max ?? 0) : legacyAge.age_max;
   const cat = (r.category ?? "").trim().toUpperCase();
   return {
     id: r.id,
@@ -355,11 +367,14 @@ export function ruleToCoverageRow(r: InsuranceCoverageRuleRead, categoryLabel: (
     freq_limit: normaliseFreq(r.freq_limit),
     age_min,
     age_max,
-    wait_period: digits(r.wait_period),
+    wait_period: typedOrMirror(r.wait_months, r.wait_period),
   };
 }
 
 function coverageRowBody(row: CoverageRow) {
+  const age_min = intOrNull(row.age_min) ?? 0;
+  const age_max = intOrNull(row.age_max) ?? 0;
+  const wait_months = intOrNull(row.wait_period) ?? 0;
   return {
     start_code: row.code,
     end_code: row.code,
@@ -367,9 +382,13 @@ function coverageRowBody(row: CoverageRow) {
     description: row.description.trim() || null,
     coverage_pct: row.coverage_pct.trim() === "" ? "0" : row.coverage_pct.trim(),
     ded_waived: row.ded_waived,
-    freq_limit: normaliseFreq(row.freq_limit),
-    age_limit: formatAgeLimit(row.age_min, row.age_max),
-    wait_period: row.wait_period.trim() || "0",
+    // Typed limits (authoritative server-side) + the legacy string mirrors.
+    freq_limit: freqLimitToApi(row.freq_limit),
+    age_min,
+    age_max,
+    wait_months,
+    age_limit: formatAgeLimit(String(age_min), String(age_max)),
+    wait_period: String(wait_months),
   };
 }
 
@@ -402,7 +421,9 @@ function freqGroupBody(row: FreqCodeGroupRow, label: string) {
     description: label || null,
     coverage_pct: null,
     ded_waived: false,
-    freq_limit: normaliseFreq(row.freq_limit),
+    freq_limit: freqLimitToApi(row.freq_limit),
+    // FREQGRP rows overload the legacy mirrors (whole-mouth mark / per-day
+    // quantity); the typed age/wait columns are deliberately left null.
     age_limit: row.whole_mouth ? WHOLE_MOUTH_MARK : null,
     wait_period: row.per_day_quantity.trim() || null,
   };

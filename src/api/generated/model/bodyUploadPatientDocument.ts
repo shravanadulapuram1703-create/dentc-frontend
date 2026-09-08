@@ -12,4 +12,6 @@ export interface BodyUploadPatientDocument {
   office_id?: number | null;
   document_type?: string | null;
   description?: string | null;
+  /** Which screen the file is attached to, e.g. 'note'. Decides the storage folder; see GET /patient-documents/limits for the list. */
+  context?: string | null;
 }

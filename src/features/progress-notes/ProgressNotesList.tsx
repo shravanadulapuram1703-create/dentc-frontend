@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useListProgressNotes } from '@/api/generated/endpoints/clinical/clinical';
 import type { ProgressNoteRead } from '@/api/generated/model';
-import { fmtCreatedAt, fmtDos, isLocked, isSigned, parseTeeth } from './progressNotesService';
+import { canEditDos, fmtCreatedAt, fmtDos, isLocked, isSigned, parseTeeth } from './progressNotesService';
 import { useUserNames } from '@/services/userDirectory';
 
 interface PatientData {
@@ -90,9 +90,16 @@ export default function ProgressNotesList() {
   const safePage = Math.min(page, totalPages);
   const rows = showAll ? filtered : filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
+  // Always open the editor: it derives what is editable from the note itself
+  // (text locks after signing/midnight, but the DOS stays correctable until the
+  // note is signed or struck off), so a locked note is not a dead end.
   const openEditor = (n: ProgressNoteRead) => {
-    const mode = isLocked(n) ? 'view' : 'edit';
-    navigate(`/patient/${patientId}/progress-notes/${mode}/${n.id}`);
+    navigate(`/patient/${patientId}/progress-notes/edit/${n.id}`);
+  };
+
+  const editTitle = (n: ProgressNoteRead) => {
+    if (!isLocked(n)) return 'Edit';
+    return canEditDos(n) ? 'Locked — view note / edit DOS' : 'View (locked)';
   };
 
   if (!patient) {
@@ -243,7 +250,7 @@ export default function ProgressNotesList() {
                             type="button"
                             onClick={() => openEditor(n)}
                             className="rounded p-1.5 text-blue-600 hover:bg-blue-100"
-                            title={isLocked(n) ? 'View (locked)' : 'Edit'}
+                            title={editTitle(n)}
                           >
                             <Edit className="h-4 w-4" />
                           </button>

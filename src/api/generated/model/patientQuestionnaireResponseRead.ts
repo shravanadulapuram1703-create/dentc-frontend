@@ -7,15 +7,19 @@
  */
 
 export interface PatientQuestionnaireResponseRead {
+  id: number;
   tenant_id: number;
   patient_id: number;
   questionnaire_type: string;
   question_code: string;
   question_text?: string | null;
   answer?: string | null;
+  answered_at?: string | null;
   is_active: boolean;
   created_by?: number | null;
-  id: number;
+  created_by_name?: string | null;
+  updated_by?: number | null;
+  updated_by_name?: string | null;
   created_at: string;
   updated_at?: string | null;
 }

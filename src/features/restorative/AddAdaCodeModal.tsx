@@ -6,6 +6,12 @@ import { codeAllowedOnTooth, classifyTooth } from './txPlanModel';
 import type { FeeScheduleContext } from '@/services/feeScheduleResolver';
 import type { CoverageContext } from '@/services/coverageResolver';
 import { priceProcedure, money2, type PricedProcedure } from './procedurePricing';
+import { procedureRequirements, validateProcedureDetails } from '@/features/procedures/procedureRequirements';
+import ProcedureDetailsDialog, {
+  type ProcedureDetailsHeader,
+  type ProcedureDetailsRowInput,
+  type ProcedureDetailsRowResult,
+} from '@/features/procedures/ProcedureDetailsDialog';
 
 // AMB / "A" codes = alternative-maximum-benefit downgrade codes (end in 'A').
 const isAmbCode = (c: { code: string; legacy_code?: string | null }) =>
@@ -54,6 +60,9 @@ interface CategoryButton { label: string; keys: Set<string>; count: number }
 export interface AdaEntry {
   tooth: string;
   surface: string | null;
+  /** Collected by the Add Procedure Details pop-up when the code requires them. */
+  quadrant?: string | null;
+  material_id?: number | null;
   procedure_code: string;
   description: string;
   fee: string;
@@ -67,6 +76,8 @@ export interface AdaEntry {
 
 interface AddAdaCodeModalProps {
   mode: 'completed' | 'tx-plans';
+  /** Patient's office — scopes the provider list in the Add Procedure Details pop-up. */
+  officeId?: number | null;
   teeth: string[];
   surface: string | null;
   providers: ProviderRead[];
@@ -92,7 +103,7 @@ interface AddAdaCodeModalProps {
  * enforcement, fee + insurance estimate, provider (Completed), Add Procedure with
  * auto-advance across the selected teeth.
  */
-export default function AddAdaCodeModal({ mode, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
+export default function AddAdaCodeModal({ mode, officeId, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
   const [codeMap, setCodeMap] = useState<Map<string, ProcedureCodeRead>>(new Map());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(() => {
@@ -111,6 +122,10 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, defau
   const [idx, setIdx] = useState(0);
   const [bundleId, setBundleId] = useState<number | ''>('');
   const [busy, setBusy] = useState(false);
+  // Codes that still need details the chart selection did not supply (surface
+  // count, quadrant, material) go through the legacy Add Procedure Details
+  // pop-up — the same enforcement the Transactions / Ledger / Treatment screens use.
+  const [details, setDetails] = useState<{ rows: ProcedureDetailsRowInput[]; quotes: Map<string, PricedProcedure | null> } | null>(null);
 
   useEffect(() => {
     loadProcedureCodes().then(setCodeMap).catch((e) => setLoadError(e instanceof Error ? e.message : 'Failed to load procedure codes'));
@@ -212,8 +227,17 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, defau
   const allow = selected ? codeAllowedOnTooth(selected, currentTooth) : { allowed: true };
   const canAdd = Boolean(selected) && allow.allowed && !busy && !(mode === 'completed' && !providerId);
 
+  /** Does the chart selection already satisfy everything this code requires? */
+  const detailsComplete = (code: ProcedureCodeRead, tooth: string, surf: string | null) =>
+    validateProcedureDetails(code, { tooth, surface: surf ?? '', quadrant: '', material_id: procedureRequirements(code).default_material_id }).length === 0;
+
   const addCurrent = async () => {
     if (!selected || !currentTooth || !canAdd) return;
+    if (!detailsComplete(selected, currentTooth, surface)) {
+      // Surfaces / quadrant / material still missing — collect them in the pop-up.
+      setDetails({ rows: [{ code: selected, tooth: currentTooth, surface }], quotes: new Map([[selected.code, quote]]) });
+      return;
+    }
     setBusy(true);
     try {
       await onAdd({
@@ -226,15 +250,51 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, defau
     } finally { setBusy(false); }
   };
 
+  /** Pop-up SAVE: every required detail validated — add each row with its details. */
+  const onDetailsSave = async (rows: ProcedureDetailsRowResult[], head: ProcedureDetailsHeader) => {
+    setBusy(true);
+    try {
+      for (const r of rows) {
+        const isCurrent = r.code.code === selected?.code && rows.length === 1;
+        const q = details?.quotes.get(r.code.code) ?? null;
+        const feeN = isCurrent ? feeNum : (q?.fee ?? 0);
+        const insN = isCurrent ? insNum : (q?.insurance_estimate ?? 0);
+        await onAdd({
+          tooth: r.tooth, surface: r.surface || null, quadrant: r.quadrant || null, material_id: r.material_id,
+          procedure_code: r.code.code, description: r.code.description,
+          fee: money2(feeN), insurance_estimate: money2(insN), patient_estimate: money2(Math.max(0, feeN - insN)),
+          coverage_pct: q?.coverage_pct ?? 0, ucr_fee: q?.ucr_fee ?? null, fee_schedule_id: q?.fee_schedule_id ?? null,
+          provider_id: mode === 'completed' ? head.provider_id || providerId : undefined,
+        });
+      }
+      setDetails(null);
+      if (rows.length === 1 && rows[0]!.code.code === selected?.code) advance();
+      else onClose();
+    } finally { setBusy(false); }
+  };
+
   const runExplosion = async () => {
     const items = bundleItems.data?.items ?? [];
     if (!items.length || !currentTooth) return;
     setBusy(true);
     try {
+      // Every exploded code is priced individually from the schedule + coverage.
+      const priced: { it: (typeof items)[number]; meta: ProcedureCodeRead | undefined; q: PricedProcedure }[] = [];
       for (const it of items) {
         const meta = codeMap.get(it.procedure_code);
-        // Every exploded code is priced individually from the schedule + coverage.
         const q = await priceProcedure(feeCtx, coverageCtx, it.procedure_code, { default_fee: meta?.default_fee, on_date: serviceDate });
+        priced.push({ it, meta, q });
+      }
+      const needy = priced.filter((p) => p.meta && !detailsComplete(p.meta, p.it.tooth || currentTooth, surface));
+      if (needy.length) {
+        // At least one exploded code needs details — collect them all in one pop-up.
+        setDetails({
+          rows: priced.filter((p) => p.meta).map((p) => ({ code: p.meta!, tooth: p.it.tooth || currentTooth, surface })),
+          quotes: new Map(priced.map((p) => [p.it.procedure_code, p.q])),
+        });
+        return;
+      }
+      for (const { it, meta, q } of priced) {
         await onAdd({
           tooth: it.tooth || currentTooth, surface, procedure_code: it.procedure_code,
           description: meta?.description ?? it.procedure_code,
@@ -403,6 +463,18 @@ export default function AddAdaCodeModal({ mode, teeth, surface, providers, defau
           )}
         </div>
       </div>
+      {details && (
+        <ProcedureDetailsDialog
+          mode={mode === 'completed' ? 'charge' : 'plan'}
+          office_id={officeId ?? null}
+          rows={details.rows}
+          header={{ provider_id: providerId, date: serviceDate }}
+          providerLocked={mode !== 'completed'}
+          busy={busy}
+          onSave={onDetailsSave}
+          onClose={() => setDetails(null)}
+        />
+      )}
     </div>
   );
 }

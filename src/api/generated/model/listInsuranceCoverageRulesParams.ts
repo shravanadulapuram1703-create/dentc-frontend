@@ -13,6 +13,14 @@ export type ListInsuranceCoverageRulesParams = {
  */
 ins_plan_id?: number | null;
 /**
+ * Filter by category
+ */
+category?: string | null;
+/**
+ * Filter by start_code
+ */
+start_code?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

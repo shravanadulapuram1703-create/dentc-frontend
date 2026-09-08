@@ -27,6 +27,7 @@ export interface LetterContextAppointmentRead {
   notes?: string | null;
   has_lab: boolean;
   lab_cost?: string | null;
+  lab_dds?: string | null;
   lab_sent_on?: string | null;
   lab_due_on?: string | null;
   lab_received_on?: string | null;

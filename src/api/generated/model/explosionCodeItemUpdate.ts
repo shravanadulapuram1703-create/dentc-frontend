@@ -13,4 +13,5 @@ export interface ExplosionCodeItemUpdate {
   default_fee?: number | string | null;
   tooth?: string | null;
   surface?: string | null;
+  quadrant?: string | null;
 }

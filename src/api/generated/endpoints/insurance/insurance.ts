@@ -25,12 +25,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CheckEmployerNameAvailabilityParams,
+  CheckInsuranceCarrierNameAvailabilityParams,
+  CheckInsurancePlanGroupAvailabilityParams,
   EligibilityVerifyRequest,
   EligibilityVerifyResult,
   EmployerCreate,
   EmployerRead,
   EmployerUpdate,
   ErrorResponse,
+  GroupAvailabilityResult,
   HTTPValidationError,
   InsCustomCoverageCreate,
   InsCustomCoverageRead,
@@ -42,6 +46,10 @@ import type {
   InsuranceCoverageRuleRead,
   InsuranceCoverageRuleUpdate,
   InsurancePlanCreate,
+  InsurancePlanFrequencyGroupCreate,
+  InsurancePlanFrequencyGroupRead,
+  InsurancePlanFrequencyGroupUpdate,
+  InsurancePlanMetadata,
   InsurancePlanRead,
   InsurancePlanUpdate,
   InsuranceSubscriberCreate,
@@ -51,14 +59,20 @@ import type {
   ListInsCustomCoverageParams,
   ListInsuranceCarriersParams,
   ListInsuranceCoverageRulesParams,
+  ListInsurancePlanFrequencyGroupsParams,
   ListInsurancePlansParams,
   ListInsuranceSubscribersParams,
+  NameAvailabilityResult,
   PaginatedResponseEmployerRead,
   PaginatedResponseInsCustomCoverageRead,
   PaginatedResponseInsuranceCarrierRead,
   PaginatedResponseInsuranceCoverageRuleRead,
+  PaginatedResponseInsurancePlanFrequencyGroupRead,
   PaginatedResponseInsurancePlanRead,
-  PaginatedResponseInsuranceSubscriberRead
+  PaginatedResponseInsuranceSubscriberRead,
+  PlanCopyRequest,
+  PlanCoverageReplaceRequest,
+  PlanCoverageResponse
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -134,6 +148,617 @@ export const useVerifySubscriberEligibility = <TError = ErrorType<ErrorResponse 
       return useMutation(getVerifySubscriberEligibilityMutationOptions(options), queryClient);
     }
     /**
+ * ``taken`` is the answer the save path enforces: an **active** plan on the
+ * same carrier already holds this group number, so ``POST/PATCH
+ * /insurance-plans`` will 409 unless ``allow_duplicate_group`` is sent.
+ *
+ * Deactivated plans (``inactive_matches``, INS-PT-21) and plans under another
+ * carrier (``other_carrier_matches``) are reported but never block — the
+ * frontend was already treating both that way, and now the backend says so.
+ * @summary Check whether a plan group number is already taken (INS-PT-20)
+ */
+export const checkInsurancePlanGroupAvailability = (
+    params: CheckInsurancePlanGroupAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GroupAvailabilityResult>(
+      {url: `/api/v1/insurance-plans/group-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCheckInsurancePlanGroupAvailabilityQueryKey = (params?: CheckInsurancePlanGroupAvailabilityParams,) => {
+    return [
+    `/api/v1/insurance-plans/group-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCheckInsurancePlanGroupAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: CheckInsurancePlanGroupAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckInsurancePlanGroupAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>> = ({ signal }) => checkInsurancePlanGroupAvailability(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckInsurancePlanGroupAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>>
+export type CheckInsurancePlanGroupAvailabilityQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useCheckInsurancePlanGroupAvailability<TData = Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsurancePlanGroupAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckInsurancePlanGroupAvailability<TData = Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsurancePlanGroupAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckInsurancePlanGroupAvailability<TData = Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsurancePlanGroupAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Check whether a plan group number is already taken (INS-PT-20)
+ */
+
+export function useCheckInsurancePlanGroupAvailability<TData = Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsurancePlanGroupAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsurancePlanGroupAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckInsurancePlanGroupAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Frequency-limitation ordinals (what ``freq_limit`` stores), the default
+ * COVERAGE & LIMITATIONS table a new plan starts with, the FREQ-tab code
+ * groups and the PLAN-tab field vocabularies — from the tenant's
+ * ``definitions`` where it has them, else the built-in legacy lists
+ * (``catalog_sources`` says which).
+ * @summary Catalogues behind the INSURANCE DETAILS wizard (PLAN-DTL-1/4)
+ */
+export const getInsurancePlanMetadata = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsurancePlanMetadata>(
+      {url: `/api/v1/insurance-plans/metadata`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsurancePlanMetadataQueryKey = () => {
+    return [
+    `/api/v1/insurance-plans/metadata`
+    ] as const;
+    }
+
+
+export const getGetInsurancePlanMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsurancePlanMetadataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsurancePlanMetadata>>> = ({ signal }) => getInsurancePlanMetadata(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsurancePlanMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getInsurancePlanMetadata>>>
+export type GetInsurancePlanMetadataQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetInsurancePlanMetadata<TData = Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanMetadata<TData = Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanMetadata<TData = Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Catalogues behind the INSURANCE DETAILS wizard (PLAN-DTL-1/4)
+ */
+
+export function useGetInsurancePlanMetadata<TData = Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsurancePlanMetadataQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary A plan's coverage rules + frequency code groups in one call
+ */
+export const getInsurancePlanCoverage = (
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlanCoverageResponse>(
+      {url: `/api/v1/insurance-plans/${planId}/coverage-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsurancePlanCoverageQueryKey = (planId: number,) => {
+    return [
+    `/api/v1/insurance-plans/${planId}/coverage-rules`
+    ] as const;
+    }
+
+
+export const getGetInsurancePlanCoverageQueryOptions = <TData = Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsurancePlanCoverageQueryKey(planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsurancePlanCoverage>>> = ({ signal }) => getInsurancePlanCoverage(planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsurancePlanCoverageQueryResult = NonNullable<Awaited<ReturnType<typeof getInsurancePlanCoverage>>>
+export type GetInsurancePlanCoverageQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetInsurancePlanCoverage<TData = Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanCoverage>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanCoverage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanCoverage<TData = Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanCoverage>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanCoverage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanCoverage<TData = Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary A plan's coverage rules + frequency code groups in one call
+ */
+
+export function useGetInsurancePlanCoverage<TData = Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanCoverage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsurancePlanCoverageQueryOptions(planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * One transaction for what used to be ~30 sequential POSTs.
+ *
+ * A section that is ``null`` is untouched. For a section that is sent: an
+ * item carrying the ``id`` of a row on this plan is updated in place (id and
+ * ``legacy_id`` survive), an item without one is inserted, and existing rows
+ * not mentioned are deleted. Any failure rolls the whole call back — no
+ * partial table.
+ * @summary Replace a plan's coverage rules and/or frequency code groups atomically (PLAN-DTL-8)
+ */
+export const replaceInsurancePlanCoverage = (
+    planId: number,
+    planCoverageReplaceRequest: BodyType<PlanCoverageReplaceRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlanCoverageResponse>(
+      {url: `/api/v1/insurance-plans/${planId}/coverage-rules`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: planCoverageReplaceRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getReplaceInsurancePlanCoverageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceInsurancePlanCoverage>>, TError,{planId: number;data: BodyType<PlanCoverageReplaceRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceInsurancePlanCoverage>>, TError,{planId: number;data: BodyType<PlanCoverageReplaceRequest>}, TContext> => {
+
+const mutationKey = ['replaceInsurancePlanCoverage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceInsurancePlanCoverage>>, {planId: number;data: BodyType<PlanCoverageReplaceRequest>}> = (props) => {
+          const {planId,data} = props ?? {};
+
+          return  replaceInsurancePlanCoverage(planId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplaceInsurancePlanCoverageMutationResult = NonNullable<Awaited<ReturnType<typeof replaceInsurancePlanCoverage>>>
+    export type ReplaceInsurancePlanCoverageMutationBody = BodyType<PlanCoverageReplaceRequest>
+    export type ReplaceInsurancePlanCoverageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Replace a plan's coverage rules and/or frequency code groups atomically (PLAN-DTL-8)
+ */
+export const useReplaceInsurancePlanCoverage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceInsurancePlanCoverage>>, TError,{planId: number;data: BodyType<PlanCoverageReplaceRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof replaceInsurancePlanCoverage>>,
+        TError,
+        {planId: number;data: BodyType<PlanCoverageReplaceRequest>},
+        TContext
+      > => {
+      return useMutation(getReplaceInsurancePlanCoverageMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary COPY FROM EXISTING — copy another plan's coverage table (and optionally its plan fields)
+ */
+export const copyInsurancePlanFrom = (
+    planId: number,
+    sourcePlanId: number,
+    planCopyRequestNull?: BodyType<PlanCopyRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlanCoverageResponse>(
+      {url: `/api/v1/insurance-plans/${planId}/copy-from/${sourcePlanId}`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: planCopyRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getCopyInsurancePlanFromMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyInsurancePlanFrom>>, TError,{planId: number;sourcePlanId: number;data?: BodyType<PlanCopyRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof copyInsurancePlanFrom>>, TError,{planId: number;sourcePlanId: number;data?: BodyType<PlanCopyRequest | null>}, TContext> => {
+
+const mutationKey = ['copyInsurancePlanFrom'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof copyInsurancePlanFrom>>, {planId: number;sourcePlanId: number;data?: BodyType<PlanCopyRequest | null>}> = (props) => {
+          const {planId,sourcePlanId,data} = props ?? {};
+
+          return  copyInsurancePlanFrom(planId,sourcePlanId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CopyInsurancePlanFromMutationResult = NonNullable<Awaited<ReturnType<typeof copyInsurancePlanFrom>>>
+    export type CopyInsurancePlanFromMutationBody = BodyType<PlanCopyRequest | null> | undefined
+    export type CopyInsurancePlanFromMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary COPY FROM EXISTING — copy another plan's coverage table (and optionally its plan fields)
+ */
+export const useCopyInsurancePlanFrom = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyInsurancePlanFrom>>, TError,{planId: number;sourcePlanId: number;data?: BodyType<PlanCopyRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof copyInsurancePlanFrom>>,
+        TError,
+        {planId: number;sourcePlanId: number;data?: BodyType<PlanCopyRequest | null>},
+        TContext
+      > => {
+      return useMutation(getCopyInsurancePlanFromMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Check whether a carrier name is already used (INS-PT-13)
+ */
+export const checkInsuranceCarrierNameAvailability = (
+    params: CheckInsuranceCarrierNameAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NameAvailabilityResult>(
+      {url: `/api/v1/insurance-carriers/name-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCheckInsuranceCarrierNameAvailabilityQueryKey = (params?: CheckInsuranceCarrierNameAvailabilityParams,) => {
+    return [
+    `/api/v1/insurance-carriers/name-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCheckInsuranceCarrierNameAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: CheckInsuranceCarrierNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckInsuranceCarrierNameAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>> = ({ signal }) => checkInsuranceCarrierNameAvailability(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckInsuranceCarrierNameAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>>
+export type CheckInsuranceCarrierNameAvailabilityQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useCheckInsuranceCarrierNameAvailability<TData = Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsuranceCarrierNameAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckInsuranceCarrierNameAvailability<TData = Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsuranceCarrierNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckInsuranceCarrierNameAvailability<TData = Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsuranceCarrierNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Check whether a carrier name is already used (INS-PT-13)
+ */
+
+export function useCheckInsuranceCarrierNameAvailability<TData = Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckInsuranceCarrierNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkInsuranceCarrierNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckInsuranceCarrierNameAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Check whether an employer name is already used (INS-PT-13)
+ */
+export const checkEmployerNameAvailability = (
+    params: CheckEmployerNameAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NameAvailabilityResult>(
+      {url: `/api/v1/employers/name-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCheckEmployerNameAvailabilityQueryKey = (params?: CheckEmployerNameAvailabilityParams,) => {
+    return [
+    `/api/v1/employers/name-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCheckEmployerNameAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: CheckEmployerNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckEmployerNameAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkEmployerNameAvailability>>> = ({ signal }) => checkEmployerNameAvailability(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckEmployerNameAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkEmployerNameAvailability>>>
+export type CheckEmployerNameAvailabilityQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useCheckEmployerNameAvailability<TData = Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckEmployerNameAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkEmployerNameAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkEmployerNameAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckEmployerNameAvailability<TData = Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckEmployerNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkEmployerNameAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkEmployerNameAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckEmployerNameAvailability<TData = Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckEmployerNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Check whether an employer name is already used (INS-PT-13)
+ */
+
+export function useCheckEmployerNameAvailability<TData = Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: CheckEmployerNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkEmployerNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckEmployerNameAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List employers
  */
 export const listEmployers = (
@@ -1997,6 +2622,379 @@ export const useDeleteInsuranceCoverageRule = <TError = ErrorType<ErrorResponse>
         TContext
       > => {
       return useMutation(getDeleteInsuranceCoverageRuleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List insurance plan frequency groups
+ */
+export const listInsurancePlanFrequencyGroups = (
+    params?: ListInsurancePlanFrequencyGroupsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseInsurancePlanFrequencyGroupRead>(
+      {url: `/api/v1/insurance-plan-frequency-groups`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListInsurancePlanFrequencyGroupsQueryKey = (params?: ListInsurancePlanFrequencyGroupsParams,) => {
+    return [
+    `/api/v1/insurance-plan-frequency-groups`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListInsurancePlanFrequencyGroupsQueryOptions = <TData = Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError = ErrorType<ErrorResponse>>(params?: ListInsurancePlanFrequencyGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListInsurancePlanFrequencyGroupsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>> = ({ signal }) => listInsurancePlanFrequencyGroups(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListInsurancePlanFrequencyGroupsQueryResult = NonNullable<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>>
+export type ListInsurancePlanFrequencyGroupsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListInsurancePlanFrequencyGroups<TData = Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListInsurancePlanFrequencyGroupsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>,
+          TError,
+          Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListInsurancePlanFrequencyGroups<TData = Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListInsurancePlanFrequencyGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>,
+          TError,
+          Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListInsurancePlanFrequencyGroups<TData = Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListInsurancePlanFrequencyGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List insurance plan frequency groups
+ */
+
+export function useListInsurancePlanFrequencyGroups<TData = Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListInsurancePlanFrequencyGroupsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanFrequencyGroups>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListInsurancePlanFrequencyGroupsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create insurance plan frequency group
+ */
+export const createInsurancePlanFrequencyGroup = (
+    insurancePlanFrequencyGroupCreate: BodyType<InsurancePlanFrequencyGroupCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsurancePlanFrequencyGroupRead>(
+      {url: `/api/v1/insurance-plan-frequency-groups`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: insurancePlanFrequencyGroupCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateInsurancePlanFrequencyGroupMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInsurancePlanFrequencyGroup>>, TError,{data: BodyType<InsurancePlanFrequencyGroupCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createInsurancePlanFrequencyGroup>>, TError,{data: BodyType<InsurancePlanFrequencyGroupCreate>}, TContext> => {
+
+const mutationKey = ['createInsurancePlanFrequencyGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createInsurancePlanFrequencyGroup>>, {data: BodyType<InsurancePlanFrequencyGroupCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createInsurancePlanFrequencyGroup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateInsurancePlanFrequencyGroupMutationResult = NonNullable<Awaited<ReturnType<typeof createInsurancePlanFrequencyGroup>>>
+    export type CreateInsurancePlanFrequencyGroupMutationBody = BodyType<InsurancePlanFrequencyGroupCreate>
+    export type CreateInsurancePlanFrequencyGroupMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create insurance plan frequency group
+ */
+export const useCreateInsurancePlanFrequencyGroup = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createInsurancePlanFrequencyGroup>>, TError,{data: BodyType<InsurancePlanFrequencyGroupCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createInsurancePlanFrequencyGroup>>,
+        TError,
+        {data: BodyType<InsurancePlanFrequencyGroupCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateInsurancePlanFrequencyGroupMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get insurance plan frequency group by id
+ */
+export const getInsurancePlanFrequencyGroup = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsurancePlanFrequencyGroupRead>(
+      {url: `/api/v1/insurance-plan-frequency-groups/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsurancePlanFrequencyGroupQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/insurance-plan-frequency-groups/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetInsurancePlanFrequencyGroupQueryOptions = <TData = Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsurancePlanFrequencyGroupQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>> = ({ signal }) => getInsurancePlanFrequencyGroup(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsurancePlanFrequencyGroupQueryResult = NonNullable<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>>
+export type GetInsurancePlanFrequencyGroupQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetInsurancePlanFrequencyGroup<TData = Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanFrequencyGroup<TData = Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanFrequencyGroup<TData = Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get insurance plan frequency group by id
+ */
+
+export function useGetInsurancePlanFrequencyGroup<TData = Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFrequencyGroup>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsurancePlanFrequencyGroupQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update insurance plan frequency group
+ */
+export const updateInsurancePlanFrequencyGroup = (
+    itemId: number,
+    insurancePlanFrequencyGroupUpdate: BodyType<InsurancePlanFrequencyGroupUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InsurancePlanFrequencyGroupRead>(
+      {url: `/api/v1/insurance-plan-frequency-groups/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: insurancePlanFrequencyGroupUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateInsurancePlanFrequencyGroupMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateInsurancePlanFrequencyGroup>>, TError,{itemId: number;data: BodyType<InsurancePlanFrequencyGroupUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateInsurancePlanFrequencyGroup>>, TError,{itemId: number;data: BodyType<InsurancePlanFrequencyGroupUpdate>}, TContext> => {
+
+const mutationKey = ['updateInsurancePlanFrequencyGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateInsurancePlanFrequencyGroup>>, {itemId: number;data: BodyType<InsurancePlanFrequencyGroupUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateInsurancePlanFrequencyGroup(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateInsurancePlanFrequencyGroupMutationResult = NonNullable<Awaited<ReturnType<typeof updateInsurancePlanFrequencyGroup>>>
+    export type UpdateInsurancePlanFrequencyGroupMutationBody = BodyType<InsurancePlanFrequencyGroupUpdate>
+    export type UpdateInsurancePlanFrequencyGroupMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update insurance plan frequency group
+ */
+export const useUpdateInsurancePlanFrequencyGroup = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateInsurancePlanFrequencyGroup>>, TError,{itemId: number;data: BodyType<InsurancePlanFrequencyGroupUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateInsurancePlanFrequencyGroup>>,
+        TError,
+        {itemId: number;data: BodyType<InsurancePlanFrequencyGroupUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateInsurancePlanFrequencyGroupMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete insurance plan frequency group
+ */
+export const deleteInsurancePlanFrequencyGroup = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/insurance-plan-frequency-groups/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteInsurancePlanFrequencyGroupMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteInsurancePlanFrequencyGroup>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteInsurancePlanFrequencyGroup>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteInsurancePlanFrequencyGroup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteInsurancePlanFrequencyGroup>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteInsurancePlanFrequencyGroup(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteInsurancePlanFrequencyGroupMutationResult = NonNullable<Awaited<ReturnType<typeof deleteInsurancePlanFrequencyGroup>>>
+
+    export type DeleteInsurancePlanFrequencyGroupMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete insurance plan frequency group
+ */
+export const useDeleteInsurancePlanFrequencyGroup = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteInsurancePlanFrequencyGroup>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteInsurancePlanFrequencyGroup>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteInsurancePlanFrequencyGroupMutationOptions(options), queryClient);
     }
     /**
  * @summary List ins custom coverage

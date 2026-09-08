@@ -113,6 +113,10 @@ Every row is one `insurance_coverage_rules` record (`ins_plan_id`-scoped).
   exclude these rows, so they can't be mistaken for coverage. **Needed:** a real
   `plan_frequency_groups` table (`ins_plan_id`, `code_group`, `freq_limit`, `whole_mouth`,
   `per_day_quantity`) + CRUD endpoints; migrating is a `SELECT … WHERE category='FREQGRP'`.
+  **Status 2026-09-07:** the backend shipped exactly this — `insurance-plan-frequency-groups`
+  CRUD (`InsurancePlanFrequencyGroupRead`: `code_group`, `freq_limit`, `whole_mouth`,
+  `per_day_quantity`) and a `frequency_groups` section on the bulk PUT. The wizard still writes
+  the FREQGRP convention; migrating the tab onto the resource is the next step.
 
 ### 🟠 Medium — works, with a workaround worth removing
 
@@ -128,10 +132,21 @@ Every row is one `insurance_coverage_rules` record (`ins_plan_id`-scoped).
   `key1`/`key2` are the "Once"/"6" fragments). **Needed:** either an enum/lookup endpoint
   documenting the codes, or store the definition id / a `frequency_code` FK. Until then the
   frontend hardcodes the canonical 13 in `planDetailsModel.ts` (`FREQUENCY_FALLBACK`).
+  **Status 2026-09-07:** `freq_limit` is now an `integer` on Create/Update/Read (bulk-PUT item
+  docstring: "Frequency ordinal; 0/null = No Limitation") and `GET /insurance-plans/metadata`
+  publishes `frequency_limitations[]` (`FrequencyLimitation`: `code` int + `label` +
+  `definition_id`/`legacy_id`). The frontend converts at the request boundary
+  (`freqLimitToApi`) and still uses `FREQUENCY_FALLBACK` for labels; switching to the
+  metadata endpoint is a follow-up.
 
 - **PLAN-DTL-5 — Coverage-rule limit columns are untyped strings.**
   `age_limit` is one string (legacy has Min **and** Max → the frontend encodes `"min-max"`),
   `wait_period` is a string (test data even contains `"10 days"`), `freq_limit` is a string.
+  **Status 2026-09-07:** typed columns shipped — `age_min`, `age_max`, `wait_months`
+  (integers) and integer `freq_limit`, with `age_limit`/`wait_period` kept as legacy string
+  mirrors ("typed limits win over the legacy string mirrors"). Migrated rows still only carry
+  the mirrors (typed columns `null` on tenant 1), so the frontend reads typed-when-present with
+  a mirror fallback and writes both.
   **Needed:** `age_min int`, `age_max int`, `wait_months int`, `freq_limit int` (or the FK from
   PLAN-DTL-4). The wizard validates whole numbers so new rows are clean.
 
@@ -156,10 +171,16 @@ Every row is one `insurance_coverage_rules` record (`ins_plan_id`-scoped).
   /insurance-coverage-rules` calls (edits are diffed so only changed rows PATCH). A
   `PUT /insurance-plans/{id}/coverage-rules` bulk replace would make Finish atomic; today
   a mid-way failure leaves a partial table (the wizard reports per-row failures).
+  **Status 2026-09-07:** shipped — `GET`/`PUT /insurance-plans/{plan_id}/coverage-rules`
+  (`PlanCoverageReplaceRequest` with `rules` + `frequency_groups`, items with `id` update in
+  place, unmentioned rows deleted, one transaction). Not wired yet; the wizard still diff-saves
+  row by row.
 
 - **PLAN-DTL-9 — No `updated_at` / `updated_by` on plans or coverage rules.**
   `InsurancePlanRead` and `InsuranceCoverageRuleRead` expose only `created_at`, so the
   legacy "Modified On/By" cannot be shown (same family as INS-PT-8).
+  **Status 2026-09-07:** `InsuranceCoverageRuleRead` now carries `created_by`, `updated_by`,
+  `updated_at`. Plans unchanged.
 
 ---
 

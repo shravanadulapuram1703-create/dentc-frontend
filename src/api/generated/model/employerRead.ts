@@ -11,6 +11,7 @@ export interface EmployerRead {
   legacy_id?: string | null;
   name: string;
   address?: string | null;
+  address2?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;

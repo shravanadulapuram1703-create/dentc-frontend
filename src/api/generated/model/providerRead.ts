@@ -45,4 +45,5 @@ export interface ProviderRead {
   custom_1?: string | null;
   custom_2?: string | null;
   created_at: string;
+  provider_kind?: string | null;
 }

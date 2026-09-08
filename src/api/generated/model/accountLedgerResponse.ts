@@ -9,9 +9,14 @@ import type { AccountLedgerRow } from './accountLedgerRow';
 
 export interface AccountLedgerResponse {
   patient_id: number;
+  /** AL-11: 'patient' | 'account' (the whole family) */
+  scope?: string;
+  responsible_party_id?: string | null;
+  /** AL-11: the account members this feed covers */
+  patient_ids?: number[];
   rows: AccountLedgerRow[];
   /**
-     * Final running balance over the full account window
+     * Final running balance over the full window
      * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
      */
   grand_total: string;

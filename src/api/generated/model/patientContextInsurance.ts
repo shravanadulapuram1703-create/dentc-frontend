@@ -10,4 +10,10 @@ export interface PatientContextInsurance {
   insurance_type: string;
   ins_plan_id?: number | null;
   carrier_name?: string | null;
+  group_number?: string | null;
+  plan_type?: string | null;
+  /** 'D' dental | 'M' medical */
+  legacy_plan_type?: string | null;
+  /** Carrier + group number — no plan-name column exists */
+  plan_name?: string | null;
 }

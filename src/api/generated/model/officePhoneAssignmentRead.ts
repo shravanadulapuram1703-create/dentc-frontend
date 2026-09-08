@@ -12,6 +12,7 @@ export interface OfficePhoneAssignmentRead {
   assignment_type: string;
   phone_number?: string | null;
   is_model_office: boolean;
+  messaging_service_sid?: string | null;
   id: number;
   created_at: string;
 }

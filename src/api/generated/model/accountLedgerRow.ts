@@ -11,17 +11,21 @@
  */
 export interface AccountLedgerRow {
   entry_date?: string | null;
-  /** charge | payment | adjustment */
+  /** charge | payment | adjustment | claim (AL-8) */
   source_type: string;
+  /** Row key: the procedure/payment/adjustment id, or '{claim_id}:{event}' */
   source_id: string;
-  /** procedure_code | 'PMT' | 'PATADJ' */
+  patient_id?: number | null;
+  patient_name?: string | null;
+  /** procedure_code | 'PMT' | 'PATADJ' | 'CLM-P/S/T' */
   code?: string | null;
   description?: string | null;
-  /** 'P' (debit) | 'C' (credit) — the legacy T column */
+  /** 'P' (debit) | 'C' (credit) | 'I' (informational claim row) — the legacy T column */
   transaction_kind: string;
   apply_to?: string | null;
   tooth?: string | null;
   surface?: string | null;
+  duration_minutes?: number | null;
   provider_id?: string | null;
   provider_name?: string | null;
   office_id?: number | null;
@@ -31,14 +35,37 @@ export interface AccountLedgerRow {
   billing_status?: string | null;
   /** AL-6 'N' — a procedure with no claim_id */
   unbilled?: boolean | null;
+  /** The claim this charge was billed on (AL-6) */
+  claim_id?: string | null;
+  /** AL-17: the legacy 'H' — this charge is held back from claims */
+  hold_claim?: boolean | null;
+  pat_paid?: string | null;
+  pat_adjust?: string | null;
+  claim_number?: string | null;
+  claim_status?: string | null;
+  /** AL-8: submitted | paid | closed | created — which transition this row is */
+  claim_event?: string | null;
+  total_billed?: string | null;
+  total_paid?: string | null;
   user_id?: number | null;
+  /** AL-10: the poster — live user short_id/username, else the legacy login */
   user_label?: string | null;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  created_at?: string | null;
+  updated_at?: string | null;
+  updated_by?: number | null;
+  updated_by_label?: string | null;
+  /**
+     * Debit magnitude, always >= 0
+     * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+     */
   charge?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  /**
+     * Credit magnitude, always >= 0
+     * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+     */
   credit?: string;
   /**
-     * Signed: +charge / -credit
+     * AL-9: genuinely signed — +charge / -credit
      * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
      */
   amount?: string;

@@ -13,7 +13,17 @@ export interface PatientSignatureRead {
   signature_len?: number | null;
   device_source?: string | null;
   is_user_sig: boolean;
+  signature_type?: string | null;
+  signed_at?: string | null;
+  signed_by_user_id?: number | null;
+  content_hash?: string | null;
+  is_active: boolean;
+  superseded_by_id?: number | null;
+  voided_at?: string | null;
+  voided_by?: number | null;
   created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

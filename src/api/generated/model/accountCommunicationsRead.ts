@@ -34,6 +34,13 @@ export interface AccountCommunicationsRead {
   telecom_verified_at?: string | null;
   telecom_verified_by?: number | null;
   updated_by?: number | null;
+  messaging_service_sid?: string | null;
+  sms_from_phone?: string | null;
+  sms_quiet_hours_start: number;
+  sms_quiet_hours_end: number;
+  sms_reminders_enabled: boolean;
+  sms_reminder_lead_hours?: unknown | null;
+  sms_reminder_template_id?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;

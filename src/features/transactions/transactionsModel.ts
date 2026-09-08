@@ -126,8 +126,10 @@ export function todayDisplay(): string {
   return new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
+/** Today's LOCAL date as YYYY-MM-DD (`toISOString()` is UTC and reads a day ahead in the US evening). */
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // ---- Provider resolution --------------------------------------------------

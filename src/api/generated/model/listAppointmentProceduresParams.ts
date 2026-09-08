@@ -21,6 +21,18 @@ procedure_code?: string | null;
  */
 provider_id?: string | null;
 /**
+ * Filter by treatment_plan_id
+ */
+treatment_plan_id?: string | null;
+/**
+ * Filter by status
+ */
+status?: string | null;
+/**
+ * Filter by is_archived
+ */
+is_archived?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

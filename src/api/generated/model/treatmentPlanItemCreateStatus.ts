@@ -16,4 +16,6 @@ export const TreatmentPlanItemCreateStatus = {
   hold: 'hold',
   alternative: 'alternative',
   referred_out: 'referred_out',
+  scheduled: 'scheduled',
+  completed: 'completed',
 } as const;

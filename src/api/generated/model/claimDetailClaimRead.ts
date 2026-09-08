@@ -21,6 +21,7 @@ export interface ClaimDetailClaimRead {
   total_billed: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_paid: string;
+  opening_paid?: string | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   est_insurance: string;
   submitted_date?: string | null;
@@ -32,6 +33,9 @@ export interface ClaimDetailClaimRead {
   ins_plan_id?: number | null;
   is_preauth: boolean;
   notes?: string | null;
+  write_off_amount?: string | null;
+  write_off_mode?: string | null;
+  write_off_value?: string | null;
   is_active: boolean;
   created_by?: number | null;
   created_at: string;

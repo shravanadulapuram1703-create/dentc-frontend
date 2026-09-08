@@ -15,6 +15,7 @@ import {
   listTreatmentPlans,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
 import { resolveProcedureFee, type FeeScheduleContext } from '../../services/feeScheduleResolver';
+import { announceProcedureChange } from '@/features/procedures/procedureSync';
 
 interface TxPlanProcedure {
   id: string;
@@ -215,6 +216,8 @@ export default function TxPlansTab({
 
       setAddCode('');
       setShowAdd(false);
+      // The patient's Treatment Plan page and Restorative Chart pick this up.
+      announceProcedureChange({ patient_id: patientId, kinds: ['plan_item'] });
       onRefresh();
     } catch (err: any) {
       console.error('Error creating treatment plan item:', err);

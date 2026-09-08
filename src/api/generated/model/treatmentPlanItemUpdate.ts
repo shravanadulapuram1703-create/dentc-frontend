@@ -14,6 +14,8 @@ export interface TreatmentPlanItemUpdate {
   description?: string | null;
   tooth?: string | null;
   surface?: string | null;
+  quadrant?: string | null;
+  material_id?: number | null;
   priority?: number | null;
   phase_id?: number | null;
   insurance_estimate?: number | string | null;

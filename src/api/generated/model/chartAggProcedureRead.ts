@@ -36,7 +36,15 @@ export interface ChartAggProcedureRead {
   is_void: boolean;
   material_id?: number | null;
   treatment_plan_id?: string | null;
+  treatment_plan_item_id?: string | null;
   notes?: string | null;
   created_by?: number | null;
+  created_by_legacy?: string | null;
+  duration_minutes?: number | null;
+  updated_at?: string | null;
+  updated_by?: number | null;
+  pat_paid?: string | null;
+  pat_adjust?: string | null;
+  fee_schedule_id?: number | null;
   created_at: string;
 }
