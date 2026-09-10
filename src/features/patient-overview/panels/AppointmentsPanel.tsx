@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { openSchedulerForBooking } from "@/services/schedulerHandoff";
 import { Archive, Plus, Eye, Loader2, ArchiveRestore } from "lucide-react";
 import { SectionBar, ActionButton, DataGrid, Td } from "../ui";
 import { fmt_date, fmt_time } from "../format";
@@ -88,7 +89,15 @@ export default function AppointmentsPanel({
             >
               {show_archived ? "Show Active" : "Show Archived"}
             </ActionButton>
-            <ActionButton onClick={() => navigate("/scheduler")}>
+            <ActionButton
+              onClick={() =>
+                openSchedulerForBooking(navigate, {
+                  patient_id,
+                  plan_item_ids: [],
+                  source: "patient-overview",
+                })
+              }
+            >
               <Plus className="w-3 h-3" /> Add New Appt
             </ActionButton>
             <ActionButton onClick={on_view_family}>

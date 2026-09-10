@@ -125,6 +125,8 @@ export function apiRow(
   user: UserFn,
   /** Procedure ids on Hold Claim, joined in by the service (AL-17). */
   held?: Set<string>,
+  /** provider_id -> "Name (ID)"; the feed's provider_name is the bare name. */
+  providerLabel?: (id: string | null | undefined) => string,
 ): LedgerRow {
   const kind: LedgerKind =
     r.source_type === 'payment' ? 'payment' : r.source_type === 'adjustment' ? 'adjustment' : 'charge';
@@ -155,7 +157,7 @@ export function apiRow(
     // Legacy shows a bare "H" in the Bill column for a held charge.
     bill: onHold ? 'H' : dash(r.billing_status),
     hold_claim: onHold,
-    provider: dash(r.provider_name ?? r.provider_id),
+    provider: dash((r.provider_id && providerLabel?.(r.provider_id)) || r.provider_name || r.provider_id),
     est_pat: num(r.patient_estimate),
     est_ins: num(r.insurance_estimate),
     amount,

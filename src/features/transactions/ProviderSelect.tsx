@@ -27,7 +27,7 @@ import {
   type ProviderOption,
 } from '@/services/providerDirectory';
 
-export type ProviderSelectKind = 'treating' | 'hygienist';
+export type ProviderSelectKind = 'treating' | 'hygienist' | 'any';
 
 interface Props {
   value: string;
@@ -50,7 +50,8 @@ function partitionProviders(
   /** Always offered even when inactive / out of office, so a stored id stays selectable. */
   keepId?: string,
 ): { inOffice: ProviderOption[]; others: ProviderOption[] } {
-  const matches = kind === 'hygienist' ? isHygienist : isTreatingProvider;
+  const matches =
+    kind === 'hygienist' ? isHygienist : kind === 'treating' ? isTreatingProvider : () => true;
   const keep = (p: ProviderOption) => matches(p) || p.id === keepId;
 
   const inOffice = officeProviders.filter(keep);

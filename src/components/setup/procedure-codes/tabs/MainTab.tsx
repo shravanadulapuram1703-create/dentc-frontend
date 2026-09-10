@@ -1,5 +1,6 @@
 import type { ProcedureCodeForm } from "../procedureCodeData";
 import type { ProviderRead, NoteMacroRead } from "@/api/generated/model";
+import { providerOptionLabel } from "@/services/providerDirectory";
 
 interface MainTabProps {
   formData: ProcedureCodeForm;
@@ -233,8 +234,7 @@ export default function MainTab({
               <option value="">— None —</option>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.short_id ? ` (${p.short_id})` : ""}
+                  {providerOptionLabel(p)}
                 </option>
               ))}
             </select>

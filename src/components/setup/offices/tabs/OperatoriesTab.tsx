@@ -2,6 +2,7 @@ import { Plus, Edit2, Trash2, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type OfficeForm, type OperatoryUi } from "../../../../data/officeData";
 import { fetchProviders, type Provider } from "../../../../services/schedulerApi";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 interface OperatoriesTabProps {
   formData: Partial<OfficeForm>;
@@ -261,7 +262,7 @@ export default function OperatoriesTab({
                           >
                             <option value="">None</option>
                             {providers.map((p) => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
+                              <option key={p.id} value={p.id}>{providerDisplayLabel(p)}</option>
                             ))}
                           </select>
                           {providers.length === 0 && (

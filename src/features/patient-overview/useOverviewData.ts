@@ -50,6 +50,7 @@ import type {
   AppointmentRead,
 } from "@/api/generated/model";
 import { today_iso } from "./format";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** How many account members we enrich with per-member balance/visit lookups. */
 const MEMBER_ENRICH_CAP = 25;
@@ -323,10 +324,7 @@ export function useOverviewData(patient_id: number) {
 
   const provider_name = useMemo(() => {
     const by_id = new Map(
-      (providers_query.data?.items ?? []).map((p) => [
-        String(p.id),
-        p.name || [p.last_name, p.first_name].filter(Boolean).join(", "),
-      ]),
+      (providers_query.data?.items ?? []).map((p) => [String(p.id), providerDisplayLabel(p)]),
     );
     return (id?: string | number | null) =>
       id == null ? "-" : by_id.get(String(id)) ?? String(id);

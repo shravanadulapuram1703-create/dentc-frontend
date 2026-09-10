@@ -1,7 +1,7 @@
 import { utils, components } from "../../../styles/theme";
 import type { TicketStatus } from "../types";
 
-const STYLES: Record<TicketStatus, string> = {
+const STYLES: Record<string, string> = {
   Open: components.badgeInfo,
   "In Progress": components.badgeWarning,
   Submitted: components.badgeInfo,

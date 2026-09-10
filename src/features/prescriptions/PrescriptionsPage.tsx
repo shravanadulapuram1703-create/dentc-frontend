@@ -100,7 +100,8 @@ export default function PrescriptionsPage() {
     setMode('view');
   };
   const handleAddNew = () => {
-    setDraft(blankDraft());
+    // Prescriber defaults to the patient's preferred provider (legacy behaviour).
+    setDraft({ ...blankDraft(), provider_id: patientQuery.data?.preferred_provider_id ?? '' });
     setSelectedId(null);
     setMode('add');
   };

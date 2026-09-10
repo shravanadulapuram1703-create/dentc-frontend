@@ -5,8 +5,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   Bell,
   CalendarClock,
+  CalendarRange,
   Check,
   Copy,
   ExternalLink,
@@ -24,8 +26,9 @@ import { listOffices } from "@/api/generated/endpoints/organization/organization
 import { officeIdNum } from "@/services/schedulerApi";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppointNow } from "../AppointNowContext";
-import type { BookingRequest, BookingRequestStatus } from "../transport/types";
-import { formatDateLong, formatTime12 } from "../public/bookingUtils";
+import { SlotConflictError, type SlotConflict } from "../staffBooking";
+import type { AvailableSlot, BookingRequest, BookingRequestStatus } from "../transport/types";
+import { formatDateLong, formatTime12, todayIso } from "../public/bookingUtils";
 
 type Filter = BookingRequestStatus | "all";
 
@@ -46,20 +49,124 @@ function StatusBadge({ status }: { status: BookingRequestStatus }) {
   );
 }
 
+/** HH:MM + minutes → HH:MM (clamped to the same day). */
+function addMinutes(hhmm: string, minutes: number): string {
+  const [h = 0, m = 0] = hhmm.split(":").map(Number);
+  const total = Math.min(h * 60 + m + minutes, 23 * 60 + 59);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** The red double-booking pop-up shown when approve / reschedule hits an overlap. */
+function ConflictDialog({
+  conflict,
+  onClose,
+  onPickAnotherTime,
+}: {
+  conflict: { slot: AvailableSlot; conflicts: SlotConflict[] };
+  onClose: () => void;
+  onPickAnotherTime: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="an-conflict-title"
+      data-testid="appointnow-conflict-dialog"
+    >
+      <div className="w-full max-w-lg rounded-2xl border-2 border-red-500 bg-white shadow-2xl">
+        <div className="flex items-start gap-3 rounded-t-2xl bg-red-600 px-5 py-4 text-white">
+          <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0" />
+          <div>
+            <h3 id="an-conflict-title" className="text-base font-bold">
+              Time slot already booked
+            </h3>
+            <p className="mt-0.5 text-sm text-red-50">
+              {formatDateLong(conflict.slot.date)} · {formatTime12(conflict.slot.start_time)} –{" "}
+              {formatTime12(conflict.slot.end_time)} overlaps{" "}
+              {conflict.conflicts.length === 1
+                ? "an existing appointment"
+                : `${conflict.conflicts.length} existing appointments`}{" "}
+              in the scheduler. Nothing was booked.
+            </p>
+          </div>
+        </div>
+        <ul className="max-h-64 divide-y divide-red-100 overflow-y-auto px-5 py-2">
+          {conflict.conflicts.map((c) => (
+            <li key={c.appointment_id} className="py-2.5 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold text-slate-900">{c.patient_name}</span>
+                <span className="font-mono text-xs text-red-700">
+                  {formatTime12(c.start_time)} – {formatTime12(c.end_time)}
+                </span>
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                {c.procedure_label ? `${c.procedure_label} · ` : ""}
+                {c.provider_name ? `${c.provider_name} · ` : ""}
+                {c.operatory_name || "Operatory"}
+                <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 font-semibold uppercase text-red-700">
+                  {c.kind === "provider" ? "Provider busy" : "Chair taken"}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-end gap-2 rounded-b-2xl border-t border-red-100 bg-red-50/60 px-5 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={onPickAnotherTime}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+          >
+            <CalendarRange className="h-4 w-4" /> Choose another time
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RequestCard({
   request,
   onApprove,
   onDecline,
+  onReschedule,
   busy,
+  rescheduling,
+  setRescheduling,
 }: {
   request: BookingRequest;
   onApprove: () => void;
   onDecline: (reason: string) => void;
+  onReschedule: (slot: AvailableSlot) => Promise<boolean>;
   busy: boolean;
+  /** Controlled from the parent so the conflict dialog can open the panel. */
+  rescheduling: boolean;
+  setRescheduling: (open: boolean) => void;
 }) {
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState("");
+  const [newDate, setNewDate] = useState(request.slot.date);
+  const [newStart, setNewStart] = useState(request.slot.start_time);
   const name = `${request.contact.first_name} ${request.contact.last_name}`.trim();
+  const newEnd = addMinutes(newStart, request.slot.duration_minutes);
+  const unchanged = newDate === request.slot.date && newStart === request.slot.start_time;
+
+  const submitReschedule = async () => {
+    const ok = await onReschedule({
+      ...request.slot,
+      date: newDate,
+      start_time: newStart,
+      end_time: newEnd,
+    });
+    if (ok) setRescheduling(false);
+  };
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -82,6 +189,13 @@ function RequestCard({
             <span className="text-slate-400">·</span>
             <span className="text-slate-600">{request.reason_label}</span>
           </div>
+          {request.original_slot && (
+            <div className="mt-0.5 text-xs text-amber-700">
+              Rescheduled by staff · patient originally asked for{" "}
+              {formatDateLong(request.original_slot.date)} at{" "}
+              {formatTime12(request.original_slot.start_time)}
+            </div>
+          )}
         </div>
         <div className="text-right text-xs text-slate-400">
           <div>Code: <span className="font-mono">{request.id.slice(0, 12)}</span></div>
@@ -101,6 +215,28 @@ function RequestCard({
             <User className="h-4 w-4 text-slate-400" /> DOB {request.contact.date_of_birth}
           </span>
         )}
+      </div>
+
+      {request.contact.insurance_info && (
+        <p className="mt-2 text-sm text-slate-600">
+          <span className="font-semibold text-slate-700">Insurance:</span>{" "}
+          {request.contact.insurance_info}
+        </p>
+      )}
+
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+        <span>
+          Disclaimer:{" "}
+          <span className={request.contact.disclaimer_accepted ? "font-semibold text-emerald-700" : "font-semibold text-red-600"}>
+            {request.contact.disclaimer_accepted ? "Yes" : "No"}
+          </span>
+        </span>
+        <span>
+          Consent to calls/texts:{" "}
+          <span className={request.contact.consent_accepted ? "font-semibold text-emerald-700" : "font-semibold text-red-600"}>
+            {request.contact.consent_accepted ? "Yes" : "No"}
+          </span>
+        </span>
       </div>
 
       {request.contact.notes && (
@@ -125,7 +261,63 @@ function RequestCard({
 
       {request.status === "pending" && (
         <div className="mt-4 border-t border-slate-100 pt-3">
-          {declining ? (
+          {rescheduling ? (
+            <div className="space-y-3 rounded-lg border border-[#3A6EA5]/30 bg-[#3A6EA5]/5 p-3">
+              <div className="text-sm font-semibold text-slate-800">
+                Reschedule before booking
+                <span className="ml-2 text-xs font-normal text-slate-500">
+                  {request.slot.duration_minutes} min · contact details are kept as entered by the patient
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <label className="block text-xs font-semibold text-slate-600">
+                  New date
+                  <input
+                    type="date"
+                    min={todayIso()}
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-normal text-slate-900 outline-none focus:border-[#3A6EA5]"
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-600">
+                  Start time
+                  <input
+                    type="time"
+                    step={300}
+                    value={newStart}
+                    onChange={(e) => setNewStart(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-normal text-slate-900 outline-none focus:border-[#3A6EA5]"
+                  />
+                </label>
+                <div className="block text-xs font-semibold text-slate-600">
+                  Ends
+                  <div className="mt-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-normal text-slate-700">
+                    {formatTime12(newEnd)}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRescheduling(false)}
+                  disabled={busy}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={submitReschedule}
+                  disabled={busy || unchanged || !newDate || !newStart}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#3A6EA5] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#2C5282] disabled:opacity-60"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarRange className="h-4 w-4" />}
+                  Check availability & save
+                </button>
+              </div>
+            </div>
+          ) : declining ? (
             <div className="space-y-2">
               <textarea
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#3A6EA5]"
@@ -164,6 +356,14 @@ function RequestCard({
               </button>
               <button
                 type="button"
+                onClick={() => setRescheduling(true)}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A6EA5]/50 px-3.5 py-2 text-sm font-semibold text-[#3A6EA5] hover:bg-[#3A6EA5]/5 disabled:opacity-60"
+              >
+                <CalendarRange className="h-4 w-4" /> Reschedule
+              </button>
+              <button
+                type="button"
                 onClick={onApprove}
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
@@ -185,11 +385,20 @@ function RequestCard({
 
 export default function RequestInbox() {
   const { currentOffice } = useAuth();
-  const { requests, pendingCount, isSimulated, refresh, approve, decline } = useAppointNow();
+  const { requests, pendingCount, isSimulated, refresh, approve, decline, reschedule } =
+    useAppointNow();
 
   const [filter, setFilter] = useState<Filter>("pending");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  /** Request whose reschedule panel is open (one at a time). */
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
+  /** Double-booking pop-up state (set by approve / reschedule on overlap). */
+  const [conflict, setConflict] = useState<{
+    request_id: string;
+    slot: AvailableSlot;
+    conflicts: SlotConflict[];
+  } | null>(null);
 
   // Search + filters (all client-side over the loaded requests).
   const [search, setSearch] = useState("");
@@ -283,6 +492,7 @@ export default function RequestInbox() {
           r.office_code,
           r.id,
           r.contact.notes ?? "",
+          r.contact.insurance_info ?? "",
           r.appointment_id ?? "",
         ]
           .join(" ")
@@ -323,9 +533,35 @@ export default function RequestInbox() {
     try {
       await approve(id);
     } catch (e) {
-      toast.error("Could not book appointment", {
-        description: e instanceof Error ? e.message : "Please try again.",
-      });
+      if (e instanceof SlotConflictError) {
+        setConflict({ request_id: id, slot: e.slot, conflicts: e.conflicts });
+        toast.error("Time slot already booked", { description: e.message });
+      } else {
+        toast.error("Could not book appointment", {
+          description: e instanceof Error ? e.message : "Please try again.",
+        });
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /** Returns true when the new slot was saved (free), false on conflict / error. */
+  const handleReschedule = async (id: string, slot: AvailableSlot): Promise<boolean> => {
+    setBusyId(id);
+    try {
+      await reschedule(id, slot);
+      return true;
+    } catch (e) {
+      if (e instanceof SlotConflictError) {
+        setConflict({ request_id: id, slot: e.slot, conflicts: e.conflicts });
+        toast.error("Time slot already booked", { description: e.message });
+      } else {
+        toast.error("Could not reschedule request", {
+          description: e instanceof Error ? e.message : "Please try again.",
+        });
+      }
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -596,10 +832,24 @@ export default function RequestInbox() {
               busy={busyId === r.id}
               onApprove={() => handleApprove(r.id)}
               onDecline={(reason) => handleDecline(r.id, reason)}
+              onReschedule={(slot) => handleReschedule(r.id, slot)}
+              rescheduling={reschedulingId === r.id}
+              setRescheduling={(open) => setReschedulingId(open ? r.id : null)}
             />
           ))
         )}
       </div>
+
+      {conflict && (
+        <ConflictDialog
+          conflict={conflict}
+          onClose={() => setConflict(null)}
+          onPickAnotherTime={() => {
+            setReschedulingId(conflict.request_id);
+            setConflict(null);
+          }}
+        />
+      )}
 
       {isSimulated && (
         <p className="mt-6 text-center text-xs text-slate-400">

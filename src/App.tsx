@@ -50,6 +50,7 @@ import OfficeSetup from './components/setup/offices/OfficeSetup';
 import OfficeAssignment from './components/setup/offices/OfficeAssignment';
 import OfficeGroupsSetup from './components/setup/office-groups/OfficeGroupsSetup';
 import ChangeMyPassword from './components/setup/security/ChangeMyPassword';
+import SignaturePadDiagnosticsPage from './features/signature/SignaturePadDiagnosticsPage';
 import ProviderSetup from './components/setup/providers/ProviderSetup';
 import CarrierSetup from './components/setup/insurance/CarrierSetup';
 import EmployerSetup from './components/setup/insurance/EmployerSetup';
@@ -366,6 +367,9 @@ function AppRoutes() {
       <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><GroupSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ChangeMyPassword /></AdminPageWrapper> : <Navigate to="/login" />} />
       
+      {/* Setup - Devices (Topaz signature pad diagnostics) */}
+      <Route path="/setup/devices/signature-pad" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><SignaturePadDiagnosticsPage /></AdminPageWrapper> : <Navigate to="/login" />} />
+
       {/* Setup - Providers */}
       <Route path="/setup/providers/provider-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ProviderSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       {/* Provider has a single office_id; no per-office settings model — see backend_devreport.md #20 */}
@@ -505,13 +509,13 @@ function AppContent() {
         transition: 'margin-right 0.3s ease-in-out'
       }}
     >
-      {/* HelpProvider exposes Report-an-Issue app-wide (nav menu, floating button,
-          Help Center) and owns the single support-ticket dialog. */}
+      {/* HelpProvider exposes Report-an-Issue app-wide (nav header button, nav
+          menu, Help Center) and owns the single support-ticket dialog. */}
       <HelpProvider>
         <AppRoutes />
       </HelpProvider>
       <LogoutOverlay />
-      {/* Global Direct Messaging - floating launcher + slide-in panel, all screens */}
+      {/* Global Direct Messaging - slide-in panel (launcher lives in GlobalNav) */}
       <Chat />
     </div>
   );

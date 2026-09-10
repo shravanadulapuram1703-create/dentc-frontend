@@ -61,6 +61,17 @@ export const MODULES: string[] = [
   "Other",
 ];
 
+/**
+ * Statuses the reporter may move a ticket to from "My Tickets". Mirrors the
+ * backend's `SupportTicketStatusUpdate` literal set — `Failed`/`Submitted` are
+ * outcomes of filing, not states a user picks.
+ */
+export const TICKET_STATUSES: OptionDef[] = [
+  { value: "Open", label: "Open" },
+  { value: "In Progress", label: "In Progress" },
+  { value: "Done", label: "Done" },
+];
+
 export const DEFAULT_ISSUE_TYPE = "Bug";
 export const DEFAULT_PRIORITY = "Medium";
 

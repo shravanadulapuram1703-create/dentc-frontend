@@ -83,7 +83,29 @@ export interface BookingContactDetails {
   date_of_birth?: string | null;
   is_new_patient: boolean;
   notes?: string | null;
+  /** Optional free-text: dental insurance provider name & member ID. */
+  insurance_info?: string | null;
+  /**
+   * Disclaimer acknowledgement (REQUIRED to submit): the patient understands this
+   * is an appointment REQUEST only (not a confirmation) and that the feature is
+   * not HIPAA compliant / no PHI is collected. `null` = not yet answered.
+   */
+  disclaimer_accepted: boolean | null;
+  /**
+   * Contact consent (REQUIRED to submit): the patient verifies the phone number
+   * is theirs and consents to calls/texts about the appointment, and understands
+   * the 24-hour notice policy for changes. `null` = not yet answered.
+   */
+  consent_accepted: boolean | null;
 }
+
+/** Disclaimer text shown next to the required Yes/No acknowledgement. */
+export const BOOKING_DISCLAIMER_TEXT =
+  "I understand that this is just an Appointment request only, NOT A CONFIRMATION. I understand that this Request Appointment feature is not HIPAA compliant and any protected health information will not be included.";
+
+/** Consent text shown next to the required Yes/No acknowledgement. */
+export const BOOKING_CONSENT_TEXT =
+  "I verify that this is my phone number and consent to receive calls and text messages regarding my appointment. I understand that if my appointment is confirmed, a minimum of 24hr notice is required to make changes to a confirmed appointment.";
 
 /** What the public page submits to request a slot. */
 export interface SubmitRequestInput {
@@ -114,6 +136,12 @@ export interface BookingRequest {
   actioned_by?: string | null;
   /** Reason captured on decline. */
   decline_reason?: string | null;
+  /**
+   * The slot the PATIENT originally asked for, set only when staff rescheduled
+   * the request before approving (`slot` then holds the new time). The contact
+   * details are never changed by a reschedule.
+   */
+  original_slot?: AvailableSlot | null;
 }
 
 /** Real-time events the transport pushes to subscribers. */
@@ -154,6 +182,12 @@ export interface BookingTransport {
   approveRequest(id: string, appointmentId: string, actionedBy?: string): Promise<BookingRequest>;
   /** Mark a request declined. */
   declineRequest(id: string, reason?: string, actionedBy?: string): Promise<BookingRequest>;
+  /**
+   * Move a PENDING request to a different slot (staff-side reschedule before
+   * approval). Keeps the contact details untouched, records the patient's
+   * original slot in `original_slot`, and stays `pending`.
+   */
+  rescheduleRequest(id: string, slot: AvailableSlot, actionedBy?: string): Promise<BookingRequest>;
 }
 
 /** Reasons offered on the public page. Durations mirror typical chair time. */

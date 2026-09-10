@@ -10,6 +10,7 @@ import {
 import { useListUserGroups } from "../../api/generated/endpoints/staff/staff";
 import { formatUsDateTime } from "../../utils/datetime";
 import { apiAssetUrl } from "../../utils/apiAsset";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /* =========================================================
    TYPES
@@ -68,7 +69,7 @@ export default function ViewUserDetailsModal({
   const providersQ = useListProviders({ size: 200 }, { query: { enabled: isOpen } });
   const providerNameById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const p of providersQ.data?.items ?? []) map.set(p.id, p.name);
+    for (const p of providersQ.data?.items ?? []) map.set(p.id, providerDisplayLabel(p));
     return map;
   }, [providersQ.data]);
 

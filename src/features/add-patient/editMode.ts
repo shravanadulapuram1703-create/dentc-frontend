@@ -208,6 +208,7 @@ export async function loadPatientForEdit(
     birthdate: s(patient.dob),
     lastName: s(patient.last_name),
     firstName: s(patient.first_name),
+    middle_initial: s(patient.middle_initial),
     title: s(patient.title),
     preferredName: s(patient.preferred_name),
     pronouns: s(patient.pronouns) || "Please Select",

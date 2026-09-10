@@ -9,6 +9,7 @@ import { useListAppointments } from '@/api/generated/endpoints/appointments/appo
 import { useGetPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { PatientRead } from '@/api/generated/model';
+import { patient_display_name } from '@/features/patient-overview/format';
 
 interface PatientShellLayoutProps {
   onLogout: () => void;
@@ -187,9 +188,8 @@ export default function PatientShellLayout({
       id: String(p.id),
       legacyId: p.legacy_id || undefined,
       chartNo: p.chart_no || `CH-${p.id}`,
-      name: p.preferred_name
-        ? `${p.last_name}, ${p.first_name} (${p.preferred_name})`
-        : `${p.last_name}, ${p.first_name}`,
+      // "Last, First Middle (Preferred)" — the middle name is optional.
+      name: patient_display_name(p),
       age: calculateAge(p.dob),
       gender: formatGender(p.gender),
       dob: formatDate(p.dob),

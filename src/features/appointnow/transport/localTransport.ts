@@ -265,6 +265,25 @@ export class LocalBookingTransport implements BookingTransport {
     }));
   }
 
+  async rescheduleRequest(
+    id: string,
+    slot: AvailableSlot,
+    actionedBy?: string,
+  ): Promise<BookingRequest> {
+    return this.transition(id, (r) => {
+      if (r.status !== "pending") {
+        throw new Error(`Only pending requests can be rescheduled (status: ${r.status}).`);
+      }
+      return {
+        ...r,
+        slot,
+        original_slot: r.original_slot ?? r.slot,
+        actioned_by: actionedBy ?? r.actioned_by ?? null,
+        updated_at: nowIso(),
+      };
+    });
+  }
+
   private transition(
     id: string,
     apply: (r: BookingRequest) => BookingRequest,

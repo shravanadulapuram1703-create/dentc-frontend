@@ -3,12 +3,12 @@
 // wraps the shared procedure-code cache for the entry panel (code search, exact
 // match, category list) so the page stays focused on state + mutations.
 
-import { loadProcedureCodes, codeDescription } from '@/components/setup/insurance/procedureCodeService';
+import { loadProcedureCodes, codeDescription, cachedProcedureCode } from '@/components/setup/insurance/procedureCodeService';
 import { listProviderProcedureCodes } from '@/api/generated/endpoints/provider-setup/provider-setup';
 import type { ProcedureCodeRead } from '@/api/generated/model';
 import { PROC_CATEGORIES, codeInCategory, type ProcCategory } from './txModel';
 
-export { loadProcedureCodes, codeDescription };
+export { loadProcedureCodes, codeDescription, cachedProcedureCode };
 
 // ---- Provider eligibility (legacy "Change Provider" restriction) ----------
 //

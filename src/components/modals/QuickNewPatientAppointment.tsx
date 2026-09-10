@@ -19,6 +19,7 @@ import type { Operatory, Provider, ProcedureType } from "../../services/schedule
 import { resolveOffice } from "../../services/officeLookup";
 import { MIN_DOB_ISO, todayIsoDate, validateDob } from "../../utils/datetime";
 import NoteMacroPickerModal from "../patient/NoteMacroPickerModal";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** Form state shared with NewAppointmentModal (it seeds the later screens). */
 export interface QuickAppointmentFormData {
@@ -343,8 +344,8 @@ export default function QuickNewPatientAppointment({
                       <>
                         {!formData.provider && <option value="">Select provider</option>}
                         {providers.map((p) => (
-                          <option key={p.id} value={p.name}>
-                            {p.id} : {p.name}
+                          <option key={p.id} value={p.id}>
+                            {providerDisplayLabel(p)}
                           </option>
                         ))}
                       </>
