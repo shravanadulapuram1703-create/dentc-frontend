@@ -13,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  AlertCircle,
   ChevronDown,
   Loader2,
   Paperclip,
@@ -31,6 +32,7 @@ import MacroQuestionnaire from './MacroQuestionnaire';
 import { macroHasFields, parseMacroFields, substituteMacro, type MacroField } from './macroTemplate';
 import {
   ATTACHMENT_ACCEPT,
+  apiErrorMessage,
   createNote,
   currentUser,
   isLocked as isLockedNote,
@@ -45,6 +47,7 @@ import {
   todayInputDate,
   toInputDate,
   updateNote,
+  updateNoteDate,
   uploadAttachment,
   validateAttachment,
 } from './progressNotesService';
@@ -60,13 +63,29 @@ interface OutletContext {
   patient: PatientData;
 }
 
-const errMsg = (err: unknown): string | undefined =>
-  (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+const errMsg = apiErrorMessage;
 
-const TEXT_COLORS = [
-  '#000000', '#1F3A5F', '#1d4ed8', '#0e7490', '#15803d',
-  '#b45309', '#b91c1c', '#7c3aed', '#be185d', '#475569',
+/** Editor's own body colour — what "Default" resets a coloured run back to. */
+const DEFAULT_TEXT_COLOR = '#0f172a';
+
+const TEXT_COLORS: ReadonlyArray<{ value: string; name: string }> = [
+  { value: '#000000', name: 'Black' },
+  { value: '#1F3A5F', name: 'Navy' },
+  { value: '#1d4ed8', name: 'Blue' },
+  { value: '#0e7490', name: 'Teal' },
+  { value: '#15803d', name: 'Green' },
+  { value: '#b45309', name: 'Amber' },
+  { value: '#b91c1c', name: 'Red' },
+  { value: '#7c3aed', name: 'Violet' },
+  { value: '#be185d', name: 'Magenta' },
+  { value: '#475569', name: 'Slate' },
 ];
+
+/** Floor for the measured macro-panel height, so a very short viewport leaves
+ *  the panel usable rather than collapsing it to a sliver. */
+const MIN_MACRO_PANEL_HEIGHT = 280;
+/** Breathing room above/below the macro panel (matches the panes row's `p-3`). */
+const PANES_GUTTER = 12;
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -93,6 +112,10 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const me = useMemo(() => currentUser(), []);
 
   const editorRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const colorMenuRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
   const hydratedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -113,8 +136,12 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const [surface, setSurface] = useState('');
   const [region, setRegion] = useState('');
   const [dos, setDos] = useState<string>(todayInputDate());
+  // DOS as loaded from the server, so a locked note can still save a DOS-only
+  // correction (and we skip the request when nothing changed).
+  const [originalDos, setOriginalDos] = useState<string>('');
 
   const [colorOpen, setColorOpen] = useState(false);
+  const [lastColor, setLastColor] = useState<string>(DEFAULT_TEXT_COLOR);
   const [hideMacroPanel, setHideMacroPanel] = useState(false);
 
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -125,10 +152,56 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const [changePassword, setChangePassword] = useState('');
 
   const [locked, setLocked] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [signed, setSigned] = useState(false);
   const [struckOff, setStruckOff] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busyAction, setBusyAction] = useState<'sign' | 'strike' | 'restore' | null>(null);
+
+  // ---- sticky workspace chrome --------------------------------------------
+  // Two things pin to the viewport as the form scrolls: the workspace title bar
+  // and the macro/category panel. Both offsets are measured rather than
+  // hard-coded, so they sit exactly below the fixed nav + sticky patient header
+  // on any screen size and survive nav/header resizes and responsive reflow.
+  // The panel is additionally capped to the height actually left on screen, so
+  // a 1000-entry list scrolls inside it instead of stretching the page.
+  // Everything else on the page keeps flowing and scrolling normally.
+  const [stickyBox, setStickyBox] = useState<
+    { headerTop: number; panelTop: number; panelHeight: number } | null
+  >(null);
+  useEffect(() => {
+    const root = workspaceRef.current;
+    if (!root) return;
+    const measure = () => {
+      // The workspace starts directly beneath the app chrome, so its document
+      // offset IS the chrome height — and therefore the title bar's sticky top.
+      const headerTop = root.getBoundingClientRect().top + window.scrollY;
+      const panelTop = headerTop + (headerRef.current?.offsetHeight ?? 0) + PANES_GUTTER;
+      setStickyBox({
+        headerTop,
+        panelTop,
+        panelHeight: Math.max(
+          MIN_MACRO_PANEL_HEIGHT,
+          window.innerHeight - panelTop - PANES_GUTTER,
+        ),
+      });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    // visualViewport covers zoom and mobile browser-chrome changes that do not
+    // always emit a window resize; the observer covers the sticky patient
+    // header above us growing or wrapping.
+    window.visualViewport?.addEventListener('resize', measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+    if (headerRef.current) ro.observe(headerRef.current);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+      ro.disconnect();
+    };
+  }, []);
 
   // ---- macros -------------------------------------------------------------
   const { data: macrosData } = useListNoteMacros({ size: 200 });
@@ -162,7 +235,9 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     setTeeth(parseTeeth(n.tooth));
     setSurface(n.surface ?? '');
     setRegion(n.region ?? '');
-    setDos(toInputDate(n.note_date) || todayInputDate());
+    const loadedDos = toInputDate(n.note_date) || todayInputDate();
+    setDos(loadedDos);
+    setOriginalDos(loadedDos);
     const sig = isSignedNote(n);
     setSigned(sig);
     setLocked(isLockedNote(n));
@@ -170,17 +245,68 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     if (editorRef.current) {
       editorRef.current.innerHTML = n.notes_html || textToHtml(n.notes ?? '');
     }
+    setHydrated(true);
   }, [noteQuery.data]);
 
-  const readOnly = mode === 'view' || locked;
+  // Until the existing note has loaded, the form is an empty shell showing
+  // today's date — keep it read-only so a stray keystroke or Save can't
+  // overwrite the real note with a blank one (the fetch can take seconds).
+  const loadingNote = isExisting && !hydrated && !noteQuery.isError;
+  const loadFailed = isExisting && noteQuery.isError;
+  const readOnly = mode === 'view' || locked || loadingNote || loadFailed;
+  // DOS outlives the text lock (doctors fix a wrong visit date days later);
+  // only a signed or struck-off note freezes it.
+  const dosEditable = !loadingNote && !loadFailed && !signed && !struckOff;
+  const dosChanged = dos !== originalDos;
+  const canSave = !readOnly || (dosEditable && dosChanged);
 
   // ---- rich text ----------------------------------------------------------
+  // Opening the picker moves focus out of the contentEditable, which collapses
+  // the user's selection — so `foreColor` would colour nothing. Stash the range
+  // on the way in and restore it before applying.
+  const rememberSelection = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (editorRef.current?.contains(range.commonAncestorContainer)) {
+      savedRangeRef.current = range.cloneRange();
+    }
+  };
+
   const applyColor = (color: string) => {
     setColorOpen(false);
-    editorRef.current?.focus();
+    if (readOnly) return;
+    const el = editorRef.current;
+    if (!el) return;
+    setLastColor(color);
+    el.focus();
+    const sel = window.getSelection();
+    const saved = savedRangeRef.current;
+    if (sel && saved) {
+      sel.removeAllRanges();
+      sel.addRange(saved);
+    }
     document.execCommand('styleWithCSS', false, 'true');
     document.execCommand('foreColor', false, color);
+    savedRangeRef.current = null;
   };
+
+  // Dismiss the picker on outside click or Escape.
+  useEffect(() => {
+    if (!colorOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (!colorMenuRef.current?.contains(e.target as Node)) setColorOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setColorOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [colorOpen]);
 
   const appendToEditor = (text: string) => {
     const el = editorRef.current;
@@ -310,18 +436,19 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
 
   const persist = async (): Promise<number | null> => {
     const body = collectBody();
-    if (!readOnly) {
-      if (!dos) {
-        window.alert('Please enter the Date of Service (DOS).');
-        return null;
-      }
-      if (!body.notes.trim()) {
-        window.alert('Please enter the progress note.');
-        return null;
-      }
+    if (!dos && (!readOnly || dosEditable)) {
+      window.alert('Please enter the Date of Service (DOS).');
+      return null;
     }
-    if (mode === 'edit' && isExisting) {
+    if (!readOnly && !body.notes.trim()) {
+      window.alert('Please enter the progress note.');
+      return null;
+    }
+    if (isExisting) {
       if (!readOnly) await updateNote(numericNoteId, body);
+      // Locked text: the only thing that can still change is the DOS, and the
+      // server's lock check only fires on the text fields, so send it alone.
+      else if (dosEditable && dosChanged) await updateNoteDate(numericNoteId, dos);
       return numericNoteId;
     }
     const created = await createNote({
@@ -397,11 +524,20 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
 
   // ---- render -------------------------------------------------------------
   return (
-    <div className="flex flex-col bg-slate-100" style={{ minHeight: 'calc(100vh - 300px)' }}>
-      {/* Workspace header */}
+    <div
+      ref={workspaceRef}
+      className="flex flex-col bg-slate-100"
+      style={{ minHeight: 'calc(100vh - 300px)' }}
+    >
+      {/* Workspace header — pinned directly below the app chrome so the patient
+          name and the Hide Macro Preview toggle stay visible while scrolling. */}
       <div
-        className="flex items-center justify-between px-5 py-2 text-sm font-semibold text-white"
-        style={{ background: 'linear-gradient(180deg,#2566a8,#16406e)' }}
+        ref={headerRef}
+        className="sticky z-20 flex items-center justify-between px-5 py-2 text-sm font-semibold text-white"
+        style={{
+          background: 'linear-gradient(180deg,#2566a8,#16406e)',
+          top: stickyBox?.headerTop ?? 0,
+        }}
       >
         <div className="flex items-center gap-3">
           <span>Progress Notes</span>
@@ -411,7 +547,12 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
           )}
           {locked && !struckOff && (
             <span className="rounded bg-amber-500/90 px-2 py-0.5 text-xs font-semibold">
-              {signed ? 'Signed · Locked' : 'Locked'}
+              {signed ? 'Signed · Locked' : 'Locked · DOS still editable'}
+            </span>
+          )}
+          {loadingNote && (
+            <span className="flex items-center gap-1 text-xs font-normal text-white/80">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading note…
             </span>
           )}
         </div>
@@ -427,10 +568,21 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
       </div>
 
       <div className="flex flex-1 gap-3 p-3">
-        {/* LEFT — Category + Macro */}
+        {/* LEFT — Category + Macro. Capped to the height actually visible on
+            screen and scrolled on its own, so a 1000-entry macro/category list
+            no longer stretches the page (which used to push Save Notes
+            thousands of pixels down). Sticky under the chrome so the capped
+            panel tracks the viewport as the form scrolls, instead of ending
+            early and leaving dead space beside the lower half of the form.
+            The rest of the form is untouched: it still flows with the page. */}
         {!hideMacroPanel && (
-          <aside className="flex w-72 shrink-0 flex-col rounded-lg border border-slate-300 bg-[#16365c] text-white">
-            <div className="space-y-3 p-4">
+          <aside
+            className="sticky flex w-72 shrink-0 flex-col overflow-y-auto rounded-lg border border-slate-300 bg-[#16365c] text-white"
+            style={
+              stickyBox ? { top: stickyBox.panelTop, maxHeight: stickyBox.panelHeight } : undefined
+            }
+          >
+            <div className="shrink-0 space-y-3 p-4">
               <div>
                 <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-blue-200">
                   Select Category
@@ -464,7 +616,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
                 />
               </div>
             </div>
-            <div className="mx-4 flex-1 overflow-y-auto rounded bg-white" style={{ minHeight: 220 }}>
+            <div className="mx-4 min-h-[11rem] flex-1 overflow-y-auto rounded bg-white">
               {filteredMacros.length === 0 ? (
                 <p className="p-3 text-center text-sm text-slate-400">
                   {macrosData ? 'No macros' : 'Loading…'}
@@ -488,7 +640,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
                 ))
               )}
             </div>
-            <div className="p-4">
+            <div className="shrink-0 p-4">
               <button
                 type="button"
                 onClick={openPreview}
@@ -501,7 +653,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
         )}
 
         {/* RIGHT — editor */}
-        <section className="flex flex-1 flex-col gap-3">
+        <section className="flex min-w-0 flex-1 flex-col gap-3">
           {/* Tooth / DOS bar */}
           <div className="flex flex-wrap items-end gap-4 rounded-lg border border-slate-300 bg-white p-3">
             <div className="min-w-[16rem] flex-1">
@@ -564,8 +716,15 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
               <input
                 type="date"
                 value={dos}
-                disabled={readOnly}
+                disabled={!dosEditable}
                 onChange={(e) => setDos(e.target.value)}
+                title={
+                  dosEditable
+                    ? 'Date of Service — editable even after the note locks'
+                    : signed
+                      ? 'Signed notes cannot change their DOS'
+                      : undefined
+                }
                 className="rounded border-2 border-slate-300 px-3 py-2 text-sm font-medium disabled:bg-slate-100"
               />
             </div>
@@ -574,29 +733,68 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
           {/* Editor + colour toolbar */}
           <div className="flex flex-1 flex-col rounded-lg border border-slate-300 bg-white">
             <div className="flex items-center gap-1 border-b border-slate-200 px-3 py-1.5">
-              <div className="relative">
+              <div className="relative" ref={colorMenuRef}>
                 <button
                   type="button"
                   disabled={readOnly}
+                  onMouseDown={rememberSelection}
                   onClick={() => setColorOpen((o) => !o)}
-                  className="flex items-center gap-0.5 rounded px-1.5 py-1 hover:bg-slate-100 disabled:opacity-50"
-                  title="Text color"
+                  aria-haspopup="menu"
+                  aria-expanded={colorOpen}
+                  className={`flex items-center gap-1 rounded px-1.5 py-1 hover:bg-slate-100 disabled:opacity-50 ${
+                    colorOpen ? 'bg-slate-100' : ''
+                  }`}
+                  title="Text colour"
                 >
-                  <span className="text-base font-bold leading-none text-red-600 underline">A</span>
+                  <span className="flex flex-col items-center leading-none">
+                    <span className="text-base font-bold text-slate-800">A</span>
+                    <span
+                      className="mt-0.5 h-[3px] w-4 rounded-sm"
+                      style={{ backgroundColor: lastColor }}
+                    />
+                  </span>
                   <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
                 </button>
                 {colorOpen && (
-                  <div className="absolute z-10 mt-1 grid grid-cols-5 gap-1 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
-                    {TEXT_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => applyColor(c)}
-                        className="h-5 w-5 rounded border border-slate-300"
-                        style={{ backgroundColor: c }}
-                        title={c}
+                  // Explicit width: as a shrink-to-fit absolute box the grid
+                  // collapsed and squashed the swatches into slivers.
+                  <div
+                    role="menu"
+                    className="absolute left-0 top-full z-30 mt-1 w-[184px] rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl"
+                  >
+                    <div className="mb-2 px-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                      Text colour
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {TEXT_COLORS.map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          role="menuitem"
+                          // Keep the caret/selection in the editor.
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => applyColor(c.value)}
+                          className={`h-7 w-7 rounded-md border border-black/10 transition hover:scale-110 ${
+                            lastColor === c.value ? 'ring-2 ring-blue-500 ring-offset-1' : ''
+                          }`}
+                          style={{ backgroundColor: c.value }}
+                          title={c.name}
+                          aria-label={c.name}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyColor(DEFAULT_TEXT_COLOR)}
+                      className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      <span
+                        className="h-3 w-3 rounded-sm border border-black/10"
+                        style={{ backgroundColor: DEFAULT_TEXT_COLOR }}
                       />
-                    ))}
+                      Default
+                    </button>
                   </div>
                 )}
               </div>
@@ -604,14 +802,39 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
                 Select text, then pick a colour to code the note.
               </span>
             </div>
-            <div
-              ref={editorRef}
-              contentEditable={!readOnly}
-              suppressContentEditableWarning
-              className="min-h-[14rem] flex-1 overflow-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-900 focus:outline-none"
-              style={{ whiteSpace: 'pre-wrap' }}
-              data-placeholder="Type the note, or add a macro from the left panel…"
-            />
+            <div className="relative flex flex-1 flex-col">
+              <div
+                ref={editorRef}
+                contentEditable={!readOnly}
+                suppressContentEditableWarning
+                className="min-h-[14rem] flex-1 overflow-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-900 focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap' }}
+                data-placeholder={loadingNote ? '' : 'Type the note, or add a macro from the left panel…'}
+              />
+              {loadingNote && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center gap-2 bg-white/80 text-sm font-semibold text-slate-500"
+                  role="status"
+                >
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" /> Loading note…
+                </div>
+              )}
+              {loadFailed && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/90 text-sm">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                  <span className="font-semibold text-slate-700">
+                    {errMsg(noteQuery.error) || 'Could not load this note.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => noteQuery.refetch()}
+                    className="font-semibold text-blue-600 hover:underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Attachments */}
@@ -758,22 +981,27 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center justify-end gap-2 rounded-lg border border-slate-300 bg-white p-3">
-            {mode !== 'view' && (
+            {(!readOnly || dosEditable) && (
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || !canSave}
+                title={
+                  readOnly && !dosChanged
+                    ? 'Note text is locked — change the DOS to enable saving'
+                    : undefined
+                }
                 className="flex items-center gap-1.5 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Notes
+                {readOnly ? 'Save DOS' : 'Save Notes'}
               </button>
             )}
             {isExisting && (
               <button
                 type="button"
                 onClick={handleStrikeToggle}
-                disabled={busyAction != null}
+                disabled={busyAction != null || loadingNote || loadFailed}
                 className={`flex items-center gap-1.5 rounded-md px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${
                   struckOff ? 'bg-green-600 hover:bg-green-700' : 'bg-amber-600 hover:bg-amber-700'
                 }`}

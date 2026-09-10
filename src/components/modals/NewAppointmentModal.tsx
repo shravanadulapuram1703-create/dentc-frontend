@@ -19,17 +19,29 @@ import {
   fetchOperatories,
   fetchProcedureTypes,
   fetchSchedulerConfig,
+  officeIdNum,
   type Provider,
   type Operatory,
+  type ProcedureType,
 } from "../../services/schedulerApi";
+import { registerPatientResilient } from "../../services/patientApi";
 import { listPatients, getPatient } from "@/api/generated/endpoints/patients/patients";
-import type { PatientRead, ListPatientsParams } from "@/api/generated/model";
+import type { PatientRead, ListPatientsParams, PatientCreate } from "@/api/generated/model";
 import AddNewPatient from "../pages/AddNewPatient";
+import QuickNewPatientAppointment, {
+  type QuickAppointmentFormData,
+} from "./QuickNewPatientAppointment";
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  /**
+   * Persist the appointment. The Scheduler resolves to `true` when the booking
+   * went through and `false` when it was rejected (slot conflict, validation,
+   * API error) so a caller that created a patient first can keep its form open
+   * instead of leaving an orphaned patient behind.
+   */
+  onSave: (data: any) => void | boolean | Promise<void | boolean>;
   selectedSlot: { time: string; operatory: string } | null;
   currentOffice: string;
   editingAppointment?: any; // Appointment data when editing
@@ -56,6 +68,8 @@ interface PatientSearchResult {
   cellPhone?: string;
   workPhone?: string;
   homePhone?: string;
+  /** PatientRead.home_office_id — the patient's own office. */
+  homeOfficeId?: number | null;
 }
 
 export default function NewAppointmentModal({
@@ -80,6 +94,10 @@ export default function NewAppointmentModal({
       // If editing, seed the patient shell from the appointment's snake_case
       // read-model fields (real demographics load in the edit form).
       if (editingAppointment) {
+        // Identity only. Every demographic field stays blank until the edit form
+        // loads the real patient record — this shell used to carry placeholders
+        // ("01/01/1990", "(555) 000-0000", "CH-001") that were never replaced,
+        // so editing an appointment displayed invented demographics.
         return {
           patientId:
             editingAppointment.patient_id != null
@@ -87,14 +105,14 @@ export default function NewAppointmentModal({
               : "",
           numericId: editingAppointment.patient_id ?? undefined,
           name: editingAppointment.patient_name ?? "",
-          gender: "U",
-          ssn: "***-**-****",
-          phone: "(555) 000-0000",
-          birthdate: "01/01/1990",
-          age: 34,
-          respId: "R-001",
-          chartNumber: "CH-001",
-          patientType: "General",
+          gender: "",
+          ssn: "",
+          phone: "",
+          birthdate: "",
+          age: 0,
+          respId: "",
+          chartNumber: "",
+          patientType: "",
           office: currentOffice,
         };
       }
@@ -105,6 +123,16 @@ export default function NewAppointmentModal({
   // and continue to the appointment-details form.
   const [showNewPatientWizard, setShowNewPatientWizard] = useState(false);
   const [isLoadingNewPatient, setIsLoadingNewPatient] = useState(false);
+  // Quick "New Patient Appointment" step (legacy parity): sits one level above
+  // the full wizard. QUICK SAVE registers + books right here; CONTINUE carries
+  // the values into the wizard and then the full appointment form.
+  const [showQuickNewPatient, setShowQuickNewPatient] = useState(false);
+  const [isQuickSaving, setIsQuickSaving] = useState(false);
+  // Patient registered by a Quick Save whose booking was then rejected — reused
+  // on retry so we never create the same person twice.
+  const [quickPatientId, setQuickPatientId] = useState<number | null>(null);
+  const [procedureTypes, setProcedureTypes] = useState<ProcedureType[]>([]);
+  const [slotInterval, setSlotInterval] = useState(10);
 
   // Patient Search State (consistent with Patient.tsx)
   const [searchBy, setSearchBy] = useState("lastName");
@@ -148,7 +176,7 @@ export default function NewAppointmentModal({
   };
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<QuickAppointmentFormData>({
     // Patient Information
     birthdate: "",
     lastName: "",
@@ -162,7 +190,7 @@ export default function NewAppointmentModal({
     // Appointment Details
     // Use selectedDate if provided, otherwise current date
     // When selectedSlot is null, time should be empty (user must select)
-    date: selectedDate ? formatDateYYYYMMDD(selectedDate) : new Date().toISOString().split("T")[0],
+    date: selectedDate ? formatDateYYYYMMDD(selectedDate) : formatDateYYYYMMDD(new Date()),
     time: selectedSlot?.time || "", // Empty when no slot selected - user must choose
     duration: 10,
     procedureType: "",
@@ -190,6 +218,10 @@ export default function NewAppointmentModal({
 
         setProviders(providersData);
         setOperatories(operatoriesData);
+        setProcedureTypes(procedureTypesData);
+        if (configData?.slotInterval && configData.slotInterval > 0) {
+          setSlotInterval(configData.slotInterval);
+        }
 
         // Set default values after data loads
         if (operatoriesData.length > 0 && !selectedSlot?.operatory) {
@@ -270,15 +302,88 @@ export default function NewAppointmentModal({
   ) => {
     setAppointmentType(type);
     if (type === "new") {
-      // New patient â†’ run the full Add New Patient flow (basic Quick Save or the
-      // complete wizard with insurance), then return to schedule the appointment.
-      setShowNewPatientWizard(true);
+      // New patient → the quick New Patient Appointment form first. From there
+      // QUICK SAVE books immediately; CONTINUE opens the full Add New Patient
+      // wizard and then the complete appointment form.
+      setShowQuickNewPatient(true);
+      setShowNewPatientWizard(false);
       setShowPatientForm(false);
       setShowPatientSearch(false);
     } else if (type === "existing") {
       setShowPatientSearch(true);
       setShowPatientForm(false);
     }
+  };
+
+  // Minimal PatientCreate from the quick form. The phone lands in the column
+  // the Cell / Home / Work radio picked (PatientRead has no home_phone column —
+  // `phone` is the home number).
+  const buildQuickPatient = (homeOfficeId: number): PatientCreate => {
+    const digits = formData.phoneNumber.replace(/\D/g, "");
+    const phone = digits || null;
+    return {
+      first_name: formData.firstName.trim(),
+      last_name: formData.lastName.trim(),
+      dob: formData.birthdate || null,
+      home_office_id: homeOfficeId,
+      email: formData.email.trim() || null,
+      cell_phone: formData.phoneType === "Cell" ? phone : null,
+      phone: formData.phoneType === "Home" ? phone : null,
+      work_phone: formData.phoneType === "Work" ? phone : null,
+      patient_type: "General",
+      is_active: true,
+    };
+  };
+
+  // QUICK SAVE: register the patient with the minimal fields, then book the
+  // slot through the Scheduler's normal save path (double-booking / office-hour
+  // checks live there). The dialog closes only when the booking succeeds.
+  const handleQuickSave = async () => {
+    setIsQuickSaving(true);
+    try {
+      let patientId = quickPatientId;
+      if (patientId == null) {
+        const homeOfficeId = officeIdNum(currentOffice);
+        if (!homeOfficeId) {
+          alert("Please select an office before booking.");
+          return;
+        }
+        const res = await registerPatientResilient({ patient: buildQuickPatient(homeOfficeId) });
+        patientId = res.patient_id;
+        setQuickPatientId(patientId);
+        if (res.warnings.length > 0) {
+          console.warn("[QuickSave] patient saved with warnings:", res.warnings);
+        }
+      }
+
+      const ok = await onSave({
+        patient_id: patientId,
+        date: formData.date,
+        start_time: formData.time,
+        duration: formData.duration,
+        procedure_type: formData.procedureType,
+        operatory: formData.operatory,
+        provider: formData.provider,
+        notes: formData.notes || "",
+        status: "Scheduled",
+        is_new_patient: true,
+      });
+      if (ok === false) return; // Scheduler already told the user why.
+      onClose();
+    } catch (err: any) {
+      console.error("Quick save failed:", err);
+      alert(
+        `Could not save: ${err?.response?.data?.detail || err?.message || "unknown error"}`,
+      );
+    } finally {
+      setIsQuickSaving(false);
+    }
+  };
+
+  // CONTINUE: hand the quick-form values to the full Add New Patient wizard.
+  const handleContinueToFullFlow = () => {
+    setShowQuickNewPatient(false);
+    setShowNewPatientWizard(true);
   };
 
   // Called by the embedded Add New Patient flow once the patient is created.
@@ -344,8 +449,15 @@ export default function NewAppointmentModal({
       respId: p.responsible_party_id ?? "",
       chartNumber: p.chart_no || "",
       patientType: p.patient_type ?? "",
-      office: currentOffice,
+      // The patient's own home office, not the office currently selected in the
+      // header (which made every search result look like it lived here).
+      office: p.home_office_code || p.home_office_name || currentOffice,
+      homeOfficeId: p.home_office_id ?? null,
       ...(p.email && { email: p.email }),
+      // PatientRead has no home_phone column: `phone` is the home number.
+      ...(p.cell_phone && { cellPhone: p.cell_phone }),
+      ...(p.work_phone && { workPhone: p.work_phone }),
+      ...(p.phone && { homePhone: p.phone }),
     };
   };
 
@@ -472,17 +584,53 @@ export default function NewAppointmentModal({
 
   if (!isOpen) return null;
 
-  // New Patient → run the real Add New Patient flow (basic Quick Save or the full
-  // wizard with insurance). It renders its own overlay; on save we return with the
-  // created patient and drop into the appointment-details form.
+  // New Patient, step 1 — the quick form (one level above the full wizard).
+  if (showQuickNewPatient) {
+    return (
+      <QuickNewPatientAppointment
+        formData={formData}
+        setFormData={setFormData}
+        providers={providers}
+        operatories={operatories}
+        procedureTypes={procedureTypes}
+        slotInterval={slotInterval}
+        currentOffice={currentOffice}
+        selectedSlot={selectedSlot}
+        isSaving={isQuickSaving}
+        isLoadingMetadata={isLoadingMetadata}
+        onQuickSave={handleQuickSave}
+        onContinue={handleContinueToFullFlow}
+        onBack={() => setShowQuickNewPatient(false)}
+        onClose={onClose}
+      />
+    );
+  }
+
+  // New Patient, step 2 (CONTINUE) → the real Add New Patient wizard, seeded
+  // with what the quick form captured. It renders its own overlay; on save we
+  // return with the created patient and drop into the appointment-details form.
   if (showNewPatientWizard) {
+    const phoneDigits = formData.phoneNumber.replace(/\D/g, "");
     return (
       <>
         <AddNewPatient
           variant="modal"
           mode="create"
           currentOffice={currentOffice}
-          onClose={() => setShowNewPatientWizard(false)}
+          initialValues={{
+            birthdate: formData.birthdate,
+            lastName: formData.lastName,
+            firstName: formData.firstName,
+            email: formData.email,
+            cellPhone: formData.phoneType === "Cell" ? phoneDigits : "",
+            phone: formData.phoneType === "Home" ? phoneDigits : "",
+            workPhone: formData.phoneType === "Work" ? phoneDigits : "",
+          }}
+          onClose={() => {
+            // Back to the quick form — its values are still there.
+            setShowNewPatientWizard(false);
+            setShowQuickNewPatient(true);
+          }}
           onSaved={handleNewPatientCreated}
         />
         {isLoadingNewPatient && (

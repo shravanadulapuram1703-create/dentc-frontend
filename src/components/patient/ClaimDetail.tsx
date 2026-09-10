@@ -36,6 +36,9 @@ import {
 import { getInsuranceCarrier } from "@/api/generated/endpoints/insurance/insurance";
 import type { ClaimDetailResponse } from "@/api/generated/model";
 import InsurancePaymentModal from "./InsurancePaymentModal";
+import ClaimFillOutModal from "./ClaimFillOutModal";
+import UpdateClaimStatusModal from "./UpdateClaimStatusModal";
+import { claimStatusLabel } from "./claimStatus";
 import { env } from "@/shared/config/env";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -190,6 +193,8 @@ export default function ClaimDetail() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showInsPayment, setShowInsPayment] = useState(false);
+  const [showFillOut, setShowFillOut] = useState(false);
+  const [showStatus, setShowStatus] = useState(false);
 
   // ✅ Notes state management
   const [claimNotes, setClaimNotes] = useState<string>("");
@@ -200,8 +205,18 @@ export default function ClaimDetail() {
     const n = typeof s === "number" ? s : parseFloat(s);
     return Number.isNaN(n) ? 0 : n;
   };
+  // Date-only values (submitted_date, close_date, date_of_service_*) must be read
+  // from their parts: `new Date("2026-08-29")` is parsed as UTC midnight, which
+  // renders as the 28th in any timezone behind UTC — the Claim Sent Date stamped
+  // "today" by the backend showed up as yesterday. Timestamps keep local
+  // conversion, which is what they mean.
   const fmtDate = (s?: string | null): string => {
     if (!s) return "-";
+    const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (dateOnly) {
+      const [, y, m, d] = dateOnly;
+      return `${m}/${d}/${y}`;
+    }
     const d = new Date(s);
     return Number.isNaN(d.getTime())
       ? s
@@ -298,11 +313,19 @@ export default function ClaimDetail() {
         total_insurance_paid: paid,
         variance: estIns - paid,
       },
-      payment_info: {
-        check_number: null as string | null,
-        bank_number: null as string | null,
-        eob_number: null as string | null,
-      },
+      // Remittance identifiers live on the coverage rows the Insurance Payment
+      // window writes (INS-1). Show the most recently posted values.
+      payment_info: (() => {
+        const posted = data.coverage
+          .filter((cv) => cv.check_number || cv.bank_number || cv.eob_number || cv.eft_trace_number)
+          .sort((a, b) => (a.payment_date ?? "").localeCompare(b.payment_date ?? ""));
+        const last = posted[posted.length - 1];
+        return {
+          check_number: last?.check_number ?? null,
+          bank_number: last?.bank_number ?? null,
+          eob_number: last?.eob_number ?? last?.eft_trace_number ?? null,
+        };
+      })(),
     };
   }, [data, patient, patientId, carrierName]);
 
@@ -389,23 +412,10 @@ export default function ClaimDetail() {
     }
   };
 
-  const handleUpdateStatus = async () => {
-    if (!claimId) return;
-    const next = window.prompt(
-      "Set claim status (e.g. submitted, paid, denied, closed):",
-      claim?.status || "",
-    );
-    if (!next || !next.trim()) return;
-    setBusy(true);
-    try {
-      await setClaimStatus(claimId, { status: next.trim() });
-      await loadClaim();
-    } catch (err) {
-      alert(errMsg(err) || "Failed to update claim status.");
-    } finally {
-      setBusy(false);
-    }
-  };
+  // Opens the Update Claim Status dialog. It used to be a window.prompt taking
+  // free text, which saved unusable values (a capitalised "Submitted" skipped
+  // the backend's Claim Sent Date stamp) and never confirmed the write.
+  const handleUpdateStatus = () => setShowStatus(true);
 
   const handleDeleteClaim = async () => {
     if (!claimId || !confirm("Are you sure you want to delete this claim?")) return;
@@ -420,8 +430,7 @@ export default function ClaimDetail() {
     }
   };
 
-  // Not yet available (clearinghouse = Phase-4 EDI; print = no report service;
-  // attachment manager / fill-out / payment entry are separate builds).
+  // Not yet available (clearinghouse = Phase-4 EDI; print = no report service).
   const handleValidateClaim = () =>
     alert("Clearinghouse validation is not available yet (Phase-4 EDI).");
   const handleEClaim = () =>
@@ -470,7 +479,8 @@ export default function ClaimDetail() {
       setDeletingAttId(null);
     }
   };
-  const handleClaimFillOut = () => alert("Claim fill-out is not available yet.");
+  // Opens the Dental Insurance Fill-out Form (legacy "Claim Fill-Out Information").
+  const handleClaimFillOut = () => setShowFillOut(true);
   const handleInsurancePayment = () => {
     if (!data) return;
     setShowInsPayment(true);
@@ -955,7 +965,7 @@ export default function ClaimDetail() {
                     Claim Sent Status
                   </span>
                   <span className="font-semibold text-orange-600">
-                    {claim.status}
+                    {claimStatusLabel(claim.status)}
                   </span>
                 </div>
 
@@ -982,7 +992,7 @@ export default function ClaimDetail() {
                     Claim Status
                   </span>
                   <span className="font-semibold text-slate-900">
-                    {claim.status}
+                    {claimStatusLabel(claim.status)}
                   </span>
                 </div>
 
@@ -1197,12 +1207,36 @@ export default function ClaimDetail() {
         </div>
       </div>
 
+      {showStatus && data && (
+        <UpdateClaimStatusModal
+          claimId={data.claim.id}
+          currentStatus={data.claim.status}
+          onClose={() => setShowStatus(false)}
+          onUpdated={loadClaim}
+        />
+      )}
+
+      {showFillOut && data && (
+        <ClaimFillOutModal
+          claimId={data.claim.id}
+          patientId={data.claim.patient_id}
+          claimNumber={data.claim.claim_number}
+          carrierName={claim.coverage_info.insurance_carrier}
+          estInsurance={claim.amounts.total_est_insurance}
+          totalBilled={claim.amounts.total_submitted_fees}
+          onClose={() => setShowFillOut(false)}
+          onSaved={loadClaim}
+        />
+      )}
+
       {showInsPayment && data && (
         <InsurancePaymentModal
           isOpen={showInsPayment}
           onClose={() => setShowInsPayment(false)}
           claim={data.claim}
           procedures={data.procedures}
+          coverage={data.coverage}
+          carrierName={carrierName}
           onPosted={loadClaim}
         />
       )}

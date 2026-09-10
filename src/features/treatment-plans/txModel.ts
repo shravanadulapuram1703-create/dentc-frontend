@@ -16,6 +16,7 @@
 // No camelCase aliases: view-model fields mirror the snake_case backend names.
 
 import type { TreatmentPlanRead, TreatmentPlanItemRead, ProviderRead } from '@/api/generated/model';
+import { isPlanItemPosted } from '@/features/procedures/procedureEntryService';
 
 // ---- IDs ------------------------------------------------------------------
 
@@ -26,9 +27,22 @@ export function genId(): string {
 
 // ---- Status ---------------------------------------------------------------
 
-export type TxStatus = 'diagnosed' | 'accepted' | 'unaccepted' | 'hold' | 'alternative' | 'referred_out';
+/**
+ * Grid statuses. The first six are the backend enum. `completed` is DERIVED —
+ * the backend has no such status; an item is completed once it was posted to
+ * the ledger (see `isPlanItemPosted` in the shared procedure service), which is
+ * how the Restorative Chart and this page agree on what is still planned.
+ */
+export type TxStatus = 'diagnosed' | 'accepted' | 'unaccepted' | 'hold' | 'alternative' | 'referred_out' | 'completed';
 
-export const STATUS_ORDER: TxStatus[] = ['diagnosed', 'accepted', 'unaccepted', 'hold', 'alternative', 'referred_out'];
+/** A status a user can SET on an item (the backend enum). */
+export type SettableTxStatus = Exclude<TxStatus, 'completed'>;
+
+/** Statuses a user can SET on an item (the backend enum). */
+export const SETTABLE_STATUSES: SettableTxStatus[] = ['diagnosed', 'accepted', 'unaccepted', 'hold', 'alternative', 'referred_out'];
+
+/** Every status the grid can show, for filters. */
+export const STATUS_ORDER: TxStatus[] = [...SETTABLE_STATUSES, 'completed'];
 
 export const STATUS_LABEL: Record<TxStatus, string> = {
   diagnosed: 'Diagnosed',
@@ -37,6 +51,7 @@ export const STATUS_LABEL: Record<TxStatus, string> = {
   hold: 'Hold',
   alternative: 'Alternative',
   referred_out: 'Referred Out',
+  completed: 'Completed',
 };
 
 /** Short code shown in the grid "St" column (matches legacy single/double letters). */
@@ -47,6 +62,7 @@ export const STATUS_ABBR: Record<TxStatus, string> = {
   hold: 'H',
   alternative: 'Alt',
   referred_out: 'RO',
+  completed: 'C',
 };
 
 export const STATUS_COLOR: Record<TxStatus, string> = {
@@ -56,9 +72,10 @@ export const STATUS_COLOR: Record<TxStatus, string> = {
   hold: '#6b7280', // gray
   alternative: '#7c3aed', // violet
   referred_out: '#dc2626', // red
+  completed: '#0f766e', // teal — posted to the ledger
 };
 
-/** A "completed" procedure (PatientProcedure) shows alongside plan items in some filters. */
+/** Backend status → grid status (never yields the derived `completed`). */
 export function normalizeStatus(raw: string | null | undefined): TxStatus {
   const s = (raw ?? '').trim().toLowerCase();
   if (s === 'a' || s === 'accepted') return 'accepted';
@@ -199,6 +216,8 @@ export function buildRows(
   tidByPlan: Map<string, number>,
   providerLabel: (id: string | null | undefined) => string,
   codeDesc: (code: string) => string,
+  /** Match keys of the charges posted from plans (`postedProcedureKeys`); matching items show as Completed. */
+  postedKeys: ReadonlySet<string> = new Set(),
 ): TxRow[] {
   const rows = items.map((it) => {
     const fee = num(it.fee);
@@ -213,7 +232,7 @@ export function buildRows(
       tid: tidByPlan.get(it.plan_id) ?? 1,
       phase: it.phase_id ?? decodePhase(it.billing_order),
       order: it.priority ?? 1,
-      status: normalizeStatus(it.status),
+      status: isPlanItemPosted(it, postedKeys) ? 'completed' : normalizeStatus(it.status),
       diag_date: it.diagnosed_date ?? it.created_at ?? '',
       code: it.procedure_code,
       description: it.description || codeDesc(it.procedure_code) || '',

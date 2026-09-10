@@ -36,6 +36,7 @@ import BenefitInformation from "./BenefitInformation";
 import EligibilitySection from "./EligibilitySection";
 import SubscriberInformation from "./SubscriberInformation";
 import NewInsPlanModal from "./NewInsPlanModal";
+import ViewPlanModal from "./ViewPlanModal";
 import { INPUT_CLS } from "./ui";
 
 interface OutletContext {
@@ -83,6 +84,7 @@ export default function InsurancePlanScreen({ category, order }: Props) {
   const [form, setForm] = useState<InsuranceForm>(() => emptyForm());
   const [planDisplay, setPlanDisplay] = useState<PlanDisplay>(EMPTY_PLAN_DISPLAY);
   const [showNewPlan, setShowNewPlan] = useState(false);
+  const [showViewPlan, setShowViewPlan] = useState(false);
 
   const update = useCallback((patch: Partial<InsuranceForm>) => setForm((p) => ({ ...p, ...patch })), []);
 
@@ -123,13 +125,22 @@ export default function InsurancePlanScreen({ category, order }: Props) {
     update({ ins_plan_id: planId, group_number: ctx.plan?.group_number ?? form.group_number });
   };
 
-  const handlePlanCreated = (plan: InsurancePlanRead, carrierLabel: string) => {
+  const handlePlanCreated = (
+    plan: InsurancePlanRead,
+    carrierLabel: string,
+    planCategory: InsCategory,
+  ) => {
     setShowNewPlan(false);
     setPlanDisplay(
       planDisplayFromSlot({ record: null, subscriber: null, plan, carrier: null, employer: null }),
     );
-    // Show the carrier name we already have from the picker.
-    setPlanDisplay((pd) => ({ ...pd, carrier_name: carrierLabel }));
+    // Show the carrier name + Dental/Medical type we already have from the modal
+    // (the carrier itself isn't re-fetched here).
+    setPlanDisplay((pd) => ({
+      ...pd,
+      carrier_name: carrierLabel,
+      carrier_type: planCategory === "D" ? "Dental" : "Medical",
+    }));
     update({ ins_plan_id: plan.id, group_number: plan.group_number ?? "" });
   };
 
@@ -198,6 +209,7 @@ export default function InsurancePlanScreen({ category, order }: Props) {
               onGroupNumberChange={(v) => update({ group_number: v })}
               onSelectPlan={(id) => void handleSelectPlan(id)}
               onAddNew={() => setShowNewPlan(true)}
+              onViewPlan={() => setShowViewPlan(true)}
             />
 
             {/* Right: benefit + eligibility + subscriber + notes */}
@@ -272,6 +284,10 @@ export default function InsurancePlanScreen({ category, order }: Props) {
           onClose={() => setShowNewPlan(false)}
           onCreated={handlePlanCreated}
         />
+      )}
+
+      {showViewPlan && planDisplay.plan_id != null && (
+        <ViewPlanModal planId={planDisplay.plan_id} onClose={() => setShowViewPlan(false)} />
       )}
     </div>
   );

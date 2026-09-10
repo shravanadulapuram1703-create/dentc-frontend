@@ -24,6 +24,7 @@ import {
   jiraConfig,
 } from "../config/jiraConfig";
 import { submitTicket } from "../services/jiraService";
+import { env } from "@/shared/config/env";
 import type {
   TicketAttachment,
   TicketContext,
@@ -172,8 +173,15 @@ export default function ReportIssueForm({ context, prefill, onSubmitted, onClose
           </div>
         )}
         {isDemoMode && (
-          <p className="mt-3 text-xs text-[#94A3B8]">
-            Demo mode: this ticket is stored locally. Configure Jira to file real issues.
+          <p
+            className={utils.cn(
+              "mt-3 text-xs",
+              env.isProd ? "font-semibold text-[#B91C1C]" : "text-[#94A3B8]",
+            )}
+          >
+            {env.isProd
+              ? "This ticket was NOT sent to Jira — it is stored in this browser only. Please report it to your administrator."
+              : "Demo mode: this ticket is stored locally. Configure Jira to file real issues."}
           </p>
         )}
         <div className="mt-6 flex justify-center gap-2">
@@ -378,9 +386,21 @@ export default function ReportIssueForm({ context, prefill, onSubmitted, onClose
 
       {/* Footer */}
       <div className="flex items-center justify-between gap-3 border-t border-[#E2E8F0] bg-[#F7F9FC] px-6 py-3">
-        <span className="text-xs text-[#94A3B8]">
+        <span
+          className={utils.cn(
+            "text-xs",
+            // Demo mode in production is a misconfiguration, not a feature: the
+            // reporter would otherwise get a friendly grey note while their ticket
+            // quietly dies in localStorage.
+            isDemoMode && env.isProd
+              ? "font-semibold text-[#B91C1C]"
+              : "text-[#94A3B8]",
+          )}
+        >
           {isDemoMode
-            ? "Demo mode — stored locally"
+            ? env.isProd
+              ? "Not connected to Jira — this ticket will only be stored in this browser"
+              : "Demo mode — stored locally"
             : `Filing to Jira project ${jiraConfig.projectKey}`}
         </span>
         <div className="flex gap-2">

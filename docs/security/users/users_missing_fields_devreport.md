@@ -60,3 +60,64 @@ of the canonical `user_preferences_schema` keys (open question #2).
 
 **Remaining work:** route the five structural fields above (Short ID, Report Access
 Provider, Custom Fields, Signature, User Image) as backend contract additions.
+
+---
+
+## Add / Edit User form fixes (frontend, 2026-08-20)
+
+`src/components/modals/AddEditUserModal.tsx`
+
+**1. Phone accepted any number of digits.** The field was a plain text input, so
+`77788889999523` saved as-is. It now formats as typed via the new shared helper
+`src/utils/phone.ts` — digits beyond ten are dropped, the value renders as
+`(555) 123-4567`, `maxLength` is 14, a partially-typed number shows an inline
+error and blocks Save, and the payload sends the raw ten digits
+(`phoneDigits(...)`) rather than the formatted string. Existing records are
+formatted on load.
+
+**2. Developer-facing validation text.** The Username field showed
+**"Backend must provide username"** on an untouched blank form — a note about the
+API, shown to the person filling in the form. Required-field feedback is now
+user-facing and appears only once the field has been visited or Save was pressed:
+
+- inline `"Username is required."` (same treatment added to First Name, Last Name
+  and Email, which previously gave no feedback at all)
+- the Save alert lists screen labels — `Username, First Name, Last Name, Email,
+  Home Office, User Role / Type` — instead of the raw state keys
+  (`username, firstName, lastName, email, homeOffice, roles`).
+
+**No backend gap.** Both were frontend-only.
+
+**Note:** a stored phone longer than ten digits is truncated to the first ten when
+the record is opened for editing, and re-saving persists the truncation. That is
+the intended clean-up for US numbers; flag it if any tenant stores international
+numbers in this field.
+
+---
+
+## View User Details — layout & avatar (frontend, 2026-08-20)
+
+`src/components/modals/ViewUserDetailsModal.tsx`
+
+**1. Tabs and content were clipped, and scrolling did nothing.** The dialog is a
+`max-h-[90vh]` flex column (header / tabs / body / footer). Two CSS defaults broke it:
+
+- the body was `flex-1 overflow-y-auto`, but `flex-1` leaves `min-height: auto`,
+  so the pane kept its full content height instead of scrolling;
+- header, tabs and footer had no `shrink-0`, so they absorbed the overflow and
+  were compressed — the tab strip was cut in half and the header squashed.
+
+Fixed with `min-h-0` on the scroll pane and `shrink-0` on header / tabs / footer
+(plus `shrink-0 whitespace-nowrap` on the tab buttons so they don't collapse when
+the strip scrolls horizontally). Measured after the fix: header 80px, tabs 49px,
+body 444px with `scrollHeight` 2146 — i.e. it actually scrolls.
+
+**2. No avatar when the user had no photo.** The `<img>` rendered only when
+`image_url` was set, leaving a blank gap otherwise — and a broken/404 URL left a
+broken-image glyph. The header now always renders a 48px avatar: the stored photo
+when it loads, otherwise the user's initials (falling back to a user icon). An
+`onError` on the image flips to the initials, so a stale path degrades cleanly.
+
+**No backend gap.** `image_url` is returned correctly and
+`/uploads/user_images/*.jpg` serves 200 image/jpeg; `apiAssetUrl` was already
+prefixing the API host. This was purely presentation.

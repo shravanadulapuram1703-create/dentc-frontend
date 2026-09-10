@@ -137,5 +137,5 @@ Reports, Utilities, Setup, Imaging, My Page, Login / Authentication, Help, Other
 | HELP-4 | (persistence) | Optional | Durable submission audit trail |
 | HELP-5 | (webhook) | Optional | Push status updates |
 
-Once HELP-1..3 land: set `VITE_JIRA_MODE=proxy` and `VITE_JIRA_PROXY_URL` — no
+Once HELP-1..3 land: set `VITE_JIRA_MODE=auto` and `VITE_JIRA_PROXY_URL` — no
 frontend changes required.

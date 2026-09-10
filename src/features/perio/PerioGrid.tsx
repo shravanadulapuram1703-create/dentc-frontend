@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { toothLabel, type NumberingSystem } from '@/features/restorative/numbering';
 import { isPrimaryId } from '@/features/restorative/dentition';
+import { cellEnabled, statusTooltip, ABSENCE_LABEL, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
 import {
   MEASURES,
   FACIAL_ROWS,
@@ -19,16 +20,24 @@ import {
 // ORDER is fixed by position (PD sits against the tooth numbers); the SURFACE it
 // reads (facial sites 0–2 vs lingual sites 3–5) flips between arches so the
 // facial bands face outward — the legacy "two arches facing each other" layout.
+//
+// Tooth status comes from the RESTORATIVE chart (`getStatus`): a missing /
+// extracted / pontic tooth renders as a locked, hatched column (no values can be
+// entered — the legacy "skip missing teeth"); an implant keeps its probing cells
+// but is marked ⁱ and has its Furcation row locked.
 
 const LABEL_W = 86;
 const TOOTH_MIN = 44; // min tooth column; columns grow as 1fr to fill the container
 const SURF_W = 16;
 const ROW_H = 19;
+const LOCKED_BG = 'repeating-linear-gradient(135deg,#e2e8f0 0 3px,#f1f5f9 3px 7px)';
 
 interface Props {
   maxTeeth: string[];
   mandTeeth: string[];
   getDraft: (tooth: string) => PerioDetailDraft | undefined;
+  /** Restorative-chart derived status (missing / implant / …). */
+  getStatus?: (tooth: string) => ToothClinicalStatus | undefined;
   active: Cell | null;
   /** Selected measure — its rows get the green highlight across every band. */
   activeMeasure: MeasureType;
@@ -63,7 +72,7 @@ interface ArchProps extends Props {
 }
 
 function ArchBlock(props: ArchProps) {
-  const { arch, teeth, topOffset, bottomOffset, showLingual, numberingSystem } = props;
+  const { arch, teeth, topOffset, bottomOffset, showLingual, numberingSystem, getStatus } = props;
   const topIsFacial = topOffset === 0;
   // Show both bands unless lingual is hidden, in which case only the facial band remains.
   const showTop = topIsFacial || showLingual;
@@ -97,15 +106,22 @@ function ArchBlock(props: ArchProps) {
           <div style={{ width: SURF_W }} className="shrink-0" />
           <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns: colW }}>
             <div className="border border-slate-300 bg-[#1f4e79]" />
-            {teeth.map((t) => (
-              <div
-                key={t}
-                className="flex items-center justify-center border border-slate-400 bg-[#1f4e79] font-semibold text-white"
-                style={{ height: ROW_H }}
-              >
-                {isPrimaryId(t) ? t : toothLabel(Number(t), numberingSystem)}
-              </div>
-            ))}
+            {teeth.map((t) => {
+              const s = getStatus?.(t);
+              const absent = !!s && !s.present;
+              return (
+                <div
+                  key={t}
+                  title={statusTooltip(s) || undefined}
+                  className="flex items-center justify-center gap-0.5 border border-slate-400 font-semibold"
+                  style={{ height: ROW_H, background: absent ? '#64748b' : '#1f4e79', color: absent ? '#cbd5e1' : '#fff', textDecoration: absent ? 'line-through' : undefined }}
+                >
+                  {isPrimaryId(t) ? t : toothLabel(Number(t), numberingSystem)}
+                  {s?.implant && <sup className="text-[8px] font-bold text-sky-200" title="Implant">i</sup>}
+                  {absent && s.reason && <span className="ml-0.5 text-[7px] font-normal no-underline" style={{ textDecoration: 'none' }}>{ABSENCE_LABEL[s.reason].slice(0, 4).toUpperCase()}</span>}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -170,27 +186,41 @@ function RowLabel({ measure, highlight }: { measure: MeasureType; highlight: boo
 }
 
 function ToothCells(props: BandProps & { measure: MeasureType; tooth: string; siteOffset: number }) {
-  const { measure, tooth, siteOffset, getDraft, active, activeMeasure, pdWarn, calWarn, readOnly, onCellClick, onToggleBool } = props;
+  const { measure, tooth, siteOffset, getDraft, getStatus, active, activeMeasure, pdWarn, calWarn, readOnly, onCellClick, onToggleBool } = props;
   const meta = MEASURES[measure];
   const draft = getDraft(tooth);
+  const status = getStatus?.(tooth);
   // The green band follows the selected measure (all of its rows across every
   // arch/surface band light up), rather than being pinned to Pocket.
   const rowBg = measure === activeMeasure ? '#dcfce7' : undefined;
+
+  // Locked by the restorative chart: missing tooth (every row) or an implant's
+  // Furcation row. Rendered hatched, no value, not clickable.
+  if (!cellEnabled(status, measure)) {
+    const why = status && !status.present && status.reason
+      ? `${ABSENCE_LABEL[status.reason]} — not probeable (Restorative Chart)`
+      : 'Furcation not applicable on an implant';
+    return <div className="border border-slate-200" style={{ height: ROW_H, background: LOCKED_BG }} title={why} aria-disabled="true" />;
+  }
 
   // Mobility: a single value spanning the tooth's 3-site width.
   if (meta.kind === 'mobility') {
     const cell: Cell = { tooth, measure, site: siteOffset };
     const v = numAt(draft, measure, siteOffset);
     const isActive = active && cellKey(active) === cellKey(cell);
+    // No mobility recorded on this exam but the restorative chart carries a
+    // grade → show it as a ghost hint (grey, italic); nothing is stored.
+    const ghost = v == null && status?.mobility_grade ? status.mobility_grade : null;
     return (
       <button
         type="button"
         disabled={readOnly}
         onClick={() => onCellClick(cell)}
         className="w-full border border-slate-200 text-center disabled:cursor-default"
-        style={{ height: ROW_H, background: isActive ? '#dbeafe' : rowBg, outline: isActive ? '2px solid #2563eb' : undefined }}
+        title={ghost ? `Mobility grade ${ghost} charted on the Restorative Chart (not recorded on this exam)` : undefined}
+        style={{ height: ROW_H, background: isActive ? '#dbeafe' : rowBg, outline: isActive ? '2px solid #2563eb' : undefined, color: ghost ? '#94a3b8' : undefined, fontStyle: ghost ? 'italic' : undefined }}
       >
-        {v ?? ''}
+        {v ?? ghost ?? ''}
       </button>
     );
   }

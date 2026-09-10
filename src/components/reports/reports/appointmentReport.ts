@@ -5,6 +5,7 @@
 import { CalendarCheck } from "lucide-react";
 import { listSchedulerAppointments } from "@/api/generated/endpoints/appointments/appointments";
 import type { AppointmentSchedulerRead } from "@/api/generated/model";
+import { fetchArchivedAppointmentIds } from "@/services/schedulerApi";
 import { fmtDate, fmtTime, distribution } from "./helpers";
 import type { ReportDefinition } from "../types";
 
@@ -60,12 +61,17 @@ export const appointmentReport: ReportDefinition<Row> = {
     { key: "status", header: "Status", accessor: (r) => derivedStatus(r) },
   ],
   fetch: async (f) => {
-    const feed = await listSchedulerAppointments({
-      date_from: f.range.from,
-      date_to: f.range.to,
-      office_id: f.office,
-    });
-    let rows = feed;
+    // The feed still returns soft-deleted appointments and carries no
+    // is_archived flag, so subtract the archived ids (gap SCHED-DEL-1).
+    const [feed, archivedIds] = await Promise.all([
+      listSchedulerAppointments({
+        date_from: f.range.from,
+        date_to: f.range.to,
+        office_id: f.office,
+      }),
+      fetchArchivedAppointmentIds(f.range.from, f.range.to, f.office ?? undefined),
+    ]);
+    let rows = feed.filter((r) => !archivedIds.has(r.id));
     if (f.provider) rows = rows.filter((r) => r.provider_id === f.provider);
     if (f.status) rows = rows.filter((r) => matchesStatus(r, f.status));
 

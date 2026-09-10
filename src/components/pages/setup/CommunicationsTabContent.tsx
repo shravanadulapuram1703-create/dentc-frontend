@@ -1,21 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Building2, User, Phone, Globe, AlertCircle, ArrowRight, ArrowLeft, Shield, Save, Edit, X, Loader2 } from 'lucide-react';
+import { Building2, User, Phone, Globe, Shield, Save, Edit, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   fetchCommunications,
   updateCommunications,
   verifyTelecom,
-  fetchPhoneAssignments,
-  updatePhoneAssignments,
+  tenantIdOf,
   accountSetupLookups,
 } from '../../../services/accountSetupApi';
 import type { LookupOption } from '../../../services/accountSetupTransform';
-
-interface Office {
-  id: string;
-  name: string;
-  isModel: boolean;
-}
+import { listPhoneAssignments, useSetPhoneAssignments } from '@/api/generated/endpoints/account-info/account-info';
+import { listOffices } from '@/api/generated/endpoints/organization/organization';
+import { resolveSmsSender } from '@/api/generated/endpoints/communications/communications';
+import type { SmsSenderResolution } from '@/api/generated/model/smsSenderResolution';
+import { PhoneAssignmentEditor } from './PhoneAssignmentEditor';
+import {
+  buildPhoneAssignmentRows,
+  toPhoneAssignmentInputs,
+  validatePhoneAssignmentRows,
+  type PhoneAssignmentRow,
+} from './phoneAssignmentModel';
 
 function mapCommRowToState(row: Record<string, unknown>) {
   return {
@@ -86,8 +90,7 @@ type CommFormSnapshot = {
   position: string;
   contactEmail: string;
   contactPhone: string;
-  officeSpecific: Office[];
-  multiOfficeShared: Office[];
+  phone_assignments: PhoneAssignmentRow[];
   businessType: string;
   companyStatus: string;
   stockSymbol: string;
@@ -96,21 +99,6 @@ type CommFormSnapshot = {
   businessIndustry: string;
   telecomStatus: 'approved' | 'pending' | 'rejected';
 };
-
-function partitionAssignments(rows: { office_id: string; assignment_type: string; office_name?: string; is_model_office?: boolean }[]) {
-  const officeSpecific: Office[] = [];
-  const multiOfficeShared: Office[] = [];
-  for (const r of rows) {
-    const o: Office = {
-      id: r.office_id,
-      name: r.office_name ?? r.office_id,
-      isModel: Boolean(r.is_model_office),
-    };
-    if (r.assignment_type === 'OFFICE_SPECIFIC') officeSpecific.push(o);
-    else if (r.assignment_type === 'MULTI_OFFICE_SHARED') multiOfficeShared.push(o);
-  }
-  return { officeSpecific, multiOfficeShared };
-}
 
 type CommunicationsTabContentProps = {
   accountId: string;
@@ -121,8 +109,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Temporarily hidden blocks (flip to true to restore).
-  const SHOW_PHONE_ASSIGNMENT = false;
+  // Temporarily hidden block (flip to true to restore).
   const SHOW_BUSINESS_TYPE = false;
 
   const [businessName, setBusinessName] = useState('');
@@ -143,11 +130,11 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
 
-  const [officeSpecific, setOfficeSpecific] = useState<Office[]>([]);
-  const [multiOfficeShared, setMultiOfficeShared] = useState<Office[]>([]);
-
-  const [selectedOfficeSpecific, setSelectedOfficeSpecific] = useState<string[]>([]);
-  const [selectedMultiOffice, setSelectedMultiOffice] = useState<string[]>([]);
+  // Phone Number Assignment (snake_case, mirrors PhoneAssignmentInput).
+  const [phoneAssignments, setPhoneAssignments] = useState<PhoneAssignmentRow[]>([]);
+  const [senderByOffice, setSenderByOffice] = useState<Record<number, SmsSenderResolution | undefined>>({});
+  const [sendersLoading, setSendersLoading] = useState(false);
+  const setPhoneAssignmentsMutation = useSetPhoneAssignments();
 
   const [businessType, setBusinessType] = useState('');
   const [companyStatus, setCompanyStatus] = useState('');
@@ -184,8 +171,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
     setPosition(snap.position);
     setContactEmail(snap.contactEmail);
     setContactPhone(snap.contactPhone);
-    setOfficeSpecific(snap.officeSpecific);
-    setMultiOfficeShared(snap.multiOfficeShared);
+    setPhoneAssignments(snap.phone_assignments);
     setBusinessType(snap.businessType);
     setCompanyStatus(snap.companyStatus);
     setStockSymbol(snap.stockSymbol);
@@ -193,6 +179,25 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
     setBusinessIdentity(snap.businessIdentity);
     setBusinessIndustry(snap.businessIndustry);
     setTelecomStatus(snap.telecomStatus);
+  }, []);
+
+  /** What the SMS gateway will actually send from, per office (`GET /sms/sender`). */
+  const refreshSenders = useCallback(async (rows: PhoneAssignmentRow[]) => {
+    setSendersLoading(true);
+    try {
+      const entries = await Promise.all(
+        rows.map(async (r) => {
+          try {
+            return [r.office_id, await resolveSmsSender({ office_id: r.office_id })] as const;
+          } catch {
+            return [r.office_id, undefined] as const;
+          }
+        }),
+      );
+      setSenderByOffice(Object.fromEntries(entries));
+    } finally {
+      setSendersLoading(false);
+    }
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -213,9 +218,10 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       setStockExchangeOptions(se);
       setBusinessIndustryOptions(ind);
 
-      const [comm, phones] = await Promise.all([
+      const [comm, phones, officesPage] = await Promise.all([
         fetchCommunications(accountId),
-        fetchPhoneAssignments(accountId),
+        listPhoneAssignments(tenantIdOf(accountId)),
+        listOffices({ size: 200, is_active: true }),
       ]);
 
       const m = mapCommRowToState(comm);
@@ -243,11 +249,9 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       setBusinessIndustry(m.businessIndustry);
       setTelecomStatus(m.telecomStatus);
 
-      const { officeSpecific: os, multiOfficeShared: ms } = partitionAssignments(
-        phones as Parameters<typeof partitionAssignments>[0]
-      );
-      setOfficeSpecific(os);
-      setMultiOfficeShared(ms);
+      const rows = buildPhoneAssignmentRows(officesPage.items ?? [], phones ?? []);
+      setPhoneAssignments(rows);
+      void refreshSenders(rows);
 
       setLoadedSnapshot({
         businessName: m.businessName,
@@ -265,8 +269,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
         position: m.position,
         contactEmail: m.contactEmail,
         contactPhone: m.contactPhone,
-        officeSpecific: os,
-        multiOfficeShared: ms,
+        phone_assignments: rows,
         businessType: m.businessType,
         companyStatus: m.companyStatus,
         stockSymbol: m.stockSymbol,
@@ -281,7 +284,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
     } finally {
       setPageLoading(false);
     }
-  }, [accountId]);
+  }, [accountId, refreshSenders]);
 
   useEffect(() => {
     void loadAll();
@@ -310,16 +313,17 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       return;
     }
 
-    if (officeSpecific.length > 5) {
-      toast.error('Maximum 5 offices allowed for Office-Specific Number (Twilio toll-free limit)');
+    const phoneError = validatePhoneAssignmentRows(phoneAssignments);
+    if (phoneError) {
+      toast.error(phoneError);
       return;
     }
 
     const s = mapCommRowToState({
       business_name: businessName,
       region_of_operations: regionOfOperations,
-      country,
-      comm_address_line_1: addressLine1,
+      comm_country: country,
+      comm_address_1: addressLine1,
       comm_city: city,
       comm_state: state,
       comm_zip: zip,
@@ -346,22 +350,16 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
     try {
       await updateCommunications(accountId, stateToPutPayload(s, einDirty, ein));
 
-      // Phone Number Assignment block is temporarily hidden — skip persisting it
-      // so an empty/untouched state can't wipe existing assignments.
-      if (SHOW_PHONE_ASSIGNMENT) {
-        const assignments = [
-          ...officeSpecific.map((o) => ({
-            office_id: o.id,
-            assignment_type: 'OFFICE_SPECIFIC' as const,
-            is_model_office: o.isModel,
-          })),
-          ...multiOfficeShared.map((o) => ({
-            office_id: o.id,
-            assignment_type: 'MULTI_OFFICE_SHARED' as const,
-            is_model_office: o.isModel,
-          })),
-        ];
-        await updatePhoneAssignments(accountId, { assignments });
+      // PUT replaces the tenant's full assignment list, so always send every
+      // assigned row. Skip when nothing changed so an untouched save doesn't
+      // churn the backend row ids.
+      const assignments = toPhoneAssignmentInputs(phoneAssignments);
+      const baseline = toPhoneAssignmentInputs(loadedSnapshot?.phone_assignments ?? []);
+      if (JSON.stringify(assignments) !== JSON.stringify(baseline)) {
+        await setPhoneAssignmentsMutation.mutateAsync({
+          tenantId: tenantIdOf(accountId),
+          data: { assignments },
+        });
       }
 
       try {
@@ -378,48 +376,6 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       toast.error("Save failed", { description: msg });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const moveToOfficeSpecific = () => {
-    const selected = multiOfficeShared.filter((o) => selectedMultiOffice.includes(o.id));
-
-    if (officeSpecific.length + selected.length > 5) {
-      toast.error('Maximum 5 offices allowed for Office-Specific Number');
-      return;
-    }
-
-    setOfficeSpecific([...officeSpecific, ...selected]);
-    setMultiOfficeShared(multiOfficeShared.filter((o) => !selectedMultiOffice.includes(o.id)));
-    setSelectedMultiOffice([]);
-  };
-
-  const moveToMultiOfficeShared = () => {
-    const selected = officeSpecific.filter((o) => selectedOfficeSpecific.includes(o.id));
-
-    if (selected.some((o) => o.isModel)) {
-      toast.error('Model office cannot be assigned to Multi-Office Shared Number');
-      return;
-    }
-
-    setMultiOfficeShared([...multiOfficeShared, ...selected]);
-    setOfficeSpecific(officeSpecific.filter((o) => !selectedOfficeSpecific.includes(o.id)));
-    setSelectedOfficeSpecific([]);
-  };
-
-  const toggleOfficeSpecificSelection = (id: string) => {
-    if (selectedOfficeSpecific.includes(id)) {
-      setSelectedOfficeSpecific(selectedOfficeSpecific.filter((sid) => sid !== id));
-    } else {
-      setSelectedOfficeSpecific([...selectedOfficeSpecific, id]);
-    }
-  };
-
-  const toggleMultiOfficeSelection = (id: string) => {
-    if (selectedMultiOffice.includes(id)) {
-      setSelectedMultiOffice(selectedMultiOffice.filter((sid) => sid !== id));
-    } else {
-      setSelectedMultiOffice([...selectedMultiOffice, id]);
     }
   };
 
@@ -768,107 +724,20 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
         </div>
       </div>
 
-      {/* PHONE NUMBER SECTION (temporarily hidden) */}
-      {SHOW_PHONE_ASSIGNMENT && (
+      {/* PHONE NUMBER SECTION */}
       <div>
         <h3 className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F] mb-4 pb-2 border-b-2 border-[#E2E8F0]">
           <Phone className="w-4 h-4 text-[#3A6EA5]" />
           Phone Number Assignment
         </h3>
-        <div className="bg-[#F7F9FC] p-4 rounded-lg border-2 border-[#E2E8F0]">
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 mb-4">
-            <p className="text-xs font-bold text-blue-900 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>
-                Maximum 5 offices for Office-Specific Number (Twilio toll-free limit). Model office (marked in red) cannot be assigned to Multi-Office Shared.
-              </span>
-            </p>
-          </div>
-
-          <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-start">
-            <div>
-              <h4 className="text-xs font-bold text-[#1E293B] mb-2">
-                Office Specific Number ({officeSpecific.length}/5)
-              </h4>
-              <div className="bg-white border-2 border-[#CBD5E1] rounded-lg p-3 min-h-[200px] space-y-2">
-                {officeSpecific.map((office) => (
-                  <div
-                    key={office.id}
-                    onClick={() => isEditMode && toggleOfficeSpecificSelection(office.id)}
-                    className={`p-2 rounded border-2 text-sm transition-all cursor-pointer ${
-                      office.isModel
-                        ? 'bg-red-50 border-red-300 text-red-900'
-                        : selectedOfficeSpecific.includes(office.id)
-                        ? 'bg-[#3A6EA5] text-white border-[#3A6EA5]'
-                        : 'bg-[#F7F9FC] border-[#E2E8F0] text-[#1E293B] hover:border-[#3A6EA5]'
-                    } ${!isEditMode ? 'cursor-default' : ''}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs">{office.name}</span>
-                      {office.isModel && (
-                        <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded">MODEL</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {officeSpecific.length === 0 && (
-                  <p className="text-xs text-[#64748B] text-center py-8">No offices assigned</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 items-center justify-center pt-8">
-              <button
-                onClick={moveToOfficeSpecific}
-                disabled={!isEditMode || selectedMultiOffice.length === 0}
-                className={`p-2 rounded-lg transition-colors ${
-                  isEditMode && selectedMultiOffice.length > 0
-                    ? 'bg-[#3A6EA5] text-white hover:bg-[#2C5282]'
-                    : 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed'
-                }`}
-                title="Move to Office Specific"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={moveToMultiOfficeShared}
-                disabled={!isEditMode || selectedOfficeSpecific.length === 0}
-                className={`p-2 rounded-lg transition-colors ${
-                  isEditMode && selectedOfficeSpecific.length > 0
-                    ? 'bg-[#3A6EA5] text-white hover:bg-[#2C5282]'
-                    : 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed'
-                }`}
-                title="Move to Multi-Office Shared"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold text-[#1E293B] mb-2">Multi-Office Shared Number</h4>
-              <div className="bg-white border-2 border-[#CBD5E1] rounded-lg p-3 min-h-[200px] space-y-2">
-                {multiOfficeShared.map((office) => (
-                  <div
-                    key={office.id}
-                    onClick={() => isEditMode && toggleMultiOfficeSelection(office.id)}
-                    className={`p-2 rounded border-2 text-sm transition-all cursor-pointer ${
-                      selectedMultiOffice.includes(office.id)
-                        ? 'bg-[#3A6EA5] text-white border-[#3A6EA5]'
-                        : 'bg-[#F7F9FC] border-[#E2E8F0] text-[#1E293B] hover:border-[#3A6EA5]'
-                    } ${!isEditMode ? 'cursor-default' : ''}`}
-                  >
-                    <span className="font-bold text-xs">{office.name}</span>
-                  </div>
-                ))}
-                {multiOfficeShared.length === 0 && (
-                  <p className="text-xs text-[#64748B] text-center py-8">No offices assigned</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <PhoneAssignmentEditor
+          rows={phoneAssignments}
+          onChange={setPhoneAssignments}
+          isEditMode={isEditMode}
+          senderByOffice={senderByOffice}
+          sendersLoading={sendersLoading}
+        />
       </div>
-      )}
 
       {/* BUSINESS TYPE SECTION (temporarily hidden) */}
       {SHOW_BUSINESS_TYPE && (

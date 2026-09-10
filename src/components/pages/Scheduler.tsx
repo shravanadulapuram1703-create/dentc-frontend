@@ -1,4 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import {
+  fetchOfficeSchedule,
+  type OfficeScheduleDayUi,
+} from "../../services/officeScheduleApi";
+import SendEmailModal from "../modals/SendEmailModal";
+import SendSmsModal from "../modals/SendSmsModal";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -9,6 +15,7 @@ import {
   Loader2,
   X,
   Palette,
+  UserPlus,
 } from "lucide-react";
 import AppShell from "../layout/AppShell";
 import WeekView from "../scheduler/WeekView";
@@ -35,6 +42,7 @@ import {
   fetchOperatories,
   fetchProviders,
   fetchSchedulerConfig,
+  officeIdNum,
   fetchAppointmentStatuses,
   fetchPatientAlerts,
   fetchPatientBalance,
@@ -76,6 +84,56 @@ type ViewMode = "daily" | "weekly" | "monthly";
  *  office's slot interval; appointment blocks are positioned against this). */
 const SLOT_PX = 40;
 const MINUTES_PER_DAY = 24 * 60;
+
+/** "HH:MM[:SS]" -> minutes past midnight; null when absent/unparseable. */
+const parseTimeMinutes = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+  const parts = value.split(":").map(Number);
+  const h = parts[0];
+  const mm = parts[1] ?? 0;
+  if (h == null || Number.isNaN(h) || Number.isNaN(mm)) return null;
+  return h * 60 + mm;
+};
+
+/** minutes past midnight -> "HH:MM". */
+const minutesToTime = (mins: number): string =>
+  `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+
+/** The grid rows between two minute marks, at the office's slot interval. */
+/** Legacy time-column label for an on-the-hour row: "08:00am", "01:00pm". */
+const legacyHourLabel = (time: string): string => {
+  const mins = parseTimeMinutes(time);
+  if (mins == null) return time;
+  const h24 = Math.floor(mins / 60);
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${String(h12).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}${h24 < 12 ? "am" : "pm"}`;
+};
+
+/** "HH:MM" -> "8:00 AM" for banners and confirm prompts. */
+const friendlyTime = (time: string | null | undefined): string => {
+  const mins = time == null ? null : parseTimeMinutes(time);
+  if (mins == null) return "";
+  return new Date(2000, 0, 1, Math.floor(mins / 60), mins % 60).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/** Mon-first day_of_week (0..6) for a YYYY-MM-DD string or Date, matching the office schedule rows. */
+const dayOfWeekMonFirst = (d: Date | string): number => {
+  const date = typeof d === "string" ? new Date(`${d}T00:00:00`) : d;
+  return (date.getDay() + 6) % 7;
+};
+
+const buildTimeSlots = (startMin: number, endMin: number, interval: number): string[] => {
+  const step = interval > 0 ? interval : 10;
+  const slots: string[] = [];
+  for (let m = startMin; m < endMin; m += step) slots.push(minutesToTime(m));
+  return slots;
+};
+
 
 const fmtYMD = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -249,22 +307,6 @@ export default function Scheduler({
   const calendarBtnRef = useRef<HTMLButtonElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
 
-  // Generate the FULL 24-hour timeline at the office's slot interval. The office
-  // start/end hours (from Office Setup) no longer clip the rows — instead the
-  // whole day renders and slots outside office hours are grayed out and made
-  // non-interactive (see isOutsideOfficeHours + the slot render).
-  const generateTimeSlots = (config: SchedulerConfig): string[] => {
-    const interval = config.slotInterval > 0 ? config.slotInterval : 10;
-    const slots: string[] = [];
-    for (let minutes = 0; minutes < MINUTES_PER_DAY; minutes += interval) {
-      const hour = Math.floor(minutes / 60);
-      const minute = minutes % 60;
-      slots.push(
-        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-      );
-    }
-    return slots;
-  };
 
   // Default scheduler config
   const defaultConfig: SchedulerConfig = {
@@ -284,7 +326,14 @@ export default function Scheduler({
   const [filterProvider, setFilterProvider] = useState("");
   const [filterOperatory, setFilterOperatory] = useState("");
   const [schedulerConfig, setSchedulerConfig] = useState<SchedulerConfig>(defaultConfig);
-  const [timeSlots, setTimeSlots] = useState<string[]>(() => generateTimeSlots(defaultConfig));
+  /** The office's weekly hours (Office Setup -> Schedule), 0=Mon … 6=Sun. */
+  const [officeSchedule, setOfficeSchedule] = useState<OfficeScheduleDayUi[] | null>(null);
+  // Re-renders once a minute so the red "now" row in the time column tracks the clock.
+  const [nowTick, setNowTick] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(new Date()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // Loading and error states
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(false);
@@ -562,38 +611,27 @@ export default function Scheduler({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appointments, selectedDate, viewMode]);
 
-  // Update time slots when config changes - only if config is valid
+  // Load the office's weekly hours; the day grid's range comes from the row for
+  // whichever weekday is on screen.
   useEffect(() => {
-    if (isValidConfig(schedulerConfig)) {
-      const newTimeSlots = generateTimeSlots(schedulerConfig);
-      // Only update if we get valid time slots
-      if (newTimeSlots.length > 0) {
-        setTimeSlots(newTimeSlots);
-      }
+    const oid = officeIdNum(currentOffice);
+    if (oid == null) {
+      setOfficeSchedule(null);
+      return;
     }
-  }, [schedulerConfig]);
-
-  // The grid renders a full 24h; auto-scroll to the office start hour so the
-  // day view opens on the working hours instead of the grayed midnight slots.
-  useEffect(() => {
-    if (viewMode !== "daily") return;
-    const el = gridScrollRef.current;
-    if (!el) return;
-    const interval = schedulerConfig.slotInterval > 0 ? schedulerConfig.slotInterval : 10;
-    const startMinutes = schedulerConfig.startHour * 60;
-    // Small delay so the 24h grid / operatory columns have finished laying out.
-    const id = window.setTimeout(() => {
-      el.scrollTop = Math.max(0, (startMinutes * SLOT_PX) / interval - SLOT_PX);
-    }, 150);
-    return () => window.clearTimeout(id);
-  }, [
-    viewMode,
-    schedulerConfig.startHour,
-    schedulerConfig.slotInterval,
-    timeSlots.length,
-    operatories.length,
-    currentOffice,
-  ]);
+    let cancelled = false;
+    void fetchOfficeSchedule(oid)
+      .then((rows) => {
+        if (!cancelled) setOfficeSchedule(rows);
+      })
+      .catch((err) => {
+        console.error("Error loading office schedule:", err);
+        if (!cancelled) setOfficeSchedule(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOffice]);
 
   // ===== TIME BLOCKING & OVERLAP LOGIC =====
 
@@ -668,28 +706,194 @@ export default function Scheduler({
   const slotInterval = schedulerConfig.slotInterval > 0 ? schedulerConfig.slotInterval : 10;
   const pxPerMinute = SLOT_PX / slotInterval;
 
-  // Position a block against the midnight-anchored 24h timeline.
+  /**
+   * The selected office's opening hours for the weekday on screen, taken from
+   * Office Setup -> Schedule. `day_of_week` there is 0=Monday … 6=Sunday, while
+   * JS `getDay()` is 0=Sunday — hence the shift.
+   *
+   * The Schedule tab's "Scheduler Configuration" (schedule_start_hour /
+   * schedule_end_hour) is the window the grid draws — canvasStartMin..canvasEndMin.
+   * The weekday row narrows the bookable hours inside that window; a row that
+   * is missing keeps the whole window bookable. A day marked Closed keeps the
+   * window so the grid still renders, greyed out.
+   */
+  const officeHours = useMemo(() => {
+    const canvasStartMin = schedulerConfig.startHour * 60;
+    const canvasEndMin = schedulerConfig.endHour * 60;
+    const fallback = {
+      canvasStartMin,
+      canvasEndMin,
+      startMin: canvasStartMin,
+      endMin: canvasEndMin,
+      closed: false,
+      lunchStartMin: null as number | null,
+      lunchEndMin: null as number | null,
+    };
+    if (!officeSchedule) return fallback;
+
+    const dow = (selectedDate.getDay() + 6) % 7; // Sun-first -> Mon-first
+    const row = officeSchedule.find((r) => r.day_of_week === dow);
+    if (!row) return fallback;
+
+    const rowStartMin = parseTimeMinutes(row.start_time);
+    const rowEndMin = parseTimeMinutes(row.end_time);
+    if (row.is_closed || rowStartMin == null || rowEndMin == null || rowEndMin <= rowStartMin) {
+      return { ...fallback, closed: Boolean(row.is_closed) };
+    }
+    // Bookable = day hours clipped to the configured window. If they do not
+    // overlap at all, nothing is bookable (every slot paints out-of-hours).
+    const startMin = Math.max(rowStartMin, canvasStartMin);
+    const endMin = Math.min(rowEndMin, canvasEndMin);
+    // Lunch (Office Setup -> Schedule "Lunch Start/Stop") is drawn as a grey
+    // band across every column, like the legacy scheduler. Only a valid range
+    // inside the working day is honoured.
+    const lunchStartMin = parseTimeMinutes(row.lunch_start);
+    const lunchEndMin = parseTimeMinutes(row.lunch_end);
+    const hasLunch =
+      lunchStartMin != null &&
+      lunchEndMin != null &&
+      lunchEndMin > lunchStartMin &&
+      lunchStartMin >= rowStartMin &&
+      lunchEndMin <= rowEndMin;
+    return {
+      canvasStartMin,
+      canvasEndMin,
+      startMin,
+      endMin,
+      closed: false,
+      lunchStartMin: hasLunch ? lunchStartMin : null,
+      lunchEndMin: hasLunch ? lunchEndMin : null,
+    };
+  }, [officeSchedule, selectedDate, schedulerConfig.startHour, schedulerConfig.endHour]);
+
+  /** Appointments on the day the grid is showing. */
+  const dayAppointments = useMemo(() => {
+    const ymd = formatDateYYYYMMDD(selectedDate);
+    return appointments.filter((a) => a.date === ymd);
+  }, [appointments, selectedDate]);
+
+  /**
+   * The window the grid actually draws: the Scheduler Configuration window
+   * (Start Hour..End Hour), widened to cover any appointment booked outside it.
+   *
+   * This is the fix for appointments vanishing — a 5:20 PM booking at an office
+   * that closes at 4 PM used to fall outside the drawn rows. The extension is
+   * still painted as out-of-hours (see isOutsideOfficeHours), so it reads as
+   * "booked outside opening hours" rather than silently widening the day.
+   */
+  const gridRange = useMemo(() => {
+    let startMin = officeHours.canvasStartMin;
+    let endMin = officeHours.canvasEndMin;
+
+    for (const appt of dayAppointments) {
+      const s = parseTimeMinutes(appt.start_time);
+      if (s == null) continue;
+      const e = s + (appt.duration || slotInterval);
+      if (s < startMin) startMin = s;
+      if (e > endMin) endMin = e;
+    }
+
+    // Snap outwards to whole slot boundaries so rows line up with the interval.
+    startMin = Math.max(0, Math.floor(startMin / slotInterval) * slotInterval);
+    endMin = Math.min(MINUTES_PER_DAY, Math.ceil(endMin / slotInterval) * slotInterval);
+    if (endMin <= startMin) endMin = Math.min(MINUTES_PER_DAY, startMin + slotInterval);
+    return { startMin, endMin };
+  }, [officeHours, dayAppointments, slotInterval]);
+
+  const timeSlots = useMemo(
+    () => buildTimeSlots(gridRange.startMin, gridRange.endMin, slotInterval),
+    [gridRange, slotInterval],
+  );
+
+  // Position a block against the top of the drawn window.
   const getAppointmentPosition = (appointment: Appointment) => {
-    const parts = appointment.start_time.split(":").map(Number);
-    const hours = parts[0] ?? 0;
-    const minutes = parts[1] ?? 0;
-    const startMinutes = hours * 60 + minutes;
-    const top = startMinutes * pxPerMinute;
+    const startMinutes = parseTimeMinutes(appointment.start_time) ?? 0;
+    const top = (startMinutes - gridRange.startMin) * pxPerMinute;
     const height = (appointment.duration || slotInterval) * pxPerMinute;
     return { top, height };
   };
 
-  // Is this HH:MM slot outside the selected office's configured hours? Such
-  // slots are visible but grayed out and non-interactive (Office Setup drives
-  // startHour/endHour via fetchSchedulerConfig).
+  // Is this HH:MM slot outside the office's hours for the day on screen? Such
+  // slots stay visible but grayed out and non-interactive — including the rows
+  // the grid added to reach an out-of-hours appointment.
   const isOutsideOfficeHours = (time: string): boolean => {
-    const parts = time.split(":").map(Number);
-    const hour = parts[0] ?? 0;
-    const minute = parts[1] ?? 0;
-    const mins = hour * 60 + minute;
-    const startMins = schedulerConfig.startHour * 60;
-    const endMins = schedulerConfig.endHour * 60;
-    return mins < startMins || mins >= endMins;
+    const mins = parseTimeMinutes(time);
+    if (mins == null) return false;
+    if (officeHours.endMin <= officeHours.startMin) return true; // no bookable overlap
+    return mins < officeHours.startMin || mins >= officeHours.endMin;
+  };
+
+  // Does this HH:MM slot fall inside the office's lunch break for the day on
+  // screen? Lunch rows are shaded grey and not bookable, but appointments that
+  // already overlap them still render on top.
+  const isLunchSlot = (time: string): boolean => {
+    const { lunchStartMin, lunchEndMin } = officeHours;
+    if (lunchStartMin == null || lunchEndMin == null) return false;
+    const mins = parseTimeMinutes(time);
+    if (mins == null) return false;
+    return mins >= lunchStartMin && mins < lunchEndMin;
+  };
+
+  // The first slot of the lunch band carries a faint "LUNCH" label in each
+  // operatory column (the band itself spans every column, legacy-style).
+  const isLunchLabelSlot = (time: string): boolean => {
+    if (!isLunchSlot(time) || officeHours.lunchStartMin == null) return false;
+    const mins = parseTimeMinutes(time) ?? 0;
+    return mins < officeHours.lunchStartMin + slotInterval;
+  };
+
+  // Office Setup -> Schedule marks the day on screen as Closed: the whole grid
+  // is greyed out and nothing can be booked into it.
+  const officeClosedToday = officeHours.closed;
+  const isDayClosed = (date: Date): boolean =>
+    officeSchedule?.find((r) => r.day_of_week === dayOfWeekMonFirst(date))?.is_closed ?? false;
+  const selectedWeekdayName = WEEKDAY_NAMES[dayOfWeekMonFirst(selectedDate)];
+
+  // Red "now" row in the time column, only while the grid shows today.
+  const isViewingToday = fmtYMD(selectedDate) === fmtYMD(nowTick);
+  const nowMinutes = nowTick.getHours() * 60 + nowTick.getMinutes();
+  const isCurrentTimeSlot = (time: string): boolean => {
+    if (!isViewingToday) return false;
+    const mins = parseTimeMinutes(time);
+    if (mins == null) return false;
+    return nowMinutes >= mins && nowMinutes < mins + slotInterval;
+  };
+
+  /**
+   * Does a booking on `dateYmd` from `startTime` to `endTime` break the office
+   * schedule for that weekday? Returns a human message, or null when it fits.
+   * Used to confirm before saving from the appointment form (which can target
+   * any date, not just the one on the grid).
+   */
+  const scheduleIssueFor = (
+    dateYmd: string,
+    startTime: string,
+    endTime: string,
+  ): string | null => {
+    if (!officeSchedule) return null;
+    const row = officeSchedule.find((r) => r.day_of_week === dayOfWeekMonFirst(dateYmd));
+    if (!row) return null;
+    const weekday = WEEKDAY_NAMES[row.day_of_week];
+    if (row.is_closed) return `The office is closed on ${weekday}s.`;
+    const start = parseTimeMinutes(startTime);
+    const end = parseTimeMinutes(endTime);
+    const open = parseTimeMinutes(row.start_time);
+    const close = parseTimeMinutes(row.end_time);
+    if (start == null || end == null) return null;
+    const winStart = schedulerConfig.startHour * 60;
+    const winEnd = schedulerConfig.endHour * 60;
+    if (start < winStart || end > winEnd) {
+      return `This appointment falls outside the scheduler window (${friendlyTime(minutesToTime(winStart))} – ${friendlyTime(minutesToTime(Math.min(winEnd, MINUTES_PER_DAY - 1)))}) set in Office Setup → Schedule.`;
+    }
+    if (open != null && close != null && (start < open || end > close)) {
+      return `This appointment falls outside the office hours for ${weekday} (${friendlyTime(row.start_time)} – ${friendlyTime(row.end_time)}).`;
+    }
+    const ls = parseTimeMinutes(row.lunch_start);
+    const le = parseTimeMinutes(row.lunch_end);
+    if (ls != null && le != null && start < le && end > ls) {
+      return `This appointment overlaps the lunch break on ${weekday} (${friendlyTime(row.lunch_start)} – ${friendlyTime(row.lunch_end)}).`;
+    }
+    return null;
   };
 
   // Handle right-click on empty slot
@@ -931,8 +1135,10 @@ export default function Scheduler({
     });
   };
 
-  // Handle appointment save
-  const handleSaveAppointment = async (appointmentData: any) => {
+  // Handle appointment save. Resolves `true` when the appointment was persisted
+  // and `false` when it was rejected (validation, slot conflict, user declined
+  // an office-hours warning, API error) so callers can keep their form open.
+  const handleSaveAppointment = async (appointmentData: any): Promise<boolean> => {
     console.log("📥 Scheduler.handleSaveAppointment called with:", appointmentData);
     
     // Check if appointment was already saved by AddEditAppointmentForm
@@ -954,7 +1160,7 @@ export default function Scheduler({
         console.error("Error refreshing appointments:", err);
         // Don't show error alert - appointment was already saved successfully
       }
-      return;
+      return true;
     }
     
     try {
@@ -999,7 +1205,18 @@ export default function Scheduler({
           alert(
             "This time slot conflicts with an existing appointment in that operatory. Please choose a different time or operatory.",
           );
-          return;
+          return false;
+        }
+
+        const checkDate = updateData.date ?? editingAppointment.date;
+        const checkStart = updateData.start_time ?? editingAppointment.start_time;
+        const scheduleIssue = scheduleIssueFor(
+          checkDate,
+          checkStart,
+          calculateEndTime(checkStart, updateData.duration ?? editingAppointment.duration),
+        );
+        if (scheduleIssue && !window.confirm(`${scheduleIssue}\n\nSave it anyway?`)) {
+          return false;
         }
 
         const updatedAppointment = await updateAppointment(updateData);
@@ -1021,12 +1238,14 @@ export default function Scheduler({
           operatory: a.operatory ?? selectedSlot?.operatory ?? "",
           provider: a.provider ?? "",
           notes: a.notes ?? "",
+          // Quick Save registers the patient moments before booking → "NP" badge.
+          ...(a.is_new_patient != null && { is_new_patient: Boolean(a.is_new_patient) }),
         };
 
         // Validate required fields
         if (!createData.operatory || !createData.provider || !createData.procedure_type) {
           alert("Missing required fields: Operatory, Provider, or Procedure Type");
-          return;
+          return false;
         }
 
         // Block double-booking the operatory.
@@ -1041,16 +1260,27 @@ export default function Scheduler({
           alert(
             "This time slot conflicts with an existing appointment in that operatory. Please choose a different time or operatory.",
           );
-          return;
+          return false;
+        }
+
+        const scheduleIssue = scheduleIssueFor(
+          createData.date,
+          createData.start_time,
+          calculateEndTime(createData.start_time, createData.duration),
+        );
+        if (scheduleIssue && !window.confirm(`${scheduleIssue}\n\nSave it anyway?`)) {
+          return false;
         }
 
         const newAppointment = await createAppointment(createData);
         setAppointments([...appointments, newAppointment]);
       }
+      return true;
     } catch (err: any) {
       setError(`Failed to save appointment: ${err.message}`);
       console.error("Error saving appointment:", err);
       alert(`Failed to save appointment: ${err.message}`);
+      return false;
     }
   };
 
@@ -1088,7 +1318,153 @@ export default function Scheduler({
     );
   };
 
+  // ===== DRAG-AND-DROP RESCHEDULE (day view) =====
+  // Drag an appointment block onto another slot — same or different operatory —
+  // to move it. The target slot is highlighted while dragging (blue = free,
+  // red = conflict / closed), the move is applied optimistically and PATCHed
+  // through updateAppointment, and it reverts if the API rejects it.
+  // Cancelled appointments stay where they are.
+  const [dragAppointmentId, setDragAppointmentId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    operatory: string;
+    time: string;
+    valid: boolean;
+  } | null>(null);
+  const [movingAppointmentId, setMovingAppointmentId] = useState<string | null>(null);
+  const dragAppointmentRef = useRef<Appointment | null>(null);
+
+  const isDropSlotValid = (
+    appt: Appointment,
+    operatoryId: string,
+    time: string,
+  ): boolean => {
+    if (officeClosedToday || isOutsideOfficeHours(time) || isLunchSlot(time)) return false;
+    const endTime = calculateEndTime(time, appt.duration || slotInterval);
+    return !hasSlotConflict(operatoryId, appt.date, time, endTime, appt.id);
+  };
+
+  const handleAppointmentDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    appointment: Appointment,
+  ) => {
+    if (appointment.cancelled || movingAppointmentId) {
+      e.preventDefault();
+      return;
+    }
+    dragAppointmentRef.current = appointment;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", appointment.id);
+    // Defer the state change: restyling the dragged element in the same frame
+    // as dragstart makes Chrome cancel the drag.
+    window.setTimeout(() => setDragAppointmentId(appointment.id), 0);
+  };
+
+  const handleAppointmentDragEnd = () => {
+    dragAppointmentRef.current = null;
+    setDragAppointmentId(null);
+    setDropTarget(null);
+  };
+
+  const handleSlotDragOver = (
+    e: React.DragEvent<HTMLDivElement>,
+    operatoryId: string,
+    time: string,
+  ) => {
+    const appt = dragAppointmentRef.current;
+    if (!appt) return;
+    e.preventDefault(); // allow the drop; validity is shown via the highlight
+    const valid = isDropSlotValid(appt, operatoryId, time);
+    e.dataTransfer.dropEffect = valid ? "move" : "none";
+    setDropTarget((prev) =>
+      prev && prev.operatory === operatoryId && prev.time === time && prev.valid === valid
+        ? prev
+        : { operatory: operatoryId, time, valid },
+    );
+  };
+
+  const handleSlotDrop = async (
+    e: React.DragEvent<HTMLDivElement>,
+    operatoryId: string,
+    time: string,
+  ) => {
+    e.preventDefault();
+    const appt = dragAppointmentRef.current;
+    handleAppointmentDragEnd();
+    if (!appt) return;
+    // The feed's start_time may carry seconds ("11:00:00"); compare by minutes.
+    if (
+      appt.operatory_id === operatoryId &&
+      parseTimeMinutes(appt.start_time) === parseTimeMinutes(time)
+    ) {
+      return;
+    }
+    if (officeClosedToday || isOutsideOfficeHours(time) || isLunchSlot(time)) return;
+
+    const duration = appt.duration || slotInterval;
+    const endTime = calculateEndTime(time, duration);
+    if (hasSlotConflict(operatoryId, appt.date, time, endTime, appt.id)) {
+      alert(
+        "That time conflicts with another appointment in this operatory. Drop it on a free slot.",
+      );
+      return;
+    }
+    const issue = scheduleIssueFor(appt.date, time, endTime);
+    if (issue && !window.confirm(`${issue}\n\nMove it anyway?`)) return;
+
+    const operatoryChanged = appt.operatory_id !== operatoryId;
+    const targetOperatory = operatories.find((o) => o.id === operatoryId);
+    const previous = appointments;
+
+    // Optimistic move so the block lands immediately; the PATCH result
+    // (denormalised, names resolved) replaces it once the server confirms.
+    setAppointments((current) =>
+      current.map((a) =>
+        a.id === appt.id
+          ? {
+              ...a,
+              start_time: time,
+              end_time: endTime,
+              operatory_id: operatoryId,
+              operatory_name: targetOperatory?.name ?? a.operatory_name,
+            }
+          : a,
+      ),
+    );
+    setMovingAppointmentId(appt.id);
+    try {
+      const updated = await updateAppointment({
+        id: appt.id,
+        start_time: time,
+        duration,
+        ...(operatoryChanged ? { operatory: operatoryId } : {}),
+      });
+      setAppointments((current) => current.map((a) => (a.id === appt.id ? updated : a)));
+    } catch (err: any) {
+      console.error("Error moving appointment:", err);
+      setAppointments(previous);
+      alert(
+        `Could not move the appointment: ${
+          err?.response?.data?.detail || err?.message || "unknown error"
+        }`,
+      );
+    } finally {
+      setMovingAppointmentId(null);
+    }
+  };
+  // ===== END DRAG-AND-DROP =====
+
   // Navigate to patient module
+  // Email / Text Message from the Go To menu. Both need the patient's contact
+  // details, which only arrive with the patient-context fetch below.
+  const [commTarget, setCommTarget] = useState<{
+    kind: "email" | "sms";
+    patient_id: number | null;
+    appointment_id: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null>(null);
+
   const handleGoToPatient = async (
     module: string,
     appointment: Appointment,
@@ -1143,22 +1519,39 @@ export default function Scheduler({
       }),
     );
 
-    switch (module) {
-      case "overview":
-        navigate(`/patient/${numericPatientId}/overview`);
-        break;
-      case "ledger":
-        navigate(`/patient/${numericPatientId}/ledger`);
-        break;
-      case "transactions":
-        navigate(`/patient/${numericPatientId}/transaction`);
-        break;
-      case "charting":
-        navigate(`/patient/${numericPatientId}/restorative`);
-        break;
-      default:
-        break;
+    // Email / Text Message open a dialog instead of navigating — they need the
+    // contact details we just resolved.
+    if (module === "email" || module === "sms") {
+      setCommTarget({
+        kind: module,
+        patient_id: appointment.patient_id ?? null,
+        appointment_id: appointment.id,
+        name: resolvedName || appointment.patient_name,
+        email: patient?.email ?? "",
+        phone: patient?.cell_phone || patient?.phone || "",
+      });
+      return;
     }
+
+    if (!numericPatientId) {
+      alert("This appointment has no patient linked, so there is nothing to open.");
+      return;
+    }
+
+    // Every entry maps to a real patient route (see App.tsx `/patient/:id/*`).
+    const ROUTES: Record<string, string> = {
+      overview: "overview",
+      treatment: "treatment",
+      transactions: "transaction",
+      ledger: "ledger",
+      "progress-notes": "progress-notes",
+      notes: "notes",
+      charting: "restorative",
+      perio: "perio",
+      imaging: "imaging",
+    };
+    const path = ROUTES[module];
+    if (path) navigate(`/patient/${numericPatientId}/${path}`);
   };
 
   // Set appointment status (applies immediately via PATCH /appointments/{id}/status).
@@ -1454,6 +1847,13 @@ export default function Scheduler({
               space; toggled via the Legend button above. */}
           {showLegend && (
             <div className="bg-white border-t border-[#E2E8F0] px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-[#1E293B] mr-2">
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-600 text-white px-1.5 py-px text-[9px] font-extrabold uppercase tracking-wide">
+                  <UserPlus className="w-2.5 h-2.5" strokeWidth={3} aria-hidden />
+                  New
+                </span>
+                New patient (first visit)
+              </span>
               <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">
                 Providers:
               </span>
@@ -1512,6 +1912,20 @@ export default function Scheduler({
 
         {/* ✅ FIX: Scheduler Grid — the ONLY scroll region (flex-1 + min-h-0 so
             it fills the remaining column height and scrolls internally). */}
+        {/* Office Setup -> Schedule says this weekday is Closed. */}
+        {viewMode === "daily" && officeClosedToday && (
+          <div
+            className="flex items-center gap-2 bg-slate-700 text-white px-4 py-2 text-sm font-semibold border-b border-slate-800"
+            role="status"
+          >
+            <span className="inline-block rounded bg-red-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+              Closed
+            </span>
+            The office is closed on {selectedWeekdayName}s. No appointments can be
+            booked for this day (Setup → Office Setup → Schedule).
+          </div>
+        )}
+
         <div
           ref={gridScrollRef}
           className="overflow-auto scheduler-scroll-container flex-1 min-h-0"
@@ -1528,20 +1942,42 @@ export default function Scheduler({
               {/* Sticky blue time header */}
               <div className="h-12 border-b-2 border-[#16293B] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] backdrop-blur-sm sticky top-0 z-20"></div>
               {timeSlots.map((time) => {
-                const outside = isOutsideOfficeHours(time);
+                const outside = officeClosedToday || isOutsideOfficeHours(time);
+                const lunch = !outside && isLunchSlot(time);
+                const onHour = time.endsWith(":00");
+                const isNow = isCurrentTimeSlot(time);
+                // Legacy time column: hour rows are a grey band ("08:00am"),
+                // the rows between show only their minutes (":10", ":20"…),
+                // and the row holding the current time turns red.
+                const rowClass = isNow
+                  ? "bg-red-600 text-white border-red-700"
+                  : onHour
+                    ? outside
+                      ? "bg-slate-300 text-slate-500 border-slate-300"
+                      : "bg-slate-500 text-white border-slate-600"
+                    : outside
+                      ? "bg-slate-100 text-slate-400 border-slate-200"
+                      : lunch
+                        ? "bg-[#D4D4D4] text-slate-500 border-[#C4C4C4]"
+                        : "bg-white text-slate-500 border-slate-200";
                 return (
                   <div
                     key={time}
-                    className={`h-10 px-3 flex items-center justify-end border-b border-slate-200 text-sm font-semibold ${
-                      outside ? "bg-slate-100 text-slate-400" : "text-slate-600"
-                    }`}
+                    className={`h-10 px-2 flex items-center justify-end border-b ${
+                      onHour || isNow ? "text-xs font-bold" : "text-[11px] font-medium"
+                    } ${rowClass}`}
                     role="rowheader"
+                    title={
+                      isNow
+                        ? "Current time"
+                        : officeClosedToday
+                          ? "Office closed"
+                          : lunch
+                            ? "Lunch break"
+                            : undefined
+                    }
                   >
-                    {time.endsWith(":00") &&
-                      new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
+                    {onHour || isNow ? legacyHourLabel(time) : time.slice(2)}
                   </div>
                 );
               })}
@@ -1582,7 +2018,8 @@ export default function Scheduler({
                 {/* Time Slots */}
                 <div className="relative bg-white">
                   {timeSlots.map((time, rowIndex) => {
-                    const outside = isOutsideOfficeHours(time);
+                    const outside = officeClosedToday || isOutsideOfficeHours(time);
+                    const lunch = !outside && isLunchSlot(time);
                     const slotBlocked = isSlotBlocked(
                       time,
                       operatory.id,
@@ -1592,18 +2029,39 @@ export default function Scheduler({
                         time,
                         operatory.id,
                       );
-                    // Slots outside office hours are visible but non-interactive.
-                    const disabled = outside || slotBlocked;
+                    // Slots outside office hours (and lunch) are visible but
+                    // non-interactive.
+                    const disabled = outside || lunch || slotBlocked;
+                    // Drag-and-drop target highlight (see handleSlotDragOver).
+                    const isDropHere =
+                      dropTarget != null &&
+                      dropTarget.operatory === operatory.id &&
+                      dropTarget.time === time;
+                    const dropValid = isDropHere && dropTarget.valid;
 
                     return (
                       <div
                         key={`${operatory.id}-${time}`}
-                        className={`h-10 border-b border-slate-200 transition-colors ${
-                          outside
-                            ? "bg-slate-100 cursor-not-allowed"
-                            : slotBlocked
-                              ? "bg-slate-100 cursor-not-allowed"
-                              : "hover:bg-[#F7F9FC] cursor-pointer"
+                        onDragOver={(e) => handleSlotDragOver(e, operatory.id, time)}
+                        onDrop={(e) => handleSlotDrop(e, operatory.id, time)}
+                        style={
+                          isDropHere
+                            ? {
+                                backgroundColor: dropValid ? "#DBEAFE" : "#FEE2E2",
+                                boxShadow: `inset 0 0 0 2px ${dropValid ? "#3A6EA5" : "#F87171"}`,
+                              }
+                            : undefined
+                        }
+                        className={`h-10 border-b transition-colors ${
+                          officeClosedToday
+                            ? "bg-slate-200 border-slate-300 cursor-not-allowed"
+                            : outside
+                              ? "bg-slate-100 border-slate-200 cursor-not-allowed"
+                              : lunch
+                              ? "bg-[#D4D4D4] border-[#C4C4C4] cursor-not-allowed"
+                              : slotBlocked
+                                ? "bg-slate-100 border-slate-200 cursor-not-allowed"
+                                : "border-slate-200 hover:bg-[#F7F9FC] cursor-pointer"
                         }`}
                         onContextMenu={(e) => {
                           if (!disabled) {
@@ -1617,16 +2075,36 @@ export default function Scheduler({
                           }
                         }}
                         title={
-                          outside
-                            ? "Outside office hours"
-                            : slotBlocked && occupyingAppt
+                          officeClosedToday
+                            ? `Office closed on ${selectedWeekdayName}s`
+                            : outside
+                              ? "Outside office hours"
+                              : lunch
+                                ? "Lunch break"
+                                : slotBlocked && occupyingAppt
                               ? `Time unavailable - occupied by ${occupyingAppt.patient_name} (${occupyingAppt.start_time}-${occupyingAppt.end_time})`
                               : ""
                         }
                         role="gridcell"
                         aria-rowindex={rowIndex + 2}
                         aria-colindex={colIndex + 2}
-                      ></div>
+                      >
+                        {isDropHere ? (
+                          <span
+                            className="pointer-events-none flex h-full items-center justify-center text-[11px] font-bold select-none"
+                            style={{ color: dropValid ? "#1F3A5F" : "#B91C1C" }}
+                          >
+                            {dropValid ? `Move to ${time}` : "Unavailable"}
+                          </span>
+                        ) : (
+                          lunch &&
+                          isLunchLabelSlot(time) && (
+                            <span className="pointer-events-none flex h-full items-center justify-center text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500/80 select-none">
+                              Lunch
+                            </span>
+                          )
+                        )}
+                      </div>
                     );
                   })}
 
@@ -1657,11 +2135,20 @@ export default function Scheduler({
                     // Missed appointments stay on the grid with a strikethrough
                     // (PDF page 15); cancelled ones are dimmed.
                     const isStruck = appointment.missed || appointment.cancelled;
+                    const canDrag = !appointment.cancelled && !movingAppointmentId;
+                    const isDragging = dragAppointmentId === appointment.id;
+                    const isMoving = movingAppointmentId === appointment.id;
                     return (
                       <div
                         key={appointment.id}
-                        className={`absolute left-1 right-1 border-2 rounded pr-2 py-1 cursor-pointer overflow-hidden ${
-                          appointment.cancelled ? "opacity-60" : ""
+                        className={`absolute left-1 right-1 border-2 rounded pr-2 py-1 overflow-hidden ${
+                          canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                        } ${appointment.cancelled ? "opacity-60" : ""} ${
+                          // While any block is being dragged, let drop events
+                          // reach the slot cells underneath every block.
+                          dragAppointmentId ? "pointer-events-none" : ""
+                        } ${isDragging ? "opacity-40" : ""} ${
+                          isMoving ? "opacity-70 animate-pulse" : ""
                         }`}
                         style={{
                           top: `${top}px`,
@@ -1670,6 +2157,9 @@ export default function Scheduler({
                           borderColor: pc.border,
                           color: pc.text,
                         }}
+                        draggable={canDrag}
+                        onDragStart={(e) => handleAppointmentDragStart(e, appointment)}
+                        onDragEnd={handleAppointmentDragEnd}
                         onClick={(e) =>
                           handleAppointmentLeftClick(e, appointment)
                         }
@@ -1682,6 +2172,13 @@ export default function Scheduler({
                         }
                         role="button"
                         aria-label={`${appointment.patient_name} - ${appointment.procedure_label} at ${appointment.start_time} (${appointment.status})`}
+                        title={
+                          isMoving
+                            ? "Saving new time…"
+                            : canDrag
+                              ? "Drag to a new time or operatory • double-click to edit"
+                              : undefined
+                        }
                         tabIndex={0}
                       >
                         {/* Status color strip (left edge) */}
@@ -1690,6 +2187,15 @@ export default function Scheduler({
                           style={{ backgroundColor: statusColor }}
                           title={appointment.status}
                         />
+                        {/* New-patient corner marker: a green triangle in the
+                            top-right so the block reads as "new" even when the
+                            name line is truncated. */}
+                        {appointment.is_new_patient && (
+                          <span
+                            className="absolute right-0 top-0 w-0 h-0 border-t-[14px] border-l-[14px] border-t-emerald-600 border-l-transparent"
+                            aria-hidden
+                          />
+                        )}
                         <div className="pl-2">
                           <div
                             className={`text-xs truncate flex items-center gap-1 ${
@@ -1709,10 +2215,12 @@ export default function Scheduler({
                             </span>
                             {appointment.is_new_patient && (
                               <span
-                                className="text-[9px] font-bold text-emerald-700"
-                                title="New patient"
+                                className="inline-flex items-center gap-0.5 rounded-full bg-emerald-600 text-white px-1.5 py-px text-[9px] font-extrabold uppercase tracking-wide flex-shrink-0 shadow-sm"
+                                title="New patient — first visit"
+                                aria-label="New patient"
                               >
-                                NP
+                                <UserPlus className="w-2.5 h-2.5" strokeWidth={3} aria-hidden />
+                                New
                               </span>
                             )}
                             {owesMoney && (
@@ -1777,6 +2285,7 @@ export default function Scheduler({
             <WeekView
               selectedDate={selectedDate}
               appointments={validAppointments}
+              isDayClosed={isDayClosed}
               onSelectDay={handleSelectDay}
               onEditAppointment={handleEditAppointment}
               getProviderColor={(appt) =>
@@ -1789,6 +2298,7 @@ export default function Scheduler({
             <MonthView
               selectedDate={selectedDate}
               appointments={validAppointments}
+              isDayClosed={isDayClosed}
               onSelectDay={handleSelectDay}
               getProviderColor={(appt) =>
                 providerColorFor(appt.provider_id, providerColorMap)
@@ -1896,6 +2406,29 @@ export default function Scheduler({
           </div>
         )}
 
+        {/* Go To -> Email (hands the draft to the user's mail client) */}
+        {commTarget?.kind === "email" && (
+          <SendEmailModal
+            isOpen
+            onClose={() => setCommTarget(null)}
+            patientEmail={commTarget.email}
+            patientName={commTarget.name}
+          />
+        )}
+
+        {/* Go To -> Text Message (records an sms-messages row) */}
+        {commTarget?.kind === "sms" && (
+          <SendSmsModal
+            isOpen
+            onClose={() => setCommTarget(null)}
+            patientName={commTarget.name}
+            patientId={commTarget.patient_id}
+            officeId={officeIdNum(currentOffice) ?? null}
+            appointmentId={commTarget.appointment_id}
+            defaultPhone={commTarget.phone}
+          />
+        )}
+
         {/* New Appointment Modal */}
         {showNewAppointment && (
           <NewAppointmentModal
@@ -1993,25 +2526,25 @@ export default function Scheduler({
                     <>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "overview",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("overview", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
                       >
                         Patient Overview
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("treatment", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Treatment Plans
                       </button>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "transactions",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("transactions", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
@@ -2020,44 +2553,74 @@ export default function Scheduler({
                       </button>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "ledger",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("ledger", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
                       >
                         Ledger
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("progress-notes", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Progress Notes
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("notes", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Notes
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("email", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Email
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("sms", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Text Message
                       </button>
                       <button
                         onClick={() => {
-                          handleGoToPatient(
-                            "charting",
-                            submenuAppointment!,
-                          );
+                          handleGoToPatient("charting", submenuAppointment!);
                           closeSubmenu();
                         }}
                         className={menuItemClass}
                       >
                         Restorative Chart
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("perio", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Perio Chart
                       </button>
-                      <button className={menuItemClass}>
+                      <button
+                        onClick={() => {
+                          handleGoToPatient("imaging", submenuAppointment!);
+                          closeSubmenu();
+                        }}
+                        className={menuItemClass}
+                      >
                         Imaging System
                       </button>
                     </>

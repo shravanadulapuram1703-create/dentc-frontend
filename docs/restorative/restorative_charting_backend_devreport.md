@@ -247,3 +247,34 @@ packing and the two-write coupling. Verified live (patient 80001): PNG persisted
 
 Optional `GET /api/v1/chart-conditions/export/fhir?patient_id=` returning an HL7
 FHIR R4 collection Bundle. Deferred this pass (FE can build it client-side later).
+
+## Restorative billing workflow (fee schedule → estimate → transaction row → Post to Ledger) — 2026-09-02
+
+Selecting an ADA code in the Restorative Chart now performs the on-premise billing functions:
+
+| Step | Source | Where |
+| --- | --- | --- |
+| Fee | fee schedule in force for patient / office / provider (assignments → office default → code `default_fee`) | `src/services/feeScheduleResolver.ts` (shared) |
+| Est. insurance | primary plan's `insurance-coverage-rules` `coverage_pct` for the code's coverage category (or the schedule's own `insurance_fee` when it states one) | `src/services/coverageResolver.ts` (NEW, shared) |
+| Patient portion | `fee − insurance_estimate` | `src/features/restorative/procedurePricing.ts` |
+| Transaction row | Completed → `POST /patient-procedures` with `fee`, `insurance_estimate`, `patient_estimate`, `ucr_fee`, `hygienist_id`, `apply_to:'P'`; Tx Plan → `POST /treatment-plan-items` with `provider_id`, `diagnosed_by`, `diagnosed_date`, `phase_id` | `RestorativeChart.onAddAda` |
+| Post to Ledger | `Post…` opens `PostToLedgerDialog` — tick which planned procedures to charge; per-row provider; `POST /patient-procedures` (`treatment_plan_id` = plan) + `PATCH /treatment-plan-items/{id}` `{status:'accepted', end_date, provider_id}`; unticked rows stay on the plan | `src/features/restorative/PostToLedgerDialog.tsx` |
+
+The bottom transaction grid gained a **Pat. Est.** column and now shows real descriptions on COMPLETED rows.
+A planned item that has been posted is hidden from the TX-PLAN rows (its COMPLETED charge replaces it), detected
+by `end_date` set + a non-void procedure with the same `treatment_plan_id` / code / tooth / surface.
+
+Live-verified (patient 3387, tooth 22, D7140): fee **90.00** (schedule 26 "Delta Dental Premier - Excel",
+practice default), coverage **80%** (rule `06` Oral Surgery on plan 12428) → Est. Ins **72.00**, patient
+**18.00**; Post… ticked only D7140 → procedure created (`fee 90 / ins 72 / pat 18`, `treatment_plan_id` set),
+plan item `accepted` + `end_date`, ledger feed shows the 90.00 charge; the unticked 11100 item stayed on the plan.
+
+### Backend gaps found
+
+| ID | Gap | Impact / interim |
+| --- | --- | --- |
+| **REST-11** | `insurance_coverage_rules.start_code/end_code` hold **legacy coverage-category codes** (`01`, `01A`, `03A`, …), not ADA codes, and no ADA→category map is exposed. `POST /patients/{id}/estimate` therefore returns `coverage_pct: 0` for every code (same root cause as FEE-1). | FE reproduces the on-premise CDT-range → category table in `coverageResolver.ts` (`D2740` → `03A` then `03`; most specific rule the plan has wins). Backend should either expose the category map or key rules by ADA range so `/estimate` becomes usable. |
+| **REST-12** | `POST /patients/{id}/estimate` ignores practice-default `fee_schedule_assignments` (rows with no keys) — returned `fee 0.00 / fee_source code_default` while the resolver finds schedule 26. Also rejects `office_id=None` with 422 when the patient has no `office_id` (only `home_office_id`). | Not used; FE prices client-side. |
+| **REST-13** | `treatment_plan_items.status` enum has no `completed`/`posted` value and there is no first-class item→procedure link. | Convention: posted item = `status:'accepted'` + `end_date` = posting date; procedure carries `treatment_plan_id`. A `completed` status (or `procedure_id` on the item) would make this explicit. |
+| **REST-14** | Setup data: two practice-default fee-schedule assignments (schedules **4** "UCR -Excel Dental" and **26** "Delta Dental Premier - Excel") both match every charge; only "newest assignment wins" separates them. The pop-out shows this as a *Setup conflict* hint. | Data clean-up in Setup → Insurance → Fee Schedules → Assignments. |
+| **REST-15** | Deductible / annual maximum / frequency limits are not applied to the estimate (`fee × coverage_pct` only, as the legacy Est. Ins. column). | Needs a working backend estimate (REST-11/12) to go further. |

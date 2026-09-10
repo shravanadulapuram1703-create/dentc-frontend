@@ -48,8 +48,10 @@ const schema = z.object({
   VITE_JIRA_BASE_URL: z.string().optional(),
   VITE_JIRA_EMAIL: z.string().optional(),
   VITE_JIRA_API_TOKEN: z.string().optional(),
-  // Target Jira project key that tickets are created under.
-  VITE_JIRA_PROJECT_KEY: z.string().default("SUP"),
+  // Target Jira project key that tickets are created under. The backend honors
+  // the key the client sends before falling back to its own JIRA_PROJECT_KEY, so
+  // this default MUST name a real project on the configured Jira site.
+  VITE_JIRA_PROJECT_KEY: z.string().default("KAN"),
 
   // --- AppointNow (external online booking) ----------------------------------
   // The public booking screen (/book/:office_code) and the staff request inbox
@@ -75,7 +77,14 @@ const imagingBridgeUrl = bridgeDisabled
  * that is actually configured, falling back to `demo` so the Help module always
  * works out of the box.
  */
-const jiraProxyUrl = parsed.VITE_JIRA_PROXY_URL?.trim() || null;
+// The support proxy lives on OUR backend, so default it to the already-configured
+// backend URL instead of requiring a second env var that can silently drift out of
+// sync (or go missing entirely in a Docker build — which is exactly how production
+// ended up in `demo` mode, filing tickets into localStorage). Set
+// VITE_JIRA_PROXY_URL to override, or VITE_JIRA_MODE=demo to opt out deliberately.
+const jiraProxyUrl =
+  parsed.VITE_JIRA_PROXY_URL?.trim() ||
+  `${parsed.VITE_API_BASE_URL.replace(/\/+$/, "")}/api/v1/support/tickets`;
 const jiraBaseUrl = parsed.VITE_JIRA_BASE_URL?.trim().replace(/\/+$/, "") || null;
 const jiraEmail = parsed.VITE_JIRA_EMAIL?.trim() || null;
 const jiraApiToken = parsed.VITE_JIRA_API_TOKEN?.trim() || null;
@@ -89,6 +98,16 @@ const jiraMode: "proxy" | "direct" | "demo" =
         ? "direct"
         : "demo"
     : parsed.VITE_JIRA_MODE;
+
+// A production bundle that falls back to `demo` files every support ticket into
+// localStorage and never touches Jira — the failure is invisible to the reporter,
+// so make it loud in the console for whoever is looking.
+if (jiraMode === "demo" && parsed.VITE_APP_ENV === "production") {
+  console.error(
+    "[help] Jira is UNCONFIGURED in a production build — support tickets are " +
+      "stored locally and will NOT reach Jira. Check the VITE_JIRA_* build args.",
+  );
+}
 
 export const env = {
   /** Backend base URL, normalized without a trailing slash. */

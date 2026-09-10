@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { FileText, Upload, Trash2, Eye, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, Upload, Trash2, Eye, Download, Loader2, AlertCircle } from 'lucide-react';
 import {
   useListPatientDocuments,
   uploadPatientDocument,
@@ -20,6 +20,8 @@ import { IMAGING_CATEGORIES } from '@/features/imaging/constants';
 const IMAGING_DOCUMENT_TYPES = new Set<string>(
   IMAGING_CATEGORIES.filter((c) => c !== 'Other'),
 );
+import { openAsset, downloadAsset } from '@/services/documentAccess';
+import type { PatientDocumentRead } from '@/api/generated/model';
 
 interface PatientData {
   id: string;
@@ -58,9 +60,6 @@ const fmtDate = (iso?: string | null): string => {
     ? '—'
     : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 };
-// Documents are served at /uploads/... on the backend origin.
-const fileHref = (url: string): string =>
-  /^https?:\/\//i.test(url) ? url : `${env.apiBaseUrl}${url}`;
 const errMsg = (err: unknown): string | undefined =>
   (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
 
@@ -81,7 +80,7 @@ export default function PatientDocuments() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const docsQuery = useListPatientDocuments(
-    { patient_id: numericPatientId },
+    { patient_id: numericPatientId, size: 200 },
     { query: { enabled: validId } },
   );
   const documents = (docsQuery.data?.items ?? [])
@@ -128,6 +127,25 @@ export default function PatientDocuments() {
       alert(errMsg(err) || 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  // `file_url` is either a signed bucket URL or an authenticated `/content`
+  // proxy path — the public /uploads mount is gone (NOTE-DOC-3), so a bare
+  // <a href> 401s. Both actions go through the authenticated fetch.
+  const handleView = async (doc: PatientDocumentRead) => {
+    try {
+      await openAsset(doc.file_url);
+    } catch {
+      alert('Could not open the file. Please try again.');
+    }
+  };
+
+  const handleDownload = async (doc: PatientDocumentRead) => {
+    try {
+      await downloadAsset(doc.file_url, doc.file_name);
+    } catch {
+      alert('Could not download the file. Please try again.');
     }
   };
 
@@ -267,15 +285,20 @@ export default function PatientDocuments() {
                   <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <a
-                          href={fileHref(doc.file_url)}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          onClick={() => handleView(doc)}
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          title="View / Download"
+                          title="View"
                         >
                           <Eye className="w-4 h-4" strokeWidth={2} />
-                        </a>
+                        </button>
+                        <button
+                          onClick={() => handleDownload(doc)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="Download"
+                        >
+                          <Download className="w-4 h-4" strokeWidth={2} />
+                        </button>
                         <button
                           onClick={() => handleDelete(doc.id)}
                           disabled={deletingId === doc.id}

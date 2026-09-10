@@ -59,6 +59,44 @@ export function estPat(
   return Math.max(0, Math.round((num(fee) - num(ins)) * 100) / 100);
 }
 
+/** Round to cents (avoids 0.1 + 0.2 style drift when summing allocations). */
+export function cents(v: number): number {
+  return Math.round(v * 100) / 100;
+}
+
+// ---- Per-procedure balances ("Procedures To Post" money columns) -----------
+
+export interface ProcedureBalance {
+  fee: number;
+  est_ins: number;
+  /** Patient payments already allocated to the charge. */
+  pat_paid: number;
+  /** Adjustments already applied to the charge. */
+  pat_adj: number;
+  /** What the patient still owes on the charge — the payment-eligible balance. */
+  remaining: number;
+}
+
+/**
+ * Money columns for one charge.
+ *
+ * `patient_estimate` is 0.00 on virtually every migrated Denticon row, so the
+ * patient's share falls back to `fee - insurance_estimate` (the same rule the
+ * backend's `patient_share()` applies). `remaining_amount` / `paid_to_date` /
+ * `adjusted_to_date` come from the backend's procedure enrichment; when a
+ * response predates that enrichment we recompute the same figures here.
+ */
+export function procedureBalance(p: PatientProcedureRead): ProcedureBalance {
+  const fee = num(p.fee);
+  const est_ins = num(p.insurance_estimate);
+  const pat_paid = num(p.paid_to_date);
+  const pat_adj = num(p.adjusted_to_date);
+  const share = num(p.patient_estimate) || estPat(fee, est_ins);
+  const remaining =
+    p.remaining_amount != null ? num(p.remaining_amount) : cents(share - pat_paid - pat_adj);
+  return { fee, est_ins, pat_paid, pat_adj, remaining: Math.max(0, cents(remaining)) };
+}
+
 // ---- Dates ----------------------------------------------------------------
 
 /** MM/DD/YYYY (or any parseable string) -> YYYY-MM-DD for the API. */
@@ -88,8 +126,10 @@ export function todayDisplay(): string {
   return new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
+/** Today's LOCAL date as YYYY-MM-DD (`toISOString()` is UTC and reads a day ahead in the US evening). */
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // ---- Provider resolution --------------------------------------------------
@@ -100,6 +140,21 @@ export function providerLabelResolver(
   const byId = new Map<string, string>();
   for (const p of providers) byId.set(p.id, p.name);
   return (id) => (id ? byId.get(id) || id : '');
+}
+
+/**
+ * `office_id -> label` for the grid's OFFICE column. The column previously
+ * rendered the raw integer (and was blank on payments/adjustments, which carry
+ * an `office_id` too); offices are named reference data, so resolve them.
+ */
+export function officeLabelResolver(
+  offices: Map<number, { code: string; name: string }>,
+): (id: number | null | undefined) => string {
+  return (id) => {
+    if (id == null) return '';
+    const o = offices.get(id);
+    return o ? o.code || o.name : String(id);
+  };
 }
 
 export function providerShortResolver(
@@ -193,6 +248,7 @@ export function procedureRow(
   patientName: string,
   providerLabel: (id: string | null | undefined) => string,
   codeDesc: (code: string) => string,
+  officeLabel: (id: number | null | undefined) => string,
 ): EntryRow {
   const fee = num(p.fee);
   const ins = num(p.insurance_estimate);
@@ -202,7 +258,7 @@ export function procedureRow(
     pm: false,
     date: fmtDate(p.date_of_service),
     patient: patientName,
-    office: p.office_id != null ? String(p.office_id) : '',
+    office: officeLabel(p.office_id),
     apply_to: p.apply_to ?? '',
     code: p.procedure_code,
     tooth: p.tooth ?? '',
@@ -220,6 +276,8 @@ export function paymentRow(
   p: PatientPaymentRead,
   patientName: string,
   codeLabel: (code: string | null | undefined) => string,
+  providerLabel: (id: string | null | undefined) => string,
+  officeLabel: (id: number | null | undefined) => string,
 ): EntryRow {
   return {
     id: p.id,
@@ -227,14 +285,14 @@ export function paymentRow(
     pm: true,
     date: fmtDate(p.payment_date),
     patient: patientName,
-    office: '',
+    office: officeLabel(p.office_id),
     apply_to: p.payment_type ?? '',
     code: p.payment_method ?? '',
     tooth: '',
     surface: '',
     description: codeLabel(p.payment_method) || 'Payment',
     bill: '',
-    provider: '',
+    provider: p.provider_name || providerLabel(p.provider_id),
     est_pat: 0,
     est_ins: 0,
     amount: -num(p.amount),
@@ -245,6 +303,8 @@ export function adjustmentRow(
   a: PatientAdjustmentRead,
   patientName: string,
   codeLabel: (code: string | null | undefined) => string,
+  providerLabel: (id: string | null | undefined) => string,
+  officeLabel: (id: number | null | undefined) => string,
 ): EntryRow {
   return {
     id: String(a.id),
@@ -252,14 +312,14 @@ export function adjustmentRow(
     pm: true,
     date: fmtDate(a.adjustment_date),
     patient: patientName,
-    office: '',
+    office: officeLabel(a.office_id),
     apply_to: '',
     code: a.adjustment_type ?? '',
     tooth: '',
     surface: '',
     description: codeLabel(a.adjustment_type) || 'Adjustment',
     bill: '',
-    provider: '',
+    provider: providerLabel(a.provider_id),
     est_pat: 0,
     est_ins: 0,
     amount: -num(a.amount),

@@ -23,6 +23,8 @@ type AdfNode = {
   content?: AdfNode[];
   attrs?: Record<string, unknown>;
   marks?: Array<{ type: string }>;
+  /** Only the top-level "doc" node carries this — ADF requires it there. */
+  version?: number;
 };
 
 function para(text: string): AdfNode {
@@ -84,7 +86,9 @@ export function buildAdfDescription(payload: TicketPayload): AdfNode {
     })),
   });
 
-  return { type: "doc", attrs: { version: 1 }, content: nodes };
+  // ADF requires `version` at the top level of the doc node — NOT under `attrs`
+  // (Jira rejects the latter with "not valid Atlassian Document Format content").
+  return { type: "doc", version: 1, content: nodes };
 }
 
 /** Compact JSON body understood by a backend proxy (and easy to log). */

@@ -46,10 +46,10 @@ export default function RecallStep({
   return (
     <div className="space-y-3">
       <GapNotice>
-        Recall rows with a due date persist via <code>patient-recalls</code> (code, reason, due date,
-        interval in months). Legacy's <strong>Int. Type</strong> is normalised to months, and{" "}
-        <strong>Sched Dt/Time</strong> has no backend column — it is folded into the recall note
-        (gap LEG-8). <strong>Schedule Appt</strong> is out of scope here (book from the Scheduler).
+        Recall rows with a due date persist via <code>patient-recalls</code> — code, reason, due
+        date, interval, <strong>Int. Type</strong> and <strong>Sched Dt/Time</strong> all have real
+        backend columns and round-trip unchanged. Clearing a saved row's due date removes it.{" "}
+        <strong>Schedule Appt</strong> is out of scope here (book from the Scheduler).
       </GapNotice>
 
       <StepSection

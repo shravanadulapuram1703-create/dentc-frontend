@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { StepSection, GapNotice, YesNoToggle } from "../stepUi";
+import { StepSection, GapNotice } from "../stepUi";
+import TriStateToggle, { TriStateLegend } from "@/components/ui/TriStateToggle";
 import {
   DEFAULT_MEDICAL_ALERT_GROUPS,
   MEDICAL_ALERT_COMMENTS_MAX,
@@ -68,7 +69,7 @@ export default function MedicalAlertsStep({ value, onChange, onCatalog }: Props)
   const answered = allItems.filter((a) => value.responses[a.code]).length;
   const yesCount = allItems.filter((a) => value.responses[a.code] === "yes").length;
 
-  const setResponse = (code: string, ans: "yes" | "no") =>
+  const setResponse = (code: string, ans: "yes" | "no" | "") =>
     onChange({ ...value, responses: { ...value.responses, [code]: ans } });
 
   /** Legacy: "Clicking No to all med alerts will select all `No` checkboxes, but will not override a `Yes`." */
@@ -113,6 +114,9 @@ export default function MedicalAlertsStep({ value, onChange, onCatalog }: Props)
           </div>
         }
       >
+        <div className="flex justify-end mb-2">
+          <TriStateLegend />
+        </div>
         <div className="space-y-4">
           {groups.map((group) => (
             <div key={group.title}>
@@ -135,7 +139,8 @@ export default function MedicalAlertsStep({ value, onChange, onCatalog }: Props)
                     >
                       {a.label}
                     </span>
-                    <YesNoToggle
+                    <TriStateToggle
+                      label={a.label}
                       value={value.responses[a.code] ?? ""}
                       onChange={(ans) => setResponse(a.code, ans)}
                     />

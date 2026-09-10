@@ -49,7 +49,8 @@ export function filterReportRows(rows: TxRow[], opts: ReportOptions): TxRow[] {
     (r) =>
       opts.tids.includes(r.tid) &&
       (opts.phase == null || r.phase === opts.phase) &&
-      opts.statuses.has(r.status) &&
+      // Completed = posted to the ledger (derived); its own "Include completed" toggle.
+      (r.status === 'completed' ? opts.includeCompleted : opts.statuses.has(r.status)) &&
       // "Include without UCR": when unchecked, drop procedures that have no
       // UCR/fee set (fee ≤ 0), matching the legacy report toggle.
       (opts.includeWithoutUcr || r.fee > 0),

@@ -6,7 +6,10 @@ interface ChartGridProps {
   onSelectRow: (id: string) => void;
   onRowDoubleClick?: (id: string) => void;
   loading: boolean;
+  /** Collapsed height cap (the user can drag the grid taller, down to `maxHeightPx` more rows). */
   maxHeightPx?: number;
+  /** Fill the parent (maximized view): the grid takes 100% height and scrolls inside it. */
+  fill?: boolean;
   /** When set, renders a Maximize button in the header (between Description and Th). */
   onMaximize?: () => void;
 }
@@ -21,14 +24,22 @@ const COLS: { key: keyof GridRow | 'n'; label: string; w: string; align?: 'right
   { key: 'surface', label: 'Surf', w: '70px', align: 'center' },
   { key: 'provider', label: 'Prdr', w: '70px' },
   { key: 'est_ins', label: 'Est. Ins.', w: '80px', align: 'right' },
+  { key: 'est_pat', label: 'Pat. Est.', w: '80px', align: 'right' },
   { key: 'fee', label: 'Fee', w: '80px', align: 'right' },
   { key: 'office', label: 'Office', w: '70px' },
   { key: 'n', label: 'N', w: '34px', align: 'center' },
 ];
 
-export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubleClick, loading, maxHeightPx = 170, onMaximize }: ChartGridProps) {
+export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubleClick, loading, maxHeightPx = 200, fill = false, onMaximize }: ChartGridProps) {
+  // The grid is its own scroll container (sticky header stays put). Collapsed:
+  // a fixed cap the user can drag taller via the resize handle. Maximized:
+  // fills the overlay and scrolls within it, so a long transaction list is
+  // never clipped.
+  const box: React.CSSProperties = fill
+    ? { height: '100%', minHeight: 0 }
+    : { height: maxHeightPx, minHeight: 96, maxHeight: '70vh', resize: 'vertical' };
   return (
-    <div className="overflow-auto border-t border-slate-300 bg-white" style={{ maxHeight: maxHeightPx }}>
+    <div className="overflow-auto border-t border-slate-300 bg-white" style={box}>
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
           <tr style={{ background: 'linear-gradient(180deg,#f3f5f8,#dfe4ea)' }}>
@@ -108,6 +119,10 @@ export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubl
                 </tr>
               );
             })
+          )}
+          {/* Trailing spacer so the last row can scroll clear of the bottom edge. */}
+          {!loading && rows.length > 0 && (
+            <tr aria-hidden="true"><td colSpan={COLS.length} style={{ height: 24 }} /></tr>
           )}
         </tbody>
       </table>

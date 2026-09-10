@@ -3,7 +3,7 @@ import type { Arch } from './toothLayout';
 import type { ToothType } from './toothLayout';
 import type { ToothGlyph } from './chartModel';
 import { rgba } from './txPlanModel';
-import { CrownMarks, RootMarks, WholeMarks, PatternDefs } from './chartGlyphs';
+import { CrownMarks, RootMarks, WholeMarks, JunctionMarks, PatternDefs } from './chartGlyphs';
 import { fillDefsFor, segmentFillUrl, isUnknownCode } from './glyphFills';
 
 // Parametric inline vector tooth. Crown / junction / each root are grouped
@@ -101,9 +101,19 @@ export default function ToothShape({
     : hover === key ? { fill: HOVER_FILL, stroke: SEL_RING, strokeWidth: 1 }
     : { fill: 'transparent', stroke: 'transparent', strokeWidth: 0 };
 
+  // A missing tooth is NOT drawn at all — the slot stays empty (same size, so the
+  // arch keeps its columns and the surround remains clickable for charting an
+  // implant / pontic into the space). No faded ghost, no outline.
+  if (missing) {
+    return (
+      <svg width={width} height={height} viewBox="0 0 100 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }} aria-label="Missing tooth">
+        <title>Missing tooth</title>
+      </svg>
+    );
+  }
+
   return (
-    <svg width={width} height={height} viewBox="0 0 100 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'block', opacity: missing ? 0.4 : 1, filter: missing ? 'grayscale(1)' : undefined }}>
+    <svg width={width} height={height} viewBox="0 0 100 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
       <defs>
         <linearGradient id={`${uid}-enamel`} x1="0" y1="0" x2="0.8" y2="1">
           <stop offset="0" stopColor="#ffffff" /><stop offset="0.5" stopColor="#f1f5f8" /><stop offset="1" stopColor="#d6dde3" />
@@ -134,6 +144,7 @@ export default function ToothShape({
         <g id={`${uid}-junction`} {...segProps('junction')}>
           <title>{tooltips.get('junction') || 'Cervical / neck (CEJ)'}</title>
           <path d="M24,86 C40,92 60,92 76,86 L76,98 C60,104 40,104 24,98 Z" fill={fillFor('junction', '#e7d9bf')} stroke="#c0a577" strokeWidth="0.8" />
+          <JunctionMarks glyphs={segmentGlyphs.get('junction')} />
           <path d="M24,86 C40,92 60,92 76,86 L76,98 C60,104 40,104 24,98 Z" {...overlayStyle('junction')} pointerEvents="none" />
         </g>
 

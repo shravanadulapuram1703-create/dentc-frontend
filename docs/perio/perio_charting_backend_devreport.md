@@ -55,7 +55,8 @@ below was observed against the live backend, not inferred.
 | 17 | Per-user chart prefs | `/perio-chart-settings` | ⚠️ No "me", no seed → **PERIO-BE-11** |
 | 18 | "Charted by / on" attribution | `created_by` int only | ⚠️ No name/updated_* → **PERIO-BE-6** |
 | 19 | Per-tooth modified audit | none on detail | ⚠️ No audit cols → **PERIO-BE-5** |
-| 20 | Print / report | none | ⚠️ Client-only → **PERIO-BE-10** |
+| 20 | Print / report | none | ⚠️ Shipped client-side (jsPDF) → **PERIO-BE-10** |
+| 21 | Provider on the exam | none on `PerioExam` | ⚠️ Printed record infers it → **PERIO-BE-14** |
 
 ---
 
@@ -122,7 +123,9 @@ below was observed against the live backend, not inferred.
 - Ask: add `date_from`/`date_to` (and the `is_voided` filter from BE-3).
 
 **PERIO-BE-10 — (Optional) Server-side comparison / summary / print.**
-- Compare-by-Dates aggregation and any PDF/print are client-side.
+- Compare-by-Dates aggregation and the PDF/print are client-side. The **Periodontal Examination
+  Record** print now ships in the frontend (`src/features/perio/perioPrint.ts`, toolbar → Print),
+  rendered with jsPDF from the same in-memory chart the grid draws — so this is no longer blocking.
 - Ask (nice-to-have): a comparison/summary endpoint (pocket-depth deltas across exams) and/or a print/report payload.
 
 **PERIO-BE-11 — Per-user chart settings convenience + defaults.**
@@ -132,6 +135,21 @@ below was observed against the live backend, not inferred.
 **PERIO-BE-12 — Define the `auto_advance` JSON schema on templates.**
 - `PerioChartTemplate.auto_advance` is a free-form `object` with no documented shape; the frontend can't honor template-driven probing order and uses a fixed order.
 - Ask: define and document the `auto_advance` structure (site visiting order per arch/surface).
+
+**PERIO-BE-14 — `PerioExam` has no provider.**
+- The legacy Denticon report prints a **Provider** block (name, address, Tax ID, License#) beside the
+  patient, but `PerioExam` carries only `patient_id`/`office_id` and `created_by` (a *user*, not a
+  provider).
+- **Frontend workaround (in place):** the Perio Chart toolbar now has a **Provider** picker; the
+  selection is what prints. It is seeded from the patient's `preferred_provider_id`, falling back to
+  the office's `billing_provider_id`, and — because there is nowhere on the exam to put it — is
+  persisted **per exam in `localStorage`** (`perio:exam_provider`, see `perioService.ts`). That means
+  the provider on a reprint is only correct on the machine that charted it; another workstation, a
+  cleared profile, or a different user reprinting the same exam falls back to the inferred default.
+- Impact: the sheet is attached to insurance claims, where the rendering provider must be accurate.
+- Ask: add a nullable `provider_id` (FK → `providers`) to `PerioExam` create/read/update, and ideally a
+  resolved `provider_name` on the read model (same treatment as `created_by_name` from BE-6). Once it
+  lands, the frontend deletes the `localStorage` seam — ping this module's owner.
 
 **PERIO-BE-13 — Clarify or deprecate `PerioChartActivity`.**
 - This denormalized legacy log (`perio_type`/`orientation`/`arch`/`quadrant`/`block_no`/`mxy`/`perio_value`, `created_by` as a **string**) has no documented relationship to exams/details and is unused by the new UI.

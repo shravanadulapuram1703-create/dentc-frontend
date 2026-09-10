@@ -20,17 +20,25 @@ export default function SendEmailModal({ isOpen, onClose, patientEmail, patientN
     setEmailData({ ...emailData, body: emailData.body + registrationLink });
   };
 
+  // There is no email-send endpoint on this backend (only /sms-messages and the
+  // tenant communications config) — see gap SCHED-EMAIL-1. Rather than claim a
+  // send that never happened, hand the drafted message to the user's own mail
+  // client, which does deliver it.
   const handleSend = () => {
-    // Log communication
-    console.log('Email sent:', emailData);
-    alert('Email sent successfully and logged to patient communications history.');
+    const to = emailData.to.trim();
+    if (!to) return;
+    const href =
+      `mailto:${encodeURIComponent(to)}` +
+      `?subject=${encodeURIComponent(emailData.subject)}` +
+      `&body=${encodeURIComponent(emailData.body)}`;
+    window.location.href = href;
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60] p-4">
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60] p-4">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl border-2 border-[#E2E8F0]">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between border-b-2 border-[#162942]">

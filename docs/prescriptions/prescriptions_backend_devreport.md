@@ -41,8 +41,19 @@ there is no backend print/export endpoint.
   (subscription heuristic); the action currently only notifies.
 
 - **RX-P4 — No print/export endpoint.** Prescription sheets are rendered
-  client-side; a server-rendered PDF (with full office header/DEA/signature
-  block) would be preferable for compliance.
+  client-side (`rxPrint.ts`) as the legacy Denticon slip — practice letterhead,
+  prescriber DEA/NPI/License, patient block, ℞ body, the DISPENSE AS WRITTEN /
+  VOLUNTARY FORMULARY PERMITTED pair, and the signature line — driven by the
+  PRINT PRESCRIPTION dialog (pre-printed stock, scope, drug count, Wide/Thin).
+  A server-rendered PDF would still be preferable for compliance, since nothing
+  about the printed artifact is currently recorded (see RX-P6).
+
+- **RX-P6 — Nothing records that a prescription was printed.** There is no
+  `printed_at` / `printed_by` / print-audit endpoint on `/prescriptions`, so the
+  practice cannot answer "was this script ever handed to the patient, and by
+  whom" — which is exactly what a controlled-substance audit asks for.
+  Ask: a `POST /prescriptions/{id}/print-log` (or `printed_at`/`printed_by`
+  columns on the read model), written when the slip is generated.
 
 - **RX-P5 — Med Status / Source Status columns** in the legacy grid have no
   backend equivalent beyond `dosespot_status`; omitted.

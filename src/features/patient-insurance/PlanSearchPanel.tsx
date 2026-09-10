@@ -18,6 +18,8 @@ interface Props {
   onGroupNumberChange: (v: string) => void;
   onSelectPlan: (planId: number) => void;
   onAddNew: () => void;
+  /** Open the read-only plan viewer for the currently selected plan. */
+  onViewPlan: () => void;
 }
 
 export default function PlanSearchPanel({
@@ -26,6 +28,7 @@ export default function PlanSearchPanel({
   onGroupNumberChange,
   onSelectPlan,
   onAddNew,
+  onViewPlan,
 }: Props) {
   const [beginsWith, setBeginsWith] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -134,9 +137,10 @@ export default function PlanSearchPanel({
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-[#1F3A5F]">{planDisplay.plan_id ?? "—"}</span>
             <button
+              onClick={onViewPlan}
               disabled={planDisplay.plan_id == null}
               className="ml-auto flex items-center gap-1 px-2 py-1 border-2 border-[#E2E8F0] rounded-md text-[10px] font-bold text-[#475569] hover:bg-[#E8EFF7] disabled:opacity-40"
-              title="View current insurance plan"
+              title={planDisplay.plan_id == null ? "Select a plan first" : "View current insurance plan"}
             >
               <Eye className="w-3 h-3" /> View Plan
             </button>

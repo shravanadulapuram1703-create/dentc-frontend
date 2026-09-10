@@ -13,14 +13,15 @@ import Scheduler from './components/pages/Scheduler';
 import Patient from './components/pages/Patient';
 import PatientShellLayout from './components/PatientShellLayout';
 import PatientOverview from './features/patient-overview/PatientOverviewPage';
-import PatientLedger from './components/pages/PatientLedger';
 import TransactionsEntryPage from './features/transactions/TransactionsEntryPage';
-import AccountLedgerPage from './features/account-ledger/AccountLedgerPage';
+import LedgerPage from './features/account-ledger/LedgerPage';
 import RestorativeChart from './features/restorative/RestorativeChart';
 import PerioChart from './features/perio/PerioChart';
 import TreatmentPlanPage from './features/treatment-plans/TreatmentPlanPage';
 import PrescriptionsPage from './features/prescriptions/PrescriptionsPage';
 import LabTrackingPage from './features/lab-tracking/LabTrackingPage';
+import MedicalHistoryPage from './features/medical-history/MedicalHistoryPage';
+import LettersPage from './features/letters/LettersPage';
 import { InsurancePlanScreen } from './features/patient-insurance';
 import OrthoPaymentPlanPage from './features/payment-plans/OrthoPaymentPlanPage';
 import RegularPaymentPlanPage from './features/payment-plans/RegularPaymentPlanPage';
@@ -38,6 +39,7 @@ import PatientNotesListing from './components/patient/PatientNotesListing';
 import PatientDocuments from './components/patient/PatientDocuments';
 import { ImagingWorkspace } from './features/imaging';
 import EmergencyContacts from './components/patient/EmergencyContacts';
+import { PatientMessagesPage, PatientCommunicationPage } from './features/sms';
 import AddEditPatientNote from './components/patient/AddEditPatientNote';
 import ProgressNotesList from './features/progress-notes/ProgressNotesList';
 import ProgressNoteEditor from './features/progress-notes/ProgressNoteEditor';
@@ -176,8 +178,8 @@ function AppRoutes() {
       >
         {/* Patient Pages */}
         <Route path="overview" element={<PatientOverview />} />
-        <Route path="ledger" element={<PatientLedger />} />
-        <Route path="account-ledger" element={<AccountLedgerPage />} />
+        <Route path="ledger" element={<LedgerPage defaultScope="patient" />} />
+        <Route path="account-ledger" element={<LedgerPage defaultScope="account" />} />
         <Route path="transaction" element={<TransactionsEntryPage />} />
         <Route path="restorative" element={<RestorativeChart />} />
         
@@ -214,9 +216,14 @@ function AppRoutes() {
         <Route path="treatment" element={<TreatmentPlanPage />} />
         <Route path="prescriptions" element={<PrescriptionsPage />} />
         <Route path="lab-tracking" element={<LabTrackingPage />} />
+        <Route path="medical-history" element={<MedicalHistoryPage />} />
         <Route path="documents" element={<PatientDocuments />} />
+        <Route path="letters" element={<LettersPage />} />
         <Route path="imaging" element={<ImagingWorkspace />} />
         <Route path="emergency-contacts" element={<EmergencyContacts />} />
+        {/* Patient SMS — two-way texting inbox + SMS/Email log (src/features/sms) */}
+        <Route path="messages" element={<PatientMessagesPage />} />
+        <Route path="communication" element={<PatientCommunicationPage />} />
         
         {/* Default - Redirect to Overview */}
         <Route index element={<Navigate to="overview" replace />} />

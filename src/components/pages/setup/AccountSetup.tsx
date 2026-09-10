@@ -1095,47 +1095,48 @@ function AdvancedTab({
             </div>
           </div>
 
+          {/* XVWeb / Cloud 9 are the integration endpoints the backend stores
+              (xvweb_url / cloud9_url), so they are edited as URLs. The previous
+              checkboxes were derived from URL presence and could not be saved —
+              a boolean cannot reconstruct a URL (KAN-14). Leaving a field blank
+              clears the integration. */}
           <div className="space-y-4">
             {/* XVWeb */}
             <div>
               <label className="block text-xs font-bold text-[#1E293B] mb-2">
-                XVWeb (Imaging)
+                XVWeb (Imaging) URL
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.xvwebEnabled || false}
-                  onChange={(e) => updateFormData({ xvwebEnabled: e.target.checked })}
-                  disabled={!isEditMode}
-                  className={`w-4 h-4 rounded border-2 ${
-                    isEditMode
-                      ? 'border-[#CBD5E1] text-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
-                      : 'border-[#E2E8F0] opacity-50'
-                  }`}
-                />
-                <span className="text-xs font-bold text-[#1E293B]">Enabled</span>
-              </div>
+              <input
+                type="url"
+                value={formData.xvwebUrl || ''}
+                onChange={(e) => updateFormData({ xvwebUrl: e.target.value })}
+                disabled={!isEditMode}
+                placeholder="e.g., https://2829.dentiray.net"
+                className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
+                  isEditMode
+                    ? 'border-[#CBD5E1] focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
+                    : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
+                }`}
+              />
             </div>
 
             {/* Cloud 9 */}
             <div>
               <label className="block text-xs font-bold text-[#1E293B] mb-2">
-                Cloud 9 (Ortho Software)
+                Cloud 9 (Ortho Software) URL
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.cloud9Enabled || false}
-                  onChange={(e) => updateFormData({ cloud9Enabled: e.target.checked })}
-                  disabled={!isEditMode}
-                  className={`w-4 h-4 rounded border-2 ${
-                    isEditMode
-                      ? 'border-[#CBD5E1] text-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
-                      : 'border-[#E2E8F0] opacity-50'
-                  }`}
-                />
-                <span className="text-xs font-bold text-[#1E293B]">Enabled</span>
-              </div>
+              <input
+                type="url"
+                value={formData.cloud9Url || ''}
+                onChange={(e) => updateFormData({ cloud9Url: e.target.value })}
+                disabled={!isEditMode}
+                placeholder="e.g., https://cloud9ortho.com/practice"
+                className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
+                  isEditMode
+                    ? 'border-[#CBD5E1] focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
+                    : 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
+                }`}
+              />
             </div>
           </div>
         </div>

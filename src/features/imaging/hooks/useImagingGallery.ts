@@ -28,7 +28,7 @@ export const useImagingGallery = (patientId: number): UseImagingGalleryResult =>
   const validId = Number.isFinite(patientId);
 
   const docsQuery = useListPatientDocuments(
-    { patient_id: patientId },
+    { patient_id: patientId, size: LIST_SIZE },
     { query: { enabled: validId } },
   );
 

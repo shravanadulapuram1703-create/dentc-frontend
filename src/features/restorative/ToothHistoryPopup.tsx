@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { GridRow } from './types';
 
 export interface ProgressNoteRow {
@@ -8,14 +9,23 @@ export interface ProgressNoteRow {
   tooth: string;
 }
 
+/** Latest periodontal exam readings for the teeth in view (from the Perio Chart). */
+export interface PerioHistory {
+  /** Display-formatted exam date. */
+  date: string;
+  href: string;
+  findings: { tooth: string; summary: string }[];
+}
+
 interface ToothHistoryPopupProps {
   teeth: string[];
   rows: GridRow[]; // already filtered to these teeth
   progressNotes: ProgressNoteRow[]; // already filtered to these teeth
+  perio?: PerioHistory;
   onClose: () => void;
 }
 
-type HistTab = 'all' | 'pre-existing' | 'ledger' | 'tx-plan' | 'progress';
+type HistTab = 'all' | 'pre-existing' | 'ledger' | 'tx-plan' | 'progress' | 'perio';
 
 const TABS: { key: HistTab; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -23,6 +33,7 @@ const TABS: { key: HistTab; label: string }[] = [
   { key: 'ledger', label: 'Ledger' },
   { key: 'tx-plan', label: 'TxPlan' },
   { key: 'progress', label: 'Progress Notes' },
+  { key: 'perio', label: 'Perio' },
 ];
 
 const matchRow = (tab: HistTab, t: string): boolean => {
@@ -33,10 +44,12 @@ const matchRow = (tab: HistTab, t: string): boolean => {
 };
 
 /** Per-tooth history: All / Pre-Existing / Ledger / TxPlan / Progress Notes. */
-export default function ToothHistoryPopup({ teeth, rows, progressNotes, onClose }: ToothHistoryPopupProps) {
+export default function ToothHistoryPopup({ teeth, rows, progressNotes, perio, onClose }: ToothHistoryPopupProps) {
   const [tab, setTab] = useState<HistTab>('all');
-  const visibleRows = tab === 'progress' ? [] : rows.filter((r) => matchRow(tab, r.type));
+  const visibleRows = tab === 'progress' || tab === 'perio' ? [] : rows.filter((r) => matchRow(tab, r.type));
   const showProgress = tab === 'all' || tab === 'progress';
+  const showPerio = (tab === 'all' || tab === 'perio') && !!perio;
+  const perioRows = showPerio ? perio!.findings.filter((f) => f.summary) : [];
   const label = teeth.map((t) => `#${t}`).join(', ');
 
   return (
@@ -60,7 +73,13 @@ export default function ToothHistoryPopup({ teeth, rows, progressNotes, onClose 
           ))}
         </div>
         <div className="max-h-[320px] overflow-y-auto">
-          {visibleRows.length === 0 && (!showProgress || progressNotes.length === 0) ? (
+          {tab === 'perio' && (
+            <div className="flex items-center justify-between bg-slate-50 px-4 py-1.5 text-[11px] text-slate-600">
+              {perio ? <span>Latest periodontal exam: <b>{perio.date}</b></span> : <span>No periodontal exam on file.</span>}
+              {perio && <Link to={perio.href} className="text-blue-700 underline-offset-2 hover:underline">Open Perio Chart</Link>}
+            </div>
+          )}
+          {visibleRows.length === 0 && (!showProgress || progressNotes.length === 0) && perioRows.length === 0 ? (
             <p className="px-4 py-6 text-center text-xs text-slate-400">No {tab === 'all' ? '' : TABS.find((t) => t.key === tab)?.label + ' '}history for {label}.</p>
           ) : (
             <table className="w-full text-xs">
@@ -96,6 +115,16 @@ export default function ToothHistoryPopup({ teeth, rows, progressNotes, onClose 
                       <td className="px-3 py-1.5 text-slate-600">—</td>
                     </tr>
                   ))}
+                {perioRows.map((f) => (
+                  <tr key={`perio-${f.tooth}`} className="border-b border-slate-100">
+                    <td className="px-3 py-1.5 font-semibold text-emerald-700">PERIO</td>
+                    <td className="px-3 py-1.5 text-slate-600">{perio!.date}</td>
+                    <td className="px-3 py-1.5 text-slate-600">—</td>
+                    <td className="px-3 py-1.5 text-slate-600">{f.summary}</td>
+                    <td className="px-3 py-1.5 text-slate-600">{f.tooth}</td>
+                    <td className="px-3 py-1.5 text-slate-600">—</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}

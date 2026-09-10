@@ -500,3 +500,42 @@ lints clean. Every gap above is either gracefully degraded with an inline notice
 captured-but-unstored, so nothing crashes. Once §0 is fixed we can live-verify the
 whole flow end-to-end; LEG-10/11/12/13 are the highest-value follow-ups because they
 unblock the legacy "Add a Dependent" workflow.
+
+---
+
+## Checkbox-group consistency (frontend, 2026-08-20)
+
+**Symptom:** on both the create and the edit path (both render from
+`src/components/pages/AddNewPatient.tsx`) every box in **Patient Status**,
+**Coverage Type** and **Patient Type** was independent, so the form accepted
+states that cannot all be true — e.g. all five Coverage Types ticked at once, or
+a patient marked both `CH – Child` and `SR – Senior Citizen`.
+
+**Fix:** every click now routes through
+`src/features/add-patient/patientFlagRules.ts`, which ticks what a choice implies
+and clears what it contradicts. Records loaded for editing are normalised through
+the same rules before the form renders, so a row saved before this change cannot
+display an impossible combination.
+
+| Group | Rule |
+|-------|------|
+| Coverage | Coverage is a partition — either **No Coverage**, or one or more specific coverages, never both and never neither. Clearing the last specific coverage falls back to No Coverage; No Coverage cannot be un-ticked into an empty state (pick a coverage to clear it). |
+| Coverage | **Secondary Dental / Medical** implies its **Primary** — ticking a secondary ticks the primary, un-ticking a primary drops its secondary. |
+| Status | **No Correspondence** is the umbrella over the automated channels: ticking it ticks **No Auto Email** + **No Auto SMS**; re-enabling either channel clears the umbrella. |
+| Status | **Add Patient to Quick-Fill List** requires **Active** — ticking Quick-Fill makes the patient active; un-ticking Active drops and locks Quick-Fill. |
+| Status ↔ Coverage | **Assign Benefits to Patient** only applies with insurance — it clears and locks while the patient has **No Coverage**. |
+| Patient Type | `CH – Child` and `SR – Senior Citizen` are mutually exclusive; ticking one clears the other. |
+
+Locked boxes are greyed and carry a `title` explaining the condition rather than
+silently ignoring clicks.
+
+**Note — dead code:** `src/components/modals/EditPatientModal.tsx` and
+`src/components/modals/EditPatientModalRefactored.tsx` carry an older copy of
+these same panels (with *no* exclusivity at all on Coverage Type) but are
+imported by nothing. They were left untouched; delete them or fold them in
+before either is ever wired up.
+
+**No backend gap.** Every flag involved already exists on `PatientCreate` /
+`PatientUpdate` (`is_active`, `assign_benefits`, `no_correspondence`,
+`no_auto_email`, `no_auto_sms`, `add_to_quickfill`, `patient_types`) — this was
+purely a frontend validation gap.

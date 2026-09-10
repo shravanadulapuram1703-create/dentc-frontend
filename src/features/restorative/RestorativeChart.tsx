@@ -1,33 +1,44 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   useListChartConditions,
   useCreateChartCondition,
   useUpdateChartCondition,
   useDeleteChartCondition,
   useListPatientProcedures,
-  useCreatePatientProcedure,
   useListProgressNotes,
   useCreateProgressNote,
+  useListPerioExams,
+  useListPerioExamDetails,
   getListChartConditionsQueryKey,
-  getListPatientProceduresQueryKey,
   getListProgressNotesQueryKey,
 } from '@/api/generated/endpoints/clinical/clinical';
 import { useListChartMaterials } from '@/api/generated/endpoints/procedures/procedures';
 import { uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
 import {
   useListTreatmentPlans,
-  useCreateTreatmentPlan,
   useListTreatmentPlanItems,
-  useCreateTreatmentPlanItem,
-  getListTreatmentPlanItemsQueryKey,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
-import { useListProviders } from '@/api/generated/endpoints/organization/organization';
+import {
+  ensureTreatmentPlan,
+  isPlanItemPosted,
+  planProcedure,
+  postCompletedProcedure,
+  postPlanItemToLedger,
+  postedProcedureKeys,
+  todayIso,
+} from '@/features/procedures/procedureEntryService';
+import { announceProcedureChange, useProcedureSync } from '@/features/procedures/procedureSync';
+import { loadFeeScheduleContext, EMPTY_FEE_CONTEXT, type FeeScheduleContext } from '@/services/feeScheduleResolver';
+import { loadCoverageContext, EMPTY_COVERAGE_CONTEXT, type CoverageContext } from '@/services/coverageResolver';
+import PostToLedgerDialog from './PostToLedgerDialog';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import type { ChartConditionRead, ChartMaterialRead, PatientProcedureRead, ProviderRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import AddAdaCodeModal, { type AdaEntry } from './AddAdaCodeModal';
 import InsuranceBenefitsModal from './InsuranceBenefitsModal';
-import { activePlan, genId, buildOverlayGlyphs, toothHasCode, SOURCE_COLOR, rgba, type ChartSource } from './txPlanModel';
+import { activePlan, buildOverlayGlyphs, toothHasCode, SOURCE_COLOR, rgba, type ChartSource } from './txPlanModel';
 import { loadProcedureCodes } from '@/components/setup/insurance/procedureCodeService';
 import type { ProcedureCodeRead } from '@/api/generated/model';
 import type { SurfaceKey } from './toothLayout';
@@ -60,6 +71,9 @@ import {
   upperTeeth, lowerTeeth, toothMeta, defaultDentition, isPrimaryId, toothSide, type DentitionMode,
 } from './dentition';
 import { toothAnatomy } from './toothAnatomy';
+import { summariseDraft, type PerioToothFindings } from '@/features/charting/toothStatusBridge';
+import { draftFromRead } from '@/features/perio/perioModel';
+import { examDateLabel } from '@/features/perio/perioService';
 import type { RestorationTemplate } from './restorationTemplates';
 import type { ActiveSelection, ChartTab, GridRow, PaletteItem, ToothArea } from './types';
 
@@ -101,15 +115,52 @@ export default function RestorativeChart() {
   const createCondition = useCreateChartCondition();
   const updateCondition = useUpdateChartCondition();
   const deleteCondition = useDeleteChartCondition();
-  const createProcedure = useCreatePatientProcedure();
   const createProgressNote = useCreateProgressNote();
-  const createPlan = useCreateTreatmentPlan();
-  const createPlanItem = useCreateTreatmentPlanItem();
 
   const plansQuery = useListTreatmentPlans({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
-  const providersQuery = useListProviders({ size: 200 });
   const plans = useMemo(() => plansQuery.data?.items ?? [], [plansQuery.data]);
-  const providers = useMemo<ProviderRead[]>(() => providersQuery.data?.items ?? [], [providersQuery.data]);
+
+  // Procedures posted / planned on the Transactions, Ledger or Treatment Plan
+  // screens (or in another tab) refresh this chart's caches automatically.
+  useProcedureSync(validId ? numericId : null);
+
+  // ---- Perio chart integration (read side) --------------------------------
+  // The latest live periodontal exam is summarised per tooth so the restorative
+  // chart can flag teeth with deep pockets / bleeding and show the readings in
+  // Tooth History. (The write side — perio findings → MOBILITY / FURCATION /
+  // RECESSION conditions — is done by the Perio Chart; they arrive here as
+  // ordinary chart_conditions rows tagged `src=perio`.)
+  const perioExamsQuery = useListPerioExams({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
+  const latestPerioExam = useMemo(
+    () => [...(perioExamsQuery.data?.items ?? [])].filter((e) => !e.is_voided).sort((a, b) => b.exam_date.localeCompare(a.exam_date))[0] ?? null,
+    [perioExamsQuery.data],
+  );
+  const perioDetailsQuery = useListPerioExamDetails({ exam_id: latestPerioExam?.id, size: 200 }, { query: { enabled: !!latestPerioExam } });
+  const perioByTooth = useMemo(() => {
+    const m = new Map<string, PerioToothFindings>();
+    for (const d of perioDetailsQuery.data?.items ?? []) m.set(d.tooth_no, summariseDraft(draftFromRead(d)));
+    return m;
+  }, [perioDetailsQuery.data]);
+  const perioDate = latestPerioExam ? examDateLabel(latestPerioExam.exam_date) : '';
+  const perioSummary = (f: PerioToothFindings): string => [
+    f.max_pd != null ? `PD max ${f.max_pd} mm` : null,
+    f.bleeding_sites ? `BOP ${f.bleeding_sites} site${f.bleeding_sites === 1 ? '' : 's'}` : null,
+    f.suppuration_sites ? `Suppuration ${f.suppuration_sites}` : null,
+    f.mobility ? `Mobility ${f.mobility}` : null,
+    f.furcation ? `Furcation class ${f.furcation}` : null,
+    f.recession ? `Recession ${f.recession} mm` : null,
+  ].filter(Boolean).join(' · ');
+  /** Per-tooth perio hint for the tooth-number cell: text + whether it warrants a red flag. */
+  const perioHint = (id: string): { text: string; alert: boolean } | null => {
+    const f = perioByTooth.get(id);
+    if (!f) return null;
+    const text = perioSummary(f);
+    if (!text) return null;
+    const alert = (f.max_pd != null && f.max_pd >= 4) || f.bleeding_sites > 0 || f.suppuration_sites > 0 || f.mobility >= 2 || f.furcation >= 2;
+    return { text: `Perio ${perioDate}: ${text}`, alert };
+  };
+  // Shared provider directory — same list, order and labels as every other screen.
+  const { providerRows: providers } = useProviderDirectory();
 
   // Timeline filter: when a from/to range is set, every charted source (conditions,
   // procedures, plan items, progress notes) is limited to that window.
@@ -156,9 +207,10 @@ export default function RestorativeChart() {
   const [adaModal, setAdaModal] = useState<{ teeth: string[]; surface: string | null; presetQuery?: string; presetLabel?: string } | null>(null);
   const [insuranceType, setInsuranceType] = useState<'primary' | 'secondary' | null>(null);
   const [gridMax, setGridMax] = useState(false);
+  const [showPost, setShowPost] = useState(false);
   // Per-tab toolbar metadata (Completed = transaction date; Tx Plans = proposal
   // date, phase, hide-unaccepted) + the shared preferred provider/hygienist.
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   const [tranDate, setTranDate] = useState(today);
   const [propDate, setPropDate] = useState(today);
   const [prefProvider, setPrefProvider] = useState('');
@@ -168,19 +220,59 @@ export default function RestorativeChart() {
 
   useEffect(() => { loadProcedureCodes().then(setCodeMap).catch(() => {}); }, []);
 
+  // Billing contexts, loaded once per patient: the fee schedules in force
+  // (Setup → Insurance → Fee Schedules; office/provider/plan assignments) and the
+  // primary plan's coverage rules. Every ADA code picked is priced from these.
+  const [feeCtx, setFeeCtx] = useState<FeeScheduleContext>(EMPTY_FEE_CONTEXT);
+  const [coverageCtx, setCoverageCtx] = useState<CoverageContext>(EMPTY_COVERAGE_CONTEXT);
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    loadFeeScheduleContext({ patient_id: numericId, office_id: officeId, provider_id: prefProvider || null })
+      .then((ctx) => alive && setFeeCtx(ctx))
+      .catch(() => alive && setFeeCtx(EMPTY_FEE_CONTEXT));
+    return () => { alive = false; };
+  }, [validId, numericId, officeId, prefProvider]);
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    loadCoverageContext({ patient_id: numericId })
+      .then((ctx) => alive && setCoverageCtx(ctx))
+      .catch(() => alive && setCoverageCtx(EMPTY_COVERAGE_CONTEXT));
+    return () => { alive = false; };
+  }, [validId, numericId]);
+
   // Active treatment plan (default = highest), overridable by the plan selector.
   const currentPlan = useMemo(() => (planId ? plans.find((p) => p.id === planId) ?? activePlan(plans) : activePlan(plans)), [plans, planId]);
   const planItemsQuery = useListTreatmentPlanItems(
     { plan_id: currentPlan?.id, size: 200 },
     { query: { enabled: !!currentPlan } },
   );
+  // A planned item that has been posted to the ledger is represented by the
+  // COMPLETED charge it became (linked back via `treatment_plan_id`), so it no
+  // longer shows as a TX-PLAN row — legacy behaviour when a plan item completes.
+  // Same predicate the Treatment Plan page uses to show the item as Completed.
+  const postedKeys = useMemo(
+    () => postedProcedureKeys(proceduresQuery.data?.items ?? [], currentPlan?.id),
+    [proceduresQuery.data, currentPlan],
+  );
+  const isPosted = (it: TreatmentPlanItemRead) => isPlanItemPosted(it, postedKeys);
+
   const planItems = useMemo<TreatmentPlanItemRead[]>(
     () => (planItemsQuery.data?.items ?? [])
+      .filter((it) => !it.is_archived && !isPosted(it))
       .filter((it) => (referredOut ? true : (it.status ?? '').toLowerCase() !== 'referred-out'))
       .filter((it) => (hideUnaccepted ? !/unaccept|propos|pending/i.test(it.status ?? '') : true))
       .filter((it) => (phase === 'ALL' ? true : String(it.priority) === phase))
       .filter((it) => inRange(it.created_at, timelineFrom, timelineTo)),
-    [planItemsQuery.data, referredOut, hideUnaccepted, phase, timelineFrom, timelineTo],
+    [planItemsQuery.data, referredOut, hideUnaccepted, phase, timelineFrom, timelineTo, postedKeys], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  // Everything on the active plan that can still be charged (Post… dialog).
+  const postableItems = useMemo<TreatmentPlanItemRead[]>(
+    () => (planItemsQuery.data?.items ?? [])
+      .filter((it) => !it.is_archived && !isPosted(it))
+      .filter((it) => !/referred/i.test(it.status ?? '')),
+    [planItemsQuery.data, postedKeys], // eslint-disable-line react-hooks/exhaustive-deps
   );
   // Phase options = the distinct priorities present on the active plan's items.
   const phaseOptions = useMemo(
@@ -237,6 +329,7 @@ export default function RestorativeChart() {
         surface: c.surface ?? '',
         provider: c.provider_id ?? '',
         est_ins: '$0.00',
+        est_pat: '$0.00',
         fee: '$0.00',
         office: officeId != null ? `O${officeId}` : '',
         notes: c.notes ?? undefined,
@@ -249,11 +342,12 @@ export default function RestorativeChart() {
       date: fmtDate(p.date_of_service),
       status: p.is_void ? 'V' : 'C',
       code: p.procedure_code,
-      description: p.procedure_code,
+      description: codeMap.get(p.procedure_code)?.description ?? p.procedure_code,
       tooth: p.tooth ?? '',
       surface: p.surface ?? '',
       provider: p.provider_id ?? '',
       est_ins: money(p.insurance_estimate),
+      est_pat: money(p.patient_estimate),
       fee: money(p.fee),
       office: `O${p.office_id}`,
     }));
@@ -267,8 +361,9 @@ export default function RestorativeChart() {
       description: it.description ?? codeMap.get(it.procedure_code)?.description ?? it.procedure_code,
       tooth: it.tooth ?? '',
       surface: it.surface ?? '',
-      provider: it.diagnosed_by ?? '',
+      provider: it.provider_id ?? it.diagnosed_by ?? '',
       est_ins: money(it.insurance_estimate),
+      est_pat: money(String(Math.max(0, (parseFloat(it.fee) || 0) - (parseFloat(it.insurance_estimate) || 0)))),
       fee: money(it.fee),
       office: officeId != null ? `O${officeId}` : '',
     }));
@@ -319,7 +414,7 @@ export default function RestorativeChart() {
       }
       await createProgressNote.mutateAsync({
         data: {
-          patient_id: numericId, office_id: officeId, note_date: new Date().toISOString().slice(0, 10),
+          patient_id: numericId, office_id: officeId, note_date: todayIso(),
           notes: text,
           notes_html: JSON.stringify({ type: 'rx-draw', strokes, doc_id }),
         },
@@ -406,7 +501,7 @@ export default function RestorativeChart() {
               region: encodeRegion({ grade: opts?.grade, sub: opts?.sub, rctfill: opts?.rctfill, root }),
               material_id: opts?.materialId ?? null, condition_code: code,
               chart_as: CHART_AS[paletteTab], description,
-              activity_date: new Date().toISOString().slice(0, 10), is_inactive: false,
+              activity_date: todayIso(), is_inactive: false,
             },
           }),
         ),
@@ -452,12 +547,11 @@ export default function RestorativeChart() {
   const ensurePlan = async (): Promise<string> => {
     if (currentPlan) return currentPlan.id;
     if (planRef.current) return planRef.current;
-    const id = genId();
-    await createPlan.mutateAsync({ data: { id, patient_id: numericId, office_id: officeId, name: 'Treatment Plan 1', status: 'active' } });
-    planRef.current = id;
-    setPlanId(id);
-    queryClient.invalidateQueries({ queryKey: ['listTreatmentPlans'] });
-    return id;
+    const { plan_id, created } = await ensureTreatmentPlan({ patient_id: numericId, office_id: officeId, plans, name: 'Treatment Plan 1' });
+    planRef.current = plan_id;
+    setPlanId(plan_id);
+    if (created) announceProcedureChange({ patient_id: numericId, kinds: ['plan'] });
+    return plan_id;
   };
 
   const openAda = (presetQuery: string, presetLabel: string) => {
@@ -480,28 +574,71 @@ export default function RestorativeChart() {
     });
   };
 
+  // Both tabs go through the shared procedure-entry service, so a charge or a
+  // planned item created here is identical to one created on the Transactions
+  // Entry, Ledger or Treatment Plan screens — and those screens refresh.
   const onAddAda = async (e: AdaEntry) => {
     if (paletteTab === 'completed') {
-      await createProcedure.mutateAsync({
-        data: {
-          id: genId(), patient_id: numericId, office_id: officeId ?? 0, procedure_code: e.procedure_code,
-          date_of_service: tranDate, provider_id: e.provider_id || prefProvider || '',
-          tooth: e.tooth, surface: e.surface || null, fee: e.fee, insurance_estimate: e.insurance_estimate,
-        },
+      // Completed = a charge on the ledger, carrying the fee-schedule fee and the
+      // insurance / patient split exactly as quoted in the pop-out. If the same
+      // code/tooth is still planned, that planned item is completed by it.
+      const result = await postCompletedProcedure({
+        patient_id: numericId,
+        office_id: officeId ?? 0,
+        procedure_code: e.procedure_code,
+        date_of_service: tranDate,
+        provider_id: e.provider_id || prefProvider || '',
+        hygienist_id: prefHygienist || null,
+        tooth: e.tooth,
+        surface: e.surface || null,
+        quadrant: e.quadrant ?? null,
+        material_id: e.material_id ?? null,
+        fee: e.fee,
+        insurance_estimate: e.insurance_estimate,
+        patient_estimate: e.patient_estimate,
+        ucr_fee: e.ucr_fee,
+        plan_items: planItemsQuery.data?.items,
       });
-      queryClient.invalidateQueries({ queryKey: getListPatientProceduresQueryKey({ patient_id: numericId, size: 200 }) });
+      if (result.plan_item) toast.success(`${e.procedure_code} completed the planned procedure on the treatment plan`);
     } else {
       const plan_id = await ensurePlan();
-      await createPlanItem.mutateAsync({
-        data: {
-          id: genId(), plan_id, procedure_code: e.procedure_code, description: e.description,
-          tooth: e.tooth, surface: e.surface || null, fee: e.fee, insurance_estimate: e.insurance_estimate,
-          status: 'diagnosed', priority: phase === 'ALL' ? 1 : Number(phase) || 1,
-        },
+      const priority = phase === 'ALL' ? 1 : Number(phase) || 1;
+      await planProcedure({
+        patient_id: numericId,
+        office_id: officeId,
+        plan_id,
+        procedure_code: e.procedure_code,
+        description: e.description,
+        tooth: e.tooth,
+        surface: e.surface || null,
+        fee: e.fee,
+        insurance_estimate: e.insurance_estimate,
+        priority,
+        phase_id: priority,
+        provider_id: prefProvider || null,
+        diagnosed_date: propDate,
       });
-      queryClient.invalidateQueries({ queryKey: getListTreatmentPlanItemsQueryKey({ plan_id, size: 200 }) });
     }
   };
+
+  /**
+   * Post one planned procedure to the ledger: create the charge (linked to the
+   * plan via `treatment_plan_id`) and mark the plan item accepted with the
+   * posting date as its end date. The COMPLETED row then replaces the TX-PLAN row.
+   * Screens are notified once, after the whole batch (see onDone below).
+   */
+  const postPlanItem = async (it: TreatmentPlanItemRead, provider_id: string, date: string) => {
+    await postPlanItemToLedger({
+      patient_id: numericId,
+      office_id: officeId ?? 0,
+      item: it,
+      provider_id,
+      date_of_service: date,
+      hygienist_id: prefHygienist || null,
+      announce: false,
+    });
+  };
+  const refreshAfterPost = () => announceProcedureChange({ patient_id: numericId, kinds: ['procedure', 'plan_item'] });
 
   const applyPaletteItem = (item: PaletteItem) => {
     if (item.action === 'open-legend') { setShowLegend(true); return; }
@@ -527,7 +664,7 @@ export default function RestorativeChart() {
     if (!validId) return;
     const rows = expandTemplate(
       template,
-      { patient_id: numericId, office_id: officeId, activity_date: new Date().toISOString().slice(0, 10), chart_as: CHART_AS[paletteTab] },
+      { patient_id: numericId, office_id: officeId, activity_date: todayIso(), chart_as: CHART_AS[paletteTab] },
       materialIdByNameResolver(materials),
     );
     try {
@@ -547,7 +684,7 @@ export default function RestorativeChart() {
           patient_id: numericId, office_id: officeId, tooth: watchTooth, area: 'whole',
           condition_code: 'WATCH', description: 'Watch', chart_as: CHART_AS[paletteTab],
           region: encodeRegion({ dir: watchDir, wx: watchPos.x, wy: watchPos.y }),
-          notes: note || null, activity_date: new Date().toISOString().slice(0, 10), is_inactive: false,
+          notes: note || null, activity_date: todayIso(), is_inactive: false,
         },
       });
       invalidate();
@@ -583,7 +720,7 @@ export default function RestorativeChart() {
       await Promise.all(existing.map((c) => deleteCondition.mutateAsync({ itemId: c.id })));
       if (note) {
         await createCondition.mutateAsync({
-          data: noteCreateBody(tooth, note, { patient_id: numericId, office_id: officeId, activity_date: new Date().toISOString().slice(0, 10) }),
+          data: noteCreateBody(tooth, note, { patient_id: numericId, office_id: officeId, activity_date: todayIso() }),
         });
       }
       invalidate();
@@ -651,6 +788,7 @@ export default function RestorativeChart() {
     blockSelected: (id: string) => !!selection?.teeth.includes(id),
     hoveredTooth,
     onHoverTooth: setHoveredTooth,
+    perioHint,
     onSelectZone: selectZone, onToggleSurface: toggleSurface,
     numberingSystem: settings.numbering_system, occlusalVisible: settings.occlusal_visible, edentulous: settings.edentulous,
     watchPlacement: (id: string) =>
@@ -734,7 +872,9 @@ export default function RestorativeChart() {
               <input type="checkbox" checked={hideUnaccepted} onChange={(e) => setHideUnaccepted(e.target.checked)} /> Hide Unaccepted
             </label>
             <button onClick={() => navigate('/scheduler')} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50">New Appt.</button>
-            <button onClick={() => navigate(`/patient/${patientId}/ledger`)} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50">Post…</button>
+            <button onClick={() => setShowPost(true)} disabled={!currentPlan || postableItems.length === 0}
+              title={postableItems.length ? `Post ${postableItems.length} planned procedure(s) to the ledger` : 'No planned procedures to post'}
+              className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Post…</button>
             <button onClick={() => setReferredOut(true)} title="Mark plan items referred out" className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50">Refer To</button>
           </>
         )}
@@ -770,7 +910,9 @@ export default function RestorativeChart() {
           </div>
 
           {/* Bottom transaction table — the Maximize button lives in the header (front). */}
-          <div className="shrink-0">
+          {/* Breathing room under the grid so its last rows never sit on the
+              viewport edge (or under the floating Help / chat buttons). */}
+          <div className="shrink-0 pb-10">
             <ChartGrid rows={gridRows} selectedRowId={selectedRowId} onSelectRow={setSelectedRowId} onRowDoubleClick={openEdit} loading={loading} onMaximize={() => setGridMax(true)} />
           </div>
 
@@ -787,8 +929,8 @@ export default function RestorativeChart() {
                   <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 8l5 5 5-5" /></svg> Restore Chart
                 </button>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <ChartGrid rows={gridRows} selectedRowId={selectedRowId} onSelectRow={setSelectedRowId} onRowDoubleClick={openEdit} loading={loading} maxHeightPx={10000} />
+              <div className="min-h-0 flex-1 overflow-hidden pb-10">
+                <ChartGrid rows={gridRows} selectedRowId={selectedRowId} onSelectRow={setSelectedRowId} onRowDoubleClick={openEdit} loading={loading} fill />
               </div>
             </div>
           )}
@@ -801,7 +943,19 @@ export default function RestorativeChart() {
       </div>
 
       {showLegend && <LegendOverlay onClose={() => setShowLegend(false)} />}
-      {historyTeeth && <ToothHistoryPopup teeth={historyTeeth} rows={historyRows} progressNotes={historyProgress} onClose={() => setHistoryTeeth(null)} />}
+      {historyTeeth && (
+        <ToothHistoryPopup
+          teeth={historyTeeth}
+          rows={historyRows}
+          progressNotes={historyProgress}
+          perio={latestPerioExam ? {
+            date: perioDate,
+            href: `/patient/${patientId}/perio`,
+            findings: historyTeeth.map((t) => ({ tooth: t, summary: perioByTooth.has(t) ? perioSummary(perioByTooth.get(t)!) : '' })),
+          } : undefined}
+          onClose={() => setHistoryTeeth(null)}
+        />
+      )}
       {showTemplates && <TemplatePicker onApply={applyTemplate} onClose={() => setShowTemplates(false)} />}
       {pendingMaterial && (
         <MaterialPicker conditionLabel={pendingMaterial.description} materials={materials} onPick={onPickMaterial} onClose={() => setPendingMaterial(null)} />
@@ -847,14 +1001,36 @@ export default function RestorativeChart() {
       {adaModal && (
         <AddAdaCodeModal
           mode={paletteTab === 'completed' ? 'completed' : 'tx-plans'}
+          officeId={officeId}
           teeth={adaModal.teeth}
           surface={adaModal.surface}
           providers={providers}
           defaultProviderId={prefProvider}
           presetQuery={adaModal.presetQuery}
           presetLabel={adaModal.presetLabel}
+          feeCtx={feeCtx}
+          coverageCtx={coverageCtx}
+          serviceDate={paletteTab === 'completed' ? tranDate : propDate}
           onAdd={onAddAda}
           onClose={() => { setAdaModal(null); setSelection(null); }}
+        />
+      )}
+      {showPost && currentPlan && (
+        <PostToLedgerDialog
+          planLabel={currentPlan.name || currentPlan.id}
+          items={postableItems}
+          providers={providers}
+          defaultProviderId={prefProvider}
+          codeMap={codeMap}
+          defaultDate={today}
+          postOne={postPlanItem}
+          onDone={(o) => {
+            refreshAfterPost();
+            if (o.posted) toast.success(`Posted ${o.posted} procedure${o.posted === 1 ? '' : 's'} to the ledger`);
+            if (o.failed.length) toast.error(`${o.failed.length} procedure(s) failed to post`);
+          }}
+          onOpenLedger={() => navigate(`/patient/${patientId}/ledger`)}
+          onClose={() => setShowPost(false)}
         />
       )}
       {insuranceType && (
@@ -884,6 +1060,8 @@ interface ArchProps {
   blockSelected: (id: string) => boolean;
   hoveredTooth: string | null;
   onHoverTooth: (id: string | null) => void;
+  /** Latest perio-exam findings for the tooth (tooltip + red flag on the number cell). */
+  perioHint: (id: string) => { text: string; alert: boolean } | null;
   onSelectZone: (id: string, area: ToothArea, root?: string) => void;
   onToggleSurface: (id: string, s: SurfaceKey) => void;
   onSelectArch: () => void;
@@ -898,7 +1076,7 @@ interface ArchProps {
 const COL = 72; // tooth column width (wider teeth)
 
 function Arch(props: ArchProps) {
-  const { teeth, selColor, byTooth, figureArea, figureRoots, surfaceSel, wholeSelected, blockSelected, hoveredTooth, onHoverTooth, onSelectZone, onToggleSurface, onSelectArch, numberingSystem, occlusalVisible, edentulous, watchPlacement, onWatchClick, numbersFirst } = props;
+  const { teeth, selColor, byTooth, figureArea, figureRoots, surfaceSel, wholeSelected, blockSelected, hoveredTooth, onHoverTooth, perioHint, onSelectZone, onToggleSurface, onSelectArch, numberingSystem, occlusalVisible, edentulous, watchPlacement, onWatchClick, numbersFirst } = props;
   const EMPTY: ToothState = { surfaces: new Set(), surfaceGlyphs: new Map(), glyphs: [], missing: false, groups: new Set() };
   // Selected whole-tooth → block outline in the active module's colour across the
   // column's 3 cells; hovered tooth → a light "tooltip" rectangle. Cells touch so
@@ -934,20 +1112,32 @@ function Arch(props: ArchProps) {
   const numbers = (
     <div className="flex items-stretch">
       <ArchButton onClick={onSelectArch} />
-      {teeth.map((id, idx) => (
-        <Fragment key={id}>
-          {idx === midIndex && <Mid />}
-          <div className="mx-0.5 flex-1" style={{ minWidth: COL, ...cellStyle(id, 'top') }} {...hov(id)}>
-            <button
-              onClick={() => onSelectZone(id, 'whole')}
-              className="w-full rounded-sm border py-0.5 text-center text-[11px] font-semibold"
-              style={{ borderColor: wholeSelected(id) ? selColor : '#cbd5e1', background: wholeSelected(id) ? rgba(selColor, 0.16) : 'linear-gradient(180deg,#f8fafc,#e2e8f0)', color: '#475569' }}
-            >
-              {displayLabel(id, numberingSystem)}
-            </button>
-          </div>
-        </Fragment>
-      ))}
+      {teeth.map((id, idx) => {
+        const perio = perioHint(id);
+        return (
+          <Fragment key={id}>
+            {idx === midIndex && <Mid />}
+            <div className="relative mx-0.5 flex-1" style={{ minWidth: COL, ...cellStyle(id, 'top') }} {...hov(id)}>
+              <button
+                onClick={() => onSelectZone(id, 'whole')}
+                title={perio?.text}
+                className="w-full rounded-sm border py-0.5 text-center text-[11px] font-semibold"
+                style={{ borderColor: wholeSelected(id) ? selColor : '#cbd5e1', background: wholeSelected(id) ? rgba(selColor, 0.16) : 'linear-gradient(180deg,#f8fafc,#e2e8f0)', color: '#475569' }}
+              >
+                {displayLabel(id, numberingSystem)}
+              </button>
+              {/* Perio flag: red = deep pocket / bleeding / mobility on the latest exam, green = probed, healthy. */}
+              {perio && (
+                <span
+                  title={perio.text}
+                  className="pointer-events-none absolute right-0.5 top-0.5 h-2 w-2 rounded-full ring-1 ring-white"
+                  style={{ background: perio.alert ? '#dc2626' : '#16a34a' }}
+                />
+              )}
+            </div>
+          </Fragment>
+        );
+      })}
     </div>
   );
 
@@ -997,11 +1187,17 @@ function Arch(props: ArchProps) {
         const meta = toothMeta(id);
         // const big = idx < 3 || idx >= teeth.length - 3;
         const big = true;
+        const size = big ? 42 : 32;
+        // A missing tooth has no surfaces to chart: the wheel is removed along
+        // with the tooth (an implant in the space keeps it, like the tooth).
+        const gone = (st.missing || edentulous) && !st.glyphs.some((g) => /IMPLANT/i.test(g.code));
         return (
           <Fragment key={id}>
             {idx === midIndex && <Mid />}
             <div className="mx-0.5 flex flex-1 justify-center py-1" style={{ minWidth: COL, ...cellStyle(id, surfPos) }} {...hov(id)}>
-              <SurfaceSelector id={id} mesialOnRight={meta.mesialOnRight} posterior={meta.posterior} selected={surfaceSel(id)} surfaceGlyphs={st.surfaceGlyphs} onToggle={onToggleSurface} selColor={selColor} size={big ? 42 : 32} />
+              {gone
+                ? <div style={{ width: size, height: size }} aria-label={`Tooth ${id} missing`} />
+                : <SurfaceSelector id={id} mesialOnRight={meta.mesialOnRight} posterior={meta.posterior} selected={surfaceSel(id)} surfaceGlyphs={st.surfaceGlyphs} onToggle={onToggleSurface} selColor={selColor} size={size} />}
             </div>
           </Fragment>
         );

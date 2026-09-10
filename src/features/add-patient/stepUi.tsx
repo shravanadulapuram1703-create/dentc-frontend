@@ -97,32 +97,9 @@ export function SelectField({
   );
 }
 
-/** Yes / No segmented toggle used by alerts + questionnaires. */
-export function YesNoToggle({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: "yes" | "no") => void;
-}) {
-  return (
-    <div className="inline-flex rounded-lg border border-[#E2E8F0] overflow-hidden">
-      {(["yes", "no"] as const).map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(opt)}
-          className={`px-3 py-1 text-sm font-medium transition-colors ${
-            value === opt
-              ? opt === "yes"
-                ? "bg-[#EF4444] text-white"
-                : "bg-[#2FB9A7] text-white"
-              : "bg-white text-[#64748B] hover:bg-[#F1F5F9]"
-          }`}
-        >
-          {opt === "yes" ? "Yes" : "No"}
-        </button>
-      ))}
-    </div>
-  );
-}
+// The alert / questionnaire answer control lives in
+// `@/components/ui/TriStateToggle` so this wizard and the Patient Medical
+// History screen share one implementation. The two-state Yes/No toggle that
+// used to live here could not express legacy's third state (NOT ANSWERED), so
+// a mis-click on a wizard row could not be undone without clearing the whole
+// step — and the two screens disagreed about what a blank answer meant.

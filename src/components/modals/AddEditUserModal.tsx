@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import {
+  formatUSPhone,
+  phoneDigits,
+  isPartialUSPhone,
+  US_PHONE_MAX_LENGTH,
+} from "@/utils/phone";
+import {
   X,
   User,
   Shield,
@@ -445,7 +451,7 @@ export default function AddEditUserModal({
         firstName: loadedUserData.first_name ?? "",
         lastName: loadedUserData.last_name ?? "",
         email: loadedUserData.email ?? "",
-        phone: loadedUserData.phone ?? "",
+        phone: formatUSPhone(loadedUserData.phone),
         shortId: loadedUserData.short_id ?? "",
         reportAccessProviderId: loadedUserData.report_access_provider_id ?? "",
         custom1: loadedUserData.custom_1 ?? "",
@@ -522,6 +528,23 @@ export default function AddEditUserModal({
     "roles",
   ];
 
+  /** What each required field is called on screen — never the state key. */
+  const FIELD_LABELS: Record<string, string> = {
+    username: "Username",
+    firstName: "First Name",
+    lastName: "Last Name",
+    email: "Email",
+    homeOffice: "Home Office",
+    roles: "User Role / Type",
+  };
+
+  // A required-field message should appear once the user has actually been to
+  // the field (or tried to save) — not sitting on an untouched blank form.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [saveAttempted, setSaveAttempted] = useState(false);
+  const markTouched = (field: string) =>
+    setTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+
   const missingFields = REQUIRED_FIELDS.filter((field) => {
     const value = formData[field as keyof typeof formData];
     if (field === "roles") {
@@ -536,6 +559,15 @@ export default function AddEditUserModal({
     missingFields.includes(field)
       ? "border-[#EF4444] bg-[#FEF2F2]"
       : "";
+
+  /** Inline "this is required" text, or "" while it would be premature. */
+  const requiredMessage = (field: string) =>
+    missingFields.includes(field) && (saveAttempted || touched[field])
+      ? `${FIELD_LABELS[field] ?? field} is required.`
+      : "";
+
+  // Phone is optional, but a half-typed number is not a number.
+  const phoneIncomplete = isPartialUSPhone(formData.phone);
 
 
   const [newIP, setNewIP] = useState("");
@@ -560,9 +592,19 @@ export default function AddEditUserModal({
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    setSaveAttempted(true);
+
     // Validation
     if (!isFormValid) {
-      alert(`Please fill in all required fields: ${missingFields.join(", ")}`);
+      alert(
+        "Please fill in all required fields: " +
+          missingFields.map((f) => FIELD_LABELS[f] ?? f).join(", "),
+      );
+      return;
+    }
+
+    if (phoneIncomplete) {
+      alert("Phone must be a 10-digit US number, e.g. (555) 123-4567");
       return;
     }
 
@@ -620,7 +662,8 @@ export default function AddEditUserModal({
 
       first_name: formData.firstName,
       last_name: formData.lastName,
-      phone: formData.phone || null,
+      // Store the raw ten digits; the form only formats them for display.
+      phone: phoneDigits(formData.phone) || null,
 
       role: formData.roles[0],
       is_active: formData.active,
@@ -963,14 +1006,15 @@ export default function AddEditUserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, username: e.target.value })
                       }
+                      onBlur={() => markTouched("username")}
                       className={`w-full px-3 py-2 border-2 rounded-lg
                         ${fieldError("username")}
                         focus:outline-none focus:border-[#3A6EA5]`}
                     />
 
-                    {missingFields.includes("username") && (
+                    {requiredMessage("username") && (
                       <p className="text-xs text-[#EF4444] mt-1">
-                        Backend must provide username
+                        {requiredMessage("username")}
                       </p>
                     )}
 
@@ -1003,8 +1047,16 @@ export default function AddEditUserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, firstName: e.target.value })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                      onBlur={() => markTouched("firstName")}
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 ${
+                        fieldError("firstName") || "border-[#E2E8F0]"
+                      }`}
                     />
+                    {requiredMessage("firstName") && (
+                      <p className="text-xs text-[#EF4444] mt-1">
+                        {requiredMessage("firstName")}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
@@ -1016,8 +1068,16 @@ export default function AddEditUserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, lastName: e.target.value })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                      onBlur={() => markTouched("lastName")}
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 ${
+                        fieldError("lastName") || "border-[#E2E8F0]"
+                      }`}
                     />
+                    {requiredMessage("lastName") && (
+                      <p className="text-xs text-[#EF4444] mt-1">
+                        {requiredMessage("lastName")}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
@@ -1044,8 +1104,16 @@ export default function AddEditUserModal({
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                      onBlur={() => markTouched("email")}
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 ${
+                        fieldError("email") || "border-[#E2E8F0]"
+                      }`}
                     />
+                    {requiredMessage("email") && (
+                      <p className="text-xs text-[#EF4444] mt-1">
+                        {requiredMessage("email")}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">
@@ -1053,12 +1121,27 @@ export default function AddEditUserModal({
                     </label>
                     <input
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      maxLength={US_PHONE_MAX_LENGTH}
+                      placeholder="(555) 123-4567"
                       value={formData.phone}
                       onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
+                        // Formats as typed and drops anything past ten digits,
+                        // so the field cannot take a longer number.
+                        setFormData({ ...formData, phone: formatUSPhone(e.target.value) })
                       }
-                      className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                      className={`w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 ${
+                        phoneIncomplete
+                          ? "border-[#EF4444] bg-[#FEF2F2]"
+                          : "border-[#E2E8F0]"
+                      }`}
                     />
+                    {phoneIncomplete && (
+                      <p className="text-xs text-[#EF4444] mt-1">
+                        Enter all 10 digits, e.g. (555) 123-4567.
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[#1E293B] font-bold mb-1 text-sm">

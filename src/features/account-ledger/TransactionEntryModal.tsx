@@ -4,17 +4,18 @@
 // payments and adjustments without leaving the ledger, fully end-to-end. The
 // ledger refreshes after every post via onChanged().
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
-import { fetchProviders, type Provider } from '@/services/schedulerApi';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { useDefinitions } from '@/hooks/useDefinitions';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import type { PatientProcedureRead } from '@/api/generated/model';
 import {
   loadOutstandingProcedures,
   codeDescription,
 } from '@/features/transactions/transactionsService';
 import {
-  providerLabelResolver,
   todayDisplay,
   toIsoDate,
 } from '@/features/transactions/transactionsModel';
@@ -48,16 +49,33 @@ export default function TransactionEntryModal({
   const [tab, setTab] = useState<Tab>(initialTab);
   const [transactionDate, setTransactionDate] = useState(todayDisplay());
   const [appliedIso, setAppliedIso] = useState(toIsoDate(todayDisplay()));
-  const [providers, setProviders] = useState<Provider[]>([]);
   const [providerId, setProviderId] = useState('');
+  const [hygienistId, setHygienistId] = useState('');
+
+  // Seed the treating provider / hygienist from the patient record, exactly as
+  // the full-page Transactions Entry screen does, so "Add Proc" from the ledger
+  // does not fail on a blank provider. A manual pick is never overridden.
+  const patientQuery = useGetPatient(patientId, { query: { enabled: Number.isFinite(patientId) && patientId > 0 } });
+  const preferred_provider_id = patientQuery.data?.preferred_provider_id ?? '';
+  const preferred_hygienist_id = patientQuery.data?.preferred_hygienist_id ?? '';
+  const [providerTouched, setProviderTouched] = useState(false);
+  const [hygienistTouched, setHygienistTouched] = useState(false);
+  useEffect(() => {
+    if (!providerTouched && preferred_provider_id) setProviderId(preferred_provider_id);
+  }, [preferred_provider_id, providerTouched]);
+  useEffect(() => {
+    if (!hygienistTouched && preferred_hygienist_id) setHygienistId(preferred_hygienist_id);
+  }, [preferred_hygienist_id, hygienistTouched]);
+
+  // Shared provider directory — same list, order and labels as the full-page
+  // Transactions Entry screen and every other provider picker.
+  const { providers, allProviders, providerLabel } = useProviderDirectory(officeId);
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
 
   const { definitions: paymentDefs } = useDefinitions('payment_method');
   const { definitions: adjustmentDefs } = useDefinitions('adjustment');
-
-  const providerLabel = useMemo(() => providerLabelResolver(providers), [providers]);
 
   // Lock body scroll while open.
   useEffect(() => {
@@ -66,17 +84,6 @@ export default function TransactionEntryModal({
       document.body.style.overflow = '';
     };
   }, []);
-
-  // Providers (office-scoped).
-  useEffect(() => {
-    let alive = true;
-    fetchProviders(officeId != null ? String(officeId) : undefined)
-      .then((list) => alive && setProviders(list))
-      .catch(() => alive && setProviders([]));
-    return () => {
-      alive = false;
-    };
-  }, [officeId]);
 
   // Outstanding (claim/payment-eligible) procedures for the Payments/Adjustments grids.
   useEffect(() => {
@@ -137,19 +144,34 @@ export default function TransactionEntryModal({
             GO
           </button>
           {tab === 'add' && (
-            <select
-              value={providerId}
-              onChange={(e) => setProviderId(e.target.value)}
-              className="ml-auto rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
-              title="Treating provider for procedures added here"
-            >
-              <option value="">-- Select Provider --</option>
-              {providers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.id} : {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="ml-auto flex items-center gap-2">
+              <ProviderSelect
+                kind="treating"
+                value={providerId}
+                onChange={(id) => {
+                  setProviderTouched(true);
+                  setProviderId(id);
+                }}
+                officeProviders={providers}
+                allProviders={allProviders}
+                placeholder="-- Select Provider --"
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
+                title="Treating provider for procedures added here"
+              />
+              <ProviderSelect
+                kind="hygienist"
+                value={hygienistId}
+                onChange={(id) => {
+                  setHygienistTouched(true);
+                  setHygienistId(id);
+                }}
+                officeProviders={providers}
+                allProviders={allProviders}
+                placeholder="-- Hygienist --"
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs shadow-sm"
+                title="Hygienist credited on procedures added here (posted as hygienist_id)"
+              />
+            </div>
           )}
         </div>
 
@@ -185,6 +207,7 @@ export default function TransactionEntryModal({
               patientId={patientId}
               officeId={officeId}
               providerId={providerId}
+              hygienistId={hygienistId}
               transactionDateIso={appliedIso}
               onPosted={handlePosted}
             />
@@ -195,6 +218,9 @@ export default function TransactionEntryModal({
               transactionDateIso={appliedIso}
               patientName={patientName}
               outstanding={outstanding}
+              providers={providers}
+              allProviders={allProviders}
+              defaultProviderId={providerId}
               providerLabel={providerLabel}
               codeDescription={codeDescription}
               onApplied={handlePosted}
@@ -207,6 +233,7 @@ export default function TransactionEntryModal({
               patientName={patientName}
               outstanding={outstanding}
               providers={providers}
+              allProviders={allProviders}
               providerLabel={providerLabel}
               codeDescription={codeDescription}
               onApplied={handlePosted}

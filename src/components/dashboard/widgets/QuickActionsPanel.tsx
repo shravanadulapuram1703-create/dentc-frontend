@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import WidgetCard from "../components/WidgetCard";
+import { useAuth } from "../../../contexts/AuthContext";
 import { utils } from "../../../styles/theme.js";
 
 interface QuickAction {
@@ -28,22 +29,71 @@ interface Props {
 }
 
 /**
- * One-click actions. Actions with real routes navigate directly; patient-context
- * actions route to patient search first; actions with no backend (walk-in) are
- * disabled with an explanation rather than faked.
+ * One-click actions, laid out newest-useful first:
+ *   row 1  actions that need no patient context
+ *   row 2  actions that open the current patient's own screen
+ *   row 3  actions with no dashboard-level entry point — disabled with a reason
+ *          rather than faked
+ *
+ * The patient-context actions deep-link straight to the screen that does the
+ * job (Transactions → Payments, Ledger, Treatment Plan) using the persisted
+ * active patient. With no patient chosen yet they fall back to `/patient`,
+ * which resumes the last one or opens the search picker.
  */
 export default function QuickActionsPanel(_props: Props) {
   const navigate = useNavigate();
+  const { activePatient } = useAuth();
+
+  const patientId = activePatient?.id;
+  /** Deep-link into the active patient's screen, or send them to pick one. */
+  const forPatient = (suffix: string) =>
+    patientId ? `/patient/${patientId}${suffix}` : "/patient";
+  const patientHint = (screen: string) =>
+    patientId
+      ? `${activePatient?.name ?? "Current patient"} → ${screen}`
+      : `Select a patient, then ${screen}`;
 
   const actions: QuickAction[] = [
+    // Row 1 — no patient context needed.
     { label: "Create Patient", icon: UserPlus, to: "/patient/new" },
     { label: "Schedule Appt", icon: CalendarPlus, to: "/scheduler" },
     { label: "Search Patient", icon: Search, to: "/patient?switch=1" },
-    { label: "Check In", icon: LogIn, to: "/scheduler", hint: "On the schedule" },
-    { label: "Checkout", icon: LogOut, to: "/scheduler", hint: "On the schedule" },
-    { label: "Collect Payment", icon: DollarSign, to: "/patient", hint: "Select a patient" },
-    { label: "Treatment Plan", icon: ClipboardList, to: "/patient", hint: "Select a patient" },
-    { label: "Insurance Claim", icon: FileText, to: "/patient", hint: "Select a patient" },
+
+    // Row 2 — open the patient's own screen.
+    {
+      label: "Collect Payment",
+      icon: DollarSign,
+      to: forPatient("/transaction?tab=payments"),
+      hint: patientHint("Transactions → Payments"),
+    },
+    {
+      label: "Treatment Plan",
+      icon: ClipboardList,
+      to: forPatient("/treatment"),
+      hint: patientHint("Treatment Plan"),
+    },
+    {
+      label: "Insurance Claim",
+      icon: FileText,
+      to: forPatient("/account-ledger"),
+      hint: patientHint("Ledger"),
+    },
+
+    // Row 3 — nothing meaningful to do from the dashboard.
+    {
+      label: "Check In",
+      icon: LogIn,
+      disabled: true,
+      reason:
+        "Check-in applies to a specific appointment — use the scheduler's status menu",
+    },
+    {
+      label: "Checkout",
+      icon: LogOut,
+      disabled: true,
+      reason:
+        "Checkout applies to a specific appointment — use the scheduler's status menu",
+    },
     {
       label: "Register Walk-In",
       icon: Footprints,

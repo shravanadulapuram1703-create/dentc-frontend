@@ -19,6 +19,11 @@ export default function ResponsiblePartyPanel({
   // — legacy shows the guarantor's name there and self-guarantors are the norm.
   const unresolved = data.responsible_party_unresolved;
 
+  // The legacy guarantor id: the resolved record's own legacy_id when we have
+  // one, otherwise the raw value carried on the patient (which is what the
+  // unresolved case is left with).
+  const legacy_resp_id = rp?.legacy_id || data.responsible_party_id_raw || "";
+
   const name = rp
     ? [rp.last_name, rp.first_name].filter(Boolean).join(", ") || "-"
     : p
@@ -39,7 +44,20 @@ export default function ResponsiblePartyPanel({
           ["Name", name, "Cell", rp?.cell_phone || p?.cell_phone || ""],
           [
             "Resp ID",
-            data.responsible_party_id_raw || "",
+            // patient.responsible_party_id is the *legacy* guarantor id on
+            // migrated accounts; the resolved record carries its own DentC id.
+            // Show whichever of the two exist so the number on screen is never
+            // ambiguous about which system it belongs to.
+            <span key="resp-id" className="inline-flex flex-wrap items-baseline gap-x-1.5">
+              <span className="font-semibold text-[#1E293B]">
+                {rp ? String(rp.id) : "-"}
+              </span>
+              {legacy_resp_id ? (
+                <span className="text-[11px] font-normal text-[#64748B]">
+                  (Legacy ID {legacy_resp_id})
+                </span>
+              ) : null}
+            </span>,
             "Email",
             rp?.email || p?.email || "",
           ],

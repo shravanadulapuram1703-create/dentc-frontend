@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
@@ -32,6 +32,7 @@ import { fetchProviders, isHygienist, type Provider } from "../../services/sched
 import { listReferrals } from "@/api/generated/endpoints/patients/patients";
 import type { ReferralRead } from "@/api/generated/model";
 import { resolveOffice, officeKeyToId, type OfficeOption } from "../../services/officeLookup";
+import { MIN_DOB_ISO, todayIsoDate, validateDob, ageFromDob } from "../../utils/datetime";
 
 /** referral_type direction codes: "0" = Referred By, "1" = Referred To. */
 const REFERRAL_DIRECTION_TO = "1";
@@ -75,9 +76,36 @@ import {
 import {
   loadPatientForEdit,
   savePatientEdits,
+  loadPatientSections,
+  savePatientSections,
+  emptySectionsBaseline,
   type PatientAudit,
   type PatientEditSnapshot,
+  type PatientSectionsBaseline,
 } from "../../features/add-patient/editMode";
+
+import {
+  applyCoverageChange,
+  applyStatusChange,
+  applyPatientTypeChange,
+  coverageLockReason,
+  statusLockReason,
+  patientTypeConflict,
+  reconcileStatusWithCoverage,
+  normalizeLoadedFlags,
+  normalizeLoadedPatientTypes,
+  pickCoverage,
+  pickStatus,
+  type CoverageField,
+  type StatusField,
+} from "../../features/add-patient/patientFlagRules";
+/** Step-1 required fields that an existing record may already be missing. */
+interface PreexistingGaps {
+  sex: boolean;
+  address1: boolean;
+  preferredProvider: boolean;
+  referralType: boolean;
+}
 
 interface AddNewPatientProps {
   /** Required by the page chrome; unused in the modal variant. */
@@ -108,6 +136,17 @@ interface AddNewPatientProps {
    * with the patient it just created.
    */
   onSaved?: (patientId: number) => void;
+  /**
+   * Create mode only — seed Step 1 with values captured earlier (the Scheduler's
+   * quick New Patient Appointment form hands its name / birthdate / contact
+   * fields here when the user picks CONTINUE instead of QUICK SAVE).
+   */
+  initialValues?: Partial<
+    Pick<
+      PatientFormData,
+      "birthdate" | "lastName" | "firstName" | "email" | "phone" | "cellPhone" | "workPhone"
+    >
+  >;
 }
 
 interface PatientFormData {
@@ -226,6 +265,7 @@ export default function AddNewPatient({
   patientId: propPatientId,
   onClose,
   onSaved,
+  initialValues,
 }: AddNewPatientProps) {
   const navigate = useNavigate();
   const { patientId: routePatientId } = useParams<{ patientId?: string }>();
@@ -237,34 +277,16 @@ export default function AddNewPatient({
       : (propPatientId ?? (routePatientId ? Number(routePatientId) : NaN));
   const isEditMode = Number.isFinite(editPatientId);
 
-  // Calculate age from birthdate
-  const calculateAge = (birthdate: string): string => {
-    if (!birthdate) return "";
-    
-    const today = new Date();
-    const birthDate = new Date(birthdate);
-    
-    // Check if date is valid
-    if (isNaN(birthDate.getTime())) return "";
-    
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    // If birthday hasn't occurred this year yet, subtract 1
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    // Return empty string for negative ages (future dates)
-    return age >= 0 ? age.toString() : "";
-  };
+  // Age beside the Birth Date field. Blank whenever the date isn't usable, so a
+  // rejected DOB never reads as if it were accepted.
+  const calculateAge = ageFromDob;
 
   // Form data state
-  const [formData, setFormData] = useState<PatientFormData>({
-    // Identity Gate
-    birthdate: "",
-    lastName: "",
-    firstName: "",
+  const [formData, setFormData] = useState<PatientFormData>(() => ({
+    // Identity Gate (seeded from the Scheduler's quick form when present)
+    birthdate: initialValues?.birthdate ?? "",
+    lastName: initialValues?.lastName ?? "",
+    firstName: initialValues?.firstName ?? "",
 
     // Additional Details
     title: "",
@@ -279,10 +301,10 @@ export default function AddNewPatient({
     zip: "",
 
     // Contact
-    phone: "",
-    cellPhone: "",
-    workPhone: "",
-    email: "",
+    phone: initialValues?.phone ?? "",
+    cellPhone: initialValues?.cellPhone ?? "",
+    workPhone: initialValues?.workPhone ?? "",
+    email: initialValues?.email ?? "",
 
     // SSN
     ssn: "",
@@ -347,7 +369,7 @@ export default function AddNewPatient({
     balanceOver60: "0.00",
     balanceOver90: "0.00",
     balanceOver120: "0.00",
-  });
+  }));
 
   // Patient Types state
   const [patientTypes, setPatientTypes] = useState({
@@ -360,6 +382,28 @@ export default function AddNewPatient({
     SS: false, // Spanish Speaking
     UP: false, // Update Information
   });
+
+  // ── Checkbox-group consistency ──────────────────────────────────────────
+  // Patient Status / Coverage Type / Patient Type were independent checkboxes,
+  // so the form accepted impossible combinations (every coverage ticked next to
+  // "No Coverage"; a patient marked both Child and Senior Citizen). Every click
+  // now goes through the rules in features/add-patient/patientFlagRules, which
+  // tick what a choice implies and clear what it contradicts.
+  const setCoverageFlag = (field: CoverageField, checked: boolean) =>
+    setFormData((prev) => {
+      const coverage = applyCoverageChange(pickCoverage(prev), field, checked);
+      const status = reconcileStatusWithCoverage(pickStatus(prev), coverage);
+      return { ...prev, ...coverage, ...status };
+    });
+
+  const setStatusFlag = (field: StatusField, checked: boolean) =>
+    setFormData((prev) => ({
+      ...prev,
+      ...applyStatusChange(pickStatus(prev), pickCoverage(prev), field, checked),
+    }));
+
+  const setPatientTypeFlag = (code: keyof typeof patientTypes, checked: boolean) =>
+    setPatientTypes((prev) => applyPatientTypeChange(prev, code, checked));
 
   // Fee Schedule state
   const [feeSchedules, setFeeSchedules] = useState<FeeSchedule[]>([]);
@@ -374,8 +418,11 @@ export default function AddNewPatient({
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   // ✅ Identity Gate Logic
+  // The DOB must be *valid*, not merely filled in — a future or out-of-range
+  // birth date keeps the rest of the form locked (KAN-37).
+  const dobError = validateDob(formData.birthdate);
   const isIdentityComplete =
-    formData.birthdate.trim() !== "" &&
+    dobError === null &&
     formData.lastName.trim() !== "" &&
     formData.firstName.trim() !== "";
 
@@ -593,6 +640,12 @@ export default function AddNewPatient({
       return next;
     });
 
+  // Surface the DOB problem as soon as something has been entered; an untouched
+  // empty field only complains once the user tries to move on.
+  const showDobError = Boolean(
+    dobError && (formData.birthdate.trim() !== "" || errors.birthdate)
+  );
+
   // ── Wizard state (legacy Denticon multi-step registration) ──────────────
   const [stepIndex, setStepIndex] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
@@ -618,15 +671,40 @@ export default function AddNewPatient({
   // stored as a display name taken from the tenant's gender list.
   const [isLoadingPatient, setIsLoadingPatient] = useState(isEditMode);
   const [loadWarnings, setLoadWarnings] = useState<string[]>([]);
-  const [loadedPatientId, setLoadedPatientId] = useState<number | null>(null);
+  /** Patient id whose hydrate is done or in flight — see the effect below. */
+  const loadingPatientRef = useRef<number | null>(null);
   const [audit, setAudit] = useState<PatientAudit | null>(null);
+  // Row ids behind Steps 2-5, so saving an edited patient reconciles the stored
+  // alert / answer / recall rows instead of appending a second copy of each.
+  const [sectionsBaseline, setSectionsBaseline] = useState<PatientSectionsBaseline>(
+    emptySectionsBaseline,
+  );
+  const [responsiblePartyId, setResponsiblePartyId] = useState<number | null>(null);
+
+  // Required Step-1 fields the stored record was already missing when it loaded.
+  // Only meaningful in edit mode; create starts with no record and enforces
+  // everything. See `requiredHere` (KAN-29).
+  const preexistingGapsRef = useRef<PreexistingGaps>({
+    sex: false,
+    address1: false,
+    preferredProvider: false,
+    referralType: false,
+  });
 
   // Hydrate every step from the stored patient. Waits for metadata because
   // `sex` is held as the tenant's display label. Runs once per patient id; the
   // guard also stops a metadata refetch from discarding edits already typed in.
+  //
+  // The guard is a REF, not the `loadedPatientId` state. Keying it off state
+  // that the effect itself sets makes the effect cancel its own in-flight run
+  // the moment it succeeds — which left the "Loading…" banner up forever and
+  // discarded the later awaits' results.
   useEffect(() => {
-    if (!isEditMode || !metadata || loadedPatientId === editPatientId) return;
+    if (!isEditMode || !metadata) return;
+    if (loadingPatientRef.current === editPatientId) return;
+    loadingPatientRef.current = editPatientId;
     let cancelled = false;
+    let settled = false;
 
     (async () => {
       setIsLoadingPatient(true);
@@ -635,15 +713,41 @@ export default function AddNewPatient({
           editPatientId,
           metadata.genders,
         );
+        settled = true;
         if (cancelled) return;
 
-        setFormData((prev) => ({ ...prev, ...(snapshot.form as Partial<PatientFormData>) }));
-        setPatientTypes((prev) => ({ ...prev, ...snapshot.patient_types }));
+        setFormData((prev) => {
+          const hydrated = { ...prev, ...(snapshot.form as Partial<PatientFormData>) };
+          // Remember which required fields the stored record already lacked, so
+          // editing an unrelated field isn't blocked by a gap the user never
+          // created (KAN-29). See `requiredInEditMode` below.
+          preexistingGapsRef.current = {
+            sex: !hydrated.sex,
+            address1: !hydrated.address1?.trim(),
+            preferredProvider: !hydrated.preferredProvider,
+            referralType: !hydrated.referralType,
+          };
+          // Stored records predate the checkbox rules and can carry impossible
+          // combinations; settle them before the form renders.
+          return { ...hydrated, ...normalizeLoadedFlags(hydrated) };
+        });
+        setPatientTypes((prev) =>
+          normalizeLoadedPatientTypes({ ...prev, ...snapshot.patient_types }),
+        );
         setAudit(snapshot.audit);
         setFirstVisit(snapshot.first_visit);
         setLastVisit(snapshot.last_visit);
-        setLoadWarnings(snapshot.warnings);
-        setLoadedPatientId(editPatientId);
+        // Responsible Party + Recall. Loaded from the patient record already in
+        // hand so the guarantor lookup does not refetch it. A section that fails
+        // to load reports a warning and falls back to the create flow's blank
+        // state, so the user can still fill in what the patient is missing.
+        const sections = await loadPatientSections(snapshot.patient);
+        if (cancelled) return;
+        setRespParty(sections.responsible_party);
+        setResponsiblePartyId(sections.responsible_party_id);
+        setRecalls(sections.recalls);
+        setSectionsBaseline(sections.baseline);
+        setLoadWarnings([...snapshot.warnings, ...sections.warnings]);
 
         // Keep the patient on their own home office rather than whatever the
         // global nav happens to have selected.
@@ -656,6 +760,9 @@ export default function AddNewPatient({
         }
       } catch (error: any) {
         console.error("Error loading patient for edit:", error);
+        // Let a failed hydrate be retried rather than latching the guard shut.
+        settled = true;
+        loadingPatientRef.current = null;
         if (!cancelled) {
           setSaveError(
             error?.response?.data?.detail || error?.message || "Failed to load this patient.",
@@ -668,8 +775,12 @@ export default function AddNewPatient({
 
     return () => {
       cancelled = true;
+      // A teardown before the fetch resolves (StrictMode's double mount, or the
+      // patient changing mid-flight) must release the claim, or the re-run is
+      // turned away by the guard while this run discards its own results.
+      if (!settled) loadingPatientRef.current = null;
     };
-  }, [isEditMode, editPatientId, metadata, loadedPatientId]);
+  }, [isEditMode, editPatientId, metadata]);
 
   // Resolve the fee-schedule display name once the list is available — edit
   // mode hydrates the id from the patient record, which alone renders blank.
@@ -701,10 +812,17 @@ export default function AddNewPatient({
       primary_medical: formData.primaryMedical,
       secondary_medical: formData.secondaryMedical,
     });
-    // Editing is entered from the Overview's PATIENT INFORMATION panel, so it
-    // edits that panel only — responsible party, insurance and recalls each
-    // have their own EDIT button on that screen.
-    return isEditMode ? all.slice(0, 1) : all;
+    // Editing walks the create flow's steps so a Quick-Saved patient can come
+    // back and complete what they skipped — minus the sections that now belong
+    // to a dedicated screen of their own:
+    //   • Medical Alerts / Questionnaires → /patient/:id/medical-history
+    //     (which also owns Signature and Copy Medical History)
+    //   • Insurance slots → /patient/:id/insurance/…, which read and write the
+    //     real patient_insurance rows; these wizard screens only build a *new*
+    //     link, so they would offer to re-enter coverage and drop it on save.
+    // Responsible Party and Recall stay here, reached from the Overview.
+    const ownedElsewhere = new Set(["medical-alerts", "questionnaires"]);
+    return isEditMode ? all.filter((s) => !s.slotKey && !ownedElsewhere.has(s.id)) : all;
   }, [
     isEditMode,
     formData.primaryDental,
@@ -776,15 +894,41 @@ export default function AddNewPatient({
   // Validate the Step-1 required fields; surface inline (legacy parity: "identify
   // where there is missing information") instead of a chain of blocking alerts.
   // Returns true when valid.
+  /**
+   * Whether a create-flow required field should block **this** save.
+   *
+   * Creating a patient requires Sex, Address, Preferred Provider and Referral
+   * Type. Edit reuses this same Step-1 form, which applied those rules
+   * retroactively to records that pre-date them — 88% of existing patients have
+   * no `preferred_provider_id` — so Save bailed out early and the edit appeared
+   * to do nothing (KAN-29 / KAN-86).
+   *
+   * In edit mode a field is therefore enforced only if the stored record already
+   * had a value: existing data still cannot be erased, but a gap the user did not
+   * create cannot block an unrelated change.
+   */
+  const requiredHere = (field: keyof PreexistingGaps): boolean =>
+    !isEditMode || !preexistingGapsRef.current[field];
+
   const validateStep1 = (): boolean => {
     const nextErrors: Record<string, string> = {};
-    if (!formData.sex) nextErrors.sex = "Sex is required";
-    if (!formData.address1.trim()) nextErrors.address1 = "Address is required";
-    if (!formData.preferredProvider) nextErrors.preferredProvider = "Preferred Provider is required";
-    if (!formData.referralType) nextErrors.referralType = "Referral Type is required";
+    if (dobError) nextErrors.birthdate = dobError;
+    if (!formData.sex && requiredHere("sex")) nextErrors.sex = "Sex is required";
+    if (!formData.address1.trim() && requiredHere("address1"))
+      nextErrors.address1 = "Address is required";
+    if (!formData.preferredProvider && requiredHere("preferredProvider"))
+      nextErrors.preferredProvider = "Preferred Provider is required";
+    if (!formData.referralType && requiredHere("referralType"))
+      nextErrors.referralType = "Referral Type is required";
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      // A bare `return false` left Save looking inert — the user saw nothing at
+      // all happen. Say what is missing, then jump to the first offending field.
+      setSaveError(
+        `Please complete the highlighted field${Object.keys(nextErrors).length > 1 ? "s" : ""}: ` +
+          Object.values(nextErrors).join(", "),
+      );
       const firstField = Object.keys(nextErrors)[0];
       document
         .querySelector(`[data-field="${firstField}"]`)
@@ -792,6 +936,7 @@ export default function AddNewPatient({
       return false;
     }
     setErrors({});
+    setSaveError(null);
     return true;
   };
 
@@ -1098,6 +1243,14 @@ export default function AddNewPatient({
       goToStep(0);
       return;
     }
+    // Same rule the create flow enforces: a non-self guarantor becomes a real
+    // record, so it needs at least a last name.
+    if (respParty.rp_source !== "Self" && !respParty.last_name.trim()) {
+      alert("The responsible party needs at least a last name.");
+      const rpIndex = steps.findIndex((s) => s.id === "responsible-party");
+      if (rpIndex >= 0) goToStep(rpIndex);
+      return;
+    }
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -1106,6 +1259,8 @@ export default function AddNewPatient({
         setSaveError("Invalid office ID");
         return;
       }
+      // Step 1 first — it owns the patient record every other section hangs
+      // off, and it is the only write whose failure aborts the save.
       const warnings = await savePatientEdits({
         patient_id: editPatientId,
         patient: buildPatientCreate(buildPatientPayload(officeIdNum)),
@@ -1117,6 +1272,27 @@ export default function AddNewPatient({
           over_120: formData.balanceOver120,
         }),
       });
+
+      // Responsible Party + Recall — the sections Quick Save skips that this
+      // screen still owns. Reconciled against the ids captured at load time and
+      // degraded to a warning on failure. Medical alerts and the questionnaires
+      // are NOT written here; the Medical History screen owns them.
+      const sections = await savePatientSections({
+        patient_id: editPatientId,
+        office_id: officeIdNum,
+        baseline: sectionsBaseline,
+        responsible_party: respParty,
+        responsible_party_id: responsiblePartyId,
+        recalls,
+      });
+      warnings.push(...sections.warnings);
+
+      // Adopt the post-save row ids. Without this a second save from the same
+      // open dialog would insert a duplicate of everything the first created.
+      setSectionsBaseline(sections.baseline);
+      setResponsiblePartyId(sections.responsible_party_id);
+      setRecalls(sections.recalls);
+
       if (warnings.length > 0) {
         alert(`Patient updated. Some items need attention:\n• ${warnings.join("\n• ")}`);
       }
@@ -1165,9 +1341,7 @@ export default function AddNewPatient({
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  {isEditMode
-                    ? "Patient Information"
-                    : `Step ${stepIndex + 1} of ${steps.length}: ${currentStep?.label}`}
+                  Step {stepIndex + 1} of {steps.length}: {currentStep?.label}
                 </h1>
                 <p className="text-sm text-white/80">
                   {isEditMode
@@ -1225,19 +1399,23 @@ export default function AddNewPatient({
           </div>
         </div>
 
-        {/* Wizard step indicator — a single-screen edit has nothing to step through. */}
-        {!isEditMode && (
-          <WizardStepper
-            steps={steps}
-            current={stepIndex}
-            maxReached={maxReached}
-            onStepClick={(i) => {
-              // Leaving Step 1 forward requires the required fields.
-              if (stepIndex === 0 && i > 0 && !validateStep1()) return;
-              setStepIndex(i);
-            }}
-          />
-        )}
+        {/* Wizard step indicator. Editing shows it too — that is the whole point
+            of the edit flow: reach the sections Quick Save skipped. An existing
+            patient has already been through Step 1, so every step is unlocked
+            once their record has actually arrived. */}
+        <WizardStepper
+          steps={steps}
+          current={stepIndex}
+          maxReached={isEditMode && !isLoadingPatient ? steps.length - 1 : maxReached}
+          onStepClick={(i) => {
+            // Stepping away mid-hydrate would validate a form that has not been
+            // filled in yet, flagging "required" on fields the patient has.
+            if (isLoadingPatient) return;
+            // Leaving Step 1 forward requires the required fields.
+            if (stepIndex === 0 && i > 0 && !validateStep1()) return;
+            setStepIndex(i);
+          }}
+        />
 
         <div className={isModal ? "p-6" : "max-w-[1600px] mx-auto p-6"}>
           {isLoadingPatient && (
@@ -1275,18 +1453,28 @@ export default function AddNewPatient({
 
                 <div className="grid grid-cols-12 gap-3">
                   {/* Birth Date - takes 3 columns */}
-                  <div className="col-span-3">
+                  <div className="col-span-3" data-field="birthdate">
                     <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                       Birth Date <span className="text-[#EF4444]">*</span>
                     </label>
                     <input
                       type="date"
                       value={formData.birthdate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, birthdate: e.target.value })
-                      }
-                      className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
+                      // `min`/`max` constrain the picker; `dobError` is the hard
+                      // stop for anything typed past them (KAN-37).
+                      min={MIN_DOB_ISO}
+                      max={todayIsoDate()}
+                      onChange={(e) => {
+                        setFormData({ ...formData, birthdate: e.target.value });
+                        clearError("birthdate");
+                      }}
+                      className={`w-full px-3 py-1.5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm ${
+                        showDobError ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                      }`}
                     />
+                    {showDobError && (
+                      <p className="text-xs text-[#EF4444] mt-1">{dobError}</p>
+                    )}
                   </div>
 
                   {/* Age - takes 1 column, read-only */}
@@ -1721,9 +1909,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.active}
-                        onChange={(e) =>
-                          setFormData({ ...formData, active: e.target.checked })
-                        }
+                        onChange={(e) => setStatusFlag("active", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1735,15 +1921,18 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.assignBenefits}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            assignBenefits: e.target.checked,
-                          })
-                        }
+                        disabled={!!statusLockReason(formData, formData, "assignBenefits")}
+                        title={statusLockReason(formData, formData, "assignBenefits")}
+                        onChange={(e) => setStatusFlag("assignBenefits", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
-                      <span className="text-sm text-[#1E293B] font-normal">
+                      <span
+                        className={`text-sm font-normal ${
+                          statusLockReason(formData, formData, "assignBenefits")
+                            ? "text-[#94A3B8]"
+                            : "text-[#1E293B]"
+                        }`}
+                      >
                         Assign Benefits to Patient
                       </span>
                     </label>
@@ -1752,12 +1941,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.hipaaAgreement}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            hipaaAgreement: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("hipaaAgreement", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1769,12 +1953,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noCorrespondence}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noCorrespondence: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("noCorrespondence", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1786,12 +1965,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noAutoEmail}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noAutoEmail: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("noAutoEmail", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1803,12 +1977,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noAutoSMS}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noAutoSMS: e.target.checked,
-                          })
-                        }
+                        onChange={(e) => setStatusFlag("noAutoSMS", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1820,15 +1989,18 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.addToQuickFill}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            addToQuickFill: e.target.checked,
-                          })
-                        }
+                        disabled={!!statusLockReason(formData, formData, "addToQuickFill")}
+                        title={statusLockReason(formData, formData, "addToQuickFill")}
+                        onChange={(e) => setStatusFlag("addToQuickFill", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
-                      <span className="text-sm text-[#1E293B] font-normal">
+                      <span
+                        className={`text-sm font-normal ${
+                          statusLockReason(formData, formData, "addToQuickFill")
+                            ? "text-[#94A3B8]"
+                            : "text-[#1E293B]"
+                        }`}
+                      >
                         Add Patient to Quick-Fill List
                       </span>
                     </label>
@@ -1860,19 +2032,8 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.noCoverage}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            noCoverage: e.target.checked,
-                            // "No Coverage" is exclusive with any selected coverage.
-                            ...(e.target.checked && {
-                              primaryDental: false,
-                              secondaryDental: false,
-                              primaryMedical: false,
-                              secondaryMedical: false,
-                            }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("noCoverage", e.target.checked)}
+                        title={coverageLockReason(formData, "noCoverage")}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1884,13 +2045,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.primaryDental}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            primaryDental: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("primaryDental", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1902,13 +2057,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.secondaryDental}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            secondaryDental: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("secondaryDental", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1920,13 +2069,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.primaryMedical}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            primaryMedical: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("primaryMedical", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -1938,13 +2081,7 @@ export default function AddNewPatient({
                       <input
                         type="checkbox"
                         checked={formData.secondaryMedical}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            secondaryMedical: e.target.checked,
-                            ...(e.target.checked && { noCoverage: false }),
-                          })
-                        }
+                        onChange={(e) => setCoverageFlag("secondaryMedical", e.target.checked)}
                         className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                       />
                       <span className="text-sm text-[#1E293B] font-normal">
@@ -2522,12 +2659,8 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.CH}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          CH: e.target.checked,
-                        })
-                      }
+                      title={`Clears ${patientTypeConflict("CH")} — a patient cannot be both.`}
+                      onChange={(e) => setPatientTypeFlag("CH", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2540,12 +2673,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.CP}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          CP: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("CP", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2558,12 +2686,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.EF}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          EF: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("EF", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2576,12 +2699,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.OR}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          OR: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("OR", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2594,12 +2712,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.SN}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          SN: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("SN", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2612,12 +2725,8 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.SR}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          SR: e.target.checked,
-                        })
-                      }
+                      title={`Clears ${patientTypeConflict("SR")} — a patient cannot be both.`}
+                      onChange={(e) => setPatientTypeFlag("SR", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2630,12 +2739,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.SS}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          SS: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("SS", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
@@ -2648,12 +2752,7 @@ export default function AddNewPatient({
                     <input
                       type="checkbox"
                       checked={patientTypes.UP}
-                      onChange={(e) =>
-                        setPatientTypes({
-                          ...patientTypes,
-                          UP: e.target.checked,
-                        })
-                      }
+                      onChange={(e) => setPatientTypeFlag("UP", e.target.checked)}
                       disabled={!isIdentityComplete}
                       className="w-4 h-4 rounded border border-[#E2E8F0] text-[#3A6EA5] focus:ring-[#3A6EA5]"
                     />
