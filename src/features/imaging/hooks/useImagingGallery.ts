@@ -49,7 +49,7 @@ export const useImagingGallery = (patientId: number): UseImagingGalleryResult =>
   );
 
   const images = useMemo<GalleryImage[]>(() => {
-    const documents = (docsQuery.data ?? [])
+    const documents = (docsQuery.data?.items ?? [])
       .filter((d) => !d.is_deleted)
       .filter(isImageDocument);
 
