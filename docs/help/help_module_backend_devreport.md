@@ -115,6 +115,37 @@ move issues. Not needed for v1 (HELP-2's list read covers it).
 
 ---
 
+## HELP-6 — Change a ticket's status from "My Tickets" **[implemented 2026-09-08]**
+
+`PATCH {VITE_JIRA_PROXY_URL}/{ticket_id}` · body `{ "status": "Open" | "In Progress" | "Done" }`
+Auth: app bearer token. `ticket_id` is the numeric `id` from the HELP-2 list.
+
+The reporter can move their own ticket between the three FE statuses. For a
+Jira-mirrored ticket the backend looks up the issue's available workflow
+transitions, applies the one whose target status maps to the requested value,
+and only then persists — so the next list read (which syncs from Jira) cannot
+undo it. Responses:
+
+| Code | Meaning |
+|------|---------|
+| `200` | Updated; body is the HELP-2 ticket shape with the new `status` |
+| `404` | Not the caller's ticket / unknown id |
+| `409` | Jira offers no transition into that status from the issue's current state (`jira_no_transition`) |
+| `422` | Status outside the allowed set (`Failed` is a filing outcome, not selectable) |
+| `502` | Jira unreachable / rejected the transition — nothing persisted |
+
+Frontend: `MyTicketsPanel` renders a status select per ticket (hidden for `Failed`)
+plus **category (issue type) / module / status filters** derived from the user's
+own tickets. Demo-mode and local-fallback tickets update the local log instead.
+
+Also landed with HELP-6: the HELP-2 list read now syncs Jira status with **one**
+JQL search (`POST /rest/api/3/search/jql`, `key in (...)`, 100 keys per call)
+instead of one `GET /issue/{key}` per open ticket — a 40-ticket "My Tickets" read
+took ~160 s serially. Unrecognised Jira workflow names (e.g. `Ready to Test`) are
+passed through as-is and shown with a neutral badge.
+
+---
+
 ## Field / enum reference (so the Jira project matches the FE)
 
 | FE issue_type | FE priority | FE status (display) |
@@ -136,6 +167,7 @@ Reports, Utilities, Setup, Imaging, My Page, Login / Authentication, Help, Other
 | HELP-3 | (config) | **Required** | Server-held Jira secret + project/enum mapping |
 | HELP-4 | (persistence) | Optional | Durable submission audit trail |
 | HELP-5 | (webhook) | Optional | Push status updates |
+| HELP-6 | `PATCH {proxy}/{id}` | **Done** | Reporter changes ticket status (Jira transition first) |
 
 Once HELP-1..3 land: set `VITE_JIRA_MODE=auto` and `VITE_JIRA_PROXY_URL` — no
 frontend changes required.

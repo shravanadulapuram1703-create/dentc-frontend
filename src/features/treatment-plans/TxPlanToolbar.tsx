@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ProviderRead } from '@/api/generated/model';
 import { STATUS_ORDER, SETTABLE_STATUSES, STATUS_LABEL, type TxStatus, type SettableTxStatus } from './txModel';
+import { providerOptionLabel } from '@/services/providerDirectory';
 
 export interface IdChange {
   tid?: number;
@@ -210,7 +211,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
               <option value="">{eligibilityLoading ? 'Loading providers…' : '— Select provider —'}</option>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.short_id ? `${p.short_id} : ${p.name}` : p.name}
+                  {providerOptionLabel(p)}
                 </option>
               ))}
             </select>

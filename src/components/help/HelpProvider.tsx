@@ -1,6 +1,6 @@
 // App-wide provider that makes "Report an Issue" reachable from anywhere:
-//   - exposes useHelp().openReportIssue() to any component (nav menu, Help page)
-//   - renders the global floating action button on authenticated screens
+//   - exposes useHelp().openReportIssue() to any component (nav header button,
+//     nav menu, Help page)
 //   - owns the single ReportIssueDialog instance
 //
 // Mounted once in App below the Router + AuthProvider so it can read auth/route.
@@ -12,11 +12,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { useAuth } from "../../contexts/AuthContext";
 import ReportIssueDialog from "./components/ReportIssueDialog";
-import ReportIssueFab from "./components/ReportIssueFab";
 import type { TicketFormValues, TicketSubmitResult } from "./types";
 
 interface HelpContextValue {
@@ -27,19 +24,7 @@ interface HelpContextValue {
 
 const HelpContext = createContext<HelpContextValue | undefined>(undefined);
 
-/** Routes where the floating button should stay hidden. */
-const HIDDEN_FAB_PREFIXES = [
-  "/login",
-  "/forgot-password",
-  "/reset-password",
-  "/activate-legacy",
-  "/signup",
-  "/help", // the Help Center has its own prominent button
-];
-
 export function HelpProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<Partial<TicketFormValues> | undefined>(undefined);
 
@@ -55,10 +40,6 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     [openReportIssue, closeReportIssue],
   );
 
-  const showFab =
-    isAuthenticated &&
-    !HIDDEN_FAB_PREFIXES.some((p) => location.pathname.startsWith(p));
-
   const onSubmitted = (result: TicketSubmitResult) => {
     if (result.ok && result.issue_key) {
       toast.success(`Ticket ${result.issue_key} submitted`);
@@ -70,7 +51,6 @@ export function HelpProvider({ children }: { children: ReactNode }) {
   return (
     <HelpContext.Provider value={value}>
       {children}
-      {showFab && <ReportIssueFab onClick={() => openReportIssue()} />}
       <ReportIssueDialog
         open={open}
         onClose={closeReportIssue}

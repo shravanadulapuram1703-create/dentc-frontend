@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ProcedureCodeRead, ProviderRead } from '@/api/generated/model';
 import { PROC_CATEGORIES, type ProcCategory } from './txModel';
 import { codesInCategory, matchCodes, isExactMatch } from './treatmentPlanService';
+import { providerOptionLabel } from '@/services/providerDirectory';
 
 export interface EntryState {
   diag_date: string;
@@ -143,7 +144,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
             <option value="">— Select provider —</option>
             {providers.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.short_id ? `${p.short_id} : ${p.name}` : p.name}
+                {providerOptionLabel(p)}
               </option>
             ))}
           </select>

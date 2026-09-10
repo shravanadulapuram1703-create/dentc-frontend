@@ -28,6 +28,7 @@ import {
 } from '@/api/generated/endpoints/billing/billing';
 import { loadProcedureCodes, codeDescription } from '@/features/transactions/transactionsService';
 import { money, num, fmtDate } from '@/features/transactions/transactionsModel';
+import { paymentCodeLabel } from '@/features/transactions/transactionCodes';
 import type { PatientProcedureRead, PatientPaymentRead } from '@/api/generated/model';
 import type { LedgerRow } from './accountLedgerModel';
 
@@ -157,8 +158,8 @@ export default function EditTransactionModal({
   }, [isCharge, row.source_id]);
 
   const paymentMethodLabel = useMemo(() => {
-    const m = new Map(paymentDefs.map((d) => [d.key1, d.description]));
-    return (code: string | null | undefined) => (code ? m.get(code) || code : '—');
+    const label = paymentCodeLabel(paymentDefs);
+    return (code: string | null | undefined) => label(code) || '—';
   }, [paymentDefs]);
 
   // A procedure already attached to a claim must not have its money moved from

@@ -70,5 +70,14 @@ export function validateContact(c: BookingContactDetails): ContactErrors {
   else if (phoneDigits.length < 7) errors.phone = "Enter a valid phone number.";
   if (!c.email.trim()) errors.email = "Email is required.";
   else if (!EMAIL_RE.test(c.email)) errors.email = "Enter a valid email address.";
+  // Disclaimer + consent are mandatory acknowledgements: an answer is required and
+  // it must be "Yes" — a request cannot be sent without them.
+  if (c.disclaimer_accepted == null)
+    errors.disclaimer_accepted = "Please answer the disclaimer.";
+  else if (!c.disclaimer_accepted)
+    errors.disclaimer_accepted = "You must accept the disclaimer to request an appointment.";
+  if (c.consent_accepted == null) errors.consent_accepted = "Please answer the consent question.";
+  else if (!c.consent_accepted)
+    errors.consent_accepted = "You must consent to be contacted to request an appointment.";
   return errors;
 }

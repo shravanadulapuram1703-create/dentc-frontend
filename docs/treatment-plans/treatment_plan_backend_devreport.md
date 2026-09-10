@@ -111,7 +111,11 @@ Legend: ✅ wired & live-verified · ⚠️ partial / stopgap · ❌ no backend 
 
 ### HIGH
 
-- **PLAN-13 — a treatment-plan-item can become undeletable.**
+- **PLAN-13 — ✅ RESOLVED (re-verified 2026-09-08).** `DELETE /treatment-plan-items/{id}`
+  returns 204 even when the item has an insurance-detail row, and the delete is now a
+  **soft delete** (`is_archived=true`). See **PLAN-24** below — the list endpoint still
+  returns those archived rows by default. Original report kept for history:
+  *a treatment-plan-item can become undeletable.*
   `treatment_plan_insurance_details` DELETE is a **soft delete** (`is_archived=true`)
   but the FK `treatment_plan_insurance_details_plan_item_id_fkey` is `RESTRICT`/`NO
   ACTION`, so the archived row keeps referencing the parent. Result: once an item
@@ -122,7 +126,12 @@ Legend: ✅ wired & live-verified · ⚠️ partial / stopgap · ❌ no backend 
   Also: the insurance-details **list returns `is_archived:true` rows** — it should
   filter them (or expose an `include_archived` flag).
 
-- **PLAN-3 — no insurance-estimate compute endpoint.**
+- **PLAN-3 — ✅ ENDPOINT SHIPPED (2026-09-08 spec): `POST /treatment-plans/{plan_id}/re-estimate?phase=`
+  → `ReEstimateResult` (per-item `coverage_pct`, `deductible_applied`, `insurance_estimate`,
+  `patient_estimate`).** Not yet wired in the frontend (FE-2). Please confirm it also
+  writes the per-item `treatment-plan-insurance-details` row (estimated_ins/pat,
+  deductible, coverage_pct, annual_max_rem) — the Edit Treatment ADVANCED panel reads
+  that row. Original report kept for history: *no insurance-estimate compute endpoint.*
   Legacy "Re-Estimate" auto-computes insurance benefit per Tx Plan ID / Phase ID from
   the patient's coverage (coverage %, deductible, annual-max remaining). There is a
   *store* (`treatment-plan-insurance-details`) but no endpoint that *computes*
@@ -258,6 +267,83 @@ modal (marked with a `†` and a footnote) for layout parity, and are **not save
 
 ---
 
+### NEW — Edit Treatment window re-audit (2026-09-08, local backend, patient 83862)
+
+The Edit Treatment window was rebuilt to legacy M08 layout parity (four label/field
+columns, STATUS / PRE AUTH STATUS panel, record column, DENTAL CROSS CODING / NOTES
+strip, DELETE · HIDE DENTAL · SAVE · CANCEL) and now opens on **double-click of any grid
+row** as well as the Diag Date link. Every field was checked against the current
+`openapi.json` and probed live (curl + UI round-trip). Status per field:
+
+**Resolved / newly wired**
+
+- **PLAN-13 ✅** item delete no longer blocked by insurance-details (204; soft delete).
+- **PLAN-20 ◐ partial.** Status enum is now `diagnosed | accepted | unaccepted | hold |
+  alternative | referred_out | scheduled | completed`. `scheduled` is settable (PATCH
+  200 verified) → the window's **Scheduled** checkbox is wired. `completed` is correctly
+  server-derived: PATCH returns 422 `status_requires_charge` ("an item becomes
+  'completed' when a charge is posted against it") — matches the frontend rule. **Still
+  missing:** `internal_referral` / `external_referral` (422 literal_error) → those two
+  checkboxes stay gated.
+- **PLAN-17 ✅ (via insurance-details).** `treatment-plan-insurance-details.notes`
+  (one row per `plan_item_id`) now backs the NOTES box — POST on first save, PATCH after
+  (both verified). **Ask:** confirm this is the intended home, or add
+  `treatment_plan_item.notes`; a note on an *insurance* row is odd for an uninsured
+  patient (the row then exists only to hold text).
+- **PLAN-9 ◐ partial.** `preauth_number / preauth_date / preauth_expires /
+  preauth_amount` exist on the insurance-detail row → **Pre Auth Date** is wired (verified).
+  Still no pre-auth **status** → the Sent / Closed radios stay gated. **Ask:** add
+  `preauth_status: 'sent' | 'closed' | null` to the detail row (or define the derivation).
+- **PLAN-12 ✅** `GET /patients/{patient_id}/treatment-plan-items` now exists (with
+  `include_archived`, `include_completed`, `plan_id`, `status` filters). Frontend still
+  fans out per plan — FE follow-up to adopt it.
+- **PLAN-6 ◐** `GET /treatment-plans/{plan_id}/report` now exists; frontend still prints
+  client-side (jsPDF). FE follow-up.
+
+**New gaps**
+
+- **PLAN-24 — item list returns archived (deleted) rows by default.** `GET
+  /treatment-plan-items?plan_id=` returned 9 rows including the soft-deleted one; only
+  `&is_archived=false` drops it (verified). Deleted procedures therefore reappeared in the
+  grid until the frontend started passing `is_archived=false` on every list call.
+  **Ask:** default to excluding archived rows (add `include_archived=true` to opt in),
+  matching `/patients/{id}/treatment-plan-items`.
+- **PLAN-25 — no `created_by` / `updated_by` on `treatment_plan_item`.** Legacy shows
+  "Created By / Modified By" as user names; the item only has timestamps (the *plan* has
+  `created_by: int`). **Ask:** add both user ids to the item, and either embed the
+  username or expose a users lookup so the UI can show a name.
+- **PLAN-26 — no item ↔ ICD-10 link ("Dental Cross Coding Information").** The
+  `icd-codes` library exists (`IcdCodeRead.icd10`), but nothing links a diagnostic code to
+  a planned procedure, so the ICD-10 list box is empty/gated. **Ask:** `icd_code_ids:
+  int[]` (or a `treatment_plan_item_icd_codes` join with `ordinal`) on the item, plus
+  "clear all".
+- **PLAN-27 — no referral fields on the item ("Referral Type" / "Referring Dentist").**
+  `referrals` resource exists but the item has no `referral_id` / `referral_type`.
+  **Ask:** add `referral_id` FK + `referral_type` code on the item.
+- **PLAN-28 — no per-item posting flags.** Legacy "Update End Date At Posting" and
+  "Re-Estimate At Posting" checkboxes have no column, and `PostPlanItemRequest` has no
+  equivalent. **Ask:** `update_end_date_at_posting: bool`, `re_estimate_at_posting: bool`
+  on the item, honored by `POST /treatment-plan-items/{id}/post`.
+- **PLAN-29 — "Fee Schedule Used" is not persisted.** The item stores `fee` but not which
+  fee schedule priced it; the window resolves the name client-side from Setup assignments
+  (can differ from what applied at creation time). **Ask:** persist `fee_schedule_id` on
+  the item at create / re-estimate.
+- **Still open, unchanged:** PLAN-18 (`accepted_date` / `scheduled_date`), PLAN-19
+  (`duration_minutes` — the window shows the code's `default_duration_minutes`, disabled),
+  PLAN-11 (Treatment Counselor).
+- **Perf — item PATCH is slow through the app.** `PATCH /treatment-plan-items/{id}` took
+  15–30 s per save in the browser while `uvicorn-dev.log` shows `Redis unavailable, token
+  store degraded: Timeout connecting to server`; a direct GET is 0.3 s. **Ask:** don't
+  block the request path on an unreachable Redis (fail fast / skip when disabled).
+
+**Test residue (2026-09-08, patient 83862, "Treatment Plan 1")** — all hidden from the
+UI by the `is_archived=false` filter, but present in the DB: archived item
+`0ba0b8e5-d95c-415c-b678-c1c14dc182c6` (D0120 "ZZ PROBE PLAN13") with insurance-detail
+id 2, and archived insurance-detail id 3 (empty) on item `9a03101b-…` (D1110). Safe to
+delete directly.
+
+---
+
 ## Consent form / Letters (legacy pp.25–28) — PLAN-7 (refined)
 
 The legacy flow is **Print reports → Letters → Patient Consent letter group → choose
@@ -304,12 +390,15 @@ these rows directly in the DB, or it will clear once PLAN-13 is fixed.
 ## Backend endpoint inventory
 
 **Present & working:** `treatment-plans` (GET/POST + `/{id}` GET/PATCH/DELETE +
-`/{id}/summary` GET), `treatment-plan-items` (GET/POST + `/{id}` GET/PATCH/DELETE),
+`/{id}/summary` GET + `/{id}/re-estimate` POST + `/{id}/report` GET),
+`treatment-plan-items` (GET/POST + `/{id}` GET/PATCH/DELETE[soft] + `/{id}/post` POST),
+`patients/{id}/treatment-plan-items`, `icd-codes`, `referrals`,
 `treatment-plan-insurance-details` (GET/POST + `/{id}` GET/PATCH/DELETE),
 `patient-procedures` (GET/POST + `/{id}` GET/PATCH/DELETE), `procedure-codes`,
 `providers`, `patients/{id}`, `offices/{id}`, `letter-templates`, tenant `consents`.
 
-**Absent (the gaps above):** insurance re-estimate/compute, treatment-plan report/
-export, per-patient consent capture/e-sign, pre-auth submission workflow, discount,
-treatment-counselor, procedure→appointment linkage, `phase_id`, `diagnosed_date`,
-item `provider_id`, item `patient_id` filter.
+**Absent (the gaps above):** per-patient consent capture/e-sign, pre-auth submission
+workflow + status, treatment-counselor, procedure→appointment linkage, item
+`accepted_date`/`scheduled_date`/`duration_minutes`/`created_by`/`updated_by`/
+`fee_schedule_id`, item↔ICD-10 link, item referral fields, posting flags,
+`internal_referral`/`external_referral` statuses.

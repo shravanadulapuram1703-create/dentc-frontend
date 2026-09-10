@@ -113,12 +113,51 @@ export function toProviderOption(p: ProviderRead): ProviderOption {
 }
 
 /**
- * The one option label for provider `<select>`s. Screens previously rendered
- * `name`, `short_id`, `id : name` or the bare id, so the same person read
- * differently on every screen.
+ * The minimum shape every provider label is built from. Covers `ProviderOption`,
+ * the raw `ProviderRead`, and the scheduler's lighter `Provider` view-model so one
+ * helper serves every screen.
  */
-export function providerOptionLabel(p: ProviderOption): string {
-  return p.short_id ? `${p.name} (${p.short_id})` : p.name;
+export type ProviderLabelSource = {
+  id: string;
+  name?: string | null;
+  short_id?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+};
+
+/**
+ * The identifier users know a provider by: the legacy `short_id` (e.g. `7409`,
+ * `736W`), falling back to the backend id (`PRV-138`) for the few rows that have
+ * none. Never blank, so a label can always be told apart.
+ */
+export function providerCode(p: Pick<ProviderLabelSource, 'id' | 'short_id'>): string {
+  return (p.short_id ?? '').trim() || String(p.id);
+}
+
+/** Bare display name (no id) — for patient-facing text such as SMS and letters. */
+export function providerBareName(p: ProviderLabelSource): string {
+  const full = (p.name ?? '').trim();
+  if (full) return full;
+  return [p.last_name, p.first_name].filter(Boolean).join(', ').trim();
+}
+
+/**
+ * THE provider label — `Name (ID)` — for every picker option, grid cell and
+ * read-only field in the app. The tenant has many providers who share a name
+ * (six "Dhileep Jinna", three "Sreehari Kancharla", …), so the id is the only
+ * thing that tells them apart and it is always appended. Screens previously
+ * rendered `name`, `name, DMD`, `short_id : name`, `id - name` or the bare id,
+ * so the same person read differently on every screen.
+ */
+export function providerDisplayLabel(p: ProviderLabelSource): string {
+  const name = providerBareName(p);
+  const code = providerCode(p);
+  return name ? `${name} (${code})` : code;
+}
+
+/** The one option label for provider `<select>`s — alias of {@link providerDisplayLabel}. */
+export function providerOptionLabel(p: ProviderLabelSource): string {
+  return providerDisplayLabel(p);
 }
 
 const byName = (a: ProviderRead, b: ProviderRead) =>
@@ -134,6 +173,32 @@ const byName = (a: ProviderRead, b: ProviderRead) =>
  * issuing their own; `fetchProviderDirectory` is the picker-shaped view of it.
  */
 export async function fetchProviderRows(): Promise<ProviderRead[]> {
+  const now = Date.now();
+  if (rowsCache && now - rowsCache.at < ROWS_CACHE_MS) return rowsCache.promise;
+  const promise = fetchProviderRowsUncached();
+  rowsCache = { at: now, promise };
+  // A failed fetch must not be cached — let the next caller retry.
+  promise.catch(() => {
+    if (rowsCache?.promise === promise) rowsCache = null;
+  });
+  return promise;
+}
+
+/**
+ * Non-React callers (scheduler feed mapping, appointment create/update, details
+ * pop-out, reports) each used to re-page `/providers` on every call. A short
+ * in-flight/TTL cache keeps that to one request per minute. React screens still
+ * go through react-query's own cache.
+ */
+const ROWS_CACHE_MS = 60 * 1000;
+let rowsCache: { at: number; promise: Promise<ProviderRead[]> } | null = null;
+
+/** Drop the cached directory (call after creating/editing a provider). */
+export function invalidateProviderDirectoryCache(): void {
+  rowsCache = null;
+}
+
+async function fetchProviderRowsUncached(): Promise<ProviderRead[]> {
   const first = await listProviders({ page: 1, size: PAGE_SIZE, sort: 'name', order: 'asc' });
   const rows = [...(first.items ?? [])];
   const pages = first.meta?.pages ?? 1;
@@ -208,12 +273,28 @@ export async function fetchProvidersForOffice(
   return scopeToOffice(directory, valid, assigned);
 }
 
-/** Resolve ids to display names against the FULL directory. Unknown ids fall back to the id. */
+/**
+ * Resolve ids to `Name (ID)` labels against the FULL directory. Unknown ids fall
+ * back to the id itself.
+ */
 export function providerLabelFor(
-  providers: ProviderOption[],
+  providers: ProviderLabelSource[],
 ): (id: string | null | undefined) => string {
-  const byId = new Map(providers.map((p) => [p.id, p.name]));
+  const byId = new Map(providers.map((p) => [String(p.id), providerDisplayLabel(p)]));
   return (id) => (id ? (byId.get(String(id)) ?? String(id)) : '');
+}
+
+/** Resolve ids to bare names (no id) — for patient-facing text only. */
+export function providerNameFor(
+  providers: ProviderLabelSource[],
+): (id: string | null | undefined) => string {
+  const byId = new Map(providers.map((p) => [String(p.id), providerBareName(p) || providerCode(p)]));
+  return (id) => (id ? (byId.get(String(id)) ?? String(id)) : '');
+}
+
+/** id → `Name (ID)` map from any provider list, for non-React callers. */
+export function providerLabelMap(providers: ProviderLabelSource[]): Map<string, string> {
+  return new Map(providers.map((p) => [String(p.id), providerDisplayLabel(p)]));
 }
 
 /** Shared react-query keys so every screen hits one cache entry. */

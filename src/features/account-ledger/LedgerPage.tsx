@@ -52,6 +52,7 @@ import {
   type LedgerSort,
   type LedgerTarget,
 } from './accountLedgerModel';
+import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 
 interface OutletCtx {
   patient: {
@@ -204,6 +205,8 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
     return (id: number | null | undefined) => (id != null ? m.get(id) || String(id) : '-');
   }, [feed.offices]);
 
+  const { providerLabel } = useProviderDirectory();
+
   const userLabel = useMemo(() => {
     const m = new Map(feed.users.map((u) => [u.id, u.short_id || u.username]));
     return (id: number | null | undefined) => (id != null ? m.get(id) || String(id) : '');
@@ -213,11 +216,11 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   const allRows = useMemo<LedgerRow[]>(() => {
     const rows: LedgerRow[] = [];
     for (const f of feed.feeds) {
-      for (const r of f.rows) rows.push(apiRow(r, f.member.patient_id, f.member.name, userLabel, f.held));
+      for (const r of f.rows) rows.push(apiRow(r, f.member.patient_id, f.member.name, userLabel, f.held, providerLabel));
       for (const c of f.claims) rows.push(claimRow(c, f.member.name, officeLabel, userLabel));
     }
     return withRunningBalance(rows);
-  }, [feed, officeLabel, userLabel]);
+  }, [feed, officeLabel, userLabel, providerLabel]);
 
   // ---- Filter -> date range -> sort ----
   const viewRows = useMemo(() => {

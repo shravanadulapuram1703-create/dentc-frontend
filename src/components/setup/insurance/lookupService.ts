@@ -23,6 +23,7 @@ import {
   listFeeSchedules,
 } from "@/api/generated/endpoints/procedures/procedures";
 import type { InsurancePlanRead, InsuranceCarrierRead } from "@/api/generated/model";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 const carrierNames = new Map<number, string>();
 const carrierRecords = new Map<number, InsuranceCarrierRead>();
@@ -154,7 +155,7 @@ export async function ensureProviderNames(ids: (string | null | undefined)[]): P
   const res = await Promise.all(
     missing.map((id) =>
       getProvider(id)
-        .then((p) => ({ id, name: p.name ?? id }))
+        .then((p) => ({ id, name: providerDisplayLabel(p) }))
         .catch(() => ({ id, name: id })),
     ),
   );
@@ -212,8 +213,8 @@ export function planLabel(id: number | null | undefined): string {
 
 export async function searchProviders(query: string): Promise<PickerOption[]> {
   const res = await listProviders({ search: query || null, size: 20, sort: "name", order: "asc" });
-  for (const p of res.items ?? []) providerNames.set(p.id, p.name);
-  return (res.items ?? []).map((p) => ({ id: p.id, label: p.name, sub: p.short_id ?? undefined }));
+  for (const p of res.items ?? []) providerNames.set(p.id, providerDisplayLabel(p));
+  return (res.items ?? []).map((p) => ({ id: p.id, label: providerDisplayLabel(p) }));
 }
 
 export async function searchOffices(query: string): Promise<PickerOption[]> {

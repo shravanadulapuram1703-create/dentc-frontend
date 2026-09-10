@@ -42,7 +42,8 @@ import {
 } from "./medicalHistoryService";
 import MedicalAlertsTab from "./tabs/MedicalAlertsTab";
 import QuestionnaireTab from "./tabs/QuestionnaireTab";
-import SignatureTab from "./tabs/SignatureTab";
+import SignatureTab, { type StagedSignatures } from "./tabs/SignatureTab";
+import { signatureFromDataUrl } from "@/features/signature/signatureModel";
 import CopyFromPatientDialog from "./CopyFromPatientDialog";
 
 interface OutletContext {
@@ -106,10 +107,7 @@ export default function MedicalHistoryPage() {
   const [form, setForm] = useState<MedicalHistoryForm>(emptyMedicalHistoryForm);
   const [baseline, setBaseline] = useState<MedicalHistoryBaseline>(emptyBaseline);
   const [signatures, setSignatures] = useState<SignaturePair>({ patient: null, dentist: null });
-  const [staged, setStaged] = useState<{ patient: string | null; dentist: string | null }>({
-    patient: null,
-    dentist: null,
-  });
+  const [staged, setStaged] = useState<StagedSignatures>({ patient: null, dentist: null });
   const [header, setHeader] = useState<HeaderData | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -322,7 +320,14 @@ export default function MedicalHistoryPage() {
         toast.info("No signature on file for this patient yet — use the Sign pad.");
         return;
       }
-      setStaged((s) => ({ ...s, dentist: data }));
+      // A re-used stored image keeps whatever device it was originally captured on.
+      setStaged((s) => ({
+        ...s,
+        dentist: signatureFromDataUrl(
+          data,
+          pair.dentist?.device_source === "topaz" ? "topaz" : "web-pad",
+        ),
+      }));
       setDirty(true);
     } catch (err) {
       toast.error((err as Error)?.message || "Could not load a stored signature.");
@@ -343,9 +348,7 @@ export default function MedicalHistoryPage() {
   const unseeded = !catalogs.source.alerts || !catalogs.source.dental || !catalogs.source.medical;
 
   return (
-    // Extra bottom padding keeps the footer's Save clear of the app's floating
-    // help/chat button, which is fixed to the bottom-right corner.
-    <div className="p-4 pb-24">
+    <div className="p-4">
       <div className="bg-white border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
         {/* ---- Legacy title + record ids ---- */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-2 flex items-center justify-between">

@@ -8,6 +8,7 @@ import {
   fetchProviderDirectory,
   fetchProvidersForOffice,
   providerDirectoryKeys,
+  providerLabelMap,
 } from "@/services/providerDirectory";
 
 // Provider display names come from the shared directory (`formatProviderName`) —
@@ -49,14 +50,14 @@ export function useProviders(office: number | null) {
 }
 
 /**
- * Load a provider id → display-name map for enriching report tables. Used inside
+ * Load a provider id → "Name (ID)" map for enriching report tables. Used inside
  * report `fetch`es (providers list is small; one page covers it).
  */
 export async function loadProviderMap(_office: number | null): Promise<Map<string, string>> {
   // Deliberately unscoped: a report row can reference a provider outside the
   // filtered office, and an id is never a useful label.
   const directory = await fetchProviderDirectory();
-  return new Map(directory.map((p) => [p.id, p.name]));
+  return providerLabelMap(directory);
 }
 
 /** Load an office id → name map. */

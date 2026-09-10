@@ -24,7 +24,6 @@ import {
 } from "@/api/generated/endpoints/appointments/appointments";
 import {
   listOperatories,
-  listProviders,
   getOffice,
 } from "@/api/generated/endpoints/organization/organization";
 import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
@@ -35,7 +34,11 @@ import {
 } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
 import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
-import { fetchProvidersForOffice } from "@/services/providerDirectory";
+import {
+  fetchProviderDirectory,
+  fetchProvidersForOffice,
+  providerLabelMap,
+} from "@/services/providerDirectory";
 import {
   getPatient,
   getPatientContext,
@@ -144,6 +147,9 @@ export interface Operatory {
 export interface Provider {
   id: string;
   name: string;
+  /** Legacy provider code (ProviderRead.short_id) — part of every provider label
+   *  because many providers share a name. See providerDisplayLabel(). */
+  short_id?: string | null;
   office?: string;
   /** Hex color set on the Provider Setup screen (ProviderRead.scheduler_color).
    *  Drives the provider's appointment color on the scheduler. */
@@ -339,6 +345,15 @@ const resolvePatientNames = async (
   return new Map(entries);
 };
 
+/** provider id -> "Name (ID)" label map, from the shared (cached) directory. */
+const providerNamesMap = async (): Promise<Map<string, string>> => {
+  try {
+    return providerLabelMap(await fetchProviderDirectory());
+  } catch {
+    return new Map();
+  }
+};
+
 /** id -> name map from a list endpoint result. */
 const namesMap = (
   items: Array<{ id: string | number; name: string }> | null | undefined,
@@ -461,7 +476,9 @@ export const fetchAppointments = async (
   // the feed still returns (gap SCHED-DEL-1).
   // The new-patient lookup also runs in parallel: the feed omits
   // `is_new_patient` (gap SCHED-NP-1), so the flag is overlaid from the plain list.
-  const [rows, archivedIds, newPatientIds] = await Promise.all([
+  // The feed's provider_name is the bare name; providers share names, so the
+  // view-model label is re-resolved to "Name (ID)" from the shared directory.
+  const [rows, archivedIds, newPatientIds, providerLabels] = await Promise.all([
     listSchedulerAppointments({
       date_from: startDate,
       date_to: to,
@@ -469,14 +486,20 @@ export const fetchAppointments = async (
     }),
     fetchArchivedAppointmentIds(startDate, to, oid),
     fetchNewPatientAppointmentIds(startDate, to, oid),
+    providerNamesMap(),
   ]);
 
   let mapped = (rows ?? [])
     .filter((a) => !archivedIds.has(a.id))
-    .map((a) => ({
-      ...mapSchedulerAppointment(a),
-      is_new_patient: newPatientIds.has(a.id) || undefined,
-    }));
+    .map((a) => {
+      const vm = mapSchedulerAppointment(a);
+      return {
+        ...vm,
+        provider_name:
+          (vm.provider_id && providerLabels.get(vm.provider_id)) || vm.provider_name,
+        is_new_patient: newPatientIds.has(a.id) || undefined,
+      };
+    });
   if (filters?.status)
     mapped = mapped.filter((a) => a.status === filters.status);
   if (filters?.provider_id)
@@ -491,14 +514,14 @@ export const fetchAppointments = async (
  *  single-appointment return so create/update/status results never leak ids
  *  or "Patient <id>" into the calendar/edit form. */
 const enrichOne = async (a: AppointmentRead): Promise<Appointment> => {
-  const [providersRes, operatoriesRes, patientNames] = await Promise.all([
-    listProviders(PAGE).catch(() => null),
+  const [providerLabels, operatoriesRes, patientNames] = await Promise.all([
+    providerNamesMap(),
     listOperatories(PAGE).catch(() => null),
     resolvePatientNames([a.patient_id]),
   ]);
   return mapAppointment(a, {
     patients: patientNames,
-    providers: namesMap(providersRes?.items),
+    providers: providerLabels,
     operatories: namesMap(operatoriesRes?.items),
   });
 };
@@ -516,12 +539,12 @@ export const createAppointment = async (
   // AppointmentCreate requires id/provider_id/office_id/end_time. The calendar
   // may pass provider/operatory as ids OR names — resolve against the canonical
   // lists, and derive office_id from the chosen operatory when not provided.
-  const [providersRes, operatoriesRes] = await Promise.all([
-    listProviders(PAGE).catch(() => null),
+  const [providerRows, operatoriesRes] = await Promise.all([
+    fetchProviderDirectory().catch(() => null),
     listOperatories(PAGE).catch(() => null),
   ]);
   const provider_id = resolveByIdOrName(
-    providersRes?.items,
+    providerRows,
     data.provider_id ?? data.provider,
   );
   const op = findByIdOrName(operatoriesRes?.items, data.operatory_id ?? data.operatory);
@@ -572,11 +595,11 @@ export const updateAppointment = async (
   let providerId = data.provider_id ?? data.provider;
   let operatoryId = data.operatory_id ?? data.operatory;
   if (providerId != null || operatoryId != null) {
-    const [pRes, oRes] = await Promise.all([
-      listProviders(PAGE).catch(() => null),
+    const [pRows, oRes] = await Promise.all([
+      fetchProviderDirectory().catch(() => null),
       listOperatories(PAGE).catch(() => null),
     ]);
-    if (providerId != null) providerId = resolveByIdOrName(pRes?.items, providerId);
+    if (providerId != null) providerId = resolveByIdOrName(pRows, providerId);
     if (operatoryId != null) {
       const opMatch = findByIdOrName(oRes?.items, operatoryId);
       operatoryId = opMatch ? String(opMatch.id) : operatoryId;
@@ -752,9 +775,9 @@ export const fetchAppointmentDetails = async (
 ): Promise<AppointmentDetails> => {
   const today = appt.date;
 
-  const [providersRes, operatoriesRes, proceduresRes, ctxRes, alertsRes, rawRes] =
+  const [providerNames, operatoriesRes, proceduresRes, ctxRes, alertsRes, rawRes] =
     await Promise.all([
-      listProviders(PAGE).catch(() => null),
+      providerNamesMap(),
       listOperatories(PAGE).catch(() => null),
       listAppointmentProcedures({ appointment_id: appt.id, ...PAGE }).catch(
         () => null,
@@ -770,7 +793,6 @@ export const fetchAppointmentDetails = async (
       getAppointmentApi(appt.id).catch(() => null),
     ]);
 
-  const providerNames = namesMap(providersRes?.items);
   const operatoryNames = namesMap(operatoriesRes?.items);
 
   // DELETE on appointment-procedures only sets is_archived and the list
@@ -826,7 +848,9 @@ export const fetchAppointmentDetails = async (
       work: patient?.work_phone ?? "",
       cell: patient?.cell_phone ?? "",
     },
-    provider_name: appt.provider_name,
+    provider_name:
+      (appt.provider_id != null && providerNames.get(String(appt.provider_id))) ||
+      appt.provider_name,
     preferred_provider,
     responsible_party_type: patient?.patient_type ?? "",
     preferred_language: patient?.preferred_language ?? "",
@@ -915,6 +939,7 @@ export const fetchProviders = async (
     .map((p) => ({
       id: p.id,
       name: p.name,
+      short_id: p.short_id,
       office: p.office_id != null ? String(p.office_id) : undefined,
       scheduler_color: p.scheduler_color,
       role: p.role ?? undefined,

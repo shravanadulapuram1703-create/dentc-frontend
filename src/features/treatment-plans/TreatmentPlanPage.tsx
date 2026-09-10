@@ -10,6 +10,8 @@ import {
   useDeleteTreatmentPlanItem,
   listTreatmentPlanItems,
   getListTreatmentPlansQueryKey,
+  createTreatmentPlanInsuranceDetail,
+  updateTreatmentPlanInsuranceDetail,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
 import { useListPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
 import { getOffice } from '@/api/generated/endpoints/organization/organization';
@@ -22,6 +24,7 @@ import {
 } from '@/services/feeScheduleResolver';
 import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
 import { priceProcedure } from '@/services/procedurePricing';
+import { openSchedulerForBooking } from '@/services/schedulerHandoff';
 import {
   planProcedure,
   postPlanItemToLedger,
@@ -42,11 +45,11 @@ import {
   planNameForTid,
   type TxStatus,
   type SettableTxStatus,
-  type TxRow,
 } from './txModel';
 import {
   loadProcedureCodes,
   codeDescription,
+  cachedProcedureCode,
   loadProviderEligibility,
   providerEligibleFor,
 } from './treatmentPlanService';
@@ -84,7 +87,11 @@ export default function TreatmentPlanPage() {
     queryKey: [TX_ITEMS_KEY, numericId, planIds],
     enabled: validId && planIds.length > 0,
     queryFn: async () => {
-      const results = await Promise.all(planIds.map((id) => listTreatmentPlanItems({ plan_id: id, size: 200 })));
+      // DELETE is a soft delete (is_archived=true) and the list endpoint still
+      // returns archived rows by default — filter them or deleted rows reappear.
+      const results = await Promise.all(
+        planIds.map((id) => listTreatmentPlanItems({ plan_id: id, size: 200, is_archived: false })),
+      );
       return results.flatMap((r) => r.items ?? []);
     },
   });
@@ -132,6 +139,15 @@ export default function TreatmentPlanPage() {
 
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
 
+  // Treating office name for the Edit Treatment window's record column.
+  const treatingOfficeId = officeId ?? patientQuery.data?.home_office_id ?? null;
+  const officeQuery = useQuery({
+    queryKey: ['office', treatingOfficeId],
+    enabled: treatingOfficeId != null,
+    staleTime: 5 * 60_000,
+    queryFn: () => getOffice(treatingOfficeId as number),
+  });
+
   // Procedure-code descriptions (cached; triggers a re-render when loaded).
   const [codesLoaded, setCodesLoaded] = useState(false);
   useEffect(() => {
@@ -167,6 +183,12 @@ export default function TreatmentPlanPage() {
     order: 1,
     provider_id: '',
   });
+  // Default the entry provider to the patient's preferred provider (legacy
+  // behaviour); never overwrite a provider the user already picked.
+  const preferredProviderId = patientQuery.data?.preferred_provider_id ?? '';
+  useEffect(() => {
+    if (preferredProviderId) setEntry((e) => (e.provider_id ? e : { ...e, provider_id: preferredProviderId }));
+  }, [preferredProviderId]);
   const [reportOpen, setReportOpen] = useState(false);
   const [sortByTooth, setSortByTooth] = useState(false);
   // Edit Treatment modal — the item id being edited (legacy: click Diag Date).
@@ -454,12 +476,13 @@ export default function TreatmentPlanPage() {
       // still needs a backend estimate endpoint (see PLAN-3 in the dev report).
     });
 
-  // ---- Edit Treatment modal (click Diag Date) -----------------------------
+  // ---- Edit Treatment window (double-click a row / click Diag Date) -------
   const editingItem = useMemo(
     () => (editingItemId ? items.find((it) => it.id === editingItemId) ?? null : null),
     [editingItemId, items],
   );
   const editingTid = editingItem ? tidByPlan.get(editingItem.plan_id) ?? 1 : 1;
+  const editingCompleted = editingItem ? allRows.find((r) => r.id === editingItem.id)?.status === 'completed' : false;
 
   const onSaveEdit = (save: EditTreatmentSave) => {
     if (!editingItem) return;
@@ -471,6 +494,20 @@ export default function TreatmentPlanPage() {
         if (targetPlan !== editingItem.plan_id) data.plan_id = targetPlan;
       }
       await updateItem.mutateAsync({ itemId: editingItem.id, data });
+      // Pre Auth Date / Notes live on the item's insurance-detail row (one per item).
+      const det = save.insurance_detail;
+      if (det) {
+        if (det.id != null) {
+          await updateTreatmentPlanInsuranceDetail(det.id, { preauth_date: det.preauth_date, notes: det.notes });
+        } else if (det.preauth_date || det.notes) {
+          await createTreatmentPlanInsuranceDetail({
+            plan_item_id: editingItem.id,
+            preauth_date: det.preauth_date,
+            notes: det.notes,
+          });
+        }
+        await queryClient.invalidateQueries({ queryKey: ['tx-item-ins-detail', editingItem.id] });
+      }
       setEditingItemId(null);
       toast.success('Treatment updated');
     });
@@ -561,9 +598,31 @@ export default function TreatmentPlanPage() {
       toast.success('All changes are saved');
     });
 
-  /** New Appt — open the scheduler to book an appointment for these procedures. */
+  /** New Appt — open the scheduler to book an appointment for these procedures.
+   *  The patient and the selected (not yet completed) plan items travel with the
+   *  navigation; the scheduler opens the New Appointment modal for this patient
+   *  when a slot is clicked, with those items already in the TREATMENTS grid. */
   const onNewAppt = () => {
-    navigate('/scheduler');
+    if (!validId) return;
+    const schedulable = selectedRows.filter((r) => r.status !== 'completed');
+    if (selectedRows.length > 0 && schedulable.length === 0) {
+      toast.info('The selected procedure(s) are already completed — pick planned procedures to schedule');
+      return;
+    }
+    if (selectedRows.length === 0) {
+      toast.info('No procedures selected — pick an open slot to book a plain appointment for this patient');
+    }
+    // The appointment defaults to the provider chosen on the plan item(s) (first
+    // row with one), then the entry panel's provider — not the operatory default.
+    const provider_id =
+      schedulable.find((r) => r.provider_id)?.provider_id || entry.provider_id || null;
+    openSchedulerForBooking(navigate, {
+      patient_id: numericId,
+      patient_name: patient?.name,
+      plan_item_ids: schedulable.map((r) => r.id),
+      provider_id,
+      source: 'treatment-plan',
+    });
   };
 
   // Actions with no backend support yet — enabled, but honestly flagged.
@@ -716,6 +775,10 @@ export default function TreatmentPlanPage() {
           providers={providers}
           availableTids={availableTids}
           currentTid={editingTid}
+          completed={editingCompleted}
+          officeName={officeQuery.data?.name ?? ''}
+          procedureCode={cachedProcedureCode(editingItem.procedure_code)}
+          feeCtx={feeCtx}
           descriptionFallback={codeMap(editingItem.procedure_code)}
           busy={busy}
           onSave={onSaveEdit}

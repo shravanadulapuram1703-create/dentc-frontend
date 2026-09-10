@@ -20,8 +20,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { officeIdNum } from "@/services/schedulerApi";
 import { getBookingTransport } from "./bookingService";
-import { bookRequestIntoScheduler } from "./staffBooking";
-import type { BookingRequest } from "./transport/types";
+import { assertSlotAvailable, bookRequestIntoScheduler } from "./staffBooking";
+import type { AvailableSlot, BookingRequest } from "./transport/types";
 
 interface AppointNowContextValue {
   ready: boolean;
@@ -29,9 +29,18 @@ interface AppointNowContextValue {
   requests: BookingRequest[];
   pendingCount: number;
   refresh: () => Promise<void>;
-  /** Books the slot into the scheduler, then marks the request approved. */
+  /**
+   * Books the slot into the scheduler, then marks the request approved.
+   * Throws SlotConflictError (from staffBooking) when the slot is double-booked.
+   */
   approve: (id: string) => Promise<void>;
   decline: (id: string, reason?: string) => Promise<void>;
+  /**
+   * Move a pending request to a new slot. Checks the real scheduler first and
+   * throws SlotConflictError when the new slot overlaps an existing appointment;
+   * the contact details are left untouched.
+   */
+  reschedule: (id: string, slot: AvailableSlot) => Promise<void>;
 }
 
 const AppointNowContext = createContext<AppointNowContextValue | undefined>(undefined);
@@ -121,6 +130,20 @@ export function AppointNowProvider({ children }: { children: ReactNode }) {
     [requests, user?.name, upsert],
   );
 
+  const reschedule = useCallback(
+    async (id: string, slot: AvailableSlot) => {
+      const req = requests.find((r) => r.id === id) ?? (await transport.listRequests()).find((r) => r.id === id);
+      if (!req) throw new Error("Request not found.");
+      // Double-booking check against the real scheduler BEFORE saving the new time.
+      await assertSlotAvailable(req, slot, officeIdNum(officeRef.current));
+      const updated = await transport.rescheduleRequest(id, slot, user?.name);
+      upsert(updated);
+      toast.success("Request rescheduled", { description: describe(updated) });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [requests, user?.name, upsert],
+  );
+
   const decline = useCallback(
     async (id: string, reason?: string) => {
       const updated = await transport.declineRequest(id, reason, user?.name);
@@ -144,6 +167,7 @@ export function AppointNowProvider({ children }: { children: ReactNode }) {
     refresh,
     approve,
     decline,
+    reschedule,
   };
 
   return (
@@ -163,6 +187,7 @@ export function useAppointNow(): AppointNowContextValue {
     refresh: async () => undefined,
     approve: async () => undefined,
     decline: async () => undefined,
+    reschedule: async () => undefined,
   };
 }
 

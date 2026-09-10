@@ -32,6 +32,41 @@ office/provider/operatory via the existing generated client and calls the existi
 `POST /api/v1/appointments` (`schedulerApi.createAppointment`). Only the *public* intake + availability
 are simulated.
 
+### 1a. Added 2026-09-09 — intake acknowledgements, staff Reschedule, double-booking guard
+
+**Public Details step** now also captures, before the Confirm step:
+- `insurance_info` (optional) — "Name of Dental Insurance Provider & Member ID number";
+- `disclaimer_accepted` and `consent_accepted` — **mandatory** Yes/No acknowledgements (request only /
+  not HIPAA compliant; phone-number + call/SMS consent + 24-hour change notice). Both must be **Yes** to
+  reach Confirm.
+
+**Staff inbox card** now has three actions on a pending request: **Decline**, **Reschedule**, **Approve &
+book**. Reschedule opens an inline date + start-time editor (end time derived from the reason's duration);
+the patient's contact details are never touched, and the original slot is kept on the request
+(`original_slot`) and shown as *"Rescheduled by staff · patient originally asked for …"*. It is also
+written into the appointment notes on approve.
+
+**Double-booking guard (client-side, against the REAL scheduler):** both *Approve & book* and *Reschedule*
+first resolve office → provider → operatories (`staffBooking.resolveBookingTargets`) and then load that
+day's appointments (`GET /appointments/scheduler` + the archived-id overlay) to check the slot
+(`findSlotConflicts`). A slot is blocked when the chosen **provider** already has an overlapping
+non-cancelled appointment, or when **every active operatory** in the office is taken; otherwise the first
+free operatory is used. On a conflict nothing is written; a **red modal** ("Time slot already booked")
+lists each overlapping appointment (patient, time, procedure, provider, operatory, reason = *Provider busy*
+/ *Chair taken*) with a "Choose another time" shortcut into Reschedule. The request stays `pending`.
+
+**End-to-end test (2026-09-09, office MOON / id 1, provider PRV-100, operatory op-1-5):**
+
+| Step | Action | Result |
+|------|--------|--------|
+| 1 | Created a real appointment 2026-09-10 10:00–11:00 for PRV-100 / op-1-5 via `POST /appointments` | 201 |
+| 2 | Seeded a pending request for 2026-09-10 10:00 (60 min, any provider) and clicked **Approve & book** | Red modal *Time slot already booked* listing the 10:00–11:00 appointment (*Provider busy*); no `POST /appointments`; request still pending |
+| 3 | **Choose another time** → Reschedule to 10:30 → *Check availability & save* | Red modal again (10:30–11:30 overlaps); slot NOT saved |
+| 4 | Reschedule to 14:00 → *Check availability & save* | Toast *Request rescheduled*; card shows 2:00 PM + "patient originally asked for 10:00 AM"; contact details unchanged |
+| 5 | **Approve & book** | `POST /appointments` 201 → `APPT-eae66930…` 14:00–15:00, PRV-100, op-1-5, office 1, `patient_id: null`; notes carry name/phone/email/new-patient/insurance/disclaimer/consent/original slot; request `approved` with `appointment_id` |
+| 6 | Backend probe: `POST /appointments` 10:15–10:45 for the SAME provider + operatory as step 1 | **201 Created — the backend does not reject overlapping appointments** (see AN-15) |
+| 7 | Cleanup: deleted the three test appointments (204 each), cleared the simulated request store | scheduler feed for 2026-09-10 shows none of them |
+
 ---
 
 ## 2. Endpoints the backend must build
@@ -87,7 +122,13 @@ Returns the open, bookable start times for the day.
 ### AN-3 — Public booking-request intake (UNAUTH)
 `POST /api/v1/appointnow/offices/{office_code}/requests`
 Body = `SubmitRequestInput` (see `types.ts`): `reason_id`, `reason_label`, `slot`, `contact`
-(`first_name`, `last_name`, `phone`, `email`, `date_of_birth?`, `is_new_patient`, `notes?`).
+(`first_name`, `last_name`, `phone`, `email`, `date_of_birth?`, `is_new_patient`, `notes?`,
+`insurance_info?`, `disclaimer_accepted`, `consent_accepted`).
+- `insurance_info` (optional free text) = "Name of Dental Insurance Provider & Member ID number".
+- `disclaimer_accepted` / `consent_accepted` (boolean) are **mandatory acknowledgements**; the public UI
+  only submits when both are `true` (Yes). The backend should **reject** intake with either `false`/missing
+  and persist both flags with the request (audit trail of the patient's acknowledgement + contact consent
+  for calls/SMS). The legal text is in `types.ts` (`BOOKING_DISCLAIMER_TEXT` / `BOOKING_CONSENT_TEXT`).
 Returns the created `BookingRequest` (`id`, `status: "pending"`, timestamps).
 - **Anti-abuse is mandatory** (public, unauthenticated write): rate-limit per IP/office, CAPTCHA/turnstile,
   and validate the slot is still open at submit time.
@@ -115,6 +156,33 @@ Returns `BookingRequest[]` (or `{ items }`), tenant/office-scoped. Powers the in
 - Approve should optionally **create/match a patient** from the contact details (see AN-9); today the
   appointment is booked with `patient_id: null` and the contact carried in the label/notes.
 - Decline body: `{ reason?: string }`. Sets `status: "declined"`, stores reason + actor.
+
+### AN-14 — Staff: reschedule a pending request (AUTH) — NEW 2026-09-09
+`POST /api/v1/appointnow/requests/{id}/reschedule` · body `{ slot: AvailableSlot, actioned_by?: string }`
+- Only valid while `status == "pending"` (409 otherwise). Replaces `slot`, sets `original_slot` to the
+  patient's first-requested slot if not already set, bumps `updated_at`, records the actor. The **contact
+  details must not change** — the appointment is always saved with the details the patient entered.
+- Must run the same **double-booking check** as approve (AN-15) and return **409 + the conflicting
+  appointments** (`{ conflicts: [{ appointment_id, patient_name, provider_name, operatory_name,
+  start_time, end_time, procedure_label, kind: "provider"|"operatory" }] }`) so the red modal can list them.
+- Release / re-take the slot hold (AN-8) for the new time. Optionally notify the patient (email/SMS) of
+  the proposed new time.
+- Frontend: `RealBookingTransport.rescheduleRequest()` already targets this route; the local simulation
+  implements it in `localTransport.ts`.
+
+### AN-15 — Server-side double-booking guard (AUTH) — NEW 2026-09-09, **verified gap**
+`POST /api/v1/appointments` (and `PATCH /appointments/{id}` on date/time/provider/operatory changes)
+currently **accepts overlapping appointments**: an appointment for the same provider AND operatory at an
+overlapping time returned **201** during the E2E test above. The frontend now guards approve/reschedule
+client-side, but that is racy (two staff users, or a walk-in booked between the check and the create).
+- Reject with **409** when the slot overlaps a non-cancelled, non-archived appointment for the **same
+  provider** or the **same operatory** (blocked-time rows included). Return the conflicting rows in the
+  body (shape above) so the UI can show them.
+- Apply the same rule inside the atomic **approve** (AN-5) and **reschedule** (AN-14) transactions, and
+  in the public **availability** (AN-2) so patients are never offered a taken slot (today the local
+  simulation fabricates slots from office hours only — it does not consult the scheduler).
+- Consider an optional `allow_overlap: true` flag for deliberate double-booking (some practices
+  double-book hygiene), defaulting to strict.
 
 ### AN-6 — Realtime notification for new requests (AUTH)
 Staff must be alerted **without polling**. Provide a WebSocket/SSE push (or webhook) on new/updated

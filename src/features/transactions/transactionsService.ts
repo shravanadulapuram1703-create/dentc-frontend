@@ -29,9 +29,11 @@ import {
   procedureRow,
   paymentRow,
   adjustmentRow,
+  debitAdjustmentRow,
   type ProcCategory,
   type EntryRow,
 } from './transactionsModel';
+import { isDebitAdjustmentPayment } from './transactionCodes';
 
 export { loadProcedureCodes, codeDescription };
 
@@ -106,7 +108,11 @@ export function buildEntryRows(
 ): EntryRow[] {
   return [
     ...raw.procs.map((p) => procedureRow(p, patientName, providerLabel, codeDescription, officeLabel)),
-    ...raw.pays.map((p) => paymentRow(p, patientName, paymentLabel, providerLabel, officeLabel)),
+    ...raw.pays.map((p) =>
+      isDebitAdjustmentPayment(p)
+        ? debitAdjustmentRow(p, patientName, adjustmentLabel, providerLabel, officeLabel)
+        : paymentRow(p, patientName, paymentLabel, providerLabel, officeLabel),
+    ),
     ...raw.adjs.map((a) => adjustmentRow(a, patientName, adjustmentLabel, providerLabel, officeLabel)),
   ];
 }

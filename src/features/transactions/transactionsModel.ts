@@ -295,7 +295,41 @@ export function paymentRow(
     provider: p.provider_name || providerLabel(p.provider_id),
     est_pat: 0,
     est_ins: 0,
-    amount: -num(p.amount),
+    // A payment always credits the account whichever sign it is stored with (AL-9).
+    amount: -Math.abs(num(p.amount)),
+  };
+}
+
+/**
+ * A `patient_payments` row with `payment_type = 'adjustment'` is a signed
+ * balance delta, not a payment — that is how a legacy `+` (debit) adjustment
+ * code is persisted (see transactionCodes.ts, gap ADJ-2). Render it as an
+ * adjustment whose amount carries the stored sign: positive raises the balance.
+ */
+export function debitAdjustmentRow(
+  p: PatientPaymentRead,
+  patientName: string,
+  codeLabel: (code: string | null | undefined) => string,
+  providerLabel: (id: string | null | undefined) => string,
+  officeLabel: (id: number | null | undefined) => string,
+): EntryRow {
+  return {
+    id: p.id,
+    kind: 'adjustment',
+    pm: true,
+    date: fmtDate(p.payment_date),
+    patient: patientName,
+    office: officeLabel(p.office_id),
+    apply_to: '',
+    code: p.payment_method ?? '',
+    tooth: '',
+    surface: '',
+    description: codeLabel(p.payment_method) || 'Adjustment',
+    bill: '',
+    provider: p.provider_name || providerLabel(p.provider_id),
+    est_pat: 0,
+    est_ins: 0,
+    amount: num(p.amount),
   };
 }
 

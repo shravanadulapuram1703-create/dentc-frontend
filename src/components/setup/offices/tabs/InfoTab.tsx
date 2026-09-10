@@ -9,7 +9,7 @@ import { Building2, MapPin, Phone, DollarSign, Plus, X, Info } from "lucide-reac
 import {
   listOfficeGroups,
 } from "@/api/generated/endpoints/organization/organization";
-import { fetchProviderDirectory } from "@/services/providerDirectory";
+import { fetchProviderDirectory, providerDisplayLabel } from "@/services/providerDirectory";
 import {
   listFeeSchedules,
   createFeeSchedule,
@@ -104,7 +104,7 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
     // Shared provider directory (active, name-sorted) — same list as every other screen.
     fetchProviderDirectory()
       .then((rows) =>
-        setProviders(rows.filter((p) => p.is_active).map((p) => ({ id: p.id, name: p.name }))),
+        setProviders(rows.filter((p) => p.is_active).map((p) => ({ id: p.id, name: providerDisplayLabel(p) }))),
       )
       .catch(() => setProviders([]));
 

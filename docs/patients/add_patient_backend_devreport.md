@@ -294,6 +294,45 @@ Every UI field **outside** that list is a gap below.
 
 ---
 
+## GAP-AP-19 — Middle name: only a 10-char `middle_initial` column, overflow returns HTTP 500
+
+- **Screen:** Add Patient wizard → Step 1 Identity Information (new optional **Middle Name**
+  field, 2026-09-08); also Edit Patient (same screen), patient header, Patient listing, Account
+  Ledger member picker (all now render "Last, First Middle (Preferred)").
+- **Business requirement:** capture and display the patient's full middle name (optional). The
+  legacy product only stored a middle **initial**; practices want the whole name on the record
+  and on the patient banner.
+- **Observation (live, backend `main`, 2026-09-08):**
+  - `PatientCreate` / `PatientUpdate` / `PatientRead` expose `middle_initial` (`str | None`, no
+    `max_length` in the schema). There is **no** `middle_name` field.
+  - The DB column is `patients.middle_initial VARCHAR(10)` (`app/db/models/patients.py:42`,
+    baseline migration `72d534c666ec`).
+  - `POST /api/v1/patients` with `middle_initial: "Alexander"` (9 chars) → 201, value persisted
+    and returned by `GET /api/v1/patients/{id}`.
+  - `PATCH /api/v1/patients/{id}` with `middle_initial: "Bartholomew"` (11 chars) →
+    **HTTP 500** `{"error":{"code":"internal_error","message":"An unexpected error occurred"}}`.
+    The DB length violation is not validated at the Pydantic layer, so the client gets an opaque
+    500 instead of a 422, and the patient is left unchanged.
+- **Frontend workaround (shipped):** the Middle Name input binds directly to `middle_initial`
+  (no alias) and is hard-capped at 10 characters (`maxLength` + slice on change and on submit),
+  so the form can never trigger the 500. Longer names are silently impossible to enter — users
+  will see the cap.
+- **Suggested backend change:**
+  1. Add `patients.middle_name VARCHAR(50) NULL` (migration) and expose it on
+     `PatientCreate` / `PatientUpdate` / `PatientRead`; keep `middle_initial` for legacy parity
+     (optionally derive it server-side as `middle_name[:1]` when not supplied). **Or**, at
+     minimum, widen `middle_initial` to `VARCHAR(50)`.
+  2. Add `max_length` constraints to the Pydantic schemas (`middle_initial`, and the other
+     string columns with DB length limits) so overflow returns **422** with a field error rather
+     than a 500.
+  3. Include the new field in `SchedulerPatientRead` / `LetterContext*` / responsible-party
+     person schemas that already carry `middle_initial`, for consistent display everywhere.
+- **Frontend follow-up once shipped:** `npm run api:sync`, rebind the field to `middle_name`,
+  drop `MIDDLE_NAME_MAX_LENGTH` in `src/components/pages/AddNewPatient.tsx`, and extend
+  `patient_display_name` in `src/features/patient-overview/format.ts`.
+
+---
+
 ## Frontend defects fixed in this branch (not backend gaps)
 
 These were client-side and are already resolved + live-verified:

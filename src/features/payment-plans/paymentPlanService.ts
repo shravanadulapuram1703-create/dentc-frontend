@@ -46,6 +46,7 @@ import type {
   OfficeRead,
 } from "@/api/generated/model";
 import type { ScheduleRow } from "./planModel";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 // ---------------------------------------------------------------------------
 // Ortho plan
@@ -322,12 +323,7 @@ function cap(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-/** Display label for a provider, legacy style: "736TC : Jinna, Dhileep DMD". */
+/** Display label for a provider — the app-wide "Name (ID)" format. */
 export function provider_label(p: ProviderRead): string {
-  const name =
-    p.last_name || p.first_name
-      ? [p.last_name, p.first_name].filter(Boolean).join(", ")
-      : p.name;
-  const suffix = p.title ? ` ${p.title}` : "";
-  return `${p.short_id ?? p.legacy_id ?? p.id} : ${name}${suffix}`;
+  return providerDisplayLabel(p);
 }

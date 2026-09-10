@@ -13,6 +13,7 @@
 import type { RxDraft } from './rxModel';
 import { fmtRxDate } from './rxModel';
 import type { PrescriptionLibraryRead, ProviderRead, PrescriptionRead } from '@/api/generated/model';
+import { providerOptionLabel } from '@/services/providerDirectory';
 
 interface Props {
   mode: 'add' | 'view' | 'empty';
@@ -55,8 +56,7 @@ export default function RxEditPanel({
 
   const dosespotId = selected?.dosespot_rx_id || '0';
 
-  const providerLabel = (p: ProviderRead) =>
-    `${p.short_id ? p.short_id + ' : ' : ''}${p.name}`;
+  const providerLabel = (p: ProviderRead) => providerOptionLabel(p);
 
   return (
     <div className="border border-slate-300 rounded-md bg-slate-50">

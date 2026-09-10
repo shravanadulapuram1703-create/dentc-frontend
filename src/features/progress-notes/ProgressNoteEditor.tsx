@@ -28,6 +28,8 @@ import {
 import { useGetProgressNote } from '@/api/generated/endpoints/clinical/clinical';
 import { useListNoteMacros } from '@/api/generated/endpoints/procedures/procedures';
 import ToothNumberPicker from './ToothNumberPicker';
+import SignatureCapture from '@/features/signature/SignatureCapture';
+import { signatureFromDataUrl, type SignatureResult } from '@/features/signature/signatureModel';
 import MacroQuestionnaire from './MacroQuestionnaire';
 import { macroHasFields, parseMacroFields, substituteMacro, type MacroField } from './macroTemplate';
 import {
@@ -118,8 +120,6 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const savedRangeRef = useRef<Range | null>(null);
   const hydratedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
 
   // ---- form state ---------------------------------------------------------
   const [category, setCategory] = useState('');
@@ -146,8 +146,8 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
 
   const [attachment, setAttachment] = useState<File | null>(null);
 
-  const [padOpen, setPadOpen] = useState(false);
-  const [sigDataUrl, setSigDataUrl] = useState<string | null>(null);
+  // Staged provider signature (Topaz pad or on-screen) committed by Save Notes.
+  const [sig, setSig] = useState<SignatureResult | null>(null);
   const [changeUser, setChangeUser] = useState('');
   const [changePassword, setChangePassword] = useState('');
 
@@ -365,43 +365,8 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   };
 
   // ---- signature pad ------------------------------------------------------
-  const canvasPoint = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = canvasRef.current!;
-    const r = c.getBoundingClientRect();
-    return { x: ((e.clientX - r.left) / r.width) * c.width, y: ((e.clientY - r.top) / r.height) * c.height };
-  };
-  const startDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    drawing.current = true;
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    const { x, y } = canvasPoint(e);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-  const moveDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current) return;
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    const { x, y } = canvasPoint(e);
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#11315c';
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-  const endDraw = () => {
-    drawing.current = false;
-  };
-  const clearPad = () => {
-    const c = canvasRef.current;
-    c?.getContext('2d')?.clearRect(0, 0, c.width, c.height);
-    setSigDataUrl(null);
-  };
-  const finishPad = () => {
-    const data = canvasRef.current?.toDataURL('image/png');
-    if (data) setSigDataUrl(data);
-    setPadOpen(false);
-  };
+  // Drawing lives in the shared <SignatureCapture/> (Topaz pad with on-screen
+  // fallback); this screen only stages the result.
   const handleLoadMySig = async () => {
     try {
       const data = await loadMySignature(numericPatientId);
@@ -409,8 +374,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
         window.alert('No signature on file — use the Sign pad to capture one.');
         return;
       }
-      setSigDataUrl(data);
-      setPadOpen(false);
+      setSig(signatureFromDataUrl(data));
     } catch (err) {
       window.alert(errMsg(err) || 'Could not load your signature.');
     }
@@ -482,9 +446,9 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
       const id = await persist();
       if (id == null) return;
       // Save Notes also commits a staged signature (legacy "Load My Sig. → Save").
-      if (sigDataUrl && !signed) {
+      if (sig && !signed) {
         try {
-          await saveUserSignature(numericPatientId, sigDataUrl);
+          await saveUserSignature(numericPatientId, sig);
           await signNote(id);
         } catch (err) {
           window.alert(errMsg(err) || 'The note was saved but signing failed.');
@@ -888,53 +852,24 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
             <div className="grid gap-4 md:grid-cols-3">
               {/* pad / preview */}
               <div>
-                <div className="mb-2 flex h-28 items-center justify-center rounded border-2 border-dashed border-slate-300 bg-slate-50">
-                  {padOpen ? (
-                    <canvas
-                      ref={canvasRef}
-                      width={320}
-                      height={104}
-                      onPointerDown={startDraw}
-                      onPointerMove={moveDraw}
-                      onPointerUp={endDraw}
-                      onPointerLeave={endDraw}
-                      className="h-full w-full touch-none bg-white"
-                    />
-                  ) : sigDataUrl ? (
-                    <img src={sigDataUrl} alt="Signature" className="max-h-full" />
-                  ) : signed ? (
+                {signed && !sig ? (
+                  <div className="mb-2 flex h-28 items-center justify-center rounded border-2 border-dashed border-slate-300 bg-slate-50">
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-green-700">
                       <PenLine className="h-4 w-4" /> Signed
                     </span>
-                  ) : (
-                    <span className="text-sm text-slate-400">Not signed</span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
+                  </div>
+                ) : (
+                  <SignatureCapture
+                    value={sig}
+                    onChange={setSig}
                     disabled={signed}
-                    onClick={() => setPadOpen(true)}
-                    className="rounded bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-300 disabled:opacity-50"
-                  >
-                    Sign
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearPad}
-                    className="rounded bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!padOpen}
-                    onClick={finishPad}
-                    className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Done
-                  </button>
-                </div>
+                    height={112}
+                    canvas_width={640}
+                    canvas_height={208}
+                    compact
+                    hint="Staged — Save Notes signs the note with it."
+                  />
+                )}
               </div>
 
               {/* change user */}

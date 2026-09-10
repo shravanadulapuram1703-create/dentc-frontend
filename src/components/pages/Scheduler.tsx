@@ -5,8 +5,12 @@ import {
 } from "../../services/officeScheduleApi";
 import SendEmailModal from "../modals/SendEmailModal";
 import SendSmsModal from "../modals/SendSmsModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
+import {
+  bookingRequestFromState,
+  type SchedulerBookingRequest,
+} from "../../services/schedulerHandoff";
 import {
   Calendar,
   ChevronLeft,
@@ -60,8 +64,9 @@ import {
   type AppointmentCreateRequest,
   type AppointmentUpdateRequest,
 } from "../../services/schedulerApi";
-import { getPatientContext } from "@/api/generated/endpoints/patients/patients";
+import { getPatient, getPatientContext } from "@/api/generated/endpoints/patients/patients";
 import type { SchedulerPatientRead } from "@/api/generated/model";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** Fallback status options used only if the backend `definitions` fetch fails
  *  or returns nothing — the live list comes from fetchAppointmentStatuses. */
@@ -279,6 +284,45 @@ export default function Scheduler({
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
 
+  // Pending booking handed over from a patient screen (Tx Plan / Restorative
+  // "New Appt", Overview "Add New Appt"). Held until the user clicks a slot;
+  // the New Appointment modal then opens with this patient preselected and the
+  // plan items seeded as procedure lines. Cleared on a successful save or via
+  // the banner's dismiss button.
+  const location = useLocation();
+  const [pendingBooking, setPendingBooking] =
+    useState<SchedulerBookingRequest | null>(null);
+  useEffect(() => {
+    const request = bookingRequestFromState(location.state);
+    if (!request) return;
+    setPendingBooking(request);
+    // Consume the state so a refresh / back-navigation doesn't re-arm it.
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+  // Banner label — the request carries a display name when the caller had one;
+  // otherwise resolve it from the patient record.
+  useEffect(() => {
+    if (!pendingBooking || pendingBooking.patient_name) return;
+    let cancelled = false;
+    void getPatient(pendingBooking.patient_id)
+      .then((p) => {
+        if (cancelled) return;
+        const name = `${p.last_name ?? ""}, ${p.first_name ?? ""}`.replace(/^, |, $/g, "");
+        setPendingBooking((cur) =>
+          cur && cur.patient_id === p.id && !cur.patient_name
+            ? { ...cur, patient_name: name || cur.patient_name }
+            : cur,
+        );
+      })
+      .catch(() => {
+        /* banner falls back to the id */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingBooking]);
+
   // Left-click "Appointment Details" pop-out (PDF pages 5–7).
   const [detailsAppt, setDetailsAppt] = useState<Appointment | null>(null);
   const [detailsAnchor, setDetailsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -459,7 +503,7 @@ export default function Scheduler({
 
   // provider_id -> name, for resolving operatory.provider_id in column headers.
   const providerNameById = useMemo(
-    () => new Map(providers.map((p) => [p.id, p.name])),
+    () => new Map(providers.map((p) => [p.id, providerDisplayLabel(p)])),
     [providers],
   );
 
@@ -1160,6 +1204,7 @@ export default function Scheduler({
         console.error("Error refreshing appointments:", err);
         // Don't show error alert - appointment was already saved successfully
       }
+      setPendingBooking(null);
       return true;
     }
     
@@ -1275,6 +1320,7 @@ export default function Scheduler({
         const newAppointment = await createAppointment(createData);
         setAppointments([...appointments, newAppointment]);
       }
+      setPendingBooking(null);
       return true;
     } catch (err: any) {
       setError(`Failed to save appointment: ${err.message}`);
@@ -1786,7 +1832,7 @@ export default function Scheduler({
                 <option className="bg-white text-slate-800" value="">All providers</option>
                 {providers.map((p) => (
                   <option className="bg-white text-slate-800" key={p.id} value={p.id}>
-                    {p.name}
+                    {providerDisplayLabel(p)}
                   </option>
                 ))}
               </select>
@@ -1875,6 +1921,37 @@ export default function Scheduler({
             </div>
           )}
         </div>
+
+        {/* Pending booking handed over from a patient screen */}
+        {pendingBooking && (
+          <div
+            className="mx-6 mt-4 flex flex-wrap items-center gap-3 rounded border-l-4 border-[#1F3A5F] bg-[#EEF3F9] px-4 py-3 text-sm text-[#1E293B]"
+            role="status"
+            data-testid="scheduler-pending-booking"
+          >
+            <Calendar className="h-4 w-4 shrink-0 text-[#1F3A5F]" />
+            <span>
+              <span className="font-semibold">
+                Booking for {pendingBooking.patient_name || `patient #${pendingBooking.patient_id}`}
+              </span>
+              {pendingBooking.plan_item_ids.length > 0 && (
+                <>
+                  {" "}
+                  · {pendingBooking.plan_item_ids.length} planned procedure
+                  {pendingBooking.plan_item_ids.length === 1 ? "" : "s"} from the treatment plan
+                </>
+              )}
+              {" — "}click an open slot to schedule the appointment.
+            </span>
+            <button
+              type="button"
+              onClick={() => setPendingBooking(null)}
+              className="ml-auto rounded border border-[#1F3A5F]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1F3A5F] hover:bg-[#1F3A5F]/5"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -2442,6 +2519,15 @@ export default function Scheduler({
             currentOffice={currentOffice}
             editingAppointment={editingAppointment}
             selectedDate={selectedDate}
+            preselectedPatientId={
+              editingAppointment ? null : pendingBooking?.patient_id ?? null
+            }
+            initialPlanItemIds={
+              editingAppointment ? [] : pendingBooking?.plan_item_ids ?? []
+            }
+            preselectedProviderId={
+              editingAppointment ? null : pendingBooking?.provider_id ?? null
+            }
           />
         )}
 

@@ -11,18 +11,18 @@ import {
   listAppointments,
   updateAppointment,
 } from '@/api/generated/endpoints/appointments/appointments';
-import { fetchProviderDirectory } from '@/services/providerDirectory';
+import { fetchProviderDirectory, providerLabelMap } from '@/services/providerDirectory';
 import { listDefinitions } from '@/api/generated/endpoints/metadata/metadata';
 import type { AppointmentUpdate } from '@/api/generated/model';
 import { mapAppointmentToLabCase, type LabCase } from './labModel';
 
 const PAGE = 200;
 
-/** id -> "Last, First" provider name map (capped at 200; sufficient per office). */
+/** id -> "Name (ID)" provider label map from the shared directory. */
 async function resolveProviderNames(): Promise<Map<string, string>> {
   try {
     const rows = await fetchProviderDirectory();
-    return new Map(rows.map((p) => [p.id, p.name]));
+    return providerLabelMap(rows);
   } catch {
     return new Map();
   }

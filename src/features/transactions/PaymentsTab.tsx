@@ -15,6 +15,18 @@ import {
   ACCENT_BLUE,
   type EntryKind,
 } from './transactionsModel';
+import {
+  PAYMENT_CATEGORIES,
+  PAYMENT_APPLY_TO,
+  CARD_EXP_MONTHS,
+  DEFAULT_CARD_EXP_MONTH,
+  cardExpYears,
+  defaultCardExpYear,
+  cardNote,
+  paymentCodeOptions,
+  paymentPanel,
+  type PaymentCategory,
+} from './transactionCodes';
 
 interface Props {
   patientId: number;
@@ -32,6 +44,9 @@ interface Props {
   onApplied: () => void;
 }
 
+const INPUT = 'w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#2566a8] focus:outline-none';
+const INPUT_DISABLED = 'w-full rounded border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs text-slate-400';
+
 export default function PaymentsTab({
   patientId,
   officeId,
@@ -46,18 +61,27 @@ export default function PaymentsTab({
   onApplied,
 }: Props) {
   const { definitions: paymentDefs } = useDefinitions('payment_method');
-  const codes = paymentDefs.map((d) => ({ code: d.key1, type: d.key2 ?? '', description: d.description }));
+  // Legacy catalog overlaid by whatever the backend has seeded (see transactionCodes.ts).
+  const codes = useMemo(() => paymentCodeOptions(paymentDefs), [paymentDefs]);
 
   const [searchCode, setSearchCode] = useState('');
-  const [searchType, setSearchType] = useState('All');
+  const [searchCategory, setSearchCategory] = useState<'All' | PaymentCategory>('All');
   const [searchDescription, setSearchDescription] = useState('');
-  const [method, setMethod] = useState('');
+  /** Selected payment code — stored as `payment_method`. */
+  const [payment_method, setPaymentMethod] = useState('');
+
+  const selectedCode = codes.find((c) => c.code === payment_method) ?? null;
+  const category: PaymentCategory | null = selectedCode?.category ?? null;
+  const panel = paymentPanel(category);
 
   const [amount, setAmount] = useState('');
-  const [checkNumber, setCheckNumber] = useState('');
-  const [bankNumber, setBankNumber] = useState('');
-  const [applyTo, setApplyTo] = useState<'patient' | 'insurance'>('patient');
-  const [providerId, setProviderId] = useState(defaultProviderId);
+  const [check_number, setCheckNumber] = useState('');
+  const [bank_number, setBankNumber] = useState('');
+  const [card_last4, setCardLast4] = useState('');
+  const [card_exp_month, setCardExpMonth] = useState(DEFAULT_CARD_EXP_MONTH);
+  const [card_exp_year, setCardExpYear] = useState(() => defaultCardExpYear());
+  const [payment_type, setPaymentType] = useState<'patient' | 'insurance'>('patient');
+  const [provider_id, setProviderId] = useState(defaultProviderId);
   const [notes, setNotes] = useState('');
 
   // Follow the toolbar provider until the user overrides it here.
@@ -70,16 +94,12 @@ export default function PaymentsTab({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // `DefinitionRead.key2` is the payment code's type. It is blank on every
-  // seeded `payment_method` row today, so the filter renders only when the
-  // backend actually supplies types — an "All"-only dropdown is not metadata.
-  const types = useMemo(() => [...new Set(codes.map((c) => c.type).filter(Boolean))], [codes]);
-  const hasTypes = types.length > 0;
+  const expYears = useMemo(() => cardExpYears(), []);
 
   const visibleCodes = codes.filter(
     (c) =>
       (!searchCode || c.code.toLowerCase().includes(searchCode.toLowerCase())) &&
-      (!hasTypes || searchType === 'All' || c.type === searchType) &&
+      (searchCategory === 'All' || c.category === searchCategory) &&
       (!searchDescription || c.description.toLowerCase().includes(searchDescription.toLowerCase())),
   );
 
@@ -95,26 +115,50 @@ export default function PaymentsTab({
     setAmount((prev) => (prev === next ? prev : next));
   }, [totalAllocated, amountTouched]);
 
+  /** Picking a code in another tender category drops the fields that category doesn't have. */
+  const pickCode = (code: string) => {
+    const next = codes.find((c) => c.code === code);
+    setPaymentMethod(code);
+    setError(null);
+    const nextPanel = paymentPanel(next?.category ?? null);
+    if (!nextPanel.check_number) setCheckNumber('');
+    if (!nextPanel.bank_number) setBankNumber('');
+    if (!nextPanel.card) setCardLast4('');
+  };
+
   const reset = () => {
     setAmount('');
     setAmountTouched(false);
     setCheckNumber('');
     setBankNumber('');
+    setCardLast4('');
+    setCardExpMonth(DEFAULT_CARD_EXP_MONTH);
+    setCardExpYear(defaultCardExpYear());
     setNotes('');
-    setMethod('');
+    setPaymentMethod('');
+    setPaymentType('patient');
     setProviderId(defaultProviderId);
     setAllocAmounts({});
     setSelected(new Set());
+    setError(null);
   };
 
   const apply = async () => {
+    if (!payment_method) {
+      setError('Select a payment code from the list.');
+      return;
+    }
     const amt = parseFloat(amount);
     if (!amt || Number.isNaN(amt) || amt <= 0) {
       setError('Enter a valid payment amount.');
       return;
     }
-    if (!method) {
-      setError('Select a payment code from the list.');
+    if (panel.check_number_required && !check_number.trim()) {
+      setError('Check # is required for a check payment.');
+      return;
+    }
+    if (panel.card && card_last4 && card_last4.replace(/\D/g, '').length < 4) {
+      setError('Enter the last 4 digits of the card.');
       return;
     }
     if (totalAllocated > amt + 0.001) {
@@ -124,18 +168,22 @@ export default function PaymentsTab({
     setSaving(true);
     setError(null);
     try {
+      // No card columns on patient_payments (gap PAY-3): keep last-4 + expiry in notes.
+      const card = panel.card ? cardNote(card_last4, card_exp_month, card_exp_year) : '';
+      const mergedNotes = [card, notes.trim()].filter(Boolean).join(' — ');
+
       const payment = await createPatientPayment({
         id: genId(),
         patient_id: patientId,
         office_id: officeId,
         payment_date: transactionDateIso,
         amount: amt.toFixed(2),
-        payment_type: applyTo,
-        payment_method: method,
-        ...(providerId ? { provider_id: providerId } : {}),
-        ...(checkNumber ? { check_number: checkNumber } : {}),
-        ...(bankNumber ? { bank_number: bankNumber } : {}),
-        ...(notes ? { notes } : {}),
+        payment_type,
+        payment_method,
+        ...(provider_id ? { provider_id } : {}),
+        ...(panel.check_number && check_number.trim() ? { check_number: check_number.trim() } : {}),
+        ...(panel.bank_number && bank_number.trim() ? { bank_number: bank_number.trim() } : {}),
+        ...(mergedNotes ? { notes: mergedNotes } : {}),
       });
 
       const allocations: AllocationLine[] = outstanding
@@ -158,142 +206,224 @@ export default function PaymentsTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[420px_1fr]">
-        {/* Payment code picker */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[460px_1fr]">
+        {/* Payment code picker: Search | All (tender category) | Description */}
         <div className="rounded border border-slate-200 bg-white">
-          <div
-            className={`grid gap-px border-b border-slate-200 bg-slate-50 p-2 ${
-              hasTypes ? 'grid-cols-[1fr_110px_1fr]' : 'grid-cols-[1fr_1fr]'
-            }`}
-          >
+          <div className="grid grid-cols-[minmax(0,1fr)_150px_minmax(0,1fr)] gap-1 border-b border-slate-200 bg-slate-50 p-2">
             <input
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
-              placeholder="Search code"
-              className="rounded border border-[#2566a8] px-2 py-1.5 text-xs focus:outline-none"
+              placeholder="Search"
+              title="Search by payment code"
+              className="w-full min-w-0 rounded border border-[#2566a8] px-2 py-1.5 text-xs focus:outline-none"
             />
-            {hasTypes && (
-              <select
-                value={searchType}
-                onChange={(e) => setSearchType(e.target.value)}
-                className="tx-select rounded border border-slate-300 px-2 py-1.5 text-xs"
-              >
-                {['All', ...types].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            )}
+            <select
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value as 'All' | PaymentCategory)}
+              title="Filter by tender type"
+              className="tx-select w-full min-w-0 rounded border border-slate-300 px-1 py-1.5 text-xs"
+            >
+              <option value="All">All</option>
+              {PAYMENT_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c === 'None' ? '-' : c}
+                </option>
+              ))}
+            </select>
             <input
               value={searchDescription}
               onChange={(e) => setSearchDescription(e.target.value)}
-              placeholder="Search Description"
-              className="rounded border border-slate-300 px-2 py-1.5 text-xs focus:outline-none"
+              placeholder="Description"
+              title="Search by description"
+              className="w-full min-w-0 rounded border border-slate-300 px-2 py-1.5 text-xs focus:outline-none"
             />
           </div>
-          <div className="max-h-40 overflow-y-auto">
+          <div
+            className="grid grid-cols-[86px_150px_minmax(0,1fr)] gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white"
+            style={{ background: HEADER_GRADIENT }}
+          >
+            <span>Search</span>
+            <span>All</span>
+            <span>Description</span>
+          </div>
+          <div className="max-h-48 overflow-y-auto" data-testid="payment-code-list">
             {visibleCodes.length === 0 ? (
-              <div className="px-3 py-6 text-center text-xs text-slate-400">No payment codes defined.</div>
+              <div className="px-3 py-6 text-center text-xs text-slate-400">No payment codes match.</div>
             ) : (
               visibleCodes.map((c) => (
                 <button
                   key={c.code}
-                  onClick={() => setMethod(c.code)}
-                  className={`grid w-full items-center gap-2 border-b border-slate-100 px-3 py-2 text-left text-xs transition hover:bg-sky-50 ${
-                    hasTypes ? 'grid-cols-[110px_1fr_1fr]' : 'grid-cols-[110px_1fr]'
-                  } ${method === c.code ? 'bg-sky-100' : ''}`}
+                  type="button"
+                  onClick={() => pickCode(c.code)}
+                  data-code={c.code}
+                  className={`grid w-full grid-cols-[86px_150px_minmax(0,1fr)] items-center gap-2 border-b border-slate-100 px-3 py-1.5 text-left text-xs transition hover:bg-sky-50 ${
+                    payment_method === c.code ? 'bg-sky-100' : ''
+                  }`}
                 >
                   <span className="font-semibold text-[#1d4ed8]">{c.code}</span>
-                  {hasTypes && <span className="text-slate-700">{c.type}</span>}
-                  <span className="text-slate-800">{c.description}</span>
+                  <span className="text-slate-700">{c.category === 'None' ? '-' : c.category}</span>
+                  <span className="min-w-0 truncate text-slate-800" title={c.description}>
+                    {c.description}
+                  </span>
                 </button>
               ))
             )}
           </div>
         </div>
 
-        {/* Payment entry fields */}
-        <div className="space-y-3 rounded border border-slate-200 bg-white p-3">
-          <div className="grid grid-cols-3 gap-3">
-            <Labeled label="Amount" required>
-              <input
-                type="number"
-                step="0.01"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setAmountTouched(true);
-                }}
-                placeholder="0.00"
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-right text-xs focus:border-[#2566a8] focus:outline-none"
-              />
-            </Labeled>
-            <Labeled label="Check #">
-              <input
-                value={checkNumber}
-                onChange={(e) => setCheckNumber(e.target.value)}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#2566a8] focus:outline-none"
-              />
-            </Labeled>
-            <Labeled label="Bank #">
-              <input
-                value={bankNumber}
-                onChange={(e) => setBankNumber(e.target.value)}
-                title="Deposit bank number — persisted on the payment"
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#2566a8] focus:outline-none"
-              />
-            </Labeled>
+        {/* Payment entry panel — shape follows the selected code's tender category */}
+        <div className="rounded border border-slate-200 bg-white" data-testid="payment-panel" data-category={category ?? ''}>
+          <div className="flex items-center justify-between border-b border-slate-200 bg-[#E8EFF7] px-3 py-1.5">
+            <span className="text-xs font-bold text-[#16406e]">{panel.title}</span>
+            <span className="text-[11px] text-slate-600">
+              {selectedCode ? (
+                <>
+                  <span className="font-semibold text-[#1d4ed8]">{selectedCode.code}</span> · {selectedCode.description}
+                </>
+              ) : (
+                'Select a payment code to open its entry form'
+              )}
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Labeled label="Apply To">
-              <select
-                value={applyTo}
-                onChange={(e) => setApplyTo(e.target.value as 'patient' | 'insurance')}
-                className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+          <div className="space-y-3 p-3">
+            {/* Row 1: Amount | category-specific #1 | category-specific #2 */}
+            <div className="grid grid-cols-3 gap-3">
+              <Labeled label="Amount" required>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                    setAmountTouched(true);
+                  }}
+                  placeholder="0.00"
+                  className={`${INPUT} text-right`}
+                />
+              </Labeled>
+              {panel.check_number ? (
+                <Labeled label="Check #" required={panel.check_number_required}>
+                  <input
+                    value={check_number}
+                    onChange={(e) => setCheckNumber(e.target.value)}
+                    className={INPUT}
+                    data-testid="check-number"
+                  />
+                </Labeled>
+              ) : panel.card ? (
+                <Labeled label="Credit Card # (last 4)">
+                  <input
+                    value={card_last4}
+                    onChange={(e) => setCardLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="1234"
+                    title="Only the last four digits are stored (in the payment notes)"
+                    className={INPUT}
+                    data-testid="card-last4"
+                  />
+                </Labeled>
+              ) : (
+                <Placeholder />
+              )}
+              {panel.bank_number ? (
+                <Labeled label="Bank #">
+                  <input
+                    value={bank_number}
+                    onChange={(e) => setBankNumber(e.target.value)}
+                    title="Deposit bank number — persisted on the payment"
+                    className={INPUT}
+                    data-testid="bank-number"
+                  />
+                </Labeled>
+              ) : (
+                <Placeholder />
+              )}
+            </div>
+
+            {/* Row 2: Apply To | Provider | Exp. Date (card only) */}
+            <div className="grid grid-cols-3 gap-3">
+              <Labeled label="Apply To">
+                <select
+                  value={payment_type}
+                  onChange={(e) => setPaymentType(e.target.value as 'patient' | 'insurance')}
+                  className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+                >
+                  {PAYMENT_APPLY_TO.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </Labeled>
+              <Labeled label="Provider">
+                <ProviderSelect
+                  kind="treating"
+                  value={provider_id}
+                  onChange={setProviderId}
+                  officeProviders={providers}
+                  allProviders={allProviders}
+                  placeholder="-- No Provider --"
+                  className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+                  title="Provider credited with this payment"
+                />
+              </Labeled>
+              {panel.card ? (
+                <Labeled label="Exp. Date">
+                  <div className="grid grid-cols-2 gap-1">
+                    <select
+                      value={card_exp_month}
+                      onChange={(e) => setCardExpMonth(e.target.value)}
+                      className="tx-select w-full rounded border border-slate-300 px-1 py-1.5 text-xs"
+                      data-testid="card-exp-month"
+                    >
+                      {CARD_EXP_MONTHS.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={card_exp_year}
+                      onChange={(e) => setCardExpYear(e.target.value)}
+                      className="tx-select w-full rounded border border-slate-300 px-1 py-1.5 text-xs"
+                      data-testid="card-exp-year"
+                    >
+                      {expYears.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </Labeled>
+              ) : (
+                <Placeholder />
+              )}
+            </div>
+
+            <Labeled label="Notes">
+              <input value={notes} onChange={(e) => setNotes(e.target.value)} className={INPUT} />
+            </Labeled>
+            {error && <div className="rounded bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{error}</div>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={apply}
+                disabled={saving}
+                style={{ background: ACCENT_BLUE }}
+                className="flex items-center gap-1.5 rounded px-4 py-1.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
               >
-                <option value="patient">Responsible Party</option>
-                <option value="insurance">Insurance</option>
-              </select>
-            </Labeled>
-            <Labeled label="Provider">
-              <ProviderSelect
-                kind="treating"
-                value={providerId}
-                onChange={setProviderId}
-                officeProviders={providers}
-                allProviders={allProviders}
-                placeholder="-- No Provider --"
-                className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
-                title="Provider credited with this payment"
-              />
-            </Labeled>
-          </div>
-          <Labeled label="Notes">
-            <input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-[#2566a8] focus:outline-none"
-            />
-          </Labeled>
-          {error && <div className="rounded bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{error}</div>}
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={apply}
-              disabled={saving}
-              style={{ background: ACCENT_BLUE }}
-              className="flex items-center gap-1.5 rounded px-4 py-1.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-              APPLY
-            </button>
-            <button
-              onClick={reset}
-              className="flex items-center gap-1.5 rounded bg-slate-500 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-slate-600"
-            >
-              <XCircle className="h-3.5 w-3.5" />
-              CANCEL
-            </button>
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                APPLY
+              </button>
+              <button
+                onClick={reset}
+                className="flex items-center gap-1.5 rounded bg-slate-500 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-slate-600"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                CANCEL
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -312,6 +442,16 @@ export default function PaymentsTab({
         paymentAmount={parseFloat(amount) || 0}
         capAmount={amountTouched ? parseFloat(amount) || 0 : undefined}
       />
+    </div>
+  );
+}
+
+/** Greyed-out slot, like the legacy panel's inactive boxes — keeps the grid shape stable across categories. */
+function Placeholder() {
+  return (
+    <div aria-hidden="true">
+      <div className="mb-1 h-[15px]" />
+      <div className={INPUT_DISABLED}>&nbsp;</div>
     </div>
   );
 }
@@ -342,6 +482,8 @@ export function ProceduresToPost({
   totalAllocated,
   paymentAmount,
   capAmount,
+  disabled,
+  disabledReason,
 }: {
   kind: EntryKind;
   outstanding: PatientProcedureRead[];
@@ -356,6 +498,9 @@ export function ProceduresToPost({
   paymentAmount?: number;
   /** Payment amount the user typed by hand — selections never allocate past it. */
   capAmount?: number;
+  /** Per-procedure split not available (e.g. debit adjustments) — rows render read-only. */
+  disabled?: boolean;
+  disabledReason?: string;
 }) {
   /** Sum of every row's New Amt except `skipId`. */
   const allocatedExcept = (alloc: Record<string, string>, skipId: string) =>
@@ -409,6 +554,9 @@ export function ProceduresToPost({
             Allocated: {money(totalAllocated)} of {money(paymentAmount ?? 0)}
           </span>
         )}
+        {disabled && disabledReason && (
+          <span className="text-[11px] font-semibold text-amber-700">{disabledReason}</span>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -443,7 +591,13 @@ export function ProceduresToPost({
                 return (
                   <tr key={p.id} className="hover:bg-slate-50">
                     <td className="px-2 py-1.5 text-center">
-                      <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p)} className="rounded" />
+                      <input
+                        type="checkbox"
+                        checked={selected.has(p.id)}
+                        onChange={() => toggle(p)}
+                        disabled={disabled}
+                        className="rounded"
+                      />
                     </td>
                     <td className="px-2 py-1.5 font-mono text-slate-700">{fmtDate(p.date_of_service)}</td>
                     <td className="px-2 py-1.5 text-slate-700">{patientName}</td>
@@ -469,8 +623,9 @@ export function ProceduresToPost({
                         step="0.01"
                         value={allocAmounts[p.id] ?? ''}
                         onChange={(e) => editAmount(p.id, e.target.value)}
+                        disabled={disabled}
                         placeholder="0.00"
-                        className="w-20 rounded border border-slate-300 px-2 py-1 text-right"
+                        className="w-20 rounded border border-slate-300 px-2 py-1 text-right disabled:bg-slate-100 disabled:text-slate-400"
                       />
                     </td>
                   </tr>
