@@ -16,7 +16,7 @@ import {
   getListProgressNotesQueryKey,
 } from '@/api/generated/endpoints/clinical/clinical';
 import { useListChartMaterials } from '@/api/generated/endpoints/procedures/procedures';
-import { uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
+import { uploadPatientDocument, useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import {
   useListTreatmentPlans,
   useListTreatmentPlanItems,
@@ -76,6 +76,8 @@ import { draftFromRead } from '@/features/perio/perioModel';
 import { examDateLabel } from '@/features/perio/perioService';
 import type { RestorationTemplate } from './restorationTemplates';
 import type { ActiveSelection, ChartTab, GridRow, PaletteItem, ToothArea } from './types';
+import { providerOptionLabel } from '@/services/providerDirectory';
+import { openSchedulerForBooking } from '@/services/schedulerHandoff';
 
 interface OutletCtx {
   patient: { id: string; name: string; officeId?: string; age?: number };
@@ -215,6 +217,14 @@ export default function RestorativeChart() {
   const [propDate, setPropDate] = useState(today);
   const [prefProvider, setPrefProvider] = useState('');
   const [prefHygienist, setPrefHygienist] = useState('');
+  // Legacy seeds both pickers from the patient record; a user's own pick wins.
+  const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
+  useEffect(() => {
+    const p = patientQuery.data;
+    if (!p) return;
+    setPrefProvider((cur) => cur || p.preferred_provider_id || '');
+    setPrefHygienist((cur) => cur || p.preferred_hygienist_id || '');
+  }, [patientQuery.data]);
   const [phase, setPhase] = useState('ALL');
   const [hideUnaccepted, setHideUnaccepted] = useState(true);
 
@@ -871,7 +881,28 @@ export default function RestorativeChart() {
             <label className="flex items-center gap-1">
               <input type="checkbox" checked={hideUnaccepted} onChange={(e) => setHideUnaccepted(e.target.checked)} /> Hide Unaccepted
             </label>
-            <button onClick={() => navigate('/scheduler')} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50">New Appt.</button>
+            <button
+              onClick={() =>
+                openSchedulerForBooking(navigate, {
+                  patient_id: numericId,
+                  patient_name: patient?.name,
+                  // Every still-open item on the active plan rides along so the
+                  // appointment's TREATMENTS grid starts filled in.
+                  plan_item_ids: postableItems.map((it) => it.id),
+                  // Default the appointment to the plan item's provider (then
+                  // the chart's Preferred Provider), not the operatory default.
+                  provider_id:
+                    postableItems.find((it) => it.provider_id || it.diagnosed_by)?.provider_id ||
+                    postableItems.find((it) => it.diagnosed_by)?.diagnosed_by ||
+                    prefProvider ||
+                    null,
+                  source: 'restorative',
+                })
+              }
+              disabled={!validId}
+              title={postableItems.length ? `Book an appointment for ${postableItems.length} planned procedure(s)` : 'Book an appointment for this patient'}
+              className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >New Appt.</button>
             <button onClick={() => setShowPost(true)} disabled={!currentPlan || postableItems.length === 0}
               title={postableItems.length ? `Post ${postableItems.length} planned procedure(s) to the ledger` : 'No planned procedures to post'}
               className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Post…</button>
@@ -1214,7 +1245,7 @@ function ProviderSelect({ value, onChange, providers, placeholder }: { value: st
     <select value={value} onChange={(e) => onChange(e.target.value)} title={placeholder} className="rounded border border-slate-300 bg-white px-2 py-1 text-slate-700">
       <option value="">{placeholder}</option>
       {providers.map((p) => (
-        <option key={p.id} value={p.id}>{p.name || `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.id}</option>
+        <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>
       ))}
     </select>
   );

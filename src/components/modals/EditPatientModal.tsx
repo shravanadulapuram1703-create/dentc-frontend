@@ -18,6 +18,7 @@ import {
   type PatientUpdateRequestFull
 } from "../../services/patientApi";
 import { fetchProviders, type Provider } from "../../services/schedulerApi";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 interface EditPatientModalProps {
   isOpen: boolean;
@@ -1546,7 +1547,7 @@ export default function EditPatientModal({
                       <option value="">Select Provider</option>
                       {providers.map((provider) => (
                         <option key={provider.id} value={provider.id}>
-                          {provider.name}
+                          {providerDisplayLabel(provider)}
                         </option>
                       ))}
                     </select>
@@ -1570,7 +1571,7 @@ export default function EditPatientModal({
                       <option value="None">None</option>
                       {hygienists.map((hygienist) => (
                         <option key={hygienist.id} value={hygienist.id}>
-                          {hygienist.name}
+                          {providerDisplayLabel(hygienist)}
                         </option>
                       ))}
                     </select>

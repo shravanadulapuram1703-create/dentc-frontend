@@ -12,6 +12,7 @@ import { getPatient, listPatients } from '@/api/generated/endpoints/patients/pat
 import { listPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
 import { listOffices } from '@/api/generated/endpoints/organization/organization';
 import { listUsers } from '@/api/generated/endpoints/users/users';
+import { patient_display_name } from '@/features/patient-overview/format';
 import type {
   AccountLedgerRow,
   InsuranceClaimRead,
@@ -39,8 +40,9 @@ export interface AccountMember {
 }
 
 export function memberName(p: PatientRead): string {
-  const base = `${p.last_name ?? ''}, ${p.first_name ?? ''}`.replace(/^, |, $/, '');
-  return p.preferred_name ? `${base} (${p.preferred_name})` : base || String(p.id);
+  // "Last, First Middle (Preferred)"; falls back to the id when the name is blank.
+  const name = patient_display_name(p);
+  return name === '-' ? String(p.id) : name;
 }
 
 /**

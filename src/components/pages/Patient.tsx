@@ -24,6 +24,7 @@ import { components } from '../../styles/theme';
 import { useListPatients } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ListPatientsParams, PatientRead } from '@/api/generated/model';
+import { patient_display_name } from '@/features/patient-overview/format';
 import { useDefinitions } from '../../hooks/useDefinitions';
 
 interface PatientProps {
@@ -103,10 +104,9 @@ function maskSsn(ssn?: string | null): string {
 }
 
 function patientName(p: PatientRead): string {
-  const last = p.last_name ?? '';
-  const first = p.first_name ?? '';
-  const base = [last, first].filter(Boolean).join(', ') || `Patient #${p.id}`;
-  return p.preferred_name ? `${base} (${p.preferred_name})` : base;
+  // "Last, First Middle (Preferred)"; falls back to the id when the name is blank.
+  const name = patient_display_name(p);
+  return name === '-' ? `Patient #${p.id}` : name;
 }
 
 function preferredPhone(p: PatientRead): string {

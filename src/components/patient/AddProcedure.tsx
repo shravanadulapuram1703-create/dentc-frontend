@@ -6,6 +6,7 @@ import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedu
 import { createPatientProcedure } from "@/api/generated/endpoints/clinical/clinical";
 import type { ProcedureCodeRead, PatientProcedureCreate } from "@/api/generated/model";
 import { fetchProcedureCategories, fetchProviders, type Provider as SchedulerProvider } from "../../services/schedulerApi";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 // UI-facing procedure-code shape. The backend ProcedureCodeRead exposes only flat
 // requires_* booleans + default_fee; the structured anatomy/surface/material rules
@@ -67,6 +68,7 @@ interface FrontendProcedureCode {
 interface Provider {
   id: string;
   name: string;
+  short_id?: string | null;
 }
 
 interface Props {
@@ -233,6 +235,7 @@ export default function AddProcedure({
           providersList.map(p => ({
             id: p.id,
             name: p.name,
+            short_id: p.short_id,
           }))
         );
       } catch (err: any) {
@@ -828,7 +831,7 @@ export default function AddProcedure({
                                 key={provider.id}
                                 value={provider.id}
                               >
-                                {provider.id} - {provider.name}
+                                {providerDisplayLabel(provider)}
                               </option>
                             ))}
                           </select>

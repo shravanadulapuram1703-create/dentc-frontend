@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import { FileText, Loader2 } from 'lucide-react';
 import type { LetterTemplateRead } from '@/api/generated/model';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { providerOptionLabel } from '@/services/providerDirectory';
 import Modal, {
   Field,
   input_class,
@@ -79,7 +81,9 @@ export default function LetterDialog({
   const [plan_id, setPlanId] = useState<string>('');
   const [busy, setBusy] = useState(false);
 
-  const { providers, allProviders, providerLabel } = useProviderDirectory(office_id);
+  // providerName (bare) goes into the letter body — patient-facing text never
+  // carries the provider id; the signer picker below uses the "Name (ID)" label.
+  const { providers, allProviders, providerName } = useProviderDirectory(office_id);
 
   const templates_query = useQuery({
     queryKey: lettersKeys.officeTemplates(office_id),
@@ -168,10 +172,15 @@ export default function LetterDialog({
     return { in_office, others };
   }, [providers, allProviders]);
 
-  const default_signer = useMemo(
-    () => signer_groups.in_office[0]?.id ?? signer_groups.others[0]?.id ?? '',
-    [signer_groups],
-  );
+  // The patient's preferred provider signs by default (legacy took the
+  // workstation dentist); fall back to the first office provider, then anyone.
+  const patient_query = useGetPatient(patient_id, { query: { enabled: patient_id > 0 } });
+  const preferred_provider_id = patient_query.data?.preferred_provider_id ?? '';
+  const default_signer = useMemo(() => {
+    const all = [...signer_groups.in_office, ...signer_groups.others];
+    if (preferred_provider_id && all.some((p) => p.id === preferred_provider_id)) return preferred_provider_id;
+    return signer_groups.in_office[0]?.id ?? signer_groups.others[0]?.id ?? '';
+  }, [signer_groups, preferred_provider_id]);
   useEffect(() => {
     if (!signer_id && default_signer) setSignerId(default_signer);
   }, [default_signer, signer_id]);
@@ -203,7 +212,7 @@ export default function LetterDialog({
           context,
           signer_name: signature_type === 'none' ? '' : (signer?.name ?? ''),
           signer_is_dentist: signature_type === 'dentist',
-          provider_label: providerLabel,
+          provider_label: providerName,
           local_today: fmt_local_today(),
         },
       );
@@ -329,14 +338,14 @@ export default function LetterDialog({
                     <optgroup label="This office">
                       {signer_groups.in_office.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {providerOptionLabel(p)}
                         </option>
                       ))}
                     </optgroup>
                     <optgroup label="All providers">
                       {signer_groups.others.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {providerOptionLabel(p)}
                         </option>
                       ))}
                     </optgroup>
@@ -344,7 +353,7 @@ export default function LetterDialog({
                 ) : (
                   [...signer_groups.in_office, ...signer_groups.others].map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}
+                      {providerOptionLabel(p)}
                     </option>
                   ))
                 )}

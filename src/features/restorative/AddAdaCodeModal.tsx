@@ -12,6 +12,7 @@ import ProcedureDetailsDialog, {
   type ProcedureDetailsRowInput,
   type ProcedureDetailsRowResult,
 } from '@/features/procedures/ProcedureDetailsDialog';
+import { providerOptionLabel } from '@/services/providerDirectory';
 
 // AMB / "A" codes = alternative-maximum-benefit downgrade codes (end in 'A').
 const isAmbCode = (c: { code: string; legacy_code?: string | null }) =>
@@ -451,7 +452,7 @@ export default function AddAdaCodeModal({ mode, officeId, teeth, surface, provid
               {mode === 'completed' && (
                 <label className="block w-48 text-xs"><span className="text-slate-500">Provider</span>
                   <select value={providerId} onChange={(e) => setProviderId(e.target.value)} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm">
-                    {providers.map((p) => <option key={p.id} value={p.id}>{p.name || `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.id}</option>)}
+                    {providers.map((p) => <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>)}
                   </select></label>
               )}
               <button onClick={addCurrent} disabled={!canAdd} className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">

@@ -106,6 +106,19 @@ export class RealBookingTransport implements BookingTransport {
     return data;
   }
 
+  async rescheduleRequest(
+    id: string,
+    slot: AvailableSlot,
+    actionedBy?: string,
+  ): Promise<BookingRequest> {
+    // Contract: AN-14 in docs/appointnow/appointnow_backend_devreport.md
+    const { data } = await api.post<BookingRequest>(
+      `${BASE}/requests/${encodeURIComponent(id)}/reschedule`,
+      { slot, actioned_by: actionedBy },
+    );
+    return data;
+  }
+
   async declineRequest(
     id: string,
     reason?: string,

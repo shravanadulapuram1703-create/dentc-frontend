@@ -16,6 +16,7 @@ import {
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
 import { resolveProcedureFee, type FeeScheduleContext } from '../../services/feeScheduleResolver';
 import { announceProcedureChange } from '@/features/procedures/procedureSync';
+import { providerDisplayLabel } from '@/services/providerDirectory';
 
 interface TxPlanProcedure {
   id: string;
@@ -324,7 +325,7 @@ export default function TxPlansTab({
                 <option value="">— Select provider —</option>
                 {providers.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}
+                    {providerDisplayLabel(p)}
                   </option>
                 ))}
               </select>

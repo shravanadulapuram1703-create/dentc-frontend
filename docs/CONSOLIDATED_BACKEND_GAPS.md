@@ -142,6 +142,7 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | NA-B4 | Family / same-account same-day scheduling | Duplicate of SCHED-APPT-3 — card disabled. | see SCHED-APPT-3 | Medium |
 | NA-B5 | Do appointment treatments post to the ledger? | Contract unconfirmed; the *Post* action was removed rather than guess. | confirm | Low |
 | **NA-B6** | **`GET /providers?office_id={id}` returns `[]` for many offices** | Office 10 → 0 of 97 providers, yet the office schedules patients. Never scope providers by the `office_id` scalar; the FE now falls back to the full list. See also PROV-1. | `/providers`, `/offices/{id}/providers/effective` | High |
+| **PLAN-APPT-1…5** | **Booking from a treatment plan** *(new 2026-09-09)* | Item not marked `scheduled` after booking; `appointment_procedures` has no `treatment_plan_item_id`; migrated items carry no provider; no provider→operatory mapping (office 1 operatories all `provider_id: null`); no atomic book-from-plan call. Full rows in §6d; detail in `docs/treatment-plans/tx_plan_new_appointment_backend_devreport.md`. | `/appointments`, `/appointment-procedures`, `/treatment-plan-items`, `/operatories` | High |
 | D1 (data) | `appt_status` definitions unseeded | FE falls back to built-in S·C·U·L·R·A·O·H letters + colors. | seeding | Data |
 | D2 (data) | Provider `scheduler_color` unset | FE falls back to a generated palette. | seeding | Data |
 
@@ -154,6 +155,7 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | Gap ID | Title | Description / Workaround | Endpoint | Severity |
 |--------|-------|--------------------------|----------|----------|
 | GAP-AP-1…18 | Add-Patient columns (pronouns, DL, student, hygienist, fee schedule, referral-to, RP relationship, coverage, patient types, flags, HIPAA note, opening balance, wizard, chart-no autogen, medical alerts, questionnaire, composite register) | ✅ **All delivered** by the backend team and wired frontend-side. | `patients`, `/patients/register` | ✅ |
+| **GAP-AP-19** *(new 2026-09-08)* | Middle name: only `middle_initial VARCHAR(10)`, overflow → **HTTP 500** | No `middle_name` field; an 11-char `middle_initial` on `PATCH /patients/{id}` returns 500 `internal_error` (no `max_length` in the schema). FE binds the new optional Middle Name input to `middle_initial` and hard-caps it at 10 chars. Ask: add `middle_name VARCHAR(50)` (or widen the column) + `max_length` → 422. Detail: `docs/patients/add_patient_backend_devreport.md` GAP-AP-19. | `PatientCreate` / `PatientUpdate` / `PatientRead` | Medium |
 | LEG-2…14 | Legacy-parity registration (alert enum, emergency contacts, question sections, plan search by group #, dentical share, anniversary expiry, recall interval, guarantor record, billing flags, statement message, RP type, account roster) | ✅ Delivered + wired. | multiple | ✅ |
 | **LEG-1** | **MEDALERT / DENTQUEST / MEDQUEST catalogs unseeded** | The legacy 88 alerts + 29/22 questions were never migrated; a single stray seeded row replaced the catalog, so the FE carries a verbatim copy and a `MIN_TENANT_CATALOG_ITEMS` guard. Seed file supplied by us. | data migration | High |
 | **LEG-15** | No `referral_type="1"` ("Referred To") records exist | The Referred-To picker has nothing to offer. | data migration | Medium |
@@ -213,7 +215,13 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | CHG-4/5/6 | Explosion codes; payment Bank #, per-procedure Pat Paid/Pat Adj; preferred-hygienist persistence | ✅ Delivered and integrated 2026-08-29. | — | ✅ |
 | CHG-7 | Today's Est **Deductible** portion not computed | Not returned on balance/estimate payloads. | add `estimated_deductible` | Medium |
 | CHG-9 | "Checked Out" appointment status from Transactions | No supported transition from this screen. | status flow | High |
-| CHG-10 | `key2` unset on `payment_method` and `adjustment` definitions | The legacy Type/Group filters have no data, so they are hidden rather than faked. Only three adjustment codes are seeded. | seed `key2` + widen the seed | Medium |
+| CHG-10 | `key2` unset on `payment_method` and `adjustment` definitions | Partially addressed (11 payment / 12 adjustment generic rows now carry `key2`), but none of the legacy codes exist — superseded by PAY-1 / ADJ-3 below. | seed `key2` + widen the seed | Medium |
+| **PAY-1** | **Seed the 18 legacy payment codes with the tender category on `key2`** | The Payments picker (Transactions + Ledger Pay/Adj) ships the legacy catalog compiled in and overlays `/definitions` on top; `key2` must be `Cash`/`Check`/`Credit Card`/`Direct Dep.`/`Third-party Financing` (the seed's current `patient`/`insurance` values are ignored). Full table in `docs/transactions/transactions_backend_devreport.md`. | `definitions` seed (`scripts/seed_transaction_definitions.py`) | High |
+| PAY-2 | No card columns on `patient_payments` | Credit-Card panel stores `CC ****1234 exp MM/YYYY` in `notes` (last 4 only). | add `card_last4`, `card_exp_month`, `card_exp_year` | Medium |
+| PAY-3 | `payment_type` undocumented enum; `check_number` never required | Frontend enforces Check # for Check-category codes. | enum in `openapi.json` + 422 rule | Low |
+| **ADJ-2** | **Debit (`+`) adjustments have no first-class representation** | `/patient-adjustments` is always a credit; 25 of 46 legacy codes raise the balance. Frontend interim: `+` codes are written as `patient_payments` with `payment_type='adjustment'` (the one signed row `ledger_sign.py` honours); per-procedure split disabled for them. | `patient_adjustments.sign`/`direction` honoured by ledger, transactions, billing, allocate | **High** |
+| ADJ-3 | Seed the 46 legacy adjustment codes | `key2` = production/collection, **`section` = `+`/`-`**; rows without a sign are not offered as picks. `write_off_type` now receives the group. | `definitions` seed | High |
+| ADJ-4 | Sign/group not on `PatientAdjustmentRead` / ledger rows | Grids resolve them from the compiled catalog. | denormalise `sign`, `group` | Low |
 | ADJ-1 | Per-procedure adjustment allocation | No allocations array; allocate is payment-scoped only. | `POST /patient-adjustments/{id}/allocate` | Medium |
 | REF-3 | Refundable-credit lookup | `PatientBalance` has no unapplied-credit field. | `GET /patients/{id}/refundable-balance` | Medium |
 | STMT-2 | Batch statement run | No monthly batch for outstanding balances. | `POST /offices/{id}/statements/batch` | Medium |
@@ -381,7 +389,12 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | PLAN-9 | No pre-auth workflow | Fields exist; no submission/tracking. | — | Low |
 | PLAN-4 | Item missing office / PS / S / C | Remaining legacy grid fields. | `treatment_plan_item` | Low |
 | PLAN-14 | Item DELETE is hard | Inconsistent with `patient-procedures` soft delete. | confirm | Low |
-| PLAN-15 | No procedure→appointment linkage | "New Appt" just navigates. | — | Low |
+| PLAN-15 | No procedure→appointment linkage | ✅ Frontend side fixed 2026-09-09: "New Appt" now hands patient + selected plan items + plan provider to the scheduler (`src/services/schedulerHandoff.ts`) and seeds the appointment's procedure lines. The **backend** linkage gaps that remain are PLAN-APPT-1…5 below. | — | superseded |
+| **PLAN-APPT-1** | **Booking a plan item does not mark it `scheduled`** | After `POST /appointments` + `POST /appointment-procedures` (with `treatment_plan_id`), the item still reads `status: "diagnosed"`; the Tx Plan grid keeps showing **D** for a booked procedure (legacy shows **S**). FE leaves it untouched — it cannot safely revert on cancel (PLAN-APPT-2). Needs PLAN-20 (`scheduled` enum value). | `POST /appointment-procedures` → item status | High |
+| **PLAN-APPT-2** | **`appointment_procedures` links the plan, not the item** | Only `treatment_plan_id` exists; no `treatment_plan_item_id`, and `TreatmentPlanItemRead` has no `appointment_id`. Two same-code/tooth items on a plan are indistinguishable; FE reconciles by `code|tooth|surface`. | add `treatment_plan_item_id` + item→appointment back-link | High |
+| PLAN-APPT-3 | Migrated plan items have no provider | `provider_id` **and** `diagnosed_by` are `null` on legacy rows (plan `8f26f012…`), so the appointment cannot default to "the provider chosen on the plan". FE falls back item → `diagnosed_by` → entry provider → operatory provider → first provider. | backfill `provider_id`; require on create | Medium |
+| PLAN-APPT-4 | No provider→operatory mapping | Only `OperatoryRead.provider_id`; no `ProviderRead.default_operatory_id`; office 1 has `provider_id: null` on all 5 operatories. FE picks the first operatory whose `provider_id` matches, else keeps the clicked slot / office default. | seed `operatories.provider_id`; add default operatory per provider | Medium |
+| PLAN-APPT-5 | No atomic "book from plan" | `POST /appointments` then N × `POST /appointment-procedures`; a failed line leaves a partial appointment (FE warns, no rollback). | `POST /appointments` with `procedures[]` or `POST /treatment-plans/{id}/book` | Medium |
 | PLAN-11 | No treatment-counselor resource | — | — | Low |
 | PLAN-7 | Per-patient consent capture | ✅ Largely delivered via `patient-consents` + `/sign` (see Letters LTR-10). | — | ✅ |
 
@@ -545,6 +558,9 @@ The entire feature is new backend work; the frontend ships against a swappable t
 | AN-6 | Realtime notification for new requests | Medium |
 | AN-7 | Provider exposure flag | ✅ exists |
 | AN-8…12 | Rate limiting, spam/abuse controls, public-endpoint tenancy, audit, request→appointment linkage | Medium |
+| AN-13 | Server-side search / filter / paging for the staff inbox | Medium |
+| AN-14 | Staff: reschedule a pending request (`POST …/requests/{id}/reschedule`, keeps contact details, returns 409 + conflicts) | High |
+| AN-15 | **Server-side double-booking guard** — `POST /appointments` accepted an overlapping same-provider/same-operatory appointment (201) in the 2026-09-09 E2E test; FE guards approve/reschedule client-side only | High |
 
 ### 8c. My Page
 
@@ -564,6 +580,25 @@ The entire feature is new backend work; the frontend ships against a swappable t
 ### 8d. Help, Messaging, Utilities, Patient Context
 
 See §3 — these are platform-level and blocking, so they are listed there in full (HELP-1…5, MSG-1…11, UTIL-1…6, PDP-1…5).
+
+---
+
+### 8z. Signature capture — Topaz pad (SIG) *(added 2026-09-10)*
+
+> Frontend: one shared `SignatureCapture` (Topaz SigPlusExtLite V3 with on-screen fallback) now drives Medical History, Progress Notes, Consent signing and the Users signature; diagnostics at `/setup/devices/signature-pad`. Full detail: `docs/signature/topaz_signature_backend_devreport.md`.
+
+| Gap ID | Title | Description / Workaround | Severity |
+|--------|-------|--------------------------|----------|
+| SIG-1 | No column for the Topaz **SigString** (vector stroke record) | Captured on every pad signature, dropped on save — only the JPEG persists. Add `sig_string` (+ `sig_format`, `sig_compression`, `sig_encryption`) to `patient_signatures`, `patient_consents`, user signature; accept on `PatientSignatureCreate`, `ConsentSignRequest`, `UserSignatureUpdate`, `MedicalHistorySignRequest`. Legacy import already stores raw SigStrings in `signature_data` (row id 1, `device_source="0"`) — migrate those. | High |
+| SIG-2 | No `point_count` / `stroke_count` | Dropped. Two nullable ints. | Low |
+| SIG-3 | No pad identity (`device_model`, `device_serial`, `device_vendor`) | Dropped; `device_source` only says "topaz"/"web-pad". Needed for audit / attribution. | Medium |
+| SIG-4 | SigString protection | Client cannot encrypt (key would ship in JS); sends clear-text over HTTPS. Encrypt at rest, exclude `sig_string` from list/read payloads unless `?include=sig_string`. | Medium |
+| SIG-5 | `signature_method` value `"topaz"` | Frontend now sends it for pad captures on consents; confirm accepted / add to enum + reports. | Low |
+| SIG-6 | User signature write path | Users screen saves through user PATCH (no `device_source`); `PUT /users/{id}/signature` exists. Declare the canonical one. | Low |
+| SIG-7 | No `content_hash` binding for consent / progress-note signatures | Only MH `/sign` freezes a version. Expose or compute a hash so edits flip a `stale` status. | Medium |
+| SIG-8 | No signature audit events | Add `signature_audit` written by sign/void endpoints (actor, ip, user_agent, device). | Medium |
+| SIG-9 | Images inline in list endpoints | `GET /patient-signatures` returns every data URL; add `include_image=false` or signed image URLs. | Low |
+| SIG-10 | `MedicalHistorySignRequest` lacks the SIG-1/3 fields | Frontend cannot switch MH signing to `/medical-history/sign` without losing Topaz metadata. | Medium |
 
 ---
 
@@ -590,6 +625,7 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 
 | Area | Report |
 |------|--------|
+| Signature capture (Topaz) | `docs/signature/topaz_signature_backend_devreport.md` (+ `topaz_workstation_setup.md`) |
 | Account Ledger, Claims | `docs/account-ledger/account_ledger_backend_devreport.md` |
 | Claim Fill-Out | `docs/account-ledger/claim_fillout_backend_devreport.md` |
 | Insurance Payment window | `docs/account-ledger/insurance_payment_backend_devreport.md` |
@@ -622,7 +658,7 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 | Security (Users, Groups) | `docs/security/users/*.md`, `docs/security/groups/groups_backend_devreport.md` |
 | Office Assignment | `docs/setup/offices/office_assignment_backend_devreport.md` |
 | Transactions | `docs/transactions/transactions_backend_devreport.md` |
-| Treatment Plans | `docs/treatment-plans/treatment_plan_backend_devreport.md` |
+| Treatment Plans | `docs/treatment-plans/treatment_plan_backend_devreport.md`, `tx_plan_new_appointment_backend_devreport.md` (Tx Plan → New Appt, PLAN-APPT-1…7) |
 | Utilities | `docs/utilities/utilities_backend_devreport.md` |
 
 _Full per-gap detail (repro steps, exact payloads, live verification logs) lives in each module's report above._

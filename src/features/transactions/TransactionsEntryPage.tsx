@@ -36,6 +36,7 @@ import ProviderSelect from './ProviderSelect';
 import AddProceduresTab from './AddProceduresTab';
 import PaymentsTab from './PaymentsTab';
 import AdjustmentsTab from './AdjustmentsTab';
+import { paymentCodeLabel, adjustmentCodeLabel } from './transactionCodes';
 
 interface OutletCtx {
   patient: {
@@ -127,14 +128,9 @@ export default function TransactionsEntryPage() {
   const { definitions: paymentDefs } = useDefinitions('payment_method');
   const { definitions: adjustmentDefs } = useDefinitions('adjustment');
 
-  const paymentLabel = useMemo(() => {
-    const m = new Map(paymentDefs.map((d) => [d.key1, d.description]));
-    return (code: string | null | undefined) => (code ? m.get(code) || code : '');
-  }, [paymentDefs]);
-  const adjustmentLabel = useMemo(() => {
-    const m = new Map(adjustmentDefs.map((d) => [d.key1, d.description]));
-    return (code: string | null | undefined) => (code ? m.get(code) || code : '');
-  }, [adjustmentDefs]);
+  // Backend description first, legacy catalog second, raw code last (transactionCodes.ts).
+  const paymentLabel = useMemo(() => paymentCodeLabel(paymentDefs), [paymentDefs]);
+  const adjustmentLabel = useMemo(() => adjustmentCodeLabel(adjustmentDefs), [adjustmentDefs]);
 
   // Network load keyed ONLY on stable primitives (patient, date, manual reloads).
   // Label resolvers are deliberately NOT deps — they change identity every render
@@ -520,6 +516,7 @@ Create a claim for the remaining ${billable.length}?`,
             outstanding={outstanding}
             providers={providers}
             allProviders={allProviders}
+            defaultProviderId={providerId}
             providerLabel={providerLabel}
             codeDescription={codeDescription}
             onApplied={refresh}

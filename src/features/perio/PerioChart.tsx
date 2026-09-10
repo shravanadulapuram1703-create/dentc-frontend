@@ -23,7 +23,7 @@ import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ChartConditionRead, PerioExamRead, PerioChartTemplateRead } from '@/api/generated/model';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
-import { providerOptionLabel } from '@/services/providerDirectory';
+import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { PERMANENT_UPPER, PERMANENT_LOWER, upperTeeth, lowerTeeth } from '@/features/restorative/dentition';
 import { loadChartSettings } from '@/features/restorative/restorativeService';
 import { deriveToothStatuses, cellEnabled, planPerioSync, ABSENCE_LABEL, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
@@ -52,6 +52,7 @@ import {
   loadPerioPrefs, savePerioPrefs, resolveTemplate, prefsFromTemplate, examDateLabel,
   loadExamProvider, saveExamProvider, type PerioPrefs,
 } from './perioService';
+import { providerBareName } from '@/services/providerDirectory';
 
 interface OutletCtx {
   patient: { id: string; name: string; officeId?: string; age?: number; dob?: string; chartNo?: string };
@@ -127,7 +128,12 @@ export default function PerioChart() {
   // "Provider" block (Tax ID / License#) the legacy report prints for claims.
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
   const officesQuery = useListOffices({ size: 200 });
-  const { providers, providerRows, providerLabel } = useProviderDirectory(officeId);
+  // The office roster is sparse (office 4 lists one test provider), so the
+  // patient's preferred provider is pinned into the list and the picker offers
+  // the roster first with every other provider still reachable.
+  const { providers, allProviders, allProviderRows } = useProviderDirectory(officeId, {
+    pinned: [patientQuery.data?.preferred_provider_id],
+  });
 
   const exams = useMemo<PerioExamRead[]>(
     () => [...(examsQuery.data?.items ?? [])].sort((a, b) => b.exam_date.localeCompare(a.exam_date)),
@@ -440,9 +446,9 @@ export default function PerioChart() {
   // the directory qualify, so a stale legacy id can't select a blank option.
   const defaultProviderId = useMemo(() => {
     const known = (id: string | null | undefined) =>
-      !!id && providerRows.some((r) => String(r.id) === String(id)) ? String(id) : '';
+      !!id && allProviderRows.some((r) => String(r.id) === String(id)) ? String(id) : '';
     return known(patientQuery.data?.preferred_provider_id) || known(office?.billing_provider_id);
-  }, [patientQuery.data, office, providerRows]);
+  }, [patientQuery.data, office, allProviderRows]);
 
   // Apply the stored pick on an exam switch; otherwise fill a still-empty pick
   // once the directory resolves (it lands a tick after the first render).
@@ -469,7 +475,7 @@ export default function PerioChart() {
   const onPrint = async () => {
     if (!selectedExam) return;
     await flushDirty();
-    const provider = providerRows.find((r) => String(r.id) === providerId);
+    const provider = allProviderRows.find((r) => String(r.id) === providerId);
 
     printPerioExam(
       perioPrintHeader({
@@ -479,7 +485,7 @@ export default function PerioChart() {
         patientDob: patient?.dob ?? '',
         office,
         provider,
-        providerName: provider ? providerLabel(provider.id) : '',
+        providerName: provider ? providerBareName(provider) : '',
       }),
       {
         maxTeeth: MAX_TEETH,
@@ -531,16 +537,17 @@ export default function PerioChart() {
           </select>
         </label>
         <label className="flex items-center gap-1.5 font-medium">Provider
-          <select
+          <ProviderSelect
             value={providerId}
-            onChange={(e) => onProviderChange(e.target.value)}
+            onChange={onProviderChange}
+            officeProviders={providers}
+            allProviders={allProviders}
+            kind="any"
+            placeholder="— Select Provider —"
             disabled={!selectedExam}
             title="Provider printed on the Periodontal Examination Record"
             className="max-w-[190px] rounded border border-slate-300 bg-white px-2 py-1 disabled:opacity-50"
-          >
-            <option value="">— Select Provider —</option>
-            {providers.map((p) => <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>)}
-          </select>
+          />
         </label>
         <button onClick={onNewExam} disabled={!validId || createExam.isPending} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">New Exam</button>
         <button onClick={() => setShowDetails(true)} disabled={!selectedExam} className="flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">

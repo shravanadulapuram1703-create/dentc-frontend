@@ -63,7 +63,9 @@ export function useSmsMergeContext(patient_id: number, office_id_hint: number | 
     { patient_id, size: 100, sort: "date", order: "desc" },
     { query: { enabled: validId } },
   );
-  const { providerLabel } = useProviderDirectory();
+  // providerLabel ("Name (ID)") is for the on-screen appointment picker;
+  // providerName (bare) is what gets merged into the patient-facing message.
+  const { providerLabel, providerName } = useProviderDirectory();
 
   const patient: PatientRead | null = patientQuery.data ?? null;
   const office: OfficeRead | null = useMemo(() => {
@@ -93,7 +95,8 @@ export function useSmsMergeContext(patient_id: number, office_id_hint: number | 
     return rows
       .filter((a) => !a.is_archived && !a.is_cancelled && !a.is_blocked)
       .map((a) => {
-        const provider_name = providerLabel(a.provider_id) || "your provider";
+        const provider_name = providerName(a.provider_id) || "your provider";
+        const provider_display = providerLabel(a.provider_id) || provider_name;
         const status = (a.status ?? "").toLowerCase();
         return {
           id: a.id,
@@ -103,13 +106,13 @@ export function useSmsMergeContext(patient_id: number, office_id_hint: number | 
           provider_name,
           office_id: a.office_id,
           status: a.status,
-          label: `${fmtApptDate(a.date)}${a.start_time ? ` · ${fmtApptTime(a.start_time)}` : ""} · ${provider_name}`,
+          label: `${fmtApptDate(a.date)}${a.start_time ? ` · ${fmtApptTime(a.start_time)}` : ""} · ${provider_display}`,
           is_upcoming: a.date >= today && status !== "missed",
           is_confirmed: !!a.confirmed_on || status === "confirmed",
         };
       })
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  }, [apptQuery.data, providerLabel]);
+  }, [apptQuery.data, providerLabel, providerName]);
 
   const buildContext = useMemo(
     () =>

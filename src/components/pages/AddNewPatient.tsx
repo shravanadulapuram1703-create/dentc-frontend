@@ -36,6 +36,12 @@ import { MIN_DOB_ISO, todayIsoDate, validateDob, ageFromDob } from "../../utils/
 
 /** referral_type direction codes: "0" = Referred By, "1" = Referred To. */
 const REFERRAL_DIRECTION_TO = "1";
+/**
+ * Backend `patients.middle_initial` is VARCHAR(10) and the API returns HTTP 500
+ * (not 422) on overflow — see docs/patients/add_patient_backend_devreport.md
+ * GAP-AP-19. Clamp client-side until the column is widened / `middle_name` added.
+ */
+const MIDDLE_NAME_MAX_LENGTH = 10;
 import { Loader2 } from "lucide-react";
 import {
   createPatientInsurance,
@@ -99,6 +105,7 @@ import {
   type CoverageField,
   type StatusField,
 } from "../../features/add-patient/patientFlagRules";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 /** Step-1 required fields that an existing record may already be missing. */
 interface PreexistingGaps {
   sex: boolean;
@@ -144,7 +151,7 @@ interface AddNewPatientProps {
   initialValues?: Partial<
     Pick<
       PatientFormData,
-      "birthdate" | "lastName" | "firstName" | "email" | "phone" | "cellPhone" | "workPhone"
+      "birthdate" | "lastName" | "firstName" | "middle_initial" | "email" | "phone" | "cellPhone" | "workPhone"
     >
   >;
 }
@@ -154,6 +161,11 @@ interface PatientFormData {
   birthdate: string;
   lastName: string;
   firstName: string;
+  /**
+   * Optional middle name. Bound to the backend column `middle_initial`, which is
+   * VARCHAR(10) — longer values 500 on save (GAP-AP-19), so the input is capped.
+   */
+  middle_initial: string;
 
   // Additional Details
   title: string;
@@ -242,8 +254,7 @@ interface PatientFormData {
  * Provider option label. The seeded data has many providers sharing a name
  * (e.g. several "Dhileep Jinna"), so append the title to tell them apart.
  */
-const providerLabel = (p: Provider): string =>
-  p.title ? `${p.name}, ${p.title}` : p.name;
+const providerLabel = (p: Provider): string => providerDisplayLabel(p);
 
 /**
  * Pull the legacy "Emergency Contact" block out of the Medical Questionnaire
@@ -287,6 +298,7 @@ export default function AddNewPatient({
     birthdate: initialValues?.birthdate ?? "",
     lastName: initialValues?.lastName ?? "",
     firstName: initialValues?.firstName ?? "",
+    middle_initial: initialValues?.middle_initial ?? "",
 
     // Additional Details
     title: "",
@@ -960,6 +972,7 @@ export default function AddNewPatient({
         identity: {
           first_name: formData.firstName,
           last_name: formData.lastName,
+          middle_initial: formData.middle_initial.trim().slice(0, MIDDLE_NAME_MAX_LENGTH) || undefined,
           preferred_name: formData.preferredName || undefined,
           dob: dobFormatted,
           gender: genderCode as "M" | "F" | "O",
@@ -1490,8 +1503,8 @@ export default function AddNewPatient({
                     />
                   </div>
 
-                  {/* Last Name - takes 4 columns */}
-                  <div className="col-span-4">
+                  {/* Last Name - takes 3 columns */}
+                  <div className="col-span-3">
                     <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                       Last Name <span className="text-[#EF4444]">*</span>
                     </label>
@@ -1505,8 +1518,8 @@ export default function AddNewPatient({
                     />
                   </div>
 
-                  {/* First Name - takes 4 columns */}
-                  <div className="col-span-4">
+                  {/* First Name - takes 3 columns */}
+                  <div className="col-span-3">
                     <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                       First Name <span className="text-[#EF4444]">*</span>
                     </label>
@@ -1515,6 +1528,29 @@ export default function AddNewPatient({
                       value={formData.firstName}
                       onChange={(e) =>
                         setFormData({ ...formData, firstName: e.target.value })
+                      }
+                      className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
+                    />
+                  </div>
+
+                  {/* Middle Name - takes 2 columns. Optional; not part of the
+                      identity gate. Stored in the backend's `middle_initial`
+                      column (VARCHAR(10) — see GAP-AP-19), hence the cap. */}
+                  <div className="col-span-2" data-field="middle_initial">
+                    <label className="block text-[#1E293B] font-normal mb-1 text-sm">
+                      Middle Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.middle_initial}
+                      maxLength={MIDDLE_NAME_MAX_LENGTH}
+                      placeholder="Optional"
+                      aria-label="Middle Name (optional)"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          middle_initial: e.target.value.slice(0, MIDDLE_NAME_MAX_LENGTH),
+                        })
                       }
                       className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
                     />
@@ -2773,6 +2809,7 @@ export default function AddNewPatient({
               patient={{
                 first_name: formData.firstName,
                 last_name: formData.lastName,
+                middle_initial: formData.middle_initial,
                 dob: formData.birthdate,
                 sex: formData.sex,
                 marital_status: formData.maritalStatus,

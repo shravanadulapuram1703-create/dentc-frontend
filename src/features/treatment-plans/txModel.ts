@@ -28,21 +28,32 @@ export function genId(): string {
 // ---- Status ---------------------------------------------------------------
 
 /**
- * Grid statuses. The first six are the backend enum. `completed` is DERIVED —
- * the backend has no such status; an item is completed once it was posted to
- * the ledger (see `isPlanItemPosted` in the shared procedure service), which is
- * how the Restorative Chart and this page agree on what is still planned.
+ * Grid statuses. The backend enum is the first six plus `scheduled` (settable
+ * from the Edit Treatment window's "Scheduled" checkbox) and `completed`.
+ * `completed` is DERIVED / server-enforced — the backend rejects setting it
+ * directly (422 `status_requires_charge`); an item is completed once a charge
+ * was posted against it (see `isPlanItemPosted` in the shared procedure
+ * service), which is how the Restorative Chart and this page agree on what is
+ * still planned.
  */
-export type TxStatus = 'diagnosed' | 'accepted' | 'unaccepted' | 'hold' | 'alternative' | 'referred_out' | 'completed';
+export type TxStatus =
+  | 'diagnosed'
+  | 'accepted'
+  | 'unaccepted'
+  | 'hold'
+  | 'alternative'
+  | 'referred_out'
+  | 'scheduled'
+  | 'completed';
 
-/** A status a user can SET on an item (the backend enum). */
+/** A status a user can SET on an item (the backend enum minus the derived one). */
 export type SettableTxStatus = Exclude<TxStatus, 'completed'>;
 
-/** Statuses a user can SET on an item (the backend enum). */
+/** The six legacy statuses offered by the bulk "Change Status" panel (M08). */
 export const SETTABLE_STATUSES: SettableTxStatus[] = ['diagnosed', 'accepted', 'unaccepted', 'hold', 'alternative', 'referred_out'];
 
 /** Every status the grid can show, for filters. */
-export const STATUS_ORDER: TxStatus[] = [...SETTABLE_STATUSES, 'completed'];
+export const STATUS_ORDER: TxStatus[] = [...SETTABLE_STATUSES, 'scheduled', 'completed'];
 
 export const STATUS_LABEL: Record<TxStatus, string> = {
   diagnosed: 'Diagnosed',
@@ -51,6 +62,7 @@ export const STATUS_LABEL: Record<TxStatus, string> = {
   hold: 'Hold',
   alternative: 'Alternative',
   referred_out: 'Referred Out',
+  scheduled: 'Scheduled',
   completed: 'Completed',
 };
 
@@ -62,6 +74,7 @@ export const STATUS_ABBR: Record<TxStatus, string> = {
   hold: 'H',
   alternative: 'Alt',
   referred_out: 'RO',
+  scheduled: 'S',
   completed: 'C',
 };
 
@@ -72,12 +85,15 @@ export const STATUS_COLOR: Record<TxStatus, string> = {
   hold: '#6b7280', // gray
   alternative: '#7c3aed', // violet
   referred_out: '#dc2626', // red
+  scheduled: '#0e7490', // cyan — booked on the scheduler
   completed: '#0f766e', // teal — posted to the ledger
 };
 
-/** Backend status → grid status (never yields the derived `completed`). */
+/** Backend status → grid status. */
 export function normalizeStatus(raw: string | null | undefined): TxStatus {
   const s = (raw ?? '').trim().toLowerCase();
+  if (s === 's' || s === 'scheduled') return 'scheduled';
+  if (s === 'c' || s === 'completed') return 'completed';
   if (s === 'a' || s === 'accepted') return 'accepted';
   if (s === 'u' || s === 'unaccepted') return 'unaccepted';
   if (s === 'h' || s === 'hold') return 'hold';

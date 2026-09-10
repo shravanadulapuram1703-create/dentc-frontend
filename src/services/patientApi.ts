@@ -19,6 +19,7 @@ import type {
   RegisterResponse,
   PatientMedicalAlertCreate,
 } from "@/api/generated/model";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 // ===== TYPES =====
 // Comprehensive patient details interface (for Patient Overview)
@@ -27,6 +28,7 @@ export interface PatientDetails {
   chart_no: string;
   first_name: string;
   last_name: string;
+  middle_initial?: string; // Backend column is VARCHAR(10) — holds a short middle name
   preferred_name?: string;
   dob?: string;
   gender?: "M" | "F" | "O";
@@ -201,6 +203,7 @@ export interface PatientCreateRequestFull {
   identity: {
     first_name: string;
     last_name: string;
+    middle_initial?: string; // ≤10 chars (backend VARCHAR(10), GAP-AP-19)
     preferred_name?: string;
     dob: string; // YYYY-MM-DD
     gender?: "M" | "F" | "O";
@@ -312,6 +315,7 @@ export interface PatientUpdateRequestFull {
   identity?: {
     first_name?: string;
     last_name?: string;
+    middle_initial?: string;
     preferred_name?: string;
     dob?: string; // YYYY-MM-DD
     gender?: "M" | "F" | "O";
@@ -430,6 +434,7 @@ const toPatientDetails = (p: PatientRead): PatientDetails =>
     chart_no: p.chart_no ?? "",
     first_name: p.first_name ?? "",
     last_name: p.last_name ?? "",
+    middle_initial: p.middle_initial ?? undefined,
     preferred_name: p.preferred_name ?? undefined,
     dob: p.dob ?? undefined,
     gender: p.gender as PatientDetails["gender"],
@@ -664,7 +669,7 @@ const enrichDisplayNames = async (details: PatientDetails, p: PatientRead): Prom
       if (!providerId && !hygienistId) return;
       const { fetchProviders } = await import("./schedulerApi");
       const list = await fetchProviders(officeId != null ? String(officeId) : undefined);
-      const byId = new Map(list.map((x) => [x.id, x.name]));
+      const byId = new Map(list.map((x) => [x.id, providerDisplayLabel(x)]));
       if (details.provider) {
         if (providerId) details.provider.preferred_provider_name = byId.get(String(providerId));
         if (hygienistId) details.provider.preferred_hygienist_name = byId.get(String(hygienistId));

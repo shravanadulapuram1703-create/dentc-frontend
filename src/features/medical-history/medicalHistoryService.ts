@@ -37,6 +37,7 @@ import type {
   PatientMedicalAlertCreateResponse,
 } from "@/api/generated/model";
 import { toCode } from "@/features/add-patient/legacyCatalogs";
+import { signatureBodyFields, type SignatureResult } from "@/features/signature/signatureModel";
 import {
   emptyMedicalHistoryForm,
   type AlertAnswer,
@@ -185,14 +186,15 @@ export async function loadSignatures(patient_id: number): Promise<SignaturePair>
  */
 export function saveSignature(
   patient_id: number,
-  data_url: string,
+  signature: SignatureResult,
   is_user_sig: boolean,
 ): Promise<PatientSignatureRead> {
+  // `sig_string` / device model + serial have no column yet (gaps SIG-1..3);
+  // only the image and its `device_source` ("topaz" | "web-pad") persist.
   return createPatientSignature({
     patient_id,
-    signature_data: data_url,
-    signature_len: data_url.length,
-    device_source: "web-pad",
+    ...signatureBodyFields(signature),
+    signed_at: signature.captured_at,
     is_user_sig,
   });
 }

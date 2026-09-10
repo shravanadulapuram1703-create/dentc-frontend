@@ -28,6 +28,9 @@ import {
 import type { UserSetupMetadata } from "../../api/generated/model/userSetupMetadata";
 import type { BackendUser } from "../../types/backendUser";
 import { apiAssetUrl } from "../../utils/apiAsset";
+import { providerDisplayLabel } from "@/services/providerDirectory";
+import SignatureCapture from "@/features/signature/SignatureCapture";
+import type { SignatureResult } from "@/features/signature/signatureModel";
 
 // Re-export BackendUser for backward compatibility
 export type { BackendUser } from "../../types/backendUser";
@@ -90,6 +93,9 @@ export default function AddEditUserModal({
 
   // User image + signature (image goes via the multipart endpoint after save).
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // "Sign on pad" dialog for the user signature (Topaz or on-screen).
+  const [sigPadOpen, setSigPadOpen] = useState(false);
+  const [sigDraft, setSigDraft] = useState<SignatureResult | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Dropdown metadata (roles, patient access levels, overtime methods, prefs
@@ -1267,7 +1273,7 @@ export default function AddEditUserModal({
                       <option value="">None</option>
                       {availableProviders.map(p => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {providerDisplayLabel(p)}
                         </option>
                       ))}
                     </select>
@@ -2144,6 +2150,16 @@ export default function AddEditUserModal({
                           onChange={(e) => onSignatureSelected(e.target.files?.[0] ?? null)}
                           className="text-sm"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSigDraft(null);
+                            setSigPadOpen(true);
+                          }}
+                          className="block text-xs font-semibold text-[#3A6EA5] hover:underline"
+                        >
+                          Sign on pad / screen…
+                        </button>
                         {formData.signatureData && (
                           <button
                             type="button"
@@ -2161,7 +2177,54 @@ export default function AddEditUserModal({
               </div>
             </div>
           )}
-            </>
+            {sigPadOpen && (
+              <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
+                <div className="w-full max-w-lg rounded-lg border-2 border-[#E2E8F0] bg-white shadow-xl">
+                  <div className="flex items-center justify-between rounded-t-md bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-4 py-2.5">
+                    <h3 className="text-sm font-bold uppercase tracking-wide text-white">Capture Signature</h3>
+                    <button
+                      type="button"
+                      onClick={() => setSigPadOpen(false)}
+                      className="text-white/80 hover:text-white"
+                      aria-label="Close"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    <SignatureCapture
+                      value={sigDraft}
+                      onChange={setSigDraft}
+                      always_open
+                      height={150}
+                      hint="Accepted — press Use signature."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 rounded-b-md border-t-2 border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setSigPadOpen(false)}
+                      className="rounded border-2 border-[#CBD5E1] bg-white px-4 py-1.5 text-sm font-bold text-[#1F3A5F] hover:bg-[#F1F5F9]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!sigDraft}
+                      onClick={() => {
+                        if (!sigDraft) return;
+                        setFormData((prev) => ({ ...prev, signatureData: sigDraft.signature_data }));
+                        setSigPadOpen(false);
+                      }}
+                      className="rounded bg-[#3A6EA5] px-4 py-1.5 text-sm font-bold text-white hover:bg-[#1F3A5F] disabled:opacity-50"
+                    >
+                      Use signature
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+    </>
           ) : null}
         </div>
 

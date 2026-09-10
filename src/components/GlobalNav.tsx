@@ -68,6 +68,7 @@ import {
   LifeBuoy,
   Bug,
   MessageCircle,
+  Usb,
 } from "lucide-react";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
@@ -76,6 +77,8 @@ import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
 import { useAuth, type Office } from "../contexts/AuthContext.js";
 import { useMessagingContext } from "../contexts/ChatContext.js";
+import ChatLauncher from "../features/messaging/components/ChatLauncher";
+import ReportIssueButton from "./help/components/ReportIssueButton";
 import { useHelp } from "./help";
 import { useAppointNow } from "@/features/appointnow/AppointNowContext";
 import api from "../services/api.js";
@@ -908,6 +911,13 @@ export default function GlobalNav({
       ],
     },
     {
+      label: "Devices",
+      icon: Usb,
+      submenu: [
+        { label: "Signature Pad (Topaz)", path: "/setup/devices/signature-pad" },
+      ],
+    },
+    {
       label: "Providers",
       icon: Stethoscope,
       submenu: [
@@ -1438,6 +1448,12 @@ export default function GlobalNav({
 
         {/* Office Selector & Organization Switcher */}
         <div className="flex items-center gap-3">
+          {/* Direct Messaging launcher (opens the slide-in panel) */}
+          <ChatLauncher />
+
+          {/* Report an Issue (opens the global support-ticket dialog) */}
+          <ReportIssueButton />
+
           {/* AppointNow: incoming online-booking requests */}
           <button
             onClick={() => navigate("/appointnow/requests")}

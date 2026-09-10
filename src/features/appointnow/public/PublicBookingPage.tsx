@@ -53,6 +53,9 @@ const EMPTY_CONTACT: BookingContactDetails = {
   date_of_birth: null,
   is_new_patient: true,
   notes: null,
+  insurance_info: null,
+  disclaimer_accepted: null,
+  consent_accepted: null,
 };
 
 /** Pick a sensible starting date (skip Sunday). */
@@ -431,6 +434,11 @@ export default function PublicBookingPage() {
                   ["Phone", contact.phone],
                   ["Email", contact.email],
                   contact.date_of_birth ? ["Date of birth", contact.date_of_birth] : null,
+                  contact.insurance_info?.trim()
+                    ? ["Insurance provider & member ID", contact.insurance_info.trim()]
+                    : null,
+                  ["Disclaimer", contact.disclaimer_accepted ? "Yes" : "No"],
+                  ["Consent", contact.consent_accepted ? "Yes" : "No"],
                 ]
                   .filter(Boolean)
                   .map((row) => {

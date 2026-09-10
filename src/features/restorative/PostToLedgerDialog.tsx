@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ProcedureCodeRead, ProviderRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import { money2 } from './procedurePricing';
+import { providerOptionLabel } from '@/services/providerDirectory';
 
 export interface PostOutcome {
   posted: number;
@@ -23,7 +24,7 @@ interface PostToLedgerDialogProps {
 
 type RowState = 'pending' | 'posting' | 'done' | 'error';
 
-const providerLabel = (p: ProviderRead) => p.name || `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.id;
+const providerLabel = (p: ProviderRead) => providerOptionLabel(p);
 
 /**
  * Legacy "Post to Ledger" from the Treatment Plan: the user ticks which planned

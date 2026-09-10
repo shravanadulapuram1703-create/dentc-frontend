@@ -6,7 +6,7 @@ interface TxPlanGridProps {
   selected: Set<string>;
   onToggle: (id: string) => void;
   onToggleAll: (checked: boolean) => void;
-  /** Open the Edit Treatment modal for a row (legacy: click the Diag Date link). */
+  /** Open the Edit Treatment window for a row (double-click anywhere on the row, or click the Diag Date link). */
   onEditRow: (id: string) => void;
   loading: boolean;
 }
@@ -91,8 +91,10 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEd
               return (
                 <tr
                   key={r.id}
-                  className={`cursor-pointer border-b border-slate-100 ${isSel ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
+                  className={`cursor-pointer select-none border-b border-slate-100 ${isSel ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
+                  title="Click to select · double-click to edit"
                   onClick={() => onToggle(r.id)}
+                  onDoubleClick={() => onEditRow(r.id)}
                 >
                   <td className="px-2 py-1 text-center" onClick={(e) => e.stopPropagation()}>
                     <input type="checkbox" checked={isSel} onChange={() => onToggle(r.id)} aria-label={`Select ${r.code}`} />

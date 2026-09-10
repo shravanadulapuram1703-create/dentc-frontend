@@ -46,6 +46,21 @@ interface NewAppointmentModalProps {
   currentOffice: string;
   editingAppointment?: any; // Appointment data when editing
   selectedDate?: Date; // Selected date from scheduler (for default when no slot)
+  /**
+   * Patient handed over from a patient screen (Tx Plan / Restorative "New
+   * Appt"). When set (and not editing) the "Who is this appointment for?"
+   * chooser is skipped: the record is loaded and the appointment-details form
+   * opens for that patient directly.
+   */
+  preselectedPatientId?: number | null;
+  /** treatment_plan_items.id values to seed the TREATMENTS grid with. */
+  initialPlanItemIds?: string[];
+  /**
+   * Provider from the plan item(s) being booked. Becomes the appointment's
+   * provider (instead of the operatory's assigned provider) and, when no slot
+   * was clicked, selects the operatory assigned to that provider.
+   */
+  preselectedProviderId?: string | null;
 }
 
 interface PatientSearchResult {
@@ -80,6 +95,9 @@ export default function NewAppointmentModal({
   currentOffice,
   editingAppointment,
   selectedDate,
+  preselectedPatientId = null,
+  initialPlanItemIds,
+  preselectedProviderId = null,
 }: NewAppointmentModalProps) {
   const [appointmentType, setAppointmentType] = useState<
     "existing" | "new" | "family" | "block" | "quickfill"
@@ -239,7 +257,7 @@ export default function NewAppointmentModal({
           if (firstProvider) {
             setFormData((prev) => ({
               ...prev,
-              provider: firstProvider.name,
+              provider: firstProvider.id,
             }));
           }
         }
@@ -277,14 +295,14 @@ export default function NewAppointmentModal({
       // When slot is selected, update time and operatory (view-only mode)
       // Auto-fill the provider from the operatory's provider_id (backend Gap 1).
       const op = operatories.find((o) => o.id === selectedSlot.operatory);
-      const providerName = op?.provider_id
-        ? providers.find((p) => p.id === op.provider_id)?.name
+      const providerId = op?.provider_id
+        ? providers.find((p) => p.id === op.provider_id)?.id
         : undefined;
       setFormData((prev) => ({
         ...prev,
         time: selectedSlot.time,
         operatory: selectedSlot.operatory,
-        ...(providerName ? { provider: providerName } : {}),
+        ...(providerId ? { provider: providerId } : {}),
       }));
     } else if (selectedDate) {
       // When no slot selected but date is provided, update date (editable mode)
@@ -529,6 +547,41 @@ export default function NewAppointmentModal({
     }
   };
 
+  // Patient handed over from a patient screen: skip the chooser and the search,
+  // load the record, and go straight to the appointment-details form.
+  useEffect(() => {
+    if (!isOpen || editingAppointment || preselectedPatientId == null) return;
+    let cancelled = false;
+    setIsLoadingNewPatient(true);
+    setAppointmentType("existing");
+    setShowPatientSearch(false);
+    setShowPatientForm(true);
+    void getPatient(preselectedPatientId)
+      .then((p) => {
+        if (cancelled) return;
+        setSelectedPatient(convertPatientToSearchResult(p));
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        console.error("Error loading preselected patient:", err);
+        alert(
+          `The patient could not be loaded to schedule the appointment: ${
+            err?.message ?? "unknown error"
+          }`,
+        );
+        // Fall back to the normal existing-patient search.
+        setShowPatientForm(false);
+        setShowPatientSearch(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingNewPatient(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, preselectedPatientId, editingAppointment?.id]);
+
   const handleSelectPatient = (
     patient: PatientSearchResult,
   ) => {
@@ -547,6 +600,15 @@ export default function NewAppointmentModal({
   };
   // Seed the appointment-details form from the slot / date+time the user picked
   // on the way in, so those choices carry into AddEditAppointmentForm.
+  //
+  // A booking handed over from a patient screen also carries the plan item's
+  // provider: that provider wins over the operatory's assigned provider, and —
+  // when no slot was clicked — the operatory assigned to that provider is
+  // selected (first operatory in this office whose provider_id matches).
+  const providerOperatory = (providerId: string | null): string | undefined =>
+    providerId
+      ? operatories.find((o) => o.provider_id === providerId)?.id
+      : undefined;
   const buildInitialAppointmentData = () => ({
     ...(formData.date && { date: formData.date }),
     ...((formData.time || selectedSlot?.time) && {
@@ -554,11 +616,26 @@ export default function NewAppointmentModal({
     }),
     ...(formData.duration && { duration: formData.duration }),
     ...(formData.procedureType && { procedureType: formData.procedureType }),
-    ...((formData.operatory || selectedSlot?.operatory) && {
-      operatory: formData.operatory || selectedSlot?.operatory,
+    // Precedence: the clicked slot's operatory, then the handed-over provider's
+    // operatory, then whatever the chooser holds. The chooser is skipped for a
+    // handed-over booking, so its `formData.operatory` / `formData.provider`
+    // are only the "first in the list" defaults set when metadata loaded —
+    // they must not beat the provider chosen on the treatment plan.
+    ...((selectedSlot?.operatory ||
+      providerOperatory(preselectedProviderId) ||
+      formData.operatory) && {
+      operatory:
+        selectedSlot?.operatory ||
+        providerOperatory(preselectedProviderId) ||
+        formData.operatory,
     }),
-    ...(formData.provider && { provider: formData.provider }),
+    ...((preselectedProviderId || formData.provider) && {
+      provider: preselectedProviderId || formData.provider,
+    }),
     ...(formData.notes && { notes: formData.notes }),
+    // Plan items handed over from the Tx Plan / Restorative "New Appt" button.
+    ...(initialPlanItemIds &&
+      initialPlanItemIds.length > 0 && { plan_item_ids: initialPlanItemIds }),
   });
 
   // Reusable Radio component (clean & safe)
@@ -1215,6 +1292,14 @@ export default function NewAppointmentModal({
               editingAppointment={editingAppointment}
               initialAppointmentData={buildInitialAppointmentData()}
             />
+          ) : isLoadingNewPatient ? (
+            /* Preselected patient (handed over from a patient screen) loading */
+            <div className="flex items-center justify-center gap-3 py-16">
+              <Loader2 className="w-5 h-5 animate-spin text-[#1F3A5F]" />
+              <span className="text-sm font-medium text-[#1E293B]">
+                Loading patient…
+              </span>
+            </div>
           ) : null}
         </div>
       </div>

@@ -972,3 +972,21 @@ needs restart/deploy. Also found: `PN-9` lock "today" is UTC (notes lock at 8 PM
 `PN-10` timestamps serialised without `Z` (parsed as local time by every client),
 `PN-11` no `updated_at/updated_by`. Details + acceptance criteria in
 `docs/progress-notes/progress_notes_backend_devreport.md` §PN-8..PN-11.
+
+## Add Patient — Middle name (`GAP-AP-19`) — 2026-09-08
+
+Module: Patients · Screen: Add/Edit Patient → Step 1 Identity Information (+ patient banner,
+Patient listing, Account Ledger member names).
+
+Business Requirement: capture and display an optional full **middle name** for the patient.
+
+Current Status: the only backend field is `middle_initial` (`patients.middle_initial VARCHAR(10)`),
+with no `middle_name` column and no `max_length` on the Pydantic schemas. Verified live: a 9-char
+value persists; an 11-char value on `PATCH /api/v1/patients/{id}` returns **HTTP 500**
+(`internal_error`) instead of a 422. The frontend binds the new Middle Name input to
+`middle_initial` and clamps it to 10 characters so the 500 cannot be triggered.
+
+Backend ask: (1) add `middle_name VARCHAR(50)` to `patients` and expose it on
+`PatientCreate`/`PatientUpdate`/`PatientRead` (or widen `middle_initial` to 50); (2) add
+`max_length` validation so overflow is a 422 field error. Full write-up with repro requests:
+[docs/patients/add_patient_backend_devreport.md](docs/patients/add_patient_backend_devreport.md) → GAP-AP-19.
