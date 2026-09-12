@@ -114,7 +114,7 @@ const money = (v: unknown): string => {
 };
 
 /** Backend gender code → the display name the wizard's `sex` select holds. */
-const GENDER_NAME: Record<string, string> = { M: "Male", F: "Female", O: "Other" };
+const GENDER_NAME: Record<string, string> = { M: "Male", F: "Female", U: "Unknown", O: "Other" };
 
 /**
  * The wizard stores `sex` as a display name because that is what the metadata

@@ -7,8 +7,10 @@
  */
 
 export interface ChartStatusTemplateCreate {
+  /** @maxLength 200 */
   name: string;
   label_key?: string | null;
+  /** @maxLength 50 */
   template_type: string;
   arch?: string | null;
   material?: string | null;

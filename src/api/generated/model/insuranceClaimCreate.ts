@@ -7,9 +7,11 @@
  */
 
 export interface InsuranceClaimCreate {
+  /** @maxLength 50 */
   id: string;
   patient_id: number;
   office_id?: number | null;
+  /** @maxLength 50 */
   claim_number: string;
   status?: string | null;
   claim_type?: string | null;

@@ -3,9 +3,10 @@
 // The legacy "Insurance Details" dialog (PLAN / BENEFITS / COVERAGE &
 // LIMITATIONS / FREQ LIMITATION CODE GRP) edits ONE insurance plan plus its
 // coverage-rule sub-resource. Per project convention every key here is the
-// backend's snake_case name; the handful of legacy fields the backend has NO
-// column for are grouped in `PlanExtras` and persisted by `planExtrasStore`
-// (browser storage) until the backend grows them — see
+// backend's snake_case name. The nine legacy PLAN/BENEFITS fields that used
+// to be browser-stored (PLAN-DTL-1) are backend columns now and live on
+// `PlanForm`; `planExtrasStore` only survives as a one-time read fallback for
+// values typed before the columns existed — see
 // docs/insurance/insurance_plan_details_backend_devreport.md (PLAN-DTL-*).
 //
 // Backend facts this model is built on (live-verified against the running
@@ -36,7 +37,7 @@ import type { InsuranceCoverageRuleRead, InsuranceCoverageRuleCreate, InsuranceC
 import { type PlanForm, emptyPlanForm, freqLimitToApi, intOrNull } from "../planData";
 
 // ---------------------------------------------------------------------------
-// PLAN tab — fields with no backend column ("extras")
+// PLAN tab — option lists for the legacy code fields
 // ---------------------------------------------------------------------------
 
 export const FEES_TO_PRINT_OPTIONS = [
@@ -68,59 +69,37 @@ export const NETWORK_TYPE_OPTIONS = [
 /** Plan Type values (legacy list). Backend PLANTYPE definitions are merged in at runtime. */
 export const PLAN_TYPE_FALLBACK = ["Indemnity", "PPO", "HMO", "DISCOUNT", "MEDICAID", "MEDICAL", "UNION", "OUT OF NETWORK"];
 
-export interface PlanExtras {
-  fees_to_print: string;
-  claim_option: string;
-  form_to_print: string;
-  reporting_subtype: string;
-  network_type: string;
-  noa_only: boolean;
-  per_visit_copay: string;
-  lifetime_ortho_benefits: boolean;
-  plan_notes: string;
-}
+/**
+ * The legacy PLAN/BENEFITS fields that were browser-stored before the backend
+ * grew their columns. Kept as a named subset so `planExtrasStore` (the legacy
+ * read fallback) stays typed.
+ */
+export type PlanExtras = Pick<
+  PlanForm,
+  | "fees_to_print"
+  | "claim_option"
+  | "form_to_print"
+  | "reporting_subtype"
+  | "network_type"
+  | "noa_only"
+  | "per_visit_copay"
+  | "lifetime_ortho_benefits"
+  | "plan_notes"
+>;
 
 export function emptyPlanExtras(): PlanExtras {
-  return {
-    fees_to_print: "office_ucr",
-    claim_option: "submit",
-    form_to_print: "ADA2024",
-    reporting_subtype: "",
-    network_type: "unknown",
-    noa_only: false,
-    per_visit_copay: "",
-    lifetime_ortho_benefits: true,
-    plan_notes: "",
-  };
+  const { fees_to_print, claim_option, form_to_print, reporting_subtype, network_type, noa_only, per_visit_copay, lifetime_ortho_benefits, plan_notes } =
+    emptyPlanForm();
+  return { fees_to_print, claim_option, form_to_print, reporting_subtype, network_type, noa_only, per_visit_copay, lifetime_ortho_benefits, plan_notes };
 }
 
 export const PLAN_EXTRA_KEYS = Object.keys(emptyPlanExtras()) as (keyof PlanExtras)[];
 
-/** The whole PLAN + BENEFITS form: backend-backed `PlanForm` + the extras. */
-export type PlanDetailsForm = PlanForm & PlanExtras;
+/** The whole PLAN + BENEFITS form — every field is a backend column. */
+export type PlanDetailsForm = PlanForm;
 
 export function emptyPlanDetailsForm(): PlanDetailsForm {
-  return { ...emptyPlanForm(), ...emptyPlanExtras() };
-}
-
-/** Split a details form back into its backend-backed and extras halves. */
-export function splitPlanDetails(f: PlanDetailsForm): { plan: PlanForm; extras: PlanExtras } {
-  const {
-    fees_to_print,
-    claim_option,
-    form_to_print,
-    reporting_subtype,
-    network_type,
-    noa_only,
-    per_visit_copay,
-    lifetime_ortho_benefits,
-    plan_notes,
-    ...plan
-  } = f;
-  return {
-    plan,
-    extras: { fees_to_print, claim_option, form_to_print, reporting_subtype, network_type, noa_only, per_visit_copay, lifetime_ortho_benefits, plan_notes },
-  };
+  return emptyPlanForm();
 }
 
 // ---------------------------------------------------------------------------

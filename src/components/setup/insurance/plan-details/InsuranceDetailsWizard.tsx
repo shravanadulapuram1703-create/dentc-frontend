@@ -9,6 +9,9 @@
 //   • Setup → Insurance → Plans           — Add Plan (create) and row click (edit)
 //   • Patient → Insurance → Add New Ins Plan — create, then link to the slot
 //   • Patient → Insurance → View Plan      — read-only
+//   • Patient → Insurance → Edit Plan      — edit, with the host's shared-plan
+//                                            banner (`notice`) and confirmation
+//                                            (`confirmFinish`) before the write
 //
 // Nothing is written until FINISH: the plan is created/updated, then the
 // coverage + frequency rows are diff-saved (planDetailsService), then the
@@ -64,6 +67,14 @@ export interface InsuranceDetailsWizardProps {
   showActive?: boolean;
   /** Footer link rendered in view mode (e.g. "Open in Setup"). */
   viewFooter?: ReactNode;
+  /** Rendered above the step body in every mode (e.g. a shared-plan impact banner). */
+  notice?: ReactNode;
+  /**
+   * Asked right before anything is written (after validation and the
+   * duplicate-group check). Resolve false to stay on the form. Edit hosts use
+   * it to confirm a change that reaches other patients.
+   */
+  confirmFinish?: () => Promise<boolean>;
 }
 
 export default function InsuranceDetailsWizard({
@@ -77,6 +88,8 @@ export default function InsuranceDetailsWizard({
   categoryNote,
   showActive = false,
   viewFooter,
+  notice,
+  confirmFinish,
 }: InsuranceDetailsWizardProps) {
   const readOnly = mode === "view";
   const [step, setStep] = useState(0);
@@ -232,6 +245,7 @@ export default function InsuranceDetailsWizard({
 
   // ---- Save --------------------------------------------------------------------
   const persist = async () => {
+    if (confirmFinish && !(await confirmFinish())) return;
     setSaving(true);
     try {
       const res = await savePlanDetails({
@@ -251,7 +265,6 @@ export default function InsuranceDetailsWizard({
       } else {
         toast.success(mode === "create" ? `${PLAN_CATEGORY_LABEL[category]} insurance plan #${res.plan.id} created` : `Plan #${res.plan.id} updated`);
       }
-      if (!res.extras_saved) toast.warning("Browser storage unavailable — the browser-kept fields were not saved");
       onSaved?.(res.plan, carrierLabel, category);
     } catch (e: unknown) {
       toast.error("Save failed", { description: e instanceof Error ? e.message : "Could not save plan" });
@@ -341,6 +354,8 @@ export default function InsuranceDetailsWizard({
             </div>
           </div>
 
+          {notice}
+
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-24 text-sm text-[#64748B]">
               <Loader2 className="h-5 w-5 animate-spin text-[#1F6FB2]" /> Loading plan…
@@ -370,10 +385,9 @@ export default function InsuranceDetailsWizard({
               onUseExistingPlan={onUseExisting ? handleUseExisting : undefined}
               useExistingLabel={useExistingLabel}
               excludePlanId={mode === "edit" ? plan_id : null}
-              showExtrasNote={!readOnly}
             />
           ) : step === 1 ? (
-            <BenefitsStep form={form} onChange={update} disabled={readOnly || saving} showExtrasNote={!readOnly} />
+            <BenefitsStep form={form} onChange={update} disabled={readOnly || saving} />
           ) : step === 2 ? (
             <CoverageStep
               rows={coverageRows}

@@ -18,6 +18,14 @@ patient_id?: number | null;
 document_type?: string | null;
 office_id?: number | null;
 /**
+ * PROC-7c: documents linked to one posted procedure
+ */
+procedure_id?: string | null;
+/**
+ * PROC-7c: documents linked to one insurance claim
+ */
+claim_id?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

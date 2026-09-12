@@ -3,8 +3,9 @@
 // One parametrized component drives all six insurance tabs (Primary/Secondary/
 // Third/Fourth Dental + Primary/Secondary Medical). It joins patient_insurance →
 // plan/carrier/employer/subscriber for the slot, lets staff search/select or add
-// a plan, edit benefit-remaining + eligibility + subscriber details + notes, and
-// saves back across patient_insurance + insurance_subscribers.
+// a plan, view or edit that plan (shared INSURANCE DETAILS wizard), edit
+// benefit-remaining + eligibility + subscriber details + notes, and saves back
+// across patient_insurance + insurance_subscribers.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
@@ -37,7 +38,12 @@ import EligibilitySection from "./EligibilitySection";
 import SubscriberInformation from "./SubscriberInformation";
 import NewInsPlanModal from "./NewInsPlanModal";
 import ViewPlanModal from "./ViewPlanModal";
+import EditPlanModal from "./EditPlanModal";
 import { INPUT_CLS } from "./ui";
+import { printInsuranceDetails } from "./insurancePrint";
+import { openServerReport } from "@/features/print/serverReport";
+import { getPatientInsuranceReport } from "@/api/generated/endpoints/patients/patients";
+import { useListOffices } from "@/api/generated/endpoints/organization/organization";
 
 interface OutletContext {
   patient: {
@@ -48,6 +54,7 @@ interface OutletContext {
     dob?: string;
     balance?: number;
     chartNo?: string;
+    office?: string;
     officeId?: string;
   };
 }
@@ -84,7 +91,8 @@ export default function InsurancePlanScreen({ category, order }: Props) {
   const [form, setForm] = useState<InsuranceForm>(() => emptyForm());
   const [planDisplay, setPlanDisplay] = useState<PlanDisplay>(EMPTY_PLAN_DISPLAY);
   const [showNewPlan, setShowNewPlan] = useState(false);
-  const [showViewPlan, setShowViewPlan] = useState(false);
+  // Which popup is open on the selected plan: the read-only viewer or the editor.
+  const [planPopup, setPlanPopup] = useState<"view" | "edit" | null>(null);
 
   const update = useCallback((patch: Partial<InsuranceForm>) => setForm((p) => ({ ...p, ...patch })), []);
 
@@ -144,6 +152,23 @@ export default function InsurancePlanScreen({ category, order }: Props) {
     update({ ins_plan_id: plan.id, group_number: plan.group_number ?? "" });
   };
 
+  // After Edit Plan → FINISH: re-read plan + carrier + employer so the read-only
+  // Ind./Fam. benefit columns, the carrier block and the employer block show the
+  // saved values. The slot's own Group # follows the plan only when it was
+  // blank or still equal to the plan's previous group number (it is stored on
+  // the subscriber, so a deliberately different value is left alone).
+  const handlePlanUpdated = async (plan: InsurancePlanRead) => {
+    setPlanPopup(null);
+    const previousGroup = planDisplay.group_number;
+    const ctx = await loadPlanContext(plan.id);
+    setPlanDisplay(planDisplayFromSlot({ record: null, subscriber: null, ...ctx }));
+    const nextGroup = ctx.plan?.group_number ?? plan.group_number ?? "";
+    if (nextGroup && (!form.group_number.trim() || form.group_number === previousGroup) && form.group_number !== nextGroup) {
+      update({ group_number: nextGroup });
+      toast.info("Group # updated from the plan", { description: "Save this screen to keep it on the subscriber." });
+    }
+  };
+
   const handlePickSubscriber = async (subscriberId: number) => {
     const sub = await getSubscriberById(subscriberId);
     if (sub) update(subscriberFields(sub));
@@ -183,12 +208,44 @@ export default function InsurancePlanScreen({ category, order }: Props) {
   const other = toggleSlot(slot);
   const otherLabel = `Add/View ${other.label}`;
 
+  // Structured print of this slot (plan, benefits, eligibility, subscriber,
+  // notes). The office record for the report header comes from the shared
+  // offices query, which is normally already cached.
+  const officesQuery = useListOffices({ size: 200 });
+  const officeId = patient.officeId ? Number(patient.officeId) : null;
+  const printFromScreen = () =>
+    printInsuranceDetails({
+      patient: { id: patientId, name: patient.name, dob: patient.dob, chart_no: patient.chartNo },
+      office: (officesQuery.data?.items ?? []).find((o) => o.id === officeId) ?? null,
+      office_name: patient.office ?? "",
+      slot,
+      form,
+      plan: planDisplay,
+    });
+  // Server-rendered report for this slot (PRINT-1); the screen-data PDF is the
+  // fallback. The route 404s for a slot with no record, which the fallback
+  // covers by printing the blank form.
+  const handlePrint = () =>
+    openServerReport({
+      fetch_pdf: () => getPatientInsuranceReport(patientId, { category, order }),
+      fallback: printFromScreen,
+      label: `Insurance Details — ${slot.label}`,
+    });
+
   return (
     <div className="bg-[#F1F5F9] min-h-[calc(100vh-260px)]">
       {/* Title bar */}
       <div className="flex items-center justify-between bg-gradient-to-b from-[#2566a8] to-[#16406e] px-4 py-2.5 text-white">
         <span className="text-sm font-bold">Insurance Details</span>
-        <Printer className="w-4 h-4 opacity-80" />
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={loading}
+          title={`Print ${slot.label} insurance details`}
+          className="rounded p-1 hover:bg-white/15 disabled:opacity-50"
+        >
+          <Printer className="w-4 h-4 opacity-80" />
+        </button>
       </div>
 
       {/* Tabs */}
@@ -209,7 +266,8 @@ export default function InsurancePlanScreen({ category, order }: Props) {
               onGroupNumberChange={(v) => update({ group_number: v })}
               onSelectPlan={(id) => void handleSelectPlan(id)}
               onAddNew={() => setShowNewPlan(true)}
-              onViewPlan={() => setShowViewPlan(true)}
+              onViewPlan={() => setPlanPopup("view")}
+              onEditPlan={() => setPlanPopup("edit")}
             />
 
             {/* Right: benefit + eligibility + subscriber + notes */}
@@ -286,8 +344,17 @@ export default function InsurancePlanScreen({ category, order }: Props) {
         />
       )}
 
-      {showViewPlan && planDisplay.plan_id != null && (
-        <ViewPlanModal planId={planDisplay.plan_id} onClose={() => setShowViewPlan(false)} />
+      {planPopup === "view" && planDisplay.plan_id != null && (
+        <ViewPlanModal planId={planDisplay.plan_id} onClose={() => setPlanPopup(null)} onEdit={() => setPlanPopup("edit")} />
+      )}
+
+      {planPopup === "edit" && planDisplay.plan_id != null && (
+        <EditPlanModal
+          planId={planDisplay.plan_id}
+          carrierName={planDisplay.carrier_name}
+          onClose={() => setPlanPopup(null)}
+          onSaved={(plan) => void handlePlanUpdated(plan)}
+        />
       )}
     </div>
   );

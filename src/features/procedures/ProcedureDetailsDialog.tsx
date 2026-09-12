@@ -12,8 +12,14 @@
 // Class V-Lingual). Every field the code's `requires_*` flags demand is enforced
 // on SAVE (see procedureRequirements.ts) with the legacy red toast wording; the
 // rest stay disabled.
+//
+// Supporting records (PROC-7c): for a code that requires an X-ray / perio chart /
+// photo / missing-tooth info / attachment, a line under the row shows what the
+// server already has on file for this patient, tooth and date. It never blocks
+// the save (the record is normally captured after the chair); the claim submit
+// is where it is enforced.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { useListChartMaterials } from '@/api/generated/endpoints/procedures/procedures';
@@ -38,6 +44,7 @@ import {
   type ProcedureRequirements,
   type SurfaceChoice,
 } from './procedureRequirements';
+import { fetchProcedureReadiness, readinessLabels, type ProcedureReadiness } from './supportingRecords';
 
 export interface ProcedureDetailsHeader {
   provider_id: string;
@@ -65,6 +72,8 @@ interface Props {
   /** `charge` = Transactions / Ledger / chart Completed; `plan` = Treatment Plan / chart Tx Plans. */
   mode: 'charge' | 'plan';
   office_id: number | null;
+  /** Real numeric patient id; enables the supporting-records readiness line per row. */
+  patient_id?: number | null;
   rows: ProcedureDetailsRowInput[];
   header: ProcedureDetailsHeader;
   /** Lock the provider (e.g. the chart's toolbar provider drives it). */
@@ -125,7 +134,14 @@ function requirementMessages(code: ProcedureCodeRead, req: ProcedureRequirements
   return out;
 }
 
-export default function ProcedureDetailsDialog({ mode, office_id, rows, header, providerLocked, onSave, onClose, busy }: Props) {
+const RECORD_KEYS = ['attachment', 'perio_chart', 'photo', 'xray', 'missing_tooth_info'] as const;
+
+/** Does this row carry at least one supporting-records flag? */
+function needsRecords(req: ProcedureRequirements): boolean {
+  return RECORD_KEYS.some((k) => req[k]);
+}
+
+export default function ProcedureDetailsDialog({ mode, office_id, patient_id, rows, header, providerLocked, onSave, onClose, busy }: Props) {
   const [hdr, setHdr] = useState<ProcedureDetailsHeader>(header);
   const reqs = useMemo(() => rows.map((r) => procedureRequirements(r.code)), [rows]);
   const [state, setState] = useState<RowState[]>(() =>
@@ -154,6 +170,59 @@ export default function ProcedureDetailsDialog({ mode, office_id, rows, header, 
 
   const patch = (i: number, p: Partial<RowState>) =>
     setState((s) => s.map((row, idx) => (idx === i ? { ...row, ...p } : row)));
+
+  // Supporting-records readiness per row (PROC-7c). Re-judged when the tooth or
+  // the date changes, debounced so tooth-grid clicks do not fan out requests.
+  const [readiness, setReadiness] = useState<Record<number, ProcedureReadiness | 'loading' | 'error'>>({});
+  const readinessSeq = useRef(0);
+  const toothKey = state.map((r) => r.tooth).join('|');
+  useEffect(() => {
+    if (!patient_id) return;
+    const wanted = rows.map((r, i) => ({ r, i })).filter(({ i }) => needsRecords(reqs[i]!));
+    if (!wanted.length) return;
+    const seq = ++readinessSeq.current;
+    setReadiness((prev) => {
+      const next = { ...prev };
+      for (const { i } of wanted) next[i] = 'loading';
+      return next;
+    });
+    const teeth = toothKey.split('|');
+    const timer = window.setTimeout(() => {
+      for (const { r, i } of wanted) {
+        fetchProcedureReadiness({ patient_id, procedure_code: r.code.code, tooth: teeth[i] ?? null, date_of_service: hdr.date || null })
+          .then((res) => { if (seq === readinessSeq.current) setReadiness((prev) => ({ ...prev, [i]: res })); })
+          .catch(() => { if (seq === readinessSeq.current) setReadiness((prev) => ({ ...prev, [i]: 'error' })); });
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [patient_id, rows, reqs, toothKey, hdr.date]);
+
+  /** One line under a row: what is on file / still missing / judged later. */
+  const readinessLine = (i: number) => {
+    const req = reqs[i]!;
+    if (!needsRecords(req)) return null;
+    const r = readiness[i];
+    const base = 'flex flex-wrap items-center gap-x-3 gap-y-0.5 px-3 py-1 text-[12px]';
+    const tag = <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">Records</span>;
+    if (!patient_id || r === 'error') {
+      const labels = readinessLabels(RECORD_KEYS.filter((k) => req[k]));
+      return <div className={`${base} bg-slate-50 text-slate-600`}>{tag} Requires {labels}{r === 'error' ? ' (could not check what is on file)' : ''}.</div>;
+    }
+    if (!r || r === 'loading') return <div className={`${base} bg-slate-50 text-slate-500`}>{tag} Checking what is on file…</div>;
+    const missing = r.missing ?? [];
+    const deferred = r.deferred ?? [];
+    const satisfied = r.satisfied ?? [];
+    const tone = missing.length ? 'bg-amber-50 text-amber-900' : 'bg-emerald-50 text-emerald-900';
+    return (
+      <div className={`${base} ${tone}`} role="status">
+        {tag}
+        {missing.length > 0 && <span><strong>Missing:</strong> {readinessLabels(missing, r)}</span>}
+        {satisfied.length > 0 && <span><strong>On file:</strong> {readinessLabels(satisfied, r)}</span>}
+        {deferred.length > 0 && <span><strong>Needed before claim:</strong> {readinessLabels(deferred, r)}</span>}
+        {missing.length > 0 && <span className="opacity-80">You can still {mode === 'plan' ? 'plan' : 'post'} it; the claim will not submit until these are on file.</span>}
+      </div>
+    );
+  };
 
   const pickTooth = (i: number, tooth: string) => {
     const next = state[i]!.tooth === tooth ? '' : tooth;
@@ -370,6 +439,14 @@ export default function ProcedureDetailsDialog({ mode, office_id, rows, header, 
                     </td>
                   </tr>
                 );
+              })}
+              {rows.map((r, i) => {
+                const line = readinessLine(i);
+                return line ? (
+                  <tr key={`rec-${r.code.code}-${i}`} className="border-b border-slate-200">
+                    <td colSpan={6} className="p-0">{line}</td>
+                  </tr>
+                ) : null;
               })}
             </tbody>
           </table>

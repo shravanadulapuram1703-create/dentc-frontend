@@ -7,8 +7,10 @@
  */
 
 export interface AppointmentCreate {
+  /** @maxLength 50 */
   id: string;
   patient_id?: number | null;
+  /** @maxLength 50 */
   provider_id: string;
   operatory_id?: string | null;
   office_id: number;
@@ -27,6 +29,8 @@ export interface AppointmentCreate {
   has_lab?: boolean | null;
   lab_cost?: number | string | null;
   lab_dds?: string | null;
+  lab_vendor_id?: number | null;
+  lab_short_notice?: boolean | null;
   lab_sent_on?: string | null;
   lab_due_on?: string | null;
   lab_received_on?: string | null;

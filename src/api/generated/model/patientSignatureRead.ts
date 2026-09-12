@@ -23,7 +23,26 @@ export interface PatientSignatureRead {
   voided_by?: number | null;
   created_by?: number | null;
   updated_by?: number | null;
+  sig_format?: string | null;
+  sig_compression?: number | null;
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  captured_user_agent?: string | null;
+  progress_note_id?: number | null;
+  consent_id?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;
+  has_image?: boolean;
+  image_omitted?: boolean;
+  has_sig_string?: boolean;
+  legacy_sig_string_in_image?: boolean;
+  signature_status?: string | null;
+  created_by_name?: string | null;
+  signed_by_name?: string | null;
+  voided_by_name?: string | null;
 }

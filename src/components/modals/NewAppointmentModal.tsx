@@ -9,6 +9,7 @@ import {
   Plus,
   Trash2,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { components } from "../../styles/theme";
@@ -27,6 +28,13 @@ import {
 import { registerPatientResilient } from "../../services/patientApi";
 import { listPatients, getPatient } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead, ListPatientsParams, PatientCreate } from "@/api/generated/model";
+import {
+  LEGACY_ID_GAP_MESSAGE,
+  lookup_patient_by_id,
+  lookup_patients_by_legacy_id,
+  parse_patient_id,
+  patient_matches_scope,
+} from "@/features/patients/patientLookup";
 import AddNewPatient from "../pages/AddNewPatient";
 import QuickNewPatientAppointment, {
   type QuickAppointmentFormData,
@@ -63,6 +71,14 @@ interface NewAppointmentModalProps {
   preselectedProviderId?: string | null;
 }
 
+/** "MM/DD/YYYY" (what the Birthdate radio invites) → "YYYY-MM-DD" for the `dob` filter; ISO passes through. */
+function toIsoDate(text: string): string {
+  const us = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!us) return text;
+  const [, mm, dd, yyyy] = us;
+  return `${yyyy}-${(mm ?? "").padStart(2, "0")}-${(dd ?? "").padStart(2, "0")}`;
+}
+
 interface PatientSearchResult {
   patientId: string;
   /** Numeric backend patient id (PatientRead.id) — used as the appointment
@@ -77,6 +93,8 @@ interface PatientSearchResult {
   age: number;
   respId: string;
   chartNumber: string;
+  /** PatientRead.legacy_id — the id from the pre-import system. */
+  legacyId: string;
   patientType: string;
   office: string;
   email?: string;
@@ -130,6 +148,7 @@ export default function NewAppointmentModal({
           age: 0,
           respId: "",
           chartNumber: "",
+          legacyId: "",
           patientType: "",
           office: currentOffice,
         };
@@ -170,6 +189,8 @@ export default function NewAppointmentModal({
   
   // Patient search loading state
   const [isSearchingPatients, setIsSearchingPatients] = useState(false);
+  // Explanatory line under the results (invalid Patient ID, PT-SEARCH-1 gap).
+  const [searchNotice, setSearchNotice] = useState<string | null>(null);
   // Prevent background scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -466,6 +487,7 @@ export default function NewAppointmentModal({
       // Real backend fields (PatientRead.responsible_party_id / patient_type).
       respId: p.responsible_party_id ?? "",
       chartNumber: p.chart_no || "",
+      legacyId: p.legacy_id ?? "",
       patientType: p.patient_type ?? "",
       // The patient's own home office, not the office currently selected in the
       // header (which made every search result look like it lived here).
@@ -487,25 +509,26 @@ export default function NewAppointmentModal({
     return match ? match[1] : officeId;
   };
 
-  // Map searchBy values to API format
-  const mapSearchByToAPI = (searchBy: string): string => {
-    const mapping: Record<string, string> = {
-      "lastName": "lastName",
-      "firstName": "firstName",
-      "homePhone": "homePhone",
-      "workPhone": "workPhone",
-      "cellPhone": "cellPhone",
-      "ssn": "ssn",
-      "respId": "responsiblePartyId",
-      "patId": "patientId",
-      "chart": "chartNumber",
-      "birthdate": "birthDate",
-    };
-    return mapping[searchBy] || searchBy;
+  // Search-by radio → the typed `GET /patients` filter it maps to. Names have
+  // no typed filter (free-text `search` covers first/last name); the three
+  // phone radios all share the backend's single `phone` filter, which matches
+  // home/cell/work. `patId` and `legacyId` are identifier lookups (see
+  // patientLookup.ts) and are handled before this table is consulted.
+  const SEARCH_BY_FILTER: Record<string, keyof ListPatientsParams | "search"> = {
+    lastName: "search",
+    firstName: "search",
+    homePhone: "phone",
+    workPhone: "phone",
+    cellPhone: "phone",
+    ssn: "ssn",
+    respId: "responsible_party_id",
+    chart: "chart_no",
+    birthdate: "dob",
   };
 
   const handlePatientSearch = async () => {
-    if (!searchText.trim()) {
+    const text = searchText.trim();
+    if (!text) {
       alert("Please enter search criteria");
       return;
     }
@@ -513,28 +536,58 @@ export default function NewAppointmentModal({
     setIsSearchingPatients(true);
     setHasSearched(false);
     setSearchResults([]);
+    setSearchNotice(null);
 
     try {
-      // Map the search form to the backend /patients query params: exact
-      // chart_no for Chart # searches, otherwise free-text `search`.
-      const apiSearchBy = mapSearchByToAPI(searchBy);
+      const officeIdNum =
+        searchIn === "current" ? Number(extractOfficeIdNumber(currentOffice)) || null : null;
+
+      // Pat. ID — exact GET /patients/{id}; office scope + Incl. Inactive are
+      // re-applied here because the by-id endpoint takes no filters.
+      if (searchBy === "patId") {
+        const p = await lookup_patient_by_id(text);
+        const hit =
+          p && patient_matches_scope(p, { home_office_id: officeIdNum, include_inactive: includeInactive })
+            ? [p]
+            : [];
+        if (!p && parse_patient_id(text) == null) {
+          setSearchNotice("Patient ID must be a number (e.g. 12345 or PT-12345).");
+        }
+        setSearchResults(hit.map(convertPatientToSearchResult));
+        setHasSearched(true);
+        return;
+      }
+
       const params: ListPatientsParams = { page: 1, size: 100 };
-      if (apiSearchBy === "chartNumber") {
-        params.chart_no = searchText.trim();
-      } else {
-        params.search = searchText.trim();
-      }
-      if (searchIn === "current") {
-        const officeIdNum = extractOfficeIdNumber(currentOffice);
-        if (officeIdNum) params.home_office_id = Number(officeIdNum);
-      }
+      if (officeIdNum) params.home_office_id = officeIdNum;
       if (!includeInactive) params.is_active = true;
+
+      // Legacy ID — `legacy_id=` list filter (PT-SEARCH-1); the helper tells
+      // us when the backend ignored it so we don't show a random page.
+      if (searchBy === "legacyId") {
+        const res = await lookup_patients_by_legacy_id(text, params);
+        if (!res.backend_supported) setSearchNotice(LEGACY_ID_GAP_MESSAGE);
+        setSearchResults(res.items.map(convertPatientToSearchResult));
+        setHasSearched(true);
+        return;
+      }
+
+      const filter = SEARCH_BY_FILTER[searchBy] ?? "search";
+      if (filter === "search") {
+        params.search = text;
+      } else if (filter === "dob") {
+        params.dob = toIsoDate(text);
+      } else if (filter === "phone") {
+        params.phone = text.replace(/\D/g, "") || text;
+      } else {
+        (params as Record<string, string | undefined>)[filter] = text;
+      }
 
       const response = await listPatients(params);
 
       // Convert backend patients to PatientSearchResult format
       const results = response.items.map(convertPatientToSearchResult);
-      
+
       setSearchResults(results);
       setHasSearched(true);
     } catch (err: any) {
@@ -1047,6 +1100,7 @@ export default function NewAppointmentModal({
                     <div className="space-y-2">
                       <Radio label="Resp. ID" value="respId" />
                       <Radio label="Pat. ID" value="patId" />
+                      <Radio label="Legacy ID" value="legacyId" />
                       <Radio label="Chart#" value="chart" />
                     </div>
 
@@ -1139,6 +1193,15 @@ export default function NewAppointmentModal({
                     found)
                   </h4>
 
+                  {searchNotice && (
+                    <p
+                      role="status"
+                      className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
+                    >
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {searchNotice}
+                    </p>
+                  )}
                   {searchResults.length === 0 ? (
                     <div className="bg-[#F7F9FC] border border-[#E2E8F0] rounded-lg p-8 text-center">
                       <p className="text-[#64748B]">
@@ -1178,6 +1241,9 @@ export default function NewAppointmentModal({
                               </th>
                               <th className="px-3 py-2 text-left font-bold">
                                 Chart#
+                              </th>
+                              <th className="px-3 py-2 text-left font-bold">
+                                Legacy ID
                               </th>
                               <th className="px-3 py-2 text-left font-bold">
                                 Pat. Type
@@ -1227,6 +1293,9 @@ export default function NewAppointmentModal({
                                   </td>
                                   <td className="px-3 py-2 text-[#1E293B]">
                                     {patient.chartNumber}
+                                  </td>
+                                  <td className="px-3 py-2 text-[#64748B]">
+                                    {patient.legacyId}
                                   </td>
                                   <td className="px-3 py-2 text-[#1E293B]">
                                     {patient.patientType}

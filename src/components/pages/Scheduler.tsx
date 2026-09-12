@@ -29,6 +29,7 @@ import CancelAppointmentDialog, {
   type CancellationResult,
 } from "../scheduler/CancelAppointmentDialog";
 import MedicalAlertPopover from "../scheduler/MedicalAlertPopover";
+import { fetchPatientMedicalAlertSummary } from "@/features/medical-alerts/patientMedicalAlerts";
 import {
   CONFIRMATION_STATUSES,
   SAMEDAY_STATUSES,
@@ -50,6 +51,7 @@ import {
   fetchAppointmentStatuses,
   fetchPatientAlerts,
   fetchPatientBalance,
+  type PatientMedicalAlert,
   createAppointment,
   updateAppointment,
   deleteAppointment,
@@ -333,12 +335,21 @@ export default function Scheduler({
 
   // Medical-alert popover (PDF page 18) + per-patient active-alert cache.
   const [alertPopover, setAlertPopover] = useState<{
+    patient_id: number | null;
     patientName: string;
-    alerts: string[];
     x: number;
     y: number;
   } | null>(null);
-  const [alertsByPatient, setAlertsByPatient] = useState<Map<number, string[]>>(new Map());
+  // patient_id -> active alerts (Medical History "yes" answers + patient alerts)
+  // and the Medical History "Additional Comments" text.
+  const [alertsByPatient, setAlertsByPatient] = useState<
+    Map<number, { alerts: PatientMedicalAlert[]; comments: string }>
+  >(new Map());
+  /** Red cross on a block: the feed's has_alert flag OR the per-patient summary. */
+  const patientHasAlert = (appointment: Appointment): boolean =>
+    appointment.has_alert === true ||
+    (appointment.patient_id != null &&
+      (alertsByPatient.get(appointment.patient_id)?.alerts.length ?? 0) > 0);
   // Per-patient computed balance (drives the $ badge on the block).
   const [balanceByPatient, setBalanceByPatient] = useState<Map<number, PatientBalanceInfo>>(
     new Map(),
@@ -606,8 +617,9 @@ export default function Scheduler({
   // Background: for the patients on the *current day*, load their active medical
   // alerts (red-cross badge, PDF pages 4/18) and computed account balance ($
   // badge). Daily view only, deduped by patient_id, capped, and non-blocking.
-  // The scheduler feed carries neither a has_alert flag nor the balance — both
-  // are documented backend gaps (SCHED-APPT-4/7) that would remove this fan-out.
+  // The feed's `has_alert` only reflects /patient-alerts, not the Medical
+  // History "yes" answers (gap MA-1), and it carries no balance (SCHED-APPT-7),
+  // so this fan-out stays until the backend denormalizes both onto the feed.
   useEffect(() => {
     if (viewMode !== "daily") return;
     const currentDate = formatDateYYYYMMDD(selectedDate);
@@ -628,12 +640,15 @@ export default function Scheduler({
         ids.map(
           async (
             id,
-          ): Promise<[number, string[], PatientBalanceInfo | null]> => {
-            const [alerts, balance] = await Promise.all([
+          ): Promise<
+            [number, { alerts: PatientMedicalAlert[]; comments: string }, PatientBalanceInfo | null]
+          > => {
+            const [alerts, summary, balance] = await Promise.all([
               fetchPatientAlerts(id).catch(() => []),
+              fetchPatientMedicalAlertSummary(id).catch(() => null),
               fetchPatientBalance(id).catch(() => null),
             ]);
-            return [id, alerts.map((al) => al.alert), balance];
+            return [id, { alerts, comments: summary?.comments ?? "" }, balance];
           },
         ),
       );
@@ -1682,16 +1697,25 @@ export default function Scheduler({
     appointment: Appointment,
   ) => {
     e.stopPropagation();
-    const alerts =
-      appointment.patient_id != null
-        ? alertsByPatient.get(appointment.patient_id) ?? []
-        : [];
     setAlertPopover({
+      patient_id: appointment.patient_id,
       patientName: appointment.patient_name,
-      alerts,
       x: e.clientX,
       y: e.clientY,
     });
+    // Feed-flagged block whose summary is not fetched yet (week/month -> day
+    // switch, or beyond the 40-patient cap): load it on demand.
+    const pid = appointment.patient_id;
+    if (pid != null && !alertsByPatient.has(pid)) {
+      Promise.all([
+        fetchPatientAlerts(pid).catch(() => []),
+        fetchPatientMedicalAlertSummary(pid).catch(() => null),
+      ]).then(([alerts, summary]) =>
+        setAlertsByPatient((prev) =>
+          new Map(prev).set(pid, { alerts, comments: summary?.comments ?? "" }),
+        ),
+      );
+    }
   };
 
   // Delete appointment
@@ -1899,6 +1923,12 @@ export default function Scheduler({
                   New
                 </span>
                 New patient (first visit)
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-[#1E293B] mr-2">
+                <span className="text-red-600 font-bold" aria-hidden>
+                  ✚
+                </span>
+                Medical alert (click for details)
               </span>
               <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">
                 Providers:
@@ -2200,9 +2230,7 @@ export default function Scheduler({
                       appointment.provider_id,
                       providerColorMap,
                     );
-                    const hasAlerts =
-                      appointment.patient_id != null &&
-                      (alertsByPatient.get(appointment.patient_id)?.length ?? 0) > 0;
+                    const hasAlerts = patientHasAlert(appointment);
                     // $ badge when the patient owes an outstanding balance.
                     const patientBalance =
                       appointment.patient_id != null
@@ -2325,8 +2353,16 @@ export default function Scheduler({
                                 onClick={(e) =>
                                   handleShowMedicalAlert(e, appointment)
                                 }
-                                className="text-red-600 hover:text-red-800 flex-shrink-0"
-                                title="Medical alert"
+                                className="text-red-600 hover:text-red-800 flex-shrink-0 font-bold"
+                                title={
+                                  appointment.patient_id != null &&
+                                  alertsByPatient.get(appointment.patient_id)?.alerts.length
+                                    ? `Medical alert: ${alertsByPatient
+                                        .get(appointment.patient_id)!
+                                        .alerts.map((al) => al.alert)
+                                        .join(", ")}`
+                                    : "Medical alert - click for details"
+                                }
                                 aria-label="View medical alert"
                               >
                                 <span aria-hidden>✚</span>
@@ -2368,6 +2404,7 @@ export default function Scheduler({
               getProviderColor={(appt) =>
                 providerColorFor(appt.provider_id, providerColorMap)
               }
+              hasAlert={patientHasAlert}
             />
           )}
 
@@ -2380,6 +2417,7 @@ export default function Scheduler({
               getProviderColor={(appt) =>
                 providerColorFor(appt.provider_id, providerColorMap)
               }
+              hasAlert={patientHasAlert}
             />
           )}
         </div>
@@ -2821,8 +2859,21 @@ export default function Scheduler({
         {/* Medical Alert popover — PDF page 18 */}
         {alertPopover && (
           <MedicalAlertPopover
+            patient_id={alertPopover.patient_id}
             patientName={alertPopover.patientName}
-            alerts={alertPopover.alerts}
+            alerts={
+              alertPopover.patient_id != null
+                ? alertsByPatient.get(alertPopover.patient_id)?.alerts ?? []
+                : []
+            }
+            comments={
+              alertPopover.patient_id != null
+                ? alertsByPatient.get(alertPopover.patient_id)?.comments
+                : undefined
+            }
+            loading={
+              alertPopover.patient_id != null && !alertsByPatient.has(alertPopover.patient_id)
+            }
             anchor={{ x: alertPopover.x, y: alertPopover.y }}
             onClose={() => setAlertPopover(null)}
           />

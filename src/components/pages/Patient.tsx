@@ -19,12 +19,20 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { components } from '../../styles/theme';
 import { useListPatients } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ListPatientsParams, PatientRead } from '@/api/generated/model';
 import { patient_display_name } from '@/features/patient-overview/format';
+import {
+  LEGACY_ID_GAP_MESSAGE,
+  lookup_patient_by_id,
+  lookup_patients_by_legacy_id,
+  parse_patient_id,
+  patient_matches_scope,
+} from '@/features/patients/patientLookup';
 import { useDefinitions } from '../../hooks/useDefinitions';
 
 interface PatientProps {
@@ -36,9 +44,13 @@ interface PatientProps {
 const PAGE_SIZE = 25;
 
 // Search modes. `any` is free-text `search` (ILIKE over name/chart_no/email/
-// phone); the rest map to typed exact filters on listPatients.
+// phone); `id` is an exact GET /patients/{id}; `legacy_id` is the (pending,
+// PT-SEARCH-1) `legacy_id=` list filter; the rest map to typed exact filters
+// on listPatients.
 const searchByOptions = [
   { value: 'any', label: 'Name / Any', placeholder: 'Search name, email, or phone…' },
+  { value: 'id', label: 'Patient ID', placeholder: 'Enter patient ID (e.g. 12345 or PT-12345)…' },
+  { value: 'legacy_id', label: 'Legacy ID', placeholder: 'Enter legacy (pre-import) patient ID…' },
   { value: 'chart_no', label: 'Chart #', placeholder: 'Enter exact chart number…' },
   { value: 'ssn', label: 'SSN', placeholder: 'Enter SSN…' },
   { value: 'medicaid_id', label: 'Medicaid ID', placeholder: 'Enter Medicaid ID…' },
@@ -51,8 +63,12 @@ type SearchBy = (typeof searchByOptions)[number]['value'];
 type SearchScope = 'current' | 'all';
 type SortOrder = 'asc' | 'desc';
 
-// Maps a non-'any' searchBy to its ListPatientsParams key.
-const SEARCH_FIELD_PARAM: Record<Exclude<SearchBy, 'any'>, keyof ListPatientsParams> = {
+// Modes resolved by identifier lookups (not the paged list query).
+type LookupSearchBy = 'id' | 'legacy_id';
+const isLookupMode = (by: SearchBy): by is LookupSearchBy => by === 'id' || by === 'legacy_id';
+
+// Maps a list-filter searchBy to its ListPatientsParams key.
+const SEARCH_FIELD_PARAM: Record<Exclude<SearchBy, 'any' | LookupSearchBy>, keyof ListPatientsParams> = {
   chart_no: 'chart_no',
   ssn: 'ssn',
   medicaid_id: 'medicaid_id',
@@ -125,9 +141,10 @@ function buildParams(snap: SearchSnapshot, currentOffice: string, page: number):
   if (text) {
     if (snap.searchBy === 'any') {
       params.search = text;
-    } else {
+    } else if (!isLookupMode(snap.searchBy)) {
       (params as Record<string, string | undefined>)[SEARCH_FIELD_PARAM[snap.searchBy]] = text;
     }
+    // 'id' / 'legacy_id' are resolved by useIdentifierLookup, not by these params.
   }
 
   if (snap.scope === 'current') {
@@ -146,6 +163,52 @@ function buildParams(snap: SearchSnapshot, currentOffice: string, page: number):
   if (snap.dobTo) params.dob_to = snap.dobTo;
 
   return params;
+}
+
+interface IdentifierLookupResult {
+  items: PatientRead[];
+  /** Set when the backend ignored the `legacy_id` filter (PT-SEARCH-1 not deployed). */
+  gap_message: string | null;
+}
+
+/**
+ * Resolves the 'id' / 'legacy_id' search modes. Patient ID is an exact
+ * GET /patients/{id}; Legacy ID goes through the `legacy_id=` list filter.
+ * Office scope and Include Inactive are re-applied client-side for the by-id
+ * path because GET /patients/{id} cannot take them.
+ */
+function useIdentifierLookup(committed: SearchSnapshot | null, currentOffice: string) {
+  const enabled = committed != null && isLookupMode(committed.searchBy);
+  const home_office_id =
+    committed?.scope === 'current' ? extractOfficeIdNumber(currentOffice) ?? null : null;
+
+  return useQuery<IdentifierLookupResult>({
+    queryKey: [
+      'patient-identifier-lookup',
+      committed?.searchBy,
+      committed?.searchText.trim(),
+      home_office_id,
+      committed?.includeInactive,
+    ],
+    enabled,
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const snap = committed as SearchSnapshot;
+      const text = snap.searchText.trim();
+      const scope = { home_office_id, include_inactive: snap.includeInactive };
+
+      if (snap.searchBy === 'id') {
+        const p = await lookup_patient_by_id(text, signal);
+        return { items: p && patient_matches_scope(p, scope) ? [p] : [], gap_message: null };
+      }
+
+      const listFilters: ListPatientsParams = { size: 200, sort: 'last_name', order: snap.order };
+      if (home_office_id) listFilters.home_office_id = home_office_id;
+      if (!snap.includeInactive) listFilters.is_active = true;
+      const res = await lookup_patients_by_legacy_id(text, listFilters, signal);
+      return { items: res.items, gap_message: res.backend_supported ? null : LEGACY_ID_GAP_MESSAGE };
+    },
+  });
 }
 
 /**
@@ -194,11 +257,32 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const params = committed ? buildParams(committed, currentOffice, page) : undefined;
+  const lookupMode = committed != null && isLookupMode(committed.searchBy);
+  const params = committed && !lookupMode ? buildParams(committed, currentOffice, page) : undefined;
 
-  const patientsQuery = useListPatients(params, {
-    query: { enabled: committed != null },
+  const listQuery = useListPatients(params, {
+    query: { enabled: committed != null && !lookupMode },
   });
+  const lookupQuery = useIdentifierLookup(committed, currentOffice);
+
+  // One view over whichever query drives the current search mode.
+  const patientsQuery = lookupMode
+    ? {
+        isFetching: lookupQuery.isFetching,
+        isLoading: lookupQuery.isLoading,
+        isError: lookupQuery.isError,
+        refetch: lookupQuery.refetch,
+      }
+    : {
+        isFetching: listQuery.isFetching,
+        isLoading: listQuery.isLoading,
+        isError: listQuery.isError,
+        refetch: listQuery.refetch,
+      };
+  const gapMessage = lookupMode ? lookupQuery.data?.gap_message ?? null : null;
+  // A Patient ID that is not a number can never match; say so instead of "searching".
+  const invalidIdInput =
+    committed?.searchBy === 'id' && parse_patient_id(committed.searchText) == null;
 
   // Resolve home_office_id -> office name without per-row calls.
   const officesQuery = useListOffices({ size: 200 });
@@ -208,8 +292,13 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
     return (id?: number | null) => (id != null ? map.get(id) ?? '—' : '—');
   }, [officesQuery.data]);
 
-  const items = patientsQuery.data?.items ?? [];
-  const meta = patientsQuery.data?.meta;
+  const items = lookupMode ? lookupQuery.data?.items ?? [] : listQuery.data?.items ?? [];
+  // Lookups are single-page: synthesize the meta the results header/pager read.
+  const meta = lookupMode
+    ? lookupQuery.data
+      ? { total: lookupQuery.data.items.length, pages: 1 }
+      : undefined
+    : listQuery.data?.meta;
   const totalPages = meta?.pages ?? 0;
 
   const runSearch = (snap: SearchSnapshot) => {
@@ -513,7 +602,21 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
               <div className="p-12 text-center">
                 <Users className="w-16 h-16 text-[#CBD5E1] mx-auto mb-4" strokeWidth={1.5} />
                 <h3 className="font-bold text-[#64748B] mb-2">No Patients Found</h3>
-                <p className="text-[#94A3B8]">Try adjusting your search criteria</p>
+                {gapMessage ? (
+                  <p
+                    className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800"
+                    role="status"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={2} />
+                    {gapMessage}
+                  </p>
+                ) : invalidIdInput ? (
+                  <p className="text-[#94A3B8]">
+                    Patient ID must be a number (e.g. 12345 or PT-12345)
+                  </p>
+                ) : (
+                  <p className="text-[#94A3B8]">Try adjusting your search criteria</p>
+                )}
               </div>
             ) : (
               <div className="divide-y-2 divide-[#E2E8F0]">
@@ -535,7 +638,7 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
                             )}
                           </button>
 
-                          <div className="grid grid-cols-4 gap-6 flex-1">
+                          <div className="grid grid-cols-6 gap-6 flex-1">
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
                                 Patient Name
@@ -549,6 +652,18 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
                               <div className="font-semibold text-[#3A6EA5]">
                                 {patient.chart_no || `PT-${patient.id}`}
                               </div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
+                                Patient ID
+                              </div>
+                              <div className="font-semibold text-[#1E293B]">{patient.id}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
+                                Legacy ID
+                              </div>
+                              <div className="font-semibold text-[#1E293B]">{patient.legacy_id || '—'}</div>
                             </div>
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">

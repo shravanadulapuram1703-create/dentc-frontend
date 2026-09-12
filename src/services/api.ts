@@ -7,6 +7,12 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // FastAPI reads list query params as repeated keys (`exam_ids=1&exam_ids=2`).
+  // axios' default serializes arrays as `exam_ids[]=1&exam_ids[]=2`, which the
+  // backend rejects with 422 (seen on GET /perio-exams/compare). `indexes: null`
+  // drops the brackets. Only list-typed query param in the generated client
+  // today is `ComparePerioExamsParams.exam_ids`.
+  paramsSerializer: { indexes: null },
 });
 
 // Attach token automatically

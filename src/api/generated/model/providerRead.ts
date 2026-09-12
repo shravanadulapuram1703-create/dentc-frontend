@@ -44,6 +44,7 @@ export interface ProviderRead {
   ortho_questionnaire_template?: string | null;
   custom_1?: string | null;
   custom_2?: string | null;
+  default_operatory_id?: string | null;
   created_at: string;
   provider_kind?: string | null;
 }

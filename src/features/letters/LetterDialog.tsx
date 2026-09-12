@@ -224,26 +224,26 @@ export default function LetterDialog({
       }
 
       const office_name = context.office?.name ?? '';
-      const doc = build_letter_pdf(
-        blocks,
-        {
-          patient_name,
-          patient_id,
-          office_name,
-          printed_on: fmt_local_today(),
-          letter_name: selected.name,
-        },
-        {
-          envelope_printing: envelope,
-          is_consent,
-          signature_type,
-          signer_name: signature_type === 'none' ? '' : (signer?.name ?? ''),
-          fallback_from: envelope_lines_from(context),
-          fallback_to: envelope_lines_to(context),
-        },
-      );
+      const pdf_header = {
+        patient_name,
+        patient_id,
+        office_name,
+        printed_on: fmt_local_today(),
+        letter_name: selected.name,
+      };
+      const pdf_opts = {
+        envelope_printing: envelope,
+        is_consent,
+        signature_type,
+        signer_name: signature_type === 'none' ? '' : (signer?.name ?? ''),
+        fallback_from: envelope_lines_from(context),
+        fallback_to: envelope_lines_to(context),
+      };
+      const doc = build_letter_pdf(blocks, pdf_header, pdf_opts);
 
       onGenerated({
+        pdf_header,
+        pdf_opts,
         template: selected,
         is_consent,
         blocks,

@@ -11,6 +11,8 @@ interface TxPlanGridProps {
   loading: boolean;
 }
 
+const HEADER_BG = 'linear-gradient(180deg,#2a4a73,#1d3a5f)';
+
 const COLS: { label: string; w: string; align?: 'right' | 'center' }[] = [
   { label: 'Diag Date', w: '92px' },
   { label: 'TID', w: '40px', align: 'center' },
@@ -49,11 +51,11 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEd
   const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.id));
 
   return (
-    <div className="overflow-auto border border-slate-300 bg-white" style={{ maxHeight: 340 }}>
+    <div className="overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm" style={{ maxHeight: 340 }}>
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10">
-          <tr style={{ background: 'linear-gradient(180deg,#f3f5f8,#dfe4ea)' }}>
-            <th className="border-b border-slate-300 px-2 py-1.5" style={{ width: '34px' }}>
+          <tr className="text-white" style={{ background: HEADER_BG }}>
+            <th className="px-2 py-2" style={{ width: '34px' }}>
               <input
                 type="checkbox"
                 aria-label="Select all"
@@ -64,7 +66,7 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEd
             {COLS.map((c) => (
               <th
                 key={c.label}
-                className="border-b border-slate-300 px-2 py-1.5 font-semibold text-slate-600"
+                className="whitespace-nowrap px-2 py-2 text-[11px] font-bold uppercase tracking-wide"
                 style={{ width: c.w, textAlign: c.align ?? 'left' }}
               >
                 {c.label}
@@ -91,7 +93,7 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEd
               return (
                 <tr
                   key={r.id}
-                  className={`cursor-pointer select-none border-b border-slate-100 ${isSel ? 'bg-sky-50' : 'hover:bg-slate-50'}`}
+                  className={`cursor-pointer select-none border-b border-slate-100 ${isSel ? 'bg-[#EFF6FE]' : 'hover:bg-slate-50'}`}
                   title="Click to select · double-click to edit"
                   onClick={() => onToggle(r.id)}
                   onDoubleClick={() => onEditRow(r.id)}
@@ -102,7 +104,7 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEd
                   <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
-                      className="font-medium text-sky-600 underline decoration-dotted underline-offset-2 hover:text-sky-800"
+                      className="font-medium text-[#3A6EA5] underline decoration-dotted underline-offset-2 hover:text-[#1F3A5F]"
                       title="Edit this procedure"
                       onClick={() => onEditRow(r.id)}
                     >
@@ -136,7 +138,7 @@ export default function TxPlanGrid({ rows, selected, onToggle, onToggleAll, onEd
         </tbody>
         {rows.length > 0 && (
           <tfoot className="sticky bottom-0">
-            <tr style={{ background: 'linear-gradient(180deg,#eef2f7,#dde3ea)' }} className="font-semibold text-slate-700">
+            <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-800">
               <td colSpan={10} className="px-2 py-1.5 text-right">
                 Totals ({rows.length} {rows.length === 1 ? 'procedure' : 'procedures'})
               </td>

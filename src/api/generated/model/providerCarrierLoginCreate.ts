@@ -7,6 +7,7 @@
  */
 
 export interface ProviderCarrierLoginCreate {
+  /** @maxLength 50 */
   provider_id: string;
   carrier_id?: number | null;
   portal_name?: string | null;

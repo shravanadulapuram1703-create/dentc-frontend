@@ -10,8 +10,14 @@ import type {
   ProcedureCodeCreate,
   ProcedureCodeUpdate,
 } from "@/api/generated/model";
+import {
+  type ProcedureCodeExtras,
+  emptyProcedureCodeExtras,
+  pickProcedureCodeExtras,
+  resolveProcedureCodeExtras,
+} from "@/features/procedures/procedureCodeExtras";
 
-export interface ProcedureCodeForm {
+export interface ProcedureCodeForm extends ProcedureCodeExtras {
   // General
   code: string;
   legacy_code: string;
@@ -38,6 +44,9 @@ export interface ProcedureCodeForm {
   max_surfaces: number | null;
   default_material_id: number | null;
   valid_teeth: string[];
+  // Supporting records required (PROC-7) — requires_attachment / requires_perio_chart /
+  // requires_photo / requires_xray / requires_missing_tooth_info (ProcedureCodeExtras,
+  // backend columns since aee911131850).
   // Billing / tax (PROC-4)
   taxable: boolean;
   sales_tax_code: string;
@@ -80,6 +89,7 @@ export function emptyProcedureCodeForm(): ProcedureCodeForm {
     max_surfaces: null,
     default_material_id: null,
     valid_teeth: [],
+    ...emptyProcedureCodeExtras(),
     taxable: false,
     sales_tax_code: "",
     visit_code: "",
@@ -120,6 +130,7 @@ export function procedureCodeToForm(p: ProcedureCodeRead): ProcedureCodeForm {
     max_surfaces: p.max_surfaces ?? null,
     default_material_id: p.default_material_id ?? null,
     valid_teeth: p.valid_teeth ?? [],
+    ...resolveProcedureCodeExtras(p),
     taxable: Boolean(p.taxable),
     sales_tax_code: p.sales_tax_code ?? "",
     visit_code: p.visit_code ?? "",
@@ -166,6 +177,7 @@ function commonBody(form: ProcedureCodeForm) {
     max_surfaces: form.max_surfaces,
     default_material_id: form.default_material_id,
     valid_teeth: form.valid_teeth.length ? form.valid_teeth : null,
+    ...pickProcedureCodeExtras(form),
     taxable: form.taxable,
     sales_tax_code: orNull(form.sales_tax_code),
     visit_code: orNull(form.visit_code),

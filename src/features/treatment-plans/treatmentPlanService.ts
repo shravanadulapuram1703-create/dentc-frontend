@@ -4,8 +4,10 @@
 // match, category list) so the page stays focused on state + mutations.
 
 import { loadProcedureCodes, codeDescription, cachedProcedureCode } from '@/components/setup/insurance/procedureCodeService';
-import { listProviderProcedureCodes } from '@/api/generated/endpoints/provider-setup/provider-setup';
-import type { ProcedureCodeRead } from '@/api/generated/model';
+import { getProcedureCodeEligibility, listIcdCodes } from '@/api/generated/endpoints/procedures/procedures';
+import { listUsers } from '@/api/generated/endpoints/users/users';
+import { listAllReferrals } from '@/components/setup/referrals/referralService';
+import type { IcdCodeRead, ProcedureCodeRead, UserRead } from '@/api/generated/model';
 import { PROC_CATEGORIES, codeInCategory, type ProcCategory } from './txModel';
 
 export { loadProcedureCodes, codeDescription, cachedProcedureCode };
@@ -13,49 +15,43 @@ export { loadProcedureCodes, codeDescription, cachedProcedureCode };
 // ---- Provider eligibility (legacy "Change Provider" restriction) ----------
 //
 // Legacy Denticon only lets you assign a provider who is *eligible* to perform
-// the selected procedures ("Denticon will only allow you to assign providers
-// eligible to perform those specific procedures" — M08 Change Provider, step 3).
-// Eligibility is the provider's assigned procedure-code allow-list
-// (`GET /providers/{id}/procedure-codes`).
-//
-// Convention: an **empty** allow-list means the provider is *unrestricted*
-// (eligible for every code) — the standard allow-list semantics and the safe
-// default while the backend is unseeded (all providers currently return `[]`,
-// see backend gap PLAN-16). A provider is filtered out only when they have an
-// explicit allow-list that does *not* cover every selected code.
+// the selected procedures (M08 Change Provider, step 3). The backend answers it
+// in one call: `GET /procedure-codes/eligibility?codes=` returns, per code, the
+// providers holding an assignment, plus `eligible_for_all` — the intersection
+// for a multi-row selection. `null` there means nothing is restricted, i.e.
+// every provider is eligible (an EMPTY assignment set = unrestricted; confirmed
+// by the backend team — there is no legacy file to seed from, assignments are
+// a Setup task via PUT /providers/{id}/procedure-codes).
 
-/** providerId → set of eligible codes, or `null` when unrestricted (empty list / unknown). */
-export type ProviderEligibility = Map<string, Set<string> | null>;
-
-/** Fetch each provider's assigned procedure-code allow-list (parallel, best-effort). */
-export async function loadProviderEligibility(providerIds: string[]): Promise<ProviderEligibility> {
-  const entries = await Promise.all(
-    providerIds.map(async (id) => {
-      try {
-        const codes = await listProviderProcedureCodes(id);
-        const arr = Array.isArray(codes) ? codes : [];
-        // Empty allow-list = unrestricted (eligible for all).
-        return [id, arr.length ? new Set(arr.map((c) => c.code)) : null] as const;
-      } catch {
-        // On error, don't block the provider — treat as unrestricted.
-        return [id, null] as const;
-      }
-    }),
-  );
-  return new Map(entries);
+/** Provider ids eligible for ALL of `codes`, or `null` when unrestricted. */
+export async function loadEligibleProviderIds(codes: string[]): Promise<Set<string> | null> {
+  if (codes.length === 0) return null;
+  const res = await getProcedureCodeEligibility({ codes: codes.join(',') });
+  return res.eligible_for_all ? new Set(res.eligible_for_all) : null;
 }
 
-/** True when the provider may perform every one of `codes` (unrestricted ⇒ true). */
-export function providerEligibleFor(
-  eligibility: ProviderEligibility | undefined,
-  providerId: string,
-  codes: string[],
-): boolean {
-  if (!eligibility) return true;
-  const set = eligibility.get(providerId);
-  if (!set) return true; // unrestricted / unknown
-  return codes.every((c) => set.has(c));
+// ---- Edit Treatment lookups --------------------------------------------------
+
+/** Every active user (Treatment Counselor dropdown), paging past the 200 cap. */
+export async function loadAllUsers(): Promise<UserRead[]> {
+  const first = await listUsers({ page: 1, size: 200, sort: 'username', order: 'asc' });
+  const rows = [...(first.items ?? [])];
+  const pages = first.meta?.pages ?? 1;
+  for (let page = 2; page <= pages; page++) {
+    const res = await listUsers({ page, size: 200, sort: 'username', order: 'asc' });
+    rows.push(...(res.items ?? []));
+  }
+  return rows.filter((u) => u.is_active !== false);
 }
+
+/** ICD-10 library search for the Dental Cross Coding list box. */
+export async function searchIcdCodes(query: string): Promise<IcdCodeRead[]> {
+  // No is_active filter: the seeded ICD library rows are not flagged active.
+  const res = await listIcdCodes({ search: query, size: 25, page: 1 });
+  return res.items ?? [];
+}
+
+export { listAllReferrals };
 
 /** All active codes belonging to a legacy category button, sorted by code. */
 export async function codesInCategory(cat: ProcCategory): Promise<ProcedureCodeRead[]> {

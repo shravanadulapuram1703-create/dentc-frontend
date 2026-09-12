@@ -8,6 +8,7 @@
 
 import { lastPatientKeys } from "@/features/patient-context/lastPatientStorage";
 import { claimFillOutKeys } from "@/components/patient/claimFillOut";
+import { adaLocalStoreKeys } from "@/features/claims/ada/adaLocalStores";
 
 /** localStorage key holding the remembered username/email for login pre-fill. */
 export const REMEMBERED_IDENTIFIER_KEY = "remembered_identifier";
@@ -28,7 +29,7 @@ export function clearAuthStorageKeepRemembered(): void {
   const remembered = localStorage.getItem(REMEMBERED_IDENTIFIER_KEY);
   if (remembered !== null) preserved.set(REMEMBERED_IDENTIFIER_KEY, remembered);
 
-  for (const key of [...lastPatientKeys(), ...claimFillOutKeys()]) {
+  for (const key of [...lastPatientKeys(), ...claimFillOutKeys(), ...adaLocalStoreKeys()]) {
     const value = localStorage.getItem(key);
     if (value !== null) preserved.set(key, value);
   }

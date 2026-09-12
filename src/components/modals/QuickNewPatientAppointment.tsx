@@ -240,7 +240,7 @@ export default function QuickNewPatientAppointment({
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-3 flex items-center justify-between border-b-2 border-[#162942]">
-          <h2 id="quick-new-patient-appt-title" className="font-bold tracking-wide">
+          <h2 id="quick-new-patient-appt-title" className="font-bold tracking-wide text-white">
             New Patient Appointment
           </h2>
           <button

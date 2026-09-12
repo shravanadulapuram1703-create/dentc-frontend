@@ -77,6 +77,46 @@ export interface SignatureCaptureProps {
 }
 
 const INK = "#11315c";
+
+/**
+ * Crop a drawn signature to its ink (plus a margin) so a small scrawl in one
+ * corner of the pad still fills the signature line it is shown on — the same
+ * "justify and zoom" Topaz applies to pad images. Returns null when nothing
+ * was drawn.
+ */
+function exportTrimmedInk(canvas: HTMLCanvasElement): string | null {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const { width, height } = canvas;
+  const { data } = ctx.getImageData(0, 0, width, height);
+  let min_x = width, min_y = height, max_x = -1, max_y = -1;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if ((data[(y * width + x) * 4 + 3] ?? 0) > 8) {
+        if (x < min_x) min_x = x;
+        if (x > max_x) max_x = x;
+        if (y < min_y) min_y = y;
+        if (y > max_y) max_y = y;
+      }
+    }
+  }
+  if (max_x < 0) return null;
+  const pad = Math.round(Math.max(width, height) * 0.03);
+  const sx = Math.max(0, min_x - pad);
+  const sy = Math.max(0, min_y - pad);
+  const sw = Math.min(width, max_x + pad) - sx;
+  const sh = Math.min(height, max_y + pad) - sy;
+  // Keep a signature-line aspect ratio (3:1) so previews line up consistently.
+  const out_w = Math.max(sw, sh * 3);
+  const out_h = Math.max(sh, Math.round(out_w / 3));
+  const off = document.createElement("canvas");
+  off.width = out_w;
+  off.height = out_h;
+  const o = off.getContext("2d");
+  if (!o) return null;
+  o.drawImage(canvas, sx, sy, sw, sh, Math.round((out_w - sw) / 2), Math.round((out_h - sh) / 2), sw, sh);
+  return off.toDataURL("image/png");
+}
 const POLL_MS = 500;
 
 function fmtWhen(iso: string | null | undefined): string {
@@ -219,7 +259,10 @@ const SignatureCapture = forwardRef<SignatureCaptureHandle, SignatureCaptureProp
       drawing.current = true;
       dirty.current = true;
       const { x, y } = point(e);
-      ctx.lineWidth = 2.2;
+      // Stroke in CSS pixels: the backing store is denser than the box it is
+      // drawn in, so a fixed device width would come out hairline-thin.
+      const scale = e.currentTarget.width / Math.max(1, e.currentTarget.getBoundingClientRect().width);
+      ctx.lineWidth = 2.2 * scale;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.strokeStyle = INK;
@@ -300,7 +343,7 @@ const SignatureCapture = forwardRef<SignatureCaptureHandle, SignatureCaptureProp
         if (!always_open) setPadOpen(false);
         return value;
       }
-      const data = canvas_ref.current?.toDataURL("image/png");
+      const data = canvas_ref.current ? exportTrimmedInk(canvas_ref.current) : null;
       if (!data) return null;
       const result: SignatureResult = {
         signature_data: data,

@@ -17,6 +17,11 @@ export interface ProcedureCodeUpdate {
   requires_surface?: boolean | null;
   requires_quadrant?: boolean | null;
   requires_lab?: boolean | null;
+  requires_attachment?: boolean | null;
+  requires_perio_chart?: boolean | null;
+  requires_photo?: boolean | null;
+  requires_xray?: boolean | null;
+  requires_missing_tooth_info?: boolean | null;
   is_ortho?: boolean | null;
   billing_order?: string | null;
   recall_interval?: number | null;

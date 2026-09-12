@@ -7,6 +7,7 @@
  */
 
 export interface UserGroupCreate {
+  /** @maxLength 255 */
   name: string;
   description?: string | null;
   is_active?: boolean | null;

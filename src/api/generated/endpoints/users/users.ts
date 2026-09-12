@@ -29,6 +29,8 @@ import type {
   BodyUploadUserImage,
   ChangePasswordRequest,
   ErrorResponse,
+  GetMySignatureParams,
+  GetUserSignatureParams,
   HTTPValidationError,
   LastPatientRead,
   LastPatientUpdate,
@@ -1279,13 +1281,14 @@ export const useClearMyLastPatient = <TError = ErrorType<ErrorResponse | HTTPVal
  * @summary Get the logged-in user's signature
  */
 export const getMySignature = (
-
+    params?: GetMySignatureParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<UserSignatureRead>(
-      {url: `/api/v1/users/me/signature`, method: 'GET', signal
+      {url: `/api/v1/users/me/signature`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -1293,23 +1296,23 @@ export const getMySignature = (
 
 
 
-export const getGetMySignatureQueryKey = () => {
+export const getGetMySignatureQueryKey = (params?: GetMySignatureParams,) => {
     return [
-    `/api/v1/users/me/signature`
+    `/api/v1/users/me/signature`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetMySignatureQueryOptions = <TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetMySignatureQueryOptions = <TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: GetMySignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMySignatureQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetMySignatureQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMySignature>>> = ({ signal }) => getMySignature(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMySignature>>> = ({ signal }) => getMySignature(params, requestOptions, signal);
 
 
 
@@ -1323,7 +1326,7 @@ export type GetMySignatureQueryError = ErrorType<ErrorResponse | HTTPValidationE
 
 
 export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>> & Pick<
+ params: undefined |  GetMySignatureParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMySignature>>,
           TError,
@@ -1333,7 +1336,7 @@ export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignatu
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>> & Pick<
+ params?: GetMySignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMySignature>>,
           TError,
@@ -1343,7 +1346,7 @@ export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignatu
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: GetMySignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1351,11 +1354,11 @@ export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignatu
  */
 
 export function useGetMySignature<TData = Awaited<ReturnType<typeof getMySignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: GetMySignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMySignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMySignatureQueryOptions(options)
+  const queryOptions = getGetMySignatureQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1435,12 +1438,14 @@ export const useSetMySignature = <TError = ErrorType<ErrorResponse | HTTPValidat
  */
 export const getUserSignature = (
     userId: number,
+    params?: GetUserSignatureParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<UserSignatureRead>(
-      {url: `/api/v1/users/${userId}/signature`, method: 'GET', signal
+      {url: `/api/v1/users/${userId}/signature`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -1448,23 +1453,25 @@ export const getUserSignature = (
 
 
 
-export const getGetUserSignatureQueryKey = (userId: number,) => {
+export const getGetUserSignatureQueryKey = (userId: number,
+    params?: GetUserSignatureParams,) => {
     return [
-    `/api/v1/users/${userId}/signature`
+    `/api/v1/users/${userId}/signature`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetUserSignatureQueryOptions = <TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetUserSignatureQueryOptions = <TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(userId: number,
+    params?: GetUserSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetUserSignatureQueryKey(userId);
+  const queryKey =  queryOptions?.queryKey ?? getGetUserSignatureQueryKey(userId,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserSignature>>> = ({ signal }) => getUserSignature(userId, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserSignature>>> = ({ signal }) => getUserSignature(userId,params, requestOptions, signal);
 
 
 
@@ -1478,7 +1485,8 @@ export type GetUserSignatureQueryError = ErrorType<ErrorResponse | HTTPValidatio
 
 
 export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- userId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>> & Pick<
+ userId: number,
+    params: undefined |  GetUserSignatureParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserSignature>>,
           TError,
@@ -1488,7 +1496,8 @@ export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSig
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>> & Pick<
+ userId: number,
+    params?: GetUserSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserSignature>>,
           TError,
@@ -1498,7 +1507,8 @@ export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSig
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ userId: number,
+    params?: GetUserSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1506,11 +1516,12 @@ export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSig
  */
 
 export function useGetUserSignature<TData = Awaited<ReturnType<typeof getUserSignature>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ userId: number,
+    params?: GetUserSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetUserSignatureQueryOptions(userId,options)
+  const queryOptions = getGetUserSignatureQueryOptions(userId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -30,6 +30,19 @@ export interface ChartAggPlanItemRead {
   start_date?: string | null;
   end_date?: string | null;
   is_archived: boolean;
+  notes?: string | null;
+  accepted_date?: string | null;
+  scheduled_date?: string | null;
+  duration_minutes?: number | null;
+  created_by?: number | null;
+  updated_by?: number | null;
+  referral_id?: number | null;
+  referral_type?: string | null;
+  update_end_date_at_posting: boolean;
+  re_estimate_at_posting: boolean;
+  fee_schedule_id?: number | null;
+  counselor_user_id?: number | null;
+  status_before_scheduled?: string | null;
   created_at: string;
   updated_at?: string | null;
 }

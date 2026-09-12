@@ -7,20 +7,21 @@
 // their stored PDF, plus any other letter saved to /patient-documents.
 
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useOutletContext } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CloudOff, FileSignature, FileText, Mail, PenLine, Plus } from 'lucide-react';
+import { CloudOff, Eye, FileSignature, FileText, Mail, PenLine, Plus } from 'lucide-react';
 import { Panel, PanelButton } from '@/features/patient-overview/ui';
 import { fmt_date } from '@/features/patient-overview/format';
-import { env } from '@/shared/config/env';
 import {
   CONSENT_STATUS_LABEL,
   SIGNATURE_METHOD_LABEL,
   is_signable,
 } from './lettersModel';
 import LetterDialog from './LetterDialog';
-import LetterPreviewModal, { type GeneratedLetter } from './LetterPreviewModal';
+import LetterPreviewModal, { type ViewerSource } from './LetterPreviewModal';
 import ConsentSignDialog from './ConsentSignDialog';
+import { openAsset } from '@/services/documentAccess';
 import { lettersKeys, loadLetterHistory, type LetterHistoryRow } from './lettersService';
 
 /** Stable identity so the memo below doesn't recompute on every render. */
@@ -45,7 +46,10 @@ export default function LettersPage() {
   const valid = Number.isFinite(patient_id) && patient_id > 0;
 
   const [dialog_open, setDialogOpen] = useState(false);
-  const [generated, setGenerated] = useState<GeneratedLetter | null>(null);
+  // The Report Viewer: a freshly generated letter, or a stored consent re-opened
+  // from history (to read it again, or to sign it on the document).
+  const [viewer, setViewer] = useState<{ source: ViewerSource; sign: boolean } | null>(null);
+  // Fallback for consents with neither rendered HTML nor a PDF to show.
   const [signing, setSigning] = useState<LetterHistoryRow | null>(null);
   const queryClient = useQueryClient();
 
@@ -67,16 +71,25 @@ export default function LettersPage() {
     };
   }, [rows]);
 
-  /**
-   * Since LTR-1 `file_url` is a fully-qualified HTTPS URL — a signed bucket URL
-   * or the `/patient-documents/{id}/content` proxy. It is still server-relative
-   * for rows written to local disk (any environment with no document bucket
-   * configured), so those are resolved against the API host to stay openable.
-   */
-  const doc_href = (row: LetterHistoryRow) => {
-    if (!row.file_url) return null;
-    if (/^https?:/i.test(row.file_url)) return row.file_url;
-    return `${env.apiBaseUrl}${row.file_url}`;
+  /** A consent can be re-opened in the viewer when there is something to show. */
+  const can_view = (row: LetterHistoryRow) =>
+    row.kind === 'consent' && row.consent_id != null && (!!row.rendered_html || !!row.file_url);
+
+  const open_stored = (row: LetterHistoryRow, sign: boolean) => {
+    if (can_view(row)) setViewer({ source: { kind: 'stored', row }, sign });
+    else setSigning(row);
+  };
+
+  // The stored PDF's `file_url` is either a signed bucket URL (opens as-is) or
+  // the `/patient-documents/{id}/content` proxy, which only answers with the
+  // bearer token — a bare `<a href>` gets `{"code":"missing_token"}`. openAsset
+  // fetches through the authenticated client and hands the browser a blob.
+  const open_pdf = (row: LetterHistoryRow) => {
+    if (!row.file_url) return;
+    openAsset(row.file_url).catch((err) => {
+      console.error(err);
+      toast.error('Could not open the stored PDF.');
+    });
   };
 
   return (
@@ -138,7 +151,7 @@ export default function LettersPage() {
                 </tr>
               )}
               {rows.map((r) => {
-                const href = doc_href(r);
+                const href = r.file_url;
                 return (
                   <tr key={r.key} className="border-t border-[#E2E8F0] hover:bg-[#F8FAFC]">
                     {/* Timestamps carry an offset since LTR-11 — no UTC pinning needed. */}
@@ -185,29 +198,42 @@ export default function LettersPage() {
                               aria-label="Stored on the app server, not the documents bucket"
                             />
                           )}
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => open_pdf(r)}
+                            title="Open the stored PDF in a new tab"
                             className="font-medium text-[#3A6EA5] hover:underline"
                           >
                             {r.file_name ?? 'Open PDF'}
-                          </a>
+                          </button>
                         </span>
                       ) : (
                         <span className="text-[#94A3B8]">—</span>
                       )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2 text-right">
-                      {r.consent_id != null && is_signable(r.status) && (
-                        <button
-                          type="button"
-                          onClick={() => setSigning(r)}
-                          className="inline-flex items-center gap-1 rounded border-2 border-[#CBD5E1] bg-white px-2 py-1 text-[11px] font-bold text-[#1F3A5F] hover:bg-[#F1F5F9]"
-                        >
-                          <PenLine className="h-3 w-3" /> Sign
-                        </button>
-                      )}
+                      <span className="inline-flex items-center gap-1">
+                        {can_view(r) && (
+                          <button
+                            type="button"
+                            onClick={() => open_stored(r, false)}
+                            title="Open in the Report Viewer"
+                            className="inline-flex items-center gap-1 rounded border-2 border-[#CBD5E1] bg-white px-2 py-1 text-[11px] font-bold text-[#1F3A5F] hover:bg-[#F1F5F9]"
+                          >
+                            <Eye className="h-3 w-3" /> View
+                          </button>
+                        )}
+                        {r.consent_id != null && is_signable(r.status) && (
+                          <button
+                            type="button"
+                            onClick={() => open_stored(r, true)}
+                            title="Read the form and sign it on the document"
+                            className="inline-flex items-center gap-1 rounded bg-[#1D4ED8] px-2 py-1 text-[11px] font-bold text-white hover:bg-[#1E40AF]"
+                          >
+                            <PenLine className="h-3 w-3" /> Sign
+                          </button>
+                        )}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -225,18 +251,19 @@ export default function LettersPage() {
           onClose={() => setDialogOpen(false)}
           onGenerated={(letter) => {
             setDialogOpen(false);
-            setGenerated(letter);
+            setViewer({ source: { kind: 'generated', letter }, sign: false });
           }}
         />
       )}
 
-      {generated && (
+      {viewer && (
         <LetterPreviewModal
-          letter={generated}
+          source={viewer.source}
           patient_id={patient_id}
           patient_name={patient.name}
           office_id={office_id}
-          onClose={() => setGenerated(null)}
+          sign_on_open={viewer.sign}
+          onClose={() => setViewer(null)}
           onSaved={refresh}
         />
       )}

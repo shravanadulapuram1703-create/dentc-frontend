@@ -8,6 +8,7 @@
 
 export interface UserIpRuleCreate {
   user_id: number;
+  /** @maxLength 45 */
   ip_address: string;
   rule_type?: string | null;
   description?: string | null;

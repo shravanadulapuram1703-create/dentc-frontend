@@ -58,7 +58,27 @@ export interface PlanForm {
   family_deductible: string;
   anniversary_date: string;
   is_active: boolean;
+  // Legacy PLAN / BENEFITS fields (backend columns since 2026-09; formerly
+  // browser-stored under PLAN-DTL-1). Selects hold the backend codes; the
+  // labels live in plan-details/planDetailsModel.ts.
+  fees_to_print: string;
+  claim_option: string;
+  form_to_print: string;
+  reporting_subtype: string;
+  network_type: string;
+  noa_only: boolean;
+  per_visit_copay: string;
+  lifetime_ortho_benefits: boolean;
+  plan_notes: string;
 }
+
+/** Defaults the legacy dialog pre-selects for a new plan. */
+export const PLAN_FIELD_DEFAULTS = {
+  fees_to_print: "office_ucr",
+  claim_option: "submit",
+  form_to_print: "ADA2024",
+  network_type: "unknown",
+} as const;
 
 export function emptyPlanForm(): PlanForm {
   return {
@@ -75,6 +95,15 @@ export function emptyPlanForm(): PlanForm {
     family_deductible: "",
     anniversary_date: "",
     is_active: true,
+    fees_to_print: PLAN_FIELD_DEFAULTS.fees_to_print,
+    claim_option: PLAN_FIELD_DEFAULTS.claim_option,
+    form_to_print: PLAN_FIELD_DEFAULTS.form_to_print,
+    reporting_subtype: "",
+    network_type: PLAN_FIELD_DEFAULTS.network_type,
+    noa_only: false,
+    per_visit_copay: "",
+    lifetime_ortho_benefits: true,
+    plan_notes: "",
   };
 }
 
@@ -93,7 +122,30 @@ export function planToForm(p: InsurancePlanRead): PlanForm {
     family_deductible: p.family_deductible ?? "",
     anniversary_date: p.anniversary_date ?? "",
     is_active: p.is_active ?? true,
+    // Migrated plans carry null in these columns → show the legacy defaults.
+    fees_to_print: p.fees_to_print || PLAN_FIELD_DEFAULTS.fees_to_print,
+    claim_option: p.claim_option || PLAN_FIELD_DEFAULTS.claim_option,
+    form_to_print: p.form_to_print || PLAN_FIELD_DEFAULTS.form_to_print,
+    reporting_subtype: p.reporting_subtype ?? "",
+    network_type: p.network_type || PLAN_FIELD_DEFAULTS.network_type,
+    noa_only: p.noa_only ?? false,
+    per_visit_copay: p.per_visit_copay == null ? "" : String(p.per_visit_copay),
+    lifetime_ortho_benefits: p.lifetime_ortho_benefits ?? true,
+    plan_notes: p.plan_notes ?? "",
   };
+}
+
+/** True when a plan row has none of the legacy PLAN/BENEFITS fields set (never saved through the wizard). */
+export function planHasNoExtras(p: InsurancePlanRead): boolean {
+  return (
+    !p.fees_to_print &&
+    !p.claim_option &&
+    !p.form_to_print &&
+    !p.reporting_subtype &&
+    !p.network_type &&
+    p.per_visit_copay == null &&
+    !p.plan_notes
+  );
 }
 
 // Money fields are decimal strings on the contract; send null when blank.
@@ -149,6 +201,15 @@ function planCommonBody(f: PlanForm) {
     family_deductible: money(f.family_deductible),
     anniversary_date: f.anniversary_date.trim() || null,
     is_active: f.is_active,
+    fees_to_print: f.fees_to_print.trim() || null,
+    claim_option: f.claim_option.trim() || null,
+    form_to_print: f.form_to_print.trim() || null,
+    reporting_subtype: f.reporting_subtype.trim() || null,
+    network_type: f.network_type.trim() || null,
+    noa_only: f.noa_only,
+    per_visit_copay: money(f.per_visit_copay),
+    lifetime_ortho_benefits: f.lifetime_ortho_benefits,
+    plan_notes: f.plan_notes.trim() || null,
   };
 }
 

@@ -261,6 +261,7 @@ export default function OfficeSetup() {
       schedule_end_hour: o.schedule_end_hour ?? null,
 
       // Billing / fee schedules (gap #11)
+      corporate_name: o.corporate_name ?? null,
       tax_id: o.tax_id ?? null,
       billing_provider_id: o.billing_provider_id ?? null,
       use_billing_license: o.use_billing_license ?? false,
@@ -322,6 +323,7 @@ const buildOfficeBody = (data: Partial<OfficeForm>): OfficeUpdate => ({
   slot_interval_minutes: data.slot_interval_minutes ?? null,
   schedule_start_hour: data.schedule_start_hour ?? null,
   schedule_end_hour: data.schedule_end_hour ?? null,
+  corporate_name: data.corporate_name?.trim() || null,
   tax_id: data.tax_id ?? null,
   billing_provider_id: data.billing_provider_id ?? null,
   use_billing_license: data.use_billing_license ?? null,

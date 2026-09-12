@@ -8,6 +8,7 @@
 
 export interface CodeBundleItemCreate {
   bundle_id: number;
+  /** @maxLength 20 */
   procedure_code: string;
   tooth?: string | null;
   surface?: string | null;

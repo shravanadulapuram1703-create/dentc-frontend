@@ -8,7 +8,9 @@
 
 export interface InsuranceCoverageRuleCreate {
   ins_plan_id: number;
+  /** @maxLength 20 */
   start_code: string;
+  /** @maxLength 20 */
   end_code: string;
   category?: string | null;
   description?: string | null;

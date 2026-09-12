@@ -65,6 +65,18 @@ preferred_hygienist_id?: string | null;
  */
 fee_schedule_id?: number | null;
 /**
+ * Filter by legacy_id
+ */
+legacy_id?: string | null;
+/**
+ * Filter by id
+ */
+id?: number | null;
+/**
+ * Comma-separated list of ids to return (batch lookup)
+ */
+ids?: string | null;
+/**
  * created_at >= (inclusive lower bound)
  */
 created_at_from?: string | null;

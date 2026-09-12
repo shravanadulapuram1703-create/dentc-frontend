@@ -2,6 +2,7 @@
 // label/value table, row-for-row with the legacy screen.
 
 import { Cake, Mail, User, Edit2, Info } from "lucide-react";
+import { useAssetObjectUrl } from "@/services/documentAccess";
 import { Panel, PanelButton, FieldTable } from "../ui";
 import {
   fmt_date,
@@ -10,6 +11,7 @@ import {
   contact_pref_label,
   patient_display_name,
 } from "../format";
+import { alertDisplayLines } from "@/features/medical-alerts/patientMedicalAlerts";
 import type { OverviewData } from "../useOverviewData";
 
 export default function PatientInformationPanel({
@@ -22,10 +24,14 @@ export default function PatientInformationPanel({
   const p = data.patient;
   const age = age_from_dob(p?.dob);
 
-  const medical_alert_text = data.medical_alerts
-    .map((a) => [a.alert_label || a.alert_code, a.response, a.comments].filter(Boolean).join(" — "))
-    .concat(data.account_alerts.map((a) => a.alert ?? "").filter(Boolean))
-    .filter(Boolean);
+  // Patient photo (PO-10): `patients.photo_document_id` points at a
+  // patient-documents row; the content proxy needs the bearer token.
+  const photo = useAssetObjectUrl(
+    p?.photo_document_id != null ? `/api/v1/patient-documents/${p.photo_document_id}/content` : null,
+  );
+
+  // Only "yes" answers + account alerts are alerts (shared reader; "no" rows hidden).
+  const medical_alert_text = alertDisplayLines(data.medical_alerts, data.account_alerts);
 
   return (
     <Panel
@@ -35,12 +41,21 @@ export default function PatientInformationPanel({
           <Edit2 className="w-3 h-3" /> Edit
         </PanelButton>
       }
+      // Sized to the Responsible Party + Insurance column beside it (zero
+      // intrinsic height, then stretched to the grid row) so a long Patient
+      // Note / Medical Alerts list scrolls inside instead of growing the row.
+      className="overflow-hidden xl:h-0 xl:min-h-full print:h-auto print:min-h-0 print:overflow-visible"
+      bodyClassName="flex flex-col flex-1 min-h-0"
     >
-      {/* Identity block */}
-      <div className="flex gap-3 p-3 border-b-2 border-[#E2E8F0]">
+      {/* Identity block — pinned; only the field table below scrolls. */}
+      <div className="flex gap-3 p-3 border-b-2 border-[#E2E8F0] shrink-0">
         <div className="shrink-0 w-[74px]">
-          <div className="w-[74px] h-[74px] rounded border-2 border-[#3A6EA5] bg-[#EEF4FB] flex items-center justify-center">
-            <User className="w-9 h-9 text-[#3A6EA5]" strokeWidth={1.75} />
+          <div className="w-[74px] h-[74px] rounded border-2 border-[#3A6EA5] bg-[#EEF4FB] flex items-center justify-center overflow-hidden">
+            {photo.src && !photo.error ? (
+              <img src={photo.src} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-9 h-9 text-[#3A6EA5]" strokeWidth={1.75} />
+            )}
           </div>
           <div className="text-center text-[10px] font-bold text-[#3A6EA5] uppercase mt-0.5">
             Photo
@@ -106,6 +121,7 @@ export default function PatientInformationPanel({
         </div>
       </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto print:overflow-visible">
       <FieldTable
         rows={[
           [
@@ -164,6 +180,7 @@ export default function PatientInformationPanel({
           ],
         ]}
       />
+      </div>
     </Panel>
   );
 }

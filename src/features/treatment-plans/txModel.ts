@@ -44,6 +44,8 @@ export type TxStatus =
   | 'alternative'
   | 'referred_out'
   | 'scheduled'
+  | 'internal_referral'
+  | 'external_referral'
   | 'completed';
 
 /** A status a user can SET on an item (the backend enum minus the derived one). */
@@ -53,7 +55,7 @@ export type SettableTxStatus = Exclude<TxStatus, 'completed'>;
 export const SETTABLE_STATUSES: SettableTxStatus[] = ['diagnosed', 'accepted', 'unaccepted', 'hold', 'alternative', 'referred_out'];
 
 /** Every status the grid can show, for filters. */
-export const STATUS_ORDER: TxStatus[] = [...SETTABLE_STATUSES, 'scheduled', 'completed'];
+export const STATUS_ORDER: TxStatus[] = [...SETTABLE_STATUSES, 'scheduled', 'internal_referral', 'external_referral', 'completed'];
 
 export const STATUS_LABEL: Record<TxStatus, string> = {
   diagnosed: 'Diagnosed',
@@ -63,6 +65,8 @@ export const STATUS_LABEL: Record<TxStatus, string> = {
   alternative: 'Alternative',
   referred_out: 'Referred Out',
   scheduled: 'Scheduled',
+  internal_referral: 'Internal Referral',
+  external_referral: 'External Referral',
   completed: 'Completed',
 };
 
@@ -75,6 +79,8 @@ export const STATUS_ABBR: Record<TxStatus, string> = {
   alternative: 'Alt',
   referred_out: 'RO',
   scheduled: 'S',
+  internal_referral: 'IR',
+  external_referral: 'ER',
   completed: 'C',
 };
 
@@ -86,6 +92,8 @@ export const STATUS_COLOR: Record<TxStatus, string> = {
   alternative: '#7c3aed', // violet
   referred_out: '#dc2626', // red
   scheduled: '#0e7490', // cyan — booked on the scheduler
+  internal_referral: '#9a3412', // rust
+  external_referral: '#be123c', // rose
   completed: '#0f766e', // teal — posted to the ledger
 };
 
@@ -93,6 +101,8 @@ export const STATUS_COLOR: Record<TxStatus, string> = {
 export function normalizeStatus(raw: string | null | undefined): TxStatus {
   const s = (raw ?? '').trim().toLowerCase();
   if (s === 's' || s === 'scheduled') return 'scheduled';
+  if (s === 'ir' || s === 'internal_referral') return 'internal_referral';
+  if (s === 'er' || s === 'external_referral') return 'external_referral';
   if (s === 'c' || s === 'completed') return 'completed';
   if (s === 'a' || s === 'accepted') return 'accepted';
   if (s === 'u' || s === 'unaccepted') return 'unaccepted';

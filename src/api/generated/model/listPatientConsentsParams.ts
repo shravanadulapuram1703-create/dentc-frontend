@@ -25,6 +25,10 @@ template_id?: number | null;
  */
 status?: string | null;
 /**
+ * Filter by signature_method
+ */
+signature_method?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

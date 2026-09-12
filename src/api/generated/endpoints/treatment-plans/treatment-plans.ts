@@ -25,6 +25,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BodySetTreatmentPlanItemIcdCodes,
+  BookFromPlanRequest,
+  BookFromPlanResult,
   ErrorResponse,
   HTTPValidationError,
   ListPatientTreatmentPlanItemsParams,
@@ -152,6 +155,14 @@ export function useGetTreatmentPlanSummary<TData = Awaited<ReturnType<typeof get
 
 
 /**
+ * PLAN-3. Reads the patient's active primary coverage, matches each line's
+ * code against the plan's coverage bands with the **ranked, coverage-category-
+ * aware** matcher the charge estimate uses (FEE-1 — the lexical matcher priced
+ * every migrated plan at 0 %), applies the deductible in priority order, caps at
+ * the annual maximum, and writes both `treatment_plan_items.insurance_estimate`
+ * **and** the per-item `treatment-plan-insurance-details` row (estimated_ins /
+ * estimated_pat / deductible / coverage_pct / annual_max_rem), which the Edit
+ * Treatment ADVANCED panel reads.
  * @summary Compute per-item insurance estimates from the patient's coverage (PLAN-3)
  */
 export const reEstimateTreatmentPlan = (
@@ -213,6 +224,71 @@ export const useReEstimateTreatmentPlan = <TError = ErrorType<ErrorResponse | HT
         TContext
       > => {
       return useMutation(getReEstimateTreatmentPlanMutationOptions(options), queryClient);
+    }
+    /**
+ * Creates the appointment, one `appointment_procedures` line per item (linked by `treatment_plan_item_id`, PLAN-APPT-2) and flips every item to `scheduled` (PLAN-APPT-1) — all or nothing. Provider defaults to the first item's provider (PLAN-APPT-3), operatory to the provider's default chair or the office chair whose column provider matches (PLAN-APPT-4), duration to the sum of the items' chair time. 409 `item_already_scheduled` if an item is already on a live appointment; 422 `item_completed` / `item_archived` / `provider_required` / `office_required`.
+ * @summary New Appt from the plan: one transaction books the selected items (PLAN-APPT-5)
+ */
+export const bookTreatmentPlanItems = (
+    planId: string,
+    bookFromPlanRequest: BodyType<BookFromPlanRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BookFromPlanResult>(
+      {url: `/api/v1/treatment-plans/${planId}/book`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bookFromPlanRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBookTreatmentPlanItemsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bookTreatmentPlanItems>>, TError,{planId: string;data: BodyType<BookFromPlanRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bookTreatmentPlanItems>>, TError,{planId: string;data: BodyType<BookFromPlanRequest>}, TContext> => {
+
+const mutationKey = ['bookTreatmentPlanItems'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bookTreatmentPlanItems>>, {planId: string;data: BodyType<BookFromPlanRequest>}> = (props) => {
+          const {planId,data} = props ?? {};
+
+          return  bookTreatmentPlanItems(planId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BookTreatmentPlanItemsMutationResult = NonNullable<Awaited<ReturnType<typeof bookTreatmentPlanItems>>>
+    export type BookTreatmentPlanItemsMutationBody = BodyType<BookFromPlanRequest>
+    export type BookTreatmentPlanItemsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary New Appt from the plan: one transaction books the selected items (PLAN-APPT-5)
+ */
+export const useBookTreatmentPlanItems = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bookTreatmentPlanItems>>, TError,{planId: string;data: BodyType<BookFromPlanRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bookTreatmentPlanItems>>,
+        TError,
+        {planId: string;data: BodyType<BookFromPlanRequest>},
+        TContext
+      > => {
+      return useMutation(getBookTreatmentPlanItemsMutationOptions(options), queryClient);
     }
     /**
  * @summary Server-side treatment-plan report payload (PLAN-6)
@@ -471,6 +547,74 @@ export const usePostTreatmentPlanItem = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getPostTreatmentPlanItemMutationOptions(options), queryClient);
+    }
+    /**
+ * The same reconciliation `PATCH /treatment-plan-items/{id}` runs when the
+ * body carries `icd_code_ids` — an item with `id` keeps its row, order is the
+ * list order (`ordinal`), anything unmentioned is removed. 422
+ * `icd_code_not_found` names the unknown ids.
+ * @summary Replace the item's ICD-10 diagnosis set (PLAN-26); [] clears all
+ */
+export const setTreatmentPlanItemIcdCodes = (
+    itemId: string,
+    bodySetTreatmentPlanItemIcdCodes: BodyType<BodySetTreatmentPlanItemIcdCodes>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TreatmentPlanItemRead>(
+      {url: `/api/v1/treatment-plan-items/${itemId}/icd-codes`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: bodySetTreatmentPlanItemIcdCodes, signal
+    },
+      options);
+    }
+
+
+
+export const getSetTreatmentPlanItemIcdCodesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTreatmentPlanItemIcdCodes>>, TError,{itemId: string;data: BodyType<BodySetTreatmentPlanItemIcdCodes>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setTreatmentPlanItemIcdCodes>>, TError,{itemId: string;data: BodyType<BodySetTreatmentPlanItemIcdCodes>}, TContext> => {
+
+const mutationKey = ['setTreatmentPlanItemIcdCodes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setTreatmentPlanItemIcdCodes>>, {itemId: string;data: BodyType<BodySetTreatmentPlanItemIcdCodes>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  setTreatmentPlanItemIcdCodes(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetTreatmentPlanItemIcdCodesMutationResult = NonNullable<Awaited<ReturnType<typeof setTreatmentPlanItemIcdCodes>>>
+    export type SetTreatmentPlanItemIcdCodesMutationBody = BodyType<BodySetTreatmentPlanItemIcdCodes>
+    export type SetTreatmentPlanItemIcdCodesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Replace the item's ICD-10 diagnosis set (PLAN-26); [] clears all
+ */
+export const useSetTreatmentPlanItemIcdCodes = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTreatmentPlanItemIcdCodes>>, TError,{itemId: string;data: BodyType<BodySetTreatmentPlanItemIcdCodes>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setTreatmentPlanItemIcdCodes>>,
+        TError,
+        {itemId: string;data: BodyType<BodySetTreatmentPlanItemIcdCodes>},
+        TContext
+      > => {
+      return useMutation(getSetTreatmentPlanItemIcdCodesMutationOptions(options), queryClient);
     }
     /**
  * @summary List treatment plans

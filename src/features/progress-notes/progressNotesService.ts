@@ -258,13 +258,14 @@ export async function loadMySignature(patientId: number): Promise<string | null>
 export function saveUserSignature(
   patientId: number,
   signature: SignatureResult,
+  progressNoteId?: number | null,
 ): Promise<PatientSignatureRead> {
-  // Image + device_source only; the Topaz SigString has no column yet (SIG-1).
   return createPatientSignature({
     patient_id: patientId,
     ...signatureBodyFields(signature),
-    signed_at: signature.captured_at,
     is_user_sig: true,
+    signature_type: 'progress_note',
+    progress_note_id: progressNoteId ?? null,
   });
 }
 

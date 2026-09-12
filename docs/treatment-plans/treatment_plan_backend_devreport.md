@@ -344,6 +344,54 @@ delete directly.
 
 ---
 
+### Backend response adopted (2026-09-11) — see `treatment_plan_edit_backend_response.md`
+
+The backend answered the 2026-09-08 re-audit (Alembic `9de6ac649cba`, applied to the dev
+DB; Orval client regenerated). Frontend status after wiring, all live-verified on
+patient 83862 through the Edit Treatment window and the Re-Estimate panel:
+
+| Gap | Backend | Frontend now |
+|---|---|---|
+| PLAN-17 notes | `treatment_plan_items.notes` | NOTES box reads/writes the **item** column (insurance-detail `notes` no longer used) |
+| PLAN-18 accepted / scheduled date | `accepted_date` (server-stamped on first Accept), `scheduled_date` (follows booking) | Both editable date fields |
+| PLAN-19 duration | `duration_minutes` (nullable → code default → 30) | Editable, code default shown as placeholder |
+| PLAN-11 counselor | `counselor_user_id` + `counselor_name` | Users dropdown (all active users) |
+| PLAN-20 statuses | `internal_referral`, `external_referral` added; `scheduled` server-owned but settable; `completed` server-derived | All four checkboxes live; Completed stays derived/disabled; grid shows IR / ER / S badges + filter entries |
+| PLAN-25 created/modified by | `created_by_name` / `updated_by_name` | Record column shows names (older rows show — until touched) |
+| PLAN-26 ICD-10 | `icd_code_ids` on PATCH (replaces set), `icd_codes[]` embedded | List box with search-to-add, ×-remove, CLEAR DENTAL CROSS CODING INFO clears the set |
+| PLAN-27 referral | `referral_id` + `referral_type` (`in`/`out`), `referral_name` | Referral Type select + Referring Dentist select (all referral sources) |
+| PLAN-28 posting flags | `update_end_date_at_posting`, `re_estimate_at_posting`, honoured by `/post` | Both checkboxes live |
+| PLAN-29 fee schedule | `fee_schedule_id` / `fee_schedule_name` stamped by server pricing | Shown when recorded; otherwise the Setup-resolved name is shown suffixed "(resolved)" |
+| PLAN-9 pre-auth status | `preauth_status` (sent/closed) + `preauth_status_at` on the insurance-detail row | Sent / Closed radios + "Status set …" stamp; Pre Auth Date unchanged |
+| PLAN-24 archived rows | list endpoints hide archived rows by default | `is_archived=false` removed from the item / detail list calls |
+| PLAN-3 re-estimate | endpoint fixed (category-aware band matcher) + `?use_new_fees=` | Toolbar Re-Estimate now calls `POST /treatment-plans/{id}/re-estimate`; "Use New Fees" → `use_new_fees=true`; client-side fee refresh removed; totals toast from the response |
+| PLAN-16 eligibility | `GET /procedure-codes/eligibility?codes=` (batched) | Change Provider uses one batched call instead of N provider calls |
+| Perf — slow PATCH | Redis fail-fast | Saves are now sub-second |
+
+**Still open after this pass**
+
+- PLAN-11 case-presentation resource (presented date / outcome) — only the counselor
+  field exists; not needed by the Edit Treatment window.
+- PLAN-9 clearinghouse pre-auth submission — status/date only; no clearinghouse.
+- PLAN-21 tilde (`~`) marker, PLAN-22 cash/card split, PLAN-23 Topaz in the plan PDF —
+  print follow-ups (report payload now carries `deductible_applied` per line).
+- "Use New Billing Order" — no server-side meaning (`billing_order` is free text); the
+  checkbox shows an info toast.
+- ICD library rows are not flagged `is_active` (search with `is_active=true` returns
+  nothing) — the frontend searches without the flag. **Ask:** backfill `is_active=true`
+  on the seeded ICD codes.
+- FE follow-ups not in this pass: `POST /treatment-plans/{id}/book` for New Appt (the
+  scheduler hand-off still books via the appointment form), adopting
+  `GET /patients/{id}/treatment-plan-items` (drops the per-plan fan-out) and the
+  server report endpoint for Print.
+
+**Dev-data note (2026-09-11):** verifying Re-Estimate with "Use New Fees" checked
+re-priced patient 83862's 8 plan items from the fee schedule (Est Pat total 1,674.00,
+previously mostly 0.00 test rows). Item `9a03101b…` (D1110) had every new field
+exercised and was reverted; its probe insurance-detail row (id 11) was soft-deleted.
+
+---
+
 ## Consent form / Letters (legacy pp.25–28) — PLAN-7 (refined)
 
 The legacy flow is **Print reports → Letters → Patient Consent letter group → choose

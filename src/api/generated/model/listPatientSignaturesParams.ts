@@ -29,6 +29,22 @@ is_active?: boolean | null;
  */
 content_hash?: string | null;
 /**
+ * Filter by device_source
+ */
+device_source?: string | null;
+/**
+ * Filter by progress_note_id
+ */
+progress_note_id?: number | null;
+/**
+ * Filter by consent_id
+ */
+consent_id?: number | null;
+/**
+ * Filter by include_image
+ */
+include_image?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

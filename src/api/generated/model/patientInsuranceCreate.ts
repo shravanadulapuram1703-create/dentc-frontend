@@ -11,6 +11,7 @@ export interface PatientInsuranceCreate {
   ins_plan_id?: number | null;
   subscriber_id?: number | null;
   legacy_plan_type?: string | null;
+  /** @maxLength 20 */
   insurance_type: string;
   relationship?: string | null;
   sec_sub_rel_to_prim_sub?: string | null;

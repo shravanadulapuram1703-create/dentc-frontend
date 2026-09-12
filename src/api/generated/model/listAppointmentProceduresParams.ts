@@ -25,6 +25,10 @@ provider_id?: string | null;
  */
 treatment_plan_id?: string | null;
 /**
+ * Filter by treatment_plan_item_id
+ */
+treatment_plan_item_id?: string | null;
+/**
  * Filter by status
  */
 status?: string | null;

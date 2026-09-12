@@ -7,6 +7,7 @@
  */
 
 export interface ChartMaterialCreate {
+  /** @maxLength 100 */
   name: string;
   pattern?: string | null;
   color?: string | null;

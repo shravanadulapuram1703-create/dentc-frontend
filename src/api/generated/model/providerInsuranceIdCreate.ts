@@ -7,6 +7,7 @@
  */
 
 export interface ProviderInsuranceIdCreate {
+  /** @maxLength 50 */
   provider_id: string;
   carrier_id: number;
   ins_id?: string | null;

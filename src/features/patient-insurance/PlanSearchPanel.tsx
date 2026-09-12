@@ -1,11 +1,12 @@
 // INSURANCE PLAN panel (left rail of the Add/Edit Plan screen).
 //
 // Lets staff search the tenant's insurance plans (by group #, carrier or payer
-// id), add a brand-new plan (popup), and shows the selected plan's id, group #,
-// carrier block and employer block — mirroring the legacy Denticon layout.
+// id), add a brand-new plan (popup), view or edit the selected plan (the shared
+// INSURANCE DETAILS wizard), and shows the selected plan's id, group #, carrier
+// block and employer block — mirroring the legacy Denticon layout.
 
 import { useState } from "react";
-import { Search, Plus, Loader2, Eye } from "lucide-react";
+import { Search, Plus, Loader2, Eye, Pencil } from "lucide-react";
 import { listInsurancePlans } from "@/api/generated/endpoints/insurance/insurance";
 import type { InsurancePlanRead } from "@/api/generated/model";
 import { ensureCarrierNames, carrierName } from "@/components/setup/insurance/lookupService";
@@ -20,6 +21,8 @@ interface Props {
   onAddNew: () => void;
   /** Open the read-only plan viewer for the currently selected plan. */
   onViewPlan: () => void;
+  /** Open the plan editor (shared plan — reaches every linked patient). */
+  onEditPlan: () => void;
 }
 
 export default function PlanSearchPanel({
@@ -29,6 +32,7 @@ export default function PlanSearchPanel({
   onSelectPlan,
   onAddNew,
   onViewPlan,
+  onEditPlan,
 }: Props) {
   const [beginsWith, setBeginsWith] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -130,20 +134,32 @@ export default function PlanSearchPanel({
         </div>
       )}
 
-      {/* Plan id + view */}
+      {/* Plan id + view / edit */}
       <div className="pt-2 border-t border-[#E2E8F0] space-y-2">
         <div className="grid grid-cols-[64px_1fr] items-center gap-2">
           <span className="text-[11px] font-bold text-[#475569] uppercase">Plan ID</span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="text-sm font-bold text-[#1F3A5F]">{planDisplay.plan_id ?? "—"}</span>
-            <button
-              onClick={onViewPlan}
-              disabled={planDisplay.plan_id == null}
-              className="ml-auto flex items-center gap-1 px-2 py-1 border-2 border-[#E2E8F0] rounded-md text-[10px] font-bold text-[#475569] hover:bg-[#E8EFF7] disabled:opacity-40"
-              title={planDisplay.plan_id == null ? "Select a plan first" : "View current insurance plan"}
-            >
-              <Eye className="w-3 h-3" /> View Plan
-            </button>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={onViewPlan}
+                disabled={planDisplay.plan_id == null}
+                className="flex items-center gap-1 px-2 py-1 border-2 border-[#E2E8F0] rounded-md text-[10px] font-bold text-[#475569] hover:bg-[#E8EFF7] disabled:opacity-40"
+                title={planDisplay.plan_id == null ? "Select a plan first" : "View the insurance plan (read-only)"}
+              >
+                <Eye className="w-3 h-3" /> View
+              </button>
+              <button
+                type="button"
+                onClick={onEditPlan}
+                disabled={planDisplay.plan_id == null}
+                className="flex items-center gap-1 px-2 py-1 border-2 border-[#3A6EA5] rounded-md text-[10px] font-bold text-[#3A6EA5] hover:bg-[#E8EFF7] disabled:opacity-40 disabled:border-[#E2E8F0] disabled:text-[#475569]"
+                title={planDisplay.plan_id == null ? "Select a plan first" : "Edit the insurance plan — changes reach every patient linked to it"}
+              >
+                <Pencil className="w-3 h-3" /> Edit Plan
+              </button>
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-[64px_1fr] items-center gap-2">

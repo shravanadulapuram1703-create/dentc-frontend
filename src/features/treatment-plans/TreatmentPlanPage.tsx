@@ -9,6 +9,7 @@ import {
   useUpdateTreatmentPlanItem,
   useDeleteTreatmentPlanItem,
   listTreatmentPlanItems,
+  reEstimateTreatmentPlan,
   getListTreatmentPlansQueryKey,
   createTreatmentPlanInsuranceDetail,
   updateTreatmentPlanInsuranceDetail,
@@ -19,7 +20,6 @@ import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import {
   EMPTY_FEE_CONTEXT,
   loadFeeScheduleContext,
-  resolveProcedureFee,
   type FeeScheduleContext,
 } from '@/services/feeScheduleResolver';
 import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
@@ -40,8 +40,9 @@ import {
   assignTids,
   buildRows,
   encodePhase,
-  decodePhase,
   genId,
+  money,
+  num,
   planNameForTid,
   type TxStatus,
   type SettableTxStatus,
@@ -50,8 +51,7 @@ import {
   loadProcedureCodes,
   codeDescription,
   cachedProcedureCode,
-  loadProviderEligibility,
-  providerEligibleFor,
+  loadEligibleProviderIds,
 } from './treatmentPlanService';
 import TxPlanGrid from './TxPlanGrid';
 import TxPlanToolbar, { type IdChange, type ReEstimateArgs } from './TxPlanToolbar';
@@ -87,11 +87,8 @@ export default function TreatmentPlanPage() {
     queryKey: [TX_ITEMS_KEY, numericId, planIds],
     enabled: validId && planIds.length > 0,
     queryFn: async () => {
-      // DELETE is a soft delete (is_archived=true) and the list endpoint still
-      // returns archived rows by default — filter them or deleted rows reappear.
-      const results = await Promise.all(
-        planIds.map((id) => listTreatmentPlanItems({ plan_id: id, size: 200, is_archived: false })),
-      );
+      // DELETE is a soft delete; the list endpoint hides archived rows by default (PLAN-24).
+      const results = await Promise.all(planIds.map((id) => listTreatmentPlanItems({ plan_id: id, size: 200 })));
       return results.flatMap((r) => r.items ?? []);
     },
   });
@@ -237,21 +234,21 @@ export default function TreatmentPlanPage() {
     [selectedRows],
   );
 
-  // Provider eligibility for the legacy "Change Provider" restriction. Fetched
-  // lazily (only after the Provider panel is first opened) and cached; each
-  // provider's assigned procedure-code allow-list decides whether they can be
-  // assigned to the selected procedures. See providerEligibleFor / PLAN-16.
-  const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
+  // Provider eligibility for the legacy "Change Provider" restriction — one
+  // batched `GET /procedure-codes/eligibility?codes=` for the selected codes,
+  // fetched lazily (after the Provider panel is first opened) and cached.
+  // `null` = nothing restricted, everyone is eligible (PLAN-16).
   const eligibilityQuery = useQuery({
-    queryKey: ['tx-provider-eligibility', providerIds],
-    enabled: eligibilityWanted && providerIds.length > 0,
+    queryKey: ['tx-code-eligibility', selectedCodes],
+    enabled: eligibilityWanted && selectedCodes.length > 0,
     staleTime: 5 * 60 * 1000,
-    queryFn: () => loadProviderEligibility(providerIds),
+    queryFn: () => loadEligibleProviderIds(selectedCodes),
   });
   const eligibleProviders = useMemo(() => {
-    if (selectedCodes.length === 0 || !eligibilityQuery.data) return providers;
-    return providers.filter((p) => providerEligibleFor(eligibilityQuery.data, p.id, selectedCodes));
-  }, [providers, selectedCodes, eligibilityQuery.data]);
+    const eligible = eligibilityQuery.data;
+    if (!eligible) return providers;
+    return providers.filter((p) => eligible.has(p.id));
+  }, [providers, eligibilityQuery.data]);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -451,29 +448,30 @@ export default function TreatmentPlanPage() {
         toast.error(`No Tx Plan ${args.tid}`);
         return;
       }
-      const targets = items.filter(
-        (it) => it.plan_id === planId && (args.phase == null || decodePhase(it.billing_order) === args.phase),
-      );
-      if (targets.length === 0) {
+      // Server-side re-estimate (PLAN-3): recomputes every line's insurance /
+      // patient estimate from the patient's coverage (category-aware band
+      // matching, deductible + annual max) and writes the per-item insurance
+      // detail the Edit Treatment ADVANCED panel reads. `use_new_fees` is the
+      // legacy "Use New Fees" checkbox — re-prices each line through the server
+      // fee resolver and stamps the fee schedule used (PLAN-29).
+      const res = await reEstimateTreatmentPlan(planId, { phase: args.phase, use_new_fees: args.use_new_fees });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [TX_ITEMS_KEY] }),
+        queryClient.invalidateQueries({ queryKey: ['tx-item-ins-detail'] }),
+      ]);
+      const n = res.lines.length;
+      if (n === 0) {
         toast.info('No procedures matched');
         return;
       }
-      if (args.use_new_fees) {
-        const map = await loadProcedureCodes();
-        for (const it of targets) {
-          const priced = await resolveProcedureFee(feeCtx, it.procedure_code, {
-            default_fee: map.get(it.procedure_code)?.default_fee,
-          });
-          await updateItem.mutateAsync({
-            itemId: it.id,
-            data: { fee: priced.fee, insurance_estimate: priced.insurance_estimate },
-          });
-        }
-        toast.success(`Refreshed fees on ${targets.length} procedure(s) from the current fee schedules`);
+      toast.success(
+        res.insured
+          ? `Re-estimated ${n} procedure(s): Est Ins ${money(num(res.total_insurance_estimate))}, Est Pat ${money(num(res.total_patient_estimate))}`
+          : `Re-estimated ${n} procedure(s) — no active insurance on file, Est Pat ${money(num(res.total_patient_estimate))}`,
+      );
+      if (args.use_new_billing_order) {
+        toast.info('Use New Billing Order has no server-side effect yet (billing order is free text on the item).');
       }
-      // The insurance figure above is the fee schedule's stated insurance portion.
-      // Re-estimating against plan coverage %, deductibles and annual maximums
-      // still needs a backend estimate endpoint (see PLAN-3 in the dev report).
     });
 
   // ---- Edit Treatment window (double-click a row / click Diag Date) -------
@@ -494,16 +492,19 @@ export default function TreatmentPlanPage() {
         if (targetPlan !== editingItem.plan_id) data.plan_id = targetPlan;
       }
       await updateItem.mutateAsync({ itemId: editingItem.id, data });
-      // Pre Auth Date / Notes live on the item's insurance-detail row (one per item).
+      // Pre Auth Date / Status live on the item's insurance-detail row (one per item).
       const det = save.insurance_detail;
       if (det) {
         if (det.id != null) {
-          await updateTreatmentPlanInsuranceDetail(det.id, { preauth_date: det.preauth_date, notes: det.notes });
-        } else if (det.preauth_date || det.notes) {
+          await updateTreatmentPlanInsuranceDetail(det.id, {
+            preauth_date: det.preauth_date,
+            preauth_status: det.preauth_status,
+          });
+        } else if (det.preauth_date || det.preauth_status) {
           await createTreatmentPlanInsuranceDetail({
             plan_item_id: editingItem.id,
             preauth_date: det.preauth_date,
-            notes: det.notes,
+            preauth_status: det.preauth_status,
           });
         }
         await queryClient.invalidateQueries({ queryKey: ['tx-item-ins-detail', editingItem.id] });
@@ -627,10 +628,10 @@ export default function TreatmentPlanPage() {
 
   // Actions with no backend support yet — enabled, but honestly flagged.
   const onPreAuth = () =>
-    toast.info('Pre-authorization submission is not available yet (backend gap PLAN-9).');
-  const onDiscount = () => toast.info('Treatment-plan discounts are not available yet (backend gap PLAN-10).');
+    toast.info('Pre-auth date and Sent/Closed status are tracked per procedure in Edit Treatment (double-click a row). Clearinghouse submission is not available yet (PLAN-9).');
+  const onDiscount = () => toast.info('Set Discount % per procedure in Edit Treatment (double-click a row).');
   const onTxCounselor = () =>
-    toast.info('Treatment Counselor presentation is not available yet (backend gap PLAN-11).');
+    toast.info('Assign the Treatment Counselor per procedure in Edit Treatment (double-click a row). Case-presentation tracking is not available yet (PLAN-11).');
 
   const buildHeader = async (): Promise<ReportHeader> => {
     const p = patientQuery.data;
@@ -704,12 +705,7 @@ export default function TreatmentPlanPage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 p-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-slate-800">Treatment Plan</h1>
-        <span className="text-xs text-slate-500">{patient?.name}</span>
-      </div>
-
+    <div className="flex h-full flex-col gap-3 bg-slate-50 p-3 text-[#1E293B]">
       <TxPlanToolbar
         selectedCount={selectedRows.length}
         providers={eligibleProviders}
@@ -761,6 +757,7 @@ export default function TreatmentPlanPage() {
         <ProcedureDetailsDialog
           mode="plan"
           office_id={officeId}
+          patient_id={validId ? numericId : null}
           rows={[{ code: enforcing }]}
           header={{ provider_id: entry.provider_id, date: entry.diag_date, tid: entry.tid, phase: entry.phase }}
           busy={busy}

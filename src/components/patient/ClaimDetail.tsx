@@ -3,6 +3,7 @@ import {
   useNavigate,
   useParams,
   useOutletContext,
+  useLocation,
 } from "react-router-dom";
 import {
   Printer,
@@ -17,6 +18,7 @@ import {
   Paperclip,
   Eye,
   Loader2,
+  FilePen,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -28,17 +30,43 @@ import {
   getClaimDetail,
   setClaimStatus,
   updateInsuranceClaim,
-  deleteInsuranceClaim,
   useListClaimAttachments,
   uploadClaimAttachment,
   deleteClaimAttachment,
 } from "@/api/generated/endpoints/billing/billing";
 import { getInsuranceCarrier } from "@/api/generated/endpoints/insurance/insurance";
-import type { ClaimDetailResponse } from "@/api/generated/model";
+import type {
+  ClaimDetailCoverageRead,
+  ClaimDetailProcedureRead,
+  ClaimDetailResponse,
+} from "@/api/generated/model";
+import type { SlotData } from "@/features/patient-insurance/insuranceModel";
+import {
+  CLAIM_ORDERS,
+  ORDER_TITLE,
+  claimCategory,
+  claimOrder,
+  claimHasPostedPayments,
+  createSubsequentClaim,
+  deleteClaimPermanently,
+  isDraftClaim,
+  loadClaimFamily,
+  resolveInsuranceSlots,
+  type ClaimFamily,
+  type ClaimOrder,
+} from "./claimLifecycle";
 import InsurancePaymentModal from "./InsurancePaymentModal";
 import ClaimFillOutModal from "./ClaimFillOutModal";
 import UpdateClaimStatusModal from "./UpdateClaimStatusModal";
+import AdaClaimPrintModal from "@/features/claims/ada/AdaClaimPrintModal";
+import { pickOtherSlot } from "@/features/claims/ada/adaClaimFormData";
+import { loadClaimPrintLog, type ClaimPrintLogEntry } from "@/features/claims/ada/adaLocalStores";
 import { claimStatusLabel } from "./claimStatus";
+import {
+  describeMissingRecord,
+  fetchClaimReadiness,
+  type ClaimReadiness,
+} from "@/features/procedures/supportingRecords";
 import { env } from "@/shared/config/env";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -129,7 +157,12 @@ function formatClaimId(claimId: string): string {
 
 export default function ClaimDetail() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { patientId, claimId } = useParams();
+  // Where CANCEL / SAVE AS DRAFT / DELETE return to: the ledger that opened
+  // this claim (patient or account scope), falling back to the patient ledger.
+  const returnTo =
+    (location.state as { from?: string } | null)?.from || `/patient/${patientId}/ledger`;
   const { currentOrganization, currentOffice } = useAuth();
 
   // Make patient context optional
@@ -188,6 +221,9 @@ export default function ClaimDetail() {
 
   // Backend-driven claim data (composed: claim + procedures + payments + coverage)
   const [data, setData] = useState<ClaimDetailResponse | null>(null);
+  // Supporting-records readiness (PROC-7c): what the submit will refuse for,
+  // plus the derived ADA Enclosures counts (PROC-7d). Server-judged.
+  const [claimReadiness, setClaimReadiness] = useState<ClaimReadiness | null>(null);
   const [carrierName, setCarrierName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +231,22 @@ export default function ClaimDetail() {
   const [showInsPayment, setShowInsPayment] = useState(false);
   const [showFillOut, setShowFillOut] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
+  // DIRECT PRINT → ADA Dental Claim Form (2024) pre-flight + PDF.
+  const [showAdaPrint, setShowAdaPrint] = useState(false);
+  // Primary + secondary/tertiary/quaternary claims sharing this claim's number.
+  const [family, setFamily] = useState<ClaimFamily>({});
+  // The patient's insurance slot this claim bills (subscriber / employer / plan).
+  const [insSlot, setInsSlot] = useState<SlotData | null>(null);
+  // The *other* plan on file (ADA Items 4–11 / COB) — shown in the header (UI-3).
+  const [otherCoverage, setOtherCoverage] = useState<{ slot: SlotData | null; dental: boolean; medical: boolean } | null>(null);
+  // Local print log for this claim (UI-15; no backend audit yet, ADA-BE-1).
+  const [printLog, setPrintLog] = useState<ClaimPrintLogEntry[]>([]);
+  // Which tiers the patient has insurance on file for.
+  const [availableOrders, setAvailableOrders] = useState<Set<ClaimOrder>>(new Set());
+  // A subsequent claim has no procedures of its own (one `claim_id` per
+  // procedure) — they are read from the primary claim instead.
+  const [primaryDetail, setPrimaryDetail] = useState<ClaimDetailResponse | null>(null);
+  const [creatingOrder, setCreatingOrder] = useState<ClaimOrder | null>(null);
 
   // ✅ Notes state management
   const [claimNotes, setClaimNotes] = useState<string>("");
@@ -228,6 +280,16 @@ export default function ClaimDetail() {
     (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
       ?.message;
 
+  // Readiness never blocks the screen; a failed read just hides the strip.
+  const refreshReadiness = useCallback(async () => {
+    if (!claimId) return;
+    try {
+      setClaimReadiness(await fetchClaimReadiness(claimId));
+    } catch {
+      setClaimReadiness(null);
+    }
+  }, [claimId]);
+
   // Load composed claim detail from /insurance-claims/{id}/detail.
   const loadClaim = useCallback(async () => {
     if (!claimId) {
@@ -242,6 +304,42 @@ export default function ClaimDetail() {
       setData(res);
       setClaimNotes(res.claim.notes || "");
       setNotesDirty(false);
+      void refreshReadiness();
+      const order = claimOrder(res.claim);
+      const category = claimCategory(res.claim);
+      // Family, insurance slots and (for a subsequent claim) the primary's
+      // procedures load in the background — none of them block the screen.
+      loadClaimFamily(res.claim.patient_id, res.claim.claim_number)
+        .then(async (fam) => {
+          setFamily(fam);
+          const primaryId = order !== "primary" ? fam.primary?.id : null;
+          if (primaryId && res.procedures.length === 0) {
+            setPrimaryDetail(await getClaimDetail(primaryId).catch(() => null));
+          } else {
+            setPrimaryDetail(null);
+          }
+        })
+        .catch(() => setFamily({}));
+      setPrintLog(loadClaimPrintLog(res.claim.id));
+      Promise.all([
+        resolveInsuranceSlots(res.claim.patient_id, category),
+        resolveInsuranceSlots(res.claim.patient_id, category === "D" ? "M" : "D").catch(() => ({})),
+      ])
+        .then(([slots, otherCat]) => {
+          const avail = new Set<ClaimOrder>();
+          for (const o of CLAIM_ORDERS) if (slots[o]?.record) avail.add(o);
+          setAvailableOrders(avail);
+          const own = slots[order] ?? null;
+          setInsSlot(own);
+          setOtherCoverage(
+            pickOtherSlot(category === "D" ? { D: slots, M: otherCat } : { D: otherCat, M: slots }, own, order),
+          );
+        })
+        .catch(() => {
+          setAvailableOrders(new Set());
+          setInsSlot(null);
+          setOtherCoverage(null);
+        });
       if (res.claim.carrier_id != null) {
         getInsuranceCarrier(res.claim.carrier_id)
           .then((c) => setCarrierName(c.name))
@@ -255,7 +353,7 @@ export default function ClaimDetail() {
     } finally {
       setLoading(false);
     }
-  }, [claimId]);
+  }, [claimId, refreshReadiness]);
 
   useEffect(() => {
     loadClaim();
@@ -266,6 +364,7 @@ export default function ClaimDetail() {
   const claim = useMemo(() => {
     if (!data) return null;
     const c = data.claim;
+    const sub = insSlot?.subscriber ?? null;
     const billed = num(c.total_billed);
     const estIns = num(c.est_insurance);
     const paid = num(c.total_paid);
@@ -295,15 +394,21 @@ export default function ClaimDetail() {
         patient_name: patient?.name || "-",
         patient_id: patientId || String(c.patient_id),
         patient_dob: patient?.dob || "-",
-        subscriber_name: "-",
-        subscriber_id: "-",
-        subscriber_dob: "-",
+        subscriber_name:
+          [sub?.sub_last_name, sub?.sub_first_name].filter(Boolean).join(", ") || "-",
+        subscriber_id: sub?.sub_member_id || "-",
+        subscriber_dob: fmtDate(sub?.sub_dob),
       },
       coverage_info: {
         insurance_carrier:
-          carrierName || (c.carrier_id != null ? `Carrier #${c.carrier_id}` : "-"),
-        group_plan: c.ins_plan_id != null ? `Plan #${c.ins_plan_id}` : "-",
-        employer_name: "-",
+          carrierName ||
+          insSlot?.carrier?.name ||
+          (c.carrier_id != null ? `Carrier #${c.carrier_id}` : "-"),
+        group_plan:
+          insSlot?.plan?.group_number ||
+          sub?.group_number ||
+          (c.ins_plan_id != null ? `Plan #${c.ins_plan_id}` : "-"),
+        employer_name: insSlot?.employer?.name || insSlot?.plan?.employer_name || "-",
         benefits_used: "-",
       },
       amounts: {
@@ -327,15 +432,33 @@ export default function ClaimDetail() {
         };
       })(),
     };
-  }, [data, patient, patientId, carrierName]);
+  }, [data, patient, patientId, carrierName, insSlot]);
+
+  // Procedures / coverage this screen works on. A secondary+ claim carries
+  // none of its own (CLM-LC-3), so it shows — and pays against — the
+  // primary claim's procedures.
+  const usesPrimaryProcedures = !!data && data.procedures.length === 0 && !!primaryDetail;
+  const effectiveProcedures: ClaimDetailProcedureRead[] = useMemo(
+    () => (usesPrimaryProcedures && primaryDetail ? primaryDetail.procedures : data?.procedures ?? []),
+    [data, primaryDetail, usesPrimaryProcedures],
+  );
+  const effectiveCoverage: ClaimDetailCoverageRead[] = useMemo(
+    () =>
+      data && data.coverage.length > 0
+        ? data.coverage
+        : usesPrimaryProcedures && primaryDetail
+          ? primaryDetail.coverage
+          : [],
+    [data, primaryDetail, usesPrimaryProcedures],
+  );
 
   // Derive procedures from the composed response, joining coverage by procedure_id.
   const procedures: ClaimProcedure[] = useMemo(() => {
     if (!data) return [];
     const covByProc = new Map(
-      data.coverage.filter((cv) => cv.procedure_id).map((cv) => [cv.procedure_id as string, cv]),
+      effectiveCoverage.filter((cv) => cv.procedure_id).map((cv) => [cv.procedure_id as string, cv]),
     );
-    return data.procedures.map((p) => {
+    return effectiveProcedures.map((p) => {
       const cov = covByProc.get(p.id);
       const description =
         procedureCodes.find((pc) => pc.code === p.procedure_code)?.description ?? p.procedure_code;
@@ -361,7 +484,7 @@ export default function ClaimDetail() {
         reasonCo: "-",
       };
     });
-  }, [data]);
+  }, [data, effectiveProcedures, effectiveCoverage]);
 
   // ✅ Evaluate attachment requirements dynamically
   const attachmentEvaluation = useMemo(() => {
@@ -417,18 +540,120 @@ export default function ClaimDetail() {
   // the backend's Claim Sent Date stamp) and never confirmed the write.
   const handleUpdateStatus = () => setShowStatus(true);
 
-  const handleDeleteClaim = async () => {
-    if (!claimId || !confirm("Are you sure you want to delete this claim?")) return;
+  const currentOrder: ClaimOrder = data ? claimOrder(data.claim) : "primary";
+  const currentCategory = data ? claimCategory(data.claim) : "D";
+  const claimTitle = `${ORDER_TITLE[currentOrder]} ${currentCategory === "M" ? "Medical" : "Dental"} Insurance Claim`;
+  const canSaveDraft = !!data && isDraftClaim(data.claim);
+
+  // Keep the claim on the ledger as a draft (not sent) and go back. Notes are
+  // saved along the way so nothing typed here is lost.
+  const handleSaveDraft = async () => {
+    if (!claimId || !data) return;
     setBusy(true);
     try {
-      await deleteInsuranceClaim(claimId);
-      navigate(`/patient/${patientId}/ledger`);
+      await updateInsuranceClaim(claimId, { status: "draft", notes: claimNotes });
+      setNotesDirty(false);
+      navigate(returnTo);
+    } catch (err) {
+      alert(errMsg(err) || "Failed to save the claim as a draft.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Remove the claim for good. The backend DELETE is a soft delete that left
+  // the claim listed as a "Draft" row and its procedures still billed
+  // (CLM-LC-1/2), so the procedures are released first and the ledger hides
+  // inactive, un-closed claims.
+  const handleDeleteClaim = async () => {
+    if (!claimId || !data) return;
+    if (claimHasPostedPayments(data)) {
+      alert(
+        "This claim has insurance payments posted against it and cannot be deleted. Reverse the payments first, or close the claim instead.",
+      );
+      return;
+    }
+    const dependants = CLAIM_ORDERS.filter((o) => o !== currentOrder && family[o]);
+    if (currentOrder === "primary" && dependants.length > 0) {
+      alert(
+        `Delete the ${dependants.map((o) => ORDER_TITLE[o].toLowerCase()).join(" and ")} claim first — the primary claim carries the procedures they bill.`,
+      );
+      return;
+    }
+    const ownProcedures = data.procedures.length;
+    const msg =
+      ownProcedures > 0
+        ? `Delete this claim? It will disappear from the ledger and its ${ownProcedures} procedure(s) become unbilled again.`
+        : "Delete this claim? It will disappear from the ledger.";
+    if (!confirm(msg)) return;
+    setBusy(true);
+    try {
+      const { unlinkFailures } = await deleteClaimPermanently(data);
+      if (unlinkFailures > 0) {
+        alert(
+          `Claim deleted, but ${unlinkFailures} procedure(s) could not be released back to unbilled. Please review them on the ledger.`,
+        );
+      }
+      navigate(returnTo);
     } catch (err) {
       alert(errMsg(err) || "Failed to delete claim.");
     } finally {
       setBusy(false);
     }
   };
+
+  // VIEW / CREATE SECONDARY … QUATERNARY. A tier can be created once the
+  // previous tier exists and the patient has that insurance on file.
+  const handleOpenOrder = (order: ClaimOrder) => {
+    const target = family[order];
+    if (!target) return;
+    navigate(`/patient/${patientId}/claim/${target.id}`, { state: { from: returnTo } });
+  };
+  const handleCreateOrder = async (order: Exclude<ClaimOrder, "primary">) => {
+    const primary = family.primary ?? (currentOrder === "primary" ? data?.claim : null);
+    if (!primary) return;
+    if (
+      !confirm(
+        `Create the ${ORDER_TITLE[order].toLowerCase()} claim for the same procedures? It will be added to the ledger as a draft.`,
+      )
+    )
+      return;
+    setCreatingOrder(order);
+    try {
+      const { id } = await createSubsequentClaim({
+        primary,
+        order,
+        coverage: effectiveCoverage,
+        fallbackOfficeId: data?.claim.office_id ?? null,
+      });
+      navigate(`/patient/${patientId}/claim/${id}`, { state: { from: returnTo } });
+    } catch (err) {
+      alert(errMsg(err) || (err as Error)?.message || "Failed to create the claim.");
+    } finally {
+      setCreatingOrder(null);
+    }
+  };
+
+  // One button per tier other than the current one: VIEW when that claim
+  // exists, CREATE when it can be created, disabled otherwise.
+  const tierButtons = CLAIM_ORDERS.filter((o) => o !== currentOrder).map((o) => {
+    const existing = family[o];
+    const idx = CLAIM_ORDERS.indexOf(o);
+    const previous: ClaimOrder | null = idx > 0 ? (CLAIM_ORDERS[idx - 1] ?? null) : null;
+    const previousExists = previous === null || previous === currentOrder || !!family[previous];
+    const canCreate = o !== "primary" && previousExists && availableOrders.has(o);
+    const kindWord = currentCategory === "M" ? "medical" : "dental";
+    const reason = existing
+      ? `Open the ${ORDER_TITLE[o].toLowerCase()} claim`
+      : o === "primary"
+        ? "No primary claim found for this claim number"
+        : !previousExists && previous
+          ? `Create the ${ORDER_TITLE[previous].toLowerCase()} claim first`
+          : !availableOrders.has(o)
+            ? `No ${ORDER_TITLE[o].toLowerCase()} ${kindWord} insurance on file for this patient`
+            : `Create the ${ORDER_TITLE[o].toLowerCase()} claim for the same procedures`;
+    return { order: o, existing: !!existing, canCreate, reason };
+  });
 
   // Not yet available (clearinghouse = Phase-4 EDI; print = no report service).
   const handleValidateClaim = () =>
@@ -458,6 +683,7 @@ export default function ClaimDetail() {
       queryClient.invalidateQueries({
         queryKey: [`/api/v1/insurance-claims/${claimId}/attachments`],
       });
+      void refreshReadiness();
     } catch (err) {
       alert(errMsg(err) || "Attachment upload failed.");
     } finally {
@@ -473,6 +699,7 @@ export default function ClaimDetail() {
       queryClient.invalidateQueries({
         queryKey: [`/api/v1/insurance-claims/${claimId}/attachments`],
       });
+      void refreshReadiness();
     } catch (err) {
       alert(errMsg(err) || "Attachment delete failed.");
     } finally {
@@ -485,11 +712,13 @@ export default function ClaimDetail() {
     if (!data) return;
     setShowInsPayment(true);
   };
-  const handleDirectPrint = () =>
-    alert("Claim form printing is not available yet (no report service).");
+  // Opens the ADA Dental Claim Form (2024) pre-flight; the PDF is rendered
+  // client-side from the claim, patient, subscriber, carrier and provider rows
+  // (see src/features/claims/ada/). No server report route exists (PRINT-1).
+  const handleDirectPrint = () => setShowAdaPrint(true);
 
   const handleCancel = () => {
-    navigate(`/patient/${patientId}/ledger`);
+    navigate(returnTo);
   };
 
   if (loading) {
@@ -520,7 +749,7 @@ export default function ClaimDetail() {
         {/* 1️⃣ HEADER */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between border-b-2 border-[#16293B]">
           <h1 className="text-xl font-bold text-white uppercase tracking-wide">
-            Primary Dental Insurance Claim
+            {claimTitle}
           </h1>
           <div className="text-white text-sm font-bold">
             PGID {getTenantId()} / OID {getOfficeId()}
@@ -528,8 +757,39 @@ export default function ClaimDetail() {
         </div>
 
         <div className="px-6 py-4 space-y-3">
-          {/* 2️⃣ INLINE DOCUMENTATION WARNING (SLIM FYI STRIP) */}
-          {attachmentEvaluation.validationSeverity &&
+          {/* 2️⃣ SUPPORTING RECORDS (server-judged, PROC-7c) */}
+          {claimReadiness && (claimReadiness.missing?.length ?? 0) > 0 && (
+            <div
+              role="status"
+              className="mb-2 rounded-md border-l-4 border-amber-400 bg-amber-50 p-2 text-sm space-y-0.5"
+            >
+              <div className="font-semibold text-amber-900">
+                Supporting records missing for {claimReadiness.missing!.length} line
+                {claimReadiness.missing!.length === 1 ? "" : "s"}
+                {claimReadiness.enforced_on_submit
+                  ? " — the claim will not submit until they are on file (or the sender overrides)."
+                  : "."}
+              </div>
+              <ul className="list-disc pl-5 text-xs text-amber-900">
+                {claimReadiness.missing!.map((m, i) => (
+                  <li key={`${m.procedure_id}-${m.record}-${i}`}>{describeMissingRecord(m)}</li>
+                ))}
+              </ul>
+              <div className="text-xs text-slate-600 pt-1">
+                Add a claim attachment below, or an X-ray / photo / perio exam on the patient record,
+                and this list updates.
+              </div>
+            </div>
+          )}
+          {claimReadiness && claimReadiness.ready && (claimReadiness.procedures?.some((p) => (p.requires?.length ?? 0) > 0) ?? false) && (
+            <div role="status" className="mb-2 rounded-md border-l-4 border-emerald-400 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+              Supporting records on file for every line that requires them.
+            </div>
+          )}
+
+          {/* 2b️⃣ INLINE DOCUMENTATION WARNING (client heuristic; only while the server has not judged) */}
+          {!claimReadiness &&
+            attachmentEvaluation.validationSeverity &&
             attachmentEvaluation.validationSeverity !==
               "error" && (
               <div className="mb-2 rounded-md border-l-4 border-orange-400 bg-orange-50 p-2 text-sm space-y-0.5">
@@ -559,7 +819,33 @@ export default function ClaimDetail() {
             )}
 
           {/* 3️⃣ TOP ACTION BUTTONS (SINGLE COMPACT ROW) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {tierButtons.map((t) => (
+              <button
+                key={t.order}
+                onClick={() => {
+                  if (t.existing) handleOpenOrder(t.order);
+                  else if (t.canCreate && t.order !== "primary") handleCreateOrder(t.order);
+                }}
+                disabled={(!t.existing && !t.canCreate) || creatingOrder !== null}
+                title={t.reason}
+                className={`px-3 py-1.5 text-xs rounded-md font-semibold uppercase tracking-wide flex items-center gap-1 ${
+                  t.existing || t.canCreate
+                    ? "bg-[#1f6fc4] text-white hover:bg-[#1a5fa8]"
+                    : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                } disabled:opacity-70`}
+              >
+                {creatingOrder === t.order ? (
+                  <Loader2 className="w-3 h-3 animate-spin" strokeWidth={2} />
+                ) : t.existing ? (
+                  <Eye className="w-3 h-3" strokeWidth={2} />
+                ) : (
+                  <Plus className="w-3 h-3" strokeWidth={2} />
+                )}
+                {t.existing ? "VIEW" : "CREATE"} {ORDER_TITLE[t.order]}
+              </button>
+            ))}
+            <span className="w-px h-5 bg-slate-300 mx-1" aria-hidden="true" />
             <button
               onClick={handleValidateClaim}
               className="px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide"
@@ -727,6 +1013,14 @@ export default function ClaimDetail() {
                 </span>{" "}
                 {claim.coverage_info.employer_name}
               </div>
+              <div className="text-xs font-medium text-slate-900" title="ADA claim form Items 4–11 (coordination of benefits)">
+                <span className="text-slate-500">Other coverage on file:</span>{" "}
+                {otherCoverage === null
+                  ? "…"
+                  : otherCoverage.slot
+                    ? `${otherCoverage.slot.carrier?.name || "Carrier"}${otherCoverage.slot.subscriber ? ` · ${[otherCoverage.slot.subscriber.sub_last_name, otherCoverage.slot.subscriber.sub_first_name].filter(Boolean).join(", ")}` : ""}${otherCoverage.slot.record?.relationship ? ` (${otherCoverage.slot.record.relationship})` : ""}${otherCoverage.dental && otherCoverage.medical ? " · Dental + Medical" : otherCoverage.medical && !otherCoverage.dental ? " · Medical" : ""}`
+                    : "None"}
+              </div>
               <div className="text-xs font-medium text-slate-900">
                 <span className="text-slate-500">
                   Benefits Used:
@@ -742,6 +1036,12 @@ export default function ClaimDetail() {
               <h2 className="text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
                 Procedures in This Claim
               </h2>
+              {usesPrimaryProcedures && family.primary && (
+                <span className="ml-2 text-[11px] font-medium normal-case text-slate-600">
+                  Billed on the primary claim #{family.primary.claim_number} — shown here for the{" "}
+                  {ORDER_TITLE[currentOrder].toLowerCase()} payer.
+                </span>
+              )}
             </div>
 
             {/* Scroll container with proper overflow handling */}
@@ -1004,6 +1304,18 @@ export default function ClaimDetail() {
                     {claim.dxc_attachment_id || "-"}
                   </span>
                 </div>
+
+                <div
+                  className="grid grid-cols-[55%_45%] px-2 py-1"
+                  title={printLog.length ? printLog.map((e) => `${new Date(e.printed_at).toLocaleString()} · ${e.printed_by} · ${e.mode} · ${e.forms} form(s)`).join("\n") : "Not printed from this browser"}
+                >
+                  <span className="text-slate-600">ADA Form Last Printed</span>
+                  <span className="text-slate-900">
+                    {printLog.length
+                      ? `${new Date(printLog[printLog.length - 1]!.printed_at).toLocaleString("en-US", { month: "2-digit", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${printLog[printLog.length - 1]!.printed_by}${printLog.length > 1 ? ` (${printLog.length}×)` : ""}`
+                      : "-"}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1139,7 +1451,9 @@ export default function ClaimDetail() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleDeleteClaim}
-                className="px-3 py-1.5 text-xs rounded-md bg-slate-600 text-white hover:bg-slate-700 font-semibold uppercase tracking-wide flex items-center gap-1"
+                disabled={busy}
+                title="Remove this claim from the ledger and release its procedures"
+                className="px-3 py-1.5 text-xs rounded-md bg-red-700 text-white hover:bg-red-800 font-semibold uppercase tracking-wide flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Trash2 className="w-3 h-3" strokeWidth={2} />
                 DELETE
@@ -1187,6 +1501,17 @@ export default function ClaimDetail() {
                 />
                 UPDATE STATUS
               </button>
+              {canSaveDraft && (
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={busy}
+                  title="Keep this claim on the ledger as a draft (not sent) and return"
+                  className="px-3 py-1.5 text-xs rounded-md bg-amber-600 text-white hover:bg-amber-700 font-semibold uppercase tracking-wide flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FilePen className="w-3 h-3" strokeWidth={2} />
+                  SAVE AS DRAFT
+                </button>
+              )}
               <button
                 onClick={handleSave}
                 disabled={busy}
@@ -1216,6 +1541,19 @@ export default function ClaimDetail() {
         />
       )}
 
+      {showAdaPrint && data && (
+        <AdaClaimPrintModal
+          detail={data}
+          procedures={effectiveProcedures}
+          coverage={effectiveCoverage}
+          enclosures={claimReadiness?.enclosures ?? null}
+          onClose={() => {
+            setShowAdaPrint(false);
+            setPrintLog(loadClaimPrintLog(data.claim.id));
+          }}
+        />
+      )}
+
       {showFillOut && data && (
         <ClaimFillOutModal
           claimId={data.claim.id}
@@ -1224,6 +1562,9 @@ export default function ClaimDetail() {
           carrierName={claim.coverage_info.insurance_carrier}
           estInsurance={claim.amounts.total_est_insurance}
           totalBilled={claim.amounts.total_submitted_fees}
+          enclosures={claimReadiness?.enclosures ?? null}
+          procedures={effectiveProcedures}
+          isPreauth={!!data.claim.is_preauth}
           onClose={() => setShowFillOut(false)}
           onSaved={loadClaim}
         />
@@ -1234,8 +1575,8 @@ export default function ClaimDetail() {
           isOpen={showInsPayment}
           onClose={() => setShowInsPayment(false)}
           claim={data.claim}
-          procedures={data.procedures}
-          coverage={data.coverage}
+          procedures={effectiveProcedures}
+          coverage={effectiveCoverage}
           carrierName={carrierName}
           onPosted={loadClaim}
         />
