@@ -15,8 +15,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus, Save, X } from "lucide-react";
 import { getPatient, updatePatient } from "@/api/generated/endpoints/patients/patients";
-import { listIcdCodes } from "@/api/generated/endpoints/procedures/procedures";
+import type { ClaimDetailProcedureRead, ClaimEnclosures, PatientSignatureRead } from "@/api/generated/model";
+import { listIcdCodes, listPlaceOfServiceCodes } from "@/api/generated/endpoints/procedures/procedures";
 import type { PatientRead } from "@/api/generated/model";
+import {
+  fetchConsentSignature,
+  fetchOrthoDefaults,
+  fetchPredeterminationNumbers,
+  type PredeterminationRef,
+} from "@/features/claims/ada/adaClaimFormData";
+import { adaQuantity } from "@/features/claims/ada/adaClaimFormModel";
 import { US_STATES } from "@/components/modals/patient/constants";
 import NoteMacroPickerModal from "./NoteMacroPickerModal";
 import {
@@ -28,6 +36,7 @@ import {
   REMARKS_MAX_LENGTH,
   STUDENT_STATUS_OPTIONS,
   type ClaimFillOutForm,
+  type ClaimLineOverride,
 } from "./claimFillOut";
 
 interface Props {
@@ -40,8 +49,18 @@ interface Props {
   estInsurance?: number;
   totalBilled?: number;
   onClose: () => void;
+  /**
+   * Derived ADA Enclosures from GET /insurance-claims/{id}/readiness (PROC-7d):
+   * seeds the Radiograph(s) / Oral Image(s) / Model(s) counts when nothing has
+   * been entered yet, and lists the attachment types the claim's codes require.
+   */
+  enclosures?: ClaimEnclosures | null;
   /** Fired after a successful save so the claim screen can refresh. */
   onSaved?: () => void;
+  /** The claim's procedures — per-line ADA Items 29a (diagnosis pointer) / 29b (quantity). */
+  procedures?: ClaimDetailProcedureRead[];
+  /** True for a predetermination/preauthorization claim (Item 2 comes from the payer later). */
+  isPreauth?: boolean;
 }
 
 const ICD_PAGE_SIZE = 200;
@@ -89,8 +108,11 @@ export default function ClaimFillOutModal({
   carrierName,
   estInsurance,
   totalBilled,
+  enclosures,
   onClose,
   onSaved,
+  procedures = [],
+  isPreauth = false,
 }: Props) {
   const [form, setForm] = useState<ClaimFillOutForm>(() => emptyClaimFillOut());
   const [patient, setPatient] = useState<PatientRead | null>(null);
@@ -100,6 +122,9 @@ export default function ClaimFillOutModal({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string>("");
   const [showMacros, setShowMacros] = useState(false);
+  const [consent, setConsent] = useState<PatientSignatureRead | null>(null);
+  const [predeterminations, setPredeterminations] = useState<PredeterminationRef[]>([]);
+  const [orthoBusy, setOrthoBusy] = useState(false);
 
   const set = useCallback(
     <K extends keyof ClaimFillOutForm>(key: K, value: ClaimFillOutForm[K]) =>
@@ -145,6 +170,95 @@ export default function ClaimFillOutModal({
       cancelled = true;
     };
   }, [claimId, patientId]);
+
+  // Item 36 evidence (UI-8) and reusable predetermination numbers (UI-18).
+  useEffect(() => {
+    let cancelled = false;
+    fetchConsentSignature(patientId).then((sig) => {
+      if (!cancelled) setConsent(sig);
+    });
+    if (!isPreauth) {
+      fetchPredeterminationNumbers(patientId, claimId).then((refs) => {
+        if (!cancelled) setPredeterminations(refs);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [patientId, claimId, isPreauth]);
+
+  // Item 38 — prefer the tenant's seeded place-of-service table (UI-13).
+  const posQuery = useQuery({
+    queryKey: ["/api/v1/place-of-service-codes", "fill-out"],
+    queryFn: () => listPlaceOfServiceCodes({ is_active: true, page: 1, size: 200, sort: "code", order: "asc" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const placeOptions = useMemo(() => {
+    const server = (posQuery.data?.items ?? [])
+      .filter((r) => /^\d{2}$/.test((r.code ?? "").trim()))
+      .map((r) => ({ code: r.code.trim(), label: `${r.code.trim()} - ${r.name || r.type || "Place of service"}` }));
+    if (server.length === 0) return PLACE_OF_TREATMENT_OPTIONS;
+    const seen = new Set(server.map((o) => o.code));
+    return [...server, ...PLACE_OF_TREATMENT_OPTIONS.filter((o) => !seen.has(o.code))];
+  }, [posQuery.data]);
+
+  // Items 41/42 — pre-fill from the active ortho payment plan (UI-19).
+  const prefillOrtho = useCallback(async () => {
+    setOrthoBusy(true);
+    try {
+      const od = await fetchOrthoDefaults(patientId);
+      setForm((prev) => ({
+        ...prev,
+        ortho_appliance_placed_date: prev.ortho_appliance_placed_date || od.appliance_placed_date,
+        ortho_months_remaining:
+          prev.ortho_months_remaining && prev.ortho_months_remaining !== "0" ? prev.ortho_months_remaining : od.months_of_treatment || prev.ortho_months_remaining,
+      }));
+    } finally {
+      setOrthoBusy(false);
+    }
+  }, [patientId]);
+
+  const setLine = useCallback((procedure_id: string, patch: Partial<ClaimLineOverride>) => {
+    setForm((prev) => {
+      const cur = prev.line_overrides[procedure_id] ?? { diagnosis_pointer: "", quantity: "01" };
+      return { ...prev, line_overrides: { ...prev.line_overrides, [procedure_id]: { ...cur, ...patch } } };
+    });
+  }, []);
+
+  const icdLetters = useMemo(
+    () => (["A", "B", "C", "D"] as const).filter((_, i) => !!(form as unknown as Record<string, string>)[`icd_${i + 1}`]?.trim()),
+    [form],
+  );
+
+  // Seed the Enclosures counts from what is actually attached to the claim
+  // (PROC-7d) as long as the user has not typed their own numbers yet.
+  useEffect(() => {
+    if (!enclosures || loading) return;
+    setForm((prev) => {
+      const untouched = [prev.enclosures_radiographs, prev.enclosures_oral_images, prev.enclosures_models]
+        .every((v) => !v || Number(v) === 0);
+      if (!untouched) return prev;
+      const n = (v: number | undefined) => clampEnclosure(String(v ?? 0));
+      const next = {
+        enclosures_radiographs: n(enclosures.radiographs),
+        enclosures_oral_images: n(enclosures.oral_images),
+        enclosures_models: n(enclosures.models),
+      };
+      if (next.enclosures_radiographs === prev.enclosures_radiographs &&
+          next.enclosures_oral_images === prev.enclosures_oral_images &&
+          next.enclosures_models === prev.enclosures_models) return prev;
+      return { ...prev, ...next };
+    });
+  }, [enclosures, loading]);
+
+  const ENCLOSURE_TYPE_LABEL: Record<string, string> = {
+    XRAY: "radiograph(s)",
+    PHOTO: "oral image(s)",
+    PERIO: "perio chart",
+    NARRATIVE: "narrative / attachment",
+  };
+  const requiredTypes = enclosures?.required_attachment_types ?? [];
+  const missingTypes = new Set(enclosures?.missing_attachment_types ?? []);
 
   // ICD-10 pick list for the four diagnosis pointers. Free text is still
   // accepted, because the library ships unseeded on most tenants.
@@ -285,6 +399,22 @@ export default function ClaimFillOutModal({
                       className={INPUT}
                     />
                   </div>
+                  {predeterminations.length > 0 && !form.prior_authorization_number && (
+                    <div className="text-[11px] text-slate-600 flex flex-wrap items-center gap-1">
+                      <span>Predetermination on file:</span>
+                      {predeterminations.slice(0, 3).map((r) => (
+                        <button
+                          key={r.claim_id}
+                          type="button"
+                          onClick={() => set("prior_authorization_number", r.prior_authorization_number)}
+                          className="px-1.5 py-0.5 rounded border border-[#1F3A5F] text-[#1F3A5F] hover:bg-[#E8EFF7]"
+                          title={`From predetermination claim ${r.claim_number}`}
+                        >
+                          Use {r.prior_authorization_number}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-6 pt-1">
                     <label className="flex items-center gap-2 text-xs text-slate-700">
                       <input
@@ -310,7 +440,66 @@ export default function ClaimFillOutModal({
                       onChange={(e) => set("signature_on_file", e.target.checked)}
                     />
                     Signature on File
+                    {consent ? (
+                      <span className="text-emerald-700">
+                        (captured {consent.signature_type || "signature"} {fmtDate(consent.signed_at || consent.created_at)})
+                      </span>
+                    ) : (
+                      <span className="text-slate-500">(no captured patient signature on file)</span>
+                    )}
                   </label>
+                  {/* ADA 2024 boxes (UI-1) */}
+                  <div className="flex flex-wrap items-center gap-6 pt-1">
+                    <label className="flex items-center gap-2 text-xs text-slate-700">
+                      <input type="checkbox" checked={form.is_epsdt} onChange={(e) => set("is_epsdt", e.target.checked)} />
+                      EPSDT / Title XIX (ADA 1)
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-700">
+                      <input type="checkbox" checked={form.is_locum_tenens} onChange={(e) => set("is_locum_tenens", e.target.checked)} />
+                      Locum tenens treating dentist (ADA 53a)
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_220px] items-center gap-2">
+                    <label className={LABEL} htmlFor="fo-srp">
+                      Date Last SRP (ADA 39a) <span className="text-slate-400">blank = from history</span>
+                    </label>
+                    <input id="fo-srp" type="date" value={form.date_last_srp} onChange={(e) => set("date_last_srp", e.target.value)} className={INPUT} />
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_220px] items-center gap-2">
+                    <label className={LABEL} htmlFor="fo-other-fees">
+                      Other Fee(s) — sales tax etc. (ADA 31a)
+                    </label>
+                    <input
+                      id="fo-other-fees"
+                      type="text"
+                      inputMode="decimal"
+                      value={form.other_fees}
+                      onChange={(e) => set("other_fees", e.target.value.replace(/[^0-9.]/g, "").slice(0, 10))}
+                      placeholder="0.00"
+                      className={`${INPUT} text-right`}
+                    />
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_100px_100px] items-center gap-2">
+                    <span className={LABEL}>Name suffix — patient / subscriber (ADA 20 / 12)</span>
+                    <input
+                      type="text"
+                      maxLength={10}
+                      value={form.patient_name_suffix}
+                      onChange={(e) => set("patient_name_suffix", e.target.value)}
+                      placeholder="Jr., III"
+                      className={INPUT}
+                      aria-label="Patient name suffix"
+                    />
+                    <input
+                      type="text"
+                      maxLength={10}
+                      value={form.subscriber_name_suffix}
+                      onChange={(e) => set("subscriber_name_suffix", e.target.value)}
+                      placeholder="Sr."
+                      className={INPUT}
+                      aria-label="Subscriber name suffix"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -324,7 +513,7 @@ export default function ClaimFillOutModal({
                       onChange={(e) => set("place_of_treatment", e.target.value)}
                       className={INPUT}
                     >
-                      {PLACE_OF_TREATMENT_OPTIONS.map((o) => (
+                      {placeOptions.map((o) => (
                         <option key={o.code} value={o.code}>
                           {o.label}
                         </option>
@@ -460,6 +649,21 @@ export default function ClaimFillOutModal({
                         />
                       </div>
                     ))}
+                    {requiredTypes.length > 0 && (
+                      <div className="pt-1 text-[11px] text-slate-600">
+                        This claim's codes require:{" "}
+                        {requiredTypes.map((t, i) => (
+                          <span key={t}>
+                            {i > 0 && ", "}
+                            <span className={missingTypes.has(t) ? "font-semibold text-amber-700" : "text-emerald-700"}>
+                              {ENCLOSURE_TYPE_LABEL[t] ?? t.toLowerCase()}
+                              {missingTypes.has(t) ? " (not attached)" : " (attached)"}
+                            </span>
+                          </span>
+                        ))}
+                        .
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -540,6 +744,16 @@ export default function ClaimFillOutModal({
                     </label>
                   </div>
                   <div className="p-3 space-y-2">
+                    {form.is_orthodontic_treatment && (
+                      <button
+                        type="button"
+                        onClick={prefillOrtho}
+                        disabled={orthoBusy}
+                        className="px-2 py-1 text-[11px] rounded border border-[#1F3A5F] text-[#1F3A5F] hover:bg-[#E8EFF7] disabled:opacity-50"
+                      >
+                        {orthoBusy ? "Reading ortho plan…" : "Pre-fill from ortho payment plan"}
+                      </button>
+                    )}
                     <div className="grid grid-cols-[minmax(0,1fr)_180px] items-center gap-2">
                       <label className={LABEL} htmlFor="fo-ortho-date">
                         Date Appliance Placed
@@ -612,6 +826,81 @@ export default function ClaimFillOutModal({
                   </div>
                 </div>
               </div>
+
+              {/* Per-procedure ADA 29a / 29b (UI-2 / UI-6) */}
+              {procedures.length > 0 && (
+                <div className="border-2 border-[#E2E8F0] rounded">
+                  <div className={SECTION_HEAD}>Procedure lines — Diagnosis pointer (ADA 29a) &amp; Quantity (29b)</div>
+                  <div className="p-3 overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-slate-500">
+                          <th className="py-1 pr-2 font-medium">DOS</th>
+                          <th className="py-1 pr-2 font-medium">Code</th>
+                          <th className="py-1 pr-2 font-medium">Tooth</th>
+                          <th className="py-1 pr-2 font-medium">Surf</th>
+                          <th className="py-1 pr-2 font-medium">Fee</th>
+                          <th className="py-1 pr-2 font-medium">Qty (01–99)</th>
+                          <th className="py-1 pr-2 font-medium">Dx pointer {icdLetters.length === 0 && <span className="font-normal text-slate-400">(enter ICD 1–4 first)</span>}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {procedures
+                          .filter((p) => !p.is_void)
+                          .map((p) => {
+                            const ov = form.line_overrides[p.id] ?? { diagnosis_pointer: "", quantity: "01" };
+                            const letters = ov.diagnosis_pointer.split("");
+                            return (
+                              <tr key={p.id} className="border-t border-slate-200">
+                                <td className="py-1 pr-2">{fmtDate(p.date_of_service)}</td>
+                                <td className="py-1 pr-2 font-semibold">{p.procedure_code}</td>
+                                <td className="py-1 pr-2">{p.tooth || "-"}</td>
+                                <td className="py-1 pr-2">{p.surface || "-"}</td>
+                                <td className="py-1 pr-2">${Number(p.fee || 0).toFixed(2)}</td>
+                                <td className="py-1 pr-2">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={ov.quantity}
+                                    onChange={(e) => setLine(p.id, { quantity: e.target.value.replace(/\D/g, "").slice(0, 2) })}
+                                    onBlur={(e) => setLine(p.id, { quantity: adaQuantity(e.target.value) })}
+                                    className={`${INPUT} w-14 text-right`}
+                                    aria-label={`Quantity for ${p.procedure_code}`}
+                                  />
+                                </td>
+                                <td className="py-1 pr-2">
+                                  <div className="flex items-center gap-2">
+                                    {(["A", "B", "C", "D"] as const).map((L) => {
+                                      const enabled = icdLetters.includes(L);
+                                      const on = letters.includes(L);
+                                      return (
+                                        <label key={L} className={`flex items-center gap-1 ${enabled ? "" : "text-slate-300"}`}>
+                                          <input
+                                            type="checkbox"
+                                            disabled={!enabled}
+                                            checked={on}
+                                            onChange={(e) => {
+                                              const next = e.target.checked ? [...letters, L] : letters.filter((x) => x !== L);
+                                              setLine(p.id, { diagnosis_pointer: (["A", "B", "C", "D"] as const).filter((x) => next.includes(x)).join("") });
+                                            }}
+                                          />
+                                          {L}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                    <div className="pt-1 text-[11px] text-slate-500">
+                      A line with no pointer prints "A" when any ICD code is entered. Same procedure on several teeth may be one line with the teeth in ADA 27 and the count in 29b.
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Remarks */}
               <div className="border-2 border-[#E2E8F0] rounded">

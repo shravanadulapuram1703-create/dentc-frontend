@@ -71,6 +71,7 @@ import PerioTemplateSetup from './components/setup/charting/PerioTemplateSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
 import ReferralSetup from './components/setup/referrals/ReferralSetup';
+import LabSetup from './components/setup/labs/LabSetup';
 import PickListSetup from './components/setup/pick-list/PickListSetup';
 import NoteMacroSetup from './components/setup/notes-macros/NoteMacroSetup';
 import MedicalAlertsSetup from './components/setup/medical/MedicalAlertsSetup';
@@ -384,6 +385,9 @@ function AppRoutes() {
       <Route path="/setup/insurance/employees" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Employees" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/insurance/employers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><EmployerSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
+      {/* Setup - Lab Tracking */}
+      <Route path="/setup/lab-tracking/labs" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><LabSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+
       {/* Setup - Referrals */}
       <Route path="/setup/referrals/referral-sources" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ReferralSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/referrals/custom-demographics" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Custom Demographics" /></AdminPageWrapper> : <Navigate to="/login" />} />

@@ -692,7 +692,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "do_you_get_frequent_fever_blisters_mouth_ulcers_or_sores_on_",
+      "key1": "do_you_get_frequent_fever_blisters_mouth_ulcers_or",
       "description": "Do you get frequent fever blisters, mouth ulcers, or sores on your lips or in your mouth ?",
       "input_type": "yesno",
       "sort_order": 9
@@ -700,7 +700,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "have_you_ever_had_burning_of_the_tongue_or_cracking_of_the_c",
+      "key1": "have_you_ever_had_burning_of_the_tongue_or_crackin",
       "description": "Have you ever had burning of the tongue or cracking of the corners of your mouth ?",
       "input_type": "yesno",
       "sort_order": 10
@@ -724,7 +724,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "do_you_notice_popping_clicking_or_soreness_of_the_jaws_or_po",
+      "key1": "do_you_notice_popping_clicking_or_soreness_of_the_",
       "description": "Do you notice popping, clicking or soreness of the jaws or points just in front of the ears ?",
       "input_type": "yesno",
       "sort_order": 13
@@ -780,7 +780,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "are_you_having_any_specific_problems_with_your_teeth_gums_or",
+      "key1": "are_you_having_any_specific_problems_with_your_tee",
       "description": "Are you having any specific problems with your teeth, gums, or mouth at this time ?",
       "input_type": "yesno",
       "sort_order": 20
@@ -812,7 +812,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "do_you_have_or_have_you_ever_been_told_that_you_have_pyorrhe",
+      "key1": "do_you_have_or_have_you_ever_been_told_that_you_ha",
       "description": "Do you have, or have you ever been told, that you have Pyorrhea (Periodontal Disease) ?",
       "input_type": "yesno",
       "sort_order": 24
@@ -820,7 +820,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "do_you_have_difficulty_in_opening_your_mouth_widely",
+      "key1": "do_you_have_difficulty_in_opening_your_mouth_widel",
       "description": "Do you have difficulty in opening your mouth widely ?",
       "input_type": "yesno",
       "sort_order": 25
@@ -828,7 +828,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "do_you_have_an_unpleasant_taste_or_odor_in_your_teeth_mouth",
+      "key1": "do_you_have_an_unpleasant_taste_or_odor_in_your_te",
       "description": "Do you have an unpleasant taste or odor in your teeth/mouth ?",
       "input_type": "yesno",
       "sort_order": 26
@@ -844,7 +844,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Dental Questionnaire",
-      "key1": "do_you_want_to_learn_to_control_your_dental_disease_and_reta",
+      "key1": "do_you_want_to_learn_to_control_your_dental_diseas",
       "description": "Do you want to learn to control your dental disease and retain your teeth ?",
       "input_type": "yesno",
       "sort_order": 28
@@ -852,7 +852,7 @@
     {
       "group_type": "DENTQUEST",
       "section": "Additional Comments",
-      "key1": "any_disease_condition_or_problem_not_listed_please_list",
+      "key1": "any_disease_condition_or_problem_not_listed_please",
       "description": "Any Disease, Condition or Problem not Listed ? Please list",
       "input_type": "textarea",
       "sort_order": 29
@@ -918,7 +918,7 @@
     {
       "group_type": "MEDQUEST",
       "section": "Medical Questionnaire",
-      "key1": "have_you_had_any_serious_illness_operation_or_been_hospitali",
+      "key1": "have_you_had_any_serious_illness_operation_or_been",
       "description": "Have you had any serious illness, operation or been hospitalized within the past 5 years ?",
       "input_type": "yesno",
       "sort_order": 8
@@ -950,7 +950,7 @@
     {
       "group_type": "MEDQUEST",
       "section": "Medical Questionnaire",
-      "key1": "have_you_taken_bisphosphonates_fosamax_boniva_zometa_actonel",
+      "key1": "have_you_taken_bisphosphonates_fosamax_boniva_zome",
       "description": "Have you taken bisphosphonates (Fosamax, Boniva, Zometa, Actonel, Didronel, Aredia, Skelid, Reclast)",
       "input_type": "yesno",
       "sort_order": 12
@@ -1030,7 +1030,7 @@
     {
       "group_type": "MEDQUEST",
       "section": "Additional Comments",
-      "key1": "any_disease_condition_or_problem_not_listed_please_list",
+      "key1": "any_disease_condition_or_problem_not_listed_please",
       "description": "Any Disease, Condition or Problem not Listed ? Please list",
       "input_type": "textarea",
       "sort_order": 22

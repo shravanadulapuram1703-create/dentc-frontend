@@ -13,4 +13,16 @@ export interface UserSignatureRead {
   device_source?: string | null;
   /** When the signature last changed */
   updated_at?: string | null;
+  signed_at?: string | null;
+  has_sig_string?: boolean;
+  sig_string?: string | null;
+  sig_format?: string | null;
+  sig_compression?: number | null;
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  captured_user_agent?: string | null;
 }

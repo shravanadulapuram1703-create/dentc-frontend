@@ -12,7 +12,15 @@ export type ComparePerioExamsParams = {
  */
 patient_id: number;
 /**
- * Exam ids to compare
+ * Exam ids to compare (repeat the key)
  */
 exam_ids: number[];
+/**
+ * PERIO-BE-15: embed each exam's per-tooth detail rows, sorted by tooth
+ */
+include_details?: boolean;
+/**
+ * PERIO-BE-18: allow voided exams in the set. Without it a voided id is 422 ``perio_exam_voided``; with it the entry is returned flagged and skipped as a delta baseline
+ */
+include_voided?: boolean;
 };

@@ -1,11 +1,16 @@
+import { useEffect, useState } from "react";
 import type { ProviderForm } from "../providerData";
 import type { OfficeRead } from "@/api/generated/model";
 import { useDefinitions } from "@/shared/hooks/useDefinitions";
+import { loadProviderTaxonomy, saveProviderTaxonomy } from "@/features/claims/ada/adaLocalStores";
+import { PROVIDER_SPECIALTY_CODES, specialtyToTaxonomy } from "@/features/claims/ada/adaClaimFormModel";
 
 interface InfoTabProps {
   formData: ProviderForm;
   updateFormData: (updates: Partial<ProviderForm>) => void;
   offices: OfficeRead[];
+  /** Saved provider id (null while adding) — keys the taxonomy stop-gap store. */
+  providerId?: string | null;
 }
 
 const labelCls = "block text-xs font-bold text-[#1E293B] mb-1.5";
@@ -66,7 +71,19 @@ function DefinitionField({
   );
 }
 
-export default function InfoTab({ formData, updateFormData, offices }: InfoTabProps) {
+export default function InfoTab({ formData, updateFormData, offices, providerId = null }: InfoTabProps) {
+  const [taxonomy, setTaxonomy] = useState(() => loadProviderTaxonomy(providerId));
+  useEffect(() => {
+    setTaxonomy(loadProviderTaxonomy(providerId));
+  }, [providerId]);
+  const effectiveTaxonomy = taxonomy || specialtyToTaxonomy(formData.specialty);
+  const isDentist = /dentist|dds|dmd|doctor/i.test(`${formData.role} ${formData.title}`) || !formData.role;
+  const readiness: Array<[string, string, boolean]> = [
+    ["54", "NPI — 10 digits", /^\d{10}$/.test(formData.npi.trim())],
+    ["55", "License number", !!formData.license.trim()],
+    ["56a", "Specialty / taxonomy code", !!effectiveTaxonomy],
+    ["57", "Phone", !!formData.phone.trim()],
+  ];
   return (
     <div className="space-y-6">
       {/* Basic provider info */}
@@ -219,6 +236,56 @@ export default function InfoTab({ formData, updateFormData, offices }: InfoTabPr
               className={inputCls}
             />
           </div>
+          <div>
+            <label className={labelCls}>Business Phone (ADA claim Item 57)</label>
+            <input
+              type="text"
+              value={formData.phone}
+              onChange={(e) => updateFormData({ phone: e.target.value })}
+              placeholder="(555) 123-4567"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Provider Taxonomy Code (ADA claim Item 56a)</label>
+            <select
+              value={taxonomy}
+              onChange={(e) => {
+                setTaxonomy(e.target.value);
+                if (providerId) saveProviderTaxonomy(providerId, e.target.value);
+              }}
+              disabled={!providerId}
+              className={inputCls}
+            >
+              <option value="">
+                {effectiveTaxonomy ? `Derived from specialty: ${effectiveTaxonomy}` : "Select taxonomy"}
+              </option>
+              {PROVIDER_SPECIALTY_CODES.map((o) => (
+                <option key={o.code} value={o.code}>
+                  {o.label} — {o.code}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-[#64748B] mt-1">
+              {providerId
+                ? "No backend column yet (ADA-BE-14) — stored in this browser; blank = mapped from Specialty."
+                : "Save the provider first to pin a taxonomy code."}
+            </p>
+          </div>
+          {isDentist && (
+            <div className="md:col-span-2 rounded-lg border-2 border-[#E2E8F0] bg-[#F8FAFC] p-3">
+              <div className="text-xs font-bold text-[#1F3A5F] uppercase tracking-wide mb-1">
+                ADA claim form readiness (treating dentist, Items 54–57)
+              </div>
+              <ul className="text-xs grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0.5">
+                {readiness.map(([item, label, ok]) => (
+                  <li key={item} className={ok ? "text-emerald-700" : "text-red-700"}>
+                    {ok ? "✓" : "✗"} Item {item}: {label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 

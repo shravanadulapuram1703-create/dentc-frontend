@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AppointmentSchedulerReadInsuranceEligibility } from './appointmentSchedulerReadInsuranceEligibility';
+import type { AppointmentSchedulerReadLabStatus } from './appointmentSchedulerReadLabStatus';
 
 /**
  * Denormalized appointment row for the calendar — names resolved server-side
@@ -36,6 +37,8 @@ export interface AppointmentSchedulerRead {
   checked_in_on?: string | null;
   checked_out_on?: string | null;
   has_alert?: boolean;
+  alert_summary?: string | null;
+  alert_count?: number;
   patient_age?: number | null;
   patient_gender?: string | null;
   responsible_party_id?: string | null;
@@ -49,4 +52,14 @@ export interface AppointmentSchedulerRead {
   cancellation_note?: string | null;
   cancellation_reason?: string | null;
   add_to_call_list?: boolean;
+  has_lab?: boolean;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string | null;
+  lab_dds?: string | null;
+  lab_cost?: string | null;
+  lab_short_notice?: boolean;
+  lab_sent_on?: string | null;
+  lab_due_on?: string | null;
+  lab_received_on?: string | null;
+  lab_status?: AppointmentSchedulerReadLabStatus;
 }

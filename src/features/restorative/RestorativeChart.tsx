@@ -78,6 +78,7 @@ import type { RestorationTemplate } from './restorationTemplates';
 import type { ActiveSelection, ChartTab, GridRow, PaletteItem, ToothArea } from './types';
 import { providerOptionLabel } from '@/services/providerDirectory';
 import { openSchedulerForBooking } from '@/services/schedulerHandoff';
+import { noteDisplayText } from '@/features/progress-notes/noteContent';
 
 interface OutletCtx {
   patient: { id: string; name: string; officeId?: string; age?: number };
@@ -385,7 +386,7 @@ export default function RestorativeChart() {
       (progressQuery.data?.items ?? [])
         .filter((p) => !p.is_deleted)
         .filter((p) => inRange(p.note_date ?? p.created_at, timelineFrom, timelineTo))
-        .map((p) => ({ id: `pn-${p.id}`, date: fmtDate(p.note_date ?? p.created_at), note: p.notes ?? '', tooth: p.tooth ?? '' })),
+        .map((p) => ({ id: `pn-${p.id}`, date: fmtDate(p.note_date ?? p.created_at), note: noteDisplayText(p), tooth: p.tooth ?? '' })),
     [progressQuery.data, timelineFrom, timelineTo],
   );
 
@@ -1033,6 +1034,7 @@ export default function RestorativeChart() {
         <AddAdaCodeModal
           mode={paletteTab === 'completed' ? 'completed' : 'tx-plans'}
           officeId={officeId}
+          patientId={validId ? numericId : null}
           teeth={adaModal.teeth}
           surface={adaModal.surface}
           providers={providers}

@@ -56,6 +56,8 @@ import {
 } from "../../services/feeScheduleResolver";
 import { loadProcedureCodes } from "@/components/setup/insurance/procedureCodeService";
 import { providerDisplayLabel } from "@/services/providerDirectory";
+import { listLabs } from "@/api/generated/endpoints/appointments/appointments";
+import type { LabRead } from "@/api/generated/model";
 
 interface PatientSearchResult {
   patientId: string;
@@ -173,6 +175,13 @@ export default function AddEditAppointmentForm({
   const [procedureCodes, setProcedureCodes] = useState<ApiProcedureCode[]>([]);
   const [procedureCategories, setProcedureCategories] = useState<ProcedureCategory[]>([]);
   const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
+  // Lab vendors (the `labs` catalog) for the LAB section's "Lab" picker.
+  const [labs, setLabs] = useState<LabRead[]>([]);
+  useEffect(() => {
+    listLabs({ is_active: true, size: 200, sort: "name", order: "asc" })
+      .then((res) => setLabs(res.items ?? []))
+      .catch(() => setLabs([]));
+  }, []);
   
   // Ensure procedureCodes is always an array (defensive check)
   const safeProcedureCodes = procedureCodes || [];
@@ -267,6 +276,8 @@ export default function AddEditAppointmentForm({
           labSentOn: appointment.labSentOn || appointment.lab_sent_on || "",
           labDueOn: appointment.labDueOn || appointment.lab_due_on || "",
           labRecvdOn: appointment.labRecvdOn || appointment.lab_recvd_on || "",
+          labVendorId: appointment.lab_vendor_id != null ? String(appointment.lab_vendor_id) : "",
+          labShortNotice: !!appointment.lab_short_notice,
           
           // Flags
           missed: appointment.missed || false,
@@ -620,6 +631,8 @@ export default function AddEditAppointmentForm({
     labSentOn: "",
     labDueOn: "",
     labRecvdOn: "",
+    labVendorId: "",
+    labShortNotice: false,
 
     // Notes & Campaign
     notes: initialAppointmentData?.notes || "",
@@ -1094,7 +1107,12 @@ export default function AddEditAppointmentForm({
         // Lab information
         lab: formData.lab || false,
         lab_dds: formData.labDDS || undefined,
-        lab_cost: formData.labCost ? parseFloat(formData.labCost.toString()) : undefined,
+        lab_vendor_id: formData.labVendorId ? Number(formData.labVendorId) : null,
+        lab_short_notice: !!formData.labShortNotice,
+        // Backend validates lab_cost >= 0 with at most two decimals (no rounding server-side).
+        lab_cost: formData.labCost
+          ? Math.max(0, Math.round(parseFloat(formData.labCost.toString()) * 100) / 100)
+          : undefined,
         // Date inputs return YYYY-MM-DD format, but convert if needed (MM/DD/YYYY -> YYYY-MM-DD)
         lab_sent_on: formData.labSentOn 
           ? (formData.labSentOn.includes("/") ? convertDateToYYYYMMDD(formData.labSentOn) : formData.labSentOn)
@@ -1845,13 +1863,39 @@ export default function AddEditAppointmentForm({
           </label>
 
           {formData.lab && (
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[#1E293B] font-medium mb-1 text-sm">
+                  Lab
+                </label>
+                <select
+                  value={formData.labVendorId}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      labVendorId: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white"
+                >
+                  <option value="">— No lab —</option>
+                  {labs.map((l) => (
+                    <option key={l.id} value={String(l.id)}>
+                      {l.code ? `${l.name} (${l.code})` : l.name}
+                    </option>
+                  ))}
+                  {formData.labVendorId && !labs.some((l) => String(l.id) === formData.labVendorId) && (
+                    <option value={formData.labVendorId}>Lab #{formData.labVendorId} (inactive)</option>
+                  )}
+                </select>
+              </div>
               <div>
                 <label className="block text-[#1E293B] font-medium mb-1 text-sm">
                   DDS
                 </label>
                 <input
                   type="text"
+                  maxLength={100}
                   value={formData.labDDS}
                   onChange={(e) =>
                     setFormData({
@@ -1925,6 +1969,22 @@ export default function AddEditAppointmentForm({
                   }
                   className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                 />
+              </div>
+              <div className="flex items-end pb-1.5">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1E293B]">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.labShortNotice}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        labShortNotice: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 rounded border-[#CBD5E1] text-[#3A6EA5] focus:ring-[#3A6EA5]"
+                  />
+                  Short Notice
+                </label>
               </div>
             </div>
           )}

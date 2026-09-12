@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { OfficeLetterhead } from './officeLetterhead';
 
 export interface OfficeRead {
   tenant_id: number;
@@ -39,4 +40,6 @@ export interface OfficeRead {
   id: number;
   created_at: string;
   updated_at?: string | null;
+  logo_url?: string | null;
+  letterhead?: OfficeLetterhead | null;
 }

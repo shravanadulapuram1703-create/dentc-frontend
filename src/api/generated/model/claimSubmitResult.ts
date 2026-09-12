@@ -14,4 +14,5 @@ export interface ClaimSubmitResult {
   sent_date: string;
   send_method: string;
   submission_id: number;
+  missing_records_overridden?: boolean;
 }

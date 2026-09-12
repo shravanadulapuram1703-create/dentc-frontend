@@ -7,11 +7,17 @@
  */
 
 /**
- * Change vs the chronologically previous exam in the comparison set.
+ * Change vs the previous **live** exam in the comparison set (a voided exam
+ * is never the baseline — PERIO-BE-18). ``PerioExamComparisonEntry.delta_vs_exam_id``
+ * names that baseline.
  */
 export interface PerioExamComparisonDelta {
   mean_pd?: number | null;
   sites_pd_4plus?: number | null;
   sites_pd_6plus?: number | null;
+  bleeding_sites?: number | null;
   bleeding_pct?: number | null;
+  suppuration_sites?: number | null;
+  suppuration_pct?: number | null;
+  mean_cal?: number | null;
 }

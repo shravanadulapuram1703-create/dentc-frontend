@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MedicalAlertAnswer } from './medicalAlertAnswer';
+import type { MedicalHistoryAudit } from './medicalHistoryAudit';
 import type { MedicalHistoryDocumentCatalogs } from './medicalHistoryDocumentCatalogs';
 import type { MedicalHistoryDocumentCatalogSources } from './medicalHistoryDocumentCatalogSources';
 import type { MedicalHistoryDocumentChanged } from './medicalHistoryDocumentChanged';
@@ -36,6 +37,7 @@ export interface MedicalHistoryDocument {
   catalogs?: MedicalHistoryDocumentCatalogs;
   catalog_sources?: MedicalHistoryDocumentCatalogSources;
   completion?: MedicalHistoryDocumentCompletion;
+  audit?: MedicalHistoryAudit | null;
   copied_from_patient_id?: number | null;
   copied_at?: string | null;
   copied_by_name?: string | null;

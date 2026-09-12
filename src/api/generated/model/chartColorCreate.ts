@@ -8,6 +8,7 @@
 
 export interface ChartColorCreate {
   category_type?: number | null;
+  /** @maxLength 100 */
   name: string;
   stroke_color?: string | null;
   fill_type?: string | null;

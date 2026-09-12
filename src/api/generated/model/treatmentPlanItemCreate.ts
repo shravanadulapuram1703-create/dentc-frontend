@@ -11,7 +11,7 @@ export interface TreatmentPlanItemCreate {
   id: string;
   plan_id: string;
   procedure_code: string;
-  fee: number | string;
+  fee?: number | string | null;
   description?: string | null;
   tooth?: string | null;
   surface?: string | null;
@@ -28,4 +28,15 @@ export interface TreatmentPlanItemCreate {
   diagnosed_date?: string | null;
   start_date?: string | null;
   end_date?: string | null;
+  notes?: string | null;
+  accepted_date?: string | null;
+  scheduled_date?: string | null;
+  duration_minutes?: number | null;
+  referral_id?: number | null;
+  referral_type?: string | null;
+  update_end_date_at_posting?: boolean | null;
+  re_estimate_at_posting?: boolean | null;
+  fee_schedule_id?: number | null;
+  counselor_user_id?: number | null;
+  icd_code_ids?: number[] | null;
 }

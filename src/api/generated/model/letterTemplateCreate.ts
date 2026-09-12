@@ -7,6 +7,7 @@
  */
 
 export interface LetterTemplateCreate {
+  /** @maxLength 255 */
   name: string;
   letter_type?: string | null;
   channel?: string | null;

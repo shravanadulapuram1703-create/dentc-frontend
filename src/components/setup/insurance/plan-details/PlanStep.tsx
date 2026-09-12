@@ -35,7 +35,7 @@ import {
   anniversaryIso,
 } from "./planDetailsModel";
 import type { PlanLookups } from "./planLookups";
-import { FormRow, WZ_INPUT, WZ_BTN_PRIMARY, Note } from "./wizardUi";
+import { FormRow, WZ_INPUT, WZ_BTN_PRIMARY } from "./wizardUi";
 
 export interface PlanStepProps {
   form: PlanDetailsForm;
@@ -53,8 +53,6 @@ export interface PlanStepProps {
   onUseExistingPlan?: (plan: InsurancePlanRead) => void;
   useExistingLabel?: string;
   excludePlanId?: number | null;
-  /** Show the "browser-stored" hint for the extras. */
-  showExtrasNote?: boolean;
 }
 
 export default function PlanStep({
@@ -73,7 +71,6 @@ export default function PlanStep({
   onUseExistingPlan,
   useExistingLabel,
   excludePlanId = null,
-  showExtrasNote = true,
 }: PlanStepProps) {
   const [addCarrier, setAddCarrier] = useState(false);
   const [addEmployer, setAddEmployer] = useState(false);
@@ -342,13 +339,6 @@ export default function PlanStep({
           </FormRow>
         )}
       </div>
-
-      {showExtrasNote && (
-        <Note tone="warn">
-          Fees to Print, Claim Options, Form to Print, Reporting Subtype, Network Type, NOA Only and Per Visit Co-Pay have no
-          column on the insurance-plan record yet — they are kept in this browser for the plan (backend report PLAN-DTL-1).
-        </Note>
-      )}
 
       {addCarrier && (
         <QuickAddCarrierModal

@@ -17,9 +17,21 @@ patient_id?: number | null;
  */
 office_id?: number | null;
 /**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
  * Filter by is_voided
  */
 is_voided?: boolean | null;
+/**
+ * Filter by date_from
+ */
+date_from?: string | null;
+/**
+ * Filter by date_to
+ */
+date_to?: string | null;
 /**
  * exam_date >= (inclusive lower bound)
  */

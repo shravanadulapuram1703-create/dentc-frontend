@@ -52,6 +52,8 @@ export interface OfficeForm {
   schedule_end_hour?: number | null;
 
   // Billing / fee schedules (gap #11 — now backed by OfficeRead/Update)
+  /** Legal billing name printed in ADA claim Item 48 (falls back to `name`). */
+  corporate_name?: string | null;
   tax_id?: string | null;
   billing_provider_id?: string | null;
   use_billing_license?: boolean | null;

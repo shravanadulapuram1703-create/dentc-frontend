@@ -7,12 +7,14 @@
  */
 
 export interface PatientPaymentCreate {
+  /** @maxLength 50 */
   id: string;
   patient_id: number;
   office_id?: number | null;
   is_archived?: boolean | null;
   payment_date: string;
   amount: number | string;
+  /** @maxLength 20 */
   payment_type: string;
   payment_method?: string | null;
   check_number?: string | null;

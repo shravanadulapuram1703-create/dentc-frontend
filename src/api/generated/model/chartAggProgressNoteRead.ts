@@ -18,6 +18,7 @@ export interface ChartAggProgressNoteRead {
   region?: string | null;
   signed_by?: number | null;
   signed_at?: string | null;
+  content_hash?: string | null;
   is_struck_off: boolean;
   struck_off_at?: string | null;
   struck_off_by?: number | null;

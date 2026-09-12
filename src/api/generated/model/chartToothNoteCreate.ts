@@ -8,6 +8,7 @@
 
 export interface ChartToothNoteCreate {
   patient_id: number;
+  /** @maxLength 10 */
   tooth: string;
   note?: string | null;
 }

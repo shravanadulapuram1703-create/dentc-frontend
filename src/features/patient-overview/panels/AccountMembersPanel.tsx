@@ -48,6 +48,7 @@ export default function AccountMembersPanel({
           empty="No account members"
           is_empty={data.members.length === 0}
           min_width={760}
+          className="max-h-56"
         >
           {data.members.map((m) => {
             const extra = data.member_extra[m.id];

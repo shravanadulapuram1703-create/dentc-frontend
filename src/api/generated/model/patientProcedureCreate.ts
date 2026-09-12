@@ -17,12 +17,15 @@
  * a fee still wins, so no existing caller changes.
  */
 export interface PatientProcedureCreate {
+  /** @maxLength 50 */
   id: string;
   patient_id: number;
   appointment_id?: string | null;
+  /** @maxLength 20 */
   procedure_code: string;
   is_archived?: boolean | null;
   date_of_service: string;
+  /** @maxLength 50 */
   provider_id: string;
   office_id: number;
   tooth?: string | null;

@@ -7,6 +7,7 @@
  */
 
 export interface FeeScheduleCreate {
+  /** @maxLength 255 */
   name: string;
   fee_type?: string | null;
   ins_plan_id?: number | null;

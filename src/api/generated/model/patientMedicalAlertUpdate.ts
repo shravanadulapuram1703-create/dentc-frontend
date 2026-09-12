@@ -10,8 +10,11 @@ import type { PatientMedicalAlertUpdateResponse } from './patientMedicalAlertUpd
 export interface PatientMedicalAlertUpdate {
   alert_code?: string | null;
   alert_label?: string | null;
+  section?: string | null;
   response?: PatientMedicalAlertUpdateResponse;
   comments?: string | null;
+  is_flash_alert?: boolean | null;
+  blocks_charges?: boolean | null;
   is_active?: boolean | null;
   allow_contradictions?: boolean;
 }

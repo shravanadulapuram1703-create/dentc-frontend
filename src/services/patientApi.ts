@@ -9,8 +9,9 @@ import {
   createPatientQuestionnaireResponse,
   setPatientOpeningBalance,
   createPatientRecall,
+  createResponsibleParty as createResponsiblePartyApi,
 } from "@/api/generated/endpoints/patients/patients";
-import type { PatientInsuranceRead } from "@/api/generated/model";
+import type { DuplicateCandidate, PatientInsuranceRead } from "@/api/generated/model";
 import type {
   PatientCreate,
   PatientUpdate,
@@ -762,11 +763,50 @@ export interface ResilientRegisterResult {
 }
 
 /**
+ * `POST /patients/register` refused the create because a strong duplicate
+ * exists (HTTP 409 `duplicate_patient`). The caller shows the candidates and,
+ * if the user confirms, re-submits with `force_create: true`.
+ */
+export class DuplicatePatientError extends Error {
+  readonly candidates: DuplicateCandidate[];
+  constructor(candidates: DuplicateCandidate[]) {
+    super("A patient matching these details already exists.");
+    this.name = "DuplicatePatientError";
+    this.candidates = candidates;
+  }
+}
+
+export const isDuplicatePatientError = (err: unknown): err is DuplicatePatientError =>
+  err instanceof DuplicatePatientError;
+
+/** HTTP status of an axios-style error, or undefined for network failures. */
+const httpStatus = (err: unknown): number | undefined =>
+  (err as { response?: { status?: number } } | null)?.response?.status;
+
+const errorCode = (err: unknown): string | undefined =>
+  (err as { response?: { data?: { error?: { code?: string } } } } | null)?.response?.data
+    ?.error?.code;
+
+const duplicateCandidates = (err: unknown): DuplicateCandidate[] =>
+  (
+    err as {
+      response?: { data?: { error?: { details?: { candidates?: DuplicateCandidate[] } } } };
+    } | null
+  )?.response?.data?.error?.details?.candidates ?? [];
+
+/**
  * Register a patient resiliently. Prefers the atomic `POST /patients/register`;
- * if that endpoint errors (e.g. the backend register handler is down), falls back
- * to the proven `POST /patients` plus best-effort persistence of each sub-section
- * through its own resource, so patient registration is never fully blocked by a
- * single endpoint. Sub-resource failures in the fallback are returned as warnings.
+ * if that endpoint is *unavailable* (network failure / 5xx), falls back to the
+ * proven `POST /patients` plus best-effort persistence of each sub-section
+ * through its own resource, so registration is never fully blocked by a single
+ * endpoint. Sub-resource failures in the fallback are returned as warnings.
+ *
+ * The fallback is NOT taken for client errors (4xx): a 409 `duplicate_patient`
+ * is surfaced as {@link DuplicatePatientError} so the user can confirm and the
+ * caller can retry with `force_create`, and a 422 is a payload bug that the
+ * chained path would only reproduce. Falling back on those used to bypass the
+ * server's duplicate guard entirely (plain `POST /patients` has none) and left
+ * the patient with a slow, non-atomic, partially-saved intake (GAP-AP-21).
  */
 export const registerPatientResilient = async (
   request: RegisterRequest,
@@ -775,6 +815,12 @@ export const registerPatientResilient = async (
     const res = await registerPatientApi(request);
     return { patient_id: res.patient_id, chart_no: res.chart_no, warnings: [], fellBack: false };
   } catch (err) {
+    const status = httpStatus(err);
+    if (status === 409 && errorCode(err) === "duplicate_patient") {
+      throw new DuplicatePatientError(duplicateCandidates(err));
+    }
+    if (status !== undefined && status < 500) throw err;
+
     // Fallback: create the patient row, then attach each sub-section individually.
     const created = await createPatientApi(request.patient);
     const patientId = created.id;
@@ -785,6 +831,31 @@ export const registerPatientResilient = async (
         await setPatientOpeningBalance(patientId, request.opening_balance);
       } catch {
         warnings.push("Opening balance could not be saved.");
+      }
+    }
+    // Responsible party — the composite creates/links the guarantor inside its
+    // transaction (LEG-10); plain `POST /patients` knows nothing about it, so
+    // it has to be replayed here or a non-self guarantor is silently lost
+    // (verified live: patient 83929 came back with responsible_party_id null).
+    const rp = request.responsible_party;
+    if (rp) {
+      try {
+        let rpId: string | null | undefined = rp.is_self
+          ? String(patientId)
+          : rp.responsible_party_id;
+        if (!rp.is_self && rp.person) {
+          const createdRp = await createResponsiblePartyApi({
+            ...rp.person,
+            home_office_id: request.patient.home_office_id ?? undefined,
+            is_active: true,
+          });
+          rpId = String(createdRp.id);
+        }
+        if (rpId) await updatePatientApi(patientId, { responsible_party_id: rpId });
+      } catch {
+        warnings.push(
+          "Responsible party could not be created/linked — set it from the Patient Overview.",
+        );
       }
     }
     for (const alert of request.medical_alerts ?? []) {

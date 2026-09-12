@@ -19,18 +19,19 @@ export default function EligibilitySection({ form, planDisplay, onChange, onUpda
     <div>
       <SectionTitle>Eligibility</SectionTitle>
       <div className="border-2 border-[#E2E8F0] rounded-lg p-3 space-y-2">
-        {/* Dates: Plan Date (read-only) | Sub Date (editable) */}
+        {/* Dates: Plan Date | Sub Date — both on the enrolment (INS-PT-6);
+            only the anniversary has a plan-level default. */}
         <div className="grid grid-cols-[110px_1fr_1fr] items-center gap-2">
           <span className="text-[11px] font-bold text-[#475569] uppercase" />
           <span className="text-[11px] font-bold text-[#1F6FB2] uppercase text-center">Plan Date</span>
           <span className="text-[11px] font-bold text-[#1F6FB2] uppercase text-center">Sub Date</span>
         </div>
         <DateRow label="Effective Date">
-          <ReadOnlyBox value="" />
+          <input type="date" value={form.plan_effective_date} onChange={(e) => onChange({ plan_effective_date: e.target.value })} className={INPUT_CLS} />
           <input type="date" value={form.effective_date} onChange={(e) => onChange({ effective_date: e.target.value })} className={INPUT_CLS} />
         </DateRow>
         <DateRow label="Term Date">
-          <ReadOnlyBox value="" />
+          <input type="date" value={form.plan_term_date} onChange={(e) => onChange({ plan_term_date: e.target.value })} className={INPUT_CLS} />
           <input type="date" value={form.term_date} onChange={(e) => onChange({ term_date: e.target.value })} className={INPUT_CLS} />
         </DateRow>
         <DateRow label="Anni. Date Exp">

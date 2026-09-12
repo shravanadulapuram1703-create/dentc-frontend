@@ -6,12 +6,17 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { PerioExamComparisonDelta } from './perioExamComparisonDelta';
+import type { PerioExamDetailRead } from './perioExamDetailRead';
 import type { PerioExamSummary } from './perioExamSummary';
 
 export interface PerioExamComparisonEntry {
   exam_id: number;
   exam_date: string;
   is_voided: boolean;
+  provider_id?: string | null;
+  provider_name?: string | null;
   summary: PerioExamSummary;
   delta?: PerioExamComparisonDelta | null;
+  delta_vs_exam_id?: number | null;
+  details?: PerioExamDetailRead[] | null;
 }

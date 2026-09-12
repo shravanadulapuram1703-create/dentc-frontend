@@ -11,7 +11,7 @@ import {
 import type {
   OfficeRead,
   ProviderScheduleDayRead,
-  AppSchemasProviderSetupScheduleDayInput,
+  ScheduleDayInput,
 } from "@/api/generated/model";
 
 interface SchedulesTabProps {
@@ -150,7 +150,7 @@ export default function SchedulesTab({ providerId }: SchedulesTabProps) {
     setSaving(true);
     try {
       // Flatten every scope into one ScheduleDayInput[] (the PUT replaces the full set).
-      const days: AppSchemasProviderSetupScheduleDayInput[] = [];
+      const days: ScheduleDayInput[] = [];
       for (const [key, scope] of scopes) {
         const officeId = key === ALL ? null : Number(key);
         for (const d of scope.days) {

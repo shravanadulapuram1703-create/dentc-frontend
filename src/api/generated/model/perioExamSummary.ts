@@ -8,17 +8,32 @@
 
 /**
  * Aggregate clinical metrics for a single exam (computed from its details).
+ *
+ * Denominators (PERIO-BE-16): ``probeable_sites`` = 6 × ``teeth_charted`` and
+ * is what every percentage divides by, so a chart with bleeding but no pocket
+ * depths still reports a percentage and nothing can exceed 100.
+ * ``sites_measured`` is the count of sites carrying a **pocket depth** (the
+ * label the UI already uses); ``sites_with_findings`` counts sites with *any*
+ * recorded value (PD / CAL / FGM / MGJ / furcation / bleeding / suppuration).
  */
 export interface PerioExamSummary {
   teeth_charted: number;
+  /** 6 × teeth_charted — the percentage denominator */
+  probeable_sites: number;
+  /** Sites with a pocket depth recorded */
   sites_measured: number;
+  /** Sites with any recorded value */
+  sites_with_findings: number;
   mean_pd?: number | null;
   max_pd?: number | null;
   sites_pd_4plus: number;
   sites_pd_6plus: number;
   bleeding_sites: number;
+  /** bleeding_sites / probeable_sites × 100, clamped 0–100; null when no teeth */
   bleeding_pct?: number | null;
   suppuration_sites: number;
+  /** suppuration_sites / probeable_sites × 100, clamped 0–100; null when no teeth */
+  suppuration_pct?: number | null;
   mean_cal?: number | null;
   max_cal?: number | null;
 }

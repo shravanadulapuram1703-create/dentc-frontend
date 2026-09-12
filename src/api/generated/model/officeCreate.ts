@@ -7,7 +7,9 @@
  */
 
 export interface OfficeCreate {
+  /** @maxLength 20 */
   office_code: string;
+  /** @maxLength 255 */
   name: string;
   short_id?: string | null;
   corporate_name?: string | null;

@@ -527,7 +527,7 @@ export default function ProviderSetup() {
           {/* Tab content */}
           <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto">
             {activeTab === "info" && (
-              <InfoTab formData={form} updateFormData={updateForm} offices={offices} />
+              <InfoTab formData={form} updateFormData={updateForm} offices={offices} providerId={selectedProviderId} />
             )}
 
             {activeTab === "works_at" &&

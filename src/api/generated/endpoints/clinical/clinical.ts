@@ -93,6 +93,8 @@ import type {
   PerioExamDetailsBulkUpsert,
   PerioExamRead,
   PerioExamUpdate,
+  PrescriptionAlertCheckRequest,
+  PrescriptionAlertCheckResult,
   PrescriptionCreate,
   PrescriptionRead,
   PrescriptionUpdate,
@@ -505,6 +507,72 @@ export const useDeleteProgressNoteAttachment = <TError = ErrorType<ErrorResponse
       return useMutation(getDeleteProgressNoteAttachmentMutationOptions(options), queryClient);
     }
     /**
+ * Read-only preview of the save-time check, so the Add screen can show the
+ * server's warnings before the prescriber presses Save. ``blocking`` is exactly
+ * the condition ``POST /prescriptions`` 409s on without ``alerts_acknowledged``.
+ * @summary Drug <-> medical-alert check: what POST /prescriptions will warn or refuse on (MA-5)
+ */
+export const checkPrescriptionAlerts = (
+    prescriptionAlertCheckRequest: BodyType<PrescriptionAlertCheckRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PrescriptionAlertCheckResult>(
+      {url: `/api/v1/prescriptions/alert-check`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: prescriptionAlertCheckRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getCheckPrescriptionAlertsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkPrescriptionAlerts>>, TError,{data: BodyType<PrescriptionAlertCheckRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkPrescriptionAlerts>>, TError,{data: BodyType<PrescriptionAlertCheckRequest>}, TContext> => {
+
+const mutationKey = ['checkPrescriptionAlerts'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkPrescriptionAlerts>>, {data: BodyType<PrescriptionAlertCheckRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  checkPrescriptionAlerts(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckPrescriptionAlertsMutationResult = NonNullable<Awaited<ReturnType<typeof checkPrescriptionAlerts>>>
+    export type CheckPrescriptionAlertsMutationBody = BodyType<PrescriptionAlertCheckRequest>
+    export type CheckPrescriptionAlertsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Drug <-> medical-alert check: what POST /prescriptions will warn or refuse on (MA-5)
+ */
+export const useCheckPrescriptionAlerts = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkPrescriptionAlerts>>, TError,{data: BodyType<PrescriptionAlertCheckRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkPrescriptionAlerts>>,
+        TError,
+        {data: BodyType<PrescriptionAlertCheckRequest>},
+        TContext
+      > => {
+      return useMutation(getCheckPrescriptionAlertsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Atomically insert-or-update a chart's tooth rows (PERIO-BE-8)
  */
 export const bulkUpsertPerioExamDetails = (
@@ -569,6 +637,9 @@ export const useBulkUpsertPerioExamDetails = <TError = ErrorType<ErrorResponse>,
       return useMutation(getBulkUpsertPerioExamDetailsMutationOptions(options), queryClient);
     }
     /**
+ * Errors (PERIO-BE-17): 404 ``perio_exam_not_found`` for an id that does not
+ * exist in this tenant, 422 ``exam_not_owned_by_patient`` for another patient's
+ * exam — ``details.exam_id`` names the offender in both.
  * @summary Summarise + delta perio exams across dates (PERIO-BE-10)
  */
 export const comparePerioExams = (

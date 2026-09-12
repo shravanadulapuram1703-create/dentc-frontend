@@ -6,6 +6,7 @@ import { DataGrid, Td } from "../ui";
 import { fmt_date, money, money_or_dash } from "../format";
 import BalancesPanel from "./BalancesPanel";
 import { BillingPanel } from "./BillingContractPanels";
+import { CONTRACT_COLUMNS, contract_rows, referral_direction_label } from "../contractRows";
 import type { OverviewData } from "../useOverviewData";
 
 /* ---------------------------------------------------------------- BALANCES */
@@ -65,63 +66,8 @@ export function BalancesTabContent({
 
 /* --------------------------------------------------------------- CONTRACTS */
 
-const CONTRACT_COLUMNS = [
-  "Plan",
-  "Setup Date",
-  "Amt Financed",
-  "Down Pay",
-  "APR",
-  "Fin Charge",
-  "Interval",
-  "# Pmts",
-  "Periodic Amt",
-  "First Due",
-  "Rem Pmts",
-  "Rem Amount",
-];
-
-interface ContractRow {
-  key: string;
-  label: string;
-  setup_date?: string | null;
-  amt_financed?: string | null;
-  down_payment?: string | null;
-  apr?: string | null;
-  fin_charge?: string | null;
-  interval_type?: string | null;
-  num_payments?: number | null;
-  periodic_amt?: string | null;
-  first_due_date?: string | null;
-  rem_payments?: number | null;
-  rem_total_amt?: string | null;
-}
-
 export function ContractsTabContent({ data }: { data: OverviewData }) {
-  const rows: ContractRow[] = [
-    ...data.reg_plans.map((p) => ({ key: `reg-${p.id}`, label: "Regular", ...p })),
-    ...data.payment_plans.map((p) => ({
-      key: `pay-${p.id}`,
-      label: p.plan_type || "Payment Plan",
-      ...p,
-    })),
-    // Ortho contracts live on /ortho-plans; their patient sub-plan maps onto the
-    // same columns under the `pat_` prefix.
-    ...data.ortho_plans.map((p) => ({
-      key: `ortho-${p.id}`,
-      label: "Ortho",
-      setup_date: p.treat_start_date,
-      amt_financed: p.pat_amt_financed,
-      down_payment: p.pat_down_pay,
-      apr: p.pat_apr,
-      fin_charge: p.pat_fin_charge,
-      interval_type: p.pat_interval,
-      num_payments: p.pat_num_payments,
-      periodic_amt: p.pat_periodic_amt,
-      first_due_date: p.pat_first_due_date,
-      rem_payments: p.pat_rem_payments,
-      rem_total_amt: p.pat_rem_amt,
-    })),
-  ];
+  const rows = contract_rows(data);
 
   return (
     <DataGrid
@@ -165,14 +111,6 @@ const REFERRAL_COLUMNS = [
   "Created",
 ];
 
-// `referral_type` is a legacy code: "0" = Referred By, "1" = Referred To.
-const direction_label = (code?: string | null): string => {
-  const c = (code ?? "").trim();
-  if (c === "0") return "Referred By";
-  if (c === "1") return "Referred To";
-  return c || "-";
-};
-
 export function ReferralsTabContent({ data }: { data: OverviewData }) {
   if (data.referrals_loading) {
     return (
@@ -191,7 +129,7 @@ export function ReferralsTabContent({ data }: { data: OverviewData }) {
     >
       {data.referrals.map((r) => (
         <tr key={r.id} className="hover:bg-[#F8FAFC]">
-          <Td className="font-semibold">{direction_label(r.referral_type)}</Td>
+          <Td className="font-semibold">{referral_direction_label(r.referral_type)}</Td>
           <Td>{[r.last_name, r.first_name].filter(Boolean).join(", ") || "-"}</Td>
           <Td>{r.practice_name || "-"}</Td>
           <Td>{r.specialty || "-"}</Td>

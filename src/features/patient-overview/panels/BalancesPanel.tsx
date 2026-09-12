@@ -58,9 +58,19 @@ export default function BalancesPanel({
           <BookOpen className="w-3 h-3" /> Ledger
         </PanelButton>
       }
-      bodyClassName="p-2"
+      // Absorbs the slack in the SUMMARY row's right column (see
+      // PatientOverviewPage) so Billing / Contract stay bottom-aligned with
+      // Recalls; the grid itself is capped so a large family scrolls.
+      className="xl:flex-1 xl:min-h-0"
+      bodyClassName="p-2 flex flex-col flex-1 min-h-0"
     >
-      <DataGrid columns={COLUMNS} empty="No balances" is_empty={false} min_width={780}>
+      <DataGrid
+        columns={COLUMNS}
+        empty="No balances"
+        is_empty={false}
+        min_width={780}
+        className="max-h-56 xl:flex-1 xl:min-h-0"
+      >
         <tr className="bg-[#F1F5F9] font-bold">
           <Td className="font-bold">Account Balance</Td>
           <Td>{money(totals.current)}</Td>

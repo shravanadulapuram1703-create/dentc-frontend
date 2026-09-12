@@ -1,15 +1,9 @@
 // Lab case grid — mirrors the legacy "Lab Cases" / Lab Report columns:
-// Appt Date · Time · Provider · Description · Lab Cost · Sent · Due · Received · Status.
+// Appt Date · Time · Provider · Description · Lab · DDS · Lab Cost · Sent ·
+// Due · Received · Status (server-derived, with a Short Notice flag).
 
-import { FlaskConical } from 'lucide-react';
-import {
-  deriveStatus,
-  fmtDate,
-  fmtTime,
-  money,
-  STATUS_META,
-  type LabCase,
-} from './labModel';
+import { FlaskConical, Zap } from 'lucide-react';
+import { fmtDate, fmtTime, money, STATUS_META, statusOf, type LabCase } from './labModel';
 
 interface Props {
   rows: LabCase[];
@@ -17,6 +11,8 @@ interface Props {
   onSelect: (id: string) => void;
   loading?: boolean;
 }
+
+const COLS = 11;
 
 export default function LabCaseList({ rows, selectedId, onSelect, loading }: Props) {
   return (
@@ -28,6 +24,8 @@ export default function LabCaseList({ rows, selectedId, onSelect, loading }: Pro
             <th className="px-3 py-2">Time</th>
             <th className="px-3 py-2">Provider</th>
             <th className="px-3 py-2">Description</th>
+            <th className="px-3 py-2">Lab</th>
+            <th className="px-3 py-2">DDS</th>
             <th className="px-3 py-2 text-right">Lab Cost</th>
             <th className="px-3 py-2">Sent</th>
             <th className="px-3 py-2">Due</th>
@@ -38,20 +36,20 @@ export default function LabCaseList({ rows, selectedId, onSelect, loading }: Pro
         <tbody className="divide-y divide-slate-100">
           {loading ? (
             <tr>
-              <td colSpan={9} className="px-3 py-8 text-center text-slate-400">
+              <td colSpan={COLS} className="px-3 py-8 text-center text-slate-400">
                 Loading lab cases…
               </td>
             </tr>
           ) : rows.length === 0 ? (
             <tr>
-              <td colSpan={9} className="px-3 py-10 text-center text-slate-400">
+              <td colSpan={COLS} className="px-3 py-10 text-center text-slate-400">
                 <FlaskConical className="mx-auto mb-2 h-7 w-7 text-slate-300" />
                 No lab cases for this patient.
               </td>
             </tr>
           ) : (
             rows.map((c) => {
-              const meta = STATUS_META[deriveStatus(c)];
+              const meta = STATUS_META[statusOf(c)];
               const active = c.id === selectedId;
               return (
                 <tr
@@ -65,6 +63,10 @@ export default function LabCaseList({ rows, selectedId, onSelect, loading }: Pro
                   <td className="px-3 py-2 whitespace-nowrap text-slate-600">{fmtTime(c.start_time)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-slate-700">{c.provider_name || '—'}</td>
                   <td className="px-3 py-2 text-slate-700">{c.procedure_label || '—'}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-slate-700">
+                    {c.lab_vendor_name || (c.lab_vendor_id != null ? `#${c.lab_vendor_id}` : '—')}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap text-slate-700">{c.lab_dds || '—'}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-slate-700">
                     {money(c.lab_cost)}
                   </td>
@@ -77,6 +79,14 @@ export default function LabCaseList({ rows, selectedId, onSelect, loading }: Pro
                     >
                       {meta.label}
                     </span>
+                    {c.lab_short_notice && (
+                      <span
+                        title="Short notice"
+                        className="ml-1 inline-flex items-center rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 ring-1 ring-inset ring-orange-300"
+                      >
+                        <Zap className="mr-0.5 h-3 w-3" /> SN
+                      </span>
+                    )}
                   </td>
                 </tr>
               );

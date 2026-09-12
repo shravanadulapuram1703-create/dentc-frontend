@@ -18,4 +18,6 @@ export const TreatmentPlanItemUpdateStatus = {
   referred_out: 'referred_out',
   scheduled: 'scheduled',
   completed: 'completed',
+  internal_referral: 'internal_referral',
+  external_referral: 'external_referral',
 } as const;

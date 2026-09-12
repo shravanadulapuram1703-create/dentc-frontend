@@ -301,9 +301,31 @@ All CRUD is live and wired through the generated Orval client
    integration, but the library has no structured drug reference. Out of scope for
    parity — logged for completeness.
 
-4. **RX-4 — No uniqueness on `drug_name`.** Duplicate drug names are allowed (the
-   seed has several, e.g. multiple "Amoxicillin 500mg" variants). The UI only
-   validates non-empty `drug_name`. Confirm whether duplicates should be constrained.
+4. **RX-4 — No uniqueness on `prescription_library` → every drug 5x (RESOLVED,
+   migration pending).** Root cause (found 2026-09-10 from the "Rx drug names
+   displayed 3–4 times" bug): the table had no unique key, so the Denticon
+   importer's `ON CONFLICT DO NOTHING` was a no-op and each migration re-run
+   appended the whole library again — 85 legacy drugs × 5 runs = 425 rows (+2
+   API-created), all five copies byte-identical per `legacy_id` (`created_at`
+   batches 05-30 19:30 / 05-30 21:44 / 05-31 05:47 / 06-08 02:39 / 06-08 07:03).
+   Only *Chlorhexidine Gluconate 0.12% Oral Rinse* is legitimately listed twice
+   (legacy 101 vs 180 — different dispense/sig).
+   - Backend: `alembic/versions/239077e738d5_dedupe_prescription_library_unique.py`
+     (same pattern as `chart_materials` / `code_bundles`) collapses each
+     `(tenant_id, legacy_id)` group to its lowest id, repoints
+     `prescriptions.library_rx_id` (14 rows) and `office_prescription_library`
+     (1 row) to the survivor, deletes the 340 duplicates and adds
+     `uq_prescription_library_tenant_legacy`. **Not yet applied** — the DB is the
+     shared dev instance; run `alembic upgrade head` there.
+   - Frontend: the Rx Drug Name picker de-duplicates identical rows client-side
+     (`dedupeRxLibrary`, lowest id kept = the migration's survivor) and suffixes
+     same-name-different-config entries with dispense · sig
+     (`rxDrugOptionLabels`); the Office Assignment picker shows dispense · sig in
+     its secondary line. The Setup → Prescriptions catalog intentionally still
+     lists raw rows (it is the admin's view for cleanup).
+   - Still open: `drug_name` itself is not unique (an admin can add a second
+     "Amoxicillin"); the UI only validates non-empty. Confirm whether the API
+     should reject a duplicate active `drug_name` + `dispense` + `sig`.
 
 ### Notes
 

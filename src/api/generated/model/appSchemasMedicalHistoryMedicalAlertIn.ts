@@ -10,6 +10,9 @@ import type { AppSchemasMedicalHistoryMedicalAlertInResponse } from './appSchema
 export interface AppSchemasMedicalHistoryMedicalAlertIn {
   alert_code: string;
   alert_label?: string | null;
+  section?: string | null;
   response?: AppSchemasMedicalHistoryMedicalAlertInResponse;
   comments?: string | null;
+  is_flash_alert?: boolean | null;
+  blocks_charges?: boolean | null;
 }
