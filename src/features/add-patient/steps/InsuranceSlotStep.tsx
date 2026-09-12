@@ -396,7 +396,8 @@ export default function InsuranceSlotStep({ slot, onChange, patientId }: Props) 
                   { value: "", label: "Select" },
                   { value: "M", label: "Male" },
                   { value: "F", label: "Female" },
-                  { value: "O", label: "Other" },
+                  { value: "U", label: "Unknown" },
+                  { value: "O", label: "Other (prints as U on claims)" },
                 ]}
                 disabled={isSelf}
               />

@@ -19,4 +19,8 @@ export interface ReEstimateLine {
   insurance_estimate: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   patient_estimate: string;
+  coverage_category?: string | null;
+  rule_start_code?: string | null;
+  fee_schedule_id?: number | null;
+  fee_source?: string | null;
 }

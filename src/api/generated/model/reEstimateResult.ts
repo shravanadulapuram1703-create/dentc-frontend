@@ -12,6 +12,7 @@ export interface ReEstimateResult {
   insured: boolean;
   ins_plan_id?: number | null;
   phase_id?: number | null;
+  use_new_fees?: boolean;
   deductible_remaining_after?: string | null;
   annual_max_remaining_after?: string | null;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */

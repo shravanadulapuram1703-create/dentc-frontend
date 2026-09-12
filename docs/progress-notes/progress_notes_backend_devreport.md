@@ -316,6 +316,60 @@ trace of who changed it or when. **Requested change:** add `updated_at` /
 
 ---
 
+### PN-12 — Legacy-imported note bodies are stored double-escaped (`~^^~lt;p~^^~gt;…`) — **P1**
+
+**Evidence (audited 2026-09-10 against `GET /api/v1/progress-notes?size=200`,
+pages 1–10 = 2,000 of 35,306 rows, 768 patients):**
+
+| Symptom | Rows in sample | Example |
+|---|---|---|
+| `notes_html` has every `&` replaced by the token `~^^~` on top of the markup already being entity-escaped once | **1,932 / 1,980 legacy rows (98 %)** | `~^^~lt;p~^^~gt;Lips: Normal~^^~lt;/p~^^~gt;` ⇒ `&lt;p&gt;Lips: Normal&lt;/p&gt;` ⇒ `<p>Lips: Normal</p>` |
+| `notes` (plain column) has a literal `?` where a non-breaking space (`&nbsp;`) was | 791 (40 %) | `Patient presented for?Periodic Exam. MHR` |
+| `notes` lost its line breaks entirely (paragraphs run together) while `notes_html` still has one `<p>` per line | 384 (19 %) | `…MHR-- Soft Tissue Exam --Ext.Head/Neck: NormalLymph Chain: Normal…` |
+| Trailing empty paragraph `<p>&nbsp;</p>` appended to the body | 845 | — |
+| `notes` itself carries the `~^^~` encoding, and each paragraph is wrapped twice (`<p><p>…</p></p>`) | 1 (id 21434) | — |
+| `notes_html` is stroke JSON, not HTML (Restorative freehand drawings persisted as progress notes; `{"type":"rx-draw",…}`) | 4 | — |
+
+Only tokens `~^^~lt;`, `~^^~gt;` and `~^^~amp;` occur (33,591 / 33,591 / 2,020
+times); the only entities after decoding are `&lt;`, `&gt;`, `&amp;`, `&nbsp;`,
+and the only tags are `<p>`, `<br>` (plus `<span style="color…">` in app-written
+rows). The pattern is consistent with the migration script escaping the HTML a
+second time and then substituting `&` → `~^^~` to survive a delimiter-based
+export. The 44 legacy rows without `notes_html` are clean plain text.
+
+**Impact:** the Progress Notes grid and editor showed raw
+`~^^~lt;p~^^~gt;…~^^~lt;/p~^^~gt;` for practically every migrated note, so clinical
+history was unreadable. The plain `notes` column is not a usable fallback for
+search or reports either (`?` mojibake, collapsed lines).
+
+**Frontend workaround (shipped):** `src/features/progress-notes/noteContent.ts`
+decodes `~^^~` → `&`, un-escapes one level, sanitises to an allow-list
+(`p/br/span/b/i/u/…`, colour styles only), drops the stray empty/trailing
+paragraphs and hides `rx-draw` rows from the list. The editor hydrates from the
+decoded HTML, so any note re-saved through the app is written back clean.
+Search/timeline text is derived from the decoded HTML rather than `notes`.
+
+**Requested change (one-off data repair + import fix):**
+1. Migration over `progress_notes` where `notes_html LIKE '%~^^~%'`:
+   `notes_html = html_unescape(replace(notes_html, '~^^~', '&'))` (single
+   un-escape pass, so `&amp;nbsp;` becomes `&nbsp;`), strip the trailing
+   `<p>&nbsp;</p>`, and collapse `<p><p>` / `</p></p>` (row 21434). Apply the same
+   to the one row whose `notes` column carries the token.
+2. Regenerate `notes` from the repaired HTML (block tags → newline, entities
+   decoded, `&nbsp;` → space) for the 791 `?`-mojibake and 384 collapsed rows —
+   this is what `search=` and any server-side report should match against.
+3. Fix the legacy importer so future migrations do not re-introduce the token.
+4. (Optional) Move the 4 `rx-draw` rows to a dedicated `drawing_strokes` /
+   `drawing_doc_id` payload — both columns already exist on `ProgressNoteRead`
+   but are null on these rows.
+
+**Acceptance:** `GET /api/v1/progress-notes` returns no `notes_html` or `notes`
+containing `~^^~`; `notes` for the sampled ids 20001/20002/20003 contains
+newlines and no `?` before "Periodic"/"severe"; a `search=Periodic%20Exam` query
+matches row 20002.
+
+---
+
 ## 3. Summary table
 
 | ID | Gap | Priority | Workaround today |
@@ -331,6 +385,7 @@ trace of who changed it or when. **Requested change:** add `updated_at` /
 | PN-9 | Lock day boundary uses UTC, not office-local day | P2 | notes lock at 8 PM Eastern; FE trusts `is_locked` |
 | PN-10 | Naive (no-`Z`) timestamps parsed as local time | P2 | FE `parseServerDateTime` pins to UTC |
 | PN-11 | No `updated_at`/`updated_by` on notes | P3 | Created column only |
+| PN-12 | Legacy `notes_html` double-escaped with `~^^~` (= `&`); `notes` has `?` mojibake / lost newlines | P1 | FE `noteContent.ts` decodes + sanitises for display; server `search=` still broken for those rows |
 
 PN-2..PN-5 and PN-7 have landed (2026-09-07 resync). PN-1 and PN-8 block legacy
 behaviour; PN-6, PN-9..PN-11 are correctness/quality follow-ups.

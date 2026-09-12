@@ -8,6 +8,7 @@
 
 export interface SmsTemplateCreate {
   office_id?: number | null;
+  /** @maxLength 120 */
   name: string;
   message_type?: string | null;
   body: string;

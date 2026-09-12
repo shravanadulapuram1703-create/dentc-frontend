@@ -26,6 +26,8 @@ export interface AppointmentUpdate {
   has_lab?: boolean | null;
   lab_cost?: number | string | null;
   lab_dds?: string | null;
+  lab_vendor_id?: number | null;
+  lab_short_notice?: boolean | null;
   lab_sent_on?: string | null;
   lab_due_on?: string | null;
   lab_received_on?: string | null;

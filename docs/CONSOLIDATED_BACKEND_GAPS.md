@@ -116,7 +116,7 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | APPT-PROC-1 | No `duration` on appointment procedure | Per-procedure duration cannot be stored; **Calc Time** only works within a session. | add `duration_minutes` | Medium |
 | APPT-PROC-2 | No `provider_units` | Legacy "P. Units" column always 1. | add `provider_units` | Medium |
 | APPT-PROC-3 | No `bill_to` | Patient-vs-insurance intent per line cannot be stored. | add `bill_to` (`P`/`I`) | Medium |
-| APPT-5 | No `lab_dds` on create/update | The LAB section's DDS input cannot be saved (read model has the other four lab fields). | `AppointmentCreate/Update` | Medium |
+| ~~APPT-5~~ | ~~No `lab_dds` on create/update~~ | **Resolved** (migration `f0a1b2c3d4e5`, verified 2026-09-11). Residual LAB-6: no `max_length` → 500 on >100 chars. | `AppointmentCreate/Update` | — |
 | APPT-6 | No explosion-code concept on appointments | The legacy "By Explosion Code" filter was removed. (An `/explosion-codes` resource has since appeared for Transactions — please confirm it is the same concept.) | confirm | Medium |
 | APPT-7 | `campaign_id` free text | No campaign resource to pick from. | expose campaigns | Low |
 | APPT-9 | `default_fee` 0.00 / `default_duration_minutes` null for most codes | Codes with no fee-schedule entry price at 0; durations default to 30 min. | seed defaults or confirm | Medium |
@@ -156,6 +156,10 @@ These patterns appear across most modules. Addressing them centrally resolves do
 |--------|-------|--------------------------|----------|----------|
 | GAP-AP-1…18 | Add-Patient columns (pronouns, DL, student, hygienist, fee schedule, referral-to, RP relationship, coverage, patient types, flags, HIPAA note, opening balance, wizard, chart-no autogen, medical alerts, questionnaire, composite register) | ✅ **All delivered** by the backend team and wired frontend-side. | `patients`, `/patients/register` | ✅ |
 | **GAP-AP-19** *(new 2026-09-08)* | Middle name: only `middle_initial VARCHAR(10)`, overflow → **HTTP 500** | No `middle_name` field; an 11-char `middle_initial` on `PATCH /patients/{id}` returns 500 `internal_error` (no `max_length` in the schema). FE binds the new optional Middle Name input to `middle_initial` and hard-caps it at 10 chars. Ask: add `middle_name VARCHAR(50)` (or widen the column) + `max_length` → 422. Detail: `docs/patients/add_patient_backend_devreport.md` GAP-AP-19. | `PatientCreate` / `PatientUpdate` / `PatientRead` | Medium |
+| **GAP-AP-20** *(new 2026-09-11)* | `question_code` / `alert_code` are `VARCHAR(50)`, overflow → **HTTP 500** + full register rollback | No `max_length` in the schema; 12 legacy questions (51–60 char slugs) could never be saved — the DevTools failures on patient 83928. FE clamps derived codes to 50 (`CATALOG_CODE_MAX_LENGTH`). Ask: widen to `VARCHAR(100)` and/or `max_length` → 422 with field. Detail: `docs/patients/add_patient_full_wizard_backend_issues.md` §2. | `POST /patients/register`, `POST /patient-questionnaire-responses`, `POST /patient-medical-alerts` | **High** |
+| **GAP-AP-21** *(new 2026-09-11)* | Duplicate guard inconsistent: register 409s on a lone SSN / chart-no match, `POST /patients` has no guard | Dev DB shares placeholder SSN `123456789` / chart `123456` across many records, so nearly every test registration 409s; FE used to fall back silently to the unguarded endpoint (non-atomic, RP lost, ~3 min). FE now shows candidates and retries with `force_create`. Ask: guard `POST /patients`, tighten `_is_strong`. §3. | `POST /patients/register`, `POST /patients` | **High** |
+| **GAP-AP-22** *(new 2026-09-11)* | Child-row endpoints ≈ 1.2 s each, no bulk create | 145 rows ≈ 3 min on the chained path vs ≈ 5 s via the composite. Ask: `/bulk` endpoints or a complete composite. §4. | `patient-medical-alerts`, `patient-questionnaire-responses` | Medium |
+| **GAP-AP-23…26** *(new 2026-09-11)* | `RecallIn` missing LEG-8 fields (=LEG-17) · insurance outside the composite · `resp_party_rel` definitions seeded twice (duplicate dropdown options) · 500s carry no diagnostic | §5–§8 of the same report. | `RegisterRequest`, `/definitions`, error handler | Medium |
 | LEG-2…14 | Legacy-parity registration (alert enum, emergency contacts, question sections, plan search by group #, dentical share, anniversary expiry, recall interval, guarantor record, billing flags, statement message, RP type, account roster) | ✅ Delivered + wired. | multiple | ✅ |
 | **LEG-1** | **MEDALERT / DENTQUEST / MEDQUEST catalogs unseeded** | The legacy 88 alerts + 29/22 questions were never migrated; a single stray seeded row replaced the catalog, so the FE carries a verbatim copy and a `MIN_TENANT_CATALOG_ITEMS` guard. Seed file supplied by us. | data migration | High |
 | **LEG-15** | No `referral_type="1"` ("Referred To") records exist | The Referred-To picker has nothing to offer. | data migration | Medium |
@@ -271,7 +275,14 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | AUD-3 | Claim status-change history | ✅ `/insurance-claims/{id}/status-history` now exists; "Claim Closed By" is still hardcoded. | — | ✅/Medium |
 | SVC-1 | Send/submit claim action | `/insurance-claims/{id}/submit` exists but no clearinghouse behaviour is documented; E-CLAIM and VALIDATE CLAIM remain disabled with an honest notice. | document Phase-4 EDI | High |
 | PATIENTS-8 | Claim validation | No clearinghouse validate call. | `POST /insurance-claims/{id}/validate` | High |
-| — | No claim print / report | DIRECT PRINT is disabled — there is no server-rendered ADA claim form. | report service | Medium |
+| **SIG-11** | **`patient_signatures` has no `claim_id`** | ADA claim Items 36/37/53 are now captured with the Topaz / on-screen pad and stored as `patient_signatures` rows (`signature_type = claim_*`), but nothing ties a row to the claim — ids live in the browser fill-out record. SIG-12…16 (type vocabulary, guardian signer name, provider-level dentist signature, server PDF embedding) in `docs/signature/topaz_signature_backend_devreport.md` §5. | `claim_id` + `?claim_id=` filter | **High** |
+| **ADA-BE-8** | **No billing-entity (Type 2) NPI on the office** | ADA 2024 Item 49 needs the organisation NPI when a corporation bills; `offices` has `corporate_name`/`tax_id` but no `npi`, so DIRECT PRINT falls back to the billing provider's Type 1 NPI. | `offices.npi` (+ `taxonomy_code`) | **High** |
+| **ADA-BE-2** | **2024 form boxes have no column** | EPSDT / Title XIX (Item 1), Locum Tenens (53a), Date Last SRP (39a) — held in the per-claim `localStorage` fill-out record; SRP date is derived from the last D4341/D4342 when blank. | `is_epsdt`, `is_locum_tenens`, `date_last_srp` on the claim / fill-out | **High** |
+| **ADA-BE-3** | **No per-procedure diagnosis pointer (Item 29a)** | Every service line points at "A" whenever any ICD is entered; 837D SV3 pointers need A–D per line. | `patient_procedures.diagnosis_pointers` + `icd_1…4` on the claim | **High** |
+| ADA-BE-12 | `treating_provider_id` / `billing_provider_id` null on ledger-created claims | Items 49–58 are inferred from the majority provider on the procedures and `offices.billing_provider_id`. | default both on `POST /insurance-claims` | Medium |
+| ADA-BE-1 | No server-rendered ADA claim form | DIRECT PRINT now renders the 2024 form client-side (jsPDF, ~18 requests) with a completion checklist; no audit row, no batch print. | `GET /insurance-claims/{id}/reports/ada-claim-form` | Medium |
+| ADA-BE-6/7/9/14 | Missing teeth override, claim-consent signature link, `other_ins_plan_id`, provider taxonomy code | Items 33 / 36 / 4–11 / 56a are derived or keyword-mapped client-side. | see `docs/claims/ada_claim_form_2024_backend_devreport.md` | Medium |
+| ADA-BE-4/5/10/11/13 | Procedure quantity (29b), other fees (31a), name suffix, quadrant token set, physical vs mailing office address (56) | Print blank / "01" / mapped. | same report | Low |
 
 ### 5e. Payment Plans (Ortho + Regular) *(new)*
 
@@ -348,9 +359,14 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | PERIO-BE-6 | Exam attribution thin | `created_by` id only. | `perio_exams` | Medium |
 | PERIO-BE-7 | No server-side range validation | `PATCH {pd1:999}` succeeds. | PATCH | Medium |
 | PERIO-BE-8 | No bulk upsert | A 32-tooth save is ~32 non-atomic calls. | `perio_exam_details` | Medium |
-| **PERIO-BE-14** | **No provider on `PerioExam`** | The printed "Periodontal Examination Record" has to infer the clinician. | add `provider_id` | Medium |
-| PERIO-BE-9 | Date-range filters | Compare/history fetch-all client-side. | `perio_exams` GET | Low |
-| PERIO-BE-10 | Server comparison / summary / print | Compare + PDF client-side. | — | Low |
+| ~~PERIO-BE-14~~ | Provider on `PerioExam` | ✅ Round 2 (2026-09-11): `provider_id` + `provider_name`, tenant-validated, 422 `provider_inactive`/`provider_not_found`. FE seam deleted. | `perio_exams` | Closed |
+| ~~PERIO-BE-9~~ | Date-range filters | ✅ Round 2: `date_from`/`date_to` aliases (+ existing `exam_date_from/_to`), `provider_id`, `is_voided`. | `perio_exams` GET | Closed |
+| ~~PERIO-BE-10~~ | Server comparison / summary | ✅ `GET /perio-exams/compare` (summary + delta + `delta_vs_exam_id`); print stays client-side by design. | — | Closed |
+| ~~PERIO-BE-15~~ | Compare per-site values / multi-`exam_id` | ✅ Round 2: `include_details=true` on compare **and** `?exam_ids=1,2,3` on details. FE now makes one call. | `perio-exams/compare`, `perio-exam-details` | Closed |
+| ~~PERIO-BE-16~~ | `bleeding_pct` > 100 % | ✅ Round 2: all % over `probeable_sites` (6 × teeth), clamped; `sites_with_findings`, `suppuration_pct` added. | `perio-exams/compare` | Closed |
+| ~~PERIO-BE-17~~ | Silent drop of unknown / foreign `exam_ids` | ✅ Round 2: 404 `perio_exam_not_found` / 422 `exam_not_owned_by_patient`. | `perio-exams/compare` | Closed |
+| ~~PERIO-BE-18~~ | Voided exams in compare + delta chain | ✅ Round 2: 422 `perio_exam_voided` unless `include_voided=true`; voided never a baseline. | `perio-exams/compare` | Closed |
+| (ride-along) | Perio rows were not tenant-scoped on the generic routes | ✅ Round 2: `_scope_tenant` via patient → tenant on both CRUDs. | `perio_exams`, `perio_exam_details` | Closed |
 | PERIO-BE-11 | Per-user chart settings | No "me" route, no seed; FE uses localStorage. | `perio_chart_settings` | Low |
 | PERIO-BE-12 | `auto_advance` schema undefined | Free-form object. | `perio_chart_templates` | Low |
 | PERIO-BE-13 | Clarify `PerioChartActivity` | Undocumented legacy log. | — | Low |
@@ -407,11 +423,9 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | RX-P3 | ePrescribe not integrated | No DoseSpot launch/handoff. | — | Low |
 | RX-P4 | No print/export endpoint | Client-side jsPDF. | — | Low |
 | RX-P5 | Med/Source status columns | No backend equivalent. | `prescriptions` | Low |
-| **Lab** LAB-1 | No lab-vendor field | `lab_vendor(_id)` + `lab_short_notice` missing; the FE renders them with a "not saved" notice. | `appointments` | High |
-| LAB-2 | No lab filters on the list | No `has_lab` / lab-date filters. | `appointments` list | Medium |
-| LAB-3 | Denormalized names missing | The scheduler feed has names but drops the lab fields. | `AppointmentSchedulerRead` | Low |
-| LAB-4 | No lab report/export | — | — | Low |
-| LAB-5 | Office-wide lab tracking | Blocked on LAB-2. | — | Low |
+| **Lab** LAB-1..11 | Lab vendor / filters / feed / reports / validation / archive | **All resolved** by migration `587baa6a0ba7` (verified 2026-09-11 evening); see `docs/lab-tracking/lab_tracking_backend_devreport.md` §3. | — | — |
+| **LAB-12** | `POST /labs` always fails | Migration made `labs.updated_at` NOT NULL while the ORM mixin sends NULL → no lab can be created; vendor picker empty. Local dev DB patched (`DROP NOT NULL`); needs a real migration. | `labs` migration | **Blocker** |
+| LAB-13 | Cost report ignores `patient_id` | `/lab-cases/cost-report(.pdf)` is tenant/office-wide only; patient tab keeps the jsPDF cost report. | `cost-report` params | Low |
 | **Imaging** IMG-1 | Binary ↔ metadata unrelated | `patient-documents` and `image-details` are unlinked; the doc id is stuffed into the `tile_id` string. | add FK | High |
 | IMG-2 | `image-details` not patient-scoped | Must resolve an image group first. | add `patient_id` + filter | High |
 | IMG-3 | No imaging-native binary endpoint | Images ride the generic document store. | `/patients/{id}/images` | High |
@@ -427,7 +441,7 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | INS-PT-7 | No per-field plan search | The legacy dialog searches one named field at a time; one `search` param spans several. | field-scoped params | Medium |
 | INS-PT-9/18 | No batch-by-id lookup for carriers and employers | Plan lists fan out one call per id. | `?ids=` batch | Medium |
 | INS-PT-10 | Carrier "Claim Type" has no label source | Raw code shown. | definitions group | Medium |
-| INS-PT-8 | Plans have no modified metadata | `InsurancePlanRead` has no `updated_at`/`updated_by`. | add | Medium |
+| INS-PT-8 | Plans have no modified metadata | ✅ Delivered 2026-09-11 — `updated_at` / `updated_by` / `updated_by_name` populated by PATCH. | — | ✅ |
 | INS-PT-13 | Quick-add can create duplicate carriers/employers | Neither create endpoint checks for an existing match. | uniqueness check | Medium |
 | INS-PT-21 | Soft-deleted plans don't flag as duplicates | The check scopes to active rows, so a deleted plan silently collides. | include inactive | Medium |
 | INS-PT-20 | No "is this group taken" endpoint | The duplicate check re-uses the list endpoint. | count/HEAD or 409 | Low |
@@ -435,6 +449,15 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | INS-PT-4/11 | Address line 2 (subscriber, employer) | Single column; the FE joins/splits on a newline. | second line | Low |
 | INS-PT-5 | No real eligibility verification | "Update Status" stamps a local value. | verification endpoint | Low |
 | INS-PT-6 | Eligibility "Plan Date" column | Only a subscriber-level date is stored. | add | Low |
+| **Edit Plan** EDIT-PLAN-1 | No optimistic concurrency on `PATCH /insurance-plans/{id}` | Edit Plan is now reachable from every patient slot screen and Setup; last writer wins with no 409/412. | `If-Match` / `expected_updated_at` → 409 | High |
+| EDIT-PLAN-2 | No plan usage / impact endpoint | The shared-plan banner sums two list totals (`patient-insurance`, `insurance-claims` — 3.9 s); no distinct patients, open claims, pending TP items. | `GET /insurance-plans/{id}/usage` | High |
+| EDIT-PLAN-3 | No re-estimate cascade after a coverage change | Existing TP / claim estimates keep old percentages; only per-object re-estimate calls exist and `/treatment-plans` cannot filter by `ins_plan_id`. | `POST /insurance-plans/{id}/re-estimate` or `ins_plan_id` filter | High |
+| EDIT-PLAN-4 | Subscriber `group_number` does not follow the plan | Denormalised copy; the patient screen shows the subscriber value. | cascade or derive | Medium |
+| EDIT-PLAN-5 | Current user's effective permissions not exposed | `me-full` has no `permissions[]`; plan permission codes exist but cannot gate Edit Plan; no `is_locked` on plans. | `permissions[]` on me-full + server enforcement | Medium |
+| EDIT-PLAN-6 | Plan history not consumable per plan | Audit rows carry a diff but rule edits are keyed by rule id and lack user names. | `GET /insurance-plans/{id}/history` | Medium |
+| EDIT-PLAN-7 | Latency on the edit path | PATCH 7.5 s cold; duplicate check ~10 s; one hung request blocked unrelated calls for 40 s. | indexes + worker fix | Medium |
+| EDIT-PLAN-8 | PATCH drops unknown keys silently | `bogus_field` → 200. | 422 on unknown fields | Low |
+| EDIT-PLAN-9 | Migrated plans NULL in the nine new plan columns | First edit persists legacy defaults; `lifetime_ortho_benefits` server default differs from legacy. | backfill / documented default | Low |
 | INS-PT-12 | `carrier_type` stringly typed | `"True"`/`"False"`. | boolean/enum | Low |
 | INS-PT-17 | No deep link to a single plan in Setup | — | route/id | Low |
 
@@ -583,7 +606,24 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 
 ---
 
-### 8z. Signature capture — Topaz pad (SIG) *(added 2026-09-10)*
+### 8y. Consent forms — sign in the Report Viewer (CS) *(added 2026-09-12)*
+
+> Frontend: consent forms are signed on the document inside the Report Viewer (generated letters and stored consents from history); the signature is stamped into the stored PDF and recorded through `/patient-consents/{id}/sign` with the full SIG field set. Full detail: `docs/letters/consent_inline_signing_backend_devreport.md`.
+
+| Gap ID | Title | Description / Workaround | Severity |
+|--------|-------|--------------------------|----------|
+| CS-1 | `/sign` takes `signature_data` **or** `document_id`, never both | A consent printed earlier and signed later keeps the unsigned PDF as its document. Accept `signed_document_id` alongside `signature_data`, or render the signed PDF server-side (LTR-5). | High |
+| CS-2 | No countersign storage | Dentist/Hygienist line is captured and stamped into the PDF only. Add `consent_signatures` child rows or `countersign_*` columns. | Medium |
+| CS-3 | Client `signed_at` ignored | Server receive time overwrites the capture time; honour it or add `captured_at`. | Low |
+| CS-4 | No "as signed" rendition; document `content_hash` inputs | `rendered_html` is pre-signature; state what `content_hash` covers. | Medium |
+| CS-5 | Consent list ships every `signature_data` inline | Add `include_signature=false` / `image_omitted` pattern for lists. | Low |
+| CS-6 | `file_url` built with the Cloud Run host in local envs | Stored-consent PDF links point at the wrong environment in dev; build from request base URL or return relative paths. | Medium |
+| CS-7 | Confirm `/sign` is not restricted to the consent's creator | Front desk prints, clinician signs. | Low |
+| CS-8 | Two capture vocabularies (`signature_method` vs `device_source`) | One shared enum across consents / patient / user signatures. | Low |
+
+### 8z. Signature capture — Topaz pad (SIG) *(added 2026-09-10, updated 2026-09-12)*
+
+> ✅ **Delivered 2026-09-12:** SIG-1, SIG-2, SIG-3, SIG-5, SIG-7 (consents), SIG-10 — SigString + device columns on all four signature request bodies; frontend now sends them. See also §8y (in-viewer consent signing).
 
 > Frontend: one shared `SignatureCapture` (Topaz SigPlusExtLite V3 with on-screen fallback) now drives Medical History, Progress Notes, Consent signing and the Users signature; diagnostics at `/setup/devices/signature-pad`. Full detail: `docs/signature/topaz_signature_backend_devreport.md`.
 
@@ -625,9 +665,11 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 
 | Area | Report |
 |------|--------|
+| Consent sign-in-viewer | `docs/letters/consent_inline_signing_backend_devreport.md` |
 | Signature capture (Topaz) | `docs/signature/topaz_signature_backend_devreport.md` (+ `topaz_workstation_setup.md`) |
 | Account Ledger, Claims | `docs/account-ledger/account_ledger_backend_devreport.md` |
 | Claim Fill-Out | `docs/account-ledger/claim_fillout_backend_devreport.md` |
+| ADA Dental Claim Form (2024) print | `docs/claims/ada_claim_form_2024_backend_devreport.md` (UI gaps: `docs/claims/ada_claim_form_2024_ui_gaps_report.md`) |
 | Insurance Payment window | `docs/account-ledger/insurance_payment_backend_devreport.md` |
 | AppointNow | `docs/appointnow/appointnow_backend_devreport.md` |
 | Authentication | `docs/authentication/authentication_backend_devreport.md` |
@@ -642,6 +684,7 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 | My Page | `docs/my-page/my_page_backend_devreport.md` |
 | Patient Context | `docs/patient-context/persistent_patient_selection_backend_devreport.md` |
 | Patient Insurance | `docs/patient-insurance/patient_insurance_backend_devreport.md` |
+| Edit Insurance Plan (patient screen) | `docs/patient-insurance/edit_insurance_plan_backend_devreport.md` |
 | Add Patient | `docs/patients/add_patient_backend_devreport.md`, `add_patient_legacy_parity_devreport.md` |
 | Patient Edit / Overview / Notes / Documents | `docs/patients/patient_edit_backend_devreport.md`, `patient_overview_backend_devreport.md`, `patient_note_documents_backend_devreport.md`, `patients_backend_devreport.md` |
 | Payment Plans | `docs/payment-plans/payment_plans_backend_devreport.md` |

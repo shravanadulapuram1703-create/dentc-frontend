@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import {
   Loader2,
   Printer,
@@ -19,6 +19,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { useProcedureSync } from '@/features/procedures/procedureSync';
 import { createInsuranceClaim } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
+import { resolveInsuranceForOrder } from '@/components/patient/claimLifecycle';
 import { getPatientBalances, type BalancesResponse } from '@/services/ledgerApi';
 import TransactionEntryModal from './TransactionEntryModal';
 import EditTransactionModal from './EditTransactionModal';
@@ -42,7 +43,6 @@ import {
   applyDateRange,
   applySort,
   parseDateInput,
-  money,
   dollars,
   HEADER_BG,
   FILTER_OPTIONS,
@@ -53,6 +53,13 @@ import {
   type LedgerTarget,
 } from './accountLedgerModel';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { useListOffices } from '@/api/generated/endpoints/organization/organization';
+import { BALANCE_COLS, aggregateBalances, fmtDay, type MemberBalance } from './ledgerBalances';
+import { contractCards } from './ledgerContracts';
+import { printLedger } from './ledgerPrint';
+import { openServerReport } from '@/features/print/serverReport';
+import { getPatientLedgerReport } from '@/api/generated/endpoints/patients/patients';
+import type { GetPatientLedgerReportParams } from '@/api/generated/model';
 
 interface OutletCtx {
   patient: {
@@ -61,22 +68,18 @@ interface OutletCtx {
     officeId?: string;
     office?: string;
     balance?: number;
+    dob?: string;
+    chartNo?: string;
   };
 }
 
 type BottomTab = 'balances' | 'contracts';
 
-
-/** Per-member balance snapshot for the legacy BALANCES table. */
-interface MemberBalance {
-  member: AccountMember;
-  balances: BalancesResponse | null;
-}
-
 export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?: LedgerScope }) {
   const { patient } = useOutletContext<OutletCtx>();
   const { patientId: patientIdParam } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const patientId = Number(patient?.id ?? patientIdParam);
   const validId = Number.isFinite(patientId) && patientId > 0;
@@ -89,7 +92,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   // ---- Data ----
   const [members, setMembers] = useState<AccountMember[]>([]);
   const [feed, setFeed] = useState<LedgerFeed>({ feeds: [], offices: [], users: [] });
-  const [plans, setPlans] = useState<PaymentPlans>({ regular: null, orthoIns: null, secIns: null });
+  const [plans, setPlans] = useState<PaymentPlans>({ regular: null, ortho: null, orthoIns: null, secIns: null });
   const [memberBalances, setMemberBalances] = useState<MemberBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +109,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   const [currentPage, setCurrentPage] = useState(1);
 
   const [txModal, setTxModal] = useState<null | 'add' | 'payments'>(null);
-  // Ledger drill-down targets — one row at a time, whichever link was clicked.
+  // Ledger drill-down targets â€” one row at a time, whichever link was clicked.
   const [detailRow, setDetailRow] = useState<LedgerRow | null>(null);
   const [claimDetailsRow, setClaimDetailsRow] = useState<LedgerRow | null>(null);
   const [allocRow, setAllocRow] = useState<LedgerRow | null>(null);
@@ -115,7 +118,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   const [bottomTab, setBottomTab] = useState<BottomTab>('balances');
   const [creatingClaim, setCreatingClaim] = useState(false);
 
-  // Legacy "Prn" row selection — keyed by LedgerRow.key.
+  // Legacy "Prn" row selection â€” keyed by LedgerRow.key.
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const sortMenuRef = useRef<HTMLDivElement>(null);
@@ -206,6 +209,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   }, [feed.offices]);
 
   const { providerLabel } = useProviderDirectory();
+  const officesQuery = useListOffices({ size: 200 });
 
   const userLabel = useMemo(() => {
     const m = new Map(feed.users.map((u) => [u.id, u.short_id || u.username]));
@@ -231,7 +235,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   const grandTotal = useMemo(() => viewRows.reduce((s, r) => s + r.amount, 0), [viewRows]);
 
   /**
-   * Ledger-derived balance per patient (charges − credits over the whole feed).
+   * Ledger-derived balance per patient (charges âˆ’ credits over the whole feed).
    *
    * This is what the legacy screen shows, and it is what the grid's running
    * balance column adds up to. `GET /patients/{id}/balance` currently reports
@@ -340,6 +344,9 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
       for (const [pid, rows] of byPatient) {
         const isos = rows.map((r) => r.iso).filter(Boolean).sort();
         const claimId = crypto.randomUUID();
+        // Bill the patient's primary dental plan so the claim screen shows the
+        // carrier / group / subscriber and secondary claims can follow it.
+        const ins = await resolveInsuranceForOrder(pid, 'D', 'primary').catch(() => null);
         await createInsuranceClaim({
           id: claimId,
           patient_id: pid,
@@ -347,6 +354,9 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
           claim_number: String(Date.now()),
           claim_type: 'dental',
           billing_order: 'primary',
+          status: 'draft',
+          ins_plan_id: ins?.record?.ins_plan_id ?? null,
+          carrier_id: ins?.plan?.carrier_id ?? null,
           date_of_service_from: isos[0] || new Date().toISOString().slice(0, 10),
           date_of_service_to: isos[isos.length - 1] || new Date().toISOString().slice(0, 10),
           total_billed: rows.reduce((s, r) => s + r.amount, 0).toFixed(2),
@@ -365,7 +375,9 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
         );
       }
       setSelected(new Set());
-      navigate(`/patient/${byPatient.keys().next().value}/claim/${createdIds[0]}`);
+      navigate(`/patient/${byPatient.keys().next().value}/claim/${createdIds[0]}`, {
+        state: { from: location.pathname },
+      });
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       alert(detail || 'Failed to create claim.');
@@ -394,7 +406,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
     }
     // target === 'detail' (the Date column)
     if (r.kind === 'claim') {
-      navigate(`/patient/${r.patient_id}/claim/${r.source_id}`);
+      navigate(`/patient/${r.patient_id}/claim/${r.source_id}`, { state: { from: location.pathname } });
       return;
     }
     if (r.kind === 'charge' || r.kind === 'payment') setDetailRow(r);
@@ -405,7 +417,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   }
 
   // Title-bar balance: the account total in Account scope, this patient's in
-  // Patient scope — always the ledger's own arithmetic (see AL-9 above).
+  // Patient scope â€” always the ledger's own arithmetic (see AL-9 above).
   const headerBalance = members.reduce(
     (s, m) => s + (ledgerBalanceByPatient.get(m.patient_id) ?? 0),
     0,
@@ -414,8 +426,52 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   const truncated = feed.feeds.some((f) => f.truncated);
   const scopeLabel = scope === 'account' ? 'Account Ledger' : 'Patient Ledger';
 
+  // Structured print â€” the whole filtered ledger (not just the current page),
+  // then the BALANCES and CONTRACTS tabs, as a report. Office record for the
+  // header comes from the shared offices query (normally a cache hit).
+  const printFromScreen = () =>
+    printLedger({
+      patient: { id: patientId, name: patientName, dob: patient?.dob, chart_no: patient?.chartNo },
+      office: (officesQuery.data?.items ?? []).find((o) => o.id === officeId) ?? null,
+      office_name: patient?.office ?? '',
+      scope_label: scopeLabel,
+      member_count: members.length,
+      date_from: appliedFrom,
+      date_to: appliedTo,
+      filter_label: FILTER_OPTIONS.find((o) => o.value === filter)?.label ?? filter,
+      sort_label: SORT_OPTIONS.find((o) => o.value === sort)?.label ?? sort,
+      rows: viewRows,
+      grand_total: grandTotal,
+      header_balance: headerBalance,
+      truncated,
+      member_balances: memberBalances,
+      ledger_balance: ledgerBalanceByPatient,
+      plans,
+    });
+  // Server-rendered statement (PRINT-1) with the grid's own scope / range /
+  // type / sort; the screen-data PDF is the fallback.
+  const handlePrint = () => {
+    const [sort_by, order] = sort.split('_') as [GetPatientLedgerReportParams['sort_by'], GetPatientLedgerReportParams['order']];
+    return openServerReport({
+      fetch_pdf: () =>
+        getPatientLedgerReport(patientId, {
+          scope,
+          date_from: appliedFrom,
+          date_to: appliedTo,
+          transaction_type: filter,
+          // The grid's Show All / Claims views list claim rows; the server
+          // leaves them out unless asked.
+          include_claims: filter === 'all' || filter === 'claim',
+          sort_by,
+          order,
+        }),
+      fallback: printFromScreen,
+      label: scopeLabel,
+    });
+  };
+
   // One compact control bar: scope toggle + actions + date/type filter + balance.
-  // Light surface on purpose — it sits directly above the blue grid header, so a
+  // Light surface on purpose â€” it sits directly above the blue grid header, so a
   // second dark band there would read as one muddy block. Everything stays on a
   // single row (wrapping only when the viewport forces it) so the grid starts as
   // high up the page as possible.
@@ -441,7 +497,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
   return (
     <div className="bg-slate-50 p-3 text-[#1E293B]">
       <div className="flex flex-wrap items-center gap-1 rounded-t-md border border-b-0 border-slate-200 bg-gradient-to-b from-white to-slate-50 px-2 py-1.5 shadow-sm">
-        {/* Scope toggle — the two views are the same screen; only the feed's
+        {/* Scope toggle â€” the two views are the same screen; only the feed's
             scope changes. This is the only Patient/Account switch. */}
         <div
           role="group"
@@ -564,7 +620,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
 
           {divider}
 
-          {/* Balance — the number people scan for, so it gets a tinted chip
+          {/* Balance â€” the number people scan for, so it gets a tinted chip
               rather than another line of grey text. */}
           <div
             className={`flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1 ${
@@ -585,9 +641,9 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
             </span>
           </div>
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="rounded-md border border-slate-300 bg-white p-1.5 text-slate-500 shadow-sm hover:border-[#1f6fc4] hover:bg-[#EFF6FE] hover:text-[#1f6fc4]"
-            title="Print"
+            title="Print the ledger"
           >
             <Printer className="h-4 w-4" />
           </button>
@@ -596,7 +652,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
 
       {truncated && (
         <div className="border-x border-b border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] text-amber-800">
-          Showing the first 500 transactions per patient — narrow the date range to see older activity.
+          Showing the first 500 transactions per patient â€” narrow the date range to see older activity.
         </div>
       )}
 
@@ -682,7 +738,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
               and inviting a scroll of the page behind it (KAN-104). */}
           <div className="flex max-h-[90vh] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex shrink-0 items-center justify-between rounded-t-lg px-4 py-2 text-white" style={{ background: HEADER_BG }}>
-              <span className="text-sm font-semibold">Balance Statistics — {scopeLabel}</span>
+              <span className="text-sm font-semibold">Balance Statistics â€” {scopeLabel}</span>
               <button onClick={() => setShowBalanceStat(false)} className="rounded p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>
             </div>
             <div className="overflow-auto p-4">
@@ -692,7 +748,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
         </div>
       )}
 
-      {/* Ledger drill-down — legacy Edit Treatment / Edit Payment window */}
+      {/* Ledger drill-down â€” legacy Edit Treatment / Edit Payment window */}
       {detailRow && (
         <EditTransactionModal
           row={detailRow}
@@ -703,7 +759,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
         />
       )}
 
-      {/* Claim Details popup — legacy claim-row Description drill-down */}
+      {/* Claim Details popup â€” legacy claim-row Description drill-down */}
       {claimDetailsRow && (
         <ClaimDetailsModal
           row={claimDetailsRow}
@@ -714,7 +770,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
         />
       )}
 
-      {/* Payment Allocation Detail — legacy Amount drill-down */}
+      {/* Payment Allocation Detail â€” legacy Amount drill-down */}
       {allocRow && (
         <PaymentAllocationModal
           row={allocRow}
@@ -723,7 +779,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
         />
       )}
 
-      {/* Transaction-entry popup — reuses the dynamic Transactions Entry tabs */}
+      {/* Transaction-entry popup â€” reuses the dynamic Transactions Entry tabs */}
       {txModal && (
         <TransactionEntryModal
           patientId={patientId}
@@ -749,24 +805,11 @@ function BalancesTable({
   rows: MemberBalance[];
   ledgerBalance: Map<number, number>;
 }) {
-  const cols = [
-    'Patient', 'Current', 'Over 30', 'Over 60', 'Over 90', 'Over 120', 'Balance',
-    'Est Ins', 'Est Pat', "Today's Charges", "Today's Payments",
-    'Last Ins. Pay', 'Last Ins. Pay Date', 'Last Pat. Pay', 'Last Pat. Date',
-  ];
+  const cols = BALANCE_COLS;
 
   if (rows.length === 0) {
     return <div className="text-center text-sm text-slate-400">No balance data available.</div>;
   }
-
-  const sum = (pick: (b: BalancesResponse) => number): number =>
-    rows.reduce((s, r) => s + (r.balances ? pick(r.balances) : 0), 0);
-
-  const fmtDay = (iso: string | null | undefined): string => {
-    if (!iso) return '—';
-    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-    return m ? `${m[2]}/${m[3]}/${m[1]}` : iso;
-  };
 
   const cell = (v: number, tone?: string) => (
     <td className={`whitespace-nowrap px-3 py-1.5 text-right font-mono ${tone ?? 'text-slate-900'}`}>
@@ -779,7 +822,7 @@ function BalancesTable({
       <td className="whitespace-nowrap px-3 py-1.5 text-[#1f6fc4]">{label}</td>
       {b === null ? (
         <td colSpan={cols.length - 1} className="px-3 py-1.5 text-slate-400">
-          <Loader2 className="inline h-3.5 w-3.5 animate-spin" /> loading…
+          <Loader2 className="inline h-3.5 w-3.5 animate-spin" /> loadingâ€¦
         </td>
       ) : (
         <>
@@ -810,29 +853,7 @@ function BalancesTable({
     (s, r) => s + (ledgerBalance.get(r.member.patient_id) ?? 0),
     0,
   );
-  const anyLoaded = rows.some((r) => r.balances);
-  const account: BalancesResponse | null = anyLoaded
-    ? {
-        account_balance: sum((b) => b.account_balance),
-        patient_balance: sum((b) => b.patient_balance),
-        insurance_balance: sum((b) => b.insurance_balance),
-        estimated_insurance: sum((b) => b.estimated_insurance),
-        estimated_patient: sum((b) => b.estimated_patient),
-        aging: {
-          current: sum((b) => b.aging.current),
-          age_30: sum((b) => b.aging.age_30),
-          age_60: sum((b) => b.aging.age_60),
-          age_90: sum((b) => b.aging.age_90),
-          age_120: sum((b) => b.aging.age_120),
-        },
-        recent_activity: {
-          today_charges: sum((b) => b.recent_activity.today_charges),
-          today_payments: sum((b) => b.recent_activity.today_payments),
-          last_insurance_payment: mostRecent(rows, 'last_insurance_payment'),
-          last_patient_payment: mostRecent(rows, 'last_patient_payment'),
-        },
-      }
-    : null;
+  const account = aggregateBalances(rows);
 
   return (
     <div className="overflow-x-auto">
@@ -860,81 +881,18 @@ function BalancesTable({
   );
 }
 
-/** Latest payment of a kind across all account members. */
-function mostRecent(
-  rows: MemberBalance[],
-  key: 'last_insurance_payment' | 'last_patient_payment',
-): { amount: number; date: string } | null {
-  let best: { amount: number; date: string } | null = null;
-  for (const r of rows) {
-    const p = r.balances?.recent_activity[key];
-    if (p && (!best || p.date > best.date)) best = p;
-  }
-  return best;
-}
-
 // ---- Contracts (payment plans) ----
 function ContractsPanel({ plans }: { plans: PaymentPlans }) {
-  const reg = plans.regular;
-  const ins = plans.orthoIns;
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <PlanCard
-        title="Regular - Patient Payment Plan"
-        rows={[
-          ['Plan Amount', reg?.amt_financed ?? reg?.plan_bal_amt],
-          ['Down Pay', reg?.down_payment],
-          ['Next Per. Amt', reg?.periodic_amt],
-          ['Next Date', reg?.first_due_date],
-          ['Rem. Total Amt', reg?.rem_total_amt],
-          ['Rem. # Of Pay', reg?.rem_payments],
-        ]}
-      />
-      {/* No clean backend resource for an ortho-specific patient plan (gap AL-3). */}
-      <PlanCard
-        title="Ortho - Patient Payment Plan"
-        rows={[
-          ['Plan Amount', null],
-          ['Down Pay', null],
-          ['Next Per. Amt', null],
-          ['Next Date', null],
-          ['Rem. Total Amt', null],
-          ['Rem. # Of Pay', null],
-        ]}
-      />
-      <PlanCard
-        title="Ortho - Insurance Payment Plan"
-        rows={[
-          ['Plan Amount', null],
-          ['Down Pay', null],
-          ['Next Per. Amt', ins?.periodic_amt],
-          ['Next Date', ins?.periodic_date],
-          ['Rem. Total Amt', null],
-          ['Rem. # Of Pay', null],
-        ]}
-      />
+      {contractCards(plans).map((card) => (
+        <PlanCard key={card.title} title={card.title} rows={card.rows} />
+      ))}
     </div>
   );
 }
 
-function PlanCard({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: [string, string | number | null | undefined][];
-}) {
-  const fmt = (v: string | number | null | undefined): string => {
-    if (v == null || v === '') return '—';
-    if (typeof v === 'number') return String(v);
-    // Date-ish strings -> MM/DD/YYYY; numeric-ish -> $amount.
-    if (/^\d{4}-\d{2}-\d{2}/.test(v)) {
-      const [y, m, d] = v.slice(0, 10).split('-');
-      return `${m}/${d}/${y}`;
-    }
-    if (/^-?\d+(\.\d+)?$/.test(v)) return `$${money(v)}`;
-    return v;
-  };
+function PlanCard({ title, rows }: { title: string; rows: Array<[string, string]> }) {
   return (
     <div className="rounded-lg border border-slate-200">
       <div className="rounded-t-lg px-3 py-2 text-xs font-bold uppercase tracking-wide text-white" style={{ background: HEADER_BG }}>
@@ -945,7 +903,7 @@ function PlanCard({
           {rows.map(([label, value], i) => (
             <tr key={i} className="border-b border-slate-100 last:border-0">
               <td className="w-1/2 bg-slate-50 px-3 py-1.5 font-semibold text-slate-600">{label}</td>
-              <td className="px-3 py-1.5 font-mono text-slate-900">{fmt(value)}</td>
+              <td className="px-3 py-1.5 font-mono text-slate-900">{value}</td>
             </tr>
           ))}
         </tbody>

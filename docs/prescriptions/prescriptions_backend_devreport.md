@@ -57,3 +57,19 @@ there is no backend print/export endpoint.
 
 - **RX-P5 — Med Status / Source Status columns** in the legacy grid have no
   backend equivalent beyond `dosespot_status`; omitted.
+
+- **RX-P7 — Drug Name picker listed every drug 5×** (bug 2026-09-10). Data
+  defect, not a UI one: `prescription_library` had no unique key and the seed
+  importer ran 5 times. Full analysis + fix under **RX-4** in
+  `docs/pick-list/pick_list_setup_backend_devreport.md` §4. Client-side the
+  picker now collapses identical rows (`dedupeRxLibrary`) and disambiguates
+  same-name configurations with dispense · sig (`rxDrugOptionLabels`); the
+  backend dedupe migration `239077e738d5` is written but awaits
+  `alembic upgrade head` on the shared dev DB.
+
+## Medical alerts on the add screen (2026-09-10)
+
+The add panel now shows the patient's active Medical History alerts (banner + Save confirm). The backend
+gaps behind that — no drug↔allergy check, no acknowledgement audit on `POST /prescriptions`, no per-patient
+alert summary — are tracked as **MA-1..8** in
+[`../medical-history/medical_alerts_surfacing_backend_devreport.md`](../medical-history/medical_alerts_surfacing_backend_devreport.md).

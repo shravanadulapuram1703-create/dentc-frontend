@@ -207,6 +207,11 @@ export interface SaveLetterResult {
  * `/patient-documents/{id}/content` proxy). The frontend only has to name the
  * document type correctly — the bucket path is the backend's business.
  *
+ * Opening that URL is `src/services/documentAccess.ts`'s job: a signed bucket
+ * URL opens as-is, but the proxy needs the bearer token, so it is fetched through
+ * the API client and served to the browser as a blob (`openAsset`,
+ * `useAssetObjectUrl`). Never put `file_url` straight into an `<a href>`.
+ *
  * Consent forms additionally get a /patient-consents row so the chart shows
  * what was presented, when, and — once signed — by whom.
  */
@@ -259,7 +264,12 @@ export interface LetterHistoryRow {
   status: string;
   signature_method: string | null;
   signer_name: string | null;
+  signer_relationship: string | null;
   signed_at: string | null;
+  /** Stored signature image (data URL) once signed — shown on the consent's signature line. */
+  signature_data: string | null;
+  /** Merged HTML as presented; lets the viewer re-open a stored consent in-app. */
+  rendered_html: string | null;
   declined_reason: string | null;
   document_id: number | null;
   file_name: string | null;
@@ -316,7 +326,10 @@ export async function loadLetterHistory(patient_id: number): Promise<LetterHisto
       status: c.status || 'printed',
       signature_method: c.signature_method ?? null,
       signer_name: c.signer_name ?? null,
+      signer_relationship: c.signer_relationship ?? null,
       signed_at: c.signed_at ?? null,
+      signature_data: c.signature_data ?? null,
+      rendered_html: c.rendered_html ?? null,
       declined_reason: c.declined_reason ?? null,
       document_id: c.document_id ?? null,
       file_name: doc?.file_name ?? null,
@@ -336,7 +349,10 @@ export async function loadLetterHistory(patient_id: number): Promise<LetterHisto
       status: 'printed',
       signature_method: null,
       signer_name: null,
+      signer_relationship: null,
       signed_at: null,
+      signature_data: null,
+      rendered_html: null,
       declined_reason: null,
       document_id: d.id,
       file_name: d.file_name,

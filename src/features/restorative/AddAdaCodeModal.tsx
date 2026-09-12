@@ -79,6 +79,8 @@ interface AddAdaCodeModalProps {
   mode: 'completed' | 'tx-plans';
   /** Patient's office — scopes the provider list in the Add Procedure Details pop-up. */
   officeId?: number | null;
+  /** Real numeric patient id — drives the supporting-records readiness line in the pop-up. */
+  patientId?: number | null;
   teeth: string[];
   surface: string | null;
   providers: ProviderRead[];
@@ -104,7 +106,7 @@ interface AddAdaCodeModalProps {
  * enforcement, fee + insurance estimate, provider (Completed), Add Procedure with
  * auto-advance across the selected teeth.
  */
-export default function AddAdaCodeModal({ mode, officeId, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
+export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
   const [codeMap, setCodeMap] = useState<Map<string, ProcedureCodeRead>>(new Map());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(() => {
@@ -468,6 +470,7 @@ export default function AddAdaCodeModal({ mode, officeId, teeth, surface, provid
         <ProcedureDetailsDialog
           mode={mode === 'completed' ? 'charge' : 'plan'}
           office_id={officeId ?? null}
+          patient_id={patientId ?? null}
           rows={details.rows}
           header={{ provider_id: providerId, date: serviceDate }}
           providerLocked={mode !== 'completed'}

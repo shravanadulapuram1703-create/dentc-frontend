@@ -8,6 +8,7 @@
 
 export interface MedicalHistoryDetailCreate {
   history_id: number;
+  /** @maxLength 50 */
   question_code: string;
   question_text?: string | null;
   answer_code?: string | null;

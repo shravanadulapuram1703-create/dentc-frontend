@@ -3,6 +3,8 @@ import { useParams, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AppShell from './layout/AppShell';
 import PatientSecondaryNav from './PatientSecondaryNav';
+import { PatientShellToggle } from './PatientShellToggle';
+import { usePatientShellCollapse } from '@/hooks/usePatientShellCollapse';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useGetPatient, useListPatientAlerts } from '@/api/generated/endpoints/patients/patients';
 import { useListAppointments } from '@/api/generated/endpoints/appointments/appointments';
@@ -44,6 +46,8 @@ export default function PatientShellLayout({
   const { setActivePatient } = useAuth();
   const numericId = patientId ? Number(patientId) : NaN;
   const validId = !Number.isNaN(numericId);
+  // Per-block minimize state for the sticky shell (persists in localStorage).
+  const { header_collapsed, nav_collapsed, toggleHeader, toggleNav } = usePatientShellCollapse();
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -273,7 +277,52 @@ export default function PatientShellLayout({
       {/* PATIENT CONTEXT SHELL - Persistent, sticks right below the fixed nav so
           the patient identity + tab bar stay visible while content scrolls. */}
       <div className="bg-white border-b-2 border-slate-200 shadow-sm sticky top-[var(--app-nav-height)] z-30">
-          {/* Patient Summary Header */}
+          {/* Patient Summary Header — full banner, or a slim one-line strip when
+              minimized so the content area gets the vertical space back. */}
+          {header_collapsed ? (
+            <div className="flex items-center justify-between gap-4 px-6 py-1.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 shadow-sm">
+                  <User className="h-4 w-4 text-white" strokeWidth={2.5} />
+                </div>
+                <h2 className="truncate text-sm font-bold text-slate-900">{patient.name}</h2>
+                <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700" title="DentC patient id">
+                  ID: {patient.id}
+                </span>
+                {patient.age > -1 && (
+                  <span className="hidden shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 md:inline">
+                    {patient.age}y • {patient.gender}
+                  </span>
+                )}
+                {patient.alerts.length > 0 && (
+                  <span className="hidden shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 lg:inline-flex">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {patient.alerts.length} Alert(s)
+                  </span>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="text-xs font-medium text-slate-500">
+                  Balance{' '}
+                  <span className={`text-sm font-bold ${patient.balance > 0 ? 'text-red-600' : patient.balance < 0 ? 'text-green-600' : 'text-slate-600'}`}>
+                    ${Math.abs(patient.balance).toFixed(2)}
+                  </span>
+                </span>
+                {patient.nextAppointment !== '—' && (
+                  <span className="hidden text-xs font-medium text-slate-500 xl:inline">
+                    Next Appt <span className="font-semibold text-slate-900">{patient.nextAppointment}</span>
+                  </span>
+                )}
+                <button
+                  onClick={handleClosePatient}
+                  className="rounded-md border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200 hover:border-slate-400"
+                >
+                  Close Patient
+                </button>
+                <PatientShellToggle collapsed onClick={toggleHeader} target="patient header" />
+              </div>
+            </div>
+          ) : (
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               {/* Patient Info */}
@@ -375,12 +424,14 @@ export default function PatientShellLayout({
                 >
                   Close Patient
                 </button>
+                <PatientShellToggle collapsed={false} onClick={toggleHeader} target="patient header" />
               </div>
             </div>
           </div>
+          )}
 
-          {/* Patient Secondary Navigation - Icon Bar */}
-          <PatientSecondaryNav patientId={patient.id} />
+          {/* Patient Secondary Navigation - Icon Bar (minimizable on its own) */}
+          <PatientSecondaryNav patientId={patient.id} collapsed={nav_collapsed} onToggleCollapsed={toggleNav} />
         </div>
 
         {/* PATIENT CONTENT AREA - This changes based on route */}

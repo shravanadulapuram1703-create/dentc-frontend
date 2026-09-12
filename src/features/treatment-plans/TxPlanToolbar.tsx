@@ -53,11 +53,14 @@ interface TxPlanToolbarProps {
 type Panel = 'provider' | 'status' | 'ids' | 'reestimate' | null;
 
 const btn =
-  'rounded border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40';
-const primaryBtn = 'rounded bg-sky-600 px-3 py-1 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-40';
-const cancelBtn = 'rounded border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100';
-const menuItem = 'block w-full px-3 py-1.5 text-left font-medium text-slate-700 hover:bg-sky-50';
-const field = 'h-7 rounded border border-slate-300 px-2 text-xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500';
+  'rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-[#3A6EA5] hover:bg-[#EFF6FE] hover:text-[#1F3A5F] disabled:cursor-not-allowed disabled:opacity-40';
+const primaryBtn =
+  'rounded-md bg-[#3A6EA5] px-3 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1F3A5F] disabled:cursor-not-allowed disabled:opacity-40';
+const cancelBtn =
+  'rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-100';
+const menuItem = 'block w-full px-3 py-1.5 text-left font-medium text-slate-700 hover:bg-[#EFF6FE] hover:text-[#1F3A5F]';
+const field =
+  'h-7 rounded-md border border-slate-300 bg-white px-2 text-xs focus:border-[#3A6EA5] focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]/30';
 // Global CSS forces large !important padding on <select>, clipping the selected
 // text in our compact h-7 selects. The `.tx-select` override (globals.css @layer
 // base) restores compact padding.
@@ -87,10 +90,10 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
   };
 
   return (
-    <div className="border border-slate-300 bg-slate-50">
+    <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
       {/* Button row */}
-      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
-        <button className={btn} disabled={busy} onClick={props.onSave}>
+      <div className="flex flex-wrap items-center gap-2 rounded-t-lg bg-gradient-to-b from-white to-slate-50 px-3 py-2">
+        <button className={primaryBtn} disabled={busy} onClick={props.onSave}>
           Save
         </button>
         <button
@@ -140,7 +143,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
             <>
               {/* click-away backdrop */}
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute left-0 top-full z-20 mt-1 min-w-44 rounded border border-slate-200 bg-white py-1 text-xs shadow-lg" role="menu">
+              <div className="absolute left-0 top-full z-20 mt-1 min-w-44 rounded-md border border-slate-200 bg-white py-1 text-xs shadow-lg" role="menu">
                 <button className={menuItem} role="menuitem" onClick={() => runMenu(props.onDiscount)}>
                   Discount
                 </button>
@@ -191,13 +194,15 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
               ))}
             </select>
           </label>
-          {has && <span className="text-[11px] font-semibold text-sky-700">{selectedCount} selected</span>}
+          {has && (
+            <span className="rounded-full bg-[#EFF6FE] px-2 py-0.5 text-[11px] font-bold text-[#1F3A5F]">{selectedCount} selected</span>
+          )}
         </div>
       </div>
 
       {/* Inline action bars */}
       {panel === 'provider' && (
-        <div className="flex flex-col gap-1.5 border-t border-slate-200 bg-white px-3 py-2">
+        <div className="flex flex-col gap-1.5 rounded-b-lg border-t border-slate-200 bg-[#F7F9FC] px-3 py-2">
           <div className="flex flex-wrap items-end gap-3">
             <span className="text-xs font-semibold text-slate-600">
               Change selected treatment&apos;s provider to:
@@ -245,7 +250,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
       )}
 
       {panel === 'status' && (
-        <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 bg-white px-3 py-2">
+        <div className="flex flex-wrap items-center gap-4 rounded-b-lg border-t border-slate-200 bg-[#F7F9FC] px-3 py-2">
           <span className="text-xs font-semibold text-slate-600">Status:</span>
           {SETTABLE_STATUSES.map((s) => (
             <label key={s} className="flex items-center gap-1 text-xs text-slate-700">
@@ -270,7 +275,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
       )}
 
       {panel === 'ids' && (
-        <div className="flex flex-col gap-2 border-t border-slate-200 bg-white px-3 py-2">
+        <div className="flex flex-col gap-2 rounded-b-lg border-t border-slate-200 bg-[#F7F9FC] px-3 py-2">
           <div className="flex flex-wrap items-end gap-3">
             <span className="text-xs font-semibold text-slate-600">Change selected treatment&apos;s:</span>
             <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
@@ -334,7 +339,7 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
               />
             </label>
             <button
-              className="rounded bg-violet-600 px-3 py-1 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-40"
+              className="rounded-md bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:opacity-40"
               disabled={!has || busy}
               onClick={() => {
                 props.onCopyAsNewPlan(newPlanTid);
@@ -348,9 +353,11 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
       )}
 
       {panel === 'reestimate' && (
-        <div className="flex flex-wrap items-end gap-3 border-t border-slate-200 bg-white px-3 py-2">
+        <div className="flex flex-wrap items-end gap-3 rounded-b-lg border-t border-slate-200 bg-[#F7F9FC] px-3 py-2">
           <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
-            Tx Plan ID <span className="text-red-500">*</span>
+            <span>
+              Tx Plan ID <span className="text-red-500">*</span>
+            </span>
             <input type="number" min={1} className={`${field} w-20`} value={reTid} onChange={(e) => setReTid(Math.max(1, Number(e.target.value) || 1))} />
           </label>
           <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">

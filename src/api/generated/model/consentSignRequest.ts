@@ -7,11 +7,30 @@
  */
 
 /**
- * LTR-10: capture a signature against an existing consent row.
+ * LTR-10: capture a signature against an existing consent row. Carries the
+ * Topaz block (SIG-1/2/3/8) via ``SignatureCaptureFields``.
  */
 export interface ConsentSignRequest {
-  /** Base64 / data-URL image of a drawn signature */
+  /** Topaz SigString — clear text, lossless; encrypted at rest */
+  sig_string?: string | null;
+  sig_format?: string | null;
+  /** 0 none | 1 lossless | 2 lossy */
+  sig_compression?: number | null;
+  /** 0 clear | 1 DES | 2 high */
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  /** Workstation hint; defaults to the request User-Agent */
+  captured_user_agent?: string | null;
+  /** Base64 / data-URL image of the signature (Topaz JPEG or canvas PNG) */
   signature_data?: string | null;
+  signature_len?: number | null;
+  device_source?: string | null;
+  /** Workstation timestamp of the capture */
+  signed_at?: string | null;
   /** An uploaded patient-document holding the scanned wet-signed copy */
   document_id?: number | null;
   status?: string;

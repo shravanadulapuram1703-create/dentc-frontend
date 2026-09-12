@@ -3,10 +3,11 @@ import { useNavigate, useOutletContext, useParams, useSearchParams } from 'react
 import { Loader2, Printer, BookOpen, FilePlus2 } from 'lucide-react';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
 import { useDefinitions } from '@/hooks/useDefinitions';
-import type { PatientProcedureRead, PatientBalance } from '@/api/generated/model';
+import type { PatientProcedureRead, PatientBalance, DayTotals } from '@/api/generated/model';
 import { createInsuranceClaim, getPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clinical';
-import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
+import { useGetPatient, getPatientDayTotals, getPatientTransactionsReport } from '@/api/generated/endpoints/patients/patients';
+import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import { useProcedureSync } from '@/features/procedures/procedureSync';
 import {
   loadRawTransactions,
@@ -37,6 +38,8 @@ import AddProceduresTab from './AddProceduresTab';
 import PaymentsTab from './PaymentsTab';
 import AdjustmentsTab from './AdjustmentsTab';
 import { paymentCodeLabel, adjustmentCodeLabel } from './transactionCodes';
+import { printTransactionsEntry } from './transactionsPrint';
+import { openServerReport } from '@/features/print/serverReport';
 
 interface OutletCtx {
   patient: {
@@ -45,6 +48,8 @@ interface OutletCtx {
     age?: number;
     gender?: string;
     dob?: string;
+    chartNo?: string;
+    office?: string;
     officeId?: string;
   };
 }
@@ -117,6 +122,9 @@ export default function TransactionsEntryPage() {
   const [outstanding, setOutstanding] = useState<PatientProcedureRead[]>([]);
   const [balance, setBalance] = useState<PatientBalance | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(true);
+  // Server day totals (PRINT-6 / CHG-7): the estimate engine's split of the
+  // day's charges, including the deductible the client cannot compute.
+  const [dayTotals, setDayTotals] = useState<DayTotals | null>(null);
   const [offices, setOffices] = useState<Map<number, OfficeLabel>>(new Map());
   const [insurance, setInsurance] = useState<InsuranceSummary>({ primary: null, secondary: null });
   const [insuranceLoading, setInsuranceLoading] = useState(true);
@@ -201,6 +209,20 @@ export default function TransactionsEntryPage() {
     };
   }, [validId, patientId]);
 
+  // Day totals for the applied date; re-read after any post so the deductible
+  // reflects the charges just entered. Never blocks the grid.
+  useEffect(() => {
+    if (!validId) return;
+    let alive = true;
+    setDayTotals(null);
+    getPatientDayTotals(patientId, { date: appliedIso })
+      .then((t) => alive && setDayTotals(t))
+      .catch(() => alive && setDayTotals(null));
+    return () => {
+      alive = false;
+    };
+  }, [validId, patientId, appliedIso, reloadKey]);
+
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
   // A procedure posted from the chart, the treatment plan, the ledger or another
   // browser tab lands in this grid without a manual reload.
@@ -216,8 +238,39 @@ export default function TransactionsEntryPage() {
   // day's procedure insurance estimates; patient portion is the remainder (charges
   // − insurance − deductible, with deductible 0 until CHG-7 is implemented).
   const todayEstIns = useMemo(() => raw.procs.reduce((s, p) => s + num(p.insurance_estimate), 0), [raw.procs]);
+  // Server-computed deductible / patient portion when day-totals has loaded;
+  // otherwise the client approximation (deductible 0) the screen always showed.
+  const todayEstDed = dayTotals ? num(dayTotals.estimated_deductible) : 0;
+  const todayEstPat = dayTotals
+    ? num(dayTotals.patient_estimate)
+    : Math.max(0, todayCharges - todayEstIns);
 
   const handleGo = () => setAppliedIso(toIsoDate(transactionDate));
+
+  // Office record for the printed report header (name / address / phone). Same
+  // shared query the rest of the app uses, so this is normally a cache hit.
+  const officesQuery = useListOffices({ size: 200 });
+  const printFromScreen = () =>
+    printTransactionsEntry({
+      patient: { id: patientId, name: patientName, dob: patient?.dob, chart_no: patient?.chartNo },
+      office: (officesQuery.data?.items ?? []).find((o) => o.id === officeId) ?? null,
+      office_name: patient?.office ?? '',
+      transaction_date: fmtDate(appliedIso),
+      balance,
+      insurance,
+      rows,
+      today_charges: todayCharges,
+      today_est_ins: todayEstIns,
+      today_est_ded: todayEstDed,
+      today_est_pat: todayEstPat,
+    });
+  // Server-rendered day sheet (PRINT-1); screen-data PDF is the fallback.
+  const handlePrint = () =>
+    openServerReport({
+      fetch_pdf: () => getPatientTransactionsReport(patientId, { date: appliedIso }),
+      fallback: printFromScreen,
+      label: `Transactions Entry — ${fmtDate(appliedIso)}`,
+    });
 
   const handleCreateClaim = async () => {
     // A charge on Hold Claim is deliberately held back from billing, so it must
@@ -283,7 +336,7 @@ Create a claim for the remaining ${billable.length}?`,
       <div className="flex items-center px-5 py-2 text-sm font-semibold text-white" style={{ background: HEADER_GRADIENT }}>
         Transactions Entry
         <span className="ml-3 rounded bg-white/15 px-2 py-0.5 text-xs font-normal">{patientName}</span>
-        <button onClick={() => window.print()} className="ml-auto rounded p-1 hover:bg-white/10" title="Print">
+        <button onClick={handlePrint} className="ml-auto rounded p-1 hover:bg-white/10" title="Print this screen">
           <Printer className="h-4 w-4" />
         </button>
       </div>
@@ -327,16 +380,17 @@ Create a claim for the remaining ${billable.length}?`,
         <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 content-start">
           <dt className="font-semibold text-slate-500">Today&apos;s Total Charges</dt>
           <dd className="text-right font-bold tabular-nums text-slate-900">{money(todayCharges)}</dd>
-          <dt className="font-semibold text-slate-500" title="Deductible applied is not computed yet (CHG-7 / PLAN-3)">
-            Today&apos;s Est Ded †
+          <dt
+            className="font-semibold text-slate-500"
+            title={dayTotals ? 'Deductible applied to today\'s charges (estimate engine)' : 'Loading day totals…'}
+          >
+            Today&apos;s Est Ded
           </dt>
-          <dd className="text-right tabular-nums text-slate-500">{money(0)}</dd>
+          <dd className="text-right tabular-nums text-slate-800">{dayTotals ? money(todayEstDed) : '…'}</dd>
           <dt className="font-semibold text-slate-500">Today&apos;s Est Ins Portion</dt>
           <dd className="text-right tabular-nums text-blue-700">{money(todayEstIns)}</dd>
           <dt className="font-semibold text-slate-500">Today&apos;s Est Pat Portion</dt>
-          <dd className="text-right font-semibold tabular-nums text-slate-900">
-            {money(Math.max(0, todayCharges - todayEstIns))}
-          </dd>
+          <dd className="text-right font-semibold tabular-nums text-slate-900">{money(todayEstPat)}</dd>
         </dl>
       </div>
 

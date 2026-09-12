@@ -18,6 +18,16 @@ export interface MedicalHistorySignature {
   signed_by_user_id?: number | null;
   signed_by_name?: string | null;
   content_hash?: string | null;
+  has_sig_string?: boolean;
+  sig_format?: string | null;
+  sig_compression?: number | null;
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  captured_user_agent?: string | null;
   is_active?: boolean;
   superseded_by_id?: number | null;
   voided_at?: string | null;

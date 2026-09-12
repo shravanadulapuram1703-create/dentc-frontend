@@ -13,4 +13,6 @@ export interface PrescriptionLibraryUpdate {
   refills?: number | null;
   is_as_written?: boolean | null;
   is_active?: boolean | null;
+  allergy_keys?: unknown | null;
+  allow_duplicate?: boolean;
 }

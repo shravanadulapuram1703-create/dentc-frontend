@@ -17,4 +17,6 @@ export interface NoteMacroRead {
   id: number;
   created_at: string;
   updated_at?: string | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
 }

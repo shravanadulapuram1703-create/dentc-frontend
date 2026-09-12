@@ -8,6 +8,7 @@
 
 export interface QuestionnaireOptionCreate {
   questionnaire_id: number;
+  /** @maxLength 20 */
   answer_code: string;
   sort_order?: number | null;
   is_active?: boolean | null;

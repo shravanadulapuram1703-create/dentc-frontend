@@ -990,3 +990,134 @@ Backend ask: (1) add `middle_name VARCHAR(50)` to `patients` and expose it on
 `PatientCreate`/`PatientUpdate`/`PatientRead` (or widen `middle_initial` to 50); (2) add
 `max_length` validation so overflow is a 422 field error. Full write-up with repro requests:
 [docs/patients/add_patient_backend_devreport.md](docs/patients/add_patient_backend_devreport.md) → GAP-AP-19.
+
+## Patient search by Patient ID / Legacy ID (`PT-SEARCH-1`, `PT-SEARCH-2`) — 2026-09-10
+
+Module: Patients · Screens: Patient Management search page (`/patient?switch=1`), Scheduler →
+New Appointment → Existing Patient chooser, Medical History → Copy from patient, Dashboard Quick
+Search.
+
+Business Requirement: staff must be able to find a patient by typing its **Patient ID**
+(`patients.id`) or its **Legacy ID** (`patients.legacy_id`, the id from the pre-import system,
+e.g. `100001`, `10021076`) directly — everywhere a patient search exists.
+
+### PT-SEARCH-1 — Missing filter: `GET /api/v1/patients?legacy_id=` (BLOCKS Legacy ID search)
+
+Current Status (verified live on the shared dev backend 2026-09-10, tenant 1, 83,924 patients):
+
+- `legacy_id` is not in the list endpoint's `filter_fields`; the param is silently ignored:
+  `GET /api/v1/patients?size=1&legacy_id=ZZZNOPE` → `meta.total = 83924` (unfiltered page 1).
+- Free-text `search` does not cover the column either:
+  `GET /api/v1/patients?search=10021076` → `total 0` although patient 66654 has
+  `legacy_id = "10021076"`; `search=100001` → `total 0` although patient 2 has `legacy_id = "100001"`.
+- The column is populated for every imported patient (`legacy_id` is non-null on all 200 rows of a
+  sampled page; newly created patients have `null`).
+
+Frontend contract already in place: every Legacy ID search sends
+`GET /api/v1/patients?legacy_id=<exact value>` together with the usual `home_office_id` /
+`is_active` / `page` / `size` / `sort` / `order` filters (`src/features/patients/patientLookup.ts`
+→ `lookup_patients_by_legacy_id`). Until the filter is honoured the frontend detects the
+"filter ignored" response (rows whose `legacy_id` ≠ the requested value) and shows
+*"Legacy ID search is not supported by the backend yet (gap PT-SEARCH-1)"* instead of a random
+page of patients.
+
+Backend ask: add `"legacy_id"` to the `filter_fields` tuple of the `patients` `CrudConfig` in
+`app/api/v1/registry.py` (the same exact-match mechanism `chart_no` / `medicaid_id` already use),
+regenerate `openapi.json` so `ListPatientsParams.legacy_id?: string | null` appears, and index
+`patients(tenant_id, legacy_id)`. Nothing else changes on the frontend — `npm run api:sync` picks
+the param up and the "not supported" notice disappears on its own.
+
+### PT-SEARCH-2 — Optional: `id` filter on the list endpoint (soft)
+
+Current Status: `GET /api/v1/patients?id=83917` is also ignored (`total 83924`). Patient ID search
+works today through `GET /api/v1/patients/{id}` (404 → "No patients found"), so this is **not a
+blocker**. The by-id endpoint takes no `home_office_id` / `is_active` filters, so the frontend
+re-applies the "Search In: Current Office" and "Include Inactive" options client-side on the single
+row it gets back.
+
+Backend ask (nice-to-have): accept `id` (or `ids`) as a list filter so an id search shares the same
+paged/filtered code path as the other modes and can be combined with the advanced filters.
+
+## Procedure Codes — supporting-records requirement flags (`PROC-7`) — 2026-09-10
+Screen: Setup → Procedure Codes → Charting (`src/components/setup/procedure-codes/tabs/ChartingTab.tsx`).
+Business requirement: alongside Tooth/Surface/Quadrant Required, the practice must be able to flag per
+code whether **attachments**, a **perio chart**, a **photo**, an **X-ray**, or **missing-tooth info** are
+required (`requires_attachment`, `requires_perio_chart`, `requires_photo`, `requires_xray`,
+`requires_missing_tooth_info`), for enforcement when procedures are added / claimed later.
+Current status: `procedure_codes` has no such columns; `PATCH /procedure-codes/{code}` returns 200 and
+silently drops the keys; `/metadata/procedure-entry-rules` does not list them. Frontend ships the five
+toggles with per-browser persistence (`dentc:proc_code_extras:<CODE>`), already sends the keys in the
+POST/PATCH body, and reads server-first so the cut-over is automatic.
+Suggested: five NOT NULL boolean columns (default false) on `procedure_codes` + the three schemas +
+list endpoint; advertise under `enforced`/`advisory` in the entry-rules metadata; optional
+readiness/enforcement contract. Full spec + acceptance curls:
+`docs/procedure-codes/procedure_code_supporting_records_backend_devreport.md`.
+
+## Patient screen printing — no server-side report endpoints (`PRINT-1..10`) — 2026-09-10
+Screens: Patient Overview, Transactions Entry, Account/Patient Ledger, Insurance Details. Their Print
+buttons called `window.print()` (Insurance had no handler) and printed the whole UI; each now builds a
+structured jsPDF report client-side from screen data (`src/features/print/patientPdf.ts` + per-screen
+`*Print.ts`), like Perio / Treatment Plan already do.
+Current status: no `…/reports/…` route returns a PDF/HTML for any of these screens (legacy rendered
+server reports), no office logo/letterhead on `OfficeRead`, and the prints inherit the existing data
+gaps — ledger feed 500-row cap (AL-2), balance endpoint vs ledger arithmetic (AL-9), Overview
+composition/enrichment caps (PO-1/PO-3), Today's Est Ded not computed (CHG-7), subscriber fields with
+no columns (INS-PT-1/2/3), no plan effective/term dates, no ortho patient plan (AL-3), no patient
+photo (PO-10).
+Suggested: `GET /api/v1/patients/{id}/reports/{overview|ledger|transactions|insurance}` returning
+`application/pdf` with the same query params the screens send. Full report:
+`docs/print/patient_print_backend_devreport.md`.
+
+## Claims — Draft / Delete / Secondary claims (`CLM-LC-1..8`) — 2026-09-11
+Screens: Ledger → CREATE CLAIM → claim screen (`src/components/patient/ClaimDetail.tsx`,
+`claimLifecycle.ts`). Reported: a claim deleted from the claim window still showed on the ledger as
+"Pri Claim - Draft"; and a primary claim must be able to spawn/open the secondary (tertiary,
+quaternary) claim when the patient carries that insurance, as in legacy.
+Current status: `DELETE /insurance-claims/{id}` is a soft delete (`is_active=false`, status left
+"draft") and `GET /insurance-claims` returns inactive rows by default; closing a claim sets the same
+flag, so deleted ≠ closed is undecidable server-side; deleting never releases `patient_procedures.claim_id`;
+there is no `parent_claim_id` / claim↔procedure link, so a secondary claim has no procedures; new
+claims are not defaulted to the patient's plan/carrier. Frontend ships SAVE AS DRAFT, a guarded DELETE
+that unlinks procedures first, a ledger filter for inactive-and-not-closed claims, and VIEW/CREATE
+SECONDARY…QUATERNARY linked by `claim_number` suffix (`-S/-T/-Q`) rendering the primary's procedures.
+Suggested: real `is_deleted` (or hard delete when unpaid) + hidden by default; release procedures on
+delete; `parent_claim_id` + detail endpoint following it (or a link table) + a
+`POST /insurance-claims/{id}/subsequent` helper; secondary estimate; default `ins_plan_id`/`carrier_id`.
+Full report: `docs/account-ledger/claim_lifecycle_backend_devreport.md`.
+
+> **Resolved 2026-09-11:** the backend shipped PROC-7a–7d (`aee911131850`: five columns, readiness
+> endpoints, claim-submit gate with override, document↔procedure/claim links, derived Enclosures) and
+> the frontend switched over — localStorage stopgap removed; Add Procedure pop-up, claim screen,
+> fill-out and Update Status → Submitted now use the readiness/submit contract. Details:
+> `docs/procedure-codes/procedure_code_supporting_records_backend_devreport.md` §8.
+
+## Add Patient — full-wizard registration (`GAP-AP-20..26`) — 2026-09-11
+
+Full report: [docs/patients/add_patient_full_wizard_backend_issues.md](docs/patients/add_patient_full_wizard_backend_issues.md).
+
+- **GAP-AP-20 🔴** `question_code` / `alert_code` columns are `VARCHAR(50)`, schema has no `max_length` → a 51+ char
+  code returns **500 `internal_error`** and rolls back the entire `POST /patients/register`. 12 legacy questionnaire
+  questions could never be saved (the DevTools failures on patient 83928). FE clamps derived codes to 50 for now.
+  Ask: widen to `VARCHAR(100)` and/or `max_length` → 422 with the field.
+- **GAP-AP-21 🟠** duplicate guard only on `/patients/register` (409 on a lone SSN or chart-no match, `force_create`
+  to override); `POST /patients` has none. FE now surfaces the 409 candidates and retries with `force_create`.
+  Ask: same guard on `POST /patients`; ignore placeholder SSNs / require SSN + DOB.
+- **GAP-AP-22 🟠** per-row child endpoints ≈ 1.2 s each; chained intake ≈ 3 min. Ask: bulk endpoints or a complete composite.
+- **GAP-AP-23 🟡** `RecallIn` lacks `interval_unit` / `scheduled_date` / `scheduled_time` (LEG-17 re-flag).
+- **GAP-AP-24 🟡** insurance not in `RegisterRequest` (non-atomic).
+- **GAP-AP-25 🟡** `resp_party_rel` definitions seeded twice → duplicated dropdown options.
+- **GAP-AP-26 🟡** 500 bodies carry no diagnostic; map `DataError` → 422, `IntegrityError` → 409.
+
+## ADA Dental Claim Form (2024) — DIRECT PRINT (2026-09-11)
+
+Claim screen → DIRECT PRINT now renders the ADA Dental Claim Form, Version 2024 (Items 1–58) client-side
+with a pre-flight completion checklist. Full backend report with 14 gaps (ADA-BE-1…14) in
+`docs/claims/ada_claim_form_2024_backend_devreport.md`; UI gaps (UI-1…20) in
+`docs/claims/ada_claim_form_2024_ui_gaps_report.md`. Headline asks:
+
+- **ADA-BE-8 🔴** `offices` has no Type 2 (entity) **NPI** → Item 49 falls back to the billing provider's Type 1 NPI.
+- **ADA-BE-2 🔴** 2024 boxes `is_epsdt` (Item 1), `is_locum_tenens` (53a), `date_last_srp` (39a) have no column (localStorage stop-gap).
+- **ADA-BE-3 🔴** no per-procedure diagnosis pointer (29a) / claim `icd_1…4` — every line points at "A".
+- **ADA-BE-12 🟠** `treating_provider_id` / `billing_provider_id` are null on ledger-created claims.
+- **ADA-BE-1 🟠** no `GET /insurance-claims/{id}/reports/ada-claim-form` (server PDF + PRINT audit); frontend jsPDF is the fallback pattern.
+

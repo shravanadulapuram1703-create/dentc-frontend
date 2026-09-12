@@ -8,6 +8,7 @@
 
 export interface PatientEmergencyContactCreate {
   patient_id: number;
+  /** @maxLength 255 */
   name: string;
   relationship?: string | null;
   phone?: string | null;

@@ -38,7 +38,9 @@ import type {
   DefinitionRead,
   DefinitionUpdate,
   ErrorResponse,
+  GetLabTrackingRules200,
   GetProcedureEntryRules200,
+  GetTreatmentPlanRules200,
   ImagingTemplateCreate,
   ImagingTemplateRead,
   ImagingTemplateUpdate,
@@ -72,6 +74,100 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * Published so the Edit Treatment window drives its STATUS / PRE AUTH STATUS /
+ * Referral Type controls from the same table the API validates against.
+ * @summary Item status / referral-type / pre-auth vocabularies and the server-owned transitions
+ */
+export const getTreatmentPlanRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetTreatmentPlanRules200>(
+      {url: `/api/v1/metadata/treatment-plan-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTreatmentPlanRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/treatment-plan-rules`
+    ] as const;
+    }
+
+
+export const getGetTreatmentPlanRulesQueryOptions = <TData = Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTreatmentPlanRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTreatmentPlanRules>>> = ({ signal }) => getTreatmentPlanRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTreatmentPlanRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getTreatmentPlanRules>>>
+export type GetTreatmentPlanRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTreatmentPlanRules<TData = Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTreatmentPlanRules>>,
+          TError,
+          Awaited<ReturnType<typeof getTreatmentPlanRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTreatmentPlanRules<TData = Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTreatmentPlanRules>>,
+          TError,
+          Awaited<ReturnType<typeof getTreatmentPlanRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTreatmentPlanRules<TData = Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Item status / referral-type / pre-auth vocabularies and the server-owned transitions
+ */
+
+export function useGetTreatmentPlanRules<TData = Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTreatmentPlanRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTreatmentPlanRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 
@@ -157,6 +253,98 @@ export function useGetProcedureEntryRules<TData = Awaited<ReturnType<typeof getP
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetProcedureEntryRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Lab-field semantics, status derivation, implications and error codes (LAB-1/8/9)
+ */
+export const getLabTrackingRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetLabTrackingRules200>(
+      {url: `/api/v1/metadata/lab-tracking-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetLabTrackingRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/lab-tracking-rules`
+    ] as const;
+    }
+
+
+export const getGetLabTrackingRulesQueryOptions = <TData = Awaited<ReturnType<typeof getLabTrackingRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabTrackingRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLabTrackingRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLabTrackingRules>>> = ({ signal }) => getLabTrackingRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLabTrackingRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLabTrackingRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getLabTrackingRules>>>
+export type GetLabTrackingRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetLabTrackingRules<TData = Awaited<ReturnType<typeof getLabTrackingRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabTrackingRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLabTrackingRules>>,
+          TError,
+          Awaited<ReturnType<typeof getLabTrackingRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLabTrackingRules<TData = Awaited<ReturnType<typeof getLabTrackingRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabTrackingRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLabTrackingRules>>,
+          TError,
+          Awaited<ReturnType<typeof getLabTrackingRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLabTrackingRules<TData = Awaited<ReturnType<typeof getLabTrackingRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabTrackingRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lab-field semantics, status derivation, implications and error codes (LAB-1/8/9)
+ */
+
+export function useGetLabTrackingRules<TData = Awaited<ReturnType<typeof getLabTrackingRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabTrackingRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetLabTrackingRulesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

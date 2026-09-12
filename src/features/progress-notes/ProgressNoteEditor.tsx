@@ -32,6 +32,7 @@ import SignatureCapture from '@/features/signature/SignatureCapture';
 import { signatureFromDataUrl, type SignatureResult } from '@/features/signature/signatureModel';
 import MacroQuestionnaire from './MacroQuestionnaire';
 import { macroHasFields, parseMacroFields, substituteMacro, type MacroField } from './macroTemplate';
+import { noteDisplayHtml, textToHtml } from './noteContent';
 import {
   ATTACHMENT_ACCEPT,
   apiErrorMessage,
@@ -89,12 +90,6 @@ const MIN_MACRO_PANEL_HEIGHT = 280;
 /** Breathing room above/below the macro panel (matches the panes row's `p-3`). */
 const PANES_GUTTER = 12;
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-function textToHtml(text: string): string {
-  return escapeHtml(text).replace(/\n/g, '<br>');
-}
 
 interface ProgressNoteEditorProps {
   mode?: 'add' | 'edit' | 'view';
@@ -243,7 +238,9 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     setLocked(isLockedNote(n));
     setStruckOff(n.is_struck_off);
     if (editorRef.current) {
-      editorRef.current.innerHTML = n.notes_html || textToHtml(n.notes ?? '');
+      // Legacy rows carry `~^^~`-encoded HTML; normalise before hydrating so a
+      // later save writes clean markup back.
+      editorRef.current.innerHTML = noteDisplayHtml(n);
     }
     setHydrated(true);
   }, [noteQuery.data]);
@@ -448,7 +445,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
       // Save Notes also commits a staged signature (legacy "Load My Sig. → Save").
       if (sig && !signed) {
         try {
-          await saveUserSignature(numericPatientId, sig);
+          await saveUserSignature(numericPatientId, sig, id);
           await signNote(id);
         } catch (err) {
           window.alert(errMsg(err) || 'The note was saved but signing failed.');

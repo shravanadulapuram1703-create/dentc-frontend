@@ -12,6 +12,10 @@ user_id?: number | null;
 resource_type?: string | null;
 resource_id?: string | null;
 /**
+ * MH-19: only entries for this chart
+ */
+patient_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

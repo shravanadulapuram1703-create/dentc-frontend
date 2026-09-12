@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Loader2, User, CalendarClock, Stethoscope, Shield } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useListPatients } from "@/api/generated/endpoints/patients/patients";
+import type { PatientRead } from "@/api/generated/model";
+import {
+  looks_like_legacy_id,
+  lookup_patient_by_id,
+  lookup_patients_by_legacy_id,
+  parse_patient_id,
+} from "@/features/patients/patientLookup";
 import { useListAppointments } from "@/api/generated/endpoints/appointments/appointments";
 import { useListProviders } from "@/api/generated/endpoints/organization/organization";
 import { useListInsuranceCarriers } from "@/api/generated/endpoints/insurance/insurance";
@@ -44,6 +52,31 @@ export default function GlobalSearchWidget() {
     { search: term, is_active: true, size: SIZE },
     { query: { enabled: want("patients") } },
   );
+  // A numeric term is also an exact Patient ID / Legacy ID lookup (free-text
+  // `search` covers neither column); hits are listed ahead of the name matches.
+  const idTerm = want("patients") && (parse_patient_id(term) != null || looks_like_legacy_id(term)) ? term : null;
+  const patientById = useQuery<PatientRead[]>({
+    queryKey: ["quick-search-patient-id", idTerm],
+    enabled: idTerm != null,
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const t = idTerm as string;
+      const [byId, byLegacy] = await Promise.all([
+        lookup_patient_by_id(t, signal).catch(() => null),
+        looks_like_legacy_id(t)
+          ? lookup_patients_by_legacy_id(t, { size: SIZE, is_active: true }, signal)
+              .then((r) => r.items)
+              .catch(() => [] as PatientRead[])
+          : Promise.resolve([] as PatientRead[]),
+      ]);
+      return [...(byId && byId.is_active !== false ? [byId] : []), ...byLegacy];
+    },
+  });
+  const patientItems = useMemo(() => {
+    const rows = [...(patientById.data ?? []), ...(patients.data?.items ?? [])];
+    const seen = new Set<number>();
+    return rows.filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true))).slice(0, SIZE);
+  }, [patientById.data, patients.data]);
   const appts = useListAppointments(
     { search: term, size: SIZE },
     { query: { enabled: want("appointments") } },
@@ -58,10 +91,14 @@ export default function GlobalSearchWidget() {
   );
 
   const isFetching =
-    patients.isFetching || appts.isFetching || providers.isFetching || carriers.isFetching;
+    patients.isFetching ||
+    patientById.isFetching ||
+    appts.isFetching ||
+    providers.isFetching ||
+    carriers.isFetching;
 
   const totalResults =
-    (want("patients") ? patients.data?.items.length ?? 0 : 0) +
+    (want("patients") ? patientItems.length : 0) +
     (want("appointments") ? appts.data?.items.length ?? 0 : 0) +
     (want("providers") ? providers.data?.items.length ?? 0 : 0) +
     (want("insurance") ? carriers.data?.items.length ?? 0 : 0);
@@ -90,10 +127,16 @@ export default function GlobalSearchWidget() {
         key: "patients" as Scope,
         title: "Patients",
         icon: <User className="w-3.5 h-3.5" />,
-        items: (patients.data?.items ?? []).map((p) => ({
+        items: patientItems.map((p) => ({
           id: `p-${p.id}`,
           primary: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || `Patient #${p.id}`,
-          secondary: [p.chart_no && `Chart ${p.chart_no}`, p.cell_phone || p.phone, p.dob]
+          secondary: [
+            `ID ${p.id}`,
+            p.legacy_id && `Legacy ${p.legacy_id}`,
+            p.chart_no && `Chart ${p.chart_no}`,
+            p.cell_phone || p.phone,
+            p.dob,
+          ]
             .filter(Boolean)
             .join(" · "),
           onClick: () => navigate(`/patient/${p.id}/overview`),
@@ -133,7 +176,7 @@ export default function GlobalSearchWidget() {
         })),
       },
     ],
-    [patients.data, appts.data, providers.data, carriers.data, navigate],
+    [patientItems, appts.data, providers.data, carriers.data, navigate],
   );
 
   return (

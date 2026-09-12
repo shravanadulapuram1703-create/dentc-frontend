@@ -8,6 +8,7 @@
 
 export interface ExplosionCodeCreate {
   office_id?: number | null;
+  /** @maxLength 50 */
   code: string;
   description?: string | null;
   is_active?: boolean | null;

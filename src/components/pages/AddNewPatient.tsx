@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
-import { checkDuplicatePatient } from "../../services/patient.service";
+import { checkDuplicatePatient, toDuplicatePatient } from "../../services/patient.service";
 import { DuplicatePatient } from "../../types/patient";
 import { 
   getFeeSchedules, 
@@ -24,6 +24,7 @@ import {
 } from "../../services/patientMetadataApi";
 import {
   registerPatientResilient,
+  isDuplicatePatientError,
   buildPatientCreate,
   type PatientCreateRequestFull,
 } from "../../services/patientApi";
@@ -428,6 +429,12 @@ export default function AddNewPatient({
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicatePatients, setDuplicatePatients] = useState<DuplicatePatient[]>([]);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  /**
+   * A registration the server refused with 409 `duplicate_patient`, parked
+   * while the duplicate modal is open. Confirming the modal re-runs it with
+   * `force_create` (GAP-AP-21).
+   */
+  const [pendingRegistration, setPendingRegistration] = useState<{ full: boolean } | null>(null);
 
   // ✅ Identity Gate Logic
   // The DOB must be *valid*, not merely filled in — a future or out-of-range
@@ -875,10 +882,9 @@ export default function AddNewPatient({
 
     try {
       const duplicates = await checkDuplicatePatient({
-        birthdate: formData.birthdate,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        office: currentOffice,
+        dob: formData.birthdate,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
       });
 
       if (duplicates && duplicates.length > 0) {
@@ -1159,10 +1165,18 @@ export default function AddNewPatient({
     return warnings;
   };
 
-  // Quick Save — atomic register of just the patient (+ self-RP link + opening
-  // balance), then straight to Overview (skips the rest of the wizard).
-  const handleQuickSave = async () => {
-    if (!validateStep1()) return;
+  /**
+   * Shared create path for Quick Save (`full` = false: patient + self-RP link +
+   * opening balance) and Finish (`full` = true: every wizard section).
+   *
+   * A server-side duplicate block (HTTP 409 `duplicate_patient`) is not an
+   * error: the candidates go into the same modal Check Patient uses, and the
+   * modal's Continue button re-runs this registration with `force_create`. The
+   * atomic `/patients/register` path is therefore kept — previously the 409
+   * silently dropped into the chained fallback, which bypassed the duplicate
+   * guard, lost the non-self guarantor and took minutes (GAP-AP-21).
+   */
+  const runRegistration = async (full: boolean, forceCreate: boolean) => {
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -1172,11 +1186,18 @@ export default function AddNewPatient({
         alert(" Invalid office ID — please select an office.");
         return;
       }
-      const res = await registerPatientResilient(buildRegisterRequest(officeIdNum, false));
-      if (res.warnings.length > 0) {
-        alert(` Patient saved. Some items need attention:\n• ${res.warnings.join("\n• ")}`);
+      const request = buildRegisterRequest(officeIdNum, full);
+      if (forceCreate) request.force_create = true;
+      const res = await registerPatientResilient(request);
+      const warnings = [...res.warnings];
+      // Everything that cannot ride inside the composite (insurance, recalls,
+      // emergency contact) is attached afterwards, best-effort.
+      if (full) warnings.push(...(await persistPostRegister(res.patient_id, officeIdNum)));
+      const verb = full ? "registered" : "saved";
+      if (warnings.length > 0) {
+        alert(` Patient ${verb}. Some items need attention:\n• ${warnings.join("\n• ")}`);
       } else {
-        alert(" Patient saved successfully!");
+        alert(` Patient ${verb} successfully!`);
       }
       // Embedded (modal) create: hand the new patient back to the host flow
       // instead of navigating away (e.g. Scheduler continues to the appointment).
@@ -1186,18 +1207,34 @@ export default function AddNewPatient({
       }
       navigate(`/patient/${res.patient_id}/overview`);
     } catch (error: any) {
-      console.error("Error saving patient:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Failed to save patient";
+      if (isDuplicatePatientError(error)) {
+        setDuplicatePatients(error.candidates.map(toDuplicatePatient));
+        setPendingRegistration({ full });
+        setShowDuplicateModal(true);
+        return;
+      }
+      console.error(full ? "Error registering patient:" : "Error saving patient:", error);
+      const errorMessage =
+        error.response?.data?.error?.message ||
+        error.response?.data?.detail ||
+        error.message ||
+        (full ? "Failed to register patient" : "Failed to save patient");
       setSaveError(errorMessage);
-      alert(` Error saving patient: ${errorMessage}`);
+      alert(` Error ${full ? "registering" : "saving"} patient: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Finish — one atomic register (patient + RP + alerts + questionnaires + recalls
-  // + opening balance), then attach insurance. A register failure rolls back the
-  // whole patient; insurance is best-effort and surfaced as a warning.
+  // Quick Save — atomic register of just the patient (+ self-RP link + opening
+  // balance), then straight to Overview (skips the rest of the wizard).
+  const handleQuickSave = async () => {
+    if (!validateStep1()) return;
+    await runRegistration(false, false);
+  };
+
+  // Finish — one atomic register (patient + RP + alerts + questionnaires +
+  // opening balance), then attach insurance / recalls / emergency contact.
   const handleFinish = async () => {
     if (!validateStep1()) {
       goToStep(0);
@@ -1211,39 +1248,21 @@ export default function AddNewPatient({
       if (rpIndex >= 0) goToStep(rpIndex);
       return;
     }
-    setIsSaving(true);
-    setSaveError(null);
-    try {
-      const officeIdNum = getOfficeIdNum();
-      if (!officeIdNum) {
-        setSaveError("Invalid office ID");
-        alert(" Invalid office ID — please select an office.");
-        return;
-      }
-      const res = await registerPatientResilient(buildRegisterRequest(officeIdNum, true));
-      const warnings = [
-        ...res.warnings,
-        ...(await persistPostRegister(res.patient_id, officeIdNum)),
-      ];
-      if (warnings.length > 0) {
-        alert(` Patient registered. Some items need attention:\n• ${warnings.join("\n• ")}`);
-      } else {
-        alert(" Patient registered successfully!");
-      }
-      // Embedded (modal) create: hand the new patient back to the host flow.
-      if (isModal) {
-        onSaved?.(res.patient_id);
-        return;
-      }
-      navigate(`/patient/${res.patient_id}/overview`);
-    } catch (error: any) {
-      console.error("Error registering patient:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Failed to register patient";
-      setSaveError(errorMessage);
-      alert(` Error registering patient: ${errorMessage}`);
-    } finally {
-      setIsSaving(false);
-    }
+    await runRegistration(true, false);
+  };
+
+  /** Duplicate modal — "Continue": resume a server-blocked registration, forced. */
+  const handleDuplicateContinue = () => {
+    setShowDuplicateModal(false);
+    const pending = pendingRegistration;
+    setPendingRegistration(null);
+    if (pending) void runRegistration(pending.full, true);
+  };
+
+  /** Duplicate modal — dismiss without creating anything. */
+  const handleDuplicateDismiss = () => {
+    setShowDuplicateModal(false);
+    setPendingRegistration(null);
   };
 
   /**
@@ -2992,7 +3011,7 @@ export default function AddNewPatient({
                 ⚠️ Identical Patients Found
               </h2>
               <button
-                onClick={() => setShowDuplicateModal(false)}
+                onClick={handleDuplicateDismiss}
                 className="text-white hover:text-gray-200"
               >
                 <X className="w-6 h-6" />
@@ -3001,8 +3020,9 @@ export default function AddNewPatient({
 
             <div className="p-6">
               <p className="text-sm text-[#64748B] mb-4">
-                The following patients match the identity information entered. Review
-                before creating a new patient.
+                {pendingRegistration
+                  ? "The save was blocked because these existing patients strongly match the details entered (same SSN, chart number, or name + date of birth). Review them — continuing creates a separate new patient."
+                  : "The following patients match the identity information entered. Review before creating a new patient."}
               </p>
 
               <div className="overflow-x-auto">
@@ -3041,12 +3061,12 @@ export default function AddNewPatient({
                         key={index}
                         className="border-b border-[#E2E8F0] hover:bg-[#F7F9FC]"
                       >
-                        <td className="px-4 py-2">{patient.birthdate}</td>
+                        <td className="px-4 py-2">{patient.dob}</td>
                         <td className="px-4 py-2 font-semibold text-[#1F3A5F]">
                           {patient.name}
                         </td>
-                        <td className="px-4 py-2">{patient.officeShortId}</td>
-                        <td className="px-4 py-2">{patient.patientId}</td>
+                        <td className="px-4 py-2">{patient.home_office_short_id}</td>
+                        <td className="px-4 py-2">{patient.patient_id}</td>
                         <td className="px-4 py-2">{patient.email}</td>
                         <td className="px-4 py-2">{patient.provider}</td>
                         <td className="px-4 py-2">
@@ -3068,11 +3088,19 @@ export default function AddNewPatient({
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
+                {pendingRegistration && (
+                  <button
+                    onClick={handleDuplicateDismiss}
+                    className="px-6 py-2 border border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#F7F9FC] transition-colors font-semibold text-sm"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
-                  onClick={() => setShowDuplicateModal(false)}
+                  onClick={handleDuplicateContinue}
                   className="px-6 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-semibold text-sm"
                 >
-                  Close & Continue Creating Patient
+                  {pendingRegistration ? "Create Anyway" : "Close & Continue Creating Patient"}
                 </button>
               </div>
             </div>

@@ -5,6 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { ActiveMedicalAlert } from './activeMedicalAlert';
+import type { PrescriptionAlertWarning } from './prescriptionAlertWarning';
 
 export interface PrescriptionRead {
   patient_id: number;
@@ -22,7 +24,14 @@ export interface PrescriptionRead {
   is_active: boolean;
   dosespot_rx_id?: string | null;
   dosespot_status?: string | null;
+  alerts_acknowledged?: boolean;
+  acknowledged_alert_ids?: number[] | null;
+  acknowledged_alerts?: ActiveMedicalAlert[] | null;
+  alert_warnings?: PrescriptionAlertWarning[] | null;
+  alerts_acknowledged_at?: string | null;
+  alerts_acknowledged_by?: number | null;
   created_by?: number | null;
   id: number;
   created_at: string;
+  warnings?: PrescriptionAlertWarning[];
 }

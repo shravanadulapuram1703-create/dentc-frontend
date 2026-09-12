@@ -1,7 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
-  Calendar,
   User,
   CreditCard,
   BookOpen,
@@ -29,9 +28,13 @@ import {
   HeartPulse,
   ShieldCheck,
 } from "lucide-react";
+import { PatientShellToggle } from "./PatientShellToggle";
 
 interface PatientSecondaryNavProps {
   patientId: string;
+  /** Minimized: the icon strip is replaced by a slim bar naming the current tab. */
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 interface PatientAction {
@@ -50,13 +53,11 @@ interface PatientAction {
 
 export default function PatientSecondaryNav({
   patientId,
+  collapsed,
+  onToggleCollapsed,
 }: PatientSecondaryNavProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-
-  const handleSchedulerClick = () => {
-    window.open("/scheduler", "_blank");
-  };
 
   const handleNavigation = (path: string) => {
     navigate(`/patient/${patientId}${path}`);
@@ -66,13 +67,6 @@ export default function PatientSecondaryNav({
   // Restorative → Perio → X-Ray(Imaging) → Progress → Treatment — which now lives
   // only here (the duplicate in-chart tab row was removed).
   const patientActions: PatientAction[] = [
-    {
-      icon: Calendar,
-      label: "Scheduler",
-      gradient: "from-blue-600 to-cyan-600",
-      onClick: handleSchedulerClick,
-      description: "Open Scheduler (New Window)",
-    },
     {
       icon: User,
       label: "Overview",
@@ -271,16 +265,57 @@ export default function PatientSecondaryNav({
   ];
 
   const base = `/patient/${patientId}`;
+  const isActionActive = (action: PatientAction) => {
+    const matchSeg = action.activeMatch ?? action.path;
+    return !!matchSeg && pathname.startsWith(base + matchSeg);
+  };
+  const activeAction = patientActions.find(isActionActive);
+
+  if (collapsed) {
+    return (
+      <div className="flex items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-6 py-1">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500">
+          <span className="font-semibold uppercase tracking-wide text-[11px]">Patient tabs</span>
+          {activeAction && (
+            <>
+              <span className="text-slate-300">|</span>
+              <span className={`flex h-5 w-5 items-center justify-center rounded bg-gradient-to-br ${activeAction.gradient}`}>
+                <activeAction.icon className="h-3 w-3 text-white" strokeWidth={2.5} />
+              </span>
+              <span className="truncate font-semibold text-slate-800">{activeAction.label}</span>
+            </>
+          )}
+        </div>
+        <PatientShellToggle
+          collapsed
+          onClick={onToggleCollapsed}
+          target="patient tabs"
+          caption={{ collapsed: "Show tabs", expanded: "Hide tabs" }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white border-t-2 border-slate-200">
-      {/* Patient Action Icons - Medical Theme */}
+    <div className="relative bg-white border-t-2 border-slate-200">
+      {/* Minimize control — floats over the right edge with a white fade so
+          the scrolling icon strip slides underneath it. */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center bg-gradient-to-l from-white via-white to-transparent pl-10 pr-4">
+        <div className="pointer-events-auto">
+          <PatientShellToggle
+            collapsed={false}
+            onClick={onToggleCollapsed}
+            target="patient tabs"
+            caption={{ collapsed: "Show tabs", expanded: "Hide tabs" }}
+          />
+        </div>
+      </div>
 
-      <div className="px-6 py-3 overflow-x-auto overflow-y-visible">
+      {/* Patient Action Icons - Medical Theme */}
+      <div className="px-6 pr-32 py-3 overflow-x-auto overflow-y-visible">
         <div className="flex items-center gap-2.5 min-w-max">
           {patientActions.map((action, index) => {
-            const matchSeg = action.activeMatch ?? action.path;
-            const isActive = !!matchSeg && pathname.startsWith(base + matchSeg);
+            const isActive = isActionActive(action);
             const onClick = action.onClick ?? (() => handleNavigation(action.path!));
             return (
               <button

@@ -1,13 +1,14 @@
 // Lab Tracking reports (legacy M12 — "Lab Report" and "Lab Cost Report").
 //
-// The backend has no reporting/export endpoint (gap LAB-4), so both reports are
-// rendered client-side with jsPDF + autotable from the in-memory lab cases. The
+// The server renders these (`GET /appointments/lab-cases/report.pdf`,
+// `…/cost-report.pdf`, LAB-4); these jsPDF + autotable builders are the
+// offline fallback used by openServerReport when the route is unreachable. The
 // page is patient-scoped, so the patient name lives in the header and the rows
 // drop the per-row patient column the office-wide legacy report carried.
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { deriveStatus, fmtDate, fmtTime, STATUS_META, type LabCase } from './labModel';
+import { fmtDate, fmtTime, STATUS_META, statusOf, type LabCase } from './labModel';
 
 export interface LabReportHeader {
   officeName: string;
@@ -52,15 +53,16 @@ export function printLabReport(cases: LabCase[], header: LabReportHeader): void 
     fmtTime(c.start_time),
     c.provider_name || '—',
     c.procedure_label || '—',
+    c.lab_vendor_name || '—',
     fmtDate(c.lab_sent_on),
     fmtDate(c.lab_due_on),
     fmtDate(c.lab_received_on),
-    STATUS_META[deriveStatus(c)].label,
+    STATUS_META[statusOf(c)].label,
     money(c.lab_cost),
   ]);
   const total = cases.reduce((s, c) => s + c.lab_cost, 0);
   body.push([
-    { content: 'Total', colSpan: 8, styles: { fontStyle: 'bold', halign: 'right' } } as unknown as string,
+    { content: 'Total', colSpan: 9, styles: { fontStyle: 'bold', halign: 'right' } } as unknown as string,
     money(total),
   ]);
 
@@ -68,11 +70,11 @@ export function printLabReport(cases: LabCase[], header: LabReportHeader): void 
     startY,
     margin: { left: marginX, right: marginX },
     theme: 'grid',
-    head: [['Appt Date', 'Time', 'Provider', 'Description', 'Sent', 'Due', 'Recvd', 'Status', 'Charges']],
+    head: [['Appt Date', 'Time', 'Provider', 'Description', 'Lab', 'Sent', 'Due', 'Recvd', 'Status', 'Charges']],
     body,
     headStyles: { fillColor: [219, 228, 234], textColor: [40, 40, 40], fontSize: 7.5 },
     styles: { fontSize: 7.5, cellPadding: 2.5, lineColor: [180, 180, 180] },
-    columnStyles: { 8: { halign: 'right' } },
+    columnStyles: { 9: { halign: 'right' } },
   });
 
   doc.autoPrint();
@@ -89,6 +91,7 @@ export function printLabCostReport(cases: LabCase[], header: LabReportHeader): v
     fmtDate(c.date),
     c.provider_name || '—',
     c.procedure_label || '—',
+    c.lab_vendor_name || '—',
     fmtDate(c.lab_sent_on),
     fmtDate(c.lab_due_on),
     fmtDate(c.lab_received_on),
@@ -96,7 +99,7 @@ export function printLabCostReport(cases: LabCase[], header: LabReportHeader): v
   ]);
   const total = cases.reduce((s, c) => s + c.lab_cost, 0);
   body.push([
-    { content: 'Total Lab Cost', colSpan: 6, styles: { fontStyle: 'bold', halign: 'right' } } as unknown as string,
+    { content: 'Total Lab Cost', colSpan: 7, styles: { fontStyle: 'bold', halign: 'right' } } as unknown as string,
     money(total),
   ]);
 
@@ -104,11 +107,11 @@ export function printLabCostReport(cases: LabCase[], header: LabReportHeader): v
     startY,
     margin: { left: marginX, right: marginX },
     theme: 'grid',
-    head: [['Appt Date', 'Provider', 'Description', 'Lab Sent', 'Lab Due', 'Lab Recvd', 'Charges']],
+    head: [['Appt Date', 'Provider', 'Description', 'Lab', 'Lab Sent', 'Lab Due', 'Lab Recvd', 'Charges']],
     body,
     headStyles: { fillColor: [219, 228, 234], textColor: [40, 40, 40], fontSize: 7.5 },
     styles: { fontSize: 7.5, cellPadding: 2.5, lineColor: [180, 180, 180] },
-    columnStyles: { 6: { halign: 'right' } },
+    columnStyles: { 7: { halign: 'right' } },
   });
 
   doc.autoPrint();

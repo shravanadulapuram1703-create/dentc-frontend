@@ -43,16 +43,30 @@ import type {
   BookingRequestRead,
   DeclineInput,
   ErrorResponse,
+  ExportLabCasesCsvParams,
+  GetLabCostReportParams,
+  GetLabNameAvailabilityParams,
   HTTPValidationError,
+  LabCaseListResponse,
+  LabCostReport,
+  LabCreate,
+  LabNameAvailability,
+  LabRead,
+  LabUpdate,
   ListAppointmentProceduresParams,
   ListAppointmentsParams,
   ListAppointnowReasonsParams,
   ListFamilyAppointmentsParams,
+  ListLabCasesParams,
+  ListLabsParams,
   ListSchedulerAppointmentsParams,
   PaginatedResponseAppointNowReasonRead,
   PaginatedResponseAppointmentProcedureRead,
   PaginatedResponseAppointmentRead,
+  PaginatedResponseLabRead,
   PatientMatch,
+  PrintLabCostReportParams,
+  PrintLabReportParams,
   PublicOfficeInfo,
   RequestListResponse,
   SubmitRequestInput
@@ -63,6 +77,567 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * Office-wide or per-patient lab tracking in one call: patient / provider / office / lab names resolved, `lab_status` derived server-side, per-status `counts` computed over every filter except `lab_status` (so the review tabs keep their badges), and `total_cost` over the selected set. `sort` accepts date (default), lab_sent_on, lab_due_on, lab_received_on, lab_cost, patient_name, provider_name, lab_vendor_name, created_at, updated_at. `search` matches patient name / chart no / id, description, DDS and lab name.
+ * @summary Lab cases (has_lab appointments) — denormalised, filtered, server-paged (LAB-2/5)
+ */
+export const listLabCases = (
+    params?: ListLabCasesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LabCaseListResponse>(
+      {url: `/api/v1/appointments/lab-cases`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListLabCasesQueryKey = (params?: ListLabCasesParams,) => {
+    return [
+    `/api/v1/appointments/lab-cases`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListLabCasesQueryOptions = <TData = Awaited<ReturnType<typeof listLabCases>>, TError = ErrorType<ErrorResponse>>(params?: ListLabCasesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabCases>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLabCasesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLabCases>>> = ({ signal }) => listLabCases(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLabCases>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListLabCasesQueryResult = NonNullable<Awaited<ReturnType<typeof listLabCases>>>
+export type ListLabCasesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListLabCases<TData = Awaited<ReturnType<typeof listLabCases>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListLabCasesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabCases>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLabCases>>,
+          TError,
+          Awaited<ReturnType<typeof listLabCases>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListLabCases<TData = Awaited<ReturnType<typeof listLabCases>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListLabCasesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabCases>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLabCases>>,
+          TError,
+          Awaited<ReturnType<typeof listLabCases>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListLabCases<TData = Awaited<ReturnType<typeof listLabCases>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListLabCasesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabCases>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lab cases (has_lab appointments) — denormalised, filtered, server-paged (LAB-2/5)
+ */
+
+export function useListLabCases<TData = Awaited<ReturnType<typeof listLabCases>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListLabCasesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabCases>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListLabCasesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Lab Cost Report — lab_cost totals over a date range, grouped (LAB-4)
+ */
+export const getLabCostReport = (
+    params?: GetLabCostReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LabCostReport>(
+      {url: `/api/v1/appointments/lab-cases/cost-report`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetLabCostReportQueryKey = (params?: GetLabCostReportParams,) => {
+    return [
+    `/api/v1/appointments/lab-cases/cost-report`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetLabCostReportQueryOptions = <TData = Awaited<ReturnType<typeof getLabCostReport>>, TError = ErrorType<ErrorResponse>>(params?: GetLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabCostReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLabCostReportQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLabCostReport>>> = ({ signal }) => getLabCostReport(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLabCostReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLabCostReportQueryResult = NonNullable<Awaited<ReturnType<typeof getLabCostReport>>>
+export type GetLabCostReportQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetLabCostReport<TData = Awaited<ReturnType<typeof getLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  GetLabCostReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabCostReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLabCostReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLabCostReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLabCostReport<TData = Awaited<ReturnType<typeof getLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabCostReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLabCostReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLabCostReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLabCostReport<TData = Awaited<ReturnType<typeof getLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabCostReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lab Cost Report — lab_cost totals over a date range, grouped (LAB-4)
+ */
+
+export function useGetLabCostReport<TData = Awaited<ReturnType<typeof getLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabCostReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetLabCostReportQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Lab Report (Not Sent / Not Received / Received / all) as a PDF (LAB-4)
+ */
+export const printLabReport = (
+    params?: PrintLabReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/appointments/lab-cases/report.pdf`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getPrintLabReportQueryKey = (params?: PrintLabReportParams,) => {
+    return [
+    `/api/v1/appointments/lab-cases/report.pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getPrintLabReportQueryOptions = <TData = Awaited<ReturnType<typeof printLabReport>>, TError = ErrorType<ErrorResponse>>(params?: PrintLabReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPrintLabReportQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof printLabReport>>> = ({ signal }) => printLabReport(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof printLabReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PrintLabReportQueryResult = NonNullable<Awaited<ReturnType<typeof printLabReport>>>
+export type PrintLabReportQueryError = ErrorType<ErrorResponse>
+
+
+export function usePrintLabReport<TData = Awaited<ReturnType<typeof printLabReport>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  PrintLabReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof printLabReport>>,
+          TError,
+          Awaited<ReturnType<typeof printLabReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePrintLabReport<TData = Awaited<ReturnType<typeof printLabReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: PrintLabReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof printLabReport>>,
+          TError,
+          Awaited<ReturnType<typeof printLabReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePrintLabReport<TData = Awaited<ReturnType<typeof printLabReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: PrintLabReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lab Report (Not Sent / Not Received / Received / all) as a PDF (LAB-4)
+ */
+
+export function usePrintLabReport<TData = Awaited<ReturnType<typeof printLabReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: PrintLabReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPrintLabReportQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Lab Cost Report as a PDF (LAB-4)
+ */
+export const printLabCostReport = (
+    params?: PrintLabCostReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/appointments/lab-cases/cost-report.pdf`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getPrintLabCostReportQueryKey = (params?: PrintLabCostReportParams,) => {
+    return [
+    `/api/v1/appointments/lab-cases/cost-report.pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getPrintLabCostReportQueryOptions = <TData = Awaited<ReturnType<typeof printLabCostReport>>, TError = ErrorType<ErrorResponse>>(params?: PrintLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabCostReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPrintLabCostReportQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof printLabCostReport>>> = ({ signal }) => printLabCostReport(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof printLabCostReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PrintLabCostReportQueryResult = NonNullable<Awaited<ReturnType<typeof printLabCostReport>>>
+export type PrintLabCostReportQueryError = ErrorType<ErrorResponse>
+
+
+export function usePrintLabCostReport<TData = Awaited<ReturnType<typeof printLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  PrintLabCostReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabCostReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof printLabCostReport>>,
+          TError,
+          Awaited<ReturnType<typeof printLabCostReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePrintLabCostReport<TData = Awaited<ReturnType<typeof printLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: PrintLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabCostReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof printLabCostReport>>,
+          TError,
+          Awaited<ReturnType<typeof printLabCostReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePrintLabCostReport<TData = Awaited<ReturnType<typeof printLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: PrintLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabCostReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lab Cost Report as a PDF (LAB-4)
+ */
+
+export function usePrintLabCostReport<TData = Awaited<ReturnType<typeof printLabCostReport>>, TError = ErrorType<ErrorResponse>>(
+ params?: PrintLabCostReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof printLabCostReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPrintLabCostReportQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Lab cases as CSV (Excel export, LAB-4)
+ */
+export const exportLabCasesCsv = (
+    params?: ExportLabCasesCsvParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/appointments/lab-cases/export.csv`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getExportLabCasesCsvQueryKey = (params?: ExportLabCasesCsvParams,) => {
+    return [
+    `/api/v1/appointments/lab-cases/export.csv`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportLabCasesCsvQueryOptions = <TData = Awaited<ReturnType<typeof exportLabCasesCsv>>, TError = ErrorType<ErrorResponse>>(params?: ExportLabCasesCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLabCasesCsv>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportLabCasesCsvQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportLabCasesCsv>>> = ({ signal }) => exportLabCasesCsv(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportLabCasesCsv>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportLabCasesCsvQueryResult = NonNullable<Awaited<ReturnType<typeof exportLabCasesCsv>>>
+export type ExportLabCasesCsvQueryError = ErrorType<ErrorResponse>
+
+
+export function useExportLabCasesCsv<TData = Awaited<ReturnType<typeof exportLabCasesCsv>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ExportLabCasesCsvParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLabCasesCsv>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLabCasesCsv>>,
+          TError,
+          Awaited<ReturnType<typeof exportLabCasesCsv>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportLabCasesCsv<TData = Awaited<ReturnType<typeof exportLabCasesCsv>>, TError = ErrorType<ErrorResponse>>(
+ params?: ExportLabCasesCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLabCasesCsv>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLabCasesCsv>>,
+          TError,
+          Awaited<ReturnType<typeof exportLabCasesCsv>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportLabCasesCsv<TData = Awaited<ReturnType<typeof exportLabCasesCsv>>, TError = ErrorType<ErrorResponse>>(
+ params?: ExportLabCasesCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLabCasesCsv>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Lab cases as CSV (Excel export, LAB-4)
+ */
+
+export function useExportLabCasesCsv<TData = Awaited<ReturnType<typeof exportLabCasesCsv>>, TError = ErrorType<ErrorResponse>>(
+ params?: ExportLabCasesCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLabCasesCsv>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportLabCasesCsvQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Is this lab name free? (the same check POST /labs enforces with a 409)
+ */
+export const getLabNameAvailability = (
+    params: GetLabNameAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LabNameAvailability>(
+      {url: `/api/v1/labs/name-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetLabNameAvailabilityQueryKey = (params?: GetLabNameAvailabilityParams,) => {
+    return [
+    `/api/v1/labs/name-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetLabNameAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getLabNameAvailability>>, TError = ErrorType<ErrorResponse>>(params: GetLabNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLabNameAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLabNameAvailability>>> = ({ signal }) => getLabNameAvailability(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLabNameAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLabNameAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getLabNameAvailability>>>
+export type GetLabNameAvailabilityQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetLabNameAvailability<TData = Awaited<ReturnType<typeof getLabNameAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: GetLabNameAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabNameAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLabNameAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof getLabNameAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLabNameAvailability<TData = Awaited<ReturnType<typeof getLabNameAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: GetLabNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabNameAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLabNameAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof getLabNameAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLabNameAvailability<TData = Awaited<ReturnType<typeof getLabNameAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: GetLabNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Is this lab name free? (the same check POST /labs enforces with a 409)
+ */
+
+export function useGetLabNameAvailability<TData = Awaited<ReturnType<typeof getLabNameAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: GetLabNameAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLabNameAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetLabNameAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 
@@ -1426,6 +2001,379 @@ export const useDeleteAppointment = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteAppointmentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List labs
+ */
+export const listLabs = (
+    params?: ListLabsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseLabRead>(
+      {url: `/api/v1/labs`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListLabsQueryKey = (params?: ListLabsParams,) => {
+    return [
+    `/api/v1/labs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListLabsQueryOptions = <TData = Awaited<ReturnType<typeof listLabs>>, TError = ErrorType<ErrorResponse>>(params?: ListLabsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLabsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLabs>>> = ({ signal }) => listLabs(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLabs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListLabsQueryResult = NonNullable<Awaited<ReturnType<typeof listLabs>>>
+export type ListLabsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListLabs<TData = Awaited<ReturnType<typeof listLabs>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListLabsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabs>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLabs>>,
+          TError,
+          Awaited<ReturnType<typeof listLabs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListLabs<TData = Awaited<ReturnType<typeof listLabs>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListLabsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabs>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLabs>>,
+          TError,
+          Awaited<ReturnType<typeof listLabs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListLabs<TData = Awaited<ReturnType<typeof listLabs>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListLabsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List labs
+ */
+
+export function useListLabs<TData = Awaited<ReturnType<typeof listLabs>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListLabsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLabs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListLabsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create lab
+ */
+export const createLab = (
+    labCreate: BodyType<LabCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LabRead>(
+      {url: `/api/v1/labs`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: labCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateLabMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLab>>, TError,{data: BodyType<LabCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLab>>, TError,{data: BodyType<LabCreate>}, TContext> => {
+
+const mutationKey = ['createLab'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLab>>, {data: BodyType<LabCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createLab(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLabMutationResult = NonNullable<Awaited<ReturnType<typeof createLab>>>
+    export type CreateLabMutationBody = BodyType<LabCreate>
+    export type CreateLabMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create lab
+ */
+export const useCreateLab = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLab>>, TError,{data: BodyType<LabCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createLab>>,
+        TError,
+        {data: BodyType<LabCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateLabMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get lab by id
+ */
+export const getLab = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LabRead>(
+      {url: `/api/v1/labs/${itemId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetLabQueryKey = (itemId: number,) => {
+    return [
+    `/api/v1/labs/${itemId}`
+    ] as const;
+    }
+
+
+export const getGetLabQueryOptions = <TData = Awaited<ReturnType<typeof getLab>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLab>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLabQueryKey(itemId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLab>>> = ({ signal }) => getLab(itemId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLab>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLabQueryResult = NonNullable<Awaited<ReturnType<typeof getLab>>>
+export type GetLabQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetLab<TData = Awaited<ReturnType<typeof getLab>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLab>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLab>>,
+          TError,
+          Awaited<ReturnType<typeof getLab>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLab<TData = Awaited<ReturnType<typeof getLab>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLab>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLab>>,
+          TError,
+          Awaited<ReturnType<typeof getLab>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLab<TData = Awaited<ReturnType<typeof getLab>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLab>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get lab by id
+ */
+
+export function useGetLab<TData = Awaited<ReturnType<typeof getLab>>, TError = ErrorType<ErrorResponse>>(
+ itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLab>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetLabQueryOptions(itemId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update lab
+ */
+export const updateLab = (
+    itemId: number,
+    labUpdate: BodyType<LabUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<LabRead>(
+      {url: `/api/v1/labs/${itemId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: labUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateLabMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLab>>, TError,{itemId: number;data: BodyType<LabUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLab>>, TError,{itemId: number;data: BodyType<LabUpdate>}, TContext> => {
+
+const mutationKey = ['updateLab'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLab>>, {itemId: number;data: BodyType<LabUpdate>}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateLab(itemId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLabMutationResult = NonNullable<Awaited<ReturnType<typeof updateLab>>>
+    export type UpdateLabMutationBody = BodyType<LabUpdate>
+    export type UpdateLabMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update lab
+ */
+export const useUpdateLab = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLab>>, TError,{itemId: number;data: BodyType<LabUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateLab>>,
+        TError,
+        {itemId: number;data: BodyType<LabUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateLabMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete lab
+ */
+export const deleteLab = (
+    itemId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/labs/${itemId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteLabMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLab>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLab>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteLab'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLab>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteLab(itemId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLabMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLab>>>
+
+    export type DeleteLabMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete lab
+ */
+export const useDeleteLab = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLab>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLab>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteLabMutationOptions(options), queryClient);
     }
     /**
  * @summary List appointment procedures

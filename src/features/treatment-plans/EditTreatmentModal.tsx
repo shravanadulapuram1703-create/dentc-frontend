@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type {
+  IcdCodeRead,
+  ItemIcdCodeRead,
   ProcedureCodeRead,
   ProviderRead,
+  ReferralRead,
   TreatmentPlanInsuranceDetailRead,
   TreatmentPlanItemRead,
   TreatmentPlanItemUpdate,
+  UserRead,
 } from '@/api/generated/model';
 import { listTreatmentPlanInsuranceDetails } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
 import { resolveProcedureFee, type FeeScheduleContext } from '@/services/feeScheduleResolver';
+import { providerOptionLabel } from '@/services/providerDirectory';
 import ToothNumberPicker from '@/features/progress-notes/ToothNumberPicker';
 import { SETTABLE_STATUSES, STATUS_LABEL, num, type SettableTxStatus, normalizeStatus } from './txModel';
-import { providerOptionLabel } from '@/services/providerDirectory';
+import { listAllReferrals, loadAllUsers, searchIcdCodes } from './treatmentPlanService';
 
 // Legacy Denticon M08 "EDIT TREATMENT" window — the per-procedure detail editor
 // opened by double-clicking a grid row (or clicking its Diag Date link). The
@@ -20,28 +25,31 @@ import { providerOptionLabel } from '@/services/providerDirectory';
 // DENTAL CROSS CODING / NOTES strip and the DELETE · HIDE DENTAL · SAVE ·
 // CANCEL footer.
 //
-// Backend homes (all snake_case, written unchanged):
-//   treatment_plan_item      — tx plan (re-parent), phase_id, description,
-//                              provider_id(+diagnosed_by), tooth, surface, fee,
-//                              insurance_estimate, discount, status,
-//                              diagnosed/start/end dates
-//   treatment-plan-insurance-details (one row per item) — preauth_date, notes,
-//                              and the ADVANCED read-only coverage figures
-// Fields with no backend column are rendered disabled with a "†" and are not
-// saved (see the gap list in docs/treatment-plans/treatment_plan_backend_devreport.md).
+// Backend homes (all snake_case, written unchanged — see
+// docs/treatment-plans/treatment_plan_edit_backend_response.md):
+//   treatment_plan_item — tx plan (re-parent), phase_id, description,
+//     provider_id(+diagnosed_by), tooth, surface, fee, insurance_estimate,
+//     discount, status (incl. scheduled / internal_referral / external_referral),
+//     diagnosed/start/end/accepted/scheduled dates, duration_minutes, notes,
+//     counselor_user_id, referral_id + referral_type, the two "at posting"
+//     flags, icd_code_ids (replaces the set), created/updated_by_name,
+//     fee_schedule_name (read-only, stamped by the server pricing)
+//   treatment-plan-insurance-details (one row per item) — preauth_date,
+//     preauth_status (sent/closed) and the ADVANCED read-only coverage figures
+// `completed` is server-derived (posting a charge) and is never sent.
 
 export interface EditTreatmentInsuranceDetailSave {
   /** Existing detail row id (PATCH) or null (POST a new row for the item). */
   id: number | null;
   preauth_date: string | null;
-  notes: string | null;
+  preauth_status: string | null;
 }
 
 export interface EditTreatmentSave {
   patch: TreatmentPlanItemUpdate;
   /** Target legacy Tx Plan ID when the user re-parents the item (else null). */
   targetTid: number | null;
-  /** Pre Auth Date / Notes changes (insurance-detail row); null when untouched. */
+  /** Pre Auth Date / Status changes (insurance-detail row); null when untouched. */
   insurance_detail: EditTreatmentInsuranceDetailSave | null;
 }
 
@@ -68,24 +76,25 @@ const input =
   'h-6 w-full rounded-sm border border-slate-300 bg-white px-1.5 text-xs text-slate-800 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500';
 const selectInput = `${input} tx-select`;
 const readonlyInput = 'h-6 w-full rounded-sm border border-slate-200 bg-slate-100 px-1.5 text-xs text-slate-600';
-const gatedInput = `${input} cursor-not-allowed bg-slate-50 text-slate-400`;
 const footerBtn =
   'rounded bg-sky-800 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-40';
 const smallBtn =
   'rounded bg-sky-700 px-2 py-0.5 text-[10px] font-bold uppercase text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-40';
 const panelTitle = 'px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-700';
 
+/** Statuses the legacy window exposes as checkboxes (mutually exclusive with the radios). */
+const CHECKBOX_STATUSES: { value: SettableTxStatus; label: string }[] = [
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'internal_referral', label: 'Internal Referral' },
+  { value: 'external_referral', label: 'External Referral' },
+];
+
 /** One legacy label | field row inside a column. */
-function Row({ label, gated, children }: { label: string; gated?: boolean; children: ReactNode }) {
+function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
-      <div
-        className={`flex min-h-8 items-center border-b border-r border-slate-300 bg-slate-50 px-2 text-[11px] font-semibold ${
-          gated ? 'text-slate-400' : 'text-slate-700'
-        }`}
-      >
+      <div className="flex min-h-8 items-center border-b border-r border-slate-300 bg-slate-50 px-2 text-[11px] font-semibold text-slate-700">
         {label}
-        {gated && <span className="ml-0.5">†</span>}
       </div>
       <div className="flex min-h-8 items-center gap-1 border-b border-slate-300 px-1">{children}</div>
     </>
@@ -125,6 +134,17 @@ function fmtMoney(v: number): string {
 function fmtDetailMoney(v: string | null | undefined): string {
   return v == null || v === '' ? '—' : fmtMoney(num(v));
 }
+function userLabel(u: UserRead): string {
+  const name = `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim();
+  return name ? `${name} (${u.username})` : u.username;
+}
+function referralLabel(r: ReferralRead): string {
+  const person = [r.last_name, r.first_name].filter(Boolean).join(', ');
+  return person || r.practice_name || r.contact_name || `Referral #${r.id}`;
+}
+function icdLabel(c: { code?: string | null; icd10?: string | null; description?: string | null }): string {
+  return [c.icd10 || c.code, c.description].filter(Boolean).join(' — ');
+}
 
 export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   const { item, providers, availableTids, currentTid, completed, officeName, procedureCode, feeCtx, descriptionFallback, busy } =
@@ -135,11 +155,15 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   const [phaseId, setPhaseId] = useState<string>(item.phase_id != null ? String(item.phase_id) : '');
   const [description, setDescription] = useState<string>(item.description ?? descriptionFallback ?? '');
   const [providerId, setProviderId] = useState<string>(item.provider_id ?? item.diagnosed_by ?? '');
+  const [counselorUserId, setCounselorUserId] = useState<string>(
+    item.counselor_user_id != null ? String(item.counselor_user_id) : '',
+  );
   const [tooth, setTooth] = useState<string>(item.tooth ?? '');
   const [surface, setSurface] = useState<string>(item.surface ?? '');
   const [fee, setFee] = useState<string>(item.fee ?? '0');
   const [estIns, setEstIns] = useState<string>(item.insurance_estimate ?? '0');
   const [discount, setDiscount] = useState<string>(item.discount ?? '');
+  const [duration, setDuration] = useState<string>(item.duration_minutes != null ? String(item.duration_minutes) : '');
   const [status, setStatus] = useState<SettableTxStatus>(() => {
     const s = normalizeStatus(item.status);
     return s === 'completed' ? 'diagnosed' : s;
@@ -147,28 +171,48 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   const [diagnosedDate, setDiagnosedDate] = useState<string>(toDateInput(item.diagnosed_date ?? item.created_at));
   const [startDate, setStartDate] = useState<string>(toDateInput(item.start_date));
   const [endDate, setEndDate] = useState<string>(toDateInput(item.end_date));
+  const [acceptedDate, setAcceptedDate] = useState<string>(toDateInput(item.accepted_date));
+  const [scheduledDate, setScheduledDate] = useState<string>(toDateInput(item.scheduled_date));
+  const [referralId, setReferralId] = useState<string>(item.referral_id != null ? String(item.referral_id) : '');
+  const [referralType, setReferralType] = useState<string>(item.referral_type ?? '');
+  const [updateEndDateAtPosting, setUpdateEndDateAtPosting] = useState<boolean>(!!item.update_end_date_at_posting);
+  const [reEstimateAtPosting, setReEstimateAtPosting] = useState<boolean>(!!item.re_estimate_at_posting);
+  const [notes, setNotes] = useState<string>(item.notes ?? '');
+  const [icdCodes, setIcdCodes] = useState<ItemIcdCodeRead[]>(() => [...(item.icd_codes ?? [])]);
 
-  // ---- Per-item insurance detail (Pre Auth Date / Notes / ADVANCED figures) -
+  // ---- Per-item insurance detail (Pre Auth Date / Status / ADVANCED figures)
   const detailQuery = useQuery({
     queryKey: ['tx-item-ins-detail', item.id],
     queryFn: async (): Promise<TreatmentPlanInsuranceDetailRead | null> => {
       const res = await listTreatmentPlanInsuranceDetails({ plan_item_id: item.id, size: 200 });
-      const live = (res.items ?? []).filter((d) => !d.is_archived);
-      return live[0] ?? null;
+      return (res.items ?? [])[0] ?? null;
     },
   });
   const detail = detailQuery.data ?? null;
   const [preauthDate, setPreauthDate] = useState('');
-  const [notes, setNotes] = useState('');
+  const [preauthStatus, setPreauthStatus] = useState('');
   const [detailSeeded, setDetailSeeded] = useState(false);
   useEffect(() => {
     if (!detailQuery.isSuccess || detailSeeded) return;
     setPreauthDate(toDateInput(detail?.preauth_date));
-    setNotes(detail?.notes ?? '');
+    setPreauthStatus((detail?.preauth_status ?? '').toLowerCase());
     setDetailSeeded(true);
   }, [detailQuery.isSuccess, detail, detailSeeded]);
 
-  // ---- Fee schedule used (resolved client-side from Setup assignments) -----
+  // ---- Lookups: counselor users, referral sources, ICD-10 search -----------
+  const usersQuery = useQuery({ queryKey: ['tx-users'], queryFn: loadAllUsers, staleTime: 5 * 60_000 });
+  const referralsQuery = useQuery({ queryKey: ['tx-referrals'], queryFn: listAllReferrals, staleTime: 5 * 60_000 });
+  const [icdQuery, setIcdQuery] = useState('');
+  const icdSearch = useQuery({
+    queryKey: ['tx-icd-search', icdQuery.trim()],
+    enabled: icdQuery.trim().length >= 2,
+    queryFn: () => searchIcdCodes(icdQuery.trim()),
+  });
+
+  // ---- Fee schedule used ----------------------------------------------------
+  // The server stamps `fee_schedule_name` when its pricing produced the fee
+  // (PLAN-29). Older / hand-priced items carry none; fall back to what Setup's
+  // assignments would pick today, flagged as a resolution rather than a record.
   const feeQuery = useQuery({
     queryKey: [
       'tx-fee-schedule-used',
@@ -176,14 +220,18 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
       feeCtx.candidates.map((c) => c.fee_schedule_id).join(','),
       feeCtx.ucr_schedule_id,
     ],
+    enabled: !item.fee_schedule_name,
     queryFn: () =>
       resolveProcedureFee(feeCtx, item.procedure_code, {
         default_fee: procedureCode?.default_fee,
         on_date: item.diagnosed_date ?? null,
       }),
   });
-  const feeScheduleUsed =
-    feeQuery.data?.fee_schedule_name ?? (feeQuery.data?.source === 'code_default' ? 'Code default fee' : '');
+  const feeScheduleUsed = item.fee_schedule_name
+    ? { text: item.fee_schedule_name, title: 'Fee schedule recorded on this procedure' }
+    : feeQuery.data?.fee_schedule_name
+      ? { text: `${feeQuery.data.fee_schedule_name} (resolved)`, title: `Not recorded on the item — ${feeQuery.data.reason}` }
+      : { text: feeQuery.isLoading ? 'Resolving…' : '—', title: 'No fee schedule recorded on this procedure' };
 
   // ---- UI state -------------------------------------------------------------
   const [showDental, setShowDental] = useState(true);
@@ -197,6 +245,7 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   }, [availableTids, currentTid]);
 
   const estPat = Math.max(0, num(fee) - num(estIns));
+  const durationPlaceholder = String(procedureCode?.default_duration_minutes ?? 30);
 
   const submit = () => {
     const patch: TreatmentPlanItemUpdate = {
@@ -212,18 +261,28 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
       fee: fee.trim() === '' ? '0' : fee,
       insurance_estimate: estIns.trim() === '' ? '0' : estIns,
       discount: discount.trim() === '' ? null : discount,
+      duration_minutes: duration.trim() === '' ? null : Number(duration),
       diagnosed_date: fromDateInput(diagnosedDate),
       start_date: fromDateInput(startDate),
       end_date: fromDateInput(endDate),
+      accepted_date: fromDateInput(acceptedDate),
+      scheduled_date: fromDateInput(scheduledDate),
+      counselor_user_id: counselorUserId ? Number(counselorUserId) : null,
+      referral_id: referralId ? Number(referralId) : null,
+      referral_type: referralType || null,
+      update_end_date_at_posting: updateEndDateAtPosting,
+      re_estimate_at_posting: reEstimateAtPosting,
+      notes: notes.trim() || null,
+      icd_code_ids: icdCodes.map((c) => c.id),
     };
     // `completed` is server-derived (422 if set directly) — never send it.
     if (!completed) patch.status = status;
 
     const preauthChanged = preauthDate !== toDateInput(detail?.preauth_date);
-    const notesChanged = notes !== (detail?.notes ?? '');
+    const preauthStatusChanged = preauthStatus !== (detail?.preauth_status ?? '').toLowerCase();
     const insurance_detail: EditTreatmentInsuranceDetailSave | null =
-      detailSeeded && (preauthChanged || notesChanged)
-        ? { id: detail?.id ?? null, preauth_date: fromDateInput(preauthDate), notes: notes.trim() || null }
+      detailSeeded && (preauthChanged || preauthStatusChanged)
+        ? { id: detail?.id ?? null, preauth_date: fromDateInput(preauthDate), preauth_status: preauthStatus || null }
         : null;
 
     props.onSave({ patch, targetTid: tid !== currentTid ? tid : null, insurance_detail });
@@ -232,13 +291,24 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   const pickStatus = (s: SettableTxStatus) => {
     if (!completed) setStatus(s);
   };
+  /** Unchecking a checkbox status falls back to the item's last radio status. */
+  const radioFallback = (): SettableTxStatus => {
+    const before = normalizeStatus(item.status_before_scheduled ?? item.status);
+    return SETTABLE_STATUSES.includes(before as SettableTxStatus) ? (before as SettableTxStatus) : 'diagnosed';
+  };
+
+  const addIcd = (c: IcdCodeRead) => {
+    if (icdCodes.some((x) => x.id === c.id)) return;
+    setIcdCodes((prev) => [...prev, { id: c.id, code: c.code, icd10: c.icd10, description: c.description, ordinal: prev.length }]);
+    setIcdQuery('');
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3">
       <div className="mt-4 w-full max-w-[1200px] rounded border border-sky-900/40 bg-slate-100 shadow-2xl">
         {/* Title bar */}
         <div className="flex items-center justify-between bg-sky-700 px-3 py-1.5 text-white">
-          <h2 className="text-xs font-bold uppercase tracking-wider">Edit Treatment</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider !text-white">Edit Treatment</h2>
           <button className="rounded px-2 text-lg leading-none hover:bg-white/20" onClick={props.onClose} aria-label="Close">
             ×
           </button>
@@ -248,17 +318,17 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.25fr_1.05fr_1fr_1fr]">
             {/* ---- Column 1: identity + billing ---- */}
             <Column labelWidth="140px">
-              <Row label="Treatment Counselor" gated>
+              <Row label="Treatment Counselor">
                 <select
-                  className={`${selectInput} cursor-not-allowed bg-slate-50 text-slate-400`}
-                  value=""
-                  disabled
-                  title="Not stored by the backend yet"
+                  className={selectInput}
+                  value={counselorUserId}
+                  onChange={(e) => setCounselorUserId(e.target.value)}
+                  disabled={usersQuery.isLoading}
                 >
-                  <option value="">—</option>
-                  {providers.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {providerOptionLabel(p)}
+                  <option value="">{usersQuery.isLoading ? 'Loading users…' : '—'}</option>
+                  {(usersQuery.data ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {userLabel(u)}
                     </option>
                   ))}
                 </select>
@@ -372,11 +442,23 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
               <Row label="Start Date">
                 <input type="date" className={input} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </Row>
-              <Row label="Accepted Date" gated>
-                <input className={gatedInput} value="" placeholder="—" disabled />
+              <Row label="Accepted Date">
+                <input
+                  type="date"
+                  className={input}
+                  value={acceptedDate}
+                  title="Stamped automatically the first time the procedure is Accepted; editable"
+                  onChange={(e) => setAcceptedDate(e.target.value)}
+                />
               </Row>
-              <Row label="Scheduled Date" gated>
-                <input className={gatedInput} value="" placeholder="—" disabled />
+              <Row label="Scheduled Date">
+                <input
+                  type="date"
+                  className={input}
+                  value={scheduledDate}
+                  title="Follows the soonest live appointment this procedure is booked on; editable"
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                />
               </Row>
               <Row label="End Date">
                 <input type="date" className={input} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
@@ -399,20 +481,31 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
               <Row label="Surface">
                 <input className={input} value={surface} onChange={(e) => setSurface(e.target.value)} />
               </Row>
-              <Row label="Duration" gated>
+              <Row label="Duration">
                 <input
-                  className={gatedInput}
-                  value={procedureCode?.default_duration_minutes ?? 0}
-                  disabled
-                  title="Per-procedure duration is not stored by the backend yet (code default shown)"
+                  type="number"
+                  min={0}
+                  step={5}
+                  className={`${input} text-right`}
+                  value={duration}
+                  placeholder={durationPlaceholder}
+                  title={`Minutes. Blank = procedure-code default (${durationPlaceholder})`}
+                  onChange={(e) => setDuration(e.target.value)}
                 />
+                <span className="text-[11px] text-slate-500">min</span>
               </Row>
-              <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-300 px-2 py-1.5 text-[11px] text-slate-400">
-                <label className="flex cursor-not-allowed items-center gap-1" title="Not stored by the backend yet">
-                  <input type="checkbox" disabled /> Update End Date At Posting †
+              <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-300 px-2 py-1.5 text-[11px] text-slate-700">
+                <label className="flex items-center gap-1" title="When posted to the ledger, set End Date to the service date even if one is already set">
+                  <input
+                    type="checkbox"
+                    checked={updateEndDateAtPosting}
+                    onChange={(e) => setUpdateEndDateAtPosting(e.target.checked)}
+                  />
+                  Update End Date At Posting
                 </label>
-                <label className="flex cursor-not-allowed items-center gap-1" title="Not stored by the backend yet">
-                  <input type="checkbox" disabled /> Re-Estimate At Posting †
+                <label className="flex items-center gap-1" title="When posted to the ledger, recompute the insurance estimate from today's coverage first">
+                  <input type="checkbox" checked={reEstimateAtPosting} onChange={(e) => setReEstimateAtPosting(e.target.checked)} />
+                  Re-Estimate At Posting
                 </label>
               </div>
             </Column>
@@ -438,31 +531,51 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                     type="checkbox"
                     checked={!completed && status === 'scheduled'}
                     disabled={completed}
-                    onChange={(e) => pickStatus(e.target.checked ? 'scheduled' : 'diagnosed')}
+                    title="Set automatically when the procedure is booked on an appointment; can also be set by hand"
+                    onChange={(e) => pickStatus(e.target.checked ? 'scheduled' : radioFallback())}
                   />
                   Scheduled
                 </label>
-                <label className="flex items-center gap-1.5 text-slate-400" title="Not in the backend status enum">
-                  <input type="checkbox" disabled /> Internal Referral †
-                </label>
+                {CHECKBOX_STATUSES.filter((c) => c.value !== 'scheduled').map((c) => (
+                  <label key={c.value} className={`flex items-center gap-1.5 ${completed ? 'text-slate-400' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={!completed && status === c.value}
+                      disabled={completed}
+                      onChange={(e) => pickStatus(e.target.checked ? c.value : radioFallback())}
+                    />
+                    {c.label}
+                  </label>
+                ))}
                 <label
                   className="flex items-center gap-1.5 text-slate-500"
                   title="Set automatically when a charge is posted to the ledger for this procedure"
                 >
                   <input type="checkbox" checked={completed} disabled readOnly /> Completed
                 </label>
-                <label className="flex items-center gap-1.5 text-slate-400" title="Not in the backend status enum">
-                  <input type="checkbox" disabled /> External Referral †
-                </label>
               </div>
               <div className={`${panelTitle} border-y border-slate-300 bg-slate-50`}>Pre Auth Status</div>
-              <div className="flex gap-6 px-2 py-2 text-xs text-slate-400">
-                <label className="flex cursor-not-allowed items-center gap-1.5" title="Not stored by the backend yet">
-                  <input type="radio" name="preauth" disabled /> Sent †
-                </label>
-                <label className="flex cursor-not-allowed items-center gap-1.5" title="Not stored by the backend yet">
-                  <input type="radio" name="preauth" disabled /> Closed †
-                </label>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 px-2 py-2 text-xs text-slate-700">
+                {['sent', 'closed'].map((s) => (
+                  <label key={s} className="flex items-center gap-1.5">
+                    <input
+                      type="radio"
+                      name="preauth"
+                      checked={preauthStatus === s}
+                      disabled={!detailSeeded}
+                      onChange={() => setPreauthStatus(s)}
+                    />
+                    {s === 'sent' ? 'Sent' : 'Closed'}
+                  </label>
+                ))}
+                {preauthStatus && (
+                  <button type="button" className="text-[11px] text-sky-700 underline" onClick={() => setPreauthStatus('')}>
+                    clear
+                  </button>
+                )}
+                {detail?.preauth_status_at && (
+                  <span className="basis-full text-[10px] text-slate-400">Status set {fmtStamp(detail.preauth_status_at)}</span>
+                )}
               </div>
               {completed && (
                 <div className="mx-2 mb-2 rounded border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] text-teal-800">
@@ -478,14 +591,14 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                   {officeName || '—'}
                 </span>
               </Row>
-              <Row label="Created By" gated>
-                <span className="text-xs text-slate-400">—</span>
+              <Row label="Created By">
+                <span className="truncate text-xs text-slate-700">{item.created_by_name || '—'}</span>
               </Row>
               <Row label="Created On">
                 <span className="text-xs text-slate-700">{fmtStamp(item.created_at)}</span>
               </Row>
-              <Row label="Modified By" gated>
-                <span className="text-xs text-slate-400">—</span>
+              <Row label="Modified By">
+                <span className="truncate text-xs text-slate-700">{item.updated_by_name || '—'}</span>
               </Row>
               <Row label="Modified On">
                 <span className="text-xs text-slate-700">{fmtStamp(item.updated_at)}</span>
@@ -504,18 +617,31 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                 <span className="text-xs text-slate-500">%</span>
               </Row>
               <Row label="Fee Schedule Used">
-                <span className="truncate text-xs text-slate-700" title={feeQuery.data?.reason}>
-                  {feeQuery.isLoading ? 'Resolving…' : feeScheduleUsed || '—'}
+                <span className="truncate text-xs text-slate-700" title={feeScheduleUsed.title}>
+                  {feeScheduleUsed.text}
                 </span>
               </Row>
-              <Row label="Referral Type" gated>
-                <input className={gatedInput} value="" placeholder="—" disabled />
+              <Row label="Referral Type">
+                <select className={selectInput} value={referralType} onChange={(e) => setReferralType(e.target.value)}>
+                  <option value="">—</option>
+                  <option value="in">In (referred to us)</option>
+                  <option value="out">Out (referred elsewhere)</option>
+                </select>
               </Row>
-              <Row label="Referring Dentist" gated>
-                <input className={gatedInput} value="" placeholder="—" disabled />
-                <button type="button" className={smallBtn} disabled title="Not stored by the backend yet">
-                  …
-                </button>
+              <Row label="Referring Dentist">
+                <select
+                  className={selectInput}
+                  value={referralId}
+                  disabled={referralsQuery.isLoading}
+                  onChange={(e) => setReferralId(e.target.value)}
+                >
+                  <option value="">{referralsQuery.isLoading ? 'Loading referrals…' : '—'}</option>
+                  {(referralsQuery.data ?? []).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {referralLabel(r)}
+                    </option>
+                  ))}
+                </select>
               </Row>
             </Column>
           </div>
@@ -530,33 +656,82 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                   </div>
                   <div className="mt-1 border border-slate-300 bg-white">
                     <div className="bg-sky-700 px-2 py-1 text-[11px] font-bold text-white">ICD-10 Diagnostic Codes</div>
-                    <div className="flex h-24 items-center justify-center px-2 text-[11px] text-slate-400">
-                      No diagnostic codes linked †
+                    <ul className="max-h-24 min-h-12 overflow-y-auto text-[11px]">
+                      {icdCodes.length === 0 ? (
+                        <li className="px-2 py-3 text-center text-slate-400">No diagnostic codes linked</li>
+                      ) : (
+                        icdCodes.map((c) => (
+                          <li key={c.id} className="flex items-center gap-2 border-b border-slate-100 px-2 py-0.5 text-slate-700">
+                            <span className="min-w-0 flex-1 truncate" title={icdLabel(c)}>
+                              {icdLabel(c)}
+                            </span>
+                            <button
+                              type="button"
+                              className="text-slate-400 hover:text-red-600"
+                              title="Remove"
+                              onClick={() => setIcdCodes((prev) => prev.filter((x) => x.id !== c.id))}
+                            >
+                              ×
+                            </button>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                    <div className="relative border-t border-slate-200 p-1">
+                      <input
+                        className={input}
+                        value={icdQuery}
+                        placeholder="Add ICD-10: search code or description…"
+                        onChange={(e) => setIcdQuery(e.target.value)}
+                      />
+                      {icdQuery.trim().length >= 2 && (
+                        <ul className="absolute left-1 right-1 z-10 mt-0.5 max-h-40 overflow-y-auto rounded border border-slate-300 bg-white text-[11px] shadow-lg">
+                          {icdSearch.isLoading ? (
+                            <li className="px-2 py-1 text-slate-400">Searching…</li>
+                          ) : (icdSearch.data ?? []).length === 0 ? (
+                            <li className="px-2 py-1 text-slate-400">No matches</li>
+                          ) : (
+                            (icdSearch.data ?? []).map((c) => (
+                              <li key={c.id}>
+                                <button
+                                  type="button"
+                                  className="w-full px-2 py-1 text-left hover:bg-sky-50 disabled:text-slate-300"
+                                  disabled={icdCodes.some((x) => x.id === c.id)}
+                                  onClick={() => addIcd(c)}
+                                >
+                                  {icdLabel(c)}
+                                </button>
+                              </li>
+                            ))
+                          )}
+                        </ul>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
                     <div className="px-1 text-[11px] font-bold uppercase tracking-wide text-sky-800">Notes</div>
-                    <button type="button" className={`${footerBtn} py-1`} disabled title="Not stored by the backend yet">
-                      Clear Dental Cross Coding Info †
+                    <button
+                      type="button"
+                      className={`${footerBtn} py-1`}
+                      disabled={icdCodes.length === 0}
+                      title="Remove every linked ICD-10 code (saved with Save)"
+                      onClick={() => setIcdCodes([])}
+                    >
+                      Clear Dental Cross Coding Info
                     </button>
                   </div>
                   <textarea
-                    className="mt-1 h-[124px] w-full resize-none rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-slate-50"
+                    className="mt-1 h-[124px] w-full resize-none rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                     value={notes}
-                    disabled={!detailSeeded}
-                    placeholder={detailSeeded ? 'Notes for this procedure' : 'Loading…'}
+                    placeholder="Notes for this procedure"
                     onChange={(e) => setNotes(e.target.value)}
                   />
                 </div>
               </div>
             </div>
           )}
-
-          <p className="mt-2 px-1 text-[10px] text-slate-400">
-            † Legacy field with no backend column yet — shown for parity, not saved. See the treatment-plan dev report.
-          </p>
         </div>
 
         {/* Footer actions */}

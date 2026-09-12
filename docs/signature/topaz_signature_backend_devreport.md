@@ -6,7 +6,7 @@
 > Medical History (patient + dentist), Progress Notes (provider), Letters → Consent signing, and
 > Security → Users (user signature). Diagnostics page: **Setup → Devices → Signature Pad (Topaz)**
 > (`/setup/devices/signature-pad`).
-> **Date:** 2026-09-10
+> **Date:** 2026-09-10 · **Updated 2026-09-12:** SIG-1, SIG-2, SIG-3, SIG-5, SIG-7 (consents: `content_hash` is computed server-side on sign) and SIG-10 are **delivered** — the generated client now carries `sig_string`, `sig_format`, `sig_compression`, `sig_encryption`, `point_count`, `stroke_count`, `device_vendor`, `device_model`, `device_serial`, `captured_user_agent` on `PatientSignatureCreate`, `MedicalHistorySignRequest`, `UserSignatureUpdate` and `ConsentSignRequest`, and `signatureBodyFields()` sends all of them. Verified live: `POST /patient-consents/{id}/sign` stores `device_source`, `captured_user_agent`, `signed_at`, `content_hash`. Remaining open: SIG-4 (encrypt at rest / opt-in `sig_string` on reads — reads now expose `has_sig_string` only, which covers the opt-out half), SIG-6, SIG-8, SIG-9 (reads now expose `has_image` / `image_omitted`, so a list flag may already exist — please confirm the query parameter).
 
 ---
 
@@ -73,3 +73,38 @@ which should be opt-in (SIG-4).
 The frontend already builds every value above in `SignatureResult`
 (`src/features/signature/signatureModel.ts`). When the columns land, the only frontend change is adding
 them to `signatureBodyFields()` and the three `sign` calls — no UI work.
+
+---
+
+## 5. ADA Dental Claim Form signatures (added 2026-09-12)
+
+**Screen:** Patient → Ledger → claim → **DIRECT PRINT** → *Signatures (Topaz pad or on screen)*
+(`src/features/claims/ada/ClaimSignatureDialog.tsx`, `adaClaimSignatures.ts`).
+
+The ADA Dental Claim Form (2024) carries three signature lines. Each can now be captured with the same
+shared `SignatureCapture` pad the Progress Notes / Medical History / Consent screens use, and the image
+is printed on the form's signature line (with the capture date) instead of "Signature on File":
+
+| ADA item | Who signs | `POST /patient-signatures` body | Printed |
+|---|---|---|---|
+| 36 Patient / Guardian consent | patient or guardian | `signature_type = "claim_patient_consent"`, `is_user_sig = false`, `signed_at`, `signature_data`, `device_source` | image + date on the Item 36 line |
+| 37 Assignment of benefits | policyholder / subscriber | `signature_type = "claim_assign_benefits"`, `is_user_sig = false` | image + date on the Item 37 line |
+| 53 Treating dentist certification | treating dentist | `signature_type = "claim_treating_dentist"`, `is_user_sig = true`, `signed_by_user_id` = signed-in user | image + printed name + date on the Item 53 line; falls back to `GET /users/{provider.user_id}/signature` |
+
+Resolution order at print time: row pinned to the claim → latest active row of that `signature_type` on
+the patient ("Signature on File") → (Item 53 only) the provider's user-account signature.
+
+### Gaps
+
+| Gap ID | Title | Detail / current workaround | Severity |
+|--------|-------|-----------------------------|----------|
+| **SIG-11** | `patient_signatures` has no claim binding | The row has `progress_note_id` and `consent_id` but no `claim_id`, so a signature cannot be tied to the claim it was captured for. The frontend keeps the three ids on the claim's fill-out record (browser `localStorage`, CLM-FO-1) — another workstation only sees the *latest* row of that type on the patient. **Ask:** add `claim_id UUID NULL` (FK `insurance_claims.id`) + `?claim_id=` filter on `GET /patient-signatures`, and accept it on `PatientSignatureCreate`. | **High** |
+| **SIG-12** | `signature_type` vocabulary | Free text today. The frontend now writes `claim_patient_consent`, `claim_assign_benefits`, `claim_treating_dentist` (alongside whatever MH / PN / consents write). Please add them to any enum / reporting and confirm they are accepted unchanged (verified: 201 on tenant 1). | Low |
+| **SIG-13** | No signer identity for a guardian | Item 36 may be signed by a parent / guardian. `PatientSignatureCreate` has no `signer_name` / `signer_relationship`; the printed form shows the image only. Add `signer_name VARCHAR(120)`, `signer_relationship VARCHAR(40)` (self / parent / guardian / POA) so the audit trail names who signed for a minor. | Medium |
+| **SIG-14** | Treating-dentist signature lives on the *user*, not the provider | `GET /users/{user_id}/signature` needs `providers.user_id`; providers with no linked user (most migrated rows) have no signature on file and must sign per claim. Add a provider-level signature (`PUT/GET /providers/{id}/signature`, same columns as the user store) or expose `signature_data` on `ProviderRead`. | Medium |
+| **SIG-15** | Item 53 "signed" state vs `is_user_sig` | The dentist certification is stored as a `patient_signatures` row with `is_user_sig = true` and `signed_by_user_id` = the signed-in user, which may be the front-desk user doing over-the-shoulder capture. Add `signer_user_id` (the dentist) distinct from `created_by`, or reuse `signed_by_user_id` and have the frontend pass the provider's `user_id` — tell us which. | Low |
+| SIG-16 | Server-rendered claim form must embed the images | When ADA-BE-1 (server PDF) lands it must render these three rows (and the user/provider signature) on the signature lines; the frontend renderer (`adaClaimFormPdf.ts`, `Canvas.image`) shows the placement: Item 36 line 14 pt high × 208 pt wide, Item 37 line 17 × 208, Item 53 line 16 × 78 before the printed name. | Medium |
+| SIG-9 (reminder) | `include_image=true` on the list | The claim pre-flight lists up to 100 active signatures **with images** to find the latest of each type; a `?signature_type=in:(…)` filter or `latest_per_type=true` would avoid shipping every MH / PN signature image. | Low |
+
+Legacy note: SIG-1 still applies — a legacy row whose `signature_data` is a raw SigString cannot be
+printed; the pre-flight shows "not captured" for it and the paper line stays blank.

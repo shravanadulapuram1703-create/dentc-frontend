@@ -10,8 +10,10 @@
  * Body for ``POST /treatment-plan-items/{id}/post`` (Post to Ledger).
  *
  * Every field is optional: the charge inherits the item (code, tooth, surface,
- * quadrant, material, fee, provider) and the plan/patient (office). Anything
- * given here overrides the inherited value.
+ * quadrant, material, fee, provider, duration) and the plan/patient (office).
+ * Anything given here overrides the inherited value. PLAN-28: the item's
+ * ``update_end_date_at_posting`` / ``re_estimate_at_posting`` flags are honoured
+ * unless overridden per call.
  */
 export interface PostPlanItemRequest {
   date_of_service?: string | null;
@@ -26,4 +28,6 @@ export interface PostPlanItemRequest {
   appointment_id?: string | null;
   notes?: string | null;
   procedure_id?: string | null;
+  update_end_date_at_posting?: boolean | null;
+  re_estimate_at_posting?: boolean | null;
 }

@@ -137,10 +137,13 @@ export default function SubscriberInformation({ slot, form, onChange, onPickSubs
             <select value={form.marital_status} onChange={(e) => onChange({ marital_status: e.target.value })} className={INPUT_CLS}>
               <option value="">—</option>
               {MARITAL_OPTIONS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
+                <option key={m.value} value={m.value}>
+                  {m.label}
                 </option>
               ))}
+              {form.marital_status && !MARITAL_OPTIONS.some((m) => m.value === form.marital_status) && (
+                <option value={form.marital_status}>{form.marital_status}</option>
+              )}
             </select>
           </Field>
         </div>
@@ -164,7 +167,7 @@ export default function SubscriberInformation({ slot, form, onChange, onPickSubs
         {/* Secondary-only: relationship to the primary subscriber */}
         {!isPrimary && (
           <Field label="Sec. Sub Rel to Prim. Sub">
-            <select value={form.sec_rel_to_prim} onChange={(e) => onChange({ sec_rel_to_prim: e.target.value })} className={INPUT_CLS}>
+            <select value={form.sec_sub_rel_to_prim_sub} onChange={(e) => onChange({ sec_sub_rel_to_prim_sub: e.target.value })} className={INPUT_CLS}>
               <option value="">Please Select</option>
               {SEC_REL_OPTIONS.map((r) => (
                 <option key={r} value={r}>

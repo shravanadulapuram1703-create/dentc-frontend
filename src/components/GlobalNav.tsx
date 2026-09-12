@@ -69,6 +69,7 @@ import {
   Bug,
   MessageCircle,
   Usb,
+  FlaskConical,
 } from "lucide-react";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
@@ -962,6 +963,16 @@ export default function GlobalNav({
         {
           label: "Employers",
           path: "/setup/insurance/employers",
+        },
+      ],
+    },
+    {
+      label: "Lab Tracking",
+      icon: FlaskConical,
+      submenu: [
+        {
+          label: "Labs",
+          path: "/setup/lab-tracking/labs",
         },
       ],
     },

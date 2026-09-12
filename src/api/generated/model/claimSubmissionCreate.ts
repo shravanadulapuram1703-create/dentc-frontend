@@ -7,6 +7,7 @@
  */
 
 export interface ClaimSubmissionCreate {
+  /** @maxLength 50 */
   claim_id: string;
   batch_id?: string | null;
   is_preauth?: boolean | null;

@@ -37,6 +37,26 @@ status?: string | null;
  */
 is_archived?: boolean | null;
 /**
+ * Filter by treatment_plan_id
+ */
+treatment_plan_id?: string | null;
+/**
+ * Filter by has_lab
+ */
+has_lab?: boolean | null;
+/**
+ * Filter by lab_vendor_id
+ */
+lab_vendor_id?: number | null;
+/**
+ * Filter by lab_short_notice
+ */
+lab_short_notice?: boolean | null;
+/**
+ * Filter by lab_status
+ */
+lab_status?: string | null;
+/**
  * date >= (inclusive lower bound)
  */
 date_from?: string | null;
@@ -44,6 +64,30 @@ date_from?: string | null;
  * date <= (inclusive upper bound)
  */
 date_to?: string | null;
+/**
+ * lab_sent_on >= (inclusive lower bound)
+ */
+lab_sent_on_from?: string | null;
+/**
+ * lab_sent_on <= (inclusive upper bound)
+ */
+lab_sent_on_to?: string | null;
+/**
+ * lab_due_on >= (inclusive lower bound)
+ */
+lab_due_on_from?: string | null;
+/**
+ * lab_due_on <= (inclusive upper bound)
+ */
+lab_due_on_to?: string | null;
+/**
+ * lab_received_on >= (inclusive lower bound)
+ */
+lab_received_on_from?: string | null;
+/**
+ * lab_received_on <= (inclusive upper bound)
+ */
+lab_received_on_to?: string | null;
 /**
  * @minimum 1
  */

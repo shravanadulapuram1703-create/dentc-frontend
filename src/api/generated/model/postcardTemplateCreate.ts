@@ -8,6 +8,7 @@
 
 export interface PostcardTemplateCreate {
   office_id?: number | null;
+  /** @maxLength 255 */
   name: string;
   card_type?: string | null;
   body?: string | null;

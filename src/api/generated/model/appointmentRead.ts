@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { AppointmentReadLabStatus } from './appointmentReadLabStatus';
 
 export interface AppointmentRead {
   id: string;
@@ -28,6 +29,8 @@ export interface AppointmentRead {
   has_lab: boolean;
   lab_cost?: string | null;
   lab_dds?: string | null;
+  lab_vendor_id?: number | null;
+  lab_short_notice: boolean;
   lab_sent_on?: string | null;
   lab_due_on?: string | null;
   lab_received_on?: string | null;
@@ -45,4 +48,6 @@ export interface AppointmentRead {
   updated_by?: number | null;
   created_at: string;
   updated_at?: string | null;
+  lab_vendor_name?: string | null;
+  lab_status?: AppointmentReadLabStatus;
 }

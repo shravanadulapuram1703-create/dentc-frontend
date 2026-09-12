@@ -12,3 +12,8 @@
 /* body {
   margin: 0;
 } */
+
+/* Progress-note bodies (list rows) — sanitised HTML from noteContent.ts. Legacy
+   rows are <p> per line, app-written rows use <br>; keep both tight. */
+.note-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-body p { margin: 0; }

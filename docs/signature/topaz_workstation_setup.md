@@ -45,7 +45,14 @@ has the silent-install switches.
 | Pad detected | **Topaz pad** is pre-selected; the box says "Please sign on the Topaz pad"; strokes stream live; DONE/ACCEPT enables once the pad reports points. |
 | Pad unplugged mid-signature | Start fails → control drops to on-screen with the Topaz error shown; status is re-probed. |
 
-## 5. Verifying a real pad (once hardware is available)
+## 5. Testing without a pad
+
+Install the 32-bit `SigPlusOCXWin32.msi` (the 64-bit MSI is invisible to the native host). The diagnostics
+page should move from `GetDeviceStatus = -3` (drivers missing) to `0` ("Pad not detected"). That proves
+extension → native host → SigPlus works; only the USB pad is absent. The live capture path itself can only be
+verified with real hardware — see section 6.
+
+## 6. Verifying a real pad (once hardware is available)
 
 1. Diagnostics page → all checks green, model + serial shown.
 2. Sign in the test box → "Method: Topaz pad", Points > 0, SigString length > 0.

@@ -24,6 +24,7 @@ import {
 import { useListProgressNotes } from '@/api/generated/endpoints/clinical/clinical';
 import type { ProgressNoteRead } from '@/api/generated/model';
 import { canEditDos, fmtCreatedAt, fmtDos, isLocked, isSigned, parseTeeth } from './progressNotesService';
+import { isDrawingNote, noteDisplayHtml, noteDisplayText } from './noteContent';
 import { useUserNames } from '@/services/userDirectory';
 
 interface PatientData {
@@ -64,7 +65,9 @@ export default function ProgressNotesList() {
   );
 
   const notes: ProgressNoteRead[] = useMemo(() => {
-    const items = (notesQuery.data?.items ?? []).filter((n) => !n.is_deleted);
+    // Restorative freehand drawings are stored as progress notes whose body is
+    // stroke JSON — they belong to the chart, not this list.
+    const items = (notesQuery.data?.items ?? []).filter((n) => !n.is_deleted && !isDrawingNote(n));
     return items.slice().sort((a, b) =>
       (b.note_date ?? b.created_at ?? '').slice(0, 10).localeCompare(
         (a.note_date ?? a.created_at ?? '').slice(0, 10),
@@ -78,7 +81,7 @@ export default function ProgressNotesList() {
         if (signatureOnly && !isSigned(n)) return false;
         if (hideStruckOff && n.is_struck_off) return false;
         if (criteria.trim()) {
-          const hay = `${n.notes ?? ''} ${n.tooth ?? ''}`.toLowerCase();
+          const hay = `${noteDisplayText(n)} ${n.tooth ?? ''}`.toLowerCase();
           if (!hay.includes(criteria.trim().toLowerCase())) return false;
         }
         return true;
@@ -271,17 +274,14 @@ export default function ProgressNotesList() {
                           )}
                         </td>
                         <td className="px-3 py-2.5">
+                          {/* Body is normalised + sanitised by noteContent.ts (legacy
+                              rows arrive as `~^^~lt;p~^^~gt;…` double-escaped HTML). */}
                           <div
-                            className={`max-w-2xl whitespace-pre-line text-[13px] ${
+                            className={`note-body max-w-2xl text-[13px] ${
                               n.is_struck_off ? 'text-slate-400 line-through' : 'text-emerald-800'
                             }`}
-                          >
-                            {n.notes_html ? (
-                              <span dangerouslySetInnerHTML={{ __html: n.notes_html }} />
-                            ) : (
-                              n.notes
-                            )}
-                          </div>
+                            dangerouslySetInnerHTML={{ __html: noteDisplayHtml(n) }}
+                          />
                         </td>
                         <td className="px-3 py-2.5 text-xs">
                           <div className="font-medium text-slate-700">{fmtCreatedAt(n.created_at)}</div>

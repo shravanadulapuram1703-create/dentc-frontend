@@ -14,6 +14,8 @@ interface WeekViewProps {
   onEditAppointment: (appointment: Appointment) => void;
   /** Resolve an appointment's provider color (matches the day view / legend). */
   getProviderColor: (appointment: Appointment) => ProviderColor;
+  /** Does the patient have an active medical alert? Renders the red ✚ badge. */
+  hasAlert?: (appointment: Appointment) => boolean;
 }
 
 const fmtYMD = (d: Date): string =>
@@ -32,6 +34,7 @@ export default function WeekView({
   onSelectDay,
   onEditAppointment,
   getProviderColor,
+  hasAlert,
   isDayClosed,
 }: WeekViewProps) {
   // Build the 7 days of the week containing selectedDate (Sunday first).
@@ -108,8 +111,19 @@ export default function WeekView({
                     }}
                     title={`${appt.start_time} ${appt.patient_name} — ${appt.procedure_label}`}
                   >
-                    <div className="text-[11px] font-semibold truncate">
-                      {appt.start_time} {appt.patient_name}
+                    <div className="text-[11px] font-semibold truncate flex items-center gap-1">
+                      {hasAlert?.(appt) && (
+                        <span
+                          className="text-red-600 font-bold flex-shrink-0"
+                          title="Medical alert — see the patient's Medical History"
+                          aria-label="Medical alert"
+                        >
+                          ✚
+                        </span>
+                      )}
+                      <span className="truncate">
+                        {appt.start_time} {appt.patient_name}
+                      </span>
                     </div>
                     <div className="text-[11px] truncate opacity-80">
                       {appt.procedure_label}

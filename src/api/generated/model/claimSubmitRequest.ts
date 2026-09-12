@@ -11,4 +11,6 @@ export interface ClaimSubmitRequest {
   sent_date?: string | null;
   batch_id?: string | null;
   is_preauth?: boolean;
+  /** Submit even though GET /insurance-claims/{id}/readiness reports missing supporting records (PROC-7c override) */
+  allow_missing_records?: boolean;
 }

@@ -21,7 +21,12 @@ interface ProcedureEntryPanelProps {
 }
 
 const fieldCls =
-  'h-7 rounded border border-slate-300 px-2 text-xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500';
+  'h-7 rounded-md border border-slate-300 bg-white px-2 text-xs focus:border-[#3A6EA5] focus:outline-none focus:ring-2 focus:ring-[#3A6EA5]/30';
+const HEADER_BG = 'linear-gradient(180deg,#2a4a73,#1d3a5f)';
+// The <label> is flex-col, so the caption (text + required star) is wrapped in
+// one <span> to keep it on a single line above the field.
+const labelCls = 'flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600';
+const sectionTitle = 'mb-1.5 text-[11px] font-bold uppercase tracking-wide text-[#1F3A5F]';
 // Global CSS forces large padding (!important) on every <select>, clipping the
 // selected text inside our compact h-7 selects. The `.tx-select` override (in
 // globals.css @layer base) restores compact padding.
@@ -92,11 +97,16 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
   };
 
   return (
-    <div className="border border-slate-300 bg-slate-50">
+    <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-t-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white" style={{ background: HEADER_BG }}>
+        Add Procedure
+      </div>
       {/* Entry fields row */}
-      <div className="flex flex-wrap items-end gap-3 border-b border-slate-200 bg-white px-3 py-2">
-        <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
-          Diagnosed Date <span className="text-red-500">*</span>
+      <div className="flex flex-wrap items-end gap-3 border-b border-slate-200 bg-[#F7F9FC] px-3 py-2">
+        <label className={labelCls}>
+          <span>
+            Diagnosed Date <span className="text-red-500">*</span>
+          </span>
           <input
             type="date"
             className={fieldCls}
@@ -104,8 +114,10 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
             onChange={(e) => onEntryChange({ diag_date: e.target.value })}
           />
         </label>
-        <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
-          Tx Plan ID <span className="text-red-500">*</span>
+        <label className={labelCls}>
+          <span>
+            Tx Plan ID <span className="text-red-500">*</span>
+          </span>
           <input
             type="number"
             min={1}
@@ -114,7 +126,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
             onChange={(e) => onEntryChange({ tid: Math.max(1, Number(e.target.value) || 1) })}
           />
         </label>
-        <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
+        <label className={labelCls}>
           Phase ID
           <input
             type="number"
@@ -124,7 +136,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
             onChange={(e) => onEntryChange({ phase: Math.max(1, Number(e.target.value) || 1) })}
           />
         </label>
-        <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
+        <label className={labelCls}>
           Order ID
           <input
             type="number"
@@ -134,7 +146,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
             onChange={(e) => onEntryChange({ order: Math.max(1, Number(e.target.value) || 1) })}
           />
         </label>
-        <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
+        <label className={labelCls}>
           Provider
           <select
             className={`${selectCls} w-48`}
@@ -154,17 +166,17 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
       <div className="grid grid-cols-[auto_1fr_1.4fr] gap-3 p-3">
         {/* Category buttons */}
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Add Proc By Category</div>
+          <div className={sectionTitle}>Add Proc By Category</div>
           <div className="grid grid-cols-2 gap-1">
             {PROC_CATEGORIES.map((cat) => (
               <button
                 key={cat.key}
                 type="button"
                 onClick={() => pickCategory(cat)}
-                className={`rounded border px-2 py-1 text-left text-[11px] font-medium transition ${
+                className={`rounded-md border px-2 py-1 text-left text-[11px] font-medium shadow-sm transition-colors ${
                   activeCat?.key === cat.key
-                    ? 'border-sky-500 bg-sky-100 text-sky-800'
-                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                    ? 'border-[#3A6EA5] bg-[#3A6EA5] text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-[#3A6EA5] hover:bg-[#EFF6FE] hover:text-[#1F3A5F]'
                 }`}
               >
                 {cat.label}
@@ -175,9 +187,9 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
 
         {/* Add by code / description */}
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Add Proc By</div>
+          <div className={sectionTitle}>Add Proc By</div>
           <div className="flex flex-col gap-2">
-            <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
+            <label className={labelCls}>
               Code
               <input
                 className={fieldCls}
@@ -192,7 +204,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
                 }}
               />
             </label>
-            <label className="flex flex-col gap-0.5 text-[11px] font-semibold text-slate-600">
+            <label className={labelCls}>
               Description
               <input
                 className={fieldCls}
@@ -210,7 +222,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
             <button
               type="button"
               onClick={() => void runCodeSearch()}
-              className="h-7 rounded bg-slate-700 px-3 text-xs font-semibold text-white hover:bg-slate-800"
+              className="h-7 rounded-md bg-[#3A6EA5] px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1F3A5F]"
             >
               Find
             </button>
@@ -219,26 +231,26 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
 
         {/* Procedures list */}
         <div className="flex flex-col">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{heading}</span>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[#1F3A5F]">{heading}</span>
             <button
               type="button"
               disabled={!selectedCode || busy}
               onClick={addSelected}
-              className="rounded bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Add Procedure
             </button>
           </div>
-          <div className="h-44 overflow-auto rounded border border-slate-300 bg-white">
+          <div className="h-44 overflow-auto rounded-md border border-slate-200 bg-white">
             <table className="w-full border-collapse text-xs">
               <thead className="sticky top-0">
-                <tr style={{ background: 'linear-gradient(180deg,#f3f5f8,#dfe4ea)' }}>
-                  <th className="border-b border-slate-300 px-2 py-1 text-left font-semibold text-slate-600" style={{ width: '70px' }}>
+                <tr className="bg-slate-100 text-slate-700">
+                  <th className="border-b border-slate-300 px-2 py-1 text-left text-[11px] font-bold uppercase tracking-wide" style={{ width: '70px' }}>
                     Code
                   </th>
-                  <th className="border-b border-slate-300 px-2 py-1 text-left font-semibold text-slate-600">Description</th>
-                  <th className="border-b border-slate-300 px-2 py-1 text-right font-semibold text-slate-600" style={{ width: '74px' }}>
+                  <th className="border-b border-slate-300 px-2 py-1 text-left text-[11px] font-bold uppercase tracking-wide">Description</th>
+                  <th className="border-b border-slate-300 px-2 py-1 text-right text-[11px] font-bold uppercase tracking-wide" style={{ width: '74px' }}>
                     Fee
                   </th>
                 </tr>
@@ -263,7 +275,7 @@ export default function ProcedureEntryPanel({ entry, onEntryChange, providers, b
                       onClick={() => setSelectedCode(c.code)}
                       onDoubleClick={() => onAdd(c)}
                       className={`cursor-pointer border-b border-slate-100 ${
-                        selectedCode === c.code ? 'bg-sky-100' : 'hover:bg-slate-50'
+                        selectedCode === c.code ? 'bg-[#EFF6FE]' : 'hover:bg-slate-50'
                       }`}
                     >
                       <td className="px-2 py-1 font-mono text-slate-700">{c.code}</td>

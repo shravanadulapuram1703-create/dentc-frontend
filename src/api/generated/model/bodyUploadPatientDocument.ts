@@ -14,4 +14,8 @@ export interface BodyUploadPatientDocument {
   description?: string | null;
   /** Which screen the file is attached to, e.g. 'note'. Decides the storage folder; see GET /patient-documents/limits for the list. */
   context?: string | null;
+  /** PROC-7c: the posted procedure this document supports (must belong to patient_id; 422 document_procedure_mismatch otherwise) */
+  procedure_id?: string | null;
+  /** PROC-7c: the insurance claim this document supports (must belong to patient_id; 422 document_claim_mismatch otherwise) */
+  claim_id?: string | null;
 }

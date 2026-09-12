@@ -7,7 +7,9 @@
  */
 
 export interface DefinitionGroupCreate {
+  /** @maxLength 50 */
   group_code: string;
+  /** @maxLength 255 */
   description: string;
   key1_label?: string | null;
   key2_label?: string | null;

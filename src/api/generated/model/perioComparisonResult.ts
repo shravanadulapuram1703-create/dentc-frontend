@@ -9,5 +9,7 @@ import type { PerioExamComparisonEntry } from './perioExamComparisonEntry';
 
 export interface PerioComparisonResult {
   patient_id: number;
+  include_details?: boolean;
+  include_voided?: boolean;
   exams: PerioExamComparisonEntry[];
 }

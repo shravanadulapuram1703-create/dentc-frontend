@@ -11,8 +11,11 @@ export interface PatientMedicalAlertCreate {
   patient_id: number;
   alert_code: string;
   alert_label?: string | null;
+  section?: string | null;
   response?: PatientMedicalAlertCreateResponse;
   comments?: string | null;
+  is_flash_alert?: boolean | null;
+  blocks_charges?: boolean | null;
   is_active?: boolean | null;
   allow_contradictions?: boolean;
 }

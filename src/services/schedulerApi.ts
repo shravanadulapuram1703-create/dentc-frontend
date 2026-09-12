@@ -35,6 +35,10 @@ import {
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
 import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
 import {
+  fetchPatientMedicalAlertSummary,
+  type ActiveMedicalAlert,
+} from "@/features/medical-alerts/patientMedicalAlerts";
+import {
   fetchProviderDirectory,
   fetchProvidersForOffice,
   providerLabelMap,
@@ -42,7 +46,6 @@ import {
 import {
   getPatient,
   getPatientContext,
-  listPatientAlerts,
 } from "@/api/generated/endpoints/patients/patients";
 import type {
   AppointmentRead,
@@ -50,7 +53,6 @@ import type {
   AppointmentProcedureRead,
   ProcedureCodeRead,
   SchedulerPatientRead,
-  PatientAlertRead,
   PatientBalance,
 } from "@/api/generated/model";
 
@@ -118,6 +120,9 @@ export interface Appointment {
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string;
+  lab_short_notice?: boolean;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
@@ -126,6 +131,10 @@ export interface Appointment {
   cancelled?: boolean;
   is_new_patient?: boolean;
   is_blocked?: boolean;
+  /** Feed flag `has_alert`. Today the backend derives it from /patient-alerts
+   *  only (not Medical History "yes" answers) — gap MA-1 — so the UI ORs it
+   *  with the per-patient summary from patientMedicalAlerts.ts. */
+  has_alert?: boolean;
   /** Server-owned status timestamps (set by PATCH /appointments/{id}/status). */
   confirmed_on?: string | null;
   checked_in_on?: string | null;
@@ -188,6 +197,9 @@ export interface AppointmentCreateRequest {
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string;
+  lab_short_notice?: boolean;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
@@ -213,6 +225,9 @@ export interface AppointmentUpdateRequest {
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string;
+  lab_short_notice?: boolean;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
@@ -301,6 +316,10 @@ const mapAppointment = (
     "",
   notes: a.notes ?? undefined,
   lab: a.has_lab ?? undefined,
+  lab_dds: a.lab_dds ?? undefined,
+  lab_vendor_id: a.lab_vendor_id ?? null,
+  lab_vendor_name: a.lab_vendor_name ?? undefined,
+  lab_short_notice: a.lab_short_notice ?? undefined,
   lab_cost: a.lab_cost != null ? Number(a.lab_cost) : undefined,
   lab_sent_on: a.lab_sent_on ?? undefined,
   lab_due_on: a.lab_due_on ?? undefined,
@@ -386,6 +405,7 @@ const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
   missed: a.is_missed ?? undefined,
   cancelled: a.is_cancelled ?? undefined,
   is_blocked: a.is_blocked ?? undefined,
+  has_alert: a.has_alert === true ? true : undefined,
   confirmed_on: a.confirmed_on ?? null,
   checked_in_on: a.checked_in_on ?? null,
   checked_out_on: a.checked_out_on ?? null,
@@ -570,6 +590,9 @@ export const createAppointment = async (
     procedure_label: data.procedure_type ?? data.procedureType ?? null,
     notes: data.notes ?? null,
     has_lab: data.lab ?? undefined,
+    lab_dds: data.lab_dds ?? undefined,
+    lab_vendor_id: data.lab_vendor_id ?? undefined,
+    lab_short_notice: data.lab_short_notice ?? undefined,
     lab_cost: data.lab_cost ?? undefined,
     lab_sent_on: data.lab_sent_on ?? undefined,
     lab_due_on: data.lab_due_on ?? undefined,
@@ -623,6 +646,9 @@ export const updateAppointment = async (
     procedure_label: data.procedure_type ?? data.procedureType,
     notes: data.notes,
     has_lab: data.lab,
+    lab_dds: data.lab_dds,
+    lab_vendor_id: data.lab_vendor_id,
+    lab_short_notice: data.lab_short_notice,
     lab_cost: data.lab_cost,
     lab_sent_on: data.lab_sent_on,
     lab_due_on: data.lab_due_on,
@@ -682,11 +708,17 @@ export interface RelatedAppointment {
   patient_name?: string;
 }
 
-/** A per-patient medical alert (the red-cross badge on the appointment). */
+/** A per-patient medical alert (the red-cross badge on the appointment).
+ *  Sourced from the shared summary in patientMedicalAlerts.ts: Medical History
+ *  "yes" answers (with their legacy section) plus free-text patient alerts. */
 export interface PatientMedicalAlert {
   id: number;
   alert: string;
+  /** Legacy group ("Allergic To", "Medical Conditions", "Account Alert", …). */
+  section: string;
+  comments: string;
   blocks_charges: boolean;
+  is_flash_alert: boolean;
 }
 
 /** A patient's computed account balance (drives the $ badge on the block and
@@ -785,11 +817,7 @@ export const fetchAppointmentDetails = async (
       appt.patient_id != null
         ? getPatientContext(appt.patient_id).catch(() => null)
         : Promise.resolve(null),
-      appt.patient_id != null
-        ? listPatientAlerts({ patient_id: appt.patient_id, is_active: true, ...PAGE }).catch(
-            () => null,
-          )
-        : Promise.resolve(null),
+      fetchPatientAlerts(appt.patient_id).catch(() => []),
       getAppointmentApi(appt.id).catch(() => null),
     ]);
 
@@ -865,29 +893,28 @@ export const fetchAppointmentDetails = async (
     // Same-day family/account appointments require a responsible-party linkage
     // the backend does not expose on the feed — documented as a gap; left empty.
     family: [],
-    alerts: (alertsRes?.items ?? []).map((a: PatientAlertRead) => ({
-      id: a.id,
-      alert: a.alert,
-      blocks_charges: a.blocks_charges,
-    })),
+    alerts: alertsRes,
   };
 };
 
-/** Fetch just the patient's active medical alerts (red-cross badge / popover). */
+const toPatientMedicalAlert = (a: ActiveMedicalAlert): PatientMedicalAlert => ({
+  id: a.id,
+  alert: a.label,
+  section: a.section,
+  comments: a.comments,
+  blocks_charges: a.blocks_charges,
+  is_flash_alert: a.is_flash_alert,
+});
+
+/** Fetch just the patient's active medical alerts (red-cross badge / popover /
+ *  Details pop-out). Reads the shared, cached summary so the scheduler shows
+ *  exactly what the Medical History tab and the Prescriptions screen show. */
 export const fetchPatientAlerts = async (
   patientId: number | null | undefined,
 ): Promise<PatientMedicalAlert[]> => {
   if (patientId == null) return [];
-  const res = await listPatientAlerts({
-    patient_id: patientId,
-    is_active: true,
-    ...PAGE,
-  }).catch(() => null);
-  return (res?.items ?? []).map((a: PatientAlertRead) => ({
-    id: a.id,
-    alert: a.alert,
-    blocks_charges: a.blocks_charges,
-  }));
+  const summary = await fetchPatientMedicalAlertSummary(patientId).catch(() => null);
+  return (summary?.alerts ?? []).map(toPatientMedicalAlert);
 };
 
 /** Fetch a patient's computed account balance (the $ badge on the block). Uses

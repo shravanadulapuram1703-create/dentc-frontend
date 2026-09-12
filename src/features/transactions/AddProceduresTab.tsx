@@ -421,6 +421,7 @@ export default function AddProceduresTab({
         <ProcedureDetailsDialog
           mode="charge"
           office_id={officeId}
+          patient_id={patientId}
           rows={details}
           header={{ provider_id: providerId, date: transactionDateIso }}
           busy={posting}

@@ -5,40 +5,11 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { money_or_dash } from "../format";
-import type { InsuranceSlot, OverviewData } from "../useOverviewData";
+import { INSURANCE_SLOT_ROWS } from "../insuranceSlotRows";
+import type { OverviewData } from "../useOverviewData";
 
 type Category = "dental" | "medical";
 
-const ROWS: Array<{ label: string; value: (s: InsuranceSlot | null) => string }> = [
-  { label: "Carrier Name", value: (s) => s?.carrier?.name || "" },
-  {
-    label: "Group #",
-    value: (s) => s?.plan?.group_number || s?.subscriber?.group_number || "",
-  },
-  { label: "Carrier Phone", value: (s) => s?.carrier?.phone || "" },
-  {
-    label: "Subscriber (Rel.)",
-    value: (s) => {
-      if (!s) return "";
-      const who = [s.subscriber?.sub_last_name, s.subscriber?.sub_first_name]
-        .filter(Boolean)
-        .join(", ");
-      const rel = s.record.relationship;
-      if (!who) return rel ? `(${rel})` : "";
-      return rel ? `${who} (${rel})` : who;
-    },
-  },
-  {
-    label: "Indi. Max (Rem.)",
-    value: (s) => money_or_dash(s?.record.max_remaining ?? s?.plan?.individual_max, ""),
-  },
-  {
-    label: "Ind. Ded. (Rem.)",
-    value: (s) =>
-      money_or_dash(s?.record.deductible_remaining ?? s?.plan?.individual_deductible, ""),
-  },
-];
 
 export default function InsurancePanel({
   data,
@@ -93,7 +64,7 @@ export default function InsurancePanel({
             </tr>
           </thead>
           <tbody>
-            {ROWS.map((row) => (
+            {INSURANCE_SLOT_ROWS.map((row) => (
               <tr key={row.label} className="border-b border-[#E2E8F0] last:border-b-0">
                 <th className="px-3 py-1.5 text-left font-medium text-[#475569] bg-[#F8FAFC]">
                   {row.label}

@@ -14,9 +14,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { toast } from "sonner";
-import { Ban, HeartPulse, Loader2, PenLine, Save } from "lucide-react";
+import { Ban, HeartPulse, History, Loader2, PenLine, Save } from "lucide-react";
 import { getPatientOverview, getPatient } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead } from "@/api/generated/model";
+import { formatAuditDateTime } from "@/utils/datetime";
 import {
   alertLabels,
   allAlertCodes,
@@ -29,14 +30,21 @@ import {
 } from "./medicalHistoryModel";
 import {
   applyCopy,
+  emptyAudit,
   emptyBaseline,
   loadHistoryForCopy,
   loadMedicalHistory,
+  loadMedicalHistoryAudit,
   loadSignatures,
   saveMedicalHistory,
   saveSignature,
+  AUDIT_SECTION_LABELS,
   COPY_SCOPE_LABELS,
+  type AuditSection,
+  type AuditStamp,
+  type ChangeLogEntry,
   type CopyScope,
+  type MedicalHistoryAudit,
   type MedicalHistoryBaseline,
   type SignaturePair,
 } from "./medicalHistoryService";
@@ -109,6 +117,12 @@ export default function MedicalHistoryPage() {
   const [signatures, setSignatures] = useState<SignaturePair>({ patient: null, dentist: null });
   const [staged, setStaged] = useState<StagedSignatures>({ patient: null, dentist: null });
   const [header, setHeader] = useState<HeaderData | null>(null);
+  // Created / Modified stamps + the row-level change log, derived from the
+  // rows' own created_at/by and updated_at/by (the backend keeps no
+  // per-patient history record — MH-19).
+  const [audit, setAudit] = useState<MedicalHistoryAudit>(emptyAudit);
+  const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
+  const [showLog, setShowLog] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -146,6 +160,8 @@ export default function MedicalHistoryPage() {
         setForm(snapshot.form);
         setBaseline(snapshot.baseline);
         setSignatures(snapshot.signatures);
+        setAudit(snapshot.audit);
+        setChangeLog(snapshot.change_log);
         setCatalogs(resolved);
         setWarnings(snapshot.warnings);
         setDirty(false);
@@ -250,11 +266,13 @@ export default function MedicalHistoryPage() {
       setBaseline(result.baseline);
 
       const sigWarnings: string[] = [];
+      let signaturesWritten = false;
       for (const which of ["patient", "dentist"] as const) {
         const data = staged[which];
         if (!data) continue;
         try {
           await saveSignature(patientId, data, which === "dentist");
+          signaturesWritten = true;
         } catch {
           sigWarnings.push(`The ${which} signature could not be saved.`);
         }
@@ -266,6 +284,14 @@ export default function MedicalHistoryPage() {
         } catch {
           /* keep what is on screen */
         }
+      }
+
+      // The server stamps created_at / updated_at and the acting user on every
+      // write, so re-read the stamps rather than guessing them from the clock.
+      if (result.changed || signaturesWritten) {
+        const refreshed = await loadMedicalHistoryAudit(patientId);
+        setAudit(refreshed.audit);
+        setChangeLog(refreshed.change_log);
       }
 
       const all = [...result.warnings, ...sigWarnings];
@@ -395,6 +421,8 @@ export default function MedicalHistoryPage() {
           <div>
             <HeaderLine label="Home Office" value={String(p?.home_office_id ?? "")} />
             <HeaderLine label="Type" value={p?.patient_type ?? ""} />
+            <HeaderLine label="Created" value={stampText(audit.overall.created)} />
+            <HeaderLine label="Modified" value={stampText(audit.overall.modified)} />
           </div>
         </div>
 
@@ -416,24 +444,43 @@ export default function MedicalHistoryPage() {
               </button>
             ))}
           </div>
-          <select
-            value=""
-            disabled={loading || saving}
-            onChange={(e) => {
-              const scope = e.target.value as CopyScope;
-              if (scope) setCopyScope(scope);
-              e.target.value = "";
-            }}
-            className="mb-2 min-w-[280px] px-3 py-1.5 border border-[#CBD5E1] rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] disabled:opacity-60"
-          >
-            <option value="">***Copy Medical History***</option>
-            {COPY_SCOPES.map((scope) => (
-              <option key={scope} value={scope}>
-                {COPY_SCOPE_LABELS[scope]}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => setShowLog((v) => !v)}
+              disabled={loading}
+              aria-pressed={showLog}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-semibold disabled:opacity-60 ${
+                showLog
+                  ? "border-[#1D4ED8] bg-[#EFF6FF] text-[#1D4ED8]"
+                  : "border-[#CBD5E1] bg-white text-[#1F3A5F] hover:bg-[#F8FAFC]"
+              }`}
+            >
+              <History className="w-4 h-4" />
+              CHANGE LOG
+              <span className="text-xs font-normal text-[#64748B]">({changeLog.length})</span>
+            </button>
+            <select
+              value=""
+              disabled={loading || saving}
+              onChange={(e) => {
+                const scope = e.target.value as CopyScope;
+                if (scope) setCopyScope(scope);
+                e.target.value = "";
+              }}
+              className="min-w-[280px] px-3 py-1.5 border border-[#CBD5E1] rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] disabled:opacity-60"
+            >
+              <option value="">***Copy Medical History***</option>
+              {COPY_SCOPES.map((scope) => (
+                <option key={scope} value={scope}>
+                  {COPY_SCOPE_LABELS[scope]}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {showLog && !loading && <ChangeLogPanel audit={audit} entries={changeLog} />}
 
         {/* ---- Banners ---- */}
         {loading && (
@@ -548,6 +595,123 @@ export default function MedicalHistoryPage() {
           onCancel={() => setCopyScope(null)}
           onConfirm={handleCopy}
         />
+      )}
+    </div>
+  );
+}
+
+/** "09/09/2026 07:59 PM EDT · Admin User", or "" when nothing has been recorded. */
+function stampText(stamp: AuditStamp): string {
+  if (!stamp.at) return "";
+  const when = formatAuditDateTime(stamp.at);
+  return stamp.by ? `${when} · ${stamp.by}` : when;
+}
+
+const SECTION_ORDER: AuditSection[] = ["alerts", "dental", "medical", "signature"];
+
+const ACTION_LABEL: Record<ChangeLogEntry["action"], string> = {
+  created: "Answered",
+  modified: "Changed",
+  removed: "Cleared",
+};
+
+const ACTION_CLASS: Record<ChangeLogEntry["action"], string> = {
+  created: "bg-[#DCFCE7] text-[#166534]",
+  modified: "bg-[#DBEAFE] text-[#1E40AF]",
+  removed: "bg-[#FEE2E2] text-[#991B1B]",
+};
+
+/**
+ * Per-section Created / Modified stamps plus the row-level change log. Every
+ * value here is the server's own stamp; the screen never writes a timestamp.
+ */
+function ChangeLogPanel({
+  audit,
+  entries,
+}: {
+  audit: MedicalHistoryAudit;
+  entries: ChangeLogEntry[];
+}) {
+  return (
+    <div className="mx-4 mt-3 rounded border border-[#E2E8F0] bg-white text-xs">
+      <div className="px-3 py-2 border-b border-[#E2E8F0] bg-[#F8FAFC] font-semibold text-[#1F3A5F] uppercase tracking-wide">
+        Created / Modified by section
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-[#64748B] border-b border-[#E2E8F0]">
+              <th className="px-3 py-1.5 font-semibold">Section</th>
+              <th className="px-3 py-1.5 font-semibold">Answered</th>
+              <th className="px-3 py-1.5 font-semibold">Created On</th>
+              <th className="px-3 py-1.5 font-semibold">Created By</th>
+              <th className="px-3 py-1.5 font-semibold">Modified On</th>
+              <th className="px-3 py-1.5 font-semibold">Modified By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SECTION_ORDER.map((section) => {
+              const row = audit.sections[section];
+              return (
+                <tr key={section} className="border-b border-[#F1F5F9]">
+                  <td className="px-3 py-1.5 font-semibold text-[#1E293B]">
+                    {AUDIT_SECTION_LABELS[section]}
+                  </td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{row.active_rows}</td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{formatAuditDateTime(row.created.at)}</td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{row.created.by ?? "—"}</td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{formatAuditDateTime(row.modified.at)}</td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{row.modified.by ?? "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="px-3 py-2 border-y border-[#E2E8F0] bg-[#F8FAFC] font-semibold text-[#1F3A5F] uppercase tracking-wide">
+        Change log
+        <span className="ml-2 font-normal normal-case text-[#64748B]">
+          newest first · latest write per answer (no intermediate edits — gap MH-19)
+        </span>
+      </div>
+      {entries.length === 0 ? (
+        <div className="px-3 py-3 text-[#64748B]">Nothing has been recorded for this patient yet.</div>
+      ) : (
+        <div className="overflow-x-auto max-h-72 overflow-y-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-white">
+              <tr className="text-left text-[#64748B] border-b border-[#E2E8F0]">
+                <th className="px-3 py-1.5 font-semibold">When</th>
+                <th className="px-3 py-1.5 font-semibold">Who</th>
+                <th className="px-3 py-1.5 font-semibold">Action</th>
+                <th className="px-3 py-1.5 font-semibold">Section</th>
+                <th className="px-3 py-1.5 font-semibold">Item</th>
+                <th className="px-3 py-1.5 font-semibold">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((e, i) => (
+                <tr key={`${e.section}-${e.item}-${e.action}-${e.at}-${i}`} className="border-b border-[#F1F5F9]">
+                  <td className="px-3 py-1.5 whitespace-nowrap text-[#1E293B]">
+                    {formatAuditDateTime(e.at)}
+                  </td>
+                  <td className="px-3 py-1.5 whitespace-nowrap text-[#1E293B]">{e.by ?? "—"}</td>
+                  <td className="px-3 py-1.5">
+                    <span className={`px-1.5 py-0.5 rounded font-semibold ${ACTION_CLASS[e.action]}`}>
+                      {ACTION_LABEL[e.action]}
+                    </span>
+                  </td>
+                  <td className="px-3 py-1.5 whitespace-nowrap text-[#475569]">
+                    {AUDIT_SECTION_LABELS[e.section]}
+                  </td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{e.item}</td>
+                  <td className="px-3 py-1.5 text-[#1E293B]">{e.value || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
