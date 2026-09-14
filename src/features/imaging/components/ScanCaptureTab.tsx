@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
-import type { PatientDocumentRead } from '@/api/generated/model';
+import type { DicomInstanceOut } from '@/api/generated/model';
 import { useDeviceScan } from '../hooks/useDeviceScan';
-import { useImageUpload } from '../hooks/useImageMutations';
-import { DEFAULT_CATEGORY, DEFAULT_SCAN_TYPE, SCAN_TYPES } from '../constants';
+import { useCaptureUpload } from '../hooks/useImageMutations';
+import { DEFAULT_SCAN_TYPE, SCAN_TYPES } from '../constants';
 import AgentSetupCard from './AgentSetupCard';
 import DeviceStatusCard from './DeviceStatusCard';
 
@@ -12,7 +12,7 @@ interface ScanCaptureTabProps {
   patientName: string;
   patientDob?: string;
   officeId?: number | null;
-  onCaptured?: (doc: PatientDocumentRead) => void;
+  onCaptured?: (instance: DicomInstanceOut) => void;
 }
 
 /** Parse a "Last, First" or "First Last" display name into name parts. */
@@ -38,11 +38,10 @@ export default function ScanCaptureTab({
   patientId,
   patientName,
   patientDob,
-  officeId,
   onCaptured,
 }: ScanCaptureTabProps) {
   const { status, info, isScanning, runScan, launch, refresh } = useDeviceScan();
-  const { upload, isUploading } = useImageUpload();
+  const { upload, isUploading } = useCaptureUpload();
   const [scanType, setScanType] = useState<string>(DEFAULT_SCAN_TYPE);
   const [launching, setLaunching] = useState(false);
 
@@ -65,14 +64,12 @@ export default function ScanCaptureTab({
 
     const result = await runScan({ patient_id: patientId, scan_type: scanType });
     if (!result) return;
-    const doc = await upload({
+    const instance = await upload({
       file: result.file,
       patient_id: patientId,
-      office_id: officeId,
-      category: DEFAULT_CATEGORY,
       description: `Captured from imaging device (${scanType})`,
     });
-    if (doc) onCaptured?.(doc);
+    if (instance) onCaptured?.(instance);
   };
 
   // Agent not installed/running → first-time setup flow.

@@ -1,17 +1,20 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { PatientDocumentRead } from '@/api/generated/model';
+import type { PatientDocumentRead, DicomInstanceOut } from '@/api/generated/model';
 import {
   uploadImage,
+  uploadCapture,
   deleteImage,
   type UploadImageInput,
+  type UploadCaptureInput,
 } from '../services/imagingService';
 import {
   PATIENT_DOCUMENTS_KEY,
   IMAGE_DETAILS_KEY,
   IMAGE_GROUPS_KEY,
 } from '../constants';
+import { DICOM_IMAGING_KEY } from './useDicomImaging';
 import { errMsg } from '../utils/errorMessage';
 
 /** Invalidate every query the imaging gallery reads from. */
@@ -50,6 +53,38 @@ export const useImageUpload = () => {
       }
     },
     [invalidate],
+  );
+
+  return { upload, isUploading };
+};
+
+/**
+ * Upload a device capture to the DICOM archive ("Scanned Imaging"), distinct
+ * from `useImageUpload` above (which writes to patient-documents / "Uploaded
+ * Images"). Invalidates the DICOM tree query, not the patient-documents ones.
+ */
+export const useCaptureUpload = () => {
+  const queryClient = useQueryClient();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const upload = useCallback(
+    async (input: UploadCaptureInput): Promise<DicomInstanceOut | null> => {
+      setIsUploading(true);
+      try {
+        const instance = await uploadCapture(input);
+        queryClient.invalidateQueries({ queryKey: [DICOM_IMAGING_KEY] });
+        toast.success('Image captured', { description: input.file.name });
+        return instance;
+      } catch (err) {
+        toast.error('Capture failed', {
+          description: errMsg(err) || 'Please try again.',
+        });
+        return null;
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [queryClient],
   );
 
   return { upload, isUploading };
