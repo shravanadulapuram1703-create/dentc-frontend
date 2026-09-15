@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Camera, Loader2, Check, Square } from 'lucide-react';
 import type { DicomInstanceOut } from '@/api/generated/model';
 import { useDeviceScan } from '../hooks/useDeviceScan';
 import { useCaptureUpload } from '../hooks/useImageMutations';
 import { DEFAULT_SCAN_TYPE, SCAN_TYPES } from '../constants';
+import { resolveAssetUrl } from '../utils/dicomAssets';
 import AgentSetupCard from './AgentSetupCard';
 import DeviceStatusCard from './DeviceStatusCard';
 
@@ -27,12 +28,16 @@ const splitName = (name: string): { first?: string; last?: string } => {
 };
 
 /**
- * "Scan & Capture" tab: one button does the whole flow — open the patient in
- * the vendor software (deep-link), then immediately start listening for
- * whatever gets captured there, and upload it automatically the moment it
- * appears. If the launch step fails (e.g. the vendor software/bridge exe
- * isn't found), the flow stops there instead of silently waiting for a
- * capture that Vatech was never told to produce.
+ * "Scan & Capture" tab: opens the patient in the vendor software (deep-link),
+ * then runs a *session* — repeatedly waiting for the next new capture and
+ * uploading it, so a full multi-exposure series (e.g. an FMX run across many
+ * tooth positions in Vatech's own acquisition screen) comes in one image at a
+ * time without the user re-clicking anything here. The session keeps going
+ * until "Done" is pressed; a capture already in flight when that happens
+ * still gets saved (Done stops the *next* wait, not the current one). If the
+ * launch step fails (e.g. the vendor software/bridge exe isn't found), the
+ * flow stops there instead of silently waiting for a capture that Vatech was
+ * never told to produce.
  */
 export default function ScanCaptureTab({
   patientId,
@@ -44,12 +49,36 @@ export default function ScanCaptureTab({
   const { upload, isUploading } = useCaptureUpload();
   const [scanType, setScanType] = useState<string>(DEFAULT_SCAN_TYPE);
   const [launching, setLaunching] = useState(false);
+  const [sessionActive, setSessionActive] = useState(false);
+  const [capturedInSession, setCapturedInSession] = useState<DicomInstanceOut[]>([]);
+  // Mirrors `sessionActive` for the running loop below: state updates from a
+  // "Done" click don't reach an already-in-flight async function's closure,
+  // so the loop reads this instead of the state variable.
+  const sessionActiveRef = useRef(false);
 
   const detecting = status === 'detecting';
   const unavailable = status === 'unavailable';
   const busy = launching || isScanning || isUploading;
 
-  const handleCapture = async () => {
+  const runSessionLoop = async () => {
+    while (sessionActiveRef.current) {
+      const result = await runScan({ patient_id: patientId, scan_type: scanType });
+      if (!result || !sessionActiveRef.current) break;
+      const instance = await upload({
+        file: result.file,
+        patient_id: patientId,
+        description: `Captured from imaging device (${scanType})`,
+      });
+      if (instance) {
+        setCapturedInSession((prev) => [...prev, instance]);
+        onCaptured?.(instance);
+      }
+    }
+    sessionActiveRef.current = false;
+    setSessionActive(false);
+  };
+
+  const handleStartSession = async () => {
     setLaunching(true);
     const { first, last } = splitName(patientName);
     let launched = false;
@@ -62,14 +91,15 @@ export default function ScanCaptureTab({
     // that Vatech was never told to start.
     if (!launched) return;
 
-    const result = await runScan({ patient_id: patientId, scan_type: scanType });
-    if (!result) return;
-    const instance = await upload({
-      file: result.file,
-      patient_id: patientId,
-      description: `Captured from imaging device (${scanType})`,
-    });
-    if (instance) onCaptured?.(instance);
+    setCapturedInSession([]);
+    sessionActiveRef.current = true;
+    setSessionActive(true);
+    void runSessionLoop();
+  };
+
+  const handleEndSession = () => {
+    sessionActiveRef.current = false;
+    setSessionActive(false);
   };
 
   // Agent not installed/running → first-time setup flow.
@@ -85,9 +115,9 @@ export default function ScanCaptureTab({
         <div>
           <h4 className="text-sm font-bold text-[#1E293B]">Scan &amp; Capture</h4>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Opens your imaging software focused on <strong>{patientName}</strong>. Capture the
-            image there as normal — it's picked up and saved to this patient automatically, no
-            extra step here.
+            Opens your imaging software focused on <strong>{patientName}</strong>. Capture as many
+            images there as you need — a full FMX series included — each one is picked up and
+            saved automatically as it appears. Press "Done" when the session is finished.
           </p>
         </div>
 
@@ -97,7 +127,7 @@ export default function ScanCaptureTab({
             <select
               value={scanType}
               onChange={(e) => setScanType(e.target.value)}
-              disabled={busy}
+              disabled={busy || sessionActive}
               className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm bg-white focus:border-[#3A6EA5] outline-none disabled:opacity-50"
             >
               {SCAN_TYPES.map((t) => (
@@ -107,16 +137,66 @@ export default function ScanCaptureTab({
               ))}
             </select>
           </div>
-          <button
-            type="button"
-            onClick={handleCapture}
-            disabled={busy}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-[#3A6EA5] hover:bg-[#2f5a8c] text-white rounded-lg font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-            {launching ? 'Opening imaging software…' : isScanning ? 'Waiting for capture…' : isUploading ? 'Saving…' : 'Capture'}
-          </button>
+
+          {sessionActive ? (
+            <>
+              <div className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#3A6EA5]">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {isUploading ? 'Saving…' : `Waiting for next capture… (${capturedInSession.length} saved)`}
+              </div>
+              <button
+                type="button"
+                onClick={handleEndSession}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-[#1E293B] hover:bg-[#0f172a] text-white rounded-lg font-bold text-sm transition-colors"
+              >
+                <Square className="w-4 h-4" />
+                Done
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartSession}
+              disabled={busy}
+              className="inline-flex items-center gap-2 px-5 py-2 bg-[#3A6EA5] hover:bg-[#2f5a8c] text-white rounded-lg font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {launching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+              {launching ? 'Opening imaging software…' : 'Start Session'}
+            </button>
+          )}
         </div>
+
+        {capturedInSession.length > 0 && (
+          <div>
+            <div className="text-xs font-bold text-[#475569] mb-2">
+              Captured this session ({capturedInSession.length})
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {capturedInSession.map((instance) => (
+                <div
+                  key={instance.sop_instance_uid}
+                  className="relative w-16 h-16 rounded-md border-2 border-[#2FB9A7] overflow-hidden bg-[#F1F5F9]"
+                  title={`#${instance.instance_number ?? instance.id}`}
+                >
+                  {resolveAssetUrl(instance.assets.thumbnail_url) ? (
+                    <img
+                      src={resolveAssetUrl(instance.assets.thumbnail_url)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#94A3B8]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 right-0 bg-[#2FB9A7] text-white rounded-tl-md p-0.5">
+                    <Check className="w-3 h-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
