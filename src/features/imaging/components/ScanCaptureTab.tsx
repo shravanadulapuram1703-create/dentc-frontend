@@ -45,7 +45,7 @@ export default function ScanCaptureTab({
   patientDob,
   onCaptured,
 }: ScanCaptureTabProps) {
-  const { status, info, isScanning, runScan, launch, refresh } = useDeviceScan();
+  const { status, info, runScan, launch, refresh } = useDeviceScan();
   const { upload, isUploading } = useCaptureUpload();
   const [scanType, setScanType] = useState<string>(DEFAULT_SCAN_TYPE);
   const [launching, setLaunching] = useState(false);
@@ -58,7 +58,6 @@ export default function ScanCaptureTab({
 
   const detecting = status === 'detecting';
   const unavailable = status === 'unavailable';
-  const busy = launching || isScanning || isUploading;
 
   const runSessionLoop = async () => {
     while (sessionActiveRef.current) {
@@ -127,7 +126,7 @@ export default function ScanCaptureTab({
             <select
               value={scanType}
               onChange={(e) => setScanType(e.target.value)}
-              disabled={busy || sessionActive}
+              disabled={launching || sessionActive}
               className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm bg-white focus:border-[#3A6EA5] outline-none disabled:opacity-50"
             >
               {SCAN_TYPES.map((t) => (
@@ -157,7 +156,15 @@ export default function ScanCaptureTab({
             <button
               type="button"
               onClick={handleStartSession}
-              disabled={busy}
+              // Only this button's own click matters here, not `busy` as a
+              // whole: `isScanning`/`isUploading` can still be true right
+              // after "Done" because the *previous* session's last runScan()
+              // call is still pending in the background (Done stops the next
+              // wait, not the current one — see the component doc comment).
+              // Gating on the shared `busy` flag would leave a fresh "Start
+              // Session" click disabled for however long that stale wait
+              // takes to resolve or time out (up to 5 minutes).
+              disabled={launching}
               className="inline-flex items-center gap-2 px-5 py-2 bg-[#3A6EA5] hover:bg-[#2f5a8c] text-white rounded-lg font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {launching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
