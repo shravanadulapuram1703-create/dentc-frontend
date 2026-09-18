@@ -1,5 +1,10 @@
+import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useGetPatientImaging as useGetPatientImagingApi } from '@/api/generated/endpoints/imaging/imaging';
 import type { DicomImagingFilters } from '../types';
+import { updateDicomInstanceToothNumbers } from '../services/imagingService';
+import { errMsg } from '../utils/errorMessage';
 
 /** Base React Query key segment for the DICOM tree (matches the generated key). */
 export const DICOM_IMAGING_KEY = '/api/v1/patients';
@@ -31,3 +36,31 @@ export const useGetPatientImaging = (
       staleTime: 5 * 60 * 1000,
     },
   });
+
+/** Tag (or clear) the teeth associated with one scanned/captured image. */
+export const useDicomToothAssociation = () => {
+  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const save = useCallback(
+    async (sopInstanceUid: string, toothNumbers: number[]): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await updateDicomInstanceToothNumbers(sopInstanceUid, toothNumbers);
+        queryClient.invalidateQueries({ queryKey: [DICOM_IMAGING_KEY] });
+        toast.success('Tooth association saved');
+        return true;
+      } catch (err) {
+        toast.error('Could not save association', {
+          description: errMsg(err) || 'Please try again.',
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [queryClient],
+  );
+
+  return { save, isSaving };
+};

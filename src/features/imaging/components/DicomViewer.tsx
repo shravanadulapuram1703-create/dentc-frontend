@@ -12,6 +12,7 @@ import {
   Loader2,
   RefreshCw,
   AlertCircle,
+  Tag,
 } from 'lucide-react';
 import type { DicomImage, DicomInstanceOut } from '../types';
 import { getDicomInstance } from '@/api/generated/endpoints/imaging/imaging';
@@ -21,6 +22,7 @@ import {
   formatStudyDate,
   studyTitle,
 } from '../utils/dicomAssets';
+import DicomToothPanel from './DicomToothPanel';
 
 interface DicomViewerProps {
   images: DicomImage[];
@@ -69,6 +71,7 @@ export default function DicomViewer({
   const [scaleLabel, setScaleLabel] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [taggingTeeth, setTaggingTeeth] = useState(false);
 
   const index = images.findIndex((i) => i.instance.sop_instance_uid === currentUid);
   // The parent (DicomStudySection) only mounts the viewer when `images.length > 0`,
@@ -285,6 +288,14 @@ export default function DicomViewer({
           <button type="button" className={toolBtn} onClick={reset} title="Fit / reset (0)">
             <span className="text-xs font-bold px-1">FIT</span>
           </button>
+          <button
+            type="button"
+            className={toolBtn}
+            onClick={() => setTaggingTeeth(true)}
+            title="Tag teeth"
+          >
+            <Tag className="w-5 h-5" />
+          </button>
           {originalUrl && (
             <a
               className={toolBtn}
@@ -397,6 +408,15 @@ export default function DicomViewer({
           </span>
         )}
       </div>
+
+      {taggingTeeth && (
+        <DicomToothPanel
+          sopInstanceUid={liveInstance.sop_instance_uid}
+          fileLabel={`${studyTitle(study)} · #${liveInstance.instance_number ?? liveInstance.id}`}
+          toothNumbers={teeth}
+          onClose={() => setTaggingTeeth(false)}
+        />
+      )}
     </div>
   );
 }
