@@ -14,7 +14,7 @@ import {
   IMAGE_DETAILS_KEY,
   IMAGE_GROUPS_KEY,
 } from '../constants';
-import { DICOM_IMAGING_KEY } from './useDicomImaging';
+import { invalidatePatientImaging } from './useDicomImaging';
 import { errMsg } from '../utils/errorMessage';
 
 /** Invalidate every query the imaging gallery reads from. */
@@ -72,7 +72,7 @@ export const useCaptureUpload = () => {
       setIsUploading(true);
       try {
         const instance = await uploadCapture(input);
-        queryClient.invalidateQueries({ queryKey: [DICOM_IMAGING_KEY] });
+        invalidatePatientImaging(queryClient);
         toast.success('Image captured', { description: input.file.name });
         return instance;
       } catch (err) {

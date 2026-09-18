@@ -1,13 +1,33 @@
 import { useState, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useGetPatientImaging as useGetPatientImagingApi } from '@/api/generated/endpoints/imaging/imaging';
 import type { DicomImagingFilters } from '../types';
 import { updateDicomInstanceToothNumbers } from '../services/imagingService';
 import { errMsg } from '../utils/errorMessage';
 
-/** Base React Query key segment for the DICOM tree (matches the generated key). */
-export const DICOM_IMAGING_KEY = '/api/v1/patients';
+/**
+ * True for any cached `GET /patients/{id}/imaging` query, any patient, any
+ * filter variant. The generated hook's real key is
+ * `[`/api/v1/patients/${patientId}/imaging`, ...(filters ? [filters] : [])]`
+ * — the patient id is baked into the first element as one combined string,
+ * not a separate array entry, so a plain string like '/api/v1/patients'
+ * (what this used to export) never matches it via React Query's per-element
+ * key comparison: invalidateQueries silently invalidated nothing, ever,
+ * which is why captured/tagged images only ever showed up after a hard
+ * page refresh (a fresh mount, not a cache invalidation). A predicate is
+ * what actually lets one invalidation cover every filter variant without
+ * needing to know which one a given screen is currently using.
+ */
+export const isPatientImagingQueryKey = (queryKey: QueryKey): boolean => {
+  const first = queryKey[0];
+  return typeof first === 'string' && /^\/api\/v1\/patients\/\d+\/imaging$/.test(first);
+};
+
+/** Invalidate every cached patient-imaging query (any patient, any filters). */
+export const invalidatePatientImaging = (queryClient: ReturnType<typeof useQueryClient>): void => {
+  queryClient.invalidateQueries({ predicate: (query) => isPatientImagingQueryKey(query.queryKey) });
+};
 
 /** Strip empty/blank filter values so the query key stays stable and we don't send `modality=`. */
 const cleanFilters = (filters?: DicomImagingFilters): DicomImagingFilters | undefined => {
@@ -47,7 +67,7 @@ export const useDicomToothAssociation = () => {
       setIsSaving(true);
       try {
         await updateDicomInstanceToothNumbers(sopInstanceUid, toothNumbers);
-        queryClient.invalidateQueries({ queryKey: [DICOM_IMAGING_KEY] });
+        invalidatePatientImaging(queryClient);
         toast.success('Tooth association saved');
         return true;
       } catch (err) {
