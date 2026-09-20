@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, Paperclip, X } from 'lucide-react';
 import type { PatientDocumentRead } from '@/api/generated/model';
 import { useImageUpload } from '../hooks/useImageMutations';
 import {
@@ -101,13 +101,40 @@ export default function UploadButton({ patientId, officeId, onUploaded }: Upload
         </div>
         <div className="flex-1 min-w-[180px]">
           <label className="block text-xs font-bold text-[#475569] mb-1">File</label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={FILE_ACCEPT_ATTR}
-            onChange={handleFileChange}
-            className="text-sm w-full"
-          />
+          <div className="relative">
+            <label
+              htmlFor="upload-file-input"
+              className="flex items-center gap-2 w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg text-sm bg-white hover:border-[#3A6EA5] cursor-pointer transition-colors"
+            >
+              <Paperclip className="w-4 h-4 text-[#64748B] shrink-0" />
+              <span
+                className={`truncate ${file ? 'text-[#1E293B] font-semibold pr-5' : 'text-[#94A3B8]'}`}
+              >
+                {file ? file.name : 'Choose file…'}
+              </span>
+            </label>
+            {file && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-[#F1F5F9] text-[#94A3B8] hover:text-[#475569] transition-colors"
+                title="Clear selected file"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <input
+              id="upload-file-input"
+              ref={fileInputRef}
+              type="file"
+              accept={FILE_ACCEPT_ATTR}
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+          </div>
         </div>
         <button
           type="button"

@@ -10,4 +10,4 @@ back to the browser, which stores it through the DentC backend (the source of
 truth). The agent holds nothing beyond short-lived temp files.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
