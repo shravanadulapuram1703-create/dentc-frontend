@@ -18,10 +18,7 @@ import {
   newRowId,
   type AppointmentProcedureLine,
 } from "../../services/appointmentProceduresApi";
-import {
-  resolveProcedureFee,
-  type FeeScheduleContext,
-} from "../../services/feeScheduleResolver";
+import { resolveProcedureFeeFor as resolveProcedureFee, type FeeScheduleContext } from "@/features/pricing";
 import type { ProcedureCode, Provider } from "../../services/schedulerApi";
 import { providerDisplayLabel } from "@/services/providerDirectory";
 

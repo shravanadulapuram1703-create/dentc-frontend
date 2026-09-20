@@ -49,13 +49,19 @@ import {
   type AppointmentProcedureLine,
 } from "../../services/appointmentProceduresApi";
 import {
+  resolveProcedureFeeFor as resolveProcedureFee,
   loadFeeScheduleContext,
-  resolveProcedureFee,
   EMPTY_FEE_CONTEXT,
   type FeeScheduleContext,
-} from "../../services/feeScheduleResolver";
+} from "@/features/pricing";
 import { loadProcedureCodes } from "@/components/setup/insurance/procedureCodeService";
 import { providerDisplayLabel } from "@/services/providerDirectory";
+import {
+  ProviderOptionGroups,
+  officeKeyToId,
+  useOfficeOptions,
+  useOfficeScope,
+} from "@/features/office-scope";
 import { listLabs } from "@/api/generated/endpoints/appointments/appointments";
 import type { LabRead } from "@/api/generated/model";
 
@@ -140,12 +146,19 @@ export default function AddEditAppointmentForm({
   editingAppointment,
   initialAppointmentData,
 }: AddEditAppointmentFormProps) {
-  const { currentOrganization, organizations, currentOffice: currentOfficeId } = useAuth();
-  
-  // Find current organization and office details
-  const currentOrg = organizations.find((org) => org.id === currentOrganization);
-  const currentOfficeObj = currentOrg?.offices.find((office) => office.id === currentOfficeId);
-  
+  const { currentOrganization, currentOffice: currentOfficeId } = useAuth();
+  // Working office (numeric id + catalog name) for the header and for stamping.
+  const officeScope = useOfficeScope();
+  // Office catalog for id → name (the cross-office note below).
+  const { data: officeOptions } = useOfficeOptions();
+  // The appointment's office stamp (STAMP.appointment = "working"): the office
+  // model first; the legacy "OFF-<id>" prop only as a fallback, and only ever
+  // through the ONE parser — never parseInt.
+  const working_office_id =
+    officeScope.office_id ?? officeKeyToId(currentOfficeId ?? currentOffice) ?? null;
+  const officeNameById = (id: number): string =>
+    officeOptions?.find((o) => o.id === id)?.name ?? `office ${id}`;
+
   // Extract numeric tenant ID from organization ID (e.g., "ORG-1" -> 1, "1" -> 1)
   const getTenantId = (): string => {
     if (!currentOrganization) return "N/A";
@@ -189,7 +202,7 @@ export default function AddEditAppointmentForm({
   // Loading states
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
   const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
-  const [appointmentLoaded, setAppointmentLoaded] = useState(false);
+  const [, setAppointmentLoaded] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [appointmentError, setAppointmentError] = useState<string | null>(null);
 
@@ -1021,27 +1034,13 @@ export default function AddEditAppointmentForm({
         
         const dobFormatted = mmddyyyyToIso(formData.birthdate) || undefined;
         
-        // Extract office ID from currentOffice string or use currentOfficeId from auth
-        const extractOfficeId = (officeStr: string | undefined): number | undefined => {
-          if (!officeStr) return undefined;
-          const trimmed = officeStr.trim();
-          if (/^\d+$/.test(trimmed)) {
-            return parseInt(trimmed, 10);
-          }
-          const bracketMatch = officeStr.match(/\[(\d+)\]/);
-          if (bracketMatch && bracketMatch[1]) {
-            return parseInt(bracketMatch[1], 10);
-          }
-          const offMatch = officeStr.match(/(?:OFF-|OFF\s*)(\d+)/i);
-          if (offMatch && offMatch[1]) {
-            return parseInt(offMatch[1], 10);
-          }
-          const trailingMatch = officeStr.match(/(\d+)$/);
-          if (trailingMatch && trailingMatch[1]) {
-            return parseInt(trailingMatch[1], 10);
-          }
-          return undefined;
-        };
+        // Registration stamps the working office as the new patient's home
+        // office. The key is "OFF-<id>" — it must be parsed (parseInt gave NaN
+        // and the backend received home_office_id: NaN) and it must exist.
+        const homeOfficeId = officeIdNum(currentOfficeId ?? currentOffice);
+        if (homeOfficeId == null) {
+          throw new Error("Select an office in the top bar to register a patient.");
+        }
 
         // Validate required fields
         if (!formData.firstName || !formData.lastName) {
@@ -1060,7 +1059,7 @@ export default function AddEditAppointmentForm({
           ...(formData.workPhone && { work_phone: digitsOnly(formData.workPhone) }),
           ...(formData.homePhone && { phone: digitsOnly(formData.homePhone) }),
           ...(formData.email && { email: formData.email }),
-          home_office_id: currentOfficeId ? parseInt(String(currentOfficeId), 10) : extractOfficeId(currentOffice),
+          home_office_id: homeOfficeId,
         };
 
         // Gender is free-text on this backend ("Male"/"Female"/"M"/…); forward
@@ -1095,6 +1094,9 @@ export default function AddEditAppointmentForm({
       // Build appointment payload
       const appointmentPayload: any = {
         patient_id: patientIdNum,
+        // Working-office stamp; the service verifies the operatory belongs to
+        // it. Dropped below when no office is selected (legacy derive path).
+        office_id: working_office_id ?? undefined,
         date: convertDateToYYYYMMDD(formData.appointmentDate),
         start_time: convertTimeTo24Hour(formData.startsAt),
         duration: formData.duration,
@@ -1235,6 +1237,17 @@ export default function AddEditAppointmentForm({
   const totalEstInsurance = treatments.reduce((sum, t) => sum + t.est_insurance, 0);
   const totalFee = treatments.reduce((sum, t) => sum + t.fee, 0);
 
+  // Cross-office booking note: the patient is homed in another office. Purely
+  // informational — the office is a working context, never a fence on who can
+  // be booked. The loaded record wins over the thin search-result view-model.
+  const patient_home_office_id = patientRecord?.home_office_id ?? patient.homeOfficeId ?? null;
+  const crossOfficeNote =
+    patient_home_office_id != null &&
+    working_office_id != null &&
+    patient_home_office_id !== working_office_id
+      ? { home: officeNameById(patient_home_office_id), working: officeNameById(working_office_id) }
+      : null;
+
   // Progressive loading: Show form immediately, load data in background
   // No blocking loader - form opens instantly with placeholders
 
@@ -1260,8 +1273,9 @@ export default function AddEditAppointmentForm({
                 <span className="text-[#B0C4DE] font-medium">
                   OID:
                 </span>
-                <span className="ml-2 font-semibold">
-                  {currentOfficeObj?.id || currentOfficeId || "N/A"}
+                <span className="ml-2 font-semibold" title={officeScope.office?.name ?? undefined}>
+                  {officeScope.office_id ?? "N/A"}
+                  {officeScope.office ? ` · ${officeScope.office.name}` : ""}
                 </span>
               </div>
             </div>
@@ -1342,6 +1356,17 @@ export default function AddEditAppointmentForm({
               Patient Information
             </button>
           </div>
+          {crossOfficeNote && (
+            <p
+              role="note"
+              data-testid="appointment-cross-office-note"
+              className="mb-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
+            >
+              Patient&apos;s home office is{" "}
+              <span className="font-semibold">{crossOfficeNote.home}</span> — booking at{" "}
+              <span className="font-semibold">{crossOfficeNote.working}</span>
+            </p>
+          )}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-[#1E293B] font-medium mb-1 text-sm">
@@ -1590,11 +1615,7 @@ export default function AddEditAppointmentForm({
                   {providers.length === 0 ? (
                     <option value="">{isLoadingMetadata ? "Loading..." : "No providers available"}</option>
                   ) : (
-                    providers.map((provider) => (
-                      <option key={provider.id} value={provider.id}>
-                        {providerDisplayLabel(provider)}
-                    </option>
-                    ))
+                    <ProviderOptionGroups providers={providers} keep_id={formData.provider || null} />
                   )}
                 </select>
               </div>
@@ -2195,11 +2216,7 @@ export default function AddEditAppointmentForm({
                             ) : (
                               <>
                                 <option value="">&mdash; None &mdash;</option>
-                                {providers.map((provider) => (
-                                  <option key={provider.id} value={provider.id}>
-                                    {providerDisplayLabel(provider)}
-                                  </option>
-                                ))}
+                                <ProviderOptionGroups providers={providers} />
                               </>
                             )}
                           </select>

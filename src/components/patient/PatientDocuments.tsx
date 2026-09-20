@@ -8,6 +8,7 @@ import {
   deletePatientDocument,
 } from '@/api/generated/endpoints/patients/patients';
 import { openAsset, downloadAsset } from '@/services/documentAccess';
+import { usePatientOffice } from '@/features/office-scope';
 import type { PatientDocumentRead } from '@/api/generated/model';
 
 interface PatientData {
@@ -15,7 +16,6 @@ interface PatientData {
   name: string;
   dob: string;
   age: number;
-  officeId?: string;
 }
 interface OutletContext {
   patient: PatientData;
@@ -58,7 +58,7 @@ export default function PatientDocuments() {
 
   const numericPatientId = Number(patientId);
   const validId = Number.isFinite(numericPatientId);
-  const officeId = patient.officeId ? Number(patient.officeId) : undefined;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   const [docType, setDocType] = useState(DOCUMENT_TYPES[0]);
   const [description, setDescription] = useState('');

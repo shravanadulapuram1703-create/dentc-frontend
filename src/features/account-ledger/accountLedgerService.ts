@@ -11,14 +11,13 @@ import {
 } from '@/api/generated/endpoints/billing/billing';
 import { getPatient, listPatients } from '@/api/generated/endpoints/patients/patients';
 import { listPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
-import { listOffices } from '@/api/generated/endpoints/organization/organization';
 import { listUsers } from '@/api/generated/endpoints/users/users';
+import { listOfficeOptions, type OfficeOption } from '@/services/officeLookup';
 import { patient_display_name } from '@/features/patient-overview/format';
 import { isDeletedClaim } from '@/components/patient/claimLifecycle';
 import type {
   AccountLedgerRow,
   InsuranceClaimRead,
-  OfficeRead,
   UserRead,
   PatientRead,
   PatientPaymentPlanRead,
@@ -101,7 +100,8 @@ export interface MemberFeed {
 
 export interface LedgerFeed {
   feeds: MemberFeed[];
-  offices: OfficeRead[];
+  /** Office label table (id / name / short_id / office_code) from the shared catalog. */
+  offices: OfficeOption[];
   users: UserRead[];
 }
 
@@ -154,7 +154,7 @@ export async function loadLedgerFeed(
     size: FEED_SIZE,
   };
 
-  const [feeds, officeRes, userRes] = await Promise.all([
+  const [feeds, offices, userRes] = await Promise.all([
     Promise.all(
       members.map(async (member): Promise<MemberFeed> => {
         const [ledger, claims, held] = await Promise.all([
@@ -176,11 +176,11 @@ export async function loadLedgerFeed(
         };
       }),
     ),
-    listOffices({ size: 200 }).catch(() => ({ items: [] as OfficeRead[] })),
+    listOfficeOptions().catch(() => [] as OfficeOption[]),
     listUsers({ size: 200 }).catch(() => ({ items: [] as UserRead[] })),
   ]);
 
-  return { feeds, offices: officeRes.items ?? [], users: userRes.items ?? [] };
+  return { feeds, offices, users: userRes.items ?? [] };
 }
 
 export interface PaymentPlans {

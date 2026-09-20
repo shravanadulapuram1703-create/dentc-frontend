@@ -10,7 +10,7 @@ import {
 } from '../../../services/accountSetupApi';
 import type { LookupOption } from '../../../services/accountSetupTransform';
 import { listPhoneAssignments, useSetPhoneAssignments } from '@/api/generated/endpoints/account-info/account-info';
-import { listOffices } from '@/api/generated/endpoints/organization/organization';
+import { listOfficeOptions } from '@/services/officeLookup';
 import { resolveSmsSender } from '@/api/generated/endpoints/communications/communications';
 import type { SmsSenderResolution } from '@/api/generated/model/smsSenderResolution';
 import { PhoneAssignmentEditor } from './PhoneAssignmentEditor';
@@ -218,11 +218,14 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       setStockExchangeOptions(se);
       setBusinessIndustryOptions(ind);
 
-      const [comm, phones, officesPage] = await Promise.all([
+      // Offices come from the shared office catalog (never filtered itself);
+      // only ACTIVE offices get an assignment row, as before.
+      const [comm, phones, allOffices] = await Promise.all([
         fetchCommunications(accountId),
         listPhoneAssignments(tenantIdOf(accountId)),
-        listOffices({ size: 200, is_active: true }),
+        listOfficeOptions(),
       ]);
+      const activeOffices = allOffices.filter((o) => o.is_active);
 
       const m = mapCommRowToState(comm);
       setBusinessName(m.businessName);
@@ -249,7 +252,7 @@ export function CommunicationsTabContent({ accountId }: CommunicationsTabContent
       setBusinessIndustry(m.businessIndustry);
       setTelecomStatus(m.telecomStatus);
 
-      const rows = buildPhoneAssignmentRows(officesPage.items ?? [], phones ?? []);
+      const rows = buildPhoneAssignmentRows(activeOffices, phones ?? []);
       setPhoneAssignments(rows);
       void refreshSenders(rows);
 

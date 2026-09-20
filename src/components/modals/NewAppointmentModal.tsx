@@ -26,6 +26,14 @@ import {
   type ProcedureType,
 } from "../../services/schedulerApi";
 import { registerPatientResilient } from "../../services/patientApi";
+import {
+  allOfficesParam,
+  homeOfficeFilter,
+  useOfficeScope,
+  useReadScope,
+  READ_SCOPE_LABELS,
+  type ReadScopeMode,
+} from "@/features/office-scope";
 import { listPatients, getPatient } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead, ListPatientsParams, PatientCreate } from "@/api/generated/model";
 import {
@@ -33,6 +41,7 @@ import {
   lookup_patient_by_id,
   lookup_patients_by_legacy_id,
   parse_patient_id,
+  patient_in_offices,
   patient_matches_scope,
 } from "@/features/patients/patientLookup";
 import AddNewPatient from "../pages/AddNewPatient";
@@ -173,7 +182,12 @@ export default function NewAppointmentModal({
 
   // Patient Search State (consistent with Patient.tsx)
   const [searchBy, setSearchBy] = useState("lastName");
-  const [searchIn, setSearchIn] = useState<"current" | "all" | "group">("all");
+  // "Search In" — the per-user patient-search read scope shared with the
+  // Patient page (sessionStorage). The old "Office Group" radio was removed:
+  // it silently meant All (office-group scope is OFF-SCOPE-8).
+  const searchScope = useReadScope("patient-search", { allow: "everyone", defaultMode: "all" });
+  // Mode the LAST search actually ran in (the radio may have moved since).
+  const [searchedMode, setSearchedMode] = useState<ReadScopeMode | null>(null);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<
@@ -183,6 +197,9 @@ export default function NewAppointmentModal({
 
   // Dynamic metadata state
   const [providers, setProviders] = useState<Provider[]>([]);
+  // Working-office name for the read-only "Office" fields (the raw "OFF-<id>"
+  // key used to be rendered there).
+  const officeScope = useOfficeScope();
   const [operatories, setOperatories] = useState<Operatory[]>([]);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
@@ -501,14 +518,6 @@ export default function NewAppointmentModal({
     };
   };
 
-  // Helper to extract numeric office ID from currentOffice (e.g., "OFF-1" -> "1")
-  const extractOfficeIdNumber = (officeId?: string): string | undefined => {
-    if (!officeId) return undefined;
-    if (/^\d+$/.test(officeId)) return officeId;
-    const match = officeId.match(/(\d+)$/);
-    return match ? match[1] : officeId;
-  };
-
   // Search-by radio → the typed `GET /patients` filter it maps to. Names have
   // no typed filter (free-text `search` covers first/last name); the three
   // phone radios all share the backend's single `phone` filter, which matches
@@ -526,7 +535,12 @@ export default function NewAppointmentModal({
     birthdate: "dob",
   };
 
-  const handlePatientSearch = async () => {
+  /**
+   * Run the search in `scope_mode` — normally the live "Search In" choice; the
+   * zero-result hint passes "all" explicitly because the mode it just set has
+   * not rendered yet.
+   */
+  const runPatientSearch = async (scope_mode: ReadScopeMode) => {
     const text = searchText.trim();
     if (!text) {
       alert("Please enter search criteria");
@@ -537,17 +551,27 @@ export default function NewAppointmentModal({
     setHasSearched(false);
     setSearchResults([]);
     setSearchNotice(null);
+    setSearchedMode(scope_mode);
 
     try {
-      const officeIdNum =
-        searchIn === "current" ? Number(extractOfficeIdNumber(currentOffice)) || null : null;
+      // "This office" scopes by the patient's HOME office (the only office
+      // filter GET /patients has); "My offices" sends nothing and filters the
+      // page client-side; "All offices" is tenant-wide.
+      const scopeOfficeId = scope_mode === "office" ? searchScope.office_id : null;
+      const scopeOfficeIds = scope_mode === "my_offices" ? searchScope.office_ids : [];
+      const inScope = (rows: PatientRead[]) => rows.filter((p) => patient_in_offices(p, scopeOfficeIds));
 
       // Pat. ID — exact GET /patients/{id}; office scope + Incl. Inactive are
       // re-applied here because the by-id endpoint takes no filters.
       if (searchBy === "patId") {
         const p = await lookup_patient_by_id(text);
         const hit =
-          p && patient_matches_scope(p, { home_office_id: officeIdNum, include_inactive: includeInactive })
+          p &&
+          patient_matches_scope(p, {
+            home_office_id: scopeOfficeId,
+            home_office_ids: scopeOfficeIds,
+            include_inactive: includeInactive,
+          })
             ? [p]
             : [];
         if (!p && parse_patient_id(text) == null) {
@@ -558,8 +582,12 @@ export default function NewAppointmentModal({
         return;
       }
 
-      const params: ListPatientsParams = { page: 1, size: 100 };
-      if (officeIdNum) params.home_office_id = officeIdNum;
+      const params: ListPatientsParams = {
+        page: 1,
+        size: 100,
+        ...homeOfficeFilter(scopeOfficeId),
+        ...allOfficesParam(scope_mode === "all"),
+      };
       if (!includeInactive) params.is_active = true;
 
       // Legacy ID — `legacy_id=` list filter (PT-SEARCH-1); the helper tells
@@ -567,7 +595,7 @@ export default function NewAppointmentModal({
       if (searchBy === "legacyId") {
         const res = await lookup_patients_by_legacy_id(text, params);
         if (!res.backend_supported) setSearchNotice(LEGACY_ID_GAP_MESSAGE);
-        setSearchResults(res.items.map(convertPatientToSearchResult));
+        setSearchResults(inScope(res.items).map(convertPatientToSearchResult));
         setHasSearched(true);
         return;
       }
@@ -586,7 +614,7 @@ export default function NewAppointmentModal({
       const response = await listPatients(params);
 
       // Convert backend patients to PatientSearchResult format
-      const results = response.items.map(convertPatientToSearchResult);
+      const results = inScope(response.items).map(convertPatientToSearchResult);
 
       setSearchResults(results);
       setHasSearched(true);
@@ -598,6 +626,14 @@ export default function NewAppointmentModal({
     } finally {
       setIsSearchingPatients(false);
     }
+  };
+
+  const handlePatientSearch = () => runPatientSearch(searchScope.mode);
+
+  // Zero results in "This office": widen to All offices and search again.
+  const handleSearchAllOffices = () => {
+    searchScope.setMode("all");
+    void runPatientSearch("all");
   };
 
   // Patient handed over from a patient screen: skip the chooser and the search,
@@ -848,7 +884,7 @@ export default function NewAppointmentModal({
                   Office:
                 </span>
                 <span className="ml-2 text-[#1E293B] font-semibold">
-                  {currentOffice}
+                  {officeScope.office?.name ?? currentOffice}
                 </span>
               </div>
               <div>
@@ -912,7 +948,7 @@ export default function NewAppointmentModal({
                   Office
                 </label>
                 <div className="px-3 py-2 bg-gray-100 border-2 border-[#E2E8F0] rounded-lg text-sm font-semibold text-[#1E293B]">
-                  {currentOffice}
+                  {officeScope.office?.name ?? currentOffice}
                 </div>
               </div>
             </div>
@@ -1129,56 +1165,33 @@ export default function NewAppointmentModal({
                 </div>
 
                 {/* Search In â†’ 1 column */}
-                <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-4 col-span-1">
+                <div
+                  className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-4 col-span-1"
+                  role="group"
+                  aria-label="Search in"
+                >
                   <h4 className="text-xs font-bold text-[#1F3A5F] uppercase mb-3 tracking-wide">
                     Search In
                   </h4>
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="searchIn"
-                        value="current"
-                        checked={searchIn === "current"}
-                        onChange={(e) =>
-                          setSearchIn(e.target.value as "current" | "all" | "group")
-                        }
-                        className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-xs text-[#1E293B]">
-                        Current Office
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="searchIn"
-                        value="all"
-                        checked={searchIn === "all"}
-                        onChange={(e) =>
-                          setSearchIn(e.target.value as "current" | "all" | "group")
-                        }
-                        className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-xs text-[#1E293B]">
-                        All Offices
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="searchIn"
-                        value="group"
-                        checked={searchIn === "group"}
-                        onChange={(e) =>
-                          setSearchIn(e.target.value as "current" | "all" | "group")
-                        }
-                        className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-xs text-[#1E293B]">
-                        Office Group
-                      </span>
-                    </label>
+                    {searchScope.modes.map((mode) => (
+                      <label key={mode} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="searchIn"
+                          value={mode}
+                          checked={searchScope.mode === mode}
+                          onChange={() => searchScope.setMode(mode)}
+                          className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
+                        />
+                        <span className="text-xs text-[#1E293B]">
+                          {READ_SCOPE_LABELS[mode]}
+                          {mode === "office" && searchScope.office_name
+                            ? ` (${searchScope.office_name})`
+                            : ""}
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1204,10 +1217,24 @@ export default function NewAppointmentModal({
                   )}
                   {searchResults.length === 0 ? (
                     <div className="bg-[#F7F9FC] border border-[#E2E8F0] rounded-lg p-8 text-center">
-                      <p className="text-[#64748B]">
-                        No patients found matching your search
-                        criteria.
-                      </p>
+                      {searchedMode === "office" && officeScope.office_id != null ? (
+                        <p className="text-[#64748B]">
+                          No match in {searchScope.office_name} —{" "}
+                          <button
+                            type="button"
+                            onClick={handleSearchAllOffices}
+                            disabled={isSearchingPatients}
+                            className="font-bold text-[#3A6EA5] hover:underline disabled:opacity-60"
+                          >
+                            Search all offices
+                          </button>
+                        </p>
+                      ) : (
+                        <p className="text-[#64748B]">
+                          No patients found matching your search
+                          criteria.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="border-2 border-[#E2E8F0] rounded-lg overflow-hidden">

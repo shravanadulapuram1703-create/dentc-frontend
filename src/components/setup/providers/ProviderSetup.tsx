@@ -16,9 +16,9 @@ import {
   createProvider,
   updateProvider,
   deleteProvider,
-  listOffices,
 } from "@/api/generated/endpoints/organization/organization";
-import type { ProviderRead, OfficeRead } from "@/api/generated/model";
+import type { ProviderRead } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
 import {
   type ProviderForm,
   emptyProviderForm,
@@ -102,7 +102,9 @@ function fmtDateTime(value?: string | null): string {
 
 export default function ProviderSetup() {
   const [providers, setProviders] = useState<ProviderRead[]>([]);
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Home-office picker / labels from the shared office catalog (id → name only).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -133,12 +135,8 @@ export default function ProviderSetup() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [provRes, offRes] = await Promise.all([
-        listProviders({ size: 200, sort: "name", order: "asc" }),
-        listOffices({ size: 200 }).catch(() => null),
-      ]);
+      const provRes = await listProviders({ size: 200, sort: "name", order: "asc" });
       setProviders(provRes.items ?? []);
-      setOffices(offRes?.items ?? []);
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : "Failed to load providers");
       setProviders([]);

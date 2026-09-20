@@ -16,7 +16,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Plus, Trash2, ListOrdered, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { coverageCategoriesFor } from "@/services/coverageResolver";
+import { coverageCategoriesFor } from "@/features/pricing";
 import EntityPicker from "../EntityPicker";
 import { loadProcedureCodes, codeDescription } from "../procedureCodeService";
 import type { PickerOption } from "../lookupService";

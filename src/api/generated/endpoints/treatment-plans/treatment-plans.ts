@@ -865,6 +865,7 @@ export function useGetTreatmentPlan<TData = Awaited<ReturnType<typeof getTreatme
 
 
 /**
+ * Partial update of one treatment plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update treatment plan
  */
 export const updateTreatmentPlan = (
@@ -929,6 +930,7 @@ export const useUpdateTreatmentPlan = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateTreatmentPlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one treatment plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete treatment plan
  */
 export const deleteTreatmentPlan = (
@@ -1238,6 +1240,7 @@ export function useGetTreatmentPlanItem<TData = Awaited<ReturnType<typeof getTre
 
 
 /**
+ * Partial update of one treatment plan item. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update treatment plan item
  */
 export const updateTreatmentPlanItem = (
@@ -1302,6 +1305,7 @@ export const useUpdateTreatmentPlanItem = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateTreatmentPlanItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one treatment plan item. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete treatment plan item
  */
 export const deleteTreatmentPlanItem = (
@@ -1611,6 +1615,7 @@ export function useGetTreatmentPlanInsuranceDetail<TData = Awaited<ReturnType<ty
 
 
 /**
+ * Partial update of one treatment plan insurance detail.
  * @summary Update treatment plan insurance detail
  */
 export const updateTreatmentPlanInsuranceDetail = (
@@ -1675,6 +1680,7 @@ export const useUpdateTreatmentPlanInsuranceDetail = <TError = ErrorType<ErrorRe
       return useMutation(getUpdateTreatmentPlanInsuranceDetailMutationOptions(options), queryClient);
     }
     /**
+ * Delete one treatment plan insurance detail.
  * @summary Delete treatment plan insurance detail
  */
 export const deleteTreatmentPlanInsuranceDetail = (

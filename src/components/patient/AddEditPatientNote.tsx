@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Save,
@@ -24,6 +24,7 @@ import {
 } from '@/api/generated/endpoints/patients/patients';
 import { useUserNames } from '@/services/userDirectory';
 import { openAsset, downloadAsset } from '@/services/documentAccess';
+import { usePatientOffice } from '@/features/office-scope';
 import {
   documentErrorMessage,
   formatFileSize,
@@ -37,19 +38,6 @@ import {
   type PatientNoteWithDocument,
 } from '@/features/patient-notes/noteDocumentsService';
 import NoteMacroPickerModal from './NoteMacroPickerModal';
-
-interface PatientData {
-  id: string;
-  name: string;
-  dob: string;
-  age: number;
-  gender?: string;
-  officeId?: string;
-}
-
-interface OutletContext {
-  patient: PatientData;
-}
 
 interface AddEditPatientNoteProps {
   mode?: 'add' | 'edit' | 'view';
@@ -73,7 +61,6 @@ function formatTimestamp(iso?: string | null): string {
 export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteProps) {
   const navigate = useNavigate();
   const { patientId, noteId } = useParams();
-  const { patient } = useOutletContext<OutletContext>();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
@@ -89,7 +76,7 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
 
   const numericPatientId = Number(patientId);
   const numericNoteId = Number(noteId);
-  const numericOfficeId = patient.officeId ? Number(patient.officeId) : undefined;
+  const { posting_office_id: numericOfficeId } = usePatientOffice();
   const isExistingNote = (mode === 'edit' || mode === 'view') && Number.isFinite(numericNoteId);
 
   const [noteType, setNoteType] = useState<string>('Patient Notes');
@@ -314,6 +301,10 @@ export default function AddEditPatientNote({ mode = 'add' }: AddEditPatientNoteP
           note_type: noteType,
           notes: noteContent.trim(),
           document_id: documentId,
+          // Record-first: the note keeps the office it was created in. Resent
+          // unchanged so a server-side office check sees it; a note with no
+          // office stays that way (nothing is stamped on update).
+          ...(loadedNote?.office_id != null ? { office_id: loadedNote.office_id } : {}),
         };
         saved = (await updateMutation.mutateAsync({
           itemId: numericNoteId,

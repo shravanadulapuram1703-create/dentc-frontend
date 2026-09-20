@@ -52,7 +52,8 @@ export interface UserGridRow {
 export interface MapUsersGridInput {
   users: UserRead[];
   userOffices: UserOfficeRead[];
-  offices: OfficeRead[];
+  /** Office label table — only `id` / `name` are read, so the shared catalog `OfficeOption` fits too. */
+  offices: Pick<OfficeRead, "id" | "name">[];
   tenants: TenantRead[];
   userGroupMemberships?: UserGroupMembershipRead[];
   userGroups?: UserGroupRead[];

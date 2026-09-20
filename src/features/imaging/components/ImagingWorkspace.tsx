@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { ImageIcon, Camera, Images } from 'lucide-react';
+import { usePatientOffice } from '@/features/office-scope';
+import { useHasRight, RIGHT } from '@/features/access-control';
 import ScanCaptureTab from './ScanCaptureTab';
 import ImagesTab from './ImagesTab';
 
@@ -9,7 +11,6 @@ interface PatientData {
   name: string;
   dob?: string;
   age?: number;
-  officeId?: string;
 }
 interface OutletContext {
   patient: PatientData;
@@ -24,9 +25,15 @@ export default function ImagingWorkspace() {
 
   const numericPatientId = Number(patientId ?? patient.id);
   const validId = Number.isFinite(numericPatientId);
-  const officeId = patient.officeId ? Number(patient.officeId) : undefined;
+  const { posting_office_id: officeId } = usePatientOffice();
+
+  // RBAC: capturing/scanning needs Imaging Full Control. A view-only user only
+  // gets the Images tab (delete/upload inside it are gated separately).
+  const canCapture = useHasRight(RIGHT.imaging.full);
 
   const [tab, setTab] = useState<TabKey>('capture');
+  // Never resolve to the capture tab without the right (default state is 'capture').
+  const effectiveTab: TabKey = canCapture ? tab : 'images';
 
   if (!validId) {
     return (
@@ -37,7 +44,9 @@ export default function ImagingWorkspace() {
   }
 
   const tabs: { key: TabKey; label: string; icon: typeof Camera }[] = [
-    { key: 'capture', label: 'Scan & Capture', icon: Camera },
+    ...(canCapture
+      ? [{ key: 'capture' as const, label: 'Scan & Capture', icon: Camera }]
+      : []),
     { key: 'images', label: 'Images', icon: Images },
   ];
 
@@ -59,7 +68,7 @@ export default function ImagingWorkspace() {
           {/* Tabs */}
           <div className="mt-5 flex gap-1 border-b border-[#E2E8F0] -mb-5">
             {tabs.map(({ key, label, icon: Icon }) => {
-              const active = tab === key;
+              const active = effectiveTab === key;
               return (
                 <button
                   key={key}
@@ -79,7 +88,7 @@ export default function ImagingWorkspace() {
           </div>
         </div>
 
-        {tab === 'capture' ? (
+        {effectiveTab === 'capture' ? (
           <ScanCaptureTab
             patientId={numericPatientId}
             patientName={patient.name}
@@ -88,7 +97,7 @@ export default function ImagingWorkspace() {
             onCaptured={() => setTab('images')}
           />
         ) : (
-          <ImagesTab patientId={numericPatientId} officeId={officeId} />
+          <ImagesTab patientId={numericPatientId} officeId={officeId ?? undefined} />
         )}
       </div>
     </div>

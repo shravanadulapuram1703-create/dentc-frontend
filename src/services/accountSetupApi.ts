@@ -29,9 +29,9 @@ import {
 import {
   getTenant,
   updateTenant,
-  listOffices,
 } from "@/api/generated/endpoints/organization/organization";
 import api from "./api";
+import { listOfficeOptions } from "./officeLookup";
 import { type LookupOption, parseLookupOptions } from "./accountSetupTransform";
 
 /**
@@ -121,16 +121,16 @@ export async function uploadAccountLogoDataUrl(accountId: string, dataUrl: strin
 // ----------------------------------------------------------------------------
 // LOOKUPS
 // ----------------------------------------------------------------------------
-// Office-backed lookups are real (/api/v1/offices). The remaining
-// definition-backed lookups (states, cultures, colors, charting options, EDI
-// vendors, business types, etc.) have no backend lookup endpoint / seeded
-// `definitions` group_codes yet — see ACCOUNT_INFO_BACKEND_MAPPING_v2.md gap L1.
-// They return [] (graceful empty) rather than hitting non-existent routes.
+// Office-backed lookups are real (the shared office catalog over /api/v1/offices).
+// The remaining definition-backed lookups (states, cultures, colors, charting
+// options, EDI vendors, business types, etc.) have no backend lookup endpoint /
+// seeded `definitions` group_codes yet — see ACCOUNT_INFO_BACKEND_MAPPING_v2.md
+// gap L1. They return [] (graceful empty) rather than hitting non-existent routes.
 
 const officeOptions = async (): Promise<LookupOption[]> => {
   try {
-    const res = await listOffices({ size: 200 });
-    return (res.items ?? []).map((o) => ({ value: String(o.id), label: o.name }));
+    const offices = await listOfficeOptions();
+    return offices.map((o) => ({ value: String(o.id), label: o.name }));
   } catch {
     return [];
   }

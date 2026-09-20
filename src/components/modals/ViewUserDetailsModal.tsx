@@ -3,11 +3,11 @@ import { X, UserCheck, Shield, Clock, Settings, Wifi, RefreshCw, AlertCircle, Us
 import { ReadOnlyField } from "../ReadOnlyField";
 import { fetchUserDetails, type UserDetails } from "../../services/userApi";
 import {
-  useListOffices,
   useListTenants,
   useListProviders,
 } from "../../api/generated/endpoints/organization/organization";
 import { useListUserGroups } from "../../api/generated/endpoints/staff/staff";
+import { useOfficeOptions } from "@/features/office-scope";
 import { formatUsDateTime } from "../../utils/datetime";
 import { apiAssetUrl } from "../../utils/apiAsset";
 import { providerDisplayLabel } from "@/services/providerDirectory";
@@ -41,15 +41,16 @@ export default function ViewUserDetailsModal({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Lookups for resolving display names (backend-driven via generated hooks).
-  const officesQ = useListOffices(LIST_PARAMS, { query: { enabled: isOpen } });
+  // Lookups for resolving display names. Offices come from the shared office
+  // catalog (id / name / office_code); tenants + groups via generated hooks.
+  const officesQ = useOfficeOptions({ enabled: isOpen });
   const tenantsQ = useListTenants(LIST_PARAMS, { query: { enabled: isOpen } });
   const groupsQ = useListUserGroups(LIST_PARAMS, { query: { enabled: isOpen } });
 
   const officeById = useMemo(() => {
     const map = new Map<number, { name: string; office_code: string }>();
-    for (const o of officesQ.data?.items ?? []) {
-      map.set(o.id, { name: o.name, office_code: o.office_code });
+    for (const o of officesQ.data ?? []) {
+      map.set(o.id, { name: o.name, office_code: o.office_code ?? "" });
     }
     return map;
   }, [officesQ.data]);

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ProcedureCodeRead, ProviderRead, TreatmentPlanItemRead } from '@/api/generated/model';
-import { money2 } from './procedurePricing';
+import { money2 } from '@/features/pricing';
 import { providerOptionLabel } from '@/services/providerDirectory';
 
 export interface PostOutcome {

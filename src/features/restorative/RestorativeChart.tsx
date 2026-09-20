@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { RequireRight, RIGHT } from '@/features/access-control';
 import {
   useListChartConditions,
   useCreateChartCondition,
@@ -31,10 +32,17 @@ import {
   todayIso,
 } from '@/features/procedures/procedureEntryService';
 import { announceProcedureChange, useProcedureSync } from '@/features/procedures/procedureSync';
-import { loadFeeScheduleContext, EMPTY_FEE_CONTEXT, type FeeScheduleContext } from '@/services/feeScheduleResolver';
-import { loadCoverageContext, EMPTY_COVERAGE_CONTEXT, type CoverageContext } from '@/services/coverageResolver';
+import {
+  loadFeeScheduleContext,
+  loadCoverageContext,
+  EMPTY_FEE_CONTEXT,
+  EMPTY_COVERAGE_CONTEXT,
+  type FeeScheduleContext,
+  type CoverageContext,
+} from '@/features/pricing';
 import PostToLedgerDialog from './PostToLedgerDialog';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import type { ChartConditionRead, ChartMaterialRead, PatientProcedureRead, ProviderRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import AddAdaCodeModal, { type AdaEntry } from './AddAdaCodeModal';
 import InsuranceBenefitsModal from './InsuranceBenefitsModal';
@@ -81,7 +89,7 @@ import { openSchedulerForBooking } from '@/services/schedulerHandoff';
 import { noteDisplayText } from '@/features/progress-notes/noteContent';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number };
+  patient: { id: string; name: string; age?: number };
 }
 
 const TAB_TITLE: Record<ChartTab, string> = {
@@ -107,7 +115,7 @@ export default function RestorativeChart() {
 
   const numericId = Number(patient?.id ?? patientId);
   const validId = !Number.isNaN(numericId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ---------------------------------------------------------------
   const conditionsParams = { patient_id: numericId, size: 200 };
@@ -595,7 +603,7 @@ export default function RestorativeChart() {
       // code/tooth is still planned, that planned item is completed by it.
       const result = await postCompletedProcedure({
         patient_id: numericId,
-        office_id: officeId ?? 0,
+        office_id: officeId,
         procedure_code: e.procedure_code,
         date_of_service: tranDate,
         provider_id: e.provider_id || prefProvider || '',
@@ -641,7 +649,7 @@ export default function RestorativeChart() {
   const postPlanItem = async (it: TreatmentPlanItemRead, provider_id: string, date: string) => {
     await postPlanItemToLedger({
       patient_id: numericId,
-      office_id: officeId ?? 0,
+      office_id: officeId,
       item: it,
       provider_id,
       date_of_service: date,
@@ -911,10 +919,13 @@ export default function RestorativeChart() {
           </>
         )}
 
-        <button onClick={deleteSelectedRow} disabled={!selectedRowId || deleteCondition.isPending} className="ml-auto flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-1 font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50">
-          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 6h10M8 6V4h4v2M6 6l1 10h6l1-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Delete…
-        </button>
+        {/* RBAC: deleting a charted condition/procedure is backend-enforced. */}
+        <RequireRight code={RIGHT.charting.restorativeDeleteCondition}>
+          <button onClick={deleteSelectedRow} disabled={!selectedRowId || deleteCondition.isPending} className="ml-auto flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-1 font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 6h10M8 6V4h4v2M6 6l1 10h6l1-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Delete…
+          </button>
+        </RequireRight>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -968,9 +979,20 @@ export default function RestorativeChart() {
           )}
         </div>
 
-        {/* Right: condition palette — full height, down to the bottom. */}
+        {/* Right: condition palette — full height, down to the bottom.
+            RBAC: applying conditions/procedures needs Full Control; a view-only
+            user sees the chart but not the palette. */}
         <div className="w-[320px] shrink-0">
-          <ConditionPalette tab={paletteTab} onTabChange={setPaletteTab} onApply={applyPaletteItem} disabled={!selection} selectionArea={selection?.area ?? null} isArchSelection={isArchSelection} />
+          <RequireRight
+            code={RIGHT.charting.restorativeFull}
+            fallback={
+              <div className="rounded border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500">
+                View-only access — charting edits are disabled.
+              </div>
+            }
+          >
+            <ConditionPalette tab={paletteTab} onTabChange={setPaletteTab} onApply={applyPaletteItem} disabled={!selection} selectionArea={selection?.area ?? null} isArchSelection={isArchSelection} />
+          </RequireRight>
         </div>
       </div>
 

@@ -1121,3 +1121,68 @@ with a pre-flight completion checklist. Full backend report with 14 gaps (ADA-BE
 - **ADA-BE-12 🟠** `treating_provider_id` / `billing_provider_id` are null on ledger-created claims.
 - **ADA-BE-1 🟠** no `GET /insurance-claims/{id}/reports/ada-claim-form` (server PDF + PRINT audit); frontend jsPDF is the fallback pattern.
 
+## Office scope — working context vs. authorization (`OFF-SCOPE-1..19`) — 2026-09-12
+
+Full report: [docs/office-scope/office_scope_backend_devreport.md](docs/office-scope/office_scope_backend_devreport.md).
+Decision implemented client-side (`src/features/office-scope/**`): the selected office is a **working
+context** (default read filter for day-data, write stamp for point-of-service records, selector for
+office-owned setup) — never a fence on patients, catalogs, users or Setup. Everything the client does today
+is workflow convenience; confidentiality needs the server:
+
+- **OFF-SCOPE-1 🔴** no endpoint validates `office_id` / `home_office_id` / `/offices/{id}/*` against the caller's
+  `user_offices` (only tenant membership) → 403 `office_not_assigned` unless assigned or privileged.
+- **OFF-SCOPE-13 🔴** `MeFull.permissions_enforced` is already `true` but refers to the legacy rights catalog; no
+  office rights exist → define `offices:view_all`, `offices:switch_any`, `patients:view_cross_office`,
+  `reports:all_offices` (the FE already honours `appointments_add_appointment_in_other_office` as coverage).
+- **OFF-SCOPE-2 🔴** ~45 list endpoints leave "omitted `office_id`" undocumented (= tenant-wide) → document; non-privileged
+  omit = assigned offices; `all_offices=true` (already sent by the FE on deliberate all-office reads) = tenant-wide.
+- **OFF-SCOPE-4 🟠** `?office_id=N` drops `office_id IS NULL` rows on nullable-office lists (PLAN-8) → `include_global`.
+- **OFF-SCOPE-5 🟠** `GET /patients` has only `home_office_id`; no "seen-at office" → `seen_at_office_id` + `search_scope`.
+- **OFF-SCOPE-10 🟠** rosters 93/1/1/0 (`/offices/{id}/providers/effective`) and `MeFull.offices` is empty even for
+  the seeded admin → backfill `provider_offices` and `user_offices`; enrich `OfficeAssignment`.
+- **OFF-SCOPE-11 🟠** point-of-service creates accept `office_id: null` → require it (422) and validate.
+- **OFF-SCOPE-3 / 6 / 7 / 8 / 9 / 12 / 14–19 🟡** `X-Office-ID` + `MeFull.current_office_id`; patient visibility
+  policy; `office_id` on 15 more lists; `office_ids[]` / `office_group_id`; `/effective` for the remaining catalog
+  overlays + `only_show_office_items` semantics; operatory∈office validation; SMS/AppointNow/utilities/audit office
+  rules; dashboard summary; account-settings sentinel + office timezone.
+- Closed frontend-side (not backend gaps): operatory default provider (`OperatoryCreate.provider_id` existed — stale
+  "gap #23"); office↔group assignment (`PATCH /offices/{id}` `office_group_id` — stale "gap #18").
+
+
+---
+
+## RBAC / access-rights enforcement (2026-09-13)
+
+Catalog curation + C1 enforcement shipped (see `docs/setup/security/ACCESS_RIGHTS_BACKEND_RESPONSE.md`).
+While wiring the frontend gating layer (`src/features/access-control/`) and live-verifying with a real
+view-only user, these gaps surfaced — full detail + repro in
+[`docs/setup/security/ACCESS_RIGHTS_RBAC_GAPS.md`](docs/setup/security/ACCESS_RIGHTS_RBAC_GAPS.md):
+
+- **RBAC-1 🔴** `*_view_only` rights don't grant reads — reads are gated by coarse `users.role`, so a
+  screen's view right is ignored. Root cause of RBAC-2/3. Make a `*_view_only`/`*_full_control` right
+  grant read on that screen's data endpoints.
+- **RBAC-2 🔴** `GET /user-groups/{id}/rights` 403s a user holding `setup_security_groups_screen_view_only`
+  (observed: "Insufficient role" → every group shows "No rights assigned yet").
+- **RBAC-3 🔴** `GET /users` returns empty for a `setup_security_users_screen_view_only` staff user
+  (observed: "No users found").
+- **RBAC-4 🟠** `transactions_edit_fee_ledger` not enforced (maps to generic `PATCH /patient-procedures`
+  → needs a fee-field-scoped guard).
+- **RBAC-5 🟠** `transactions_delete_procedure` (`DELETE /patient-procedures/{id}`, ledger charge delete)
+  not enforced — only payment deletes are.
+- **RBAC-6 🟡** enforcement stops at the C1 starter set; extend `require_permission` to the rest of the
+  catalog's write operations (prescription strike-off, TP delete/discount/edit-fee, payment posting,
+  progress-note lock override, medical-history edits, perio/imaging writes, …).
+
+FE follow-ups (frontend-owned, listed for completeness): no delete UI yet for `patient_delete_patient_information`
+(DELETE /patients) or `patient_delete_patient_insurance_plan_information` (DELETE /patient-insurance);
+Restorative/Perio/Imaging screens still need full-vs-view gating; FE gating kill-switch stays dark until
+RBAC-1 is fixed.
+
+**Update 2026-09-14 — backend resolved RBAC-1…5 + RBAC-6 phase-1** (see
+`docs/setup/security/ACCESS_RIGHTS_RBAC_GAPS_RESPONSE.md`): new `require_read_access` gate makes
+`*_view_only` rights grant reads (RBAC-1) — fixes the Groups-rights read (RBAC-2) and Users list (RBAC-3);
+`edit_fee_ledger` field-scoped (RBAC-4) and `delete_procedure` gated (RBAC-5); RBAC-6 phase-1 enforces
+patient/insurance payment posting, perio-chart writes (`charting_perio_full_control`) and TP delete.
+RBAC-6 remainder still open: prescription strike-off, TP discount/edit-fee/change-status, progress-note
+lock, medical-history edits, `imaging_capture_acquire`, adjustments. FE gated all C1 writes + FE-RBAC-3
+(restorative/perio/imaging full-vs-view); FE-RBAC-1/2 (patient + patient-insurance delete UI) still absent.

@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { ConsentCountersignRequest } from './consentCountersignRequest';
 
 /**
  * LTR-10: capture a signature against an existing consent row. Carries the
@@ -33,6 +34,9 @@ export interface ConsentSignRequest {
   signed_at?: string | null;
   /** An uploaded patient-document holding the scanned wet-signed copy */
   document_id?: number | null;
+  /** The signed PDF rendition (patient-document id), kept beside document_id */
+  signed_document_id?: number | null;
+  countersigns?: ConsentCountersignRequest[] | null;
   status?: string;
   signature_method?: string | null;
   signer_name?: string | null;

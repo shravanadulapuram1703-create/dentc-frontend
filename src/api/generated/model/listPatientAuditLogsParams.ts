@@ -15,6 +15,10 @@ resource_type?: string | null;
 resource_id?: string | null;
 user_id?: number | null;
 /**
+ * OFF-SCOPE-17: only entries made in this office
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

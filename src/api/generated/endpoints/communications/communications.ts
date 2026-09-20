@@ -1808,6 +1808,7 @@ export function useGetSmsMessage<TData = Awaited<ReturnType<typeof getSmsMessage
 
 
 /**
+ * Partial update of one sms message. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update sms message
  */
 export const updateSmsMessage = (
@@ -1872,6 +1873,7 @@ export const useUpdateSmsMessage = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateSmsMessageMutationOptions(options), queryClient);
     }
     /**
+ * Delete one sms message. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete sms message
  */
 export const deleteSmsMessage = (
@@ -2181,6 +2183,7 @@ export function useGetSmsTemplate<TData = Awaited<ReturnType<typeof getSmsTempla
 
 
 /**
+ * Partial update of one sms template. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update sms template
  */
 export const updateSmsTemplate = (
@@ -2245,6 +2248,7 @@ export const useUpdateSmsTemplate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateSmsTemplateMutationOptions(options), queryClient);
     }
     /**
+ * Delete one sms template. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete sms template
  */
 export const deleteSmsTemplate = (
@@ -2554,6 +2558,7 @@ export function useGetEmailMessage<TData = Awaited<ReturnType<typeof getEmailMes
 
 
 /**
+ * Partial update of one email message. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update email message
  */
 export const updateEmailMessage = (
@@ -2618,6 +2623,7 @@ export const useUpdateEmailMessage = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateEmailMessageMutationOptions(options), queryClient);
     }
     /**
+ * Delete one email message. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete email message
  */
 export const deleteEmailMessage = (
@@ -2927,6 +2933,7 @@ export function useGetLetterTemplate<TData = Awaited<ReturnType<typeof getLetter
 
 
 /**
+ * Partial update of one letter template.
  * @summary Update letter template
  */
 export const updateLetterTemplate = (
@@ -2991,6 +2998,7 @@ export const useUpdateLetterTemplate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateLetterTemplateMutationOptions(options), queryClient);
     }
     /**
+ * Delete one letter template.
  * @summary Delete letter template
  */
 export const deleteLetterTemplate = (
@@ -3300,6 +3308,7 @@ export function useGetPostcardTemplate<TData = Awaited<ReturnType<typeof getPost
 
 
 /**
+ * Partial update of one postcard template.
  * @summary Update postcard template
  */
 export const updatePostcardTemplate = (
@@ -3364,6 +3373,7 @@ export const useUpdatePostcardTemplate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePostcardTemplateMutationOptions(options), queryClient);
     }
     /**
+ * Delete one postcard template.
  * @summary Delete postcard template
  */
 export const deletePostcardTemplate = (
@@ -3673,6 +3683,7 @@ export function useGetCampaign<TData = Awaited<ReturnType<typeof getCampaign>>, 
 
 
 /**
+ * Partial update of one campaign.
  * @summary Update campaign
  */
 export const updateCampaign = (
@@ -3737,6 +3748,7 @@ export const useUpdateCampaign = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCampaignMutationOptions(options), queryClient);
     }
     /**
+ * Delete one campaign.
  * @summary Delete campaign
  */
 export const deleteCampaign = (

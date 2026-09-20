@@ -5,6 +5,10 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import type { OfficeOption } from "@/services/officeLookup";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOfficeScope } from "@/features/office-scope";
 import {
   ArrowLeft,
   Download,
@@ -64,12 +68,24 @@ function resolveFilters(draft: DraftFilters): ReportFilters {
   };
 }
 
+/** Human label for a resolved office filter (null = tenant-wide). Never the raw `OFF-<id>` key. */
+function officeLabelOf(office: number | null, offices: OfficeOption[] | undefined): string {
+  if (office == null) return "All offices";
+  const o = (offices ?? []).find((x) => x.id === office);
+  return o ? officeName(o) : `Office ${office}`;
+}
+
 export default function ReportShell({ def, currentOffice }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const user_id = user?.id ?? null;
+  const { office_id, allowed_office_ids } = useOfficeScope();
+  // Both filter states are seeded ONCE from the working office; ReportRunnerPage
+  // keys this component by office_id so an office switch remounts and re-seeds.
   const [draft, setDraft] = useState<DraftFilters>(() => initialDraft(def, currentOffice));
   // Applied filters drive the query — committed on "Run report" (auto-run on mount).
   const [applied, setApplied] = useState<ReportFilters>(() => resolveFilters(initialDraft(def, currentOffice)));
-  const [views, setViews] = useState<SavedView[]>(() => loadViews(def.id));
+  const [views, setViews] = useState<SavedView[]>(() => loadViews(user_id, def.id));
   const [showSave, setShowSave] = useState(false);
   const [viewName, setViewName] = useState("");
 
@@ -82,11 +98,10 @@ export default function ReportShell({ def, currentOffice }: Props) {
   });
   const data = query.data;
 
-  const officeLabel = useMemo(() => {
-    if (applied.office == null) return "All offices";
-    const o = (officesQ.data ?? []).find((x) => x.id === applied.office);
-    return o ? officeName(o) : `Office ${applied.office}`;
-  }, [applied.office, officesQ.data]);
+  const officeLabel = useMemo(
+    () => officeLabelOf(applied.office, officesQ.data),
+    [applied.office, officesQ.data],
+  );
 
   const subtitle = useMemo(() => {
     const parts = [
@@ -130,12 +145,22 @@ export default function ReportShell({ def, currentOffice }: Props) {
     openReportPdf(buildMatrix(def.columns, rows), { title: def.title, subtitle, summary: summaryChips });
 
   const saveView = () => {
-    setViews(addView(def.id, viewName, resolveFilters(draft)));
+    setViews(addView(user_id, def.id, viewName, resolveFilters(draft)));
     setViewName("");
     setShowSave(false);
   };
   const applyView = (v: SavedView) => {
-    const f = v.filters;
+    let f = v.filters;
+    // A view saved for an office the user may no longer work in falls back to
+    // the working office — and says so — rather than silently running against
+    // the wrong office or refusing the view. (An empty allowed list means the
+    // catalog has not loaded yet / nothing is enforced: never a gate.)
+    if (f.office != null && allowed_office_ids.length > 0 && !allowed_office_ids.includes(f.office)) {
+      toast.warning(
+        `Saved view "${v.name}" was scoped to an office you can no longer work in — running for ${officeLabelOf(office_id, officesQ.data)} instead.`,
+      );
+      f = { ...f, office: office_id };
+    }
     setDraft({
       preset: f.preset,
       from: f.range.from,
@@ -202,7 +227,7 @@ export default function ReportShell({ def, currentOffice }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => setViews(removeView(def.id, v.id))}
+              onClick={() => setViews(removeView(user_id, def.id, v.id))}
               className="p-0.5 rounded-full hover:bg-[#DBEAFE]"
               aria-label={`Remove saved view ${v.name}`}
             >

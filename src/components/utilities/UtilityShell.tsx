@@ -33,6 +33,9 @@ interface Props {
   currentOffice: string;
 }
 
+// `__office` defaults to the working office and stays re-selectable in the form
+// (privilege gating comes later). Seeded once per mount — UtilityRunnerPage keys
+// the shell by office_id so an office switch re-seeds it.
 function initialValues(def: UtilityDefinition, currentOffice: string): ParamValues {
   const v: ParamValues = {};
   if (def.officeScoped) {
@@ -87,10 +90,11 @@ export default function UtilityShell({ def, currentOffice }: Props) {
     return out;
   }, [def, values, officeLabel]);
 
+  // The audit record names the office — never the raw `OFF-<id>` key.
   const ctx = {
     user_id: user?.id ?? "anon",
     user_name: user?.name || user?.email || "Unknown user",
-    office: officeLabel || currentOffice || "—",
+    office: officeLabel || "—",
   };
 
   const complete = paramsComplete(def, values);

@@ -29,9 +29,14 @@ export interface ProgressNoteRead {
   is_deleted: boolean;
   created_by?: number | null;
   created_at: string;
+  updated_at?: string | null;
+  updated_by?: number | null;
   created_by_name?: string | null;
+  updated_by_name?: string | null;
   signed_by_name?: string | null;
   struck_off_by_name?: string | null;
   is_locked?: boolean;
+  locks_at?: string | null;
+  timezone?: string | null;
   attachment_count?: number;
 }

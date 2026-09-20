@@ -12,7 +12,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Paperclip,
   X,
 } from 'lucide-react';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
@@ -53,6 +52,7 @@ import {
   type LedgerTarget,
 } from './accountLedgerModel';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import { BALANCE_COLS, aggregateBalances, fmtDay, type MemberBalance } from './ledgerBalances';
 import { contractCards } from './ledgerContracts';
@@ -65,7 +65,6 @@ interface OutletCtx {
   patient: {
     id: string;
     name: string;
-    officeId?: string;
     office?: string;
     balance?: number;
     dob?: string;
@@ -83,7 +82,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
 
   const patientId = Number(patient?.id ?? patientIdParam);
   const validId = Number.isFinite(patientId) && patientId > 0;
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
   const patientName = patient?.name ?? 'Unknown Patient';
 
   // ---- Scope (Patient Ledger <-> Account Ledger) ----

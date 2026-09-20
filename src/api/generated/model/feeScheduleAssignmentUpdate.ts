@@ -10,8 +10,8 @@ export interface FeeScheduleAssignmentUpdate {
   ins_plan_id?: number | null;
   carrier_id?: number | null;
   provider_id?: string | null;
+  specialty_id?: string | null;
   office_id?: number | null;
   office_group_id?: number | null;
   fee_schedule_id?: number | null;
-  specialty_id?: string | null;
 }

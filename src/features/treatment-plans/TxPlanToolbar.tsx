@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ProviderRead } from '@/api/generated/model';
 import { STATUS_ORDER, SETTABLE_STATUSES, STATUS_LABEL, type TxStatus, type SettableTxStatus } from './txModel';
 import { providerOptionLabel } from '@/services/providerDirectory';
+import { RequireRight, RIGHT } from '@/features/access-control';
 
 export interface IdChange {
   tid?: number;
@@ -106,9 +107,12 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
         >
           Provider
         </button>
-        <button className={btn} disabled={busy} onClick={props.onDelete}>
-          Delete
-        </button>
+        {/* RBAC: deleting a treatment plan is backend-enforced. */}
+        <RequireRight code={RIGHT.transactions.treatmentPlanDelete}>
+          <button className={btn} disabled={busy} onClick={props.onDelete}>
+            Delete
+          </button>
+        </RequireRight>
         <button className={btn} disabled={busy} onClick={props.onClearFilters}>
           Clear All Filters
         </button>
@@ -167,9 +171,12 @@ export default function TxPlanToolbar(props: TxPlanToolbarProps) {
           )}
         </div>
 
-        <button className={btn} disabled={busy} onClick={props.onPostToLedger}>
-          Post to Ledger
-        </button>
+        {/* RBAC: posting a plan to the ledger needs the right (backend also 403s). */}
+        <RequireRight code={RIGHT.transactions.treatmentPlanPostToLedger}>
+          <button className={btn} disabled={busy} onClick={props.onPostToLedger}>
+            Post to Ledger
+          </button>
+        </RequireRight>
         <button className={btn} disabled={busy} onClick={props.onPrint}>
           Print
         </button>

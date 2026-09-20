@@ -674,13 +674,21 @@ export function ortho_form_from(row: OrthoPlanRead): OrthoPlanForm {
 }
 
 /** Body for POST/PATCH /ortho-plans — only the columns the backend owns. */
-export function ortho_body(form: OrthoPlanForm, patient_id: number, office_id: number | null) {
+export function ortho_body(
+  form: OrthoPlanForm,
+  patient_id: number,
+  office_id: number | null,
+  created_office_id: number | null = null,
+) {
   const pat_on = form.pat_plan_enabled;
   const ins_on = form.ins_plan_enabled;
   const sec_on = form.sec_ins_plan_enabled;
   return {
     patient_id,
+    // The contract owner (home office). `created_office_id` records WHERE the
+    // plan was entered (the working office), which can differ (Phase 4).
     office_id,
+    created_office_id,
     procedure_code: form.procedure_code.trim() || null,
     description: form.description.trim() || null,
     total_ortho_amt: num_out(form.total_ortho_amt),

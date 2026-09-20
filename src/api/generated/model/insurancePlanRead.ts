@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { GroupNumberCascade } from './groupNumberCascade';
 
 export interface InsurancePlanRead {
   tenant_id: number;
@@ -33,6 +34,11 @@ export interface InsurancePlanRead {
   per_visit_copay?: string | null;
   lifetime_ortho_benefits: boolean;
   plan_notes?: string | null;
+  is_non_dup_benefits: boolean;
+  legacy_prepaid_code?: string | null;
+  is_locked: boolean;
+  locked_at?: string | null;
+  locked_by?: number | null;
   created_on?: string | null;
   created_by?: string | null;
   modified_on?: string | null;
@@ -48,4 +54,7 @@ export interface InsurancePlanRead {
   is_dental?: boolean | null;
   created_by_name?: string | null;
   updated_by_name?: string | null;
+  locked_by_name?: string | null;
+  version?: string | null;
+  group_number_cascade?: GroupNumberCascade | null;
 }

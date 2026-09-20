@@ -13,6 +13,8 @@ export interface ResponsiblePartyUpdate {
   last_name?: string | null;
   first_name?: string | null;
   middle_initial?: string | null;
+  middle_name?: string | null;
+  suffix?: string | null;
   address_line1?: string | null;
   address_line2?: string | null;
   city?: string | null;

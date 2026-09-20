@@ -591,7 +591,9 @@ export function buildMedicalAlertsIn(
   labels: Record<string, string>,
 ): MedicalAlertIn[] {
   const rows: MedicalAlertIn[] = Object.entries(form.responses)
-    .filter(([, ans]) => ans === "yes" || ans === "no")
+    // Type-guarded so `ans` narrows to the "yes" | "no" enum: the generated
+    // MedicalAlertIn.response no longer accepts the "" (unanswered) sentinel.
+    .filter((e): e is [string, "yes" | "no"] => e[1] === "yes" || e[1] === "no")
     .map(([code, ans]) => ({
       alert_code: code,
       alert_label: labels[code] ?? undefined,

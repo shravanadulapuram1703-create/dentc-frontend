@@ -35,7 +35,12 @@ import type {
   ErrorResponse,
   HTTPValidationError,
   IntIdAssignmentSet,
+  ListOfficeEffectiveExpCodesParams,
   ListOfficeEffectiveLetterTemplatesParams,
+  ListOfficeEffectiveNoteMacrosParams,
+  ListOfficeEffectivePrescriptionLibraryParams,
+  ListOfficeEffectiveProcedureCodesParams,
+  ListOfficeEffectiveProductionTypesParams,
   ListOfficeEffectiveProvidersParams,
   OfficeUsersSet,
   StrIdAssignmentSet,
@@ -1143,6 +1148,506 @@ export const useSetOfficeLetterTemplates = <TError = ErrorType<ErrorResponse | H
       return useMutation(getSetOfficeLetterTemplatesMutationOptions(options), queryClient);
     }
     /**
+ * @summary Procedure Codes this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+export const listOfficeEffectiveProcedureCodes = (
+    officeId: number,
+    params?: ListOfficeEffectiveProcedureCodesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedProcedureCodeRead[]>(
+      {url: `/api/v1/offices/${officeId}/procedure-codes/effective`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOfficeEffectiveProcedureCodesQueryKey = (officeId: number,
+    params?: ListOfficeEffectiveProcedureCodesParams,) => {
+    return [
+    `/api/v1/offices/${officeId}/procedure-codes/effective`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOfficeEffectiveProcedureCodesQueryOptions = <TData = Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number,
+    params?: ListOfficeEffectiveProcedureCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficeEffectiveProcedureCodesQueryKey(officeId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>> = ({ signal }) => listOfficeEffectiveProcedureCodes(officeId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOfficeEffectiveProcedureCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>>
+export type ListOfficeEffectiveProcedureCodesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOfficeEffectiveProcedureCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: undefined |  ListOfficeEffectiveProcedureCodesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveProcedureCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveProcedureCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveProcedureCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveProcedureCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Procedure Codes this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+
+export function useListOfficeEffectiveProcedureCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveProcedureCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProcedureCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOfficeEffectiveProcedureCodesQueryOptions(officeId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Exp Codes this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+export const listOfficeEffectiveExpCodes = (
+    officeId: number,
+    params?: ListOfficeEffectiveExpCodesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedCodeBundleRead[]>(
+      {url: `/api/v1/offices/${officeId}/exp-codes/effective`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOfficeEffectiveExpCodesQueryKey = (officeId: number,
+    params?: ListOfficeEffectiveExpCodesParams,) => {
+    return [
+    `/api/v1/offices/${officeId}/exp-codes/effective`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOfficeEffectiveExpCodesQueryOptions = <TData = Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number,
+    params?: ListOfficeEffectiveExpCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficeEffectiveExpCodesQueryKey(officeId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>> = ({ signal }) => listOfficeEffectiveExpCodes(officeId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOfficeEffectiveExpCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>>
+export type ListOfficeEffectiveExpCodesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOfficeEffectiveExpCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: undefined |  ListOfficeEffectiveExpCodesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveExpCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveExpCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveExpCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveExpCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Exp Codes this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+
+export function useListOfficeEffectiveExpCodes<TData = Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveExpCodesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveExpCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOfficeEffectiveExpCodesQueryOptions(officeId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Production Types this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+export const listOfficeEffectiveProductionTypes = (
+    officeId: number,
+    params?: ListOfficeEffectiveProductionTypesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedProductionTypeRead[]>(
+      {url: `/api/v1/offices/${officeId}/production-types/effective`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOfficeEffectiveProductionTypesQueryKey = (officeId: number,
+    params?: ListOfficeEffectiveProductionTypesParams,) => {
+    return [
+    `/api/v1/offices/${officeId}/production-types/effective`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOfficeEffectiveProductionTypesQueryOptions = <TData = Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number,
+    params?: ListOfficeEffectiveProductionTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficeEffectiveProductionTypesQueryKey(officeId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>> = ({ signal }) => listOfficeEffectiveProductionTypes(officeId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOfficeEffectiveProductionTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>>
+export type ListOfficeEffectiveProductionTypesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOfficeEffectiveProductionTypes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: undefined |  ListOfficeEffectiveProductionTypesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveProductionTypes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveProductionTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveProductionTypes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveProductionTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Production Types this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+
+export function useListOfficeEffectiveProductionTypes<TData = Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveProductionTypesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveProductionTypes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOfficeEffectiveProductionTypesQueryOptions(officeId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Note Macros this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+export const listOfficeEffectiveNoteMacros = (
+    officeId: number,
+    params?: ListOfficeEffectiveNoteMacrosParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedNoteMacroRead[]>(
+      {url: `/api/v1/offices/${officeId}/note-macros/effective`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOfficeEffectiveNoteMacrosQueryKey = (officeId: number,
+    params?: ListOfficeEffectiveNoteMacrosParams,) => {
+    return [
+    `/api/v1/offices/${officeId}/note-macros/effective`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOfficeEffectiveNoteMacrosQueryOptions = <TData = Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number,
+    params?: ListOfficeEffectiveNoteMacrosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficeEffectiveNoteMacrosQueryKey(officeId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>> = ({ signal }) => listOfficeEffectiveNoteMacros(officeId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOfficeEffectiveNoteMacrosQueryResult = NonNullable<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>>
+export type ListOfficeEffectiveNoteMacrosQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOfficeEffectiveNoteMacros<TData = Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: undefined |  ListOfficeEffectiveNoteMacrosParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveNoteMacros<TData = Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveNoteMacrosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectiveNoteMacros<TData = Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveNoteMacrosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Note Macros this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+
+export function useListOfficeEffectiveNoteMacros<TData = Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectiveNoteMacrosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectiveNoteMacros>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOfficeEffectiveNoteMacrosQueryOptions(officeId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Prescription Library this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+export const listOfficeEffectivePrescriptionLibrary = (
+    officeId: number,
+    params?: ListOfficeEffectivePrescriptionLibraryParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AssignedPrescriptionRead[]>(
+      {url: `/api/v1/offices/${officeId}/prescription-library/effective`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOfficeEffectivePrescriptionLibraryQueryKey = (officeId: number,
+    params?: ListOfficeEffectivePrescriptionLibraryParams,) => {
+    return [
+    `/api/v1/offices/${officeId}/prescription-library/effective`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOfficeEffectivePrescriptionLibraryQueryOptions = <TData = Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number,
+    params?: ListOfficeEffectivePrescriptionLibraryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficeEffectivePrescriptionLibraryQueryKey(officeId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>> = ({ signal }) => listOfficeEffectivePrescriptionLibrary(officeId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOfficeEffectivePrescriptionLibraryQueryResult = NonNullable<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>>
+export type ListOfficeEffectivePrescriptionLibraryQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOfficeEffectivePrescriptionLibrary<TData = Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: undefined |  ListOfficeEffectivePrescriptionLibraryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectivePrescriptionLibrary<TData = Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectivePrescriptionLibraryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeEffectivePrescriptionLibrary<TData = Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectivePrescriptionLibraryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Prescription Library this office can pick: its assignment, else the full catalog (OFF-SCOPE-9)
+ */
+
+export function useListOfficeEffectivePrescriptionLibrary<TData = Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params?: ListOfficeEffectivePrescriptionLibraryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeEffectivePrescriptionLibrary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOfficeEffectivePrescriptionLibraryQueryOptions(officeId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Providers serving an office: assigned ∪ home office (PROV-1)
  */
 export const listOfficeEffectiveProviders = (

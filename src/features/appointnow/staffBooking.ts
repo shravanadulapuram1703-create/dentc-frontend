@@ -16,16 +16,19 @@
 // with patient_id = null and the contact details carried in the label/notes for
 // staff to attach to a patient record later (see AN-5 in the devreport).
 
-import {
-  listOffices,
-  listProviders,
-  listOperatories,
-} from "@/api/generated/endpoints/organization/organization";
+import { listOperatories } from "@/api/generated/endpoints/organization/organization";
+import { listOfficeOptions, type OfficeOption } from "@/services/officeLookup";
 import {
   createAppointment,
   fetchAppointments,
   type Appointment,
 } from "@/services/schedulerApi";
+import {
+  fetchOfficeProviderIds,
+  fetchProviderRows,
+  formatProviderName,
+  partitionByOffice,
+} from "@/services/providerDirectory";
 import type { AvailableSlot, BookingRequest } from "./transport/types";
 
 const PAGE = { size: 200 } as const;
@@ -106,9 +109,9 @@ export async function resolveBookingTargets(
   request: BookingRequest,
   fallbackOfficeId?: number | null,
 ): Promise<BookingTargets> {
-  // 1. Resolve the office by code (fall back to the selected office).
-  const officesRes = await listOffices(PAGE).catch(() => null);
-  const offices = officesRes?.items ?? [];
+  // 1. Resolve the office by code (fall back to the selected office). The shared
+  //    office catalog carries id / office_code, which is all this needs.
+  const offices = await listOfficeOptions().catch(() => [] as OfficeOption[]);
   const office =
     offices.find(
       (o) => o.office_code?.toUpperCase() === request.office_code.toUpperCase(),
@@ -123,14 +126,18 @@ export async function resolveBookingTargets(
     );
   }
 
-  // 2. Providers + operatories for that office.
-  const [providersRes, operatoriesRes] = await Promise.all([
-    listProviders(PAGE).catch(() => null),
+  // 2. Providers + operatories for that office. Providers come from the shared
+  //    directory scoped through the real roster (assignment join ∪ home office),
+  //    never the `office_id` scalar alone — that scalar is 0/97 for office 10 —
+  //    and fall back to every active provider when the roster is empty.
+  const [rows, assignedIds, operatoriesRes] = await Promise.all([
+    fetchProviderRows().catch(() => []),
+    fetchOfficeProviderIds(officeId).catch(() => null),
     listOperatories({ ...PAGE, office_id: officeId }).catch(() => null),
   ]);
-  const providers = (providersRes?.items ?? []).filter(
-    (p) => p.office_id === officeId && p.is_active,
-  );
+  const activeRows = rows.filter((p) => p.is_active !== false);
+  const { in_office, others: otherProviders } = partitionByOffice(activeRows, officeId, assignedIds);
+  const providers = in_office.length > 0 ? in_office : otherProviders;
   const operatories = (operatoriesRes?.items ?? []).filter(
     (o) => o.office_id === officeId && o.is_active,
   );
@@ -158,7 +165,7 @@ export async function resolveBookingTargets(
   return {
     office_id: officeId,
     provider_id: provider.id,
-    provider_name: provider.name,
+    provider_name: formatProviderName(provider),
     operatory_ids: [...tied, ...others].map((o) => o.id),
   };
 }

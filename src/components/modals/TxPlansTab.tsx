@@ -14,7 +14,7 @@ import {
   createTreatmentPlanItem,
   listTreatmentPlans,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
-import { resolveProcedureFee, type FeeScheduleContext } from '../../services/feeScheduleResolver';
+import { resolveProcedureFeeFor as resolveProcedureFee, type FeeScheduleContext } from '@/features/pricing';
 import { announceProcedureChange } from '@/features/procedures/procedureSync';
 import { providerDisplayLabel } from '@/services/providerDirectory';
 
@@ -206,7 +206,7 @@ export default function TxPlansTab({
         procedure_code: code.code,
         description: code.description,
         fee: priced?.fee ?? code.defaultFee,
-        insurance_estimate: priced?.insurance_estimate ?? 0,
+        // Server fills the coverage split (no client insurance_estimate).
         priority: 1,
         phase_id: addPhase,
         billing_order: String(addPhase),

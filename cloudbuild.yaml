@@ -22,6 +22,10 @@ substitutions:
   # and never reach Jira.
   _JIRA_MODE: "auto"
   _JIRA_PROJECT_KEY: "KAN"
+  # AppointNow public booking transport. MUST be `api` for any deployed build —
+  # `local` keeps requests in the patient's own browser and the office never
+  # sees them.
+  _APPOINTNOW_BACKEND: "api"
 
 steps:
   - name: gcr.io/cloud-builders/docker
@@ -35,6 +39,8 @@ steps:
       - VITE_JIRA_MODE=${_JIRA_MODE}
       - --build-arg
       - VITE_JIRA_PROJECT_KEY=${_JIRA_PROJECT_KEY}
+      - --build-arg
+      - VITE_APPOINTNOW_BACKEND=${_APPOINTNOW_BACKEND}
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
       - .

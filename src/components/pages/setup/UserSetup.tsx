@@ -4,6 +4,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import AddEditUserModal from "../../modals/AddEditUserModal";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
 import { useUsersGrid } from "@/features/users/useUsersGrid";
+import { officeKeyToId } from "@/services/officeLookup";
 import type { SecurityGroupRef } from "@/features/users/mapUsersGrid";
 import {
   useListTenants,
@@ -20,6 +21,7 @@ import {
   uploadUserImage,
 } from "../../../api/generated/endpoints/users/users";
 import type { BackendUser } from "../../../types/backendUser";
+import { RequireRight, RIGHT } from "@/features/access-control";
 
 interface PermittedIP {
   id: string;
@@ -195,13 +197,11 @@ export default function UserSetup({
     }
   }, [searchScope]);
 
-  const normalizeOID = (v: string | number) =>
-    String(v).replace(/^O-/, "");
+  // "O-3", "OFF-3", "3" and numeric ids all compare on the numeric office id.
+  const normalizeOID = (v: string | number) => String(officeKeyToId(v) ?? "");
 
   const normalizePGID = (v: string | number) =>
     String(v).replace(/^P-/, "");
-
-  console.log({currentOffice,OID: availableOIDs});
 
   const filteredOIDs = useMemo(() => {
     // Home Office only → show only home office
@@ -256,7 +256,15 @@ export default function UserSetup({
   // (/users + /user-offices + /offices + /tenants) via generated React Query
   // hooks. Replaces the legacy /users/list-with-home-office imperative fetch.
   const { users, refetch: fetchUsers } = useUsersGrid({
-    office_id: filterOID !== "all" ? Number(filterOID) : undefined,
+    // "Home Office only" scopes the grid to the working office server-side
+    // (GET /users?office_id = assigned-office filter); filteredUsers then keeps
+    // the rows whose HOME office is that office.
+    office_id:
+      searchScope === "home"
+        ? officeKeyToId(currentOffice)
+        : filterOID !== "all"
+          ? Number(filterOID)
+          : undefined,
     role: filterRole !== "all" ? filterRole : undefined,
     search: debouncedSearch || undefined,
   });
@@ -353,7 +361,9 @@ export default function UserSetup({
       .filter((user) => {
         // Home Office scope
         if (searchScope === "home") {
-          return user.homeOffice === currentOffice;
+          // homeOfficeOID is "O-<id>", currentOffice is "OFF-<id>": compare ids.
+          const home = normalizeOID(user.homeOfficeOID);
+          return home !== "" && home === normalizeOID(currentOffice);
         }
 
         // PGID filter (no server param — tenant-scoped client-side)
@@ -821,7 +831,8 @@ export default function UserSetup({
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons — RBAC: add/delete need Full Control; hidden for view-only. */}
+            <RequireRight code={RIGHT.setup.securityUsersFull}>
             <div className="border-t-2 border-[#E2E8F0] p-4 bg-[#F7F9FC]">
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -849,6 +860,7 @@ export default function UserSetup({
                 </button>
               </div>
             </div>
+            </RequireRight>
           </div>
 
           {/* Right Panel - User Details */}
@@ -1114,14 +1126,17 @@ export default function UserSetup({
                   {/* Quick Actions */}
                   <div className="mt-4 pt-4 border-t-2 border-[#E2E8F0]">
                     <div className="flex gap-3">
-                      <button
-                        onClick={handleEditUser}
-                        disabled={!selectedUser}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm font-bold text-sm"
-                      >
-                        <Edit className="w-4 h-4" />
-                        EDIT USER DETAILS
-                      </button>
+                      {/* RBAC: editing needs Full Control; view-only keeps "View" below. */}
+                      <RequireRight code={RIGHT.setup.securityUsersFull}>
+                        <button
+                          onClick={handleEditUser}
+                          disabled={!selectedUser}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#2d5080] transition-colors shadow-sm font-bold text-sm"
+                        >
+                          <Edit className="w-4 h-4" />
+                          EDIT USER DETAILS
+                        </button>
+                      </RequireRight>
                       <button
                         onClick={handleViewDetails}
                         className="flex items-center gap-2 px-5 py-2.5 bg-[#64748B] text-white rounded-lg hover:bg-[#475569] transition-colors shadow-sm font-bold text-sm"

@@ -13,6 +13,10 @@ export type AppointnowListRequestsParams = {
 status?: string | null;
 office_id?: number | null;
 /**
+ * OFF-SCOPE-15: My-offices inbox (repeatable)
+ */
+office_ids?: number[] | null;
+/**
  * name/phone/email/reason/code
  */
 q?: string | null;

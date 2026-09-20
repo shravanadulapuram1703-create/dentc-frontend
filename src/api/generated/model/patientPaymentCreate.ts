@@ -11,6 +11,7 @@ export interface PatientPaymentCreate {
   id: string;
   patient_id: number;
   office_id?: number | null;
+  created_office_id?: number | null;
   is_archived?: boolean | null;
   payment_date: string;
   amount: number | string;

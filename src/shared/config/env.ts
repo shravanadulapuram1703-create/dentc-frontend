@@ -53,11 +53,14 @@ const schema = z.object({
   // --- AppointNow (external online booking) ----------------------------------
   // The public booking screen (/book/:office_code) and the staff request inbox
   // talk to a swappable transport. Two modes:
-  //   local  (default) — client-side simulation (localStorage + BroadcastChannel).
-  //                       Fully demonstrable end-to-end in a browser; no backend.
-  //   api    — hit the real /api/v1/appointnow/* endpoints once the backend team
-  //            ships them (see docs/appointnow/appointnow_backend_devreport.md).
-  VITE_APPOINTNOW_BACKEND: z.enum(["local", "api"]).default("local"),
+  //   api    (default) — the real /api/v1/appointnow/* endpoints (shipped). A
+  //                      request from a patient's phone lands in the backend and
+  //                      is visible to every staff session of that office.
+  //   local  — client-side simulation (localStorage + BroadcastChannel) for demos
+  //            with no backend. Only ever visible inside ONE browser profile, so
+  //            NEVER ship a production build in this mode (that is exactly how
+  //            external bookings went missing — see appointnow_backend_devreport.md).
+  VITE_APPOINTNOW_BACKEND: z.enum(["local", "api"]).default("api"),
 });
 
 const parsed = schema.parse(import.meta.env);
@@ -106,6 +109,15 @@ if (jiraMode === "demo" && parsed.VITE_APP_ENV === "production") {
   );
 }
 
+// A production bundle running the AppointNow SIMULATION stores every public
+// booking request in the visitor's own localStorage — the office never sees it.
+if (parsed.VITE_APPOINTNOW_BACKEND === "local" && parsed.VITE_APP_ENV === "production") {
+  console.error(
+    "[appointnow] VITE_APPOINTNOW_BACKEND=local in a production build — public " +
+      "booking requests will NOT reach the office. Rebuild with `api` (the default).",
+  );
+}
+
 export const env = {
   /** Backend base URL, normalized without a trailing slash. */
   apiBaseUrl: parsed.VITE_API_BASE_URL.replace(/\/+$/, ""),
@@ -137,8 +149,8 @@ export const env = {
     projectKey: parsed.VITE_JIRA_PROJECT_KEY,
   },
   /**
-   * AppointNow transport mode. "local" runs the client-side booking simulation;
-   * "api" targets the real /api/v1/appointnow/* endpoints (backend gap).
+   * AppointNow transport mode. "api" (default) targets the real
+   * /api/v1/appointnow/* endpoints; "local" runs the client-side simulation.
    */
   appointNowBackend: parsed.VITE_APPOINTNOW_BACKEND,
 } as const;

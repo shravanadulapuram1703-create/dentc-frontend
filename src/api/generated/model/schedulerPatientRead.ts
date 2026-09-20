@@ -16,6 +16,8 @@ export interface SchedulerPatientRead {
   preferred_name?: string | null;
   title?: string | null;
   middle_initial?: string | null;
+  middle_name?: string | null;
+  suffix?: string | null;
   dob?: string | null;
   gender?: string | null;
   ssn?: string | null;

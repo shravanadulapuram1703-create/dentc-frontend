@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useHasRight, RIGHT } from '@/features/access-control';
 import {
   useListPerioExams,
   useCreatePerioExam,
@@ -22,6 +23,7 @@ import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ChartConditionRead, PerioExamRead, PerioChartTemplateRead } from '@/api/generated/model';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { PERMANENT_UPPER, PERMANENT_LOWER, upperTeeth, lowerTeeth } from '@/features/restorative/dentition';
 import { loadChartSettings } from '@/features/restorative/restorativeService';
@@ -54,7 +56,7 @@ import {
 import { providerBareName } from '@/services/providerDirectory';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number; dob?: string; chartNo?: string };
+  patient: { id: string; name: string; age?: number; dob?: string; chartNo?: string };
 }
 
 const MAX_TEETH = PERMANENT_UPPER;          // 1..16
@@ -64,11 +66,14 @@ const FLUSH_MS = 700;
 export default function PerioChart() {
   const { patient } = useOutletContext<OutletCtx>();
   const { patientId } = useParams<{ patientId: string }>();
+  // RBAC: perio writes are backend-enforced on `charting_perio_full_control`.
+  // Without it the chart is read-only (grid + create/delete disabled).
+  const canEdit = useHasRight(RIGHT.charting.perioFull);
   const queryClient = useQueryClient();
 
   const numericId = Number(patient?.id ?? patientId);
   const validId = !Number.isNaN(numericId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ---------------------------------------------------------------
   const examsParams = { patient_id: numericId, size: 200 };
@@ -173,7 +178,7 @@ export default function PerioChart() {
   }, [templates]);
 
   const selectedExam = useMemo(() => exams.find((e) => e.id === selectedExamId) ?? null, [exams, selectedExamId]);
-  const readOnly = !!selectedExam?.is_voided;
+  const readOnly = !!selectedExam?.is_voided || !canEdit;
   // Only the most recent live exam represents the patient's CURRENT periodontal
   // state, so only its findings are mirrored onto the restorative chart —
   // editing an old exam must never overwrite newer findings.
@@ -565,11 +570,11 @@ export default function PerioChart() {
           />
           {providerError && <span className="text-rose-600">{providerError}</span>}
         </label>
-        <button onClick={onNewExam} disabled={!validId || createExam.isPending} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">New Exam</button>
+        <button onClick={onNewExam} disabled={!validId || createExam.isPending || !canEdit} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">New Exam</button>
         <button onClick={() => setShowDetails(true)} disabled={!selectedExam} className="flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">
           Exam Details{selectedExam?.notes ? <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> : null}
         </button>
-        <button onClick={deleteTodaysExam} disabled={!selectedExam} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Delete Exam</button>
+        <button onClick={deleteTodaysExam} disabled={!selectedExam || !canEdit} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Delete Exam</button>
         <button
           onClick={() => { void onPrint(); }}
           disabled={!selectedExam}
@@ -579,7 +584,8 @@ export default function PerioChart() {
           <Printer className="h-3.5 w-3.5" />Print
         </button>
         <button onClick={() => setShowCompare(true)} disabled={exams.length === 0} className="ml-auto rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Compare by Dates</button>
-        {readOnly && <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-700">Voided — read only</span>}
+        {selectedExam?.is_voided && <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-700">Voided — read only</span>}
+        {!canEdit && !selectedExam?.is_voided && <span className="rounded bg-slate-200 px-2 py-1 font-medium text-slate-600">View only</span>}
       </div>
 
       {/* Restorative-chart link strip: which teeth are locked and why, and
@@ -616,7 +622,8 @@ export default function PerioChart() {
           ) : selectedExam == null ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-500">
               <p>No periodontal exam on file for {patient?.name}.</p>
-              <button onClick={onNewExam} disabled={!validId} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">+ New Exam</button>
+              <button onClick={onNewExam} disabled={!validId || !canEdit} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">+ New Exam</button>
+              {!canEdit && <p className="text-xs text-slate-400">You have view-only access to perio charting.</p>}
             </div>
           ) : prefs.graphical ? (
             <PerioGraphicalView

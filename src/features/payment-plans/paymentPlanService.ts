@@ -307,15 +307,28 @@ export async function loadBalance(patient_id: number): Promise<PatientBalance | 
   return getPatientBalance(patient_id).catch(() => null);
 }
 
-/** Office name + phone for the printed contract header. */
+/**
+ * Office name + phone for the printed contract header.
+ *
+ * Only the office the contract belongs to is ever printed — a financing
+ * contract must not carry another office's letterhead, so there is no fallback
+ * to the first office in the catalog. When the office is unknown (no id, or an
+ * id the catalog does not list) the header carries an explicit placeholder.
+ */
 export function office_header(
   offices: OfficeRead[],
   office_id: number | null,
 ): { office_name: string; office_phone: string } {
-  const office = offices.find((o) => o.id === office_id) ?? offices[0];
+  const office = office_id == null ? undefined : offices.find((o) => o.id === office_id);
+  if (!office) {
+    return {
+      office_name: office_id == null ? "Office not on file" : `Office ${office_id} (not on file)`,
+      office_phone: "",
+    };
+  }
   return {
-    office_name: office?.name ?? "",
-    office_phone: office?.phone ?? office?.phone_2 ?? "",
+    office_name: office.name ?? "",
+    office_phone: office.phone ?? office.phone_2 ?? "",
   };
 }
 

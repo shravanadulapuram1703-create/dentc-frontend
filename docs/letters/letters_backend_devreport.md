@@ -407,6 +407,16 @@ on `letter-context` and `/letters/render` (or list such tokens in a `fallback_to
 alongside `unresolved_tokens`). The preview would then show "provider taken from the
 patient's preferred provider — no appointment on file" instead of silently printing a name.
 
+### LTR-18 / LTR-19 / LTR-20 — stored consent PDFs unreachable on Cloud Run (2026-09-12)
+
+Every `consent-form` document row is `storage_backend: "local"` on **both** backends (20/20), and
+the Cloud Run backend answers `404 not_found "Document 'N' content is not available"` for all of
+them even with a valid bearer token — the bytes only exist on the disk of the process that took
+the upload, and the two backends share one DB. The `{"code":"missing_token"}` the user saw was the
+frontend's raw `<a href>` (fixed in `c808622` + ClaimDetail). Full evidence, curl repros and the
+three asks (bucket routing/env on Cloud Run, consistent `file_url` shape, `mime_type`/`file_path`
+always null) are in `docs/letters/letters_document_link_backend_report.md`.
+
 ## Also noted
 
 `#APPT_DATETIME#` being added as a 57th, deliberately non-corpus token is fine — the

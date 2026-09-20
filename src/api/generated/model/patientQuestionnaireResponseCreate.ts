@@ -8,7 +8,9 @@
 
 export interface PatientQuestionnaireResponseCreate {
   patient_id: number;
+  /** @maxLength 20 */
   questionnaire_type: string;
+  /** @maxLength 100 */
   question_code: string;
   question_text?: string | null;
   answer?: string | null;

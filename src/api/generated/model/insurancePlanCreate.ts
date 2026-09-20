@@ -12,6 +12,9 @@
  * ``allow_duplicate_group`` is the API half of the dialog's "override" button —
  * two offices can legitimately hold separate plans on one group, so the server
  * refuses the *accidental* duplicate rather than the duplicate.
+ *
+ * EDIT-PLAN-8: unknown keys are **422**, not silently dropped — a stale field
+ * name in a client would otherwise fail without a trace.
  */
 export interface InsurancePlanCreate {
   carrier_id: number;
@@ -38,6 +41,9 @@ export interface InsurancePlanCreate {
   per_visit_copay?: number | string | null;
   lifetime_ortho_benefits?: boolean | null;
   plan_notes?: string | null;
+  is_non_dup_benefits?: boolean | null;
+  legacy_prepaid_code?: string | null;
+  is_locked?: boolean | null;
   created_on?: string | null;
   modified_on?: string | null;
   modified_by?: string | null;

@@ -23,7 +23,10 @@ export interface ProcedureCodeForm extends ProcedureCodeExtras {
   legacy_code: string;
   description: string;
   category: string;
+  /** Retired as a pricing input (docs/pricing §3.9) — kept for round-trip, hidden from the UI. */
   default_fee: string;
+  /** Insurance coverage category — the band insurance plans price this code against. */
+  coverage_category: string;
   billing_order: string;
   // Scheduling / recall
   default_duration_minutes: number | null;
@@ -72,6 +75,7 @@ export function emptyProcedureCodeForm(): ProcedureCodeForm {
     description: "",
     category: "",
     default_fee: "0",
+    coverage_category: "",
     billing_order: "",
     default_duration_minutes: null,
     recall_interval: null,
@@ -113,6 +117,7 @@ export function procedureCodeToForm(p: ProcedureCodeRead): ProcedureCodeForm {
     description: p.description,
     category: p.category,
     default_fee: p.default_fee ?? "0",
+    coverage_category: p.coverage_category ?? "",
     billing_order: p.billing_order ?? "",
     default_duration_minutes: p.default_duration_minutes ?? null,
     recall_interval: p.recall_interval ?? null,
@@ -160,6 +165,7 @@ function commonBody(form: ProcedureCodeForm) {
     description: form.description.trim(),
     category: form.category.trim(),
     default_fee: orNull(form.default_fee) ?? "0",
+    coverage_category: orNull(form.coverage_category),
     billing_order: orNull(form.billing_order),
     default_duration_minutes: form.default_duration_minutes,
     recall_interval: form.recall_interval,

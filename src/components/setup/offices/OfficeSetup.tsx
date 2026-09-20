@@ -14,6 +14,7 @@ import {
 } from "@/api/generated/endpoints/organization/organization";
 import type { OfficeForm, OperatoryUi } from "../../../data/officeData";
 import type { OfficeRead, OfficeUpdate, OfficeCreate } from "@/api/generated/model";
+import { invalidateOfficeOptions } from "@/features/office-scope";
 import InfoTab from "./tabs/InfoTab";
 import OperatoriesTab from "./tabs/OperatoriesTab";
 import HolidaysTab from "./tabs/HolidaysTab";
@@ -228,8 +229,8 @@ export default function OfficeSetup() {
       display_order: op.display_order ?? index + 1,
       is_active: op.is_active ?? true,
       has_future_appointments: false,
-      default_provider_id: undefined,
-      default_provider_name: undefined,
+      provider_id: op.provider_id ?? null,
+      provider_name: undefined,
     }));
     // Remember the loaded set so we can diff additions/edits/deletes on save.
     setOriginalOperatories(loadedOperatories);
@@ -269,6 +270,7 @@ export default function OfficeSetup() {
       opening_date: o.opening_date ?? null,
       default_fee_schedule_id: o.default_fee_schedule_id ?? null,
       default_ucr_fee_schedule_id: o.default_ucr_fee_schedule_id ?? null,
+      unpriced_charge_policy: o.unpriced_charge_policy ?? null,
 
       is_active: o.is_active ?? true,
 
@@ -331,6 +333,7 @@ const buildOfficeBody = (data: Partial<OfficeForm>): OfficeUpdate => ({
   opening_date: data.opening_date ?? null,
   default_fee_schedule_id: data.default_fee_schedule_id ?? null,
   default_ucr_fee_schedule_id: data.default_ucr_fee_schedule_id ?? null,
+  unpriced_charge_policy: data.unpriced_charge_policy ?? null,
   is_active: data.is_active ?? true,
 });
 
@@ -360,6 +363,7 @@ const persistOperatories = async (officeId: number) => {
         name: op.name,
         display_order: op.display_order,
         is_active: op.is_active,
+        provider_id: op.provider_id ?? null,
       });
     }
     const prev = originalById.get(op.id);
@@ -367,12 +371,14 @@ const persistOperatories = async (officeId: number) => {
       !prev ||
       prev.name !== op.name ||
       prev.display_order !== op.display_order ||
-      prev.is_active !== op.is_active;
+      prev.is_active !== op.is_active ||
+      (prev.provider_id ?? null) !== (op.provider_id ?? null);
     return changed
       ? updateOperatory(op.id, {
           name: op.name,
           display_order: op.display_order,
           is_active: op.is_active,
+          provider_id: op.provider_id ?? null,
         })
       : Promise.resolve();
   });
@@ -422,6 +428,12 @@ const handleSave = async () => {
     if (officeId != null) {
       await persistOperatories(officeId);
     }
+
+    // The office catalog changed (new office / renamed / (de)activated): drop
+    // the shared office-options cache so the switcher, badges and every picker
+    // pick it up without a reload. This editor keeps its own full OfficeRead
+    // list (it renders address / phone / audit columns the catalog lacks).
+    void invalidateOfficeOptions();
 
     // Refetch offices list after successful save.
     const officesRes = await listOffices({ size: 200 });

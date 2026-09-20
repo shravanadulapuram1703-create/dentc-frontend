@@ -71,19 +71,77 @@ import {
   Usb,
   FlaskConical,
 } from "lucide-react";
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { SubmenuPortal } from "./navigation/SubmenuPortal";
 import { components } from "../styles/theme.js";
 import OrganizationSwitcher from "./navigation/OrganizationSwitcher.js";
-import { useAuth, type Office } from "../contexts/AuthContext.js";
+import { useAuth } from "../contexts/AuthContext.js";
+import { useOfficeScope } from "@/features/office-scope";
+import { officeKeyToId } from "@/services/officeLookup";
 import { useMessagingContext } from "../contexts/ChatContext.js";
 import ChatLauncher from "../features/messaging/components/ChatLauncher";
 import ReportIssueButton from "./help/components/ReportIssueButton";
 import { useHelp } from "./help";
 import { useAppointNow } from "@/features/appointnow/AppointNowContext";
+import { useRights, type RightCode } from "@/features/access-control";
 import api from "../services/api.js";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
+
+// RBAC: view-or-full right(s) that grant each Setup screen, keyed by nav path.
+// A leaf not listed here is always shown; a submenu group with no visible child is
+// hidden, and the top-level Setup button hides when nothing remains. While the
+// access-control kill-switch is dark, `hasAny` grants everything → nothing hides.
+const SETUP_NAV_RIGHTS: Record<string, RightCode[]> = {
+  "/setup/account-info": ["setup_account_screen_view_only", "setup_account_screen_full_control"],
+  "/setup/offices/office-setup": ["setup_office_screen_view_only", "setup_office_screen_full_control"],
+  "/setup/offices/office-assignment": ["setup_security_user_per_office_screen_view_only", "setup_security_user_per_office_screen_full_control"],
+  "/setup/security/users": ["setup_security_users_screen_view_only", "setup_security_users_screen_full_control"],
+  "/setup/security/groups": ["setup_security_groups_screen_view_only", "setup_security_groups_screen_full_control"],
+  "/setup/devices/signature-pad": ["setup_signature_pad_device_full_control"],
+  "/setup/providers/provider-setup": ["setup_provider_screen_view_only", "setup_provider_screen_full_control"],
+  "/setup/insurance/dashboard": ["setup_insurance_plans_screen_view_only", "setup_insurance_plans_screen_full_control"],
+  "/setup/insurance/insurance-plans": ["setup_insurance_plans_screen_view_only", "setup_insurance_plans_screen_full_control"],
+  "/setup/insurance/custom-coverage": ["setup_insurance_custom_coverage_screen_view_only", "setup_insurance_custom_coverage_screen_full_control"],
+  "/setup/insurance/dental-carriers": ["setup_insurance_dental_carriers_screen_view_only", "setup_insurance_dental_carriers_screen_full_control"],
+  "/setup/insurance/medical-carriers": ["setup_insurance_medical_carriers_screen_view_only", "setup_insurance_medical_carriers_screen_full_control"],
+  "/setup/insurance/employers": ["setup_insurance_employers_screen_view_only", "setup_insurance_employers_screen_full_control"],
+  "/setup/lab-tracking/labs": ["setup_labs_screen_view_only", "setup_labs_screen_full_control"],
+  "/setup/referrals/referral-sources": ["setup_referrals_screen_view_only", "setup_referrals_screen_full_control"],
+  "/setup/procedure-codes/procedure-codes": ["setup_procedure_codes_screen_view_only", "setup_procedure_codes_screen_full_control"],
+  "/setup/procedure-codes/explosion-codes": ["setup_explosion_codes_screen_view_only", "setup_explosion_codes_screen_full_control"],
+  "/setup/procedure-codes/icd-codes": ["setup_icd_codes_screen_view_only", "setup_icd_codes_screen_full_control"],
+  "/setup/procedure-codes/modifier-codes": ["setup_modifier_codes_screen_view_only", "setup_modifier_codes_screen_full_control"],
+  "/setup/procedure-codes/place-of-service": ["setup_place_of_service_codes_screen_view_only", "setup_place_of_service_codes_screen_full_control"],
+  "/setup/procedure-codes/type-of-service": ["setup_type_of_service_codes_screen_view_only", "setup_type_of_service_codes_screen_full_control"],
+  "/setup/fee-schedules/fee-schedule-setup": ["setup_fee_schedules_screen_view_only", "setup_fee_schedules_screen_full_control"],
+  "/setup/fee-schedules/fee-schedule-assignments": ["setup_fee_schedules_assignments_screen_view_only", "setup_fee_schedules_assignments_screen_full_control"],
+  "/setup/charting/colors": ["setup_charting_color_screen_view_only", "setup_charting_color_screen_full_control"],
+  "/setup/charting/materials": ["setup_chart_materials_screen_view_only", "setup_chart_materials_screen_full_control"],
+  "/setup/charting/per-use-templates": ["setup_perio_setup_template_screen_full_control"],
+  "/setup/pick-list/manage": ["setup_picklist_full_control"],
+  "/setup/notes-macros/create": ["setup_notes_macros_view_only", "setup_notes_macros_full_control"],
+  "/setup/medical/medical-alerts": ["setup_medical_alerts_view_only", "setup_medical_alerts_screen_full_control"],
+  "/setup/medical/medical-questionnaire": ["setup_medical_questionnaire_view_only", "setup_medical_questionnaire_full_control"],
+  "/setup/medical/dental-questionnaire": ["setup_dental_questionnaire_view_only", "setup_dental_questionnaire_full_control"],
+  "/setup/prescriptions/prescription-setup": ["setup_prescriptions_screen_view_only", "setup_prescriptions_screen_full_control"],
+  "/setup/custom-toolbar/configure": ["setup_security_custom_toolbar_screen_view_only", "setup_security_custom_toolbar_screen_full_control"],
+};
+
+/** Recursively drop nav leaves the user lacks the right for, and any group left
+ *  with no visible children. Leaves with no mapping are kept (default-allow). */
+function filterNavByRights(items: any[], hasAny: (codes: RightCode[]) => boolean): any[] {
+  const out: any[] = [];
+  for (const item of items) {
+    if (Array.isArray(item?.submenu)) {
+      const kids = filterNavByRights(item.submenu, hasAny);
+      if (kids.length > 0) out.push({ ...item, submenu: kids });
+    } else {
+      const codes = item?.path ? SETUP_NAV_RIGHTS[item.path] : undefined;
+      if (!codes || hasAny(codes)) out.push(item);
+    }
+  }
+  return out;
+}
 
 export interface GlobalNavProps {
   onLogout: () => void;
@@ -102,13 +160,13 @@ interface MenuPathNode {
   items: any[];
 }
 
-export default function GlobalNav({
-  onLogout,
-  currentOffice,
-  setCurrentOffice,
-}: GlobalNavProps) {
+// `currentOffice` / `setCurrentOffice` stay in the props contract for the ~80
+// route elements that still pass them, but the nav reads the working office
+// from useOfficeScope() and switches through it (guards, toasts, access).
+export default function GlobalNav({ onLogout }: GlobalNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { hasAny } = useRights();
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -214,63 +272,41 @@ export default function GlobalNav({
   // Get Auth Context for current organization
   const { currentOrganization, user, organizations, activePatient } = useAuth();
 
-  // State for offices fetched from backend API.
-  // Bound to the AuthContext `Office` shape (snake_case API fields, `OFF-{id}`
-  // ids) so dropdown selection matches `currentOffice` app-wide and the
-  // AuthContext fallback below assigns without any mapping.
-  const [offices, setOffices] = useState<Office[]>([]);
-  const [loadingOffices, setLoadingOffices] = useState(false);
-  const [officesError, setOfficesError] = useState<string | null>(null);
+  // Working office + the user's access set. "My offices" = the assignments
+  // returned by /auth/me-full (home starred); "Other offices" = the rest of the
+  // tenant, selectable with a coverage warning until the backend enforces
+  // assignments — after that only privileged users see the group.
+  const scope = useOfficeScope();
+  const myOffices = useMemo(() => {
+    const org = organizations.find((o) => o.id === currentOrganization) ?? organizations[0];
+    return org?.offices ?? [];
+  }, [organizations, currentOrganization]);
+  const myOfficeIds = useMemo(
+    () => new Set(myOffices.map((o) => officeKeyToId(o.id))),
+    [myOffices],
+  );
+  const otherOffices = useMemo(
+    () => scope.office_options.filter((o) => !myOfficeIds.has(o.id)),
+    [scope.office_options, myOfficeIds],
+  );
+  const showOtherOffices =
+    !scope.office_assignment_enforced ||
+    scope.can_switch_any_office ||
+    scope.can_view_all_offices ||
+    myOffices.length === 0;
 
-  // Fetch offices from backend API
-  useEffect(() => {
-    const fetchOffices = async () => {
-      try {
-        setLoadingOffices(true);
-        setOfficesError(null);
-        
-        // Fetch offices from backend API (paginated: { items, meta })
-        const response = await listOffices({ size: 200 });
+  // Header label: the catalog name, else the assignment name — never the raw key.
+  const currentOfficeName =
+    scope.office?.name ??
+    myOffices.find((o) => officeKeyToId(o.id) === scope.office_id)?.name ??
+    (scope.office_id != null ? "Loading…" : "Select Office");
 
-        // Map OfficeRead (snake_case) to the AuthContext `Office` shape.
-        // Use the app's canonical `OFF-{id}` id so selection here matches the
-        // `currentOffice` that AuthContext seeds and downstream consumers parse.
-        const mappedOffices: Office[] = response.items.map((office) => ({
-          id: `OFF-${office.id}`,
-          name: office.name,
-          code: office.office_code,
-          address: "",
-          displayName: `${office.name} [${office.short_id ?? office.id}]`,
-          is_current: false,
-        }));
-
-        setOffices(mappedOffices);
-      } catch (err: any) {
-        console.error("Error fetching offices:", err);
-        setOfficesError(err.response?.data?.detail || err.message || "Failed to load offices");
-        // Fallback to offices from AuthContext if API fails
-        const currentOrg = organizations.find((org) => org.id === currentOrganization);
-        setOffices(currentOrg?.offices || []);
-      } finally {
-        setLoadingOffices(false);
-      }
-    };
-
-    // Fetch offices when component mounts or organization changes
-    if (currentOrganization) {
-      fetchOffices();
-    }
-  }, [currentOrganization, organizations]);
-  
-  // Current office for header display. Both the office ids and `currentOffice`
-  // use the canonical `OFF-{id}` format, so this is a direct id match.
-  const currentOfficeObj = offices.find((office) => office.id === currentOffice);
-
-  // Format office display name - show just the name, not the ID
-  const formatOfficeDisplay = (office: Office) => {
-    // Return just the office name (user wants name, not ID)
-    return office.name || office.displayName || office.id;
-  };
+  const officeRowClass = (isSelected: boolean) =>
+    `w-full text-left px-4 py-2 text-sm font-medium transition-colors flex items-center justify-between ${
+      isSelected
+        ? "bg-[#3A6EA5] text-white"
+        : "text-[#1E293B] hover:bg-[#F7F9FC] hover:text-[#3A6EA5]"
+    }`;
 
   // PATIENT DROPDOWN MENU (Patient Context)
   const patientMenuItems = [
@@ -1207,6 +1243,10 @@ export default function GlobalNav({
     // },
   ];
 
+  // RBAC: Setup items the current user may see (view-or-full per screen). Unmapped
+  // leaves stay; empty groups drop. Dark kill-switch → everything visible.
+  const visibleSetupItems = filterNavByRights(setupMenuItems, hasAny);
+
   // HELP DROPDOWN MENU
   // Modernized: a single Help Center hub + a prominent Report an Issue action
   // (files a tracked Jira ticket). Legacy links (Remote Support, Payer ID lists,
@@ -1505,7 +1545,7 @@ export default function GlobalNav({
                   Office
                 </span>
                 <span className="font-bold text-white text-sm">
-                  {currentOfficeObj ? currentOfficeObj.name : (currentOffice || "Select Office")}
+                  {currentOfficeName}
                 </span>
               </div>
               <ChevronDown
@@ -1516,39 +1556,77 @@ export default function GlobalNav({
             {showOfficeDropdown && (
               <div className="absolute top-full right-0 mt-2 w-80 bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
                 <div className="py-1">
-                  {loadingOffices ? (
+                  {scope.office_options_loading && myOffices.length === 0 ? (
                     <div className="px-4 py-4 text-center">
                       <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#3A6EA5]" />
                       <p className="text-xs text-[#64748B] mt-2">Loading offices...</p>
                     </div>
-                  ) : officesError ? (
-                    <div className="px-4 py-2 text-sm text-red-600">
-                      {officesError}
-                    </div>
-                  ) : offices.length === 0 ? (
+                  ) : myOffices.length === 0 && otherOffices.length === 0 ? (
                     <div className="px-4 py-2 text-sm text-[#64748B]">
                       No offices available
                     </div>
                   ) : (
-                    offices.map((office) => {
-                      const isSelected = office.id === currentOffice;
-                      return (
-                        <button
-                          key={office.id}
-                          onClick={() => {
-                            setCurrentOffice(office.id);
-                            setShowOfficeDropdown(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors ${
-                            isSelected
-                              ? "bg-[#3A6EA5] text-white"
-                              : "text-[#1E293B] hover:bg-[#F7F9FC] hover:text-[#3A6EA5]"
-                          }`}
-                        >
-                          {formatOfficeDisplay(office)}
-                        </button>
-                      );
-                    })
+                    <>
+                      {myOffices.length > 0 && (
+                        <>
+                          <div className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+                            My offices
+                          </div>
+                          {myOffices.map((office) => {
+                            const id = officeKeyToId(office.id);
+                            const isSelected = id != null && id === scope.office_id;
+                            const isHome = id != null && id === scope.home_office_id;
+                            return (
+                              <button
+                                key={office.id}
+                                onClick={() => {
+                                  if (id != null) void scope.switchOffice(id);
+                                  setShowOfficeDropdown(false);
+                                }}
+                                className={officeRowClass(isSelected)}
+                              >
+                                {/* Prefer the tenant catalog name (OfficeRead.name is
+                                    required) over the me-full assignment name (nullable),
+                                    so the row never prints the raw "OFF-<id>" key. */}
+                                <span>
+                                  {scope.office_options.find((o) => o.id === id)?.name ||
+                                    office.name ||
+                                    office.id}
+                                </span>
+                                {isHome && (
+                                  <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                                    Home
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </>
+                      )}
+                      {showOtherOffices && otherOffices.length > 0 && (
+                        <>
+                          <div
+                            className={`px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[#64748B] ${
+                              myOffices.length > 0 ? "border-t border-[#E2E8F0] mt-1" : ""
+                            }`}
+                          >
+                            {myOffices.length > 0 ? "Other offices (coverage)" : "All offices"}
+                          </div>
+                          {otherOffices.map((office) => (
+                            <button
+                              key={office.key}
+                              onClick={() => {
+                                void scope.switchOffice(office.id);
+                                setShowOfficeDropdown(false);
+                              }}
+                              className={officeRowClass(office.id === scope.office_id)}
+                            >
+                              <span>{office.name}</span>
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1703,7 +1781,8 @@ export default function GlobalNav({
           )}
         </div>
 
-        {/* Setup - Dropdown */}
+        {/* Setup - Dropdown — hidden entirely when the user has no Setup rights. */}
+        {visibleSetupItems.length > 0 && (
         <div
           className="relative"
           ref={(el) => {
@@ -1724,11 +1803,12 @@ export default function GlobalNav({
           {activeDropdown === "setup" && (
             <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["setup"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["setup"]?.getBoundingClientRect().left }}>
               <div className="max-h-[80vh] overflow-y-auto">
-                {renderSubmenu(setupMenuItems, 0, "", true)}
+                {renderSubmenu(visibleSetupItems, 0, "", true)}
               </div>
             </div>
           )}
         </div>
+        )}
 
         {/* Help */}
         <div

@@ -40,9 +40,11 @@ import {
 } from "@/features/medical-alerts/patientMedicalAlerts";
 import {
   fetchProviderDirectory,
-  fetchProvidersForOffice,
+  fetchProvidersForOfficeGrouped,
   providerLabelMap,
+  type ProviderOption,
 } from "@/services/providerDirectory";
+import { listOfficeOptions, officeKeyToId } from "@/services/officeLookup";
 import {
   getPatient,
   getPatientContext,
@@ -62,13 +64,10 @@ import type {
 const PAGE = { size: 200 } as const;
 
 /** "OFF-1" | "1" -> 1 (numeric office id the backend filters expect).
- *  Exported so screens can scope their reference-data fetches to the
- *  selected office instead of loading every office's data. */
-export const officeIdNum = (officeId?: string | number | null): number | undefined => {
-  if (officeId == null || officeId === "") return undefined;
-  const m = String(officeId).match(/(\d+)/);
-  return m ? Number(m[1]) : undefined;
-};
+ *  @deprecated Alias of the canonical `officeKeyToId` (src/services/officeLookup.ts),
+ *  kept so the many existing importers keep working. New code reads
+ *  `useOfficeScope().office_id` or imports `officeKeyToId` directly. */
+export const officeIdNum = officeKeyToId;
 
 /** Coerce any patient identifier the calendar may carry to the numeric
  *  patient_id the backend contract requires (number | null). Non-numeric
@@ -168,6 +167,8 @@ export interface Provider {
   role?: string;
   /** Display title (DMD/DDS…), handy for disambiguating duplicate names. */
   title?: string | null;
+  /** True when the provider serves the office the list was fetched for (roster ∪ home office). */
+  in_office?: boolean;
 }
 
 export interface ProcedureType {
@@ -187,6 +188,13 @@ export interface AppointmentCreateRequest {
    *  is number | null). null is only valid for a not-yet-created patient — the
    *  caller must create the patient first and pass the returned numeric id. */
   patient_id: number | null;
+  /**
+   * Office stamp (STAMP.appointment = "working"): the WORKING office at the
+   * time of booking. When supplied, the chosen operatory must belong to it —
+   * `createAppointment` verifies that and throws otherwise. Legacy callers
+   * that omit it get the operatory's own office.
+   */
+  office_id?: number;
   date: string;
   start_time: string;
   duration: number;
@@ -215,6 +223,8 @@ export interface AppointmentCreateRequest {
 export interface AppointmentUpdateRequest {
   id: string;
   patient_id?: number | null;
+  /** Re-stamp the office (see AppointmentCreateRequest.office_id); validated against the operatory. */
+  office_id?: number;
   date?: string;
   start_time?: string;
   duration?: number;
@@ -281,6 +291,34 @@ const newAppointmentId = (): string => {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   return `APPT-${uuid}`;
+};
+
+/**
+ * Guard for the appointment office stamp. The working office is the stamp
+ * (STAMP.appointment = "working"), so the chosen operatory must belong to it —
+ * otherwise the appointment lands on one office's calendar while its chair
+ * lives in another's. Checks the office-scoped operatory list (the same call
+ * the calendar columns use); if that call fails, falls back to the unscoped
+ * row's own `office_id` so a transient error never blocks a save. An operatory
+ * that did not resolve at all is left to the backend to validate.
+ */
+const assertOperatoryInOffice = async (
+  op: { id: string | number; name: string; office_id?: number | null } | undefined,
+  office_id: number,
+): Promise<void> => {
+  if (!op) return;
+  const scoped = await listOperatories({ office_id, ...PAGE }).catch(() => null);
+  const in_office = scoped
+    ? (scoped.items ?? []).some((o) => String(o.id) === String(op.id))
+    : op.office_id == null || op.office_id === office_id;
+  if (in_office) return;
+  const owner_id = op.office_id ?? null;
+  const owner =
+    owner_id != null
+      ? ((await listOfficeOptions().catch(() => [])).find((o) => o.id === owner_id)?.name ??
+        `office ${owner_id}`)
+      : "another office";
+  throw new Error(`Operatory ${op.name} belongs to ${owner}, not the working office`);
 };
 
 const mapAppointment = (
@@ -558,7 +596,9 @@ export const createAppointment = async (
 
   // AppointmentCreate requires id/provider_id/office_id/end_time. The calendar
   // may pass provider/operatory as ids OR names — resolve against the canonical
-  // lists, and derive office_id from the chosen operatory when not provided.
+  // (unscoped) lists for name resolution. The office stamp is the caller's
+  // working office when supplied (and the operatory must then belong to it);
+  // legacy callers that omit it get the operatory's own office.
   const [providerRows, operatoriesRes] = await Promise.all([
     fetchProviderDirectory().catch(() => null),
     listOperatories(PAGE).catch(() => null),
@@ -569,8 +609,9 @@ export const createAppointment = async (
   );
   const op = findByIdOrName(operatoriesRes?.items, data.operatory_id ?? data.operatory);
   const operatory_id = op ? String(op.id) : (data.operatory_id ?? data.operatory ?? null);
-  const office_id =
-    officeIdNum(data.office_id ?? data.officeId) ?? op?.office_id ?? undefined;
+  const requested_office_id = officeKeyToId(data.office_id);
+  if (requested_office_id != null) await assertOperatoryInOffice(op, requested_office_id);
+  const office_id = requested_office_id ?? op?.office_id ?? undefined;
 
   const created = await createAppointmentApi({
     id: data.id ?? newAppointmentId(),
@@ -615,23 +656,33 @@ export const updateAppointment = async (
     data.duration != null ? Number(data.duration) : undefined;
 
   // Resolve provider/operatory (id or name) only when the edit touches them.
+  // A re-stamped office (`office_id`) is validated against the operatory the
+  // appointment will have after this edit — the one in the patch, or, when the
+  // patch leaves the chair alone, the one already stored on the appointment.
+  const requested_office_id = officeKeyToId(data.office_id);
   let providerId = data.provider_id ?? data.provider;
   let operatoryId = data.operatory_id ?? data.operatory;
-  if (providerId != null || operatoryId != null) {
+  if (providerId != null || operatoryId != null || requested_office_id != null) {
     const [pRows, oRes] = await Promise.all([
       fetchProviderDirectory().catch(() => null),
       listOperatories(PAGE).catch(() => null),
     ]);
     if (providerId != null) providerId = resolveByIdOrName(pRows, providerId);
-    if (operatoryId != null) {
-      const opMatch = findByIdOrName(oRes?.items, operatoryId);
-      operatoryId = opMatch ? String(opMatch.id) : operatoryId;
+    let opMatch = operatoryId != null ? findByIdOrName(oRes?.items, operatoryId) : undefined;
+    if (operatoryId != null) operatoryId = opMatch ? String(opMatch.id) : operatoryId;
+    if (requested_office_id != null) {
+      if (operatoryId == null) {
+        const current = await getAppointmentApi(id).catch(() => null);
+        opMatch = findByIdOrName(oRes?.items, current?.operatory_id ?? null);
+      }
+      await assertOperatoryInOffice(opMatch, requested_office_id);
     }
   }
 
   const rawPatientId = data.patient_id ?? data.patientId;
   const patch: Record<string, unknown> = {
     patient_id: rawPatientId != null ? toPatientId(rawPatientId) : undefined,
+    office_id: requested_office_id,
     provider_id: providerId,
     operatory_id: operatoryId,
     date: data.date,
@@ -957,21 +1008,34 @@ export const fetchOperatories = async (
  * office-assignment join with that scalar and falls back to the full list when the
  * office resolves to nobody.
  */
+/**
+ * Every ACTIVE provider in the tenant, with the given office's roster first and
+ * flagged `in_office` — "prefer, never exclude". An office-scoped picker used to
+ * get only the roster, which is genuinely sparse (office 4 → one test provider),
+ * so registration and booking could not select the provider who actually treats
+ * the patient (NA-F6). Callers render the two groups with
+ * `<ProviderOptionGroups>`; the operatory → default-provider auto-fill now
+ * resolves against everyone, so a cross-office default provider survives.
+ * With no office, every provider is returned unflagged (scheduler legend).
+ */
 export const fetchProviders = async (
-  officeId?: string,
+  officeId?: string | number | null,
 ): Promise<Provider[]> => {
-  const scoped = await fetchProvidersForOffice(officeId);
-  return scoped
-    .filter((p) => p.is_active)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      short_id: p.short_id,
-      office: p.office_id != null ? String(p.office_id) : undefined,
-      scheduler_color: p.scheduler_color,
-      role: p.role ?? undefined,
-      title: p.title,
-    }));
+  const { in_office, others } = await fetchProvidersForOfficeGrouped(officeId);
+  const toView = (p: ProviderOption, in_office: boolean): Provider => ({
+    id: p.id,
+    name: p.name,
+    short_id: p.short_id,
+    office: p.office_id != null ? String(p.office_id) : undefined,
+    scheduler_color: p.scheduler_color,
+    role: p.role ?? undefined,
+    title: p.title,
+    in_office,
+  });
+  return [
+    ...in_office.filter((p) => p.is_active).map((p) => toView(p, true)),
+    ...others.filter((p) => p.is_active).map((p) => toView(p, false)),
+  ];
 };
 
 /** True when the provider's role marks them as a hygienist. */

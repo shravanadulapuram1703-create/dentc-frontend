@@ -34,6 +34,10 @@ export interface PatientSignatureRead {
   captured_user_agent?: string | null;
   progress_note_id?: number | null;
   consent_id?: number | null;
+  claim_id?: string | null;
+  signer_name?: string | null;
+  signer_relationship?: string | null;
+  signer_provider_id?: string | null;
   id: number;
   created_at: string;
   updated_at?: string | null;
@@ -42,6 +46,7 @@ export interface PatientSignatureRead {
   has_sig_string?: boolean;
   legacy_sig_string_in_image?: boolean;
   signature_status?: string | null;
+  capture_method?: string | null;
   created_by_name?: string | null;
   signed_by_name?: string | null;
   voided_by_name?: string | null;

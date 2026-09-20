@@ -23,6 +23,8 @@ export interface SignatureAuditEventRead {
   signature_type?: string | null;
   content_hash?: string | null;
   reason?: string | null;
+  signer_name?: string | null;
+  signer_relationship?: string | null;
   id: number;
   created_at: string;
 }

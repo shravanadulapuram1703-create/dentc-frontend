@@ -46,5 +46,14 @@ export interface ClaimDetailProcedureRead {
   pat_paid?: string | null;
   pat_adjust?: string | null;
   fee_schedule_id?: number | null;
+  fee_source?: string | null;
+  fee_effective_date?: string | null;
+  fee_override_reason?: string | null;
+  coverage_pct?: string | null;
+  coverage_rule_id?: number | null;
+  estimated_deductible?: string | null;
+  sec_insurance_estimate?: string | null;
+  diagnosis_pointers?: string | null;
+  quantity: number;
   created_at: string;
 }

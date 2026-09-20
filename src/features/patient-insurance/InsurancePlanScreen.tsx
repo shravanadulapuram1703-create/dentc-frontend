@@ -44,6 +44,7 @@ import { printInsuranceDetails } from "./insurancePrint";
 import { openServerReport } from "@/features/print/serverReport";
 import { getPatientInsuranceReport } from "@/api/generated/endpoints/patients/patients";
 import { useListOffices } from "@/api/generated/endpoints/organization/organization";
+import { usePatientOffice } from "@/features/office-scope";
 
 interface OutletContext {
   patient: {
@@ -55,7 +56,6 @@ interface OutletContext {
     balance?: number;
     chartNo?: string;
     office?: string;
-    officeId?: string;
   };
 }
 
@@ -212,7 +212,7 @@ export default function InsurancePlanScreen({ category, order }: Props) {
   // notes). The office record for the report header comes from the shared
   // offices query, which is normally already cached.
   const officesQuery = useListOffices({ size: 200 });
-  const officeId = patient.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
   const printFromScreen = () =>
     printInsuranceDetails({
       patient: { id: patientId, name: patient.name, dob: patient.dob, chart_no: patient.chartNo },
