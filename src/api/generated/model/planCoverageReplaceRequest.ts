@@ -11,8 +11,13 @@ import type { FrequencyGroupItem } from './frequencyGroupItem';
 /**
  * A section left ``null`` is untouched; a section sent as a list replaces
  * the plan's rows of that kind (see the endpoint docstring).
+ *
+ * EDIT-PLAN-1: ``expected_updated_at`` is the **plan's** ``updated_at`` the
+ * client read — the plan row is the version of the whole document (every
+ * rule / frequency-group write moves it), so one value guards all four tabs.
  */
 export interface PlanCoverageReplaceRequest {
   rules?: CoverageRuleItem[] | null;
   frequency_groups?: FrequencyGroupItem[] | null;
+  expected_updated_at?: string | null;
 }

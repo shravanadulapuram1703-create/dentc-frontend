@@ -27,6 +27,7 @@ import type {
 import type {
   AccountBalance,
   AccountLedgerResponse,
+  AdaClaimForm,
   AdjustmentSummary,
   AllocateAdjustmentRequest,
   AllocatePaymentRequest,
@@ -34,7 +35,9 @@ import type {
   BodyUploadClaimAttachment,
   ClaimAttachmentRead,
   ClaimDetailResponse,
+  ClaimFormBatchRequest,
   ClaimRecalcResult,
+  ClaimSignaturesRead,
   ClaimStatusHistory,
   ClaimStatusUpdate,
   ClaimSubmissionCreate,
@@ -53,6 +56,9 @@ import type {
   ExplosionExpandResult,
   FeeQuote,
   GenerateScheduleRequest,
+  GetAdaClaimFormParams,
+  GetAdaClaimFormReportParams,
+  GetClaimSignaturesParams,
   GetOfficeAdjustmentSummaryParams,
   GetOfficeCollectionsParams,
   GetOfficeTransactionsParams,
@@ -1941,6 +1947,271 @@ export function useGetPatientAccountLedger<TData = Awaited<ReturnType<typeof get
 
 
 /**
+ * @summary The assembled ADA Dental Claim Form (2024) for one claim, as JSON (ADA-BE-1)
+ */
+export const getAdaClaimForm = (
+    claimId: string,
+    params?: GetAdaClaimFormParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AdaClaimForm>(
+      {url: `/api/v1/insurance-claims/${claimId}/ada-claim-form`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetAdaClaimFormQueryKey = (claimId: string,
+    params?: GetAdaClaimFormParams,) => {
+    return [
+    `/api/v1/insurance-claims/${claimId}/ada-claim-form`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdaClaimFormQueryOptions = <TData = Awaited<ReturnType<typeof getAdaClaimForm>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(claimId: string,
+    params?: GetAdaClaimFormParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimForm>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdaClaimFormQueryKey(claimId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdaClaimForm>>> = ({ signal }) => getAdaClaimForm(claimId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: claimId !== null && claimId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimForm>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdaClaimFormQueryResult = NonNullable<Awaited<ReturnType<typeof getAdaClaimForm>>>
+export type GetAdaClaimFormQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetAdaClaimForm<TData = Awaited<ReturnType<typeof getAdaClaimForm>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params: undefined |  GetAdaClaimFormParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimForm>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdaClaimForm>>,
+          TError,
+          Awaited<ReturnType<typeof getAdaClaimForm>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdaClaimForm<TData = Awaited<ReturnType<typeof getAdaClaimForm>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetAdaClaimFormParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimForm>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdaClaimForm>>,
+          TError,
+          Awaited<ReturnType<typeof getAdaClaimForm>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdaClaimForm<TData = Awaited<ReturnType<typeof getAdaClaimForm>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetAdaClaimFormParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimForm>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The assembled ADA Dental Claim Form (2024) for one claim, as JSON (ADA-BE-1)
+ */
+
+export function useGetAdaClaimForm<TData = Awaited<ReturnType<typeof getAdaClaimForm>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetAdaClaimFormParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimForm>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdaClaimFormQueryOptions(claimId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary ADA Dental Claim Form (2024) as a printable PDF (ADA-BE-1)
+ */
+export const getAdaClaimFormReport = (
+    claimId: string,
+    params?: GetAdaClaimFormReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/insurance-claims/${claimId}/reports/ada-claim-form`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetAdaClaimFormReportQueryKey = (claimId: string,
+    params?: GetAdaClaimFormReportParams,) => {
+    return [
+    `/api/v1/insurance-claims/${claimId}/reports/ada-claim-form`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdaClaimFormReportQueryOptions = <TData = Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(claimId: string,
+    params?: GetAdaClaimFormReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdaClaimFormReportQueryKey(claimId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdaClaimFormReport>>> = ({ signal }) => getAdaClaimFormReport(claimId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: claimId !== null && claimId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdaClaimFormReportQueryResult = NonNullable<Awaited<ReturnType<typeof getAdaClaimFormReport>>>
+export type GetAdaClaimFormReportQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetAdaClaimFormReport<TData = Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params: undefined |  GetAdaClaimFormReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdaClaimFormReport>>,
+          TError,
+          Awaited<ReturnType<typeof getAdaClaimFormReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdaClaimFormReport<TData = Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetAdaClaimFormReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdaClaimFormReport>>,
+          TError,
+          Awaited<ReturnType<typeof getAdaClaimFormReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdaClaimFormReport<TData = Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetAdaClaimFormReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary ADA Dental Claim Form (2024) as a printable PDF (ADA-BE-1)
+ */
+
+export function useGetAdaClaimFormReport<TData = Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetAdaClaimFormReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdaClaimFormReportQueryOptions(claimId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Many claims' ADA forms in one PDF, e.g. every unsent paper claim (ADA-BE-1)
+ */
+export const renderAdaClaimFormBatch = (
+    claimFormBatchRequest: BodyType<ClaimFormBatchRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/insurance-claims/reports/ada-claim-form`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: claimFormBatchRequest,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+export const getRenderAdaClaimFormBatchMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renderAdaClaimFormBatch>>, TError,{data: BodyType<ClaimFormBatchRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof renderAdaClaimFormBatch>>, TError,{data: BodyType<ClaimFormBatchRequest>}, TContext> => {
+
+const mutationKey = ['renderAdaClaimFormBatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renderAdaClaimFormBatch>>, {data: BodyType<ClaimFormBatchRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  renderAdaClaimFormBatch(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenderAdaClaimFormBatchMutationResult = NonNullable<Awaited<ReturnType<typeof renderAdaClaimFormBatch>>>
+    export type RenderAdaClaimFormBatchMutationBody = BodyType<ClaimFormBatchRequest>
+    export type RenderAdaClaimFormBatchMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Many claims' ADA forms in one PDF, e.g. every unsent paper claim (ADA-BE-1)
+ */
+export const useRenderAdaClaimFormBatch = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renderAdaClaimFormBatch>>, TError,{data: BodyType<ClaimFormBatchRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof renderAdaClaimFormBatch>>,
+        TError,
+        {data: BodyType<ClaimFormBatchRequest>},
+        TContext
+      > => {
+      return useMutation(getRenderAdaClaimFormBatchMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Office outstanding / patient / insurance balances (DASH-1)
  */
 export const getOfficeFinancialSummary = (
@@ -4751,6 +5022,106 @@ export const useDeleteClaimAttachment = <TError = ErrorType<ErrorResponse | HTTP
       return useMutation(getDeleteClaimAttachmentMutationOptions(options), queryClient);
     }
     /**
+ * @summary What prints on ADA Items 36 / 37 / 53 for this claim — pinned, on-file, or provider (SIG-16)
+ */
+export const getClaimSignatures = (
+    claimId: string,
+    params?: GetClaimSignaturesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ClaimSignaturesRead>(
+      {url: `/api/v1/insurance-claims/${claimId}/signatures`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetClaimSignaturesQueryKey = (claimId: string,
+    params?: GetClaimSignaturesParams,) => {
+    return [
+    `/api/v1/insurance-claims/${claimId}/signatures`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClaimSignaturesQueryOptions = <TData = Awaited<ReturnType<typeof getClaimSignatures>>, TError = ErrorType<ErrorResponse>>(claimId: string,
+    params?: GetClaimSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimSignatures>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClaimSignaturesQueryKey(claimId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClaimSignatures>>> = ({ signal }) => getClaimSignatures(claimId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: claimId !== null && claimId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClaimSignatures>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetClaimSignaturesQueryResult = NonNullable<Awaited<ReturnType<typeof getClaimSignatures>>>
+export type GetClaimSignaturesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetClaimSignatures<TData = Awaited<ReturnType<typeof getClaimSignatures>>, TError = ErrorType<ErrorResponse>>(
+ claimId: string,
+    params: undefined |  GetClaimSignaturesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimSignatures>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimSignatures>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimSignatures>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimSignatures<TData = Awaited<ReturnType<typeof getClaimSignatures>>, TError = ErrorType<ErrorResponse>>(
+ claimId: string,
+    params?: GetClaimSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimSignatures>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimSignatures>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimSignatures>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimSignatures<TData = Awaited<ReturnType<typeof getClaimSignatures>>, TError = ErrorType<ErrorResponse>>(
+ claimId: string,
+    params?: GetClaimSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimSignatures>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary What prints on ADA Items 36 / 37 / 53 for this claim — pinned, on-file, or provider (SIG-16)
+ */
+
+export function useGetClaimSignatures<TData = Awaited<ReturnType<typeof getClaimSignatures>>, TError = ErrorType<ErrorResponse>>(
+ claimId: string,
+    params?: GetClaimSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimSignatures>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetClaimSignaturesQueryOptions(claimId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List patient adjustments
  */
 export const listPatientAdjustments = (
@@ -4999,6 +5370,7 @@ export function useGetPatientAdjustment<TData = Awaited<ReturnType<typeof getPat
 
 
 /**
+ * Partial update of one patient adjustment.
  * @summary Update patient adjustment
  */
 export const updatePatientAdjustment = (
@@ -5063,6 +5435,7 @@ export const useUpdatePatientAdjustment = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientAdjustmentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient adjustment.
  * @summary Delete patient adjustment
  */
 export const deletePatientAdjustment = (
@@ -5372,6 +5745,7 @@ export function useGetPatientPayment<TData = Awaited<ReturnType<typeof getPatien
 
 
 /**
+ * Partial update of one patient payment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient payment
  */
 export const updatePatientPayment = (
@@ -5436,6 +5810,7 @@ export const useUpdatePatientPayment = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientPaymentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient payment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient payment
  */
 export const deletePatientPayment = (
@@ -5745,6 +6120,7 @@ export function useGetInsuranceClaim<TData = Awaited<ReturnType<typeof getInsura
 
 
 /**
+ * Partial update of one insurance claim.
  * @summary Update insurance claim
  */
 export const updateInsuranceClaim = (
@@ -5809,6 +6185,7 @@ export const useUpdateInsuranceClaim = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateInsuranceClaimMutationOptions(options), queryClient);
     }
     /**
+ * Delete one insurance claim.
  * @summary Delete insurance claim
  */
 export const deleteInsuranceClaim = (
@@ -6118,6 +6495,7 @@ export function useGetClaimSubmission<TData = Awaited<ReturnType<typeof getClaim
 
 
 /**
+ * Partial update of one claim submission.
  * @summary Update claim submission
  */
 export const updateClaimSubmission = (
@@ -6182,6 +6560,7 @@ export const useUpdateClaimSubmission = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateClaimSubmissionMutationOptions(options), queryClient);
     }
     /**
+ * Delete one claim submission.
  * @summary Delete claim submission
  */
 export const deleteClaimSubmission = (
@@ -6491,6 +6870,7 @@ export function useGetLedgerInsuranceDetail<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Partial update of one ledger insurance detail.
  * @summary Update ledger insurance detail
  */
 export const updateLedgerInsuranceDetail = (
@@ -6555,6 +6935,7 @@ export const useUpdateLedgerInsuranceDetail = <TError = ErrorType<ErrorResponse>
       return useMutation(getUpdateLedgerInsuranceDetailMutationOptions(options), queryClient);
     }
     /**
+ * Delete one ledger insurance detail.
  * @summary Delete ledger insurance detail
  */
 export const deleteLedgerInsuranceDetail = (
@@ -6864,6 +7245,7 @@ export function useGetPaymentAllocation<TData = Awaited<ReturnType<typeof getPay
 
 
 /**
+ * Partial update of one payment allocation.
  * @summary Update payment allocation
  */
 export const updatePaymentAllocation = (
@@ -6928,6 +7310,7 @@ export const useUpdatePaymentAllocation = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePaymentAllocationMutationOptions(options), queryClient);
     }
     /**
+ * Delete one payment allocation.
  * @summary Delete payment allocation
  */
 export const deletePaymentAllocation = (
@@ -7237,6 +7620,7 @@ export function useGetPatientPaymentPlan<TData = Awaited<ReturnType<typeof getPa
 
 
 /**
+ * Partial update of one patient payment plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient payment plan
  */
 export const updatePatientPaymentPlan = (
@@ -7301,6 +7685,7 @@ export const useUpdatePatientPaymentPlan = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientPaymentPlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient payment plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient payment plan
  */
 export const deletePatientPaymentPlan = (
@@ -7610,6 +7995,7 @@ export function useGetPatientInsPaymentPlan<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Partial update of one patient ins payment plan.
  * @summary Update patient ins payment plan
  */
 export const updatePatientInsPaymentPlan = (
@@ -7674,6 +8060,7 @@ export const useUpdatePatientInsPaymentPlan = <TError = ErrorType<ErrorResponse>
       return useMutation(getUpdatePatientInsPaymentPlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient ins payment plan.
  * @summary Delete patient ins payment plan
  */
 export const deletePatientInsPaymentPlan = (
@@ -7983,6 +8370,7 @@ export function useGetPatientSecInsPaymentPlan<TData = Awaited<ReturnType<typeof
 
 
 /**
+ * Partial update of one patient sec ins payment plan.
  * @summary Update patient sec ins payment plan
  */
 export const updatePatientSecInsPaymentPlan = (
@@ -8047,6 +8435,7 @@ export const useUpdatePatientSecInsPaymentPlan = <TError = ErrorType<ErrorRespon
       return useMutation(getUpdatePatientSecInsPaymentPlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient sec ins payment plan.
  * @summary Delete patient sec ins payment plan
  */
 export const deletePatientSecInsPaymentPlan = (
@@ -8356,6 +8745,7 @@ export function useGetPatientPlanInstallment<TData = Awaited<ReturnType<typeof g
 
 
 /**
+ * Partial update of one patient plan installment.
  * @summary Update patient plan installment
  */
 export const updatePatientPlanInstallment = (
@@ -8420,6 +8810,7 @@ export const useUpdatePatientPlanInstallment = <TError = ErrorType<ErrorResponse
       return useMutation(getUpdatePatientPlanInstallmentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient plan installment.
  * @summary Delete patient plan installment
  */
 export const deletePatientPlanInstallment = (
@@ -8729,6 +9120,7 @@ export function useGetPatientRegPlan<TData = Awaited<ReturnType<typeof getPatien
 
 
 /**
+ * Partial update of one patient reg plan.
  * @summary Update patient reg plan
  */
 export const updatePatientRegPlan = (
@@ -8793,6 +9185,7 @@ export const useUpdatePatientRegPlan = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientRegPlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient reg plan.
  * @summary Delete patient reg plan
  */
 export const deletePatientRegPlan = (
@@ -9102,6 +9495,7 @@ export function useGetOrthoPlan<TData = Awaited<ReturnType<typeof getOrthoPlan>>
 
 
 /**
+ * Partial update of one ortho plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update ortho plan
  */
 export const updateOrthoPlan = (
@@ -9166,6 +9560,7 @@ export const useUpdateOrthoPlan = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateOrthoPlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one ortho plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete ortho plan
  */
 export const deleteOrthoPlan = (

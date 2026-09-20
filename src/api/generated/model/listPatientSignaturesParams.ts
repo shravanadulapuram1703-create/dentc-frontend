@@ -41,9 +41,25 @@ progress_note_id?: number | null;
  */
 consent_id?: number | null;
 /**
+ * Filter by claim_id
+ */
+claim_id?: string | null;
+/**
+ * Filter by signer_provider_id
+ */
+signer_provider_id?: string | null;
+/**
  * Filter by include_image
  */
 include_image?: boolean | null;
+/**
+ * Filter by signature_types
+ */
+signature_types?: string | null;
+/**
+ * Filter by latest_per_type
+ */
+latest_per_type?: boolean | null;
 /**
  * @minimum 1
  */

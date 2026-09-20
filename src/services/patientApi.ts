@@ -70,10 +70,11 @@ export interface PatientDetails {
     preferred_hygienist_name?: string;
   };
   
-  fee_schedule?: {
-    fee_schedule_id?: string;
-    fee_schedule_name?: string;
-  };
+  // Flat, backend-parity fields (patients.fee_schedule_id). `fee_schedule_name`
+  // is a convenience label the backend enriches onto the response; it is not a
+  // wire field. No nested `fee_schedule` object — see docs/pricing FE-PR-71.
+  fee_schedule_id?: number | null;
+  fee_schedule_name?: string | null;
   
   patient_type?: string;
   patient_flags?: {
@@ -240,10 +241,10 @@ export interface PatientCreateRequestFull {
     preferred_hygienist_id?: string;
   };
   
-  fee_schedule?: {
-    fee_schedule_id?: string;
-  };
-  
+  // Flat wire shape (docs/pricing FE-PR-71). `flattenPatientPayload` coerces the
+  // form's string id to the backend's numeric `patients.fee_schedule_id`.
+  fee_schedule_id?: number | string | null;
+
   patient_type?: string;
   patient_flags?: {
     is_ortho?: boolean;
@@ -352,10 +353,10 @@ export interface PatientUpdateRequestFull {
     preferred_hygienist_id?: string;
   };
   
-  fee_schedule?: {
-    fee_schedule_id?: string;
-  };
-  
+  // Flat wire shape (docs/pricing FE-PR-71). `flattenPatientPayload` coerces the
+  // form's string id to the backend's numeric `patients.fee_schedule_id`.
+  fee_schedule_id?: number | string | null;
+
   patient_type?: string;
   patient_flags?: {
     is_ortho?: boolean;
@@ -472,9 +473,8 @@ const toPatientDetails = (p: PatientRead): PatientDetails =>
       preferred_provider_id: p.preferred_provider_id ?? undefined,
       preferred_hygienist_id: (p as any).preferred_hygienist_id ?? undefined,
     },
-    fee_schedule: (p as any).fee_schedule_id != null
-      ? { fee_schedule_id: String((p as any).fee_schedule_id) }
-      : undefined,
+    fee_schedule_id: p.fee_schedule_id ?? null,
+    fee_schedule_name: (p as any).fee_schedule_name ?? null,
     patient_flags: {
       is_active: p.is_active,
       hipaa_agreement: p.hipaa_agreement ?? undefined,
@@ -682,10 +682,8 @@ const enrichDisplayNames = async (details: PatientDetails, p: PatientRead): Prom
       const res = await getFeeSchedules(officeId != null ? String(officeId) : undefined);
       const match = res.feeSchedules.find((f) => f.feeScheduleId === String(feeScheduleId));
       if (match) {
-        details.fee_schedule = {
-          fee_schedule_id: match.feeScheduleId,
-          fee_schedule_name: match.feeScheduleName,
-        };
+        // id is already set by toPatientDetails; enrichment supplies the label.
+        details.fee_schedule_name = match.feeScheduleName;
       }
     })(),
     (async () => {

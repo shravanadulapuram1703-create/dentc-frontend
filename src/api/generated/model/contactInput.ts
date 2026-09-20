@@ -26,4 +26,7 @@ export interface ContactInput {
   date_of_birth?: string | null;
   is_new_patient?: boolean;
   notes?: string | null;
+  insurance_info?: string | null;
+  disclaimer_accepted?: boolean | null;
+  consent_accepted?: boolean | null;
 }

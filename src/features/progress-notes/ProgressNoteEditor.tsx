@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useGetProgressNote } from '@/api/generated/endpoints/clinical/clinical';
 import { useListNoteMacros } from '@/api/generated/endpoints/procedures/procedures';
+import { usePatientOffice } from '@/features/office-scope';
 import ToothNumberPicker from './ToothNumberPicker';
 import SignatureCapture from '@/features/signature/SignatureCapture';
 import { signatureFromDataUrl, type SignatureResult } from '@/features/signature/signatureModel';
@@ -60,7 +61,6 @@ interface PatientData {
   name: string;
   dob: string;
   age: number;
-  officeId?: string;
 }
 interface OutletContext {
   patient: PatientData;
@@ -105,7 +105,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
   const validPatientId = Number.isFinite(numericPatientId);
   const numericNoteId = Number(noteId);
   const isExisting = (mode === 'edit' || mode === 'view') && Number.isFinite(numericNoteId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
   const me = useMemo(() => currentUser(), []);
 
   const editorRef = useRef<HTMLDivElement>(null);
@@ -406,7 +406,16 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
       return null;
     }
     if (isExisting) {
-      if (!readOnly) await updateNote(numericNoteId, body);
+      // Record-first: the note keeps the office it was written in. Resent
+      // unchanged so a server-side office check sees it; a note with no office
+      // stays that way (nothing is stamped on update).
+      const record_office_id = noteQuery.data?.office_id;
+      if (!readOnly) {
+        await updateNote(numericNoteId, {
+          ...body,
+          ...(record_office_id != null ? { office_id: record_office_id } : {}),
+        });
+      }
       // Locked text: the only thing that can still change is the DOS, and the
       // server's lock check only fires on the text fields, so send it alone.
       else if (dosEditable && dosChanged) await updateNoteDate(numericNoteId, dos);

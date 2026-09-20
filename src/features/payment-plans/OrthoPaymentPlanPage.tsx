@@ -31,6 +31,7 @@ import {
 import type { OrthoPlanRead, PatientBalance } from "@/api/generated/model";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDefinitions } from "@/hooks/useDefinitions";
+import { OfficeBadge, usePatientOffice } from "@/features/office-scope";
 import {
   loadBalance,
   loadOrthoPlan,
@@ -93,7 +94,6 @@ interface OutletContext {
     name: string;
     dob?: string;
     chartNo?: string;
-    officeId?: string;
     balance?: number;
   };
 }
@@ -112,7 +112,9 @@ export default function OrthoPaymentPlanPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const patient_id = Number(patient.id);
-  const office_id = patient.officeId ? Number(patient.officeId) : null;
+  // Ortho plan is a contract owned by the patient's HOME office (stampPolicy =
+  // home); `created_office_id` records the office it was entered at (working).
+  const { home_office_id: office_id, working_office_id } = usePatientOffice();
 
   const [loading, set_loading] = useState(true);
   const [saving, set_saving] = useState(false);
@@ -311,6 +313,7 @@ export default function OrthoPaymentPlanPage() {
         { ...form, ins_months_remaining: form.ins_months_remaining || months_remaining },
         patient_id,
         office_id,
+        working_office_id ?? office_id,
       );
       const saved = await saveOrthoPlan(record?.id ?? null, body);
       set_record(saved);
@@ -452,7 +455,7 @@ export default function OrthoPaymentPlanPage() {
       <div className="border-2 border-t-0 border-[#E2E8F0] rounded-b-md bg-[#F7F9FC] p-2 sm:p-3 pb-14 space-y-3">
         <PlanPatientSummary
           patient_id={patient_id}
-          office_id={patient.officeId}
+          office_id={office_id}
           patient_name={patient.name}
           balance={balance}
           insurance_slots={ctx?.insurance_slots ?? []}
@@ -463,8 +466,10 @@ export default function OrthoPaymentPlanPage() {
           title="Plan ID"
           actions={
             <div className="flex items-center gap-4 text-[11px] text-[#475569]">
-              <span>
-                Created At: <strong>{ctx?.offices.find((o) => o.id === office_id)?.name ?? "-"}</strong>
+              <span className="inline-flex items-center gap-1">
+                {/* The saved plan's own office when there is one; the posting
+                    office for a plan not yet created. */}
+                Created At: <OfficeBadge office_id={record?.office_id ?? office_id} variant="name" />
               </span>
               <span>
                 Created On: <strong>{record ? fmt_date(record.created_at.slice(0, 10)) : "-"}</strong>

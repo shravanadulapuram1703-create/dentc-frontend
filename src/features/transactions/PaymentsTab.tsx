@@ -5,6 +5,7 @@ import { createPatientPayment, allocatePayment } from '@/api/generated/endpoints
 import { useDefinitions } from '@/hooks/useDefinitions';
 import { type ProviderOption } from '@/services/providerDirectory';
 import ProviderSelect from './ProviderSelect';
+import { RequireRight, RIGHT } from '@/features/access-control';
 import {
   fmtDate,
   genId,
@@ -407,15 +408,18 @@ export default function PaymentsTab({
             </Labeled>
             {error && <div className="rounded bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{error}</div>}
             <div className="flex justify-end gap-2">
-              <button
-                onClick={apply}
-                disabled={saving}
-                style={{ background: ACCENT_BLUE }}
-                className="flex items-center gap-1.5 rounded px-4 py-1.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                APPLY
-              </button>
+              {/* RBAC: posting a patient payment is backend-enforced. */}
+              <RequireRight code={RIGHT.transactions.addPostPatientPayments}>
+                <button
+                  onClick={apply}
+                  disabled={saving}
+                  style={{ background: ACCENT_BLUE }}
+                  className="flex items-center gap-1.5 rounded px-4 py-1.5 text-xs font-bold text-white shadow-sm transition disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  APPLY
+                </button>
+              </RequireRight>
               <button
                 onClick={reset}
                 className="flex items-center gap-1.5 rounded bg-slate-500 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-slate-600"

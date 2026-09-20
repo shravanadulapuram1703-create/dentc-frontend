@@ -21,14 +21,13 @@ import {
 import { fetchUserForEdit } from "../../services/userApi";
 import { getUserSetupMetadata, deleteUserImage } from "../../api/generated/endpoints/users/users";
 import { listUserGroups } from "../../api/generated/endpoints/staff/staff";
-import {
-  useListOffices,
-  useListProviders,
-} from "../../api/generated/endpoints/organization/organization";
+import { useListProviders } from "../../api/generated/endpoints/organization/organization";
+import { useOfficeOptions } from "@/features/office-scope";
 import type { UserSetupMetadata } from "../../api/generated/model/userSetupMetadata";
 import type { BackendUser } from "../../types/backendUser";
 import { apiAssetUrl } from "../../utils/apiAsset";
 import { providerDisplayLabel } from "@/services/providerDirectory";
+import { officeKeyToId } from "@/services/officeLookup";
 import SignatureCapture from "@/features/signature/SignatureCapture";
 import type { SignatureResult } from "@/features/signature/signatureModel";
 
@@ -56,7 +55,8 @@ export default function AddEditUserModal({
 }: AddEditUserModalProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [setup, setSetup] = useState<UserSetupMetadata | null>(null);
-  const [setupLoading, setSetupLoading] = useState(false);
+  // Setter-only for now: nothing renders the metadata-loading state yet.
+  const [, setSetupLoading] = useState(false);
   const [groupMembershipsMetadata, setGroupMembershipsMetadata] = useState<
     Array<{ code: string; name: string; description?: string }>
   >([]);
@@ -83,9 +83,10 @@ export default function AddEditUserModal({
 
   // Form Data State
   
-  // Offices for the assignment picker (generated client, OfficeRead).
-  const officesQ = useListOffices({ size: 200 }, { query: { enabled: isOpen } });
-  const availableOffices = officesQ.data?.items ?? [];
+  // Offices for the assignment picker — the shared office catalog (id / name /
+  // office_code). Never filtered: a user may be assigned to any tenant office.
+  const officesQ = useOfficeOptions({ enabled: isOpen });
+  const availableOffices = officesQ.data ?? [];
 
   // Providers for the Report Access Provider dropdown.
   const providersQ = useListProviders({ size: 200 }, { query: { enabled: isOpen } });
@@ -392,8 +393,10 @@ export default function AddEditUserModal({
         custom2: "",
         signatureData: "",
         active: true,
-        homeOffice: "",
-        assignedOffices: [],
+        // A user created while working in an office defaults to that office
+        // (home + assignment); edit mode overwrites these from the record.
+        homeOffice: officeKeyToId(currentOffice) != null ? String(officeKeyToId(currentOffice)) : "",
+        assignedOffices: officeKeyToId(currentOffice) != null ? [String(officeKeyToId(currentOffice))] : [],
         roles: [],
         groupMemberships: [],
         permittedIPs: [],
@@ -595,7 +598,8 @@ export default function AddEditUserModal({
     { id: 4, label: "User Settings", icon: Settings },
   ];
 
-  const [saving, setSaving] = useState(false);
+  // Setter-only for now: the footer SAVE button does not yet reflect the in-flight state.
+  const [, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaveAttempted(true);
@@ -737,16 +741,7 @@ export default function AddEditUserModal({
     }
   };
 
-  // Office Assignment Handlers
-  const moveOfficeToAssigned = (office: string) => {
-    if (!formData.assignedOffices.includes(office)) {
-      setFormData({
-        ...formData,
-        assignedOffices: [...formData.assignedOffices, office],
-      });
-    }
-  };
-
+  // Office Assignment Handlers (the "Available Offices" list assigns inline on click).
   const removeOfficeFromAssigned = (office: string) => {
     setFormData({
       ...formData,
@@ -1448,7 +1443,7 @@ export default function AddEditUserModal({
                               className="px-3 py-2 hover:bg-white rounded cursor-pointer text-sm border border-transparent hover:border-[#3A6EA5] mb-1"
                             >
                               <div className="font-bold text-[#1E293B]">{o.name}</div>
-                              <div className="text-xs text-[#64748B]">OID: {o.office_code}</div>
+                              <div className="text-xs text-[#64748B]">OID: {o.office_code || "—"}</div>
                             </div>
                         ))}
                     </div>
@@ -1544,7 +1539,7 @@ export default function AddEditUserModal({
                       .filter(o => formData.assignedOffices.includes(String(o.id)))
                       .map(o => (
                         <option key={o.id} value={String(o.id)}>
-                          {o.name} (OID: {o.office_code})
+                          {o.name} (OID: {o.office_code || "—"})
                         </option>
                       ))}
                   </select>

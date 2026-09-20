@@ -31,6 +31,7 @@ import { money, num, fmtDate } from '@/features/transactions/transactionsModel';
 import { paymentCodeLabel } from '@/features/transactions/transactionCodes';
 import type { PatientProcedureRead, PatientPaymentRead } from '@/api/generated/model';
 import type { LedgerRow } from './accountLedgerModel';
+import { RequireRight, RIGHT } from '@/features/access-control';
 
 interface Props {
   row: LedgerRow; // the ledger row that was clicked (kind 'charge' | 'payment')
@@ -181,8 +182,10 @@ export default function EditTransactionModal({
           provider_id: provider_id || null,
           hold_claim,
           notes: notes.trim() || null,
-          // Financials only when the charge has not been claimed.
-          ...(billed ? {} : { fee: fee || undefined, insurance_estimate: insurance_estimate || undefined }),
+          // Financials only when the charge has not been claimed. A fee edit
+          // re-runs the split server-side, so we send the fee but no client
+          // insurance_estimate.
+          ...(billed ? {} : { fee: fee || undefined }),
         });
       } else {
         await updatePatientPayment(row.source_id, {
@@ -443,13 +446,19 @@ export default function EditTransactionModal({
 
             {/* Footer actions */}
             <div className="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5">
-              <button
-                onClick={handleDelete}
-                disabled={busy}
-                className="flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-3 py-1.5 text-[11px] font-bold uppercase text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-40"
+              {/* RBAC: deleting a payment is backend-enforced; deleting a charge
+                  gates on the procedure right (not yet server-enforced). */}
+              <RequireRight
+                code={isCharge ? RIGHT.transactions.deleteProcedure : RIGHT.transactions.deletePatientPayments}
               >
-                <Trash2 className="h-3.5 w-3.5" /> Delete
-              </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={busy}
+                  className="flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-3 py-1.5 text-[11px] font-bold uppercase text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              </RequireRight>
               <button
                 onClick={handleSave}
                 disabled={busy}

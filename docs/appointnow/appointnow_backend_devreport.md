@@ -1,237 +1,237 @@
 # AppointNow — External Online Booking — Backend Dev Report
 
-**Module:** AppointNow (native online appointment booking)
-**Frontend:** `src/features/appointnow/**` · public page `/book/:office_code` · staff inbox `/appointnow/requests`
-**Transport swap flag:** `VITE_APPOINTNOW_BACKEND` (`local` = client-side simulation, default · `api` = real backend)
-**Status:** Frontend shipped and live-verified against the client-side simulation. **The entire public
-surface (office info, availability, request intake) and the staff request store are NOT yet in the
-backend and must be built.** This report is the contract for the backend team.
+**Module:** AppointNow (public online booking `/book/:office_code` + staff inbox `/appointnow/requests`)
+**Frontend:** `src/features/appointnow/**` · transport flag `VITE_APPOINTNOW_BACKEND` (`api` = real backend, **now the default** · `local` = single-browser demo simulation)
+**Backend:** `app/api/v1/appointnow.py` · `app/services/appointnow_service.py` · tables `booking_requests`, `appointnow_reasons` (migration `b3c4d5e6f7a8`)
+**Status date:** 2026-09-12
+**Verified against:** local backend `127.0.0.1:8000` and the deployed Cloud Run backend used by `https://reckondental.com`
 
 ---
 
-## 1. What was built (frontend)
+## 0a. Round 3 — frontend cut-over to backend round 2 (2026-09-12, later the same day)
 
-A public, login-free, embeddable booking screen that a practice pastes onto a third-party office
-website. External patients:
+The backend answered every item in §0 ([appointnow_backend_response.md](appointnow_backend_response.md), alembic `431b5da5630e`). The frontend now consumes all of it; verified live against the round-2 code on the local backend (restarted from the repo) with office MOON.
 
-1. pick a **reason** (drives chair-time duration) and optionally a provider,
-2. see **available (unbooked) slots** for a chosen day,
-3. enter **basic details** (name, phone, email, DOB, notes),
-4. submit a **booking request**.
+| Item | Frontend change | Verified |
+|------|-----------------|----------|
+| AN-BUG-1 approve | Server books; client sends `provider_id` from a new **"Book with"** pick on the pending card (active providers of the office via `providerDirectory`), no client-side booking or pre-check in `api` mode | `POST …/approve` 200 → appointment `AN01a09723…` PRV-149 / OPR-100, request `approved`, "Booked as appointment … by Admin User" |
+| AN-14 reschedule | `RealBookingTransport.rescheduleRequest` → `POST …/reschedule {slot}`; `supportsReschedule = true`; Reschedule button + conflict-dialog CTA back; 409 `slot_conflict.details.conflicts[]` → `SlotConflictError` → red dialog | 200; card shows "patient originally asked for 9:00 AM" + "Rescheduled by Admin User"; `reschedule_count` 1 |
+| AN-16 acknowledgements | Public submit sends `insurance_info` / `disclaimer_accepted` / `consent_accepted` as real fields; the notes fold is gone (marker parser kept only as a read fallback for a pre-round-2 backend) | UI submit 201 with `insurance_info: "Cigna - ID 4242"`, both flags `true`, notes clean; API submit without flags → 422 `acknowledgement_required` |
+| AN-17 read shape | Binds `office_code`, `actioned_by_name`, `original_slot`, `rescheduled_by_name`/`_at`, `reschedule_count`, `contact_notified_via`/`_at` | All present on the approved row |
+| AN-6 push | New `lib/appointnowSocket.ts` opens `/api/v1/messaging/ws?token=` (Direct Messaging runs in its local simulation here, so no messaging socket exists to piggy-back on) and filters `type: "appointnow.request"`; `supportsPush = true`; 30 s poll kept as reconciliation (`pollIntervalMs`) | Backend log `WebSocket /api/v1/messaging/ws [accepted]`; a request submitted by curl produced the "New booking request" toast + card + badge within seconds, before any poll |
+| AN-24 purge | `deleteRequest(id, force)` → `DELETE …/requests/{id}?force=`; **Delete** action on non-pending cards (approved → confirm + `force=true`) | 200, row removed, counts updated |
+| AN-18 providers hidden | Public page shows "You'll be seen by the next available provider" when the office has none visible | MOON: 0 public providers, 6 reasons |
+| AN-21 notifications | Card shows "Patient notified by text message / email" when the backend stamps `contact_notified_via` | Backend attempted Twilio (dev credentials rejected 401 70051 → e-mail log-only), so the stamp stayed `null` on dev — expected until real credentials exist |
+| Counts race (frontend) | Approve's HTTP response and its push event can land in the same tick; the inbox state is now one object updated functionally so a transition is counted once | Approved 2/All 1 before the fix → 1/1 after |
 
-The request appears inside the DentC app (staff **inbox** + **nav-bell badge** + **toast notification**).
-Staff **Approve** (which books a real appointment into the scheduler) or **Decline**.
+Generated client regenerated from the backend repo's `openapi.json` (`npm run api:gen`, 172 files, `tsc -b` clean).
 
-Because there is no backend yet, the whole flow runs against a **swappable transport** that *simulates*
-the backend client-side (localStorage + BroadcastChannel), exactly like the Messaging module. The
-transport interface (`src/features/appointnow/transport/types.ts`) is backend-shaped so the real client
-(`transport/realTransport.ts`, currently inert) becomes a drop-in when the endpoints below ship.
-
-**Approve already books for real:** the staff side is authenticated, so `staffBooking.ts` resolves a real
-office/provider/operatory via the existing generated client and calls the existing
-`POST /api/v1/appointments` (`schedulerApi.createAppointment`). Only the *public* intake + availability
-are simulated.
-
-### 1a. Added 2026-09-09 — intake acknowledgements, staff Reschedule, double-booking guard
-
-**Public Details step** now also captures, before the Confirm step:
-- `insurance_info` (optional) — "Name of Dental Insurance Provider & Member ID number";
-- `disclaimer_accepted` and `consent_accepted` — **mandatory** Yes/No acknowledgements (request only /
-  not HIPAA compliant; phone-number + call/SMS consent + 24-hour change notice). Both must be **Yes** to
-  reach Confirm.
-
-**Staff inbox card** now has three actions on a pending request: **Decline**, **Reschedule**, **Approve &
-book**. Reschedule opens an inline date + start-time editor (end time derived from the reason's duration);
-the patient's contact details are never touched, and the original slot is kept on the request
-(`original_slot`) and shown as *"Rescheduled by staff · patient originally asked for …"*. It is also
-written into the appointment notes on approve.
-
-**Double-booking guard (client-side, against the REAL scheduler):** both *Approve & book* and *Reschedule*
-first resolve office → provider → operatories (`staffBooking.resolveBookingTargets`) and then load that
-day's appointments (`GET /appointments/scheduler` + the archived-id overlay) to check the slot
-(`findSlotConflicts`). A slot is blocked when the chosen **provider** already has an overlapping
-non-cancelled appointment, or when **every active operatory** in the office is taken; otherwise the first
-free operatory is used. On a conflict nothing is written; a **red modal** ("Time slot already booked")
-lists each overlapping appointment (patient, time, procedure, provider, operatory, reason = *Provider busy*
-/ *Chair taken*) with a "Choose another time" shortcut into Reschedule. The request stays `pending`.
-
-**End-to-end test (2026-09-09, office MOON / id 1, provider PRV-100, operatory op-1-5):**
-
-| Step | Action | Result |
-|------|--------|--------|
-| 1 | Created a real appointment 2026-09-10 10:00–11:00 for PRV-100 / op-1-5 via `POST /appointments` | 201 |
-| 2 | Seeded a pending request for 2026-09-10 10:00 (60 min, any provider) and clicked **Approve & book** | Red modal *Time slot already booked* listing the 10:00–11:00 appointment (*Provider busy*); no `POST /appointments`; request still pending |
-| 3 | **Choose another time** → Reschedule to 10:30 → *Check availability & save* | Red modal again (10:30–11:30 overlaps); slot NOT saved |
-| 4 | Reschedule to 14:00 → *Check availability & save* | Toast *Request rescheduled*; card shows 2:00 PM + "patient originally asked for 10:00 AM"; contact details unchanged |
-| 5 | **Approve & book** | `POST /appointments` 201 → `APPT-eae66930…` 14:00–15:00, PRV-100, op-1-5, office 1, `patient_id: null`; notes carry name/phone/email/new-patient/insurance/disclaimer/consent/original slot; request `approved` with `appointment_id` |
-| 6 | Backend probe: `POST /appointments` 10:15–10:45 for the SAME provider + operatory as step 1 | **201 Created — the backend does not reject overlapping appointments** (see AN-15) |
-| 7 | Cleanup: deleted the three test appointments (204 each), cleared the simulated request store | scheduler feed for 2026-09-10 shows none of them |
+**Still open for the backend / DevOps:** AN-20 Cloud Run config (`APPOINTNOW_TURNSTILE_SECRET`, `REDIS_ENABLED`, SendGrid/Twilio); AN-15 generic overlap guard on `POST /appointments` (product call); AN-22 patient-match UI + Turnstile widget on the public page (frontend follow-ups once a site key exists); MOON's Monday `office_schedule_days` row ends 23:04 (data fix in Setup → Office Hours). Dev-DB Twilio credentials are invalid (401 70051) — contact SMS falls back to e-mail log-only.
 
 ---
 
-## 2. Endpoints the backend must build
+## 0. TL;DR for the backend team
 
-All under a new tag, e.g. `appointnow`. Slot/time values are `HH:MM` (24h); dates are `YYYY-MM-DD`.
+| # | Item | Severity | Owner |
+|---|------|----------|-------|
+| **AN-BUG-1** | **`POST /appointnow/requests/{id}/approve` always fails with HTTP 422 `foreign_key_violation`** (`fk_booking_requests_appointment_id_appointments`). The service assigns `req.appointment_id = appt.id` before the new `Appointment` row is flushed, so Postgres rejects the UPDATE. Nothing is booked; the request stays `pending`. **Staff cannot approve any online booking until this ships.** One-line fix in §3. | **P0 — blocker** | Backend |
+| AN-14 | No **reschedule** endpoint for a pending request. The frontend hides the Reschedule action in `api` mode. | P1 | Backend |
+| AN-16 | `ContactInput` silently **drops** `insurance_info`, `disclaimer_accepted`, `consent_accepted` (pydantic ignores unknown keys). The frontend now folds them into `notes` as a workaround. Please persist them as real columns. | P1 | Backend |
+| AN-6 | No WebSocket/SSE consumer for the Redis `appointnow:{tenant}:{office}` publish. Staff sessions **poll** every 30 s. | P2 | Backend |
+| AN-17 | Staff reads (`GET /appointnow/requests`, `/approve`, `/decline`) return `office_code: null` and no actor name (`actioned_by`). Frontend resolves the code from `/offices` and shows no actor. | P2 | Backend |
+| AN-18 | `providers.visible_in_appointnow` defaults to **true** → office MOON exposes **91 providers** on the public page, including rows like "Test Test", "TEST@ Tesy", "Hygiene History", "Dental Care McMurray". | P2 (data/config) | Backend + practice admin |
+| AN-19 | Public availability for MOON on a weekday offers slots from 08:00 through **22:00** (last start 10:00 PM). Please confirm the office end-of-day cap is applied when the requested provider has no `provider_schedule_days`. | P2 (verify) | Backend |
+| AN-20 | Production anti-abuse is effectively off: `APPOINTNOW_TURNSTILE_SECRET` unset (CAPTCHA skipped) and the per-IP rate limit "degrades open" without Redis. | P2 (config) | DevOps |
+| AN-21 | No email/SMS to the office on a new request, nor to the patient on approve/decline. | P3 | Backend |
+| AN-24 | No `DELETE`/purge for booking requests (spam/test rows can only be declined). | P3 | Backend |
 
-### AN-1 — Public office info (UNAUTH)
-`GET /api/v1/appointnow/offices/{office_code}`
-Returns public-safe office branding + the providers opted into online booking. No PMS internals.
-```jsonc
-{
-  "office_code": "MAINST",
-  "office_id": 1,
-  "name": "Reckon Dental — Main St",
-  "timezone": "America/New_York",
-  "phone": "(555) 123-4567",
-  "address": "123 Main St, Springfield",
-  "providers": [ { "id": "PRV-1", "name": "Dr. Jane Smith", "title": "DDS" } ]
-}
+Everything else in the original contract (AN-1/2/3/4/5/7/8/9/10/12/13/15) is **shipped and verified** — see §4.
+
+---
+
+## 1. Incident: external bookings never reached the office (root cause + fix)
+
+**Symptom reported:** booking from `https://reckondental.com/book/MOON` on an external device (patient's phone) never showed up in the office's AppointNow inbox. Booking from a second tab of an already-logged-in browser *did* work.
+
+**Root cause (frontend build configuration, now fixed):** the deployed bundle ran AppointNow in `local` mode. `VITE_APPOINTNOW_BACKEND` defaulted to `local` in `src/shared/config/env.ts`, `.env` set `local`, and neither the `Dockerfile`, `cloudbuild.yaml` nor the Cloud Run deploy workflow passed the variable — so production shipped the **client-side simulation** (localStorage + BroadcastChannel). A request was stored in the *visitor's own browser* and broadcast only to other tabs of that same browser profile. That is exactly why "same browser, new tab" worked and "another device" did not. The deployed backend had `0` rows in `booking_requests` when checked.
+
+The backend had meanwhile shipped the whole `/api/v1/appointnow/*` surface (both the local dev server and Cloud Run answer `GET /api/v1/appointnow/offices/MOON` with the real office + 91 providers + reason catalog), but the frontend was never switched over.
+
+**Frontend fix (this change set):**
+
+- `VITE_APPOINTNOW_BACKEND` now **defaults to `api`**; `local` is opt-in for demos. A production build in `local` mode logs a loud console error.
+- `Dockerfile`, `cloudbuild.yaml` and `.github/workflows/deploy-cloud-run.yml` pass `VITE_APPOINTNOW_BACKEND=api` explicitly.
+- `RealBookingTransport` rewritten against the **shipped** contract (generated Orval client for the staff surface; a bare axios instance for the anonymous public surface so the shared 401→/login interceptor can never fire — AN-12).
+- Staff context (`AppointNowContext`) now **scopes** the inbox / bell badge / toasts to the office selected in the top bar (`office_id` query param) and **polls every 30 s** (plus on tab focus) because there is no push channel (AN-6).
+- Approve now lets the **server book atomically** (AN-5) instead of the client booking first — avoids double appointments. The client still runs its scheduler pre-check only to show the rich "Time slot already booked" dialog.
+- Contract deltas are normalised in the transport (office_code from `/offices`, contact extras folded into `notes`, missing `actioned_by`/`original_slot`), and capability flags (`supportsReschedule`, `supportsPush`, `booksOnApprove`) drive the UI.
+- Public page uses the office's server-side **reason catalog** (`PublicOfficeInfo.reasons`), enforces `requires_provider`, and shows the backend's human error message on submit (slot just taken / rate-limited / CAPTCHA).
+- `server.js` no longer sends `X-Frame-Options: DENY` for `/book/*` (CSP `frame-ancestors *`), so practices can embed the page in an `<iframe>` on their own site.
+
+**Deploy note:** the production frontend must be **rebuilt** for the fix to take effect (VITE_* values are baked at build time).
+
+---
+
+## 2. Shipped backend contract (as implemented) vs. the frontend
+
+All routes live under `/api/v1/appointnow` (tag `Appointments`). Public routes have no auth dependency and never return 401.
+
+| Route | Auth | Frontend use | Notes / deltas |
+|-------|------|--------------|----------------|
+| `GET /offices/{office_code}` → `PublicOfficeInfo` | none | public page header, providers, **reasons** | `reasons[]` served per office (defaults when none configured). `office_code` is globally unique (`offices.office_code UNIQUE`). |
+| `GET /offices/{office_code}/availability?date&provider_id&duration_minutes` → `{slots, timezone}` | none | slot picker | Redis-cached 30 s; subtracts appointments + active soft-holds. See AN-19. |
+| `POST /offices/{office_code}/requests` (`SubmitRequestInput`) → 201 `BookingRequestRead` | none | submit | Re-validates the slot (409 `slot_unavailable`), rate limit (429), Turnstile (403). **Drops** `insurance_info`/`disclaimer_accepted`/`consent_accepted` (AN-16). `office_code` in the response is set. |
+| `GET /requests?status&office_id&q&reason_id&reason_label&is_new_patient&date_from&date_to&sort&page&size≤200` → `{items, counts, page, size, total}` | Bearer | inbox + badge (paged 200/page, `office_id` scope) | `office_code` is **null** on every row (AN-17). Runs the expiry sweep lazily. |
+| `GET /requests/{id}` | Bearer | — | |
+| `GET /requests/{id}/patient-matches` → `PatientMatch[]` | Bearer | not wired yet (frontend follow-up) | AN-9 delivered server-side. |
+| `POST /requests/{id}/approve` (`ApproveInput{appointment_id?, patient_id?, create_patient?, provider_id?, operatory_id?}`) | Bearer | approve | **Books server-side** (ignores `appointment_id`). **Currently 422 — AN-BUG-1.** |
+| `POST /requests/{id}/decline` (`{reason?}`) | Bearer | decline | Works (verified). |
+| `POST /requests/{id}/reschedule` | — | hidden | **Does not exist** (AN-14). |
+| `/appointnow-reasons` CRUD | Bearer | not wired (Setup screen is a frontend follow-up) | Per-office reason catalog. |
+
+`BookingRequestRead` (server) vs `BookingRequest` (UI): server lacks `actioned_by` (name), `original_slot`, and the three contact extras; server adds `patient_id`, `actioned_at`. `contact.*` fields are nullable on read — the UI normalises to empty strings.
+
+---
+
+## 3. AN-BUG-1 — approve fails with a foreign-key violation (P0)
+
+**Repro (local backend, Postgres, 2026-09-12):**
+
 ```
-- `providers` = only providers with **`ProviderRead.visible_in_appointnow = true`** (see AN-7).
-- Must be reachable **anonymously** (no tenant token). Resolve the tenant from `office_code`.
-- `name` must be the **human office name only** (e.g. `"Excel Dental - Wexford"`) — **never** the
-  `office_code`/id. The public header renders this string verbatim as the page title.
-- 404 for unknown/booking-disabled offices (the UI shows a friendly "booking unavailable").
-- **Frontend note:** in `local` mode the page now best-effort resolves the *real* office name (+ phone,
-  address, AppointNow-visible providers) via the existing authed `GET /offices` **only when a staff token
-  is present** (i.e. a staff member previewing from the app). A genuinely anonymous visitor on a
-  third-party site has no token, so the true office name/branding depends entirely on **AN-1**; until it
-  ships they see a generic brand fallback.
-
-### AN-2 — Public availability (UNAUTH)
-`GET /api/v1/appointnow/offices/{office_code}/availability?date=YYYY-MM-DD&provider_id=&duration_minutes=`
-Returns the open, bookable start times for the day.
-```jsonc
-{ "slots": [ { "date": "2026-08-03", "start_time": "09:00", "end_time": "10:00",
-               "duration_minutes": 60, "provider_id": "PRV-1", "provider_name": "Dr. Jane Smith" } ] }
+POST /api/v1/appointnow/requests/01a0960c-53e7-7000-bf6c-b7159ee8553d/approve
+{"appointment_id":null,"patient_id":null,"provider_id":"PRV-181","operatory_id":"op-1-5"}
+→ 422 {"error":{"code":"foreign_key_violation","message":"a referenced record does not exist.",
+   "details":{"sqlstate":"23503","constraint":"fk_booking_requests_appointment_id_appointments",
+   "columns":["appointment_id"],"values":["AN01a0960e10e970008621e3"]}}}
 ```
-**Algorithm (reference implementation shipped as `src/features/appointnow/lib/availability.ts`):**
-1. Take the office per-day working window (`GET /offices/{id}/schedule` → `OfficeScheduleDayRead`:
-   `start_time`/`end_time`, minus `lunch_start..lunch_end`, honoring `is_closed`).
-2. If a provider is requested, intersect with that provider's window
-   (`GET /providers/{id}/schedule` → `ProviderScheduleDayRead`).
-3. Remove office/provider **holidays** (`/offices/{id}/holidays`, `/providers/{id}/holidays`,
-   `/tenants/{id}/holidays`).
-4. Slice into `OfficeRead.slot_interval_minutes` steps; keep steps where
-   `[start, start+duration_minutes)` fits the window.
-5. Subtract **already-booked** ranges from `GET /appointments/scheduler?date_from&date_to&office_id`
-   (per operatory/provider capacity).
-6. For today, drop slots that already started.
-- Must be anonymous, cheap, and **cacheable** (short TTL). Consider a per-office availability cache.
 
-### AN-3 — Public booking-request intake (UNAUTH)
-`POST /api/v1/appointnow/offices/{office_code}/requests`
-Body = `SubmitRequestInput` (see `types.ts`): `reason_id`, `reason_label`, `slot`, `contact`
-(`first_name`, `last_name`, `phone`, `email`, `date_of_birth?`, `is_new_patient`, `notes?`,
-`insurance_info?`, `disclaimer_accepted`, `consent_accepted`).
-- `insurance_info` (optional free text) = "Name of Dental Insurance Provider & Member ID number".
-- `disclaimer_accepted` / `consent_accepted` (boolean) are **mandatory acknowledgements**; the public UI
-  only submits when both are `true` (Yes). The backend should **reject** intake with either `false`/missing
-  and persist both flags with the request (audit trail of the patient's acknowledgement + contact consent
-  for calls/SMS). The legal text is in `types.ts` (`BOOKING_DISCLAIMER_TEXT` / `BOOKING_CONSENT_TEXT`).
-Returns the created `BookingRequest` (`id`, `status: "pending"`, timestamps).
-- **Anti-abuse is mandatory** (public, unauthenticated write): rate-limit per IP/office, CAPTCHA/turnstile,
-  and validate the slot is still open at submit time.
-- Should **soft-hold** the slot (see AN-8) so two people can't request the same slot simultaneously.
-- Do **not** create a patient or appointment here — this is only a request.
+Same result with an empty body. Afterwards `GET /appointments/AN01a0960e10e970008621e3` → 404 (the whole transaction rolled back) and the request is still `pending`. Reproduced 3× in a row.
 
-### AN-4 — Staff: list requests (AUTH)
-`GET /api/v1/appointnow/requests?status=pending|approved|declined|expired&office_id=`
-Returns `BookingRequest[]` (or `{ items }`), tenant/office-scoped. Powers the inbox + badge count.
-- **Server-side search/filter/paging (see AN-13):** the inbox has a search box + filters (office, reason,
-  patient type, appointment-date range) + sort. Today these run **client-side over the full loaded list**,
-  which only scales while request volume is small. Please add query params so the list can be filtered
-  server-side: `q` (free-text over name/phone/email/reason/code), `reason_id`/`reason_label`, `is_new_patient`,
-  `date_from`/`date_to` (over the requested **slot date**), `sort` (`created_desc|created_asc|slot_asc|slot_desc`),
-  and `page`/`size`. Also return an unfiltered **per-status count summary** (pending/approved/declined/all)
-  so the tab badges stay accurate independent of the active filter.
+**Cause** (`app/services/appointnow_service.py::approve_request`): the code does `db.add(appt)` and then sets `req.appointment_id = appt.id` in the same unit of work. There is no `relationship()` between `BookingRequest.appointment_id` and `Appointment`, so SQLAlchemy has no dependency edge and emits the `UPDATE booking_requests` **before** the `INSERT INTO appointments` — Postgres rejects the FK.
 
-### AN-5 — Staff: approve / decline (AUTH)
-`POST /api/v1/appointnow/requests/{id}/approve` · `POST /api/v1/appointnow/requests/{id}/decline`
-- **Approve should book atomically server-side**: re-check the slot is still free, create the
-  appointment, attach it to the request (`appointment_id`), set `status: "approved"`, release the hold,
-  and return the updated request. (The current frontend books client-side via `POST /appointments` and
-  passes the resulting `appointment_id` in the approve body — the server may honor that id or, preferably,
-  book itself and ignore it. Please make approval the single atomic transaction.)
-- Approve should optionally **create/match a patient** from the contact details (see AN-9); today the
-  appointment is booked with `patient_id: null` and the contact carried in the label/notes.
-- Decline body: `{ reason?: string }`. Sets `status: "declined"`, stores reason + actor.
+**Fix (one line):**
 
-### AN-14 — Staff: reschedule a pending request (AUTH) — NEW 2026-09-09
-`POST /api/v1/appointnow/requests/{id}/reschedule` · body `{ slot: AvailableSlot, actioned_by?: string }`
-- Only valid while `status == "pending"` (409 otherwise). Replaces `slot`, sets `original_slot` to the
-  patient's first-requested slot if not already set, bumps `updated_at`, records the actor. The **contact
-  details must not change** — the appointment is always saved with the details the patient entered.
-- Must run the same **double-booking check** as approve (AN-15) and return **409 + the conflicting
-  appointments** (`{ conflicts: [{ appointment_id, patient_name, provider_name, operatory_name,
-  start_time, end_time, procedure_label, kind: "provider"|"operatory" }] }`) so the red modal can list them.
-- Release / re-take the slot hold (AN-8) for the new time. Optionally notify the patient (email/SMS) of
-  the proposed new time.
-- Frontend: `RealBookingTransport.rescheduleRequest()` already targets this route; the local simulation
-  implements it in `localTransport.ts`.
+```python
+    db.add(appt)
+    db.flush()  # INSERT the appointment first so booking_requests.appointment_id can reference it
 
-### AN-15 — Server-side double-booking guard (AUTH) — NEW 2026-09-09, **verified gap**
-`POST /api/v1/appointments` (and `PATCH /appointments/{id}` on date/time/provider/operatory changes)
-currently **accepts overlapping appointments**: an appointment for the same provider AND operatory at an
-overlapping time returned **201** during the E2E test above. The frontend now guards approve/reschedule
-client-side, but that is racy (two staff users, or a walk-in booked between the check and the create).
-- Reject with **409** when the slot overlaps a non-cancelled, non-archived appointment for the **same
-  provider** or the **same operatory** (blocked-time rows included). Return the conflicting rows in the
-  body (shape above) so the UI can show them.
-- Apply the same rule inside the atomic **approve** (AN-5) and **reschedule** (AN-14) transactions, and
-  in the public **availability** (AN-2) so patients are never offered a taken slot (today the local
-  simulation fabricates slots from office hours only — it does not consult the scheduler).
-- Consider an optional `allow_overlap: true` flag for deliberate double-booking (some practices
-  double-book hygiene), defaulting to strict.
+    req.status = "approved"
+    req.appointment_id = appt.id
+```
 
-### AN-6 — Realtime notification for new requests (AUTH)
-Staff must be alerted **without polling**. Provide a WebSocket/SSE push (or webhook) on new/updated
-requests. The frontend already renders a toast + bell badge; the local simulation uses BroadcastChannel.
-In `api` mode, `RealBookingTransport.subscribe()` is a no-op until this ships (falls back to manual
-Refresh). Optional but recommended: email/SMS to the office on new request, and to the patient on
-approve/decline.
+(or declare `appointment = relationship("Appointment")` on `BookingRequest` and assign `req.appointment = appt`).
 
-### AN-7 — Provider exposure flag (EXISTS)
-`ProviderRead.visible_in_appointnow` already exists and is the intended control for which providers are
-offered in AN-1/AN-2. Please ensure it is settable in Provider Setup and enforced in AN-1/AN-2.
+**Why the test suite is green:** `tests/conftest.py` runs on in-memory **SQLite**, which does not enforce foreign keys unless `PRAGMA foreign_keys=ON` is issued per connection. `test_approve_books_appointment` therefore passes while Postgres fails. Consider enabling the pragma in the test engine (`event.listen(engine, "connect", …)`) so FK ordering bugs surface in CI.
+
+Please also apply the same pattern anywhere else a new row's id is assigned to an FK column in the same flush (e.g. `patient_id` from `_patient_crud.create` is already committed separately, so that path is fine).
 
 ---
 
-## 3. Additional backend concerns (please design in)
+## 4. Verification log (2026-09-12)
 
-- **AN-8 Slot hold/expiry:** holding a slot on request (AN-3) with a TTL, auto-expiring to `status:
-  "expired"` if not actioned, so availability stays truthful.
-- **AN-9 Duplicate-patient matching:** on approve, match phone/email/DOB against existing patients before
-  creating a new one; surface a "possible match" to staff.
-- **AN-10 Timezone:** availability + display must respect `OfficeRead.timezone`; the public visitor may be
-  in a different zone. Return times in office-local and label the zone.
-- **AN-11 Public CORS:** AN-1..3 must allow-list the practice's website origin(s) (the page may be
-  embedded in an iframe → also consider `X-Frame-Options`/CSP `frame-ancestors`).
-- **AN-12 Auth interceptor hazard:** the public endpoints must **never return 401** to an anonymous
-  visitor — the shared axios client hard-redirects any 401 to `/login`. The frontend already isolates
-  public calls onto a bare axios instance, but keep public responses to 200/403/404/422.
-- **AN-13 Inbox search / filter / paging (scale):** the staff inbox now ships a search box, filters
-  (office, reason, patient type, appointment-date range) and sort — all **client-side over the full
-  request list**, which is fine at low volume but won't scale. Add the server-side params on **AN-4** and
-  return a per-status count summary for the tab badges. Suggested indexes: `(tenant_id, office_id,
-  status, created_at)` and `(tenant_id, office_id, slot_date)`; a text index over
-  name/phone/email/reason for `q`.
+Environment: frontend dev server `:5173` in `api` mode, local backend `:8000`, office **MOON** (id 1). Cloud Run was probed read-only.
 
----
+| # | Step | Result |
+|---|------|--------|
+| 1 | Anonymous visit `/book/MOON` (no token in localStorage) | `GET /appointnow/offices/MOON` 200 → real name "Excel Dental- Moon, PA", phone/address, 91 providers, server reason catalog (New Patient Exam, Cleaning / Hygiene, Checkup / Recall, …). No "Demo mode" footer. |
+| 2 | Time step, Mon 2026-09-14, 60 min | `GET …/availability?date=2026-09-14&duration_minutes=60` 200 → 28 slots 08:00–22:00 (lunch 11:30/12:00 correctly excluded — see AN-19 for the late-evening tail). |
+| 3 | Details + Yes/Yes acknowledgements + insurance, **Send request** | `POST …/MOON/requests` **201**, id `01a0960c-…`. Confirmation screen shows the code. Server row: `notes` = free text + `Insurance: …` + `Disclaimer accepted: Yes` + `Contact consent (calls/texts): Yes` (workaround for AN-16). |
+| 4 | Staff session (admin), `/appointnow/requests`, no office selected | `GET /appointnow/requests?sort=created_desc&page=1&size=200` 200 → card rendered, **bell badge = 1**, "Office: MOON" resolved from `office_id`, insurance/disclaimer/consent parsed back out of notes. Reschedule button hidden (`supportsReschedule=false`). |
+| 5 | Select office "Excel Dental- Moon, PA" in the top bar | List re-queried with `office_id=1`; banner "Showing requests for Excel Dental- Moon, PA"; public link switches to `/book/MOON`. |
+| 6 | Second request submitted **via curl** (simulating another device) | `POST …/MOON/requests` 201 (`01a0960d-…`). On the next poll (tab focus) the app showed toast **"New booking request"**, badge 1 → **2**, Pending 2 — without any user action in that browser. |
+| 7 | **Approve & book** on request 1 | Client pre-check passed (`/offices`, `/providers`, `/operatories?office_id=1`, `/appointments/scheduler`), then `POST …/approve` → **422 foreign_key_violation** (AN-BUG-1). UI toast "Could not book appointment — a referenced record does not exist."; request stays pending; no orphan appointment (GET → 404). |
+| 8 | **Decline** request 2 with a reason | `POST …/decline` 200 → status `declined`, badge 2 → 1, Declined tab count 1, toast "Request declined". |
+| 9 | Cloud Run read-only probes | `GET /appointnow/offices/MOON` 200 (same payload as local); `GET /appointnow/requests` 200 `total: 0` — confirms no external request ever reached production. |
+| 10 | Cleanup | Both test rows deleted from the local `booking_requests` table (no appointment was ever linked). |
 
-## 4. Data shapes (authoritative: `src/features/appointnow/transport/types.ts`)
-
-`BookingRequest`, `SubmitRequestInput`, `AvailabilityQuery`, `AvailableSlot`, `PublicOfficeInfo`,
-`AppointmentReason` are defined there and should be mirrored by the backend response models. The
-reason catalog (id → duration) currently lives client-side (`APPOINTMENT_REASONS`); consider serving it
-per-office from AN-1 so offices can customize reasons/durations.
+Frontend checks: `npx tsc -b` clean; `npx eslint src/features/appointnow src/shared/config/env.ts` 0 errors.
 
 ---
 
-## 5. How to light up the real backend
+## 5. Open gaps — details and requested contract
 
-1. Implement AN-1..AN-6.
-2. Set `VITE_APPOINTNOW_BACKEND=api`.
-3. `RealBookingTransport` (already written, `transport/realTransport.ts`) takes over with **no UI change**.
-   Public calls go through a bare axios instance (`baseURL` only); staff calls through the shared authed
-   client. Flip `supportsAttachments`-style capability flags are not needed here.
+### AN-14 — Reschedule a pending request (P1)
+`POST /api/v1/appointnow/requests/{id}/reschedule` · body `{ slot: { date, start_time, end_time?, duration_minutes?, provider_id? } }`.
+- Only while `status == "pending"` (409 otherwise). Replace the slot, keep the contact untouched, store the patient's first-requested slot in a new `original_slot` (returned on reads), bump `updated_at`, record the actor.
+- Run the same conflict check as approve; on overlap return **409** with `details.conflicts[]` (`appointment_id, patient_name, provider_name, operatory_name, start_time, end_time, procedure_label, kind: "provider"|"operatory"`) so the red dialog can list them.
+- Re-take the soft-hold for the new time.
+Frontend: `RealBookingTransport.rescheduleRequest` + `supportsReschedule` are ready to flip; until then the inbox hides Reschedule and the conflict dialog tells staff to decline and book from the Scheduler.
+
+### AN-16 — Persist the intake acknowledgements (P1)
+Add to `ContactInput`/`ContactOut` and `booking_requests`:
+`insurance_info: str | None (max 500)`, `disclaimer_accepted: bool`, `consent_accepted: bool`. Reject intake (422) when either acknowledgement is not `true` — these are the legal texts in `types.ts` (`BOOKING_DISCLAIMER_TEXT`, `BOOKING_CONSENT_TEXT`) and must be auditable. Until then the frontend writes them into `notes` with the markers `Insurance:`, `Disclaimer accepted:`, `Contact consent (calls/texts):` and parses them back on read; once the columns exist the frontend will send the fields directly (drop the markers).
+
+### AN-17 — Staff read shape (P2)
+- Return `office_code` on every `BookingRequestRead` (join `offices`), not only on the public submit response.
+- Return `actioned_by_name` (or embed `{ id, name }`) so the inbox can show "Booked by Jane".
+- Expose `original_slot` once AN-14 lands.
+
+### AN-6 — Realtime push (P2)
+The service publishes `request.created` / `request.updated` to Redis channel `appointnow:{tenant_id}:{office_id}` but nothing consumes it. Please add a staff WebSocket (e.g. `/api/v1/appointnow/ws?office_id=` reusing the messaging WS auth) or an SSE endpoint that relays those events. The frontend polls every 30 s and on tab focus meanwhile; `RealBookingTransport.subscribe()` is the seam.
+
+### AN-18 — Provider exposure default (P2)
+`Provider.visible_in_appointnow` defaults to `True`, so every active provider of an office is offered publicly (MOON: 91, including test/placeholder rows and many duplicates by name). Recommend default `False` + a migration that sets it explicitly, and a Provider Setup toggle (frontend follow-up) so practices curate the list. The engine also assigns the *first* visible provider (alphabetical) to "any provider" requests — with the default on, that is "Ahmed Meer" for every MOON request.
+
+### AN-19 — Availability end-of-day cap (verify)
+`GET …/MOON/availability?date=2026-09-15&duration_minutes=60` returns start times up to **22:00** (end 23:00). Lunch is honoured, so the office window is being read; please confirm the office `end_time` (or `schedule_end_hour`) caps the last slot when the provider has no `provider_schedule_days`, and that the provider fallback window is not 00:00–24:00.
+
+### AN-20 — Anti-abuse in production (config, P2)
+- Set `APPOINTNOW_TURNSTILE_SECRET` on Cloud Run and add the site key to the frontend (`turnstile_token` is already in `SubmitRequestInput`; the public page needs the widget — frontend follow-up once the key exists).
+- `_rate_limit` returns silently when Redis is unavailable ("degrades open"). Confirm `REDIS_ENABLED` on Cloud Run.
+
+### AN-21 — Notifications (P3)
+Email/SMS the office on a new request and the patient on approve/decline/reschedule (Twilio is already integrated for patient SMS).
+
+### AN-22 — Patient matching UX (frontend follow-up, server done)
+`GET /requests/{id}/patient-matches` and `ApproveInput.patient_id / create_patient` are live. The inbox does not surface matches yet; the approve body sends `patient_id: null` so the appointment is booked with `patient_id = null` and the contact carried in the notes (unchanged behaviour).
+
+### AN-23 — CORS / embedding
+`CORS_ORIGIN_REGEX` allows `*.run.app` and `*.reckondental.com`. Embedding the page in an `<iframe>` on a practice's site works (the page itself is served from reckondental.com — frontend `server.js` now allows framing of `/book/*`). Calling the public API **directly** from another origin would need that origin allow-listed.
+
+### AN-24 — Purge endpoint (P3)
+`DELETE /api/v1/appointnow/requests/{id}` (admin) for spam/test rows; today rows can only be declined.
+
+### AN-25 — Expiry sweep is lazy
+`expire_stale_requests` runs only when a staff user lists requests. A pending request whose slot passed still holds its soft-hold in availability until someone opens the inbox. A periodic job (or running the sweep inside availability) would keep public availability truthful.
+
+---
+
+## 6. Status matrix (original contract)
+
+| Gap | Title | Status 2026-09-12 |
+|-----|-------|-------------------|
+| AN-1 | Public office info | **Shipped** (+ per-office reasons) |
+| AN-2 | Public availability | **Shipped** (Redis cache 30 s) — verify AN-19 |
+| AN-3 | Public intake | **Shipped** (rate limit, Turnstile hook, slot re-check, soft-hold) — AN-16 fields missing |
+| AN-4 / AN-13 | Staff list + server filters + counts | **Shipped** — AN-17 (office_code, actor) |
+| AN-5 | Approve (atomic book) / Decline | Decline **shipped**; Approve **broken (AN-BUG-1)** |
+| AN-6 | Realtime push | **Open** (Redis publish only) |
+| AN-7 | `visible_in_appointnow` enforced | Shipped — default should flip (AN-18) |
+| AN-8 | Slot hold/expiry | **Shipped** (15 min hold; lazy expiry, AN-25) |
+| AN-9 | Duplicate-patient matching | **Shipped** (frontend not wired, AN-22) |
+| AN-10 | Timezone | **Shipped** (office-local, `timezone` in responses) |
+| AN-11 | Public CORS / embedding | Regex allow-list; frontend framing fixed (AN-23) |
+| AN-12 | Never 401 on public routes | **Shipped** |
+| AN-14 | Reschedule | **Open** |
+| AN-15 | Server-side double-booking guard | **Shipped inside approve** (`slot_conflict` 409); generic `POST /appointments` overlap guard still open |
+
+---
+
+## 7. Deployment checklist
+
+**Frontend (this change set):**
+- Rebuild + redeploy (`cloudbuild.yaml` / deploy workflow now pass `VITE_APPOINTNOW_BACKEND=api`; the code default is `api` as well).
+- Smoke test: open `https://reckondental.com/book/MOON` in a private window → the page must show the real office name and no "Demo mode" footer; submit → `POST /api/v1/appointnow/offices/MOON/requests` 201 in the network tab; the request appears in the inbox of a logged-in staff user with MOON selected within 30 s.
+
+**Backend:**
+- Ship AN-BUG-1 (approve) first — nothing can be booked until then.
+- Set `APPOINTNOW_TURNSTILE_SECRET`, confirm `REDIS_ENABLED`, and curate `visible_in_appointnow`.
+- Then AN-14, AN-16, AN-17, AN-6 in that order.
+
+---
+
+## Appendix — history
+
+- **2026-07-31:** frontend shipped against a client-side simulation; original contract AN-1..AN-12 written here.
+- **2026-09-09:** intake acknowledgements (`insurance_info`, `disclaimer_accepted`, `consent_accepted`), staff Reschedule, client-side double-booking guard; AN-13..AN-15 added. Backend `POST /appointments` verified to accept overlapping appointments (201).
+- **2026-09-12:** backend surface found shipped; production incident traced to the `local` build flag; frontend cut over to `api`; approve blocker AN-BUG-1 found; this report rewritten as the current status.

@@ -158,9 +158,8 @@ export default function OperatoriesTab({
             <li>Cannot delete operatories with future appointments</li>
             <li>Scheduler updates dynamically when operatories change</li>
             <li>
-              Default provider is populated from this office's providers, but the
-              choice is not yet saved (the operatory API has no provider field —
-              backend gap #23)
+              Default provider is saved with the operatory and auto-fills new
+              appointments booked in that room
             </li>
           </ul>
         </div>
@@ -243,17 +242,17 @@ export default function OperatoriesTab({
                         <>
                           <select
                             className="border border-slate-300 rounded px-2 py-1 text-xs bg-white disabled:bg-slate-100"
-                            value={op.default_provider_id ?? ""}
+                            value={op.provider_id ?? ""}
                             disabled={providers.length === 0}
                             onChange={(e) => {
-                              const providerId = e.target.value || undefined;
+                              const providerId = e.target.value || null;
                               const provider = providers.find((p) => String(p.id) === providerId);
                               const updated = operatories.map((o) =>
                                 o.id === op.id
                                   ? {
                                       ...o,
-                                      default_provider_id: providerId,
-                                      default_provider_name: provider?.name ?? undefined,
+                                      provider_id: providerId,
+                                      provider_name: provider?.name ?? undefined,
                                     }
                                   : o
                               );

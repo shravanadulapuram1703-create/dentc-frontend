@@ -10,8 +10,8 @@ import {
   Network,
 } from "lucide-react";
 import { toast } from "sonner";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
-import type { OfficeRead, ReferralRead } from "@/api/generated/model";
+import type { ReferralRead } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
 import {
   listAllReferrals,
   createReferralSource,
@@ -91,7 +91,9 @@ function Field({
 
 export default function ReferralSetup() {
   const [referrals, setReferrals] = useState<ReferralRead[]>([]);
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Office picker / labels from the shared office catalog (id → name only).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -121,12 +123,8 @@ export default function ReferralSetup() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [refs, offRes] = await Promise.all([
-        listAllReferrals(),
-        listOffices({ size: 200 }).catch(() => null),
-      ]);
+      const refs = await listAllReferrals();
       setReferrals(refs);
-      setOffices(offRes?.items ?? []);
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : "Failed to load referrals");
       setReferrals([]);

@@ -50,7 +50,6 @@ interface PatientData {
   dob: string;
   age: number;
   gender?: string;
-  officeId?: string;
 }
 
 interface OutletContext {

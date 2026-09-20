@@ -692,6 +692,21 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
 
             <p className="text-xs text-[#64748B] mt-1">Used for new patients, ledger posting, clinical estimates</p>
           </div>
+
+          {/* Unpriced-charge policy (docs/pricing §3.4) */}
+          <div>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">Unpriced Charge Policy</label>
+            <select
+              value={formData.unpriced_charge_policy ?? ""}
+              onChange={(e) => updateFormData({ unpriced_charge_policy: e.target.value || null })}
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg text-sm"
+            >
+              <option value="">Use default (flag)</option>
+              <option value="flag">Post at $0, mark it unpriced and list it for Setup</option>
+              <option value="refuse">Refuse the charge until the code is priced</option>
+            </select>
+            <p className="text-xs text-[#64748B] mt-1">What happens when a charged code has no fee on any list.</p>
+          </div>
         </div>
       </div>
 

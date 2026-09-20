@@ -1510,6 +1510,7 @@ export function useGetPatientProcedure<TData = Awaited<ReturnType<typeof getPati
 
 
 /**
+ * Partial update of one patient procedure. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient procedure
  */
 export const updatePatientProcedure = (
@@ -1574,6 +1575,7 @@ export const useUpdatePatientProcedure = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientProcedureMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient procedure. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient procedure
  */
 export const deletePatientProcedure = (
@@ -1883,6 +1885,7 @@ export function useGetChartCondition<TData = Awaited<ReturnType<typeof getChartC
 
 
 /**
+ * Partial update of one chart condition. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update chart condition
  */
 export const updateChartCondition = (
@@ -1947,6 +1950,7 @@ export const useUpdateChartCondition = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateChartConditionMutationOptions(options), queryClient);
     }
     /**
+ * Delete one chart condition. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete chart condition
  */
 export const deleteChartCondition = (
@@ -2256,6 +2260,7 @@ export function useGetProgressNote<TData = Awaited<ReturnType<typeof getProgress
 
 
 /**
+ * Partial update of one progress note. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update progress note
  */
 export const updateProgressNote = (
@@ -2320,6 +2325,7 @@ export const useUpdateProgressNote = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProgressNoteMutationOptions(options), queryClient);
     }
     /**
+ * Delete one progress note. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete progress note
  */
 export const deleteProgressNote = (
@@ -2629,6 +2635,7 @@ export function useGetPerioExam<TData = Awaited<ReturnType<typeof getPerioExam>>
 
 
 /**
+ * Partial update of one perio exam. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update perio exam
  */
 export const updatePerioExam = (
@@ -2693,6 +2700,7 @@ export const useUpdatePerioExam = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePerioExamMutationOptions(options), queryClient);
     }
     /**
+ * Delete one perio exam. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete perio exam
  */
 export const deletePerioExam = (
@@ -3002,6 +3010,7 @@ export function useGetPerioExamDetail<TData = Awaited<ReturnType<typeof getPerio
 
 
 /**
+ * Partial update of one perio exam detail. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update perio exam detail
  */
 export const updatePerioExamDetail = (
@@ -3066,6 +3075,7 @@ export const useUpdatePerioExamDetail = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePerioExamDetailMutationOptions(options), queryClient);
     }
     /**
+ * Delete one perio exam detail. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete perio exam detail
  */
 export const deletePerioExamDetail = (
@@ -3375,6 +3385,7 @@ export function useGetPrescription<TData = Awaited<ReturnType<typeof getPrescrip
 
 
 /**
+ * Partial update of one prescription.
  * @summary Update prescription
  */
 export const updatePrescription = (
@@ -3439,6 +3450,7 @@ export const useUpdatePrescription = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePrescriptionMutationOptions(options), queryClient);
     }
     /**
+ * Delete one prescription.
  * @summary Delete prescription
  */
 export const deletePrescription = (
@@ -3748,6 +3760,7 @@ export function useGetPerioChartSetting<TData = Awaited<ReturnType<typeof getPer
 
 
 /**
+ * Partial update of one perio chart setting.
  * @summary Update perio chart setting
  */
 export const updatePerioChartSetting = (
@@ -3812,6 +3825,7 @@ export const useUpdatePerioChartSetting = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePerioChartSettingMutationOptions(options), queryClient);
     }
     /**
+ * Delete one perio chart setting.
  * @summary Delete perio chart setting
  */
 export const deletePerioChartSetting = (
@@ -4121,6 +4135,7 @@ export function useGetPerioChartTemplate<TData = Awaited<ReturnType<typeof getPe
 
 
 /**
+ * Partial update of one perio chart template. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update perio chart template
  */
 export const updatePerioChartTemplate = (
@@ -4185,6 +4200,7 @@ export const useUpdatePerioChartTemplate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePerioChartTemplateMutationOptions(options), queryClient);
     }
     /**
+ * Delete one perio chart template. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete perio chart template
  */
 export const deletePerioChartTemplate = (
@@ -4494,6 +4510,7 @@ export function useGetPerioChartActivity<TData = Awaited<ReturnType<typeof getPe
 
 
 /**
+ * Partial update of one perio chart activity.
  * @summary Update perio chart activity
  */
 export const updatePerioChartActivity = (
@@ -4558,6 +4575,7 @@ export const useUpdatePerioChartActivity = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePerioChartActivityMutationOptions(options), queryClient);
     }
     /**
+ * Delete one perio chart activity.
  * @summary Delete perio chart activity
  */
 export const deletePerioChartActivity = (
@@ -4867,6 +4885,7 @@ export function useGetChartStatusTemplate<TData = Awaited<ReturnType<typeof getC
 
 
 /**
+ * Partial update of one chart status template. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update chart status template
  */
 export const updateChartStatusTemplate = (
@@ -4931,6 +4950,7 @@ export const useUpdateChartStatusTemplate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateChartStatusTemplateMutationOptions(options), queryClient);
     }
     /**
+ * Delete one chart status template. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete chart status template
  */
 export const deleteChartStatusTemplate = (
@@ -5240,6 +5260,7 @@ export function useGetChartToothNote<TData = Awaited<ReturnType<typeof getChartT
 
 
 /**
+ * Partial update of one chart tooth note. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update chart tooth note
  */
 export const updateChartToothNote = (
@@ -5304,6 +5325,7 @@ export const useUpdateChartToothNote = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateChartToothNoteMutationOptions(options), queryClient);
     }
     /**
+ * Delete one chart tooth note. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete chart tooth note
  */
 export const deleteChartToothNote = (
@@ -5613,6 +5635,7 @@ export function useGetCariesRiskAssessment<TData = Awaited<ReturnType<typeof get
 
 
 /**
+ * Partial update of one caries risk assessment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update caries risk assessment
  */
 export const updateCariesRiskAssessment = (
@@ -5677,6 +5700,7 @@ export const useUpdateCariesRiskAssessment = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCariesRiskAssessmentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one caries risk assessment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete caries risk assessment
  */
 export const deleteCariesRiskAssessment = (

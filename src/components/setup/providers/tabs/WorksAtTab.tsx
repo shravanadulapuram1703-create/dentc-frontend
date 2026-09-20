@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Save, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
 import {
   listOfficeProviders,
   setOfficeProviders,
 } from "@/api/generated/endpoints/office-assignment/office-assignment";
-import type { OfficeRead } from "@/api/generated/model";
+import { listOfficeOptions, type OfficeOption } from "@/services/officeLookup";
 import DualListPicker, { type DualListItem } from "../../offices/DualListPicker";
 
 interface WorksAtTabProps {
@@ -24,7 +23,9 @@ interface WorksAtTabProps {
  * are preserved.
  */
 export default function WorksAtTab({ providerId, homeOfficeId }: WorksAtTabProps) {
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // The office catalog (id / name / short_id) — the load fans out one
+  // `listOfficeProviders` call per office, so it is read inside `load`.
+  const [offices, setOffices] = useState<OfficeOption[]>([]);
   // officeId -> full provider-id set currently assigned to that office (server truth).
   const [officeProviderIds, setOfficeProviderIds] = useState<Map<number, string[]>>(new Map());
   const [originalAssigned, setOriginalAssigned] = useState<Set<number>>(new Set());
@@ -37,8 +38,7 @@ export default function WorksAtTab({ providerId, homeOfficeId }: WorksAtTabProps
     setLoading(true);
     setError(null);
     try {
-      const offRes = await listOffices({ size: 200 });
-      const offList = offRes.items ?? [];
+      const offList = await listOfficeOptions();
       const sets = await Promise.all(
         offList.map((o) =>
           listOfficeProviders(o.id)
@@ -76,7 +76,7 @@ export default function WorksAtTab({ providerId, homeOfficeId }: WorksAtTabProps
   );
 
   const toItem = useCallback(
-    (o: OfficeRead): DualListItem => ({
+    (o: OfficeOption): DualListItem => ({
       id: String(o.id),
       primary: o.name,
       secondary: `Office ID: ${o.id}${o.short_id ? ` · ${o.short_id}` : ""}`,

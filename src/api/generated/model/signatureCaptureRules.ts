@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { SignatureCaptureRulesClaimSignatureItems } from './signatureCaptureRulesClaimSignatureItems';
 import type { SignatureCaptureRulesDocumentBinding } from './signatureCaptureRulesDocumentBinding';
 import type { SignatureCaptureRulesSigCompressionValues } from './signatureCaptureRulesSigCompressionValues';
 import type { SignatureCaptureRulesSigEncryptionValues } from './signatureCaptureRulesSigEncryptionValues';
@@ -32,4 +33,16 @@ export interface SignatureCaptureRules {
   sig_string_endpoints: string[];
   canonical_user_signature_write: string;
   document_binding: SignatureCaptureRulesDocumentBinding;
+  capture_methods: string[];
+  capture_method_rule: string;
+  consent_countersign_roles: string[];
+  consent_signed_at_tolerance_minutes: number;
+  consent_content_hash: string;
+  consent_signed_rendition: string;
+  provider_signature_write: string;
+  signature_types: string[];
+  claim_signature_items: SignatureCaptureRulesClaimSignatureItems;
+  claim_signature_resolution: string[];
+  signer_relationships: string[];
+  item_53_attester: string;
 }

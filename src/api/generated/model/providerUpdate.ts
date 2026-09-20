@@ -17,6 +17,7 @@ export interface ProviderUpdate {
   tax_id?: string | null;
   dea_id?: string | null;
   specialty?: string | null;
+  taxonomy_code?: string | null;
   is_active?: boolean | null;
   first_name?: string | null;
   last_name?: string | null;

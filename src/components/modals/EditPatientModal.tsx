@@ -18,7 +18,8 @@ import {
   type PatientUpdateRequestFull
 } from "../../services/patientApi";
 import { fetchProviders, type Provider } from "../../services/schedulerApi";
-import { providerDisplayLabel } from "@/services/providerDirectory";
+import { officeKeyToId } from "@/services/officeLookup";
+import { ProviderOptionGroups } from "@/features/office-scope";
 
 interface EditPatientModalProps {
   isOpen: boolean;
@@ -141,6 +142,9 @@ export default function EditPatientModal({
   const [patientError, setPatientError] = useState<string | null>(null);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // The patient's own home office (from the loaded record). Editing never
+  // re-stamps it from the office switcher — see handleSave.
+  const [homeOfficeId, setHomeOfficeId] = useState<number | null>(null);
 
   // Metadata state
   const [metadata, setMetadata] = useState<PatientMetadataResponse | null>(null);
@@ -341,6 +345,7 @@ export default function EditPatientModal({
     };
     setPatientTypes(patientTypesFromApi);
     setIsOrthoPatient(patientTypesFromApi.OR);
+    setHomeOfficeId(patient.office?.home_office_id ?? null);
 
     // Preferred Contact - keep API value directly (matches AddNewPatient.tsx)
     const preferredContactValue = patient.contact?.preferred_contact || "No Preference";
@@ -404,8 +409,8 @@ export default function EditPatientModal({
 
       // Office & Provider
       office: patient.office?.home_office_name || currentOffice || "",
-      feeSchedule: patient.fee_schedule?.fee_schedule_name || "",
-      feeScheduleId: patient.fee_schedule?.fee_schedule_id || "",
+      feeSchedule: patient.fee_schedule_name || "",
+      feeScheduleId: patient.fee_schedule_id != null ? String(patient.fee_schedule_id) : "",
       preferredProvider: patient.provider?.preferred_provider_id || "",
       preferredHygienist: patient.provider?.preferred_hygienist_id || "None",
 
@@ -583,17 +588,17 @@ export default function EditPatientModal({
     setSaveError(null);
 
     try {
-      // Extract numeric office ID
-      const extractOfficeIdNumber = (officeId?: string): number | undefined => {
-        if (!officeId) return undefined;
-        if (/^\d+$/.test(officeId)) return parseInt(officeId, 10);
-        const match = officeId.match(/(\d+)$/);
-        return match && match[1] ? parseInt(match[1], 10) : undefined;
-      };
-
-      const officeIdNum = extractOfficeIdNumber(currentOffice);
+      // The patient's home office is an ownership attribute set at registration
+      // and moved only by the explicit "change home office" utility — it is
+      // never re-stamped from the office switcher (that used to move patients
+      // between offices on every edit, and threw when no office was selected
+      // after a session restore). A record with no home office adopts the
+      // working office; only when neither exists do we refuse.
+      const officeIdNum = homeOfficeId ?? officeKeyToId(currentOffice);
       if (!officeIdNum) {
-        throw new Error("Invalid office ID");
+        throw new Error(
+          "This patient has no home office and no office is selected. Pick an office in the top bar first.",
+        );
       }
 
       // Convert form data to API format (same as AddNewPatient)
@@ -662,9 +667,7 @@ export default function EditPatientModal({
           },
         }),
         ...(formData.feeScheduleId && {
-          fee_schedule: {
-            fee_schedule_id: formData.feeScheduleId,
-          },
+          fee_schedule_id: formData.feeScheduleId,
         }),
         patient_type: patientType,
         patient_flags: {
@@ -1545,11 +1548,12 @@ export default function EditPatientModal({
                       className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
                     >
                       <option value="">Select Provider</option>
-                      {providers.map((provider) => (
-                        <option key={provider.id} value={provider.id}>
-                          {providerDisplayLabel(provider)}
-                        </option>
-                      ))}
+                      {/* Roster first, everyone else below; the stored preferred
+                          provider stays selectable even when out of roster. */}
+                      <ProviderOptionGroups
+                        providers={providers}
+                        keep_id={formData.preferredProvider || null}
+                      />
                     </select>
                   </div>
 
@@ -1569,11 +1573,7 @@ export default function EditPatientModal({
                       className="w-full px-3 py-1.5 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm disabled:bg-gray-100"
                     >
                       <option value="None">None</option>
-                      {hygienists.map((hygienist) => (
-                        <option key={hygienist.id} value={hygienist.id}>
-                          {providerDisplayLabel(hygienist)}
-                        </option>
-                      ))}
+                      <ProviderOptionGroups providers={hygienists} />
                     </select>
                   </div>
                 </div>

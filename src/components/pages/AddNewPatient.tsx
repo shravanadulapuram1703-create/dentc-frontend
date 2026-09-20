@@ -3,23 +3,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
 import { checkDuplicatePatient, toDuplicatePatient } from "../../services/patient.service";
-import { DuplicatePatient } from "../../types/patient";
+import type { DuplicatePatient } from "../../types/patient";
 import { 
   getFeeSchedules, 
   type FeeSchedule,
   getProcedureCodesByFeeSchedule 
 } from "../../api/feeSchedules";
-import { 
+import {
   fetchPatientMetadata,
   type PatientMetadataResponse,
-  type TitleOption,
-  type PronounOption,
-  type StateOption,
-  type MaritalStatusOption,
-  type GenderOption,
-  type ResponsiblePartyRelationshipOption,
-  type ContactPreferenceOption,
-  type ReferralTypeOption,
   type PatientTypeOption,
 } from "../../services/patientMetadataApi";
 import {
@@ -30,6 +22,7 @@ import {
 } from "../../services/patientApi";
 import type { RegisterRequest } from "@/api/generated/model";
 import { fetchProviders, isHygienist, type Provider } from "../../services/schedulerApi";
+import { OfficeRequiredBanner, ProviderOptionGroups, useOfficeScope } from "@/features/office-scope";
 import { listReferrals } from "@/api/generated/endpoints/patients/patients";
 import type { ReferralRead } from "@/api/generated/model";
 import { resolveOffice, officeKeyToId, type OfficeOption } from "../../services/officeLookup";
@@ -106,7 +99,6 @@ import {
   type CoverageField,
   type StatusField,
 } from "../../features/add-patient/patientFlagRules";
-import { providerDisplayLabel } from "@/services/providerDirectory";
 /** Step-1 required fields that an existing record may already be missing. */
 interface PreexistingGaps {
   sex: boolean;
@@ -252,12 +244,6 @@ interface PatientFormData {
 }
 
 /**
- * Provider option label. The seeded data has many providers sharing a name
- * (e.g. several "Dhileep Jinna"), so append the title to tell them apart.
- */
-const providerLabel = (p: Provider): string => providerDisplayLabel(p);
-
-/**
  * Pull the legacy "Emergency Contact" block out of the Medical Questionnaire
  * answers so it can be stored in the real `patient-emergency-contacts` resource
  * (LEG-3) rather than living on as questionnaire rows.
@@ -288,6 +274,8 @@ export default function AddNewPatient({
       ? NaN
       : (propPatientId ?? (routePatientId ? Number(routePatientId) : NaN));
   const isEditMode = Number.isFinite(editPatientId);
+  // Working office — registration stamps it as the new patient's home office.
+  const officeScope = useOfficeScope();
 
   // Age beside the Birth Date field. Blank whenever the date isn't usable, so a
   // rejected DOB never reads as if it were accepted.
@@ -514,12 +502,21 @@ export default function AddNewPatient({
         setFeeScheduleError(
           response.feeSchedules.length === 0 ? "No fee schedules are set up for this organization." : null,
         );
-        // Default to the office's usual schedule when none is chosen yet.
+        // Default a new patient to the office's configured default patient fee
+        // schedule (offices.default_fee_schedule_id — the list a new patient is
+        // registered with, per docs/pricing §1.3), falling back to the first
+        // schedule when the office has no pointer or it isn't in the loaded list.
+        // (Resolved here rather than reading `homeOffice`, which loads
+        // concurrently and may not be set yet; resolveOffice is session-cached.)
+        const office = await resolveOffice(currentOffice).catch(() => null);
+        if (cancelled) return;
         setFormData((prev) => {
           if (prev.feeScheduleId || response.feeSchedules.length === 0) return prev;
+          const defaultId = office?.default_fee_schedule_id;
           const preferred =
-            response.feeSchedules.find((fs) => fs.feeScheduleName === "CP-50") ??
-            response.feeSchedules[0]!;
+            (defaultId != null
+              ? response.feeSchedules.find((fs) => fs.feeScheduleId === String(defaultId))
+              : undefined) ?? response.feeSchedules[0]!;
           return {
             ...prev,
             feeSchedule: preferred.feeScheduleName,
@@ -626,7 +623,7 @@ export default function AddNewPatient({
   // Metadata state
   const [metadata, setMetadata] = useState<PatientMetadataResponse | null>(null);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
-  const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [, setMetadataError] = useState<string | null>(null);
   
   // Providers and Hygienists state
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -642,7 +639,7 @@ export default function AddNewPatient({
   const [homeOffice, setHomeOffice] = useState<OfficeOption | null>(null);
   
   // Patient Types metadata
-  const [patientTypesMetadata, setPatientTypesMetadata] = useState<PatientTypeOption[]>([]);
+  const [, setPatientTypesMetadata] = useState<PatientTypeOption[]>([]);
   
   // Loading and saving states
   const [isSaving, setIsSaving] = useState(false);
@@ -1015,9 +1012,7 @@ export default function AddNewPatient({
           preferred_provider_id: formData.preferredProvider || undefined,
           preferred_hygienist_id: formData.preferredHygienist !== "None" ? formData.preferredHygienist : undefined,
         },
-        fee_schedule: formData.feeScheduleId ? {
-          fee_schedule_id: formData.feeScheduleId,
-        } : undefined,
+        fee_schedule_id: formData.feeScheduleId || undefined,
         patient_type: patientType,
         patient_flags: {
           is_ortho: patientTypes.OR,
@@ -1450,6 +1445,14 @@ export default function AddNewPatient({
         />
 
         <div className={isModal ? "p-6" : "max-w-[1600px] mx-auto p-6"}>
+          {/* Registration stamps the working office as the home office, so it
+              needs one — a banner above the wizard, never a gate. Editing keeps
+              the patient's own home office and does not need it. */}
+          {!isEditMode && officeScope.office_id == null && (
+            <div className="mb-4">
+              <OfficeRequiredBanner action="register a patient" />
+            </div>
+          )}
           {isLoadingPatient && (
             <div className="mb-4 flex items-center gap-3 rounded-lg border-2 border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#1F3A5F]">
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -2230,14 +2233,12 @@ export default function AddNewPatient({
                           {loadingProviders
                             ? "Loading providers…"
                             : providers.length === 0
-                              ? "No providers for this office"
+                              ? "No providers found"
                               : "Select Provider"}
                         </option>
-                        {providers.map((provider) => (
-                          <option key={provider.id} value={provider.id}>
-                            {providerLabel(provider)}
-                          </option>
-                        ))}
+                        {/* This office's roster first, every other provider below —
+                            a sparse roster must never block registration (NA-F6). */}
+                        <ProviderOptionGroups providers={providers} />
                       </select>
                       {errors.preferredProvider && (
                         <p className="text-xs text-[#EF4444] mt-1">{errors.preferredProvider}</p>
@@ -2266,11 +2267,7 @@ export default function AddNewPatient({
                               ? "None (no hygienists for this office)"
                               : "None"}
                         </option>
-                        {hygienists.map((hygienist) => (
-                          <option key={hygienist.id} value={hygienist.id}>
-                            {providerLabel(hygienist)}
-                          </option>
-                        ))}
+                        <ProviderOptionGroups providers={hygienists} />
                       </select>
                     </div>
                   </div>

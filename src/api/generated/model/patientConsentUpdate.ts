@@ -34,4 +34,8 @@ export interface PatientConsentUpdate {
   device_serial?: string | null;
   captured_user_agent?: string | null;
   content_hash?: string | null;
+  signed_document_id?: number | null;
+  captured_at?: string | null;
+  signed_at_source?: string | null;
+  signed_rendered_html?: string | null;
 }

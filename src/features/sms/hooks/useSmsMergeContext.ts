@@ -68,10 +68,14 @@ export function useSmsMergeContext(patient_id: number, office_id_hint: number | 
   const { providerLabel, providerName } = useProviderDirectory();
 
   const patient: PatientRead | null = patientQuery.data ?? null;
+  // The patient's home office, else the shell's posting office. Never an
+  // arbitrary office from the catalog: a text signed "from" the wrong practice
+  // is worse than one with no office line.
   const office: OfficeRead | null = useMemo(() => {
     const list = officesQuery.data?.items ?? [];
     const wanted = patient?.home_office_id ?? office_id_hint;
-    return list.find((o) => o.id === wanted) ?? list[0] ?? null;
+    if (wanted == null) return null;
+    return list.find((o) => o.id === wanted) ?? null;
   }, [officesQuery.data, patient?.home_office_id, office_id_hint]);
 
   const phones: PhoneOption[] = useMemo(() => {

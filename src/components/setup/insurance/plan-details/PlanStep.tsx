@@ -36,9 +36,12 @@ import {
 } from "./planDetailsModel";
 import type { PlanLookups } from "./planLookups";
 import { FormRow, WZ_INPUT, WZ_BTN_PRIMARY } from "./wizardUi";
+import PlanFeeBindingPanel from "./PlanFeeBindingPanel";
 
 export interface PlanStepProps {
   form: PlanDetailsForm;
+  /** The plan id when editing/viewing — enables the read-only fee-binding panel (FE-PR-53). */
+  planId?: number | null;
   onChange: (patch: Partial<PlanDetailsForm>) => void;
   category: PlanCategory;
   onCategoryChange: (c: PlanCategory) => void;
@@ -57,6 +60,7 @@ export interface PlanStepProps {
 
 export default function PlanStep({
   form,
+  planId,
   onChange,
   category,
   onCategoryChange,
@@ -279,7 +283,7 @@ export default function PlanStep({
           </div>
         </FormRow>
 
-        <FormRow label="Fees to Print on Claims" required>
+        <FormRow label="Fees Printed on Claims (printing only)" required>
           <Select value={form.fees_to_print} onChange={(v) => onChange({ fees_to_print: v })} options={FEES_TO_PRINT_OPTIONS} disabled={disabled} />
         </FormRow>
         <FormRow label="Claim Options" required>
@@ -327,8 +331,11 @@ export default function PlanStep({
             <DefinitionField groupCode="coverage_type" value={form.coverage_type} onChange={(v) => onChange({ coverage_type: v })} placeholder="e.g. I, F, C" hints={COVERAGE_TYPE_OPTIONS} disabled={disabled} />
           </div>
         </FormRow>
-        <FormRow label="Prepaid Plan">
+        <FormRow label="Capitation / copay plan (prices from a copay list)">
           <input type="checkbox" checked={form.is_prepaid} onChange={(e) => onChange({ is_prepaid: e.target.checked })} disabled={disabled} className="h-4 w-4 accent-[#1F6FB2]" />
+        </FormRow>
+        <FormRow label="Non-duplication of benefits (COB)">
+          <input type="checkbox" checked={form.is_non_dup_benefits} onChange={(e) => onChange({ is_non_dup_benefits: e.target.checked })} disabled={disabled} className="h-4 w-4 accent-[#1F6FB2]" />
         </FormRow>
         {showActive && (
           <FormRow label="Active">
@@ -339,6 +346,8 @@ export default function PlanStep({
           </FormRow>
         )}
       </div>
+
+      {planId != null && <PlanFeeBindingPanel planId={planId} />}
 
       {addCarrier && (
         <QuickAddCarrierModal

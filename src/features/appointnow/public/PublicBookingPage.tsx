@@ -2,6 +2,8 @@
 // /book/:office_code. Renders WITHOUT the app shell / global nav (App.tsx keeps
 // /book/* out of the authed layout), so it can be pasted into a third-party
 // office website (iframe or direct link). Talks only to getBookingTransport().
+// The reason catalog comes from the office (backend AN-1) when configured and
+// falls back to the built-in APPOINTMENT_REASONS otherwise.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -71,6 +73,11 @@ function initialDate(): string {
 
 const DEFAULT_REASON = APPOINTMENT_REASONS[0] as AppointmentReason;
 
+/** Office-configured reasons when present, else the built-in catalog. */
+function reasonsFor(office: PublicOfficeInfo | null): AppointmentReason[] {
+  return office?.reasons && office.reasons.length > 0 ? office.reasons : APPOINTMENT_REASONS;
+}
+
 function Stepper({ current }: { current: Step }) {
   const activeIdx = STEPS.findIndex((s) => s.key === current);
   return (
@@ -119,7 +126,10 @@ export default function PublicBookingPage() {
   const [step, setStep] = useState<Step>("reason");
   const [reason, setReason] = useState<AppointmentReason>(DEFAULT_REASON);
   const [providerId, setProviderId] = useState<string | null>(null);
+  const [providerError, setProviderError] = useState<string | null>(null);
   const [date, setDate] = useState<string>(initialDate);
+
+  const reasons = useMemo(() => reasonsFor(office), [office]);
 
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -142,10 +152,20 @@ export default function PublicBookingPage() {
       .then((info) => {
         if (cancelled) return;
         setOffice(info);
+        // Default to the office's first configured reason (ids differ per office).
+        const first = reasonsFor(info)[0];
+        if (first) setReason(first);
         document.title = `Book — ${info.name}`;
       })
-      .catch(() => {
-        if (!cancelled) setOfficeError("We couldn't load this office's booking page.");
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        const notFound =
+          typeof e === "object" && e !== null && "status" in e && (e as { status?: number }).status === 404;
+        setOfficeError(
+          notFound
+            ? "This office is not available for online booking."
+            : "We couldn't load this office's booking page.",
+        );
       })
       .finally(() => {
         if (!cancelled) setLoadingOffice(false);
@@ -192,6 +212,16 @@ export default function PublicBookingPage() {
     if (Object.keys(errs).length === 0) setStep("review");
   };
 
+  const handleFindTime = () => {
+    // Some reasons must be booked with a specific provider (backend `requires_provider`).
+    if (reason.requires_provider && !providerId && office && office.providers.length > 0) {
+      setProviderError("Please choose a provider for this type of visit.");
+      return;
+    }
+    setProviderError(null);
+    setStep("slot");
+  };
+
   const handleSubmit = async () => {
     if (!office || !selectedSlot) return;
     setSubmitting(true);
@@ -206,8 +236,14 @@ export default function PublicBookingPage() {
       });
       setConfirmation(req);
       setStep("done");
-    } catch {
-      setSubmitError("Could not submit your request. Please try again.");
+    } catch (e) {
+      // The backend answers with a human message ("That time was just taken…",
+      // rate-limited, human verification…) — show it rather than a generic one.
+      setSubmitError(
+        e instanceof Error && e.message
+          ? e.message
+          : "Could not submit your request. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -215,6 +251,7 @@ export default function PublicBookingPage() {
 
   const resetFlow = () => {
     setStep("reason");
+    setProviderError(null);
     setSelectedSlot(null);
     setContact(EMPTY_CONTACT);
     setContactErrors({});
@@ -266,13 +303,16 @@ export default function PublicBookingPage() {
                 Choose a reason so we can reserve enough time.
               </p>
               <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {APPOINTMENT_REASONS.map((r) => {
+                {reasons.map((r) => {
                   const active = r.id === reason.id;
                   return (
                     <button
                       key={r.id}
                       type="button"
-                      onClick={() => setReason(r)}
+                      onClick={() => {
+                        setReason(r);
+                        setProviderError(null);
+                      }}
                       className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
                         active
                           ? "border-[#3A6EA5] bg-[#3A6EA5]/5 ring-1 ring-[#3A6EA5]"
@@ -296,11 +336,19 @@ export default function PublicBookingPage() {
                 </label>
                 {office.providers.length > 0 ? (
                   <select
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 ${
+                      providerError ? "border-red-400" : "border-slate-300"
+                    }`}
                     value={providerId ?? ""}
-                    onChange={(e) => setProviderId(e.target.value || null)}
+                    onChange={(e) => {
+                      setProviderId(e.target.value || null);
+                      setProviderError(null);
+                    }}
+                    aria-invalid={providerError ? true : undefined}
                   >
-                    <option value="">Any available provider</option>
+                    <option value="">
+                      {reason.requires_provider ? "Choose a provider…" : "Any available provider"}
+                    </option>
                     {office.providers.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.title ? `${p.title} ` : ""}
@@ -313,12 +361,15 @@ export default function PublicBookingPage() {
                     You'll be seen by the next available provider.
                   </p>
                 )}
+                {providerError && (
+                  <p className="mt-1 text-xs text-red-600">{providerError}</p>
+                )}
               </div>
 
               <div className="mt-6 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setStep("slot")}
+                  onClick={handleFindTime}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#3A6EA5] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2C5282]"
                 >
                   Find a time <ArrowRight className="h-4 w-4" />

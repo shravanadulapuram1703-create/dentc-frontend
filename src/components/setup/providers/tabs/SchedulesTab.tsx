@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock, Copy, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
 import {
   getProviderSchedule,
   setProviderSchedule,
@@ -9,10 +8,10 @@ import {
 // Provider schedules use the provider-setup day shape (it carries `effective_from`
 // and a per-office scope); the office-setup screens use the generic ScheduleDayInput.
 import type {
-  OfficeRead,
   ProviderScheduleDayRead,
   ScheduleDayInput,
 } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
 
 interface SchedulesTabProps {
   providerId: string;
@@ -65,7 +64,9 @@ function rowsToScope(rows: ProviderScheduleDayRead[]): Scope {
 }
 
 export default function SchedulesTab({ providerId }: SchedulesTabProps) {
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Scope labels from the shared office catalog (id → name only).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   // scopeKey ("all" | office_id) -> Scope. Holds every scope loaded/edited so the
   // full-replace PUT preserves scopes the user didn't touch.
   const [scopes, setScopes] = useState<Map<string, Scope>>(new Map());
@@ -78,11 +79,7 @@ export default function SchedulesTab({ providerId }: SchedulesTabProps) {
     setLoading(true);
     setError(null);
     try {
-      const [offRes, rows] = await Promise.all([
-        listOffices({ size: 200 }),
-        getProviderSchedule(providerId),
-      ]);
-      setOffices(offRes.items ?? []);
+      const rows = await getProviderSchedule(providerId);
       // Group rows by scope (office_id ?? "all").
       const grouped = new Map<string, ProviderScheduleDayRead[]>();
       for (const r of rows) {

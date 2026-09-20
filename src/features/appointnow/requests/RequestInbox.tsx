@@ -1,12 +1,15 @@
 // RequestInbox — the staff view of incoming AppointNow online-booking requests
 // (route /appointnow/requests, rendered inside the app shell). Lists requests by
-// status, exposes Approve (books the slot into the scheduler via the context) and
-// Decline, and surfaces the public booking link staff paste on external sites.
+// status, exposes Approve (books the slot into the scheduler via the context),
+// Decline and — when the connected backend supports it — Reschedule, and
+// surfaces the public booking link staff paste on external sites. The list is
+// scoped to the office selected in the top bar (see AppointNowContext).
 
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Bell,
+  Building2,
   CalendarClock,
   CalendarRange,
   Check,
@@ -14,21 +17,29 @@ import {
   ExternalLink,
   Loader2,
   Mail,
+  MessageSquare,
   Phone,
   RefreshCw,
   Search,
   SlidersHorizontal,
+  Trash2,
   User,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
-import { officeIdNum } from "@/services/schedulerApi";
-import { useAuth } from "@/contexts/AuthContext";
+import { fetchProvidersForOffice, type ProviderOption } from "@/services/providerDirectory";
+import {
+  OfficeBadge,
+  ScopeToggle,
+  useOfficeOptions,
+  useOfficeScope,
+} from "@/features/office-scope";
 import { useAppointNow } from "../AppointNowContext";
 import { SlotConflictError, type SlotConflict } from "../staffBooking";
+import { POLL_INTERVAL_MS } from "../AppointNowContext";
 import type { AvailableSlot, BookingRequest, BookingRequestStatus } from "../transport/types";
 import { formatDateLong, formatTime12, todayIso } from "../public/bookingUtils";
+import { RequireRight, RIGHT } from "@/features/access-control";
 
 type Filter = BookingRequestStatus | "all";
 
@@ -59,10 +70,13 @@ function addMinutes(hhmm: string, minutes: number): string {
 /** The red double-booking pop-up shown when approve / reschedule hits an overlap. */
 function ConflictDialog({
   conflict,
+  canReschedule,
   onClose,
   onPickAnotherTime,
 }: {
   conflict: { slot: AvailableSlot; conflicts: SlotConflict[] };
+  /** False when the backend cannot reschedule (AN-14) — offer decline instead. */
+  canReschedule: boolean;
   onClose: () => void;
   onPickAnotherTime: () => void;
 }) {
@@ -111,6 +125,13 @@ function ConflictDialog({
             </li>
           ))}
         </ul>
+        {!canReschedule && (
+          <p className="px-5 pb-3 text-xs text-slate-600">
+            Rescheduling online requests is not available on the connected backend yet.
+            Decline this request and book the patient from the Scheduler, or approve
+            it once the conflicting appointment has been moved.
+          </p>
+        )}
         <div className="flex justify-end gap-2 rounded-b-2xl border-t border-red-100 bg-red-50/60 px-5 py-3">
           <button
             type="button"
@@ -119,13 +140,15 @@ function ConflictDialog({
           >
             Close
           </button>
-          <button
-            type="button"
-            onClick={onPickAnotherTime}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-          >
-            <CalendarRange className="h-4 w-4" /> Choose another time
-          </button>
+          {canReschedule && (
+            <button
+              type="button"
+              onClick={onPickAnotherTime}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              <CalendarRange className="h-4 w-4" /> Choose another time
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -134,17 +157,25 @@ function ConflictDialog({
 
 function RequestCard({
   request,
+  providers,
   onApprove,
   onDecline,
   onReschedule,
+  onDelete,
+  canReschedule,
   busy,
   rescheduling,
   setRescheduling,
 }: {
   request: BookingRequest;
-  onApprove: () => void;
+  /** Active providers of the request's office (for the approve provider pick). */
+  providers: ProviderOption[];
+  onApprove: (providerId: string | null) => void;
   onDecline: (reason: string) => void;
   onReschedule: (slot: AvailableSlot) => Promise<boolean>;
+  onDelete: () => void;
+  /** Hide the Reschedule action when the backend has no endpoint for it (AN-14). */
+  canReschedule: boolean;
   busy: boolean;
   /** Controlled from the parent so the conflict dialog can open the panel. */
   rescheduling: boolean;
@@ -154,7 +185,12 @@ function RequestCard({
   const [reason, setReason] = useState("");
   const [newDate, setNewDate] = useState(request.slot.date);
   const [newStart, setNewStart] = useState(request.slot.start_time);
+  // Provider to book against on approve. Defaults to the provider the public
+  // availability engine assigned; "" = let the backend pick (first active).
+  const [providerChoice, setProviderChoice] = useState<string>(request.slot.provider_id ?? "");
   const name = `${request.contact.first_name} ${request.contact.last_name}`.trim();
+  const activeProviders = providers.filter((p) => p.is_active);
+  const choiceKnown = !providerChoice || activeProviders.some((p) => p.id === providerChoice);
   const newEnd = addMinutes(newStart, request.slot.duration_minutes);
   const unchanged = newDate === request.slot.date && newStart === request.slot.start_time;
 
@@ -199,7 +235,11 @@ function RequestCard({
         </div>
         <div className="text-right text-xs text-slate-400">
           <div>Code: <span className="font-mono">{request.id.slice(0, 12)}</span></div>
-          <div>Office: {request.office_code}</div>
+          <div className="mt-0.5 flex items-center justify-end gap-1.5">
+            <span>Office: {request.office_code}</span>
+            {/* Amber when it is not the working office — never hidden. */}
+            <OfficeBadge office_id={request.office_id} />
+          </div>
         </div>
       </div>
 
@@ -256,6 +296,26 @@ function RequestCard({
         <p className="mt-2 text-xs text-slate-500">
           Declined{request.actioned_by ? ` by ${request.actioned_by}` : ""}
           {request.decline_reason ? ` — ${request.decline_reason}` : ""}.
+        </p>
+      )}
+      {request.status === "expired" && (
+        <p className="mt-2 text-xs text-slate-500">
+          Expired — the requested time passed before the request was actioned.
+        </p>
+      )}
+      {request.rescheduled_by && (
+        <p className="mt-1 text-xs text-slate-500">
+          Rescheduled by {request.rescheduled_by}
+          {request.reschedule_count && request.reschedule_count > 1
+            ? ` (${request.reschedule_count}×)`
+            : ""}
+          .
+        </p>
+      )}
+      {request.contact_notified_via && (
+        <p className="mt-1 inline-flex items-center gap-1 text-xs text-slate-500">
+          <MessageSquare className="h-3.5 w-3.5 text-slate-400" />
+          Patient notified by {request.contact_notified_via === "sms" ? "text message" : "email"}.
         </p>
       )}
 
@@ -345,38 +405,84 @@ function RequestCard({
               </div>
             </div>
           ) : (
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeclining(true)}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:opacity-60"
-              >
-                <X className="h-4 w-4" /> Decline
-              </button>
-              <button
-                type="button"
-                onClick={() => setRescheduling(true)}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A6EA5]/50 px-3.5 py-2 text-sm font-semibold text-[#3A6EA5] hover:bg-[#3A6EA5]/5 disabled:opacity-60"
-              >
-                <CalendarRange className="h-4 w-4" /> Reschedule
-              </button>
-              <button
-                type="button"
-                onClick={onApprove}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-              >
-                {busy ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                Approve & book
-              </button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {activeProviders.length > 0 && (
+                <label className="mr-auto inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  Book with
+                  <select
+                    value={choiceKnown ? providerChoice : ""}
+                    onChange={(e) => setProviderChoice(e.target.value)}
+                    disabled={busy}
+                    className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm font-normal text-slate-800 outline-none focus:border-[#3A6EA5]"
+                    title="Provider to book the appointment with"
+                  >
+                    <option value="">First available provider</option>
+                    {activeProviders.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                        {p.title ? ` (${p.title})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {/* RBAC: declining a booking is backend-enforced. */}
+              <RequireRight code={RIGHT.appointNow.decline}>
+                <button
+                  type="button"
+                  onClick={() => setDeclining(true)}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:opacity-60"
+                >
+                  <X className="h-4 w-4" /> Decline
+                </button>
+              </RequireRight>
+              {canReschedule && (
+                <button
+                  type="button"
+                  onClick={() => setRescheduling(true)}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A6EA5]/50 px-3.5 py-2 text-sm font-semibold text-[#3A6EA5] hover:bg-[#3A6EA5]/5 disabled:opacity-60"
+                >
+                  <CalendarRange className="h-4 w-4" /> Reschedule
+                </button>
+              )}
+              {/* RBAC: approving a booking is backend-enforced. */}
+              <RequireRight code={RIGHT.appointNow.approve}>
+                <button
+                  type="button"
+                  onClick={() => onApprove(choiceKnown && providerChoice ? providerChoice : null)}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {busy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Approve & book
+                </button>
+              </RequireRight>
             </div>
           )}
+        </div>
+      )}
+
+      {request.status !== "pending" && (
+        <div className="mt-3 flex justify-end border-t border-slate-100 pt-2">
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={busy}
+            title={
+              request.status === "approved"
+                ? "Remove this request record (the booked appointment is kept)"
+                : "Permanently delete this request"
+            }
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
         </div>
       )}
     </div>
@@ -384,9 +490,59 @@ function RequestCard({
 }
 
 export default function RequestInbox() {
-  const { currentOffice } = useAuth();
-  const { requests, pendingCount, isSimulated, refresh, approve, decline, reschedule } =
-    useAppointNow();
+  // The working office (name for the banner, id for the booking link).
+  const officeScope = useOfficeScope();
+  const {
+    requests,
+    counts,
+    pendingCount,
+    isSimulated,
+    supportsReschedule,
+    isPolling,
+    scopeOfficeId,
+    inbox_scope,
+    loadError,
+    refresh,
+    approve,
+    decline,
+    reschedule,
+    remove,
+  } = useAppointNow();
+
+  // Active providers per office, for the "Book with" pick on pending cards.
+  // Loaded once per office present in the list (providerDirectory handles the
+  // multi-office assignment landmine — never scope by the office_id scalar).
+  const [providersByOffice, setProvidersByOffice] = useState<Record<number, ProviderOption[]>>({});
+  const pendingOfficeIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          requests
+            .filter((r) => r.status === "pending" && r.office_id != null)
+            .map((r) => r.office_id as number),
+        ),
+      ].sort(),
+    [requests],
+  );
+  useEffect(() => {
+    let cancelled = false;
+    const missing = pendingOfficeIds.filter((id) => !(id in providersByOffice));
+    if (missing.length === 0) return;
+    Promise.all(
+      missing.map(async (id) => [id, await fetchProvidersForOffice(id).catch(() => [])] as const),
+    ).then((entries) => {
+      if (cancelled) return;
+      setProvidersByOffice((prev) => {
+        const next = { ...prev };
+        for (const [id, list] of entries) next[id] = list;
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingOfficeIds.join(",")]);
 
   const [filter, setFilter] = useState<Filter>("pending");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -411,40 +567,32 @@ export default function RequestInbox() {
     "created_desc",
   );
 
-  // Offices → public link picker.
-  const [offices, setOffices] = useState<Array<{ id: number; office_code: string; name: string }>>([]);
+  // Offices → public link picker, from the shared office catalog. The link
+  // follows the WORKING office; with none selected there is no link (never a
+  // silent "first office" fallback — that handed staff the wrong office's URL).
+  const { data: officeCatalog } = useOfficeOptions();
+  const offices = useMemo(
+    () =>
+      (officeCatalog ?? [])
+        .filter((o) => !!o.office_code)
+        .map((o) => ({ id: o.id, office_code: o.office_code as string, name: o.name })),
+    [officeCatalog],
+  );
   const [linkOfficeCode, setLinkOfficeCode] = useState<string>("");
-
   useEffect(() => {
-    let cancelled = false;
-    listOffices({ size: 200 })
-      .then((res) => {
-        if (cancelled) return;
-        const items = (res?.items ?? []).map((o) => ({
-          id: o.id,
-          office_code: o.office_code,
-          name: o.name,
-        }));
-        setOffices(items);
-        const currentId = officeIdNum(currentOffice);
-        const match = items.find((o) => o.id === currentId) ?? items[0];
-        if (match) setLinkOfficeCode(match.office_code);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [currentOffice]);
+    const match =
+      officeScope.office_id != null
+        ? offices.find((o) => o.id === officeScope.office_id)
+        : undefined;
+    setLinkOfficeCode(match?.office_code ?? "");
+  }, [officeScope.office_id, offices]);
 
   const publicUrl = linkOfficeCode
     ? `${window.location.origin}/book/${linkOfficeCode}`
     : "";
 
-  const counts = useMemo(() => {
-    const c = { pending: 0, approved: 0, declined: 0, expired: 0, all: requests.length };
-    requests.forEach((r) => (c[r.status] += 1));
-    return c;
-  }, [requests]);
+  /** Human name of the working office (top-bar selection). */
+  const scopeOfficeName = officeScope.office?.name ?? null;
 
   // Distinct offices / reasons present in the current requests (for the dropdowns).
   const officeOptions = useMemo(
@@ -528,10 +676,10 @@ export default function RequestInbox() {
     sort,
   ]);
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async (id: string, providerId: string | null) => {
     setBusyId(id);
     try {
-      await approve(id);
+      await approve(id, { provider_id: providerId });
     } catch (e) {
       if (e instanceof SlotConflictError) {
         setConflict({ request_id: id, slot: e.slot, conflicts: e.conflicts });
@@ -571,6 +719,31 @@ export default function RequestInbox() {
     setBusyId(id);
     try {
       await decline(id, reason.trim() || undefined);
+    } catch (e) {
+      toast.error("Could not decline request", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (r: BookingRequest) => {
+    const who = `${r.contact.first_name} ${r.contact.last_name}`.trim() || "this request";
+    const force = r.status === "approved";
+    const ok = window.confirm(
+      force
+        ? `Delete the request record for ${who}? The booked appointment ${r.appointment_id ?? ""} is kept.`
+        : `Permanently delete the request from ${who}? This cannot be undone.`,
+    );
+    if (!ok) return;
+    setBusyId(r.id);
+    try {
+      await remove(r.id, force);
+    } catch (e) {
+      toast.error("Could not delete request", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setBusyId(null);
     }
@@ -580,6 +753,10 @@ export default function RequestInbox() {
     setRefreshing(true);
     try {
       await refresh();
+    } catch (e) {
+      toast.error("Could not refresh requests", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setRefreshing(false);
     }
@@ -599,6 +776,7 @@ export default function RequestInbox() {
     { key: "pending", label: "Pending", count: counts.pending },
     { key: "approved", label: "Approved", count: counts.approved },
     { key: "declined", label: "Declined", count: counts.declined },
+    { key: "expired", label: "Expired", count: counts.expired },
     { key: "all", label: "All", count: counts.all },
   ];
 
@@ -619,15 +797,54 @@ export default function RequestInbox() {
           <p className="mt-1 text-sm text-slate-500">
             Online booking requests from your public scheduling page.
           </p>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-slate-500">
+            <Building2 className="h-3.5 w-3.5 text-[#3A6EA5]" />
+            {inbox_scope.mode === "all" ? (
+              <>Showing requests for all offices</>
+            ) : inbox_scope.mode === "my_offices" ? (
+              <>
+                Showing requests for{" "}
+                <span className="font-semibold text-slate-700">
+                  your {inbox_scope.office_ids.length} offices
+                </span>
+              </>
+            ) : scopeOfficeId != null ? (
+              <>
+                Showing requests for{" "}
+                <span className="font-semibold text-slate-700">
+                  {scopeOfficeName ?? `office ${scopeOfficeId}`}
+                </span>
+                {" · "}pick another office in the top bar to see its requests
+              </>
+            ) : (
+              <>Showing requests for all offices · select an office in the top bar to narrow</>
+            )}
+            {isPolling && (
+              <span className="ml-1 text-slate-400">
+                · auto-refreshes every {Math.round(POLL_INTERVAL_MS / 1000)}s
+              </span>
+            )}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={doRefresh}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> Refresh
-        </button>
+        {/* Toolbar: how wide the inbox reads + refresh */}
+        <div className="flex flex-wrap items-center gap-2">
+          <ScopeToggle scope={inbox_scope} label="Inbox office scope" />
+          <button
+            type="button"
+            onClick={doRefresh}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
       </div>
+
+      {loadError && (
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{loadError}</span>
+        </div>
+      )}
 
       {/* Public link */}
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
@@ -644,7 +861,9 @@ export default function RequestInbox() {
               className="rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#3A6EA5]"
               value={linkOfficeCode}
               onChange={(e) => setLinkOfficeCode(e.target.value)}
+              title="Defaults to the working office; pick another office to get its link"
             >
+              <option value="">Select an office…</option>
               {offices.map((o) => (
                 <option key={o.id} value={o.office_code}>
                   {o.name} ({o.office_code})
@@ -653,7 +872,7 @@ export default function RequestInbox() {
             </select>
           )}
           <code className="flex-1 truncate rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700">
-            {publicUrl || "No office available"}
+            {publicUrl || "Select an office to get its booking link"}
           </code>
           <button
             type="button"
@@ -829,10 +1048,13 @@ export default function RequestInbox() {
             <RequestCard
               key={r.id}
               request={r}
+              providers={(r.office_id != null && providersByOffice[r.office_id]) || []}
               busy={busyId === r.id}
-              onApprove={() => handleApprove(r.id)}
+              onApprove={(providerId) => handleApprove(r.id, providerId)}
               onDecline={(reason) => handleDecline(r.id, reason)}
               onReschedule={(slot) => handleReschedule(r.id, slot)}
+              onDelete={() => handleDelete(r)}
+              canReschedule={supportsReschedule}
               rescheduling={reschedulingId === r.id}
               setRescheduling={(open) => setReschedulingId(open ? r.id : null)}
             />
@@ -843,6 +1065,7 @@ export default function RequestInbox() {
       {conflict && (
         <ConflictDialog
           conflict={conflict}
+          canReschedule={supportsReschedule}
           onClose={() => setConflict(null)}
           onPickAnotherTime={() => {
             setReschedulingId(conflict.request_id);

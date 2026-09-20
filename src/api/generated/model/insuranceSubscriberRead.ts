@@ -15,6 +15,7 @@ export interface InsuranceSubscriberRead {
   sub_first_name?: string | null;
   sub_last_name?: string | null;
   sub_mi?: string | null;
+  sub_suffix?: string | null;
   sub_address?: string | null;
   sub_address2?: string | null;
   sub_city?: string | null;
@@ -44,4 +45,6 @@ export interface InsuranceSubscriberRead {
   id: number;
   created_at: string;
   updated_at?: string | null;
+  plan_group_number?: string | null;
+  group_number_matches_plan?: boolean | null;
 }

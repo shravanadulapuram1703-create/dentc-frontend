@@ -15,9 +15,10 @@ export interface OperatoryUi {
   display_order: number;
   is_active: boolean;
   has_future_appointments?: boolean;
-  /** Local-only until the operatory model gains the field (backend gap #23). */
-  default_provider_id?: string;
-  default_provider_name?: string;
+  /** Default provider (`OperatoryRead.provider_id`) — auto-fills appointments booked in this room. */
+  provider_id?: string | null;
+  /** Display-only label for `provider_id`. */
+  provider_name?: string;
 }
 
 /**
@@ -61,6 +62,8 @@ export interface OfficeForm {
   opening_date?: string | null;
   default_fee_schedule_id?: number | null;
   default_ucr_fee_schedule_id?: number | null;
+  /** "flag" (post $0 + flag) | "refuse" (block unpriced charges) — docs/pricing §3.4. */
+  unpriced_charge_policy?: string | null;
 
   is_active?: boolean | null;
 

@@ -76,8 +76,9 @@ export default function FeeSchedulesTab({ code }: FeeSchedulesTabProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-[#64748B]">
-          Pricing for <span className="font-bold text-[#1F3A5F]">{code}</span> across fee schedules.
-          Edit amounts in{" "}
+          Read-only. Procedure Codes defines <em>what a code is</em>; <em>what it costs</em> is owned by
+          Fee Schedules. Pricing for <span className="font-bold text-[#1F3A5F]">{code}</span> across
+          schedules is shown here — edit amounts in{" "}
           <a href="/setup/fee-schedules/fee-schedule-setup" className="text-[#3A6EA5] font-bold hover:underline">
             Fee Schedule Setup
           </a>

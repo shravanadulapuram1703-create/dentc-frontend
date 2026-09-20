@@ -5,6 +5,7 @@ import {
   fetchOfficeProviderIds,
   fetchProviderRows,
   formatProviderName,
+  partitionByOffice,
   providerDirectoryKeys,
   providerLabelFor,
   providerNameFor,
@@ -12,6 +13,7 @@ import {
   toProviderOption,
   type ProviderOption,
 } from '@/services/providerDirectory';
+import { officeKeyToId } from '@/services/officeLookup';
 
 /** Providers are reference data — refetching them per screen is what made the lists drift. */
 const STALE_MS = 5 * 60 * 1000;
@@ -35,6 +37,14 @@ export interface ProviderDirectoryOptions {
 export interface ProviderDirectory {
   /** Providers to offer in a picker for this office (active only, plus any `pinned` ids). */
   providers: ProviderOption[];
+  /**
+   * "Prefer, never exclude" halves for a grouped picker: the active providers on
+   * this office's roster (assignment join ∪ home office) and every other active
+   * provider. Render `officeProviders` under "This office" and `otherProviders`
+   * below it — nothing is hidden, the office still reads first.
+   */
+  officeProviders: ProviderOption[];
+  otherProviders: ProviderOption[];
   /** Every provider in the tenant, active and inactive — use for label resolution. */
   allProviders: ProviderOption[];
   /** Same scoping as `providers`, as raw rows, for screens that need backend-only fields. */
@@ -62,11 +72,9 @@ export function useProviderDirectory(
   // Stable key so a caller passing a fresh array literal each render does not
   // rebuild the lists every time.
   const pinnedKey = (options?.pinned ?? []).filter(Boolean).map(String).sort().join('|');
-  const oid = useMemo(() => {
-    if (office_id == null || office_id === '') return null;
-    const n = Number(office_id);
-    return Number.isFinite(n) ? n : null;
-  }, [office_id]);
+  // Accepts "OFF-4" as well as 4 — `Number("OFF-4")` was NaN and silently
+  // un-scoped every caller that passed the canonical key.
+  const oid = useMemo(() => officeKeyToId(office_id) ?? null, [office_id]);
 
   const directoryQuery = useQuery({
     queryKey: providerDirectoryKeys.all,
@@ -98,11 +106,22 @@ export function useProviderDirectory(
   }, [rows, oid, assignedQuery.data, pinnedKey]);
   const providers = useMemo(() => providerRows.map(toProviderOption), [providerRows]);
 
+  const grouped = useMemo(() => {
+    const active = rows.filter((p) => p.is_active !== false);
+    const { in_office, others } = partitionByOffice(active, oid, assignedQuery.data ?? null);
+    return {
+      officeProviders: in_office.map(toProviderOption),
+      otherProviders: others.map(toProviderOption),
+    };
+  }, [rows, oid, assignedQuery.data]);
+
   const providerLabel = useMemo(() => providerLabelFor(allProviders), [allProviders]);
   const providerName = useMemo(() => providerNameFor(allProviders), [allProviders]);
 
   return {
     providers,
+    officeProviders: grouped.officeProviders,
+    otherProviders: grouped.otherProviders,
     allProviders,
     providerRows,
     allProviderRows: rows,

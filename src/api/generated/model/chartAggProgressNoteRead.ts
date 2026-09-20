@@ -26,6 +26,8 @@ export interface ChartAggProgressNoteRead {
   drawing_doc_id?: number | null;
   is_deleted: boolean;
   created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

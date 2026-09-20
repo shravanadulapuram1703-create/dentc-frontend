@@ -11,6 +11,7 @@ export interface FeeScheduleRead {
   legacy_id?: string | null;
   name: string;
   fee_type?: string | null;
+  pricing_model: string;
   ins_plan_id?: number | null;
   office_id?: number | null;
   effective_date?: string | null;

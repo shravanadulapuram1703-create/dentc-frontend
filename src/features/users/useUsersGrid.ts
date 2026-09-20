@@ -2,13 +2,13 @@ import { useMemo } from "react";
 import { useListUsers } from "@/api/generated/endpoints/users/users";
 import {
   useListUserOffices,
-  useListOffices,
   useListTenants,
 } from "@/api/generated/endpoints/organization/organization";
 import {
   useListUserGroupMemberships,
   useListUserGroups,
 } from "@/api/generated/endpoints/staff/staff";
+import { useOfficeOptions } from "@/features/office-scope";
 import { mapUsersGrid, type UserGridRow } from "./mapUsersGrid";
 
 // Pilot: fetch a single large page of each resource. Proper cursor/page
@@ -34,9 +34,10 @@ export interface UseUsersGridResult {
 /**
  * Server state for the UserSetup grid, composed from the canonical backend
  * resources via the generated React Query hooks. The user list is filtered
- * server-side by `office_id`/`role` (GET /users supports both); the office /
- * tenant / user-office resources are fetched in full to resolve the
- * home-office, assigned-office and PGID columns client-side.
+ * server-side by `office_id`/`role` (GET /users supports both); the tenant /
+ * user-office resources are fetched in full and office names come from the
+ * shared office catalog, to resolve the home-office, assigned-office and PGID
+ * columns client-side.
  */
 export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult {
   const usersParams = {
@@ -48,7 +49,7 @@ export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult
 
   const usersQ = useListUsers(usersParams);
   const userOfficesQ = useListUserOffices(LIST_PARAMS);
-  const officesQ = useListOffices(LIST_PARAMS);
+  const officesQ = useOfficeOptions();
   const tenantsQ = useListTenants(LIST_PARAMS);
   const groupMembershipsQ = useListUserGroupMemberships(LIST_PARAMS);
   const groupsQ = useListUserGroups(LIST_PARAMS);
@@ -58,7 +59,7 @@ export function useUsersGrid(filters: UsersGridFilters = {}): UseUsersGridResult
       mapUsersGrid({
         users: usersQ.data?.items ?? [],
         userOffices: userOfficesQ.data?.items ?? [],
-        offices: officesQ.data?.items ?? [],
+        offices: officesQ.data ?? [],
         tenants: tenantsQ.data?.items ?? [],
         userGroupMemberships: groupMembershipsQ.data?.items ?? [],
         userGroups: groupsQ.data?.items ?? [],

@@ -29,6 +29,10 @@ status?: string | null;
  */
 signature_method?: string | null;
 /**
+ * Filter by include_signature
+ */
+include_signature?: boolean | null;
+/**
  * @minimum 1
  */
 page?: number;

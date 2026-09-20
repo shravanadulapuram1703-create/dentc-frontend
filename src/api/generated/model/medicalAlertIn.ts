@@ -5,10 +5,14 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { MedicalAlertInResponse } from './medicalAlertInResponse';
 
 export interface MedicalAlertIn {
   alert_code: string;
   alert_label?: string | null;
-  response?: string | null;
+  section?: string | null;
+  response?: MedicalAlertInResponse;
   comments?: string | null;
+  is_flash_alert?: boolean | null;
+  blocks_charges?: boolean | null;
 }

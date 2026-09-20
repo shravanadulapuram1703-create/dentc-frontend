@@ -21,6 +21,7 @@ import {
 import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import { formatProviderName } from '@/services/providerDirectory';
 import type { PrescriptionLibraryRead, ProviderRead } from '@/api/generated/model';
 import { loadRxLibrary } from './prescriptionsService';
@@ -51,14 +52,14 @@ import {
 } from '@/features/medical-alerts/patientMedicalAlerts';
 
 interface OutletContext {
-  patient: { id: string; name: string; officeId?: string; age?: number; dob?: string };
+  patient: { id: string; name: string; age?: number; dob?: string };
 }
 
 export default function PrescriptionsPage() {
   const { patient } = useOutletContext<OutletContext>();
   const numericId = Number(patient.id);
   const validId = Number.isFinite(numericId) && numericId > 0;
-  const officeId = patient.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ----
   const rxQuery = useListPrescriptions(

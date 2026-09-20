@@ -183,7 +183,8 @@ export async function markPlanItemPosted(
 
 export interface CompletedProcedureInput {
   patient_id: number;
-  office_id: number;
+  /** Office of service. Null is rejected with a readable error — never coerced to 0. */
+  office_id: number | null;
   procedure_code: string;
   /** Service / transaction date, YYYY-MM-DD. */
   date_of_service: string;
@@ -235,10 +236,10 @@ export async function postCompletedProcedure(input: CompletedProcedureInput): Pr
     plan_item = await findOpenPlanItem(input.patient_id, input, input.plan_items).catch(() => null);
   }
 
-  const fee = num(input.fee);
-  const insurance_estimate = input.insurance_estimate != null ? num(input.insurance_estimate) : 0;
-  const patient_estimate = input.patient_estimate != null ? num(input.patient_estimate) : Math.max(0, fee - insurance_estimate);
-
+  // Server-authoritative pricing (docs/pricing): the browser posts NO money — the
+  // server resolves the fee and computes/stamps the split (fee / ucr_fee /
+  // insurance_estimate / patient_estimate / fee_source / provenance) at the
+  // posting office and date of service.
   const body: PatientProcedureCreate = {
     id: genId(),
     patient_id: input.patient_id,
@@ -250,10 +251,6 @@ export async function postCompletedProcedure(input: CompletedProcedureInput): Pr
     tooth: input.tooth || null,
     surface: input.surface || null,
     quadrant: input.quadrant || null,
-    fee: fee.toFixed(2),
-    insurance_estimate: insurance_estimate.toFixed(2),
-    patient_estimate: patient_estimate.toFixed(2),
-    ...(input.ucr_fee != null ? { ucr_fee: input.ucr_fee } : {}),
     ...(input.material_id != null ? { material_id: input.material_id } : {}),
     ...(input.notes ? { notes: input.notes } : {}),
     ...(input.appointment_id ? { appointment_id: input.appointment_id } : {}),
@@ -336,6 +333,8 @@ export async function planProcedure(input: PlannedProcedureInput): Promise<Plann
   const phase = input.phase_id && input.phase_id > 0 ? input.phase_id : 1;
   const provider = input.provider_id || null;
 
+  // Server-authoritative pricing: the plan item keeps its (server-quoted) fee,
+  // but the coverage split is filled by the server (apply_split split-only mode).
   const body: TreatmentPlanItemCreate = {
     id: genId(),
     plan_id,
@@ -344,7 +343,6 @@ export async function planProcedure(input: PlannedProcedureInput): Promise<Plann
     tooth: input.tooth || null,
     surface: input.surface || null,
     fee: num(input.fee).toFixed(2),
-    insurance_estimate: num(input.insurance_estimate).toFixed(2),
     ...(input.discount != null ? { discount: input.discount } : {}),
     priority,
     phase_id: phase,
@@ -369,14 +367,27 @@ export async function planProcedure(input: PlannedProcedureInput): Promise<Plann
  */
 export async function postPlanItemToLedger(args: {
   patient_id: number;
-  office_id: number;
+  office_id: number | null;
   item: TreatmentPlanItemRead;
   provider_id: string;
   date_of_service: string;
   hygienist_id?: string | null;
   announce?: boolean;
+  /**
+   * Fee override. A plan item stores the fee it was priced at when it was
+   * planned (at the plan's office). When it is posted to the ledger at a
+   * DIFFERENT office (Phase 4: the working office can differ from the plan's
+   * office), the caller re-prices the code at the posting office and passes the
+   * new fee/insurance here so the ledger charge reflects the office it is posted
+   * at. Omit to post the item's stored (plan-time) fee unchanged.
+   */
+  fee?: string | number | null;
+  insurance_estimate?: string | number | null;
 }): Promise<CompletedProcedureResult> {
   const { item } = args;
+  const fee = args.fee != null ? args.fee : item.fee;
+  const insurance_estimate =
+    args.insurance_estimate != null ? args.insurance_estimate : item.insurance_estimate;
   return postCompletedProcedure({
     patient_id: args.patient_id,
     office_id: args.office_id,
@@ -386,9 +397,9 @@ export async function postPlanItemToLedger(args: {
     hygienist_id: args.hygienist_id,
     tooth: item.tooth,
     surface: item.surface,
-    fee: item.fee,
-    insurance_estimate: item.insurance_estimate,
-    patient_estimate: Math.max(0, num(item.fee) - num(item.insurance_estimate)),
+    fee,
+    insurance_estimate,
+    patient_estimate: Math.max(0, num(fee) - num(insurance_estimate)),
     plan_item: item,
     reconcile_plan: false,
     announce: args.announce,

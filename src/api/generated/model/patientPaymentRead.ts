@@ -10,6 +10,7 @@ export interface PatientPaymentRead {
   id: string;
   patient_id: number;
   office_id?: number | null;
+  created_office_id?: number | null;
   legacy_id?: string | null;
   is_archived: boolean;
   payment_date: string;

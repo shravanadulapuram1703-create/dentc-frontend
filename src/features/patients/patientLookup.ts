@@ -101,12 +101,33 @@ export async function lookup_patients_by_legacy_id(
   return { items, backend_supported };
 }
 
-/** Client-side re-application of the list filters a by-id lookup cannot send to the server. */
+/**
+ * Client-side "my offices" read scope: keeps rows homed in any of `office_ids`
+ * AND rows with no home office at all — a null-office record is never silently
+ * hidden (the OfficeBadge shows it as "Unassigned"). An empty set means no
+ * office filter.
+ */
+export function patient_in_offices(p: PatientRead, office_ids: readonly number[]): boolean {
+  if (office_ids.length === 0) return true;
+  return p.home_office_id == null || office_ids.includes(p.home_office_id);
+}
+
+/**
+ * Client-side re-application of the list filters a by-id lookup cannot send to
+ * the server. `home_office_id` mirrors the server's `home_office_id=` filter
+ * (exact match); `home_office_ids` is the "my offices" set (see
+ * {@link patient_in_offices}).
+ */
 export function patient_matches_scope(
   p: PatientRead,
-  opts: { home_office_id?: number | null; include_inactive?: boolean },
+  opts: {
+    home_office_id?: number | null;
+    home_office_ids?: readonly number[];
+    include_inactive?: boolean;
+  },
 ): boolean {
   if (opts.home_office_id != null && p.home_office_id !== opts.home_office_id) return false;
+  if (opts.home_office_ids && !patient_in_offices(p, opts.home_office_ids)) return false;
   if (!opts.include_inactive && p.is_active === false) return false;
   return true;
 }

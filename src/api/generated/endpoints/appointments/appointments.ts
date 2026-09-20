@@ -38,6 +38,8 @@ import type {
   AppointmentUpdate,
   AppointnowListRequestsParams,
   AppointnowPublicAvailabilityParams,
+  AppointnowPurgeRequest200,
+  AppointnowPurgeRequestParams,
   ApproveInput,
   AvailabilityResponse,
   BookingRequestRead,
@@ -69,6 +71,7 @@ import type {
   PrintLabReportParams,
   PublicOfficeInfo,
   RequestListResponse,
+  RescheduleInput,
   SubmitRequestInput
 } from '../../model';
 
@@ -1405,6 +1408,72 @@ export function useAppointnowGetRequest<TData = Awaited<ReturnType<typeof appoin
 
 
 /**
+ * AN-24 (admin): hard-delete a spam/test request. An approved request is
+ * refused (409 ``request_approved``) without ``force=true``; the booked
+ * appointment is never touched.
+ * @summary Purge Request
+ */
+export const appointnowPurgeRequest = (
+    requestId: string,
+    params?: AppointnowPurgeRequestParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AppointnowPurgeRequest200>(
+      {url: `/api/v1/appointnow/requests/${requestId}`, method: 'DELETE',
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowPurgeRequestMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowPurgeRequest>>, TError,{requestId: string;params?: AppointnowPurgeRequestParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowPurgeRequest>>, TError,{requestId: string;params?: AppointnowPurgeRequestParams}, TContext> => {
+
+const mutationKey = ['appointnowPurgeRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowPurgeRequest>>, {requestId: string;params?: AppointnowPurgeRequestParams}> = (props) => {
+          const {requestId,params} = props ?? {};
+
+          return  appointnowPurgeRequest(requestId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowPurgeRequestMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowPurgeRequest>>>
+
+    export type AppointnowPurgeRequestMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Purge Request
+ */
+export const useAppointnowPurgeRequest = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowPurgeRequest>>, TError,{requestId: string;params?: AppointnowPurgeRequestParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowPurgeRequest>>,
+        TError,
+        {requestId: string;params?: AppointnowPurgeRequestParams},
+        TContext
+      > => {
+      return useMutation(getAppointnowPurgeRequestMutationOptions(options), queryClient);
+    }
+    /**
  * AN-9: possible existing-patient matches (phone/email/DOB) to surface before
  * a new patient is created on approve.
  * @summary Request Patient Matches
@@ -1628,6 +1697,75 @@ export const useAppointnowDeclineRequest = <TError = ErrorType<ErrorResponse | H
         TContext
       > => {
       return useMutation(getAppointnowDeclineRequestMutationOptions(options), queryClient);
+    }
+    /**
+ * AN-14: move a *pending* request to a staff-chosen slot. Keeps the contact,
+ * preserves the patient's first-requested slot in ``original_slot``, re-takes
+ * the soft-hold, records the actor. 409 ``request_not_pending`` once settled;
+ * 409 ``slot_conflict`` with ``details.conflicts[]`` on an overlapping
+ * appointment for the provider.
+ * @summary Reschedule Request
+ */
+export const appointnowRescheduleRequest = (
+    requestId: string,
+    rescheduleInput: BodyType<RescheduleInput>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BookingRequestRead>(
+      {url: `/api/v1/appointnow/requests/${requestId}/reschedule`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: rescheduleInput, signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowRescheduleRequestMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowRescheduleRequest>>, TError,{requestId: string;data: BodyType<RescheduleInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowRescheduleRequest>>, TError,{requestId: string;data: BodyType<RescheduleInput>}, TContext> => {
+
+const mutationKey = ['appointnowRescheduleRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowRescheduleRequest>>, {requestId: string;data: BodyType<RescheduleInput>}> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  appointnowRescheduleRequest(requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowRescheduleRequestMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowRescheduleRequest>>>
+    export type AppointnowRescheduleRequestMutationBody = BodyType<RescheduleInput>
+    export type AppointnowRescheduleRequestMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reschedule Request
+ */
+export const useAppointnowRescheduleRequest = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowRescheduleRequest>>, TError,{requestId: string;data: BodyType<RescheduleInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowRescheduleRequest>>,
+        TError,
+        {requestId: string;data: BodyType<RescheduleInput>},
+        TContext
+      > => {
+      return useMutation(getAppointnowRescheduleRequestMutationOptions(options), queryClient);
     }
     /**
  * @summary List appointments
@@ -1878,6 +2016,7 @@ export function useGetAppointment<TData = Awaited<ReturnType<typeof getAppointme
 
 
 /**
+ * Partial update of one appointment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update appointment
  */
 export const updateAppointment = (
@@ -1942,6 +2081,7 @@ export const useUpdateAppointment = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateAppointmentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one appointment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete appointment
  */
 export const deleteAppointment = (
@@ -2251,6 +2391,7 @@ export function useGetLab<TData = Awaited<ReturnType<typeof getLab>>, TError = E
 
 
 /**
+ * Partial update of one lab. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update lab
  */
 export const updateLab = (
@@ -2315,6 +2456,7 @@ export const useUpdateLab = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateLabMutationOptions(options), queryClient);
     }
     /**
+ * Delete one lab. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete lab
  */
 export const deleteLab = (
@@ -2624,6 +2766,7 @@ export function useGetAppointmentProcedure<TData = Awaited<ReturnType<typeof get
 
 
 /**
+ * Partial update of one appointment procedure.
  * @summary Update appointment procedure
  */
 export const updateAppointmentProcedure = (
@@ -2688,6 +2831,7 @@ export const useUpdateAppointmentProcedure = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateAppointmentProcedureMutationOptions(options), queryClient);
     }
     /**
+ * Delete one appointment procedure.
  * @summary Delete appointment procedure
  */
 export const deleteAppointmentProcedure = (
@@ -2997,6 +3141,7 @@ export function useGetAppointnowReason<TData = Awaited<ReturnType<typeof getAppo
 
 
 /**
+ * Partial update of one appointnow reason. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update appointnow reason
  */
 export const updateAppointnowReason = (
@@ -3061,6 +3206,7 @@ export const useUpdateAppointnowReason = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateAppointnowReasonMutationOptions(options), queryClient);
     }
     /**
+ * Delete one appointnow reason. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete appointnow reason
  */
 export const deleteAppointnowReason = (

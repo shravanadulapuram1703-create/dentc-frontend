@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlaskConical, Loader2, Pencil, Plus, Save, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
-import type { LabCreate, LabRead, LabUpdate, OfficeRead } from "@/api/generated/model";
+import type { LabCreate, LabRead, LabUpdate } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
 import {
   createLabVendor,
   deactivateLabVendor,
@@ -142,7 +142,9 @@ function Field({
 
 export default function LabSetup() {
   const [labs, setLabs] = useState<LabRead[]>([]);
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Office picker / labels from the shared office catalog (id → name only).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
@@ -155,12 +157,8 @@ export default function LabSetup() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [rows, offs] = await Promise.all([
-        listAllLabs(),
-        listOffices({ size: 200 }).then((r) => r.items ?? []).catch(() => [] as OfficeRead[]),
-      ]);
+      const rows = await listAllLabs();
       setLabs(rows);
-      setOffices(offs);
     } catch (e: unknown) {
       toast.error("Could not load labs", { description: labErrorMessage(e, "Request failed") });
     } finally {

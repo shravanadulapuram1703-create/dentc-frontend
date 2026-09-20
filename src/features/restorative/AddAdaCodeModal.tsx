@@ -3,9 +3,13 @@ import type { ProcedureCodeRead, ProviderRead } from '@/api/generated/model';
 import { useListCodeBundles, useListCodeBundleItems } from '@/api/generated/endpoints/procedures/procedures';
 import { loadProcedureCodes } from '@/components/setup/insurance/procedureCodeService';
 import { codeAllowedOnTooth, classifyTooth } from './txPlanModel';
-import type { FeeScheduleContext } from '@/services/feeScheduleResolver';
-import type { CoverageContext } from '@/services/coverageResolver';
-import { priceProcedure, money2, type PricedProcedure } from './procedurePricing';
+import {
+  priceProcedureFor as priceProcedure,
+  money2,
+  type FeeScheduleContext,
+  type CoverageContext,
+  type PricedProcedure,
+} from '@/features/pricing';
 import { procedureRequirements, validateProcedureDetails } from '@/features/procedures/procedureRequirements';
 import ProcedureDetailsDialog, {
   type ProcedureDetailsHeader,

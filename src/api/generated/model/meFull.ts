@@ -17,5 +17,9 @@ export interface MeFull {
   tenant?: TenantBrief | null;
   offices?: OfficeAssignment[];
   last_patient_id?: number | null;
+  current_office_id?: number | null;
   provider_id?: string | null;
+  permissions?: string[];
+  permissions_enforced?: boolean;
+  groups?: string[];
 }

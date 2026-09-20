@@ -4,6 +4,7 @@ import {
   listOfficeEffectiveProviders,
 } from '@/api/generated/endpoints/office-assignment/office-assignment';
 import type { ProviderRead } from '@/api/generated/model';
+import { officeKeyToId } from '@/services/officeLookup';
 
 /**
  * Single source of truth for "which providers exist" and "what is a provider called".
@@ -245,9 +246,31 @@ async function fetchOfficeProviderIds(office_id: number): Promise<string[] | nul
 }
 
 /**
+ * "Prefer, never exclude": split a directory into the providers serving an
+ * office (assignment join ∪ legacy `office_id` scalar) and everyone else. Both
+ * halves are returned so a picker can render "This office" first and keep every
+ * other provider reachable below it. With no office, everything is `others`.
+ */
+export function partitionByOffice<T extends { id: string; office_id?: number | null }>(
+  directory: T[],
+  office_id: number | null | undefined,
+  assigned_ids: string[] | null,
+): { in_office: T[]; others: T[] } {
+  if (office_id == null) return { in_office: [], others: directory };
+  const ids = new Set(assigned_ids ?? []);
+  const in_office = directory.filter((p) => ids.has(p.id) || p.office_id === office_id);
+  const inIds = new Set(in_office.map((p) => p.id));
+  return { in_office, others: directory.filter((p) => !inIds.has(p.id)) };
+}
+
+/**
  * The providers a given office should offer, from an already-loaded directory.
  * Union of the assignment join and the legacy `office_id` scalar; falls back to the
  * whole directory when the office resolves to nothing.
+ *
+ * Prefer {@link partitionByOffice} for pickers: the roster is genuinely sparse
+ * (office 4 → 1 test provider) so "scoped, else everyone" hides real providers
+ * whenever the roster has a single row.
  */
 export function scopeToOffice<T extends { id: string; office_id?: number | null }>(
   directory: T[],
@@ -255,22 +278,42 @@ export function scopeToOffice<T extends { id: string; office_id?: number | null 
   assigned_ids: string[] | null,
 ): T[] {
   if (office_id == null) return directory;
-  const ids = new Set(assigned_ids ?? []);
-  const scoped = directory.filter((p) => ids.has(p.id) || p.office_id === office_id);
-  return scoped.length > 0 ? scoped : directory;
+  const { in_office } = partitionByOffice(directory, office_id, assigned_ids);
+  return in_office.length > 0 ? in_office : directory;
+}
+
+/**
+ * Accept any office key shape ("OFF-4", "4", 4). `Number("OFF-4")` is NaN, which
+ * used to silently turn office-scoped pickers tenant-wide — and, because the
+ * roster is sparse, that accident was load-bearing. Now that every picker keeps
+ * the full directory reachable (partitionByOffice), scoping is safe to honour.
+ */
+function toOfficeId(office_id: number | string | null | undefined): number | null {
+  return officeKeyToId(office_id) ?? null;
 }
 
 /** Directory + office scoping in one call, for non-React callers. */
 export async function fetchProvidersForOffice(
   office_id: number | string | null | undefined,
 ): Promise<ProviderOption[]> {
-  const oid = office_id == null || office_id === '' ? null : Number(office_id);
-  const valid = oid != null && Number.isFinite(oid) ? oid : null;
+  const valid = toOfficeId(office_id);
   const [directory, assigned] = await Promise.all([
     fetchProviderDirectory(),
     valid != null ? fetchOfficeProviderIds(valid) : Promise.resolve(null),
   ]);
   return scopeToOffice(directory, valid, assigned);
+}
+
+/** Directory split into this office's roster and everyone else, for pickers. */
+export async function fetchProvidersForOfficeGrouped(
+  office_id: number | string | null | undefined,
+): Promise<{ in_office: ProviderOption[]; others: ProviderOption[] }> {
+  const valid = toOfficeId(office_id);
+  const [directory, assigned] = await Promise.all([
+    fetchProviderDirectory(),
+    valid != null ? fetchOfficeProviderIds(valid) : Promise.resolve(null),
+  ]);
+  return partitionByOffice(directory, valid, assigned);
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   type SchedulerBookingRequest,
 } from "../../services/schedulerHandoff";
 import {
+  Building2,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -29,6 +30,7 @@ import CancelAppointmentDialog, {
   type CancellationResult,
 } from "../scheduler/CancelAppointmentDialog";
 import MedicalAlertPopover from "../scheduler/MedicalAlertPopover";
+import { RequireRight, RIGHT } from "@/features/access-control";
 import { fetchPatientMedicalAlertSummary } from "@/features/medical-alerts/patientMedicalAlerts";
 import {
   CONFIRMATION_STATUSES,
@@ -42,6 +44,7 @@ import {
   providerColorFor,
   type ProviderColor,
 } from "../../utils/providerColor";
+import { OFFICE_CHANGED_EVENT, OfficeRequiredBanner, useOfficeScope } from "@/features/office-scope";
 import {
   fetchAppointments,
   fetchOperatories,
@@ -196,6 +199,8 @@ export default function Scheduler({
   currentOffice,
   setCurrentOffice,
 }: SchedulerProps) {
+  // Working-office name for the header (the raw "OFF-<id>" key was rendered).
+  const officeScope = useOfficeScope();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showCalendarPicker, setShowCalendarPicker] =
@@ -257,20 +262,6 @@ export default function Scheduler({
   const SUBMENU_MAX_HEIGHT = 420;
   const SUBMENU_MARGIN = 8;
 
-  const getSubmenuLeftPosition = () => {
-    if (!activeSubmenu.anchorRect) return 0;
-
-    const spaceOnRight =
-      window.innerWidth - activeSubmenu.anchorRect.right;
-
-    // Not enough space → open to the LEFT
-    if (spaceOnRight < SUBMENU_WIDTH + 10) {
-      return activeSubmenu.anchorRect.left - SUBMENU_WIDTH - 6;
-    }
-
-    // Default → open to the RIGHT
-    return activeSubmenu.anchorRect.right + 6;
-  };
   const closeSubmenu = () => {
     setActiveSubmenu({
       type: null,
@@ -388,6 +379,19 @@ export default function Scheduler({
   useEffect(() => {
     const id = window.setInterval(() => setNowTick(new Date()), 60_000);
     return () => window.clearInterval(id);
+  }, []);
+
+  // Office switch: the provider / operatory / status filters belonged to the
+  // office that was on screen (its chairs, its roster), so they are cleared;
+  // the selected date is the user's place in the calendar and stays.
+  useEffect(() => {
+    const onOfficeChanged = () => {
+      setFilterStatus("");
+      setFilterProvider("");
+      setFilterOperatory("");
+    };
+    window.addEventListener(OFFICE_CHANGED_EVENT, onOfficeChanged);
+    return () => window.removeEventListener(OFFICE_CHANGED_EVENT, onOfficeChanged);
   }, []);
 
   // Loading and error states
@@ -1126,16 +1130,6 @@ export default function Scheduler({
     );
   }, [selectedDate]);
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   // Step the selected date by one unit of the current view (day/week/month).
   const stepDate = (dir: number) => {
     const d = new Date(selectedDate);
@@ -1290,6 +1284,10 @@ export default function Scheduler({
         // Create new appointment
         const createData: AppointmentCreateRequest = {
           patient_id: patientId,
+          // Office stamp = the WORKING office (STAMP.appointment); the service
+          // verifies the operatory belongs to it. Omitted when none is selected
+          // so the legacy derive-from-operatory path still applies.
+          ...(officeScope.office_id != null && { office_id: officeScope.office_id }),
           date: a.date ?? formatDateYYYYMMDD(selectedDate),
           start_time: a.start_time ?? a.startTime ?? a.time ?? selectedSlot?.time ?? "09:00",
           duration: a.duration ?? 30,
@@ -1746,6 +1744,17 @@ export default function Scheduler({
     });
   };
 
+  // A hand-off that names an office other than the working one: booking would
+  // land in the wrong office's chairs, so offer the switch instead of guessing.
+  const bookingOfficeId = pendingBooking?.office_id ?? null;
+  const bookingOfficeMismatch =
+    bookingOfficeId != null && bookingOfficeId !== officeScope.office_id;
+  const bookingOfficeName =
+    bookingOfficeId != null
+      ? officeScope.office_options.find((o) => o.id === bookingOfficeId)?.name ??
+        `office ${bookingOfficeId}`
+      : "";
+
   // Layout note:
   // We let flexbox handle column widths so that columns expand/shrink
   // with the number of operatories, avoiding empty gaps on the right.
@@ -1770,7 +1779,9 @@ export default function Scheduler({
               </div>
               <div className="leading-tight">
                 <h1 className="text-lg font-bold text-white">Scheduler</h1>
-                <p className="text-[11px] text-white/80">Office: {currentOffice}</p>
+                <p className="text-[11px] text-white/80">
+                  Office: {officeScope.office?.name ?? (officeScope.office_id != null ? "…" : "none selected")}
+                </p>
               </div>
             </div>
 
@@ -1952,6 +1963,14 @@ export default function Scheduler({
           )}
         </div>
 
+        {/* No working office: the grid still renders (tenant-wide feed) but
+            nothing can be booked without one — a banner, never a gate. */}
+        {officeScope.office_id == null && (
+          <div className="mx-6 mt-4">
+            <OfficeRequiredBanner action="view the schedule" />
+          </div>
+        )}
+
         {/* Pending booking handed over from a patient screen */}
         {pendingBooking && (
           <div
@@ -1979,6 +1998,29 @@ export default function Scheduler({
               className="ml-auto rounded border border-[#1F3A5F]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1F3A5F] hover:bg-[#1F3A5F]/5"
             >
               Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* The hand-off names another office: offer to switch rather than book
+            into the working office's chairs by mistake. */}
+        {bookingOfficeMismatch && bookingOfficeId != null && (
+          <div
+            className="mx-6 mt-2 flex flex-wrap items-center gap-3 rounded border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            role="status"
+            data-testid="scheduler-booking-office-mismatch"
+          >
+            <Building2 className="h-4 w-4 shrink-0" />
+            <span>
+              This booking is for <span className="font-semibold">{bookingOfficeName}</span>
+              {officeScope.office ? ` — you are working in ${officeScope.office.name}` : ""}.
+            </span>
+            <button
+              type="button"
+              onClick={() => void officeScope.switchOffice(bookingOfficeId)}
+              className="ml-auto rounded border border-amber-500 bg-white px-2.5 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Switch to {bookingOfficeName}
             </button>
           </div>
         )}
@@ -2472,17 +2514,20 @@ export default function Scheduler({
                 >
                   Reschedule
                 </button>
-                <button
-                  onClick={() =>
-                    handleDeleteAppointment(
-                      contextMenu.appointment!,
-                    )
-                  }
-                  className="w-full px-3 py-1.5 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
-                  role="menuitem"
-                >
-                  Delete
-                </button>
+                {/* RBAC: deleting an appointment is backend-enforced. */}
+                <RequireRight code={RIGHT.appointments.delete}>
+                  <button
+                    onClick={() =>
+                      handleDeleteAppointment(
+                        contextMenu.appointment!,
+                      )
+                    }
+                    className="w-full px-3 py-1.5 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
+                    role="menuitem"
+                  >
+                    Delete
+                  </button>
+                </RequireRight>
                 {/* STEP 3.2: Divider between actions and submenus */}
                 <div className="my-1 border-t border-[#E2E8F0]" />
                 {/* ✅ STEP 4: Go To - Click-based trigger */}
