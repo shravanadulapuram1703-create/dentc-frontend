@@ -8,4 +8,8 @@
 
 export type EstimatePatientChargesParams = {
 office_id?: number | null;
+/**
+ * Price against the entry in force on this date (v2)
+ */
+date_of_service?: string | null;
 };

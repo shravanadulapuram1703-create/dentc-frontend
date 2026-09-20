@@ -51,6 +51,8 @@ export interface PlanForm {
   plan_type: string;
   coverage_type: string;
   is_prepaid: boolean;
+  /** COB non-duplication of benefits (docs/pricing §1.5 secondary split). */
+  is_non_dup_benefits: boolean;
   individual_max: string;
   individual_deductible: string;
   ortho_max: string;
@@ -88,6 +90,7 @@ export function emptyPlanForm(): PlanForm {
     plan_type: "",
     coverage_type: "",
     is_prepaid: false,
+    is_non_dup_benefits: false,
     individual_max: "",
     individual_deductible: "",
     ortho_max: "",
@@ -115,6 +118,7 @@ export function planToForm(p: InsurancePlanRead): PlanForm {
     plan_type: p.plan_type ?? "",
     coverage_type: p.coverage_type ?? "",
     is_prepaid: p.is_prepaid ?? false,
+    is_non_dup_benefits: p.is_non_dup_benefits ?? false,
     individual_max: p.individual_max ?? "",
     individual_deductible: p.individual_deductible ?? "",
     ortho_max: p.ortho_max ?? "",
@@ -194,6 +198,7 @@ function planCommonBody(f: PlanForm) {
     plan_type: f.plan_type.trim() || null,
     coverage_type: f.coverage_type.trim() || null,
     is_prepaid: f.is_prepaid,
+    is_non_dup_benefits: f.is_non_dup_benefits,
     individual_max: money(f.individual_max),
     individual_deductible: money(f.individual_deductible),
     ortho_max: money(f.ortho_max),

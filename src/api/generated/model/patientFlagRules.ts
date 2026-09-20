@@ -8,6 +8,7 @@
 import type { CoverageTypeRules } from './coverageTypeRules';
 import type { PatientStatusRules } from './patientStatusRules';
 import type { PatientTypeRules } from './patientTypeRules';
+import type { RespPartyRelRules } from './respPartyRelRules';
 
 /**
  * The Add/Edit Patient checkbox-integrity rules, served as data so the form
@@ -17,4 +18,5 @@ export interface PatientFlagRules {
   patient_type: PatientTypeRules;
   patient_status: PatientStatusRules;
   coverage_type: CoverageTypeRules;
+  responsible_party_relationship?: RespPartyRelRules | null;
 }

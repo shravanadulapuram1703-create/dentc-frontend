@@ -8,7 +8,8 @@ import { PROVIDER_SPECIALTY_CODES, specialtyToTaxonomy } from "@/features/claims
 interface InfoTabProps {
   formData: ProviderForm;
   updateFormData: (updates: Partial<ProviderForm>) => void;
-  offices: OfficeRead[];
+  /** Home-office picker rows — only `id` / `name` are read (shared catalog `OfficeOption` fits). */
+  offices: Pick<OfficeRead, "id" | "name">[];
   /** Saved provider id (null while adding) — keys the taxonomy stop-gap store. */
   providerId?: string | null;
 }

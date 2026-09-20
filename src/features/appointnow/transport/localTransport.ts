@@ -1,11 +1,13 @@
-// LocalBookingTransport — the client-side AppointNow simulation (default).
+// LocalBookingTransport — the client-side AppointNow simulation (OPT-IN via
+// VITE_APPOINTNOW_BACKEND=local; the default is the real backend).
 //
-// Stands in for the not-yet-built backend so the whole flow is demonstrable in a
-// browser: the public page fetches simulated availability and submits a request;
-// the request is persisted to shared localStorage and broadcast over a
-// BroadcastChannel; the app's staff inbox (another tab) receives it live, and
-// approve/decline update the same shared store. Everything here is labelled
-// `isSimulated = true` so the UI can say so.
+// Demonstrates the whole flow in ONE browser profile with no backend: the public
+// page fetches simulated availability and submits a request; the request is
+// persisted to localStorage and broadcast over a BroadcastChannel; the app's
+// staff inbox (another tab of the SAME browser) receives it live, and
+// approve/decline update the same store. It can never see a request submitted
+// from another device — that is exactly why production must run `api` mode.
+// Everything here is labelled `isSimulated = true` so the UI can say so.
 
 import {
   listOffices,
@@ -17,18 +19,21 @@ import {
   type BookedRange,
 } from "../lib/availability";
 import { AppointNowBus } from "../lib/appointnowBus";
-import { loadRequests, upsertRequest } from "../lib/appointnowStorage";
+import { loadRequests, saveRequests, upsertRequest } from "../lib/appointnowStorage";
 import type {
+  ApproveOptions,
   AvailabilityQuery,
   AvailableSlot,
   BookingEvent,
   BookingEventHandler,
   BookingRequest,
-  BookingRequestStatus,
+  BookingRequestList,
   BookingTransport,
+  ListRequestsParams,
   PublicOfficeInfo,
   SubmitRequestInput,
 } from "./types";
+import { countByStatus } from "./types";
 
 /** Slot granularity for the simulation (minutes). */
 const SIM_SLOT_INTERVAL = 30;
@@ -59,6 +64,10 @@ function hasAuthToken(): boolean {
 
 export class LocalBookingTransport implements BookingTransport {
   readonly isSimulated = true;
+  readonly supportsPush = true; // BroadcastChannel delivers cross-tab events
+  readonly pollIntervalMs = null; // nothing to reconcile against
+  readonly supportsReschedule = true;
+  readonly booksOnApprove = false; // the caller books via the scheduler API first
 
   private bus: AppointNowBus | null = null;
   private handlers = new Set<BookingEventHandler>();
@@ -232,21 +241,26 @@ export class LocalBookingTransport implements BookingTransport {
 
   // --- Staff surface -------------------------------------------------------
 
-  async listRequests(status?: BookingRequestStatus): Promise<BookingRequest[]> {
-    const all = loadRequests();
-    return status ? all.filter((r) => r.status === status) : all;
+  async listRequests(params: ListRequestsParams = {}): Promise<BookingRequestList> {
+    // Office scoping: simulated requests usually carry office_id = null (no
+    // authed lookup on the public page), so only filter rows that KNOW their
+    // office — otherwise the demo inbox would look empty.
+    const scoped = loadRequests().filter(
+      (r) =>
+        params.office_id == null || r.office_id == null || r.office_id === params.office_id,
+    );
+    const items = params.status ? scoped.filter((r) => r.status === params.status) : scoped;
+    return { items, counts: countByStatus(scoped) };
   }
 
-  async approveRequest(
-    id: string,
-    appointmentId: string,
-    actionedBy?: string,
-  ): Promise<BookingRequest> {
+  async approveRequest(id: string, options: ApproveOptions = {}): Promise<BookingRequest> {
     return this.transition(id, (r) => ({
       ...r,
       status: "approved",
-      appointment_id: appointmentId,
-      actioned_by: actionedBy ?? null,
+      appointment_id: options.appointment_id ?? null,
+      patient_id: options.patient_id ?? r.patient_id ?? null,
+      actioned_by: options.actioned_by ?? null,
+      actioned_at: nowIso(),
       updated_at: nowIso(),
     }));
   }
@@ -261,6 +275,7 @@ export class LocalBookingTransport implements BookingTransport {
       status: "declined",
       decline_reason: reason ?? null,
       actioned_by: actionedBy ?? null,
+      actioned_at: nowIso(),
       updated_at: nowIso(),
     }));
   }
@@ -282,6 +297,17 @@ export class LocalBookingTransport implements BookingTransport {
         updated_at: nowIso(),
       };
     });
+  }
+
+  async deleteRequest(id: string, force = false): Promise<void> {
+    const all = loadRequests();
+    const current = all.find((r) => r.id === id);
+    if (!current) throw new Error(`Booking request ${id} not found`);
+    if (current.status === "approved" && !force) {
+      throw new Error("This request is linked to a booked appointment. Confirm to delete it anyway.");
+    }
+    saveRequests(all.filter((r) => r.id !== id));
+    this.emit({ type: "request:deleted", request_id: id, office_id: current.office_id ?? null });
   }
 
   private transition(

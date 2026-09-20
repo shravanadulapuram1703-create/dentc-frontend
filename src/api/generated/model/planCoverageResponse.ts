@@ -16,4 +16,6 @@ export interface PlanCoverageResponse {
   summary?: PlanCoverageSummary | null;
   copied_from_plan_id?: number | null;
   copied_plan_fields?: string[];
+  plan_updated_at?: string | null;
+  version?: string | null;
 }

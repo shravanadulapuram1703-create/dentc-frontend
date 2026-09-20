@@ -25,7 +25,6 @@ import {
   summarize,
   todayIso,
   toUpdateBody,
-  type LabCase,
   type LabDraft,
   type LabFilter,
 } from './labModel';
@@ -47,7 +46,6 @@ interface OutletContext {
   patient: {
     id: string;
     name: string;
-    officeId?: string;
     chartNo?: string;
     dob?: string;
     office?: string;

@@ -12,7 +12,7 @@ import type {
   UserRead,
 } from '@/api/generated/model';
 import { listTreatmentPlanInsuranceDetails } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
-import { resolveProcedureFee, type FeeScheduleContext } from '@/services/feeScheduleResolver';
+import { resolveProcedureFeeFor as resolveProcedureFee, type FeeScheduleContext } from '@/features/pricing';
 import { providerOptionLabel } from '@/services/providerDirectory';
 import ToothNumberPicker from '@/features/progress-notes/ToothNumberPicker';
 import { SETTABLE_STATUSES, STATUS_LABEL, num, type SettableTxStatus, normalizeStatus } from './txModel';

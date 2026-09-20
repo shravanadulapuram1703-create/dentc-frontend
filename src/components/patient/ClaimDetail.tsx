@@ -67,11 +67,20 @@ import {
   fetchClaimReadiness,
   type ClaimReadiness,
 } from "@/features/procedures/supportingRecords";
-import { env } from "@/shared/config/env";
+import { openAsset } from "@/services/documentAccess";
 import { useAuth } from "../../contexts/AuthContext";
+import { RequireRight, RIGHT } from "@/features/access-control";
 
-const fileHref = (url: string): string =>
-  /^https?:\/\//i.test(url) ? url : `${env.apiBaseUrl}${url}`;
+/**
+ * Claim attachments are served by `/insurance-claims/{id}/attachments/{id}/content`,
+ * which needs the bearer token — a bare `<a href>` gets `{"code":"missing_token"}`.
+ * openAsset fetches through the authenticated client and opens the blob.
+ */
+const open_attachment = (url: string) =>
+  openAsset(url).catch((err) => {
+    console.error(err);
+    alert("Could not open the attachment.");
+  });
 
 // ✅ ONLY tooltip needed: Overpayment Disbursement (professional billing systems only explain what's truly complex)
 function OverpaymentInfo() {
@@ -163,7 +172,7 @@ export default function ClaimDetail() {
   // this claim (patient or account scope), falling back to the patient ledger.
   const returnTo =
     (location.state as { from?: string } | null)?.from || `/patient/${patientId}/ledger`;
-  const { currentOrganization, currentOffice } = useAuth();
+  const { currentOrganization } = useAuth();
 
   // Make patient context optional
   let patient: PatientData | undefined;
@@ -202,21 +211,6 @@ export default function ClaimDetail() {
       return currentOrganization;
     }
     return currentOrganization;
-  };
-
-  // Extract numeric office ID from currentOffice (e.g., "OFF-1" -> 1, "1" -> 1)
-  const getOfficeId = (): string => {
-    if (!currentOffice) return "N/A";
-    // Extract numeric ID from formats like "OFF-1", "O-1", "1", etc.
-    const match = currentOffice.match(/(\d+)$/);
-    if (match && match[1]) {
-      return match[1];
-    }
-    // If already numeric, return as-is
-    if (/^\d+$/.test(currentOffice)) {
-      return currentOffice;
-    }
-    return currentOffice;
   };
 
   // Backend-driven claim data (composed: claim + procedures + payments + coverage)
@@ -752,7 +746,9 @@ export default function ClaimDetail() {
             {claimTitle}
           </h1>
           <div className="text-white text-sm font-bold">
-            PGID {getTenantId()} / OID {getOfficeId()}
+            {/* The claim's OWN office, never the top-bar selection — a claim opened
+                while working elsewhere must still say where it was billed. */}
+            PGID {getTenantId()} / OID {data?.claim.office_id ?? "—"}
           </div>
         </div>
 
@@ -934,15 +930,14 @@ export default function ClaimDetail() {
                         {a.attachment_type && (
                           <span className="text-slate-500">({a.attachment_type})</span>
                         )}
-                        <a
-                          href={fileHref(a.file_url)}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => open_attachment(a.file_url)}
                           className="ml-auto p-1 text-blue-600 hover:bg-blue-100 rounded"
                           title="View / Download"
                         >
                           <Eye className="w-3.5 h-3.5" strokeWidth={2} />
-                        </a>
+                        </button>
                         <button
                           onClick={() => handleDeleteAttachment(a.id)}
                           disabled={deletingAttId === a.id}
@@ -1449,15 +1444,18 @@ export default function ClaimDetail() {
           <div className="bg-slate-100 border-t-2 border-slate-300 px-6 py-2 flex items-center justify-between gap-3">
             {/* Left group: Destructive */}
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleDeleteClaim}
-                disabled={busy}
-                title="Remove this claim from the ledger and release its procedures"
-                className="px-3 py-1.5 text-xs rounded-md bg-red-700 text-white hover:bg-red-800 font-semibold uppercase tracking-wide flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-3 h-3" strokeWidth={2} />
-                DELETE
-              </button>
+              {/* RBAC: deleting a claim needs the right (backend also 403s). */}
+              <RequireRight code={RIGHT.transactions.deleteInsuranceClaims}>
+                <button
+                  onClick={handleDeleteClaim}
+                  disabled={busy}
+                  title="Remove this claim from the ledger and release its procedures"
+                  className="px-3 py-1.5 text-xs rounded-md bg-red-700 text-white hover:bg-red-800 font-semibold uppercase tracking-wide flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-3 h-3" strokeWidth={2} />
+                  DELETE
+                </button>
+              </RequireRight>
               <button
                 onClick={handleDirectPrint}
                 className="px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide flex items-center gap-1"

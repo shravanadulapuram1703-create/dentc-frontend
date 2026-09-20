@@ -38,6 +38,7 @@ import type {
   DefinitionRead,
   DefinitionUpdate,
   ErrorResponse,
+  GetAdaClaimFormRules200,
   GetLabTrackingRules200,
   GetProcedureEntryRules200,
   GetTreatmentPlanRules200,
@@ -61,6 +62,7 @@ import type {
   PickListCascadeResult,
   PickListItemsReplace,
   PickListOptionRead,
+  ProviderTaxonomyCode,
   QuestionnaireHeaderCreate,
   QuestionnaireHeaderRead,
   QuestionnaireHeaderUpdate,
@@ -253,6 +255,190 @@ export function useGetProcedureEntryRules<TData = Awaited<ReturnType<typeof getP
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetProcedureEntryRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Vocabularies, derivation rules and error codes behind the ADA claim form
+ */
+export const getAdaClaimFormRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetAdaClaimFormRules200>(
+      {url: `/api/v1/metadata/ada-claim-form-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetAdaClaimFormRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/ada-claim-form-rules`
+    ] as const;
+    }
+
+
+export const getGetAdaClaimFormRulesQueryOptions = <TData = Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdaClaimFormRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdaClaimFormRules>>> = ({ signal }) => getAdaClaimFormRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdaClaimFormRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdaClaimFormRules>>>
+export type GetAdaClaimFormRulesQueryError = ErrorType<unknown>
+
+
+export function useGetAdaClaimFormRules<TData = Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdaClaimFormRules>>,
+          TError,
+          Awaited<ReturnType<typeof getAdaClaimFormRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdaClaimFormRules<TData = Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdaClaimFormRules>>,
+          TError,
+          Awaited<ReturnType<typeof getAdaClaimFormRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdaClaimFormRules<TData = Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Vocabularies, derivation rules and error codes behind the ADA claim form
+ */
+
+export function useGetAdaClaimFormRules<TData = Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdaClaimFormRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdaClaimFormRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Dental Healthcare Provider Taxonomy codes + the specialty keywords that map to them (ADA-BE-14)
+ */
+export const listProviderTaxonomyCodes = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProviderTaxonomyCode[]>(
+      {url: `/api/v1/metadata/provider-taxonomy-codes`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProviderTaxonomyCodesQueryKey = () => {
+    return [
+    `/api/v1/metadata/provider-taxonomy-codes`
+    ] as const;
+    }
+
+
+export const getListProviderTaxonomyCodesQueryOptions = <TData = Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProviderTaxonomyCodesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>> = ({ signal }) => listProviderTaxonomyCodes(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProviderTaxonomyCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>>
+export type ListProviderTaxonomyCodesQueryError = ErrorType<unknown>
+
+
+export function useListProviderTaxonomyCodes<TData = Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProviderTaxonomyCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listProviderTaxonomyCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProviderTaxonomyCodes<TData = Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProviderTaxonomyCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listProviderTaxonomyCodes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProviderTaxonomyCodes<TData = Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dental Healthcare Provider Taxonomy codes + the specialty keywords that map to them (ADA-BE-14)
+ */
+
+export function useListProviderTaxonomyCodes<TData = Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderTaxonomyCodes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProviderTaxonomyCodesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -730,6 +916,7 @@ export function useGetDefinition<TData = Awaited<ReturnType<typeof getDefinition
 
 
 /**
+ * Partial update of one definition. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update definition
  */
 export const updateDefinition = (
@@ -794,6 +981,7 @@ export const useUpdateDefinition = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateDefinitionMutationOptions(options), queryClient);
     }
     /**
+ * Delete one definition. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete definition
  */
 export const deleteDefinition = (
@@ -1103,6 +1291,7 @@ export function useGetDefinitionGroup<TData = Awaited<ReturnType<typeof getDefin
 
 
 /**
+ * Partial update of one definition group. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update definition group
  */
 export const updateDefinitionGroup = (
@@ -1167,6 +1356,7 @@ export const useUpdateDefinitionGroup = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateDefinitionGroupMutationOptions(options), queryClient);
     }
     /**
+ * Delete one definition group. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete definition group
  */
 export const deleteDefinitionGroup = (
@@ -1476,6 +1666,7 @@ export function useGetImagingTemplate<TData = Awaited<ReturnType<typeof getImagi
 
 
 /**
+ * Partial update of one imaging template.
  * @summary Update imaging template
  */
 export const updateImagingTemplate = (
@@ -1540,6 +1731,7 @@ export const useUpdateImagingTemplate = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateImagingTemplateMutationOptions(options), queryClient);
     }
     /**
+ * Delete one imaging template.
  * @summary Delete imaging template
  */
 export const deleteImagingTemplate = (
@@ -1849,6 +2041,7 @@ export function useGetQuestionnaireHeader<TData = Awaited<ReturnType<typeof getQ
 
 
 /**
+ * Partial update of one questionnaire header.
  * @summary Update questionnaire header
  */
 export const updateQuestionnaireHeader = (
@@ -1913,6 +2106,7 @@ export const useUpdateQuestionnaireHeader = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateQuestionnaireHeaderMutationOptions(options), queryClient);
     }
     /**
+ * Delete one questionnaire header.
  * @summary Delete questionnaire header
  */
 export const deleteQuestionnaireHeader = (
@@ -2222,6 +2416,7 @@ export function useGetQuestionnaireOption<TData = Awaited<ReturnType<typeof getQ
 
 
 /**
+ * Partial update of one questionnaire option.
  * @summary Update questionnaire option
  */
 export const updateQuestionnaireOption = (
@@ -2286,6 +2481,7 @@ export const useUpdateQuestionnaireOption = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateQuestionnaireOptionMutationOptions(options), queryClient);
     }
     /**
+ * Delete one questionnaire option.
  * @summary Delete questionnaire option
  */
 export const deleteQuestionnaireOption = (
@@ -2595,6 +2791,7 @@ export function useGetChartColor<TData = Awaited<ReturnType<typeof getChartColor
 
 
 /**
+ * Partial update of one chart color. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update chart color
  */
 export const updateChartColor = (
@@ -2659,6 +2856,7 @@ export const useUpdateChartColor = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateChartColorMutationOptions(options), queryClient);
     }
     /**
+ * Delete one chart color. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete chart color
  */
 export const deleteChartColor = (
@@ -2968,6 +3166,7 @@ export function useGetCodesViewEntry<TData = Awaited<ReturnType<typeof getCodesV
 
 
 /**
+ * Partial update of one codes view entry.
  * @summary Update codes view entry
  */
 export const updateCodesViewEntry = (
@@ -3032,6 +3231,7 @@ export const useUpdateCodesViewEntry = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCodesViewEntryMutationOptions(options), queryClient);
     }
     /**
+ * Delete one codes view entry.
  * @summary Delete codes view entry
  */
 export const deleteCodesViewEntry = (

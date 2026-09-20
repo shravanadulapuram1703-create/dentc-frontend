@@ -41,6 +41,14 @@ export interface ChartAggPlanItemRead {
   update_end_date_at_posting: boolean;
   re_estimate_at_posting: boolean;
   fee_schedule_id?: number | null;
+  ucr_fee?: string | null;
+  fee_source?: string | null;
+  fee_effective_date?: string | null;
+  fee_override_reason?: string | null;
+  coverage_pct?: string | null;
+  coverage_rule_id?: number | null;
+  estimated_deductible?: string | null;
+  sec_insurance_estimate?: string | null;
   counselor_user_id?: number | null;
   status_before_scheduled?: string | null;
   created_at: string;

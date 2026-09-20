@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Ban, HeartPulse, History, Loader2, PenLine, Save } from "lucide-react";
 import { getPatientOverview, getPatient } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead } from "@/api/generated/model";
+import { OfficeBadge, usePatientOffice } from "@/features/office-scope";
 import { formatAuditDateTime } from "@/utils/datetime";
 import {
   alertLabels,
@@ -55,7 +56,7 @@ import { signatureFromDataUrl } from "@/features/signature/signatureModel";
 import CopyFromPatientDialog from "./CopyFromPatientDialog";
 
 interface OutletContext {
-  patient: { id: string; name: string; officeId?: string; chartNo?: string; dob?: string };
+  patient: { id: string; name: string; chartNo?: string; dob?: string };
 }
 
 type TabId = "alerts" | "dental" | "medical" | "signature";
@@ -107,6 +108,7 @@ const ageFrom = (dob?: string | null): string => {
 
 export default function MedicalHistoryPage() {
   const { patient } = useOutletContext<OutletContext>();
+  const { home_office_id } = usePatientOffice();
   const patientId = Number(patient.id);
   const validId = Number.isFinite(patientId) && patientId > 0;
 
@@ -386,7 +388,7 @@ export default function MedicalHistoryPage() {
             Patient Medical History
           </h1>
           <span className="text-xs font-semibold">
-            PGID: {patientId} / OID: {p?.home_office_id ?? patient.officeId ?? "—"}
+            PGID: {patientId} / OID: {p?.home_office_id ?? home_office_id ?? "—"}
           </span>
         </div>
 
@@ -419,7 +421,10 @@ export default function MedicalHistoryPage() {
             <HeaderLine label="Est Pat" value={header?.est_pat ?? ""} />
           </div>
           <div>
-            <HeaderLine label="Home Office" value={String(p?.home_office_id ?? "")} />
+            <div className="flex gap-2 leading-5">
+              <span className="text-[#64748B] min-w-[74px]">Home Office</span>
+              <OfficeBadge office_id={p?.home_office_id ?? home_office_id} variant="name" />
+            </div>
             <HeaderLine label="Type" value={p?.patient_type ?? ""} />
             <HeaderLine label="Created" value={stampText(audit.overall.created)} />
             <HeaderLine label="Modified" value={stampText(audit.overall.modified)} />

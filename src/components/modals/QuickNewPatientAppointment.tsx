@@ -17,9 +17,9 @@ import { useEffect, useMemo, useState } from "react";
 import { X, ChevronRight, Save, Plus, Loader2, ArrowLeft } from "lucide-react";
 import type { Operatory, Provider, ProcedureType } from "../../services/schedulerApi";
 import { resolveOffice } from "../../services/officeLookup";
+import { ProviderOptionGroups } from "@/features/office-scope";
 import { MIN_DOB_ISO, todayIsoDate, validateDob } from "../../utils/datetime";
 import NoteMacroPickerModal from "../patient/NoteMacroPickerModal";
-import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** Form state shared with NewAppointmentModal (it seeds the later screens). */
 export interface QuickAppointmentFormData {
@@ -343,11 +343,7 @@ export default function QuickNewPatientAppointment({
                     ) : (
                       <>
                         {!formData.provider && <option value="">Select provider</option>}
-                        {providers.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {providerDisplayLabel(p)}
-                          </option>
-                        ))}
+                        <ProviderOptionGroups providers={providers} />
                       </>
                     )}
                   </select>

@@ -13,6 +13,7 @@ import {
 } from "../../../../api/generated/endpoints/security/security";
 import type { UserGroupRead } from "../../../../api/generated/model/userGroupRead";
 import AddEditGroupModal from "./AddEditGroupModal";
+import { RequireRight, RIGHT } from "@/features/access-control";
 
 export default function GroupSetup() {
   const queryClient = useQueryClient();
@@ -191,15 +192,18 @@ export default function GroupSetup() {
                 )}
               </div>
 
-              <div className="border-t-2 border-[#E2E8F0] bg-[#F7F9FC] p-4">
-                <button
-                  onClick={openAdd}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#22C55E] px-4 py-2 font-bold text-white shadow-sm transition-colors hover:bg-[#16A34A]"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add
-                </button>
-              </div>
+              {/* RBAC: creating a group needs Full Control; hidden for view-only. */}
+              <RequireRight code={RIGHT.setup.securityGroupsFull}>
+                <div className="border-t-2 border-[#E2E8F0] bg-[#F7F9FC] p-4">
+                  <button
+                    onClick={openAdd}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#22C55E] px-4 py-2 font-bold text-white shadow-sm transition-colors hover:bg-[#16A34A]"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </button>
+                </div>
+              </RequireRight>
             </div>
           </div>
 
@@ -242,29 +246,33 @@ export default function GroupSetup() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap justify-end gap-3 border-t-2 border-[#E2E8F0] bg-[#F7F9FC] p-4">
-                  <button
-                    onClick={() => void handleCopy()}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#64748B] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#475569]"
-                  >
-                    <Copy className="h-4 w-4" />
-                    Copy User Group
-                  </button>
-                  <button
-                    onClick={openEdit}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#3A6EA5] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#2d5080]"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit User Group
-                  </button>
-                  <button
-                    onClick={() => void handleDelete()}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#EF4444] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#DC2626]"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete User Group
-                  </button>
-                </div>
+                {/* RBAC: mutating a group needs Full Control; a view-only user sees
+                    the assigned rights but none of these actions. */}
+                <RequireRight code={RIGHT.setup.securityGroupsFull}>
+                  <div className="flex flex-wrap justify-end gap-3 border-t-2 border-[#E2E8F0] bg-[#F7F9FC] p-4">
+                    <button
+                      onClick={() => void handleCopy()}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#64748B] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#475569]"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy User Group
+                    </button>
+                    <button
+                      onClick={openEdit}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#3A6EA5] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#2d5080]"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit User Group
+                    </button>
+                    <button
+                      onClick={() => void handleDelete()}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#EF4444] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#DC2626]"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete User Group
+                    </button>
+                  </div>
+                </RequireRight>
               </div>
             ) : (
               <div className="rounded-lg border-2 border-[#E2E8F0] bg-white p-12 text-center shadow-sm">

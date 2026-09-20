@@ -13,5 +13,6 @@ export interface FeeScheduleEntryCreate {
   amb_code?: string | null;
   patient_fee?: number | string | null;
   insurance_fee?: number | string | null;
+  is_no_charge?: boolean | null;
   effective_date?: string | null;
 }

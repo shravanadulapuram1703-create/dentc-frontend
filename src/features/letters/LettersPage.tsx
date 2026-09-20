@@ -22,6 +22,7 @@ import LetterDialog from './LetterDialog';
 import LetterPreviewModal, { type ViewerSource } from './LetterPreviewModal';
 import ConsentSignDialog from './ConsentSignDialog';
 import { openAsset } from '@/services/documentAccess';
+import { usePatientOffice } from '@/features/office-scope';
 import { lettersKeys, loadLetterHistory, type LetterHistoryRow } from './lettersService';
 
 /** Stable identity so the memo below doesn't recompute on every render. */
@@ -36,13 +37,13 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 interface OutletContext {
-  patient: { id: string; name: string; officeId?: string };
+  patient: { id: string; name: string };
 }
 
 export default function LettersPage() {
   const { patient } = useOutletContext<OutletContext>();
   const patient_id = Number(patient.id);
-  const office_id = patient.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: office_id } = usePatientOffice();
   const valid = Number.isFinite(patient_id) && patient_id > 0;
 
   const [dialog_open, setDialogOpen] = useState(false);

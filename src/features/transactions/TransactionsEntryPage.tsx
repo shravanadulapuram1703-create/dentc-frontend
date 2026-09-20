@@ -9,6 +9,7 @@ import { updatePatientProcedure } from '@/api/generated/endpoints/clinical/clini
 import { useGetPatient, getPatientDayTotals, getPatientTransactionsReport } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import { useProcedureSync } from '@/features/procedures/procedureSync';
+import { usePatientOffice } from '@/features/office-scope';
 import {
   loadRawTransactions,
   buildEntryRows,
@@ -50,7 +51,6 @@ interface OutletCtx {
     dob?: string;
     chartNo?: string;
     office?: string;
-    officeId?: string;
   };
 }
 
@@ -68,7 +68,7 @@ export default function TransactionsEntryPage() {
 
   const patientId = Number(patient?.id ?? patientIdParam);
   const validId = Number.isFinite(patientId) && patientId > 0;
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
   const patientName = patient?.name ?? 'Unknown Patient';
 
   const [transactionDate, setTransactionDate] = useState(todayDisplay());
@@ -98,7 +98,7 @@ export default function TransactionsEntryPage() {
   // reachable, because the roster is genuinely sparse (PROV-1). Labels always
   // resolve against the full directory, so a historical row posted by an
   // out-of-office or deactivated provider still shows a name, not "PRV-138".
-  const { providers, allProviders, providerLabel } = useProviderDirectory(patient?.officeId);
+  const { providers, allProviders, providerLabel } = useProviderDirectory(officeId);
 
   // The patient's own record carries the defaults the legacy screen opens with.
   // Same query key as the patient shell above, so this is a cache hit, not a

@@ -20,6 +20,7 @@ export interface ProviderRead {
   tax_id?: string | null;
   dea_id?: string | null;
   specialty?: string | null;
+  taxonomy_code?: string | null;
   is_active: boolean;
   first_name?: string | null;
   last_name?: string | null;
@@ -47,4 +48,6 @@ export interface ProviderRead {
   default_operatory_id?: string | null;
   created_at: string;
   provider_kind?: string | null;
+  effective_taxonomy_code?: string | null;
+  effective_taxonomy_source?: string | null;
 }

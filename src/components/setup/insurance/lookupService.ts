@@ -16,13 +16,13 @@ import {
   getProvider,
   listProviders,
   getOffice,
-  listOffices,
 } from "@/api/generated/endpoints/organization/organization";
 import {
   getFeeSchedule,
   listFeeSchedules,
 } from "@/api/generated/endpoints/procedures/procedures";
 import type { InsurancePlanRead, InsuranceCarrierRead } from "@/api/generated/model";
+import { listOfficeOptions } from "@/services/officeLookup";
 import { providerDisplayLabel } from "@/services/providerDirectory";
 
 const carrierNames = new Map<number, string>();
@@ -218,10 +218,13 @@ export async function searchProviders(query: string): Promise<PickerOption[]> {
 }
 
 export async function searchOffices(query: string): Promise<PickerOption[]> {
-  const res = await listOffices({ size: 200, sort: "name", order: "asc" });
+  // The shared office catalog (session-cached); name-sorted and filtered here.
+  const offices = await listOfficeOptions();
   const q = query.trim().toLowerCase();
-  const items = (res.items ?? []).filter((o) => !q || o.name.toLowerCase().includes(q));
-  for (const o of res.items ?? []) officeNames.set(o.id, o.name);
+  const items = offices
+    .filter((o) => !q || o.name.toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  for (const o of offices) officeNames.set(o.id, o.name);
   return items.slice(0, 25).map((o) => ({ id: o.id, label: o.name, sub: o.short_id ?? undefined }));
 }
 

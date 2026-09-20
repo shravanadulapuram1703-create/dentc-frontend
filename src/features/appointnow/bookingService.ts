@@ -1,13 +1,13 @@
 // bookingService — the single swap point between the AppointNow UI (public
 // booking screen + staff inbox) and its backend.
 //
-//   • Transport: LocalBookingTransport (default, client-side simulation) or
-//     RealBookingTransport (when VITE_APPOINTNOW_BACKEND=api). The public page
-//     and the staff context both talk to `getBookingTransport()`, never to a
-//     concrete transport.
+//   • Transport: RealBookingTransport (default — the shipped /api/v1/appointnow
+//     backend) or LocalBookingTransport (VITE_APPOINTNOW_BACKEND=local, a
+//     single-browser simulation for demos). The public page and the staff
+//     context both talk to `getBookingTransport()`, never to a concrete transport.
 //
-// See docs/appointnow/appointnow_backend_devreport.md for the backend that makes
-// RealBookingTransport light up.
+// See docs/appointnow/appointnow_backend_devreport.md for the contract and the
+// remaining backend gaps.
 
 import { env } from "@/shared/config/env";
 import type { BookingTransport } from "./transport/types";

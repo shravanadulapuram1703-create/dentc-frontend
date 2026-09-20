@@ -1,6 +1,8 @@
 import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
 import { env } from "@/shared/config/env";
 import { clearAuthStorageKeepRemembered } from "@/features/auth/rememberMe";
+import { OFFICE_HEADER, getActiveOfficeId } from "@/features/office-scope/officeHeader";
 
 const api = axios.create({
   baseURL: env.apiBaseUrl,
@@ -15,21 +17,54 @@ const api = axios.create({
   paramsSerializer: { indexes: null },
 });
 
-// Attach token automatically
+// Attach token + working-office header automatically
 api.interceptors.request.use((config) => {
   if (!config.url?.includes("/auth/login")) {
     const token = localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // `X-Office-ID` = the working office (OFF-SCOPE-3): the server validates it,
+    // audits it, and stamps it as the default office on creates that omit one.
+    // Never a read filter — reads carry the office as an explicit query param.
+    const officeId = getActiveOfficeId();
+    if (officeId != null) {
+      config.headers[OFFICE_HEADER] = String(officeId);
+    }
   }
   return config;
 });
 
-// Response interceptor to handle 401 Unauthorized
+/**
+ * The app-wide error envelope is `{ error: { code, message, details } }`
+ * (confirmed with the backend team — `error.code` on every endpoint, not
+ * `detail`). Return that code, so office-scope refusals can be matched by code.
+ */
+function apiErrorCode(data: unknown): string | null {
+  if (!data || typeof data !== "object") return null;
+  const err = (data as { error?: unknown }).error;
+  if (err && typeof err === "object") {
+    const code = (err as { code?: unknown }).code;
+    if (typeof code === "string") return code;
+  }
+  return null;
+}
+
+// Response interceptor to handle 401 Unauthorized + office-scope 403s
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    // Office-scope refusals (OFF-SCOPE-1/6): the server rejected the office the
+    // request carried. Surface it and let the user act — NEVER auto-switch, and
+    // let the calling screen's own catch still run (we only re-reject).
+    if (error.response?.status === 403) {
+      const code = apiErrorCode(error.response.data);
+      if (code === "office_not_assigned") {
+        toast.error("You're not assigned to that office. Switch to one of yours to continue.");
+      } else if (code === "patient_not_in_office") {
+        toast.error("This patient's chart is in another office you can't access.");
+      }
+    }
     // Check if it's a 401 Unauthorized response
     if (error.response?.status === 401) {
       // Some 401s are business responses, not session expiry — don't log out:

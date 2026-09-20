@@ -25,7 +25,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdjustRequest,
   AppSchemasProcedureSetupFeeScheduleOption,
+  BulkEntriesRequest,
   ChartMaterialCreate,
   ChartMaterialRead,
   ChartMaterialUpdate,
@@ -57,6 +59,7 @@ import type {
   FeeScheduleUpdate,
   GetClaimReadinessParams,
   GetPatientProcedureReadinessParams,
+  GetPricingHealthParams,
   GetProcedureCodeEligibilityParams,
   GetProcedureReadinessParams,
   HTTPValidationError,
@@ -116,7 +119,9 @@ import type {
   ProcedureInsuranceRuleCreate,
   ProcedureInsuranceRuleRead,
   ProcedureInsuranceRuleUpdate,
-  ProcedureReadiness
+  ProcedureReadiness,
+  QuoteRequest,
+  ReassignPatientsRequest
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -647,6 +652,605 @@ export const useCreateFeeScheduleVersion = <TError = ErrorType<ErrorResponse | H
       return useMutation(getCreateFeeScheduleVersionMutationOptions(options), queryClient);
     }
     /**
+ * Fee types, pricing models, fee sources, assignment keys, the precedence
+ * card, and the warning/error code tables — served verbatim from ``fee_vocab``
+ * so the UI cannot paraphrase the hierarchy wrong.
+ * @summary The pricing vocabulary + precedence card the Setup screens render (§3.1)
+ */
+export const getFeeScheduleMetadata = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/metadata`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetFeeScheduleMetadataQueryKey = () => {
+    return [
+    `/api/v1/fee-schedules/metadata`
+    ] as const;
+    }
+
+
+export const getGetFeeScheduleMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeeScheduleMetadataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeeScheduleMetadata>>> = ({ signal }) => getFeeScheduleMetadata(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFeeScheduleMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeScheduleMetadata>>>
+export type GetFeeScheduleMetadataQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The pricing vocabulary + precedence card the Setup screens render (§3.1)
+ */
+
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFeeScheduleMetadataQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Where a fee schedule is used, and whether it can be retired (§3.5)
+ */
+export const getFeeScheduleUsage = (
+    scheduleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/usage`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetFeeScheduleUsageQueryKey = (scheduleId: number,) => {
+    return [
+    `/api/v1/fee-schedules/${scheduleId}/usage`
+    ] as const;
+    }
+
+
+export const getGetFeeScheduleUsageQueryOptions = <TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeeScheduleUsageQueryKey(scheduleId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeeScheduleUsage>>> = ({ signal }) => getFeeScheduleUsage(scheduleId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: scheduleId !== null && scheduleId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFeeScheduleUsageQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeScheduleUsage>>>
+export type GetFeeScheduleUsageQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Where a fee schedule is used, and whether it can be retired (§3.5)
+ */
+
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFeeScheduleUsageQueryOptions(scheduleId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Soft-retire a fee schedule (refused while it is still referenced)
+ */
+export const retireFeeSchedule = (
+    scheduleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<FeeScheduleRead>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/retire`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getRetireFeeScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retireFeeSchedule>>, TError,{scheduleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof retireFeeSchedule>>, TError,{scheduleId: number}, TContext> => {
+
+const mutationKey = ['retireFeeSchedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof retireFeeSchedule>>, {scheduleId: number}> = (props) => {
+          const {scheduleId} = props ?? {};
+
+          return  retireFeeSchedule(scheduleId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RetireFeeScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof retireFeeSchedule>>>
+
+    export type RetireFeeScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Soft-retire a fee schedule (refused while it is still referenced)
+ */
+export const useRetireFeeSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retireFeeSchedule>>, TError,{scheduleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof retireFeeSchedule>>,
+        TError,
+        {scheduleId: number},
+        TContext
+      > => {
+      return useMutation(getRetireFeeScheduleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Upsert many entries at once; a shared effective_date is the New Effective Date workflow
+ */
+export const bulkUpsertFeeScheduleEntries = (
+    scheduleId: number,
+    bulkEntriesRequest: BodyType<BulkEntriesRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/entries/bulk`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkEntriesRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkUpsertFeeScheduleEntriesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BulkEntriesRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BulkEntriesRequest>}, TContext> => {
+
+const mutationKey = ['bulkUpsertFeeScheduleEntries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, {scheduleId: number;data: BodyType<BulkEntriesRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  bulkUpsertFeeScheduleEntries(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkUpsertFeeScheduleEntriesMutationResult = NonNullable<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>>
+    export type BulkUpsertFeeScheduleEntriesMutationBody = BodyType<BulkEntriesRequest>
+    export type BulkUpsertFeeScheduleEntriesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Upsert many entries at once; a shared effective_date is the New Effective Date workflow
+ */
+export const useBulkUpsertFeeScheduleEntries = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BulkEntriesRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>,
+        TError,
+        {scheduleId: number;data: BodyType<BulkEntriesRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkUpsertFeeScheduleEntriesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Write a new dated set of prices adjusted from the current ones (percent or amount)
+ */
+export const adjustFeeScheduleEntries = (
+    scheduleId: number,
+    adjustRequest: BodyType<AdjustRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/adjust`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adjustRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getAdjustFeeScheduleEntriesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<AdjustRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<AdjustRequest>}, TContext> => {
+
+const mutationKey = ['adjustFeeScheduleEntries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, {scheduleId: number;data: BodyType<AdjustRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  adjustFeeScheduleEntries(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdjustFeeScheduleEntriesMutationResult = NonNullable<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>>
+    export type AdjustFeeScheduleEntriesMutationBody = BodyType<AdjustRequest>
+    export type AdjustFeeScheduleEntriesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Write a new dated set of prices adjusted from the current ones (percent or amount)
+ */
+export const useAdjustFeeScheduleEntries = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<AdjustRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adjustFeeScheduleEntries>>,
+        TError,
+        {scheduleId: number;data: BodyType<AdjustRequest>},
+        TContext
+      > => {
+      return useMutation(getAdjustFeeScheduleEntriesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Move patients off this schedule onto another (Change Patient Fee Schedule)
+ */
+export const reassignFeeSchedulePatients = (
+    scheduleId: number,
+    reassignPatientsRequest: BodyType<ReassignPatientsRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/reassign-patients`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reassignPatientsRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getReassignFeeSchedulePatientsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, TError,{scheduleId: number;data: BodyType<ReassignPatientsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, TError,{scheduleId: number;data: BodyType<ReassignPatientsRequest>}, TContext> => {
+
+const mutationKey = ['reassignFeeSchedulePatients'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, {scheduleId: number;data: BodyType<ReassignPatientsRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  reassignFeeSchedulePatients(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReassignFeeSchedulePatientsMutationResult = NonNullable<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>>
+    export type ReassignFeeSchedulePatientsMutationBody = BodyType<ReassignPatientsRequest>
+    export type ReassignFeeSchedulePatientsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Move patients off this schedule onto another (Change Patient Fee Schedule)
+ */
+export const useReassignFeeSchedulePatients = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, TError,{scheduleId: number;data: BodyType<ReassignPatientsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reassignFeeSchedulePatients>>,
+        TError,
+        {scheduleId: number;data: BodyType<ReassignPatientsRequest>},
+        TContext
+      > => {
+      return useMutation(getReassignFeeSchedulePatientsMutationOptions(options), queryClient);
+    }
+    /**
+ * With a ``patient_id`` this is the full estimate (fee + coverage split); with
+ * none it is a fee-only quote for the office/provider/plan/date context, so a
+ * screen can price before a patient or a date of service exists.
+ * @summary Price one or more lines for a context (scheduler / template / add-patient)
+ */
+export const quoteProcedureFees = (
+    quoteRequest: BodyType<QuoteRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/pricing/quote`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: quoteRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getQuoteProcedureFeesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quoteProcedureFees>>, TError,{data: BodyType<QuoteRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof quoteProcedureFees>>, TError,{data: BodyType<QuoteRequest>}, TContext> => {
+
+const mutationKey = ['quoteProcedureFees'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof quoteProcedureFees>>, {data: BodyType<QuoteRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  quoteProcedureFees(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type QuoteProcedureFeesMutationResult = NonNullable<Awaited<ReturnType<typeof quoteProcedureFees>>>
+    export type QuoteProcedureFeesMutationBody = BodyType<QuoteRequest>
+    export type QuoteProcedureFeesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Price one or more lines for a context (scheduler / template / add-patient)
+ */
+export const useQuoteProcedureFees = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quoteProcedureFees>>, TError,{data: BodyType<QuoteRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof quoteProcedureFees>>,
+        TError,
+        {data: BodyType<QuoteRequest>},
+        TContext
+      > => {
+      return useMutation(getQuoteProcedureFeesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Coded pricing-setup findings, each naming the screen that owns the fix
+ */
+export const getPricingHealth = (
+    params?: GetPricingHealthParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/setup/pricing-health`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPricingHealthQueryKey = (params?: GetPricingHealthParams,) => {
+    return [
+    `/api/v1/setup/pricing-health`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPricingHealthQueryOptions = <TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPricingHealthQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPricingHealth>>> = ({ signal }) => getPricingHealth(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPricingHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getPricingHealth>>>
+export type GetPricingHealthQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  GetPricingHealthParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPricingHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getPricingHealth>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPricingHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getPricingHealth>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Coded pricing-setup findings, each naming the screen that owns the fix
+ */
+
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPricingHealthQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Catalog KPI counts (total / active / inactive / ortho / by-category)
  */
 export const getProcedureCodeStats = (
@@ -2089,6 +2693,7 @@ export function useGetProcedureCode<TData = Awaited<ReturnType<typeof getProcedu
 
 
 /**
+ * Partial update of one procedure code.
  * @summary Update procedure code
  */
 export const updateProcedureCode = (
@@ -2153,6 +2758,7 @@ export const useUpdateProcedureCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProcedureCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one procedure code.
  * @summary Delete procedure code
  */
 export const deleteProcedureCode = (
@@ -2462,6 +3068,7 @@ export function useGetFeeSchedule<TData = Awaited<ReturnType<typeof getFeeSchedu
 
 
 /**
+ * Partial update of one fee schedule.
  * @summary Update fee schedule
  */
 export const updateFeeSchedule = (
@@ -2526,6 +3133,7 @@ export const useUpdateFeeSchedule = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateFeeScheduleMutationOptions(options), queryClient);
     }
     /**
+ * Delete one fee schedule.
  * @summary Delete fee schedule
  */
 export const deleteFeeSchedule = (
@@ -2835,6 +3443,7 @@ export function useGetFeeScheduleEntry<TData = Awaited<ReturnType<typeof getFeeS
 
 
 /**
+ * Partial update of one fee schedule entry. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update fee schedule entry
  */
 export const updateFeeScheduleEntry = (
@@ -2899,6 +3508,7 @@ export const useUpdateFeeScheduleEntry = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateFeeScheduleEntryMutationOptions(options), queryClient);
     }
     /**
+ * Delete one fee schedule entry. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete fee schedule entry
  */
 export const deleteFeeScheduleEntry = (
@@ -3208,6 +3818,7 @@ export function useGetCodeBundle<TData = Awaited<ReturnType<typeof getCodeBundle
 
 
 /**
+ * Partial update of one code bundle.
  * @summary Update code bundle
  */
 export const updateCodeBundle = (
@@ -3272,6 +3883,7 @@ export const useUpdateCodeBundle = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCodeBundleMutationOptions(options), queryClient);
     }
     /**
+ * Delete one code bundle.
  * @summary Delete code bundle
  */
 export const deleteCodeBundle = (
@@ -3581,6 +4193,7 @@ export function useGetCodeBundleItem<TData = Awaited<ReturnType<typeof getCodeBu
 
 
 /**
+ * Partial update of one code bundle item.
  * @summary Update code bundle item
  */
 export const updateCodeBundleItem = (
@@ -3645,6 +4258,7 @@ export const useUpdateCodeBundleItem = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCodeBundleItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one code bundle item.
  * @summary Delete code bundle item
  */
 export const deleteCodeBundleItem = (
@@ -3954,6 +4568,7 @@ export function useGetChartMaterial<TData = Awaited<ReturnType<typeof getChartMa
 
 
 /**
+ * Partial update of one chart material. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update chart material
  */
 export const updateChartMaterial = (
@@ -4018,6 +4633,7 @@ export const useUpdateChartMaterial = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateChartMaterialMutationOptions(options), queryClient);
     }
     /**
+ * Delete one chart material. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete chart material
  */
 export const deleteChartMaterial = (
@@ -4327,6 +4943,7 @@ export function useGetNoteMacro<TData = Awaited<ReturnType<typeof getNoteMacro>>
 
 
 /**
+ * Partial update of one note macro. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update note macro
  */
 export const updateNoteMacro = (
@@ -4391,6 +5008,7 @@ export const useUpdateNoteMacro = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateNoteMacroMutationOptions(options), queryClient);
     }
     /**
+ * Delete one note macro. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete note macro
  */
 export const deleteNoteMacro = (
@@ -4700,6 +5318,7 @@ export function useGetPrescriptionLibraryItem<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Partial update of one prescription library item. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update prescription library item
  */
 export const updatePrescriptionLibraryItem = (
@@ -4764,6 +5383,7 @@ export const useUpdatePrescriptionLibraryItem = <TError = ErrorType<ErrorRespons
       return useMutation(getUpdatePrescriptionLibraryItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one prescription library item. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete prescription library item
  */
 export const deletePrescriptionLibraryItem = (
@@ -5073,6 +5693,7 @@ export function useGetPlaceOfServiceCode<TData = Awaited<ReturnType<typeof getPl
 
 
 /**
+ * Partial update of one place of service code.
  * @summary Update place of service code
  */
 export const updatePlaceOfServiceCode = (
@@ -5137,6 +5758,7 @@ export const useUpdatePlaceOfServiceCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePlaceOfServiceCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one place of service code.
  * @summary Delete place of service code
  */
 export const deletePlaceOfServiceCode = (
@@ -5446,6 +6068,7 @@ export function useGetIcdCode<TData = Awaited<ReturnType<typeof getIcdCode>>, TE
 
 
 /**
+ * Partial update of one icd code.
  * @summary Update icd code
  */
 export const updateIcdCode = (
@@ -5510,6 +6133,7 @@ export const useUpdateIcdCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateIcdCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one icd code.
  * @summary Delete icd code
  */
 export const deleteIcdCode = (
@@ -5819,6 +6443,7 @@ export function useGetExplosionCode<TData = Awaited<ReturnType<typeof getExplosi
 
 
 /**
+ * Partial update of one explosion code.
  * @summary Update explosion code
  */
 export const updateExplosionCode = (
@@ -5883,6 +6508,7 @@ export const useUpdateExplosionCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateExplosionCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one explosion code.
  * @summary Delete explosion code
  */
 export const deleteExplosionCode = (
@@ -6192,6 +6818,7 @@ export function useGetExplosionCodeItem<TData = Awaited<ReturnType<typeof getExp
 
 
 /**
+ * Partial update of one explosion code item.
  * @summary Update explosion code item
  */
 export const updateExplosionCodeItem = (
@@ -6256,6 +6883,7 @@ export const useUpdateExplosionCodeItem = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateExplosionCodeItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one explosion code item.
  * @summary Delete explosion code item
  */
 export const deleteExplosionCodeItem = (
@@ -6565,6 +7193,7 @@ export function useGetFeeScheduleAssignment<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Partial update of one fee schedule assignment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update fee schedule assignment
  */
 export const updateFeeScheduleAssignment = (
@@ -6629,6 +7258,7 @@ export const useUpdateFeeScheduleAssignment = <TError = ErrorType<ErrorResponse>
       return useMutation(getUpdateFeeScheduleAssignmentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one fee schedule assignment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete fee schedule assignment
  */
 export const deleteFeeScheduleAssignment = (

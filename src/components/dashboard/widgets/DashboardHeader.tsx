@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, CalendarDays, Clock, UserCircle2 } from "lucide-react";
-import { useAuth } from "../../../contexts/AuthContext.js";
 import type { UserRole } from "../../../contexts/AuthContext.js";
+import { useOfficeScope } from "@/features/office-scope";
 import { roleLabel } from "../lib/dashboardUtils";
 
 interface DashboardHeaderProps {
   userName?: string;
   role?: UserRole;
-  currentOffice: string;
+  /** Kept for the route wrapper's props contract; the office comes from useOfficeScope(). */
+  currentOffice?: string;
 }
 
 /**
  * Executive header: greeting + identity + current office + live date/time clock.
  */
-export default function DashboardHeader({ userName, role, currentOffice }: DashboardHeaderProps) {
-  const { organizations, currentOrganization } = useAuth();
+export default function DashboardHeader({ userName, role }: DashboardHeaderProps) {
+  const { office, office_id } = useOfficeScope();
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -22,11 +23,9 @@ export default function DashboardHeader({ userName, role, currentOffice }: Dashb
     return () => clearInterval(id);
   }, []);
 
-  const officeName = useMemo(() => {
-    const org = organizations.find((o) => o.id === currentOrganization);
-    const office = org?.offices.find((o) => o.id === currentOffice);
-    return office?.displayName || office?.name || currentOffice || "No office selected";
-  }, [organizations, currentOrganization, currentOffice]);
+  // The catalog name — never the raw "OFF-<id>" key (which used to show when the
+  // user had no assignment rows to resolve the name from).
+  const officeName = office?.name ?? (office_id != null ? `Office ${office_id}` : "No office selected");
 
   const greeting = now.getHours() < 12 ? "Good morning" : now.getHours() < 18 ? "Good afternoon" : "Good evening";
   const dateStr = now.toLocaleDateString(undefined, {

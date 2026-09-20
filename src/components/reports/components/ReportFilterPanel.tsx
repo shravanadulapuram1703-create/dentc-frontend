@@ -2,6 +2,8 @@
 // (def.filters + def.extraFilters). Presentational: it edits a draft object that
 // the ReportShell commits on "Run report".
 import { Play, RotateCcw, Loader2 } from "lucide-react";
+import type { OfficeOption } from "@/services/officeLookup";
+import { useOfficeScope } from "@/features/office-scope";
 import { PRESET_LABELS, type RangePreset } from "../lib/reportRange";
 import { useOffices, useProviders, officeName } from "../lib/useReportRefData";
 import { providerOptionLabel } from "@/services/providerDirectory";
@@ -35,6 +37,28 @@ export default function ReportFilterPanel({ def, draft, onChange, onRun, onReset
   const has = (k: string) => def.filters.includes(k as never);
   const officesQ = useOffices();
   const providersQ = useProviders(draft.office ? Number(draft.office) : null);
+
+  // Office picker: "All offices" stays available to everyone (assignments are
+  // not enforced yet); the user's own offices are listed first as a hint, every
+  // other office below — prefer, never exclude.
+  const { assigned_office_ids } = useOfficeScope();
+  const offices = officesQ.data ?? [];
+  const myOffices = offices.filter((o) => assigned_office_ids.includes(o.id));
+  const otherOffices = offices.filter((o) => !assigned_office_ids.includes(o.id));
+  // `useOffices` is the shared catalog filtered to active offices; a draft office
+  // outside it (a deactivated working office, a saved view) must stay selectable
+  // rather than rendering blank.
+  const draftOfficeId = draft.office ? Number(draft.office) : null;
+  const missingOffice =
+    draftOfficeId != null && !offices.some((o) => o.id === draftOfficeId) ? draftOfficeId : null;
+  const officeOptions = (list: OfficeOption[]) =>
+    list.map((o) => (
+      <option key={o.id} value={String(o.id)}>
+        {officeName(o)}
+      </option>
+    ));
+  const missingOption =
+    missingOffice != null ? <option value={String(missingOffice)}>Office {missingOffice}</option> : null;
 
   return (
     <form
@@ -108,11 +132,22 @@ export default function ReportFilterPanel({ def, draft, onChange, onRun, onReset
               className={fieldCls}
             >
               <option value="">All offices</option>
-              {(officesQ.data ?? []).map((o) => (
-                <option key={o.id} value={String(o.id)}>
-                  {officeName(o)}
-                </option>
-              ))}
+              {myOffices.length > 0 ? (
+                <>
+                  <optgroup label="My offices">{officeOptions(myOffices)}</optgroup>
+                  {(otherOffices.length > 0 || missingOption) && (
+                    <optgroup label="Other offices">
+                      {missingOption}
+                      {officeOptions(otherOffices)}
+                    </optgroup>
+                  )}
+                </>
+              ) : (
+                <>
+                  {missingOption}
+                  {officeOptions(offices)}
+                </>
+              )}
             </select>
           </div>
         )}

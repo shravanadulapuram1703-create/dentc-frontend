@@ -17,4 +17,8 @@ provider_id?: string | null;
  * Override the patient's primary plan
  */
 ins_plan_id?: number | null;
+/**
+ * Price against the entry in force on this date (v2)
+ */
+date_of_service?: string | null;
 };

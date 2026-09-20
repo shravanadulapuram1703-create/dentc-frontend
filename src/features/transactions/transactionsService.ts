@@ -10,7 +10,7 @@ import {
   expandExplosionCode,
 } from '@/api/generated/endpoints/billing/billing';
 import { listExplosionCodes } from '@/api/generated/endpoints/procedures/procedures';
-import { listOffices } from '@/api/generated/endpoints/organization/organization';
+import { listOfficeOptions } from '@/services/officeLookup';
 import { listPatientInsurance } from '@/api/generated/endpoints/patients/patients';
 import {
   getInsurancePlan,
@@ -137,12 +137,13 @@ export interface OfficeLabel {
 /**
  * `id -> office` for every office in the tenant, so the grid can render
  * "MOON" / "Excel Dental- Moon" instead of the raw `office_id` integer that
- * `patient_procedures.office_id` carries.
+ * `patient_procedures.office_id` carries. Backed by the shared office catalog
+ * (`listOfficeOptions`, session-cached).
  */
 export async function loadOfficeDirectory(): Promise<Map<number, OfficeLabel>> {
-  const res = await listOffices({ size: 200 });
+  const offices = await listOfficeOptions();
   const map = new Map<number, OfficeLabel>();
-  for (const o of res.items ?? []) {
+  for (const o of offices) {
     map.set(o.id, {
       id: o.id,
       code: (o.short_id || o.office_code || String(o.id)).trim(),

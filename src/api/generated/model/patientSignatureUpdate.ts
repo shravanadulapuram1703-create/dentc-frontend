@@ -32,4 +32,8 @@ export interface PatientSignatureUpdate {
   captured_user_agent?: string | null;
   progress_note_id?: number | null;
   consent_id?: number | null;
+  claim_id?: string | null;
+  signer_name?: string | null;
+  signer_relationship?: string | null;
+  signer_provider_id?: string | null;
 }

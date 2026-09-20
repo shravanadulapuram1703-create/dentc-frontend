@@ -29,6 +29,34 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { PatientShellToggle } from "./PatientShellToggle";
+import { useRights, type RightCode } from "@/features/access-control";
+
+// RBAC: view-or-full right(s) that grant each patient tab, keyed by label. A tab
+// with any of its codes is shown; tabs NOT listed here are always shown
+// (default-allow — utility/search actions and anything not yet mapped). While the
+// access-control kill-switch is dark, `hasAny` grants everything, so nothing hides.
+const TAB_RIGHTS: Record<string, RightCode[]> = {
+  Overview: ["patient_patient_overview_view_only", "patient_patient_overview_screen_full_control"],
+  Transaction: ["transactions_transaction_entry_view_only", "transactions_transaction_entry_screen_full_control"],
+  Ledger: ["transactions_patient_ledger_view_only", "transactions_patient_ledger_screen_full_control"],
+  Insurance: ["patient_insurance_plan_information_view_only", "patient_insurance_plan_information_screen_full_control"],
+  Restorative: ["charting_restorative_view_only", "charting_restorative_full_control"],
+  Perio: ["charting_perio_view_only", "charting_perio_full_control"],
+  "X-Ray": ["imaging_view_only", "imaging_full_control"],
+  Progress: ["patient_view_progress_notes", "patient_add_progress_notes", "patient_edit_progress_notes"],
+  Treatment: ["transactions_treatment_plan_view_only", "transactions_treatment_plan_screen_full_control"],
+  Prescriptions: ["patient_prescription_view_only", "patient_prescription_screen_full_control"],
+  "Lab Tracking": ["patient_lab_cases_view_only", "patient_lab_cases_full_control"],
+  "Medical Hx": ["patient_medical_history_view_only", "patient_medical_history_full_control"],
+  Notes: ["patient_patient_notes_view_only", "patient_patient_notes_add", "patient_patient_notes_edit"],
+  Documents: ["patient_documents_view_only", "patient_documents_full_control"],
+  Emergency: ["patient_emergency_contacts_view_only", "patient_emergency_contacts_full_control"],
+  Letters: ["patient_letters_view_only", "patient_letters_full_control"],
+  Messages: ["patient_messaging_hub_view_only", "patient_messaging_hub_user_full_control"],
+  "SMS/Email": ["patient_email_or_text_message_view_only", "patient_email_or_text_message_full_control"],
+  "New Patient": ["patient_add_new_patient_full_control", "patient_add_new_patient_quick_save"],
+  "New Member": ["patient_add_new_member_full_control", "patient_add_new_member_quick_save"],
+};
 
 interface PatientSecondaryNavProps {
   patientId: string;
@@ -58,6 +86,7 @@ export default function PatientSecondaryNav({
 }: PatientSecondaryNavProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { hasAny } = useRights();
 
   const handleNavigation = (path: string) => {
     navigate(`/patient/${patientId}${path}`);
@@ -158,7 +187,7 @@ export default function PatientSecondaryNav({
       label: "New Patient",
       gradient: "from-green-600 to-emerald-600",
       onClick: () => {
-        window.open("/patient/new", "_blank");
+        navigate("/patient/new");
       },
       description: "Add New Patient",
     },
@@ -264,12 +293,19 @@ export default function PatientSecondaryNav({
     },
   ];
 
+  // RBAC: hide a tab when the user holds none of its mapped rights (unmapped =
+  // always shown). Kill-switch dark → hasAny grants → all tabs visible.
+  const visibleActions = patientActions.filter((a) => {
+    const codes = TAB_RIGHTS[a.label];
+    return !codes || hasAny(codes);
+  });
+
   const base = `/patient/${patientId}`;
   const isActionActive = (action: PatientAction) => {
     const matchSeg = action.activeMatch ?? action.path;
     return !!matchSeg && pathname.startsWith(base + matchSeg);
   };
-  const activeAction = patientActions.find(isActionActive);
+  const activeAction = visibleActions.find(isActionActive);
 
   if (collapsed) {
     return (
@@ -314,7 +350,7 @@ export default function PatientSecondaryNav({
       {/* Patient Action Icons - Medical Theme */}
       <div className="px-6 pr-32 py-3 overflow-x-auto overflow-y-visible">
         <div className="flex items-center gap-2.5 min-w-max">
-          {patientActions.map((action, index) => {
+          {visibleActions.map((action, index) => {
             const isActive = isActionActive(action);
             const onClick = action.onClick ?? (() => handleNavigation(action.path!));
             return (

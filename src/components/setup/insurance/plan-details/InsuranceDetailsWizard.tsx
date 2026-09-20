@@ -365,6 +365,7 @@ export default function InsuranceDetailsWizard({
           ) : step === 0 ? (
             <PlanStep
               form={form}
+              planId={mode !== "create" ? plan_id : null}
               onChange={update}
               category={category}
               onCategoryChange={setCategory}

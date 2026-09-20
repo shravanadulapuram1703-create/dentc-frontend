@@ -6,6 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * EDIT-PLAN-1: ``expected_updated_at`` is the ``updated_at`` the client read
+ * when it opened the wizard. Send it and the save is refused (412) if the row
+ * moved since; send an explicit ``null`` to assert the row has never been
+ * updated; leave it out for no precondition. ``If-Match`` / ``If-Unmodified-
+ * Since`` headers are the equivalent transport-level form.
+ */
 export interface InsurancePlanUpdate {
   carrier_id?: number | null;
   employer_id?: number | null;
@@ -31,9 +38,13 @@ export interface InsurancePlanUpdate {
   per_visit_copay?: number | string | null;
   lifetime_ortho_benefits?: boolean | null;
   plan_notes?: string | null;
+  is_non_dup_benefits?: boolean | null;
+  legacy_prepaid_code?: string | null;
+  is_locked?: boolean | null;
   created_on?: string | null;
   modified_on?: string | null;
   modified_by?: string | null;
   is_active?: boolean | null;
   allow_duplicate_group?: boolean;
+  expected_updated_at?: string | null;
 }

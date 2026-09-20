@@ -9,7 +9,10 @@ import type { CodeGroup } from './codeGroup';
 import type { DefaultCoverageRule } from './defaultCoverageRule';
 import type { FrequencyLimitation } from './frequencyLimitation';
 import type { InsurancePlanMetadataCatalogSources } from './insurancePlanMetadataCatalogSources';
+import type { InsurancePlanMetadataConcurrency } from './insurancePlanMetadataConcurrency';
 import type { InsurancePlanMetadataConventions } from './insurancePlanMetadataConventions';
+import type { InsurancePlanMetadataPermissions } from './insurancePlanMetadataPermissions';
+import type { InsurancePlanMetadataPlanFieldDefaults } from './insurancePlanMetadataPlanFieldDefaults';
 import type { InsurancePlanMetadataPlanFieldOptions } from './insurancePlanMetadataPlanFieldOptions';
 
 export interface InsurancePlanMetadata {
@@ -17,6 +20,9 @@ export interface InsurancePlanMetadata {
   default_coverage_rules: DefaultCoverageRule[];
   code_groups: CodeGroup[];
   plan_field_options: InsurancePlanMetadataPlanFieldOptions;
+  plan_field_defaults?: InsurancePlanMetadataPlanFieldDefaults;
+  permissions?: InsurancePlanMetadataPermissions;
+  concurrency?: InsurancePlanMetadataConcurrency;
   catalog_sources: InsurancePlanMetadataCatalogSources;
   conventions: InsurancePlanMetadataConventions;
 }

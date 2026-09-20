@@ -14,6 +14,7 @@ export interface UserSignatureRead {
   /** When the signature last changed */
   updated_at?: string | null;
   signed_at?: string | null;
+  capture_method?: string | null;
   has_sig_string?: boolean;
   sig_string?: string | null;
   sig_format?: string | null;

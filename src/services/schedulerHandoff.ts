@@ -11,6 +11,7 @@
 // `treatment_plan_id`).
 
 import type { NavigateFunction } from "react-router-dom";
+import { officeKeyToId } from "@/services/officeLookup";
 
 export interface SchedulerBookingRequest {
   /** PatientRead.id — the appointment's `patient_id`. */
@@ -27,6 +28,13 @@ export interface SchedulerBookingRequest {
    * the operatory assigned to this provider when no slot was clicked.
    */
   provider_id?: string | null;
+  /**
+   * Office the booking is meant for (e.g. the plan's / patient's office).
+   * Optional: callers that have no opinion leave it undefined. When it differs
+   * from the working office the scheduler shows a "Switch to <office>" banner
+   * instead of silently booking into the wrong office's operatories.
+   */
+  office_id?: number;
   /** Where the request came from (for the scheduler banner). */
   source?: "treatment-plan" | "restorative" | "patient-overview";
 }
@@ -49,6 +57,11 @@ export const bookingRequestFromState = (
   const plan_item_ids = Array.isArray(raw.plan_item_ids)
     ? raw.plan_item_ids.map((id) => String(id)).filter(Boolean)
     : [];
+  // Numeric id or an "OFF-<id>" key — the ONE parser decides, never parseInt.
+  const office_id =
+    typeof raw.office_id === "number" || typeof raw.office_id === "string"
+      ? officeKeyToId(raw.office_id)
+      : undefined;
   return {
     patient_id,
     patient_name:
@@ -58,6 +71,7 @@ export const bookingRequestFromState = (
       typeof raw.provider_id === "string" && raw.provider_id
         ? raw.provider_id
         : null,
+    ...(office_id != null && office_id > 0 ? { office_id } : {}),
     source:
       raw.source === "treatment-plan" ||
       raw.source === "restorative" ||

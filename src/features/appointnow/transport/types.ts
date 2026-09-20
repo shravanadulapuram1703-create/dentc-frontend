@@ -2,16 +2,20 @@
 // (public booking screen + staff request inbox) and its backend. Two
 // implementations exist:
 //
-//   - localTransport.ts — client-side simulation (localStorage + BroadcastChannel).
-//                         The default; makes the whole request→approve flow
-//                         demonstrable end-to-end in a browser with no backend.
-//   - realTransport.ts  — env-gated REST client that targets the contract in
-//                         docs/appointnow/appointnow_backend_devreport.md. INERT
-//                         until VITE_APPOINTNOW_BACKEND=api.
+//   - realTransport.ts  — the DEFAULT: REST client for the shipped backend
+//                         (/api/v1/appointnow/*) + the `appointnow.request` push
+//                         envelope on the messaging WebSocket. Requests submitted
+//                         from ANY device land in the tenant's booking_requests
+//                         table and reach every staff session of that office.
+//   - localTransport.ts — client-side simulation (localStorage + BroadcastChannel),
+//                         opt-in via VITE_APPOINTNOW_BACKEND=local for demos with
+//                         no backend. Only ever visible inside ONE browser profile.
 //
 // Swapping between them is a config change (VITE_APPOINTNOW_BACKEND) in
-// bookingService.ts — no UI change. Keep this interface backend-shaped so the
-// real implementation is a drop-in.
+// bookingService.ts — no UI change. Keep this interface backend-shaped so both
+// implementations stay drop-ins. Capability flags (`supportsPush`,
+// `supportsReschedule`, `booksOnApprove`) let the UI adapt to what the connected
+// backend can do instead of guessing.
 
 /** Booking-request lifecycle. */
 export type BookingRequestStatus = "pending" | "approved" | "declined" | "expired";
@@ -37,6 +41,11 @@ export interface PublicOfficeInfo {
   address?: string | null;
   /** Providers exposed to online booking; empty ⇒ "any available provider". */
   providers: PublicProvider[];
+  /**
+   * Per-office reason catalog served by the backend (AN-1). Empty/absent ⇒ the
+   * page falls back to the built-in `APPOINTMENT_REASONS`.
+   */
+  reasons?: AppointmentReason[];
   /** True when this info came from the client-side simulation, not the backend. */
   is_simulated: boolean;
 }
@@ -47,6 +56,8 @@ export interface AppointmentReason {
   label: string;
   /** Minutes the appointment blocks the chair. */
   duration_minutes: number;
+  /** When true the patient must pick a specific provider for this reason. */
+  requires_provider?: boolean;
 }
 
 /** Query for open slots on a given day. */
@@ -132,8 +143,19 @@ export interface BookingRequest {
   updated_at: string;
   /** Set once approved and booked into the scheduler. */
   appointment_id?: string | null;
-  /** Staff who actioned it (display name). */
+  /** PMS patient linked/created on approve (AN-9); null while unlinked. */
+  patient_id?: number | null;
+  /** Staff who approved/declined it (display name, `actioned_by_name` server-side). */
   actioned_by?: string | null;
+  /** ISO timestamp of the approve/decline action (server-side). */
+  actioned_at?: string | null;
+  /** Staff who last rescheduled it (AN-14). */
+  rescheduled_by?: string | null;
+  rescheduled_at?: string | null;
+  reschedule_count?: number;
+  /** Last outbound notification to the contact (AN-21): "sms" | "email" | null. */
+  contact_notified_via?: string | null;
+  contact_notified_at?: string | null;
   /** Reason captured on decline. */
   decline_reason?: string | null;
   /**
@@ -144,10 +166,50 @@ export interface BookingRequest {
   original_slot?: AvailableSlot | null;
 }
 
+/** Unfiltered per-status totals for the inbox tabs / nav badge (AN-13). */
+export interface StatusCounts {
+  pending: number;
+  approved: number;
+  declined: number;
+  expired: number;
+  all: number;
+}
+
+/** Staff list query. `office_id` scopes the inbox to the selected office. */
+export interface ListRequestsParams {
+  status?: BookingRequestStatus;
+  office_id?: number | null;
+}
+
+/** Staff list result: the rows plus the server's per-status counts. */
+export interface BookingRequestList {
+  items: BookingRequest[];
+  counts: StatusCounts;
+}
+
+/** What staff pass when approving (steers the booking). */
+export interface ApproveOptions {
+  /**
+   * Appointment already booked by the CLIENT (only when `booksOnApprove` is
+   * false — the local simulation). The real backend books itself and ignores it.
+   */
+  appointment_id?: string | null;
+  /** Provider / chair the request should be booked against (server-validated). */
+  provider_id?: string | null;
+  operatory_id?: string | null;
+  /** Link the request to an existing PMS patient (AN-9). */
+  patient_id?: number | null;
+  /** Staff display name (recorded by the simulation; the server uses the JWT). */
+  actioned_by?: string | null;
+  /** The slot being booked — lets a 409 slot_conflict map to SlotConflictError. */
+  slot?: AvailableSlot;
+}
+
 /** Real-time events the transport pushes to subscribers. */
 export type BookingEvent =
   | { type: "request:new"; request: BookingRequest }
-  | { type: "request:updated"; request: BookingRequest };
+  | { type: "request:updated"; request: BookingRequest }
+  | { type: "request:deleted"; request_id: string; office_id: number | null };
 
 export type BookingEventHandler = (event: BookingEvent) => void;
 
@@ -155,6 +217,25 @@ export type BookingEventHandler = (event: BookingEvent) => void;
 export interface BookingTransport {
   /** True when this is a labelled client-side simulation. */
   readonly isSimulated: boolean;
+  /**
+   * True when `subscribe()` delivers live events (BroadcastChannel / socket).
+   * When false the staff context POLLS `listRequests` to notice new requests.
+   */
+  readonly supportsPush: boolean;
+  /**
+   * Reconciliation poll period in ms, or null for none. The real backend's push
+   * is best-effort (Redis fan-out / in-process), so the context keeps a slow
+   * poll as the source of truth even with push connected.
+   */
+  readonly pollIntervalMs: number | null;
+  /** True when `rescheduleRequest` is implemented by this backend (AN-14). */
+  readonly supportsReschedule: boolean;
+  /**
+   * True when `approveRequest` books the scheduler appointment SERVER-SIDE
+   * (atomic re-check + create). When false the caller must book first and pass
+   * the resulting `appointment_id` in `ApproveOptions`.
+   */
+  readonly booksOnApprove: boolean;
 
   /** Start listeners (BroadcastChannel / socket). Idempotent. */
   init(): Promise<void> | void;
@@ -172,30 +253,60 @@ export interface BookingTransport {
   submitRequest(input: SubmitRequestInput): Promise<BookingRequest>;
 
   // --- Staff (authenticated) surface ---------------------------------------
-  /** List requests, optionally filtered by status. */
-  listRequests(status?: BookingRequestStatus): Promise<BookingRequest[]>;
+  /** List requests (all statuses unless filtered), scoped by office when given. */
+  listRequests(params?: ListRequestsParams): Promise<BookingRequestList>;
   /**
-   * Mark a request approved. `appointmentId` is the scheduler appointment the
-   * caller booked (the staff UI books via the real scheduler API, then records
-   * the id here). Returns the updated request.
+   * Approve a request. With `booksOnApprove` the backend re-checks the slot,
+   * books the appointment and links it atomically; otherwise the caller booked
+   * already and passes `appointment_id`. Returns the updated request.
    */
-  approveRequest(id: string, appointmentId: string, actionedBy?: string): Promise<BookingRequest>;
+  approveRequest(id: string, options?: ApproveOptions): Promise<BookingRequest>;
   /** Mark a request declined. */
   declineRequest(id: string, reason?: string, actionedBy?: string): Promise<BookingRequest>;
   /**
    * Move a PENDING request to a different slot (staff-side reschedule before
    * approval). Keeps the contact details untouched, records the patient's
-   * original slot in `original_slot`, and stays `pending`.
+   * original slot in `original_slot`, and stays `pending`. Throws
+   * SlotConflictError on overlap and a plain Error when `supportsReschedule`
+   * is false.
    */
   rescheduleRequest(id: string, slot: AvailableSlot, actionedBy?: string): Promise<BookingRequest>;
+  /**
+   * Permanently remove a request (spam/test rows — AN-24). An APPROVED request
+   * is refused unless `force` is true; the booked appointment is never touched.
+   */
+  deleteRequest(id: string, force?: boolean): Promise<void>;
 }
 
-/** Reasons offered on the public page. Durations mirror typical chair time. */
+/** Empty counts (used before the first load / by the simulation). */
+export const EMPTY_COUNTS: StatusCounts = {
+  pending: 0,
+  approved: 0,
+  declined: 0,
+  expired: 0,
+  all: 0,
+};
+
+/** Compute per-status counts from a list (simulation + client fallback). */
+export function countByStatus(requests: BookingRequest[]): StatusCounts {
+  const c: StatusCounts = { ...EMPTY_COUNTS, all: requests.length };
+  for (const r of requests) {
+    if (r.status in c) c[r.status] += 1;
+  }
+  return c;
+}
+
+/**
+ * Built-in reasons offered on the public page when the office has none
+ * configured. Ids mirror the backend's default catalog
+ * (`appointnow_service._DEFAULT_REASONS`) so a submitted `reason_id` resolves
+ * server-side either way.
+ */
 export const APPOINTMENT_REASONS: AppointmentReason[] = [
-  { id: "new_patient_exam", label: "New Patient Exam", duration_minutes: 60 },
-  { id: "cleaning", label: "Cleaning & Checkup", duration_minutes: 60 },
+  { id: "new_patient", label: "New Patient Exam", duration_minutes: 60 },
+  { id: "cleaning", label: "Cleaning / Hygiene", duration_minutes: 60 },
+  { id: "checkup", label: "Checkup / Recall", duration_minutes: 30 },
   { id: "emergency", label: "Emergency / Tooth Pain", duration_minutes: 30 },
   { id: "consultation", label: "Consultation", duration_minutes: 30 },
-  { id: "follow_up", label: "Follow-up Visit", duration_minutes: 30 },
-  { id: "cosmetic", label: "Cosmetic Consultation", duration_minutes: 45 },
+  { id: "other", label: "Other", duration_minutes: 30 },
 ];

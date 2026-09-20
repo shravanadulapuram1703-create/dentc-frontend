@@ -73,6 +73,7 @@ jobs:
           docker build \
             --build-arg VITE_API_BASE_URL="$API_BASE_URL" \
             --build-arg VITE_APP_ENV=production \
+            --build-arg VITE_APPOINTNOW_BACKEND=api \
             -t "$IMAGE" .
 
           docker push "$IMAGE"

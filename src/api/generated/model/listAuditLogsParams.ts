@@ -16,6 +16,10 @@ resource_id?: string | null;
  */
 patient_id?: number | null;
 /**
+ * OFF-SCOPE-17: access-by-location — only entries made in this office
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

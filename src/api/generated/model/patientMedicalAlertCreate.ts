@@ -9,6 +9,7 @@ import type { PatientMedicalAlertCreateResponse } from './patientMedicalAlertCre
 
 export interface PatientMedicalAlertCreate {
   patient_id: number;
+  /** @maxLength 100 */
   alert_code: string;
   alert_label?: string | null;
   section?: string | null;

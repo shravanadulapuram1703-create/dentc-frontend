@@ -14,6 +14,11 @@
  * them. The full catalog (left pane) comes from the existing tenant-wide list
  * endpoints; the assigned set (right pane) from the office-scoped GET.
  */
+import { queryClient } from "@/shared/config/queryClient";
+import {
+  invalidateProviderDirectoryCache,
+  providerDirectoryKeys,
+} from "@/services/providerDirectory";
 import {
   listOfficeProcedureCodes,
   setOfficeProcedureCodes,
@@ -163,6 +168,10 @@ export const providersResource: AssignmentResource = {
     })),
   save: async (officeId, ids) => {
     await setOfficeProviders(officeId, { ids });
+    // The roster feeds every provider picker's "This office" group — drop both
+    // the module TTL cache and the React Query entry so the change shows at once.
+    invalidateProviderDirectoryCache();
+    await queryClient.invalidateQueries({ queryKey: providerDirectoryKeys.office(officeId) });
   },
 };
 

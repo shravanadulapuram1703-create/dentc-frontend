@@ -26,6 +26,7 @@ import type {
 
 import type {
   ErrorResponse,
+  GetProviderSignatureParams,
   ListOfficeGroupsParams,
   ListOfficesParams,
   ListOperatoriesParams,
@@ -49,6 +50,8 @@ import type {
   PaginatedResponseUserOfficeRead,
   ProviderCreate,
   ProviderRead,
+  ProviderSignatureRead,
+  ProviderSignatureUpdate,
   ProviderUpdate,
   TenantCreate,
   TenantRead,
@@ -67,6 +70,231 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary A provider's signature on file — the provider store, else the linked user's (SIG-14)
+ */
+export const getProviderSignature = (
+    providerId: string,
+    params?: GetProviderSignatureParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProviderSignatureRead>(
+      {url: `/api/v1/providers/${providerId}/signature`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetProviderSignatureQueryKey = (providerId: string,
+    params?: GetProviderSignatureParams,) => {
+    return [
+    `/api/v1/providers/${providerId}/signature`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProviderSignatureQueryOptions = <TData = Awaited<ReturnType<typeof getProviderSignature>>, TError = ErrorType<ErrorResponse>>(providerId: string,
+    params?: GetProviderSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviderSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProviderSignatureQueryKey(providerId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProviderSignature>>> = ({ signal }) => getProviderSignature(providerId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: providerId !== null && providerId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProviderSignature>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProviderSignatureQueryResult = NonNullable<Awaited<ReturnType<typeof getProviderSignature>>>
+export type GetProviderSignatureQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetProviderSignature<TData = Awaited<ReturnType<typeof getProviderSignature>>, TError = ErrorType<ErrorResponse>>(
+ providerId: string,
+    params: undefined |  GetProviderSignatureParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviderSignature>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProviderSignature>>,
+          TError,
+          Awaited<ReturnType<typeof getProviderSignature>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProviderSignature<TData = Awaited<ReturnType<typeof getProviderSignature>>, TError = ErrorType<ErrorResponse>>(
+ providerId: string,
+    params?: GetProviderSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviderSignature>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProviderSignature>>,
+          TError,
+          Awaited<ReturnType<typeof getProviderSignature>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProviderSignature<TData = Awaited<ReturnType<typeof getProviderSignature>>, TError = ErrorType<ErrorResponse>>(
+ providerId: string,
+    params?: GetProviderSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviderSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary A provider's signature on file — the provider store, else the linked user's (SIG-14)
+ */
+
+export function useGetProviderSignature<TData = Awaited<ReturnType<typeof getProviderSignature>>, TError = ErrorType<ErrorResponse>>(
+ providerId: string,
+    params?: GetProviderSignatureParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProviderSignature>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProviderSignatureQueryOptions(providerId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Save a provider's signature (Topaz block accepted; replaces the whole block)
+ */
+export const setProviderSignature = (
+    providerId: string,
+    providerSignatureUpdate: BodyType<ProviderSignatureUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProviderSignatureRead>(
+      {url: `/api/v1/providers/${providerId}/signature`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: providerSignatureUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getSetProviderSignatureMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSignature>>, TError,{providerId: string;data: BodyType<ProviderSignatureUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setProviderSignature>>, TError,{providerId: string;data: BodyType<ProviderSignatureUpdate>}, TContext> => {
+
+const mutationKey = ['setProviderSignature'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setProviderSignature>>, {providerId: string;data: BodyType<ProviderSignatureUpdate>}> = (props) => {
+          const {providerId,data} = props ?? {};
+
+          return  setProviderSignature(providerId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetProviderSignatureMutationResult = NonNullable<Awaited<ReturnType<typeof setProviderSignature>>>
+    export type SetProviderSignatureMutationBody = BodyType<ProviderSignatureUpdate>
+    export type SetProviderSignatureMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Save a provider's signature (Topaz block accepted; replaces the whole block)
+ */
+export const useSetProviderSignature = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setProviderSignature>>, TError,{providerId: string;data: BodyType<ProviderSignatureUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setProviderSignature>>,
+        TError,
+        {providerId: string;data: BodyType<ProviderSignatureUpdate>},
+        TContext
+      > => {
+      return useMutation(getSetProviderSignatureMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Clear a provider's stored signature (audited as `cleared`)
+ */
+export const clearProviderSignature = (
+    providerId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/providers/${providerId}/signature`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getClearProviderSignatureMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearProviderSignature>>, TError,{providerId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clearProviderSignature>>, TError,{providerId: string}, TContext> => {
+
+const mutationKey = ['clearProviderSignature'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clearProviderSignature>>, {providerId: string}> = (props) => {
+          const {providerId} = props ?? {};
+
+          return  clearProviderSignature(providerId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClearProviderSignatureMutationResult = NonNullable<Awaited<ReturnType<typeof clearProviderSignature>>>
+
+    export type ClearProviderSignatureMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Clear a provider's stored signature (audited as `cleared`)
+ */
+export const useClearProviderSignature = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clearProviderSignature>>, TError,{providerId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clearProviderSignature>>,
+        TError,
+        {providerId: string},
+        TContext
+      > => {
+      return useMutation(getClearProviderSignatureMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List tenants
  */
 export const listTenants = (
@@ -315,6 +543,7 @@ export function useGetTenant<TData = Awaited<ReturnType<typeof getTenant>>, TErr
 
 
 /**
+ * Partial update of one tenant.
  * @summary Update tenant
  */
 export const updateTenant = (
@@ -379,6 +608,7 @@ export const useUpdateTenant = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateTenantMutationOptions(options), queryClient);
     }
     /**
+ * Delete one tenant.
  * @summary Delete tenant
  */
 export const deleteTenant = (
@@ -688,6 +918,7 @@ export function useGetOffice<TData = Awaited<ReturnType<typeof getOffice>>, TErr
 
 
 /**
+ * Partial update of one office. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update office
  */
 export const updateOffice = (
@@ -752,6 +983,7 @@ export const useUpdateOffice = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateOfficeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one office. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete office
  */
 export const deleteOffice = (
@@ -1061,6 +1293,7 @@ export function useGetProvider<TData = Awaited<ReturnType<typeof getProvider>>, 
 
 
 /**
+ * Partial update of one provider.
  * @summary Update provider
  */
 export const updateProvider = (
@@ -1125,6 +1358,7 @@ export const useUpdateProvider = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProviderMutationOptions(options), queryClient);
     }
     /**
+ * Delete one provider.
  * @summary Delete provider
  */
 export const deleteProvider = (
@@ -1434,6 +1668,7 @@ export function useGetOperatory<TData = Awaited<ReturnType<typeof getOperatory>>
 
 
 /**
+ * Partial update of one operatory.
  * @summary Update operatory
  */
 export const updateOperatory = (
@@ -1498,6 +1733,7 @@ export const useUpdateOperatory = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateOperatoryMutationOptions(options), queryClient);
     }
     /**
+ * Delete one operatory.
  * @summary Delete operatory
  */
 export const deleteOperatory = (
@@ -1807,6 +2043,7 @@ export function useGetUserOffice<TData = Awaited<ReturnType<typeof getUserOffice
 
 
 /**
+ * Partial update of one user office.
  * @summary Update user office
  */
 export const updateUserOffice = (
@@ -1871,6 +2108,7 @@ export const useUpdateUserOffice = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateUserOfficeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one user office.
  * @summary Delete user office
  */
 export const deleteUserOffice = (
@@ -2180,6 +2418,7 @@ export function useGetOfficeGroup<TData = Awaited<ReturnType<typeof getOfficeGro
 
 
 /**
+ * Partial update of one office group.
  * @summary Update office group
  */
 export const updateOfficeGroup = (
@@ -2244,6 +2483,7 @@ export const useUpdateOfficeGroup = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateOfficeGroupMutationOptions(options), queryClient);
     }
     /**
+ * Delete one office group.
  * @summary Delete office group
  */
 export const deleteOfficeGroup = (

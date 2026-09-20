@@ -9,6 +9,7 @@
 export interface FeeScheduleUpdate {
   name?: string | null;
   fee_type?: string | null;
+  pricing_model?: string | null;
   ins_plan_id?: number | null;
   office_id?: number | null;
   effective_date?: string | null;

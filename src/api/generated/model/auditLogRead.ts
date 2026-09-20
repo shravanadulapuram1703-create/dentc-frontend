@@ -14,6 +14,7 @@ export interface AuditLogRead {
   resource_type?: string | null;
   resource_id?: string | null;
   patient_id?: number | null;
+  office_id?: number | null;
   method: string;
   path: string;
   status_code?: number | null;

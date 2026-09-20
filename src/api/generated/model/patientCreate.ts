@@ -14,6 +14,8 @@ export interface PatientCreate {
   preferred_name?: string | null;
   title?: string | null;
   middle_initial?: string | null;
+  middle_name?: string | null;
+  suffix?: string | null;
   dob?: string | null;
   gender?: string | null;
   ssn?: string | null;
@@ -66,4 +68,6 @@ export interface PatientCreate {
   no_correspondence?: boolean | null;
   photo_document_id?: number | null;
   is_active?: boolean | null;
+  /** GAP-AP-21: create even if a strong duplicate match exists (the user reviewed the 409 `error.details.candidates` and confirmed this is a new patient). Not a column — consumed by the guard. */
+  force_create?: boolean;
 }

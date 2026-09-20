@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Loader2, User, CalendarClock, Stethoscope, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useListPatients } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead } from "@/api/generated/model";
+import { OfficeBadge } from "@/features/office-scope";
 import {
   looks_like_legacy_id,
   lookup_patient_by_id,
@@ -29,9 +30,26 @@ const SCOPES: { value: Scope; label: string }[] = [
 
 const SIZE = 6;
 
+interface ResultItem {
+  id: string;
+  primary: string;
+  secondary?: string;
+  /** Rendered after `primary` (patients: their home-office badge). */
+  badge?: ReactNode;
+  onClick?: () => void;
+}
+
+interface ResultGroup {
+  key: Scope;
+  title: string;
+  icon: ReactNode;
+  items: ResultItem[];
+}
+
 /**
  * Global quick search. There is no unified backend search endpoint, so this fans
- * out to each entity's list endpoint in parallel and merges the results.
+ * out to each entity's list endpoint in parallel and merges the results. It is
+ * a jump-to over org-wide identity — deliberately no office-scope toggle.
  */
 export default function GlobalSearchWidget() {
   const navigate = useNavigate();
@@ -121,15 +139,17 @@ export default function GlobalSearchWidget() {
     </button>
   );
 
-  const groups = useMemo(
+  const groups = useMemo<ResultGroup[]>(
     () => [
       {
-        key: "patients" as Scope,
+        key: "patients",
         title: "Patients",
         icon: <User className="w-3.5 h-3.5" />,
         items: patientItems.map((p) => ({
           id: `p-${p.id}`,
           primary: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || `Patient #${p.id}`,
+          // Where the patient is homed — amber when it is another office.
+          badge: <OfficeBadge office_id={p.home_office_id} />,
           secondary: [
             `ID ${p.id}`,
             p.legacy_id && `Legacy ${p.legacy_id}`,
@@ -143,7 +163,7 @@ export default function GlobalSearchWidget() {
         })),
       },
       {
-        key: "appointments" as Scope,
+        key: "appointments",
         title: "Appointments",
         icon: <CalendarClock className="w-3.5 h-3.5" />,
         items: (appts.data?.items ?? []).map((a) => ({
@@ -154,7 +174,7 @@ export default function GlobalSearchWidget() {
         })),
       },
       {
-        key: "providers" as Scope,
+        key: "providers",
         title: "Providers",
         icon: <Stethoscope className="w-3.5 h-3.5" />,
         items: (providers.data?.items ?? []).map((p) => ({
@@ -165,7 +185,7 @@ export default function GlobalSearchWidget() {
         })),
       },
       {
-        key: "insurance" as Scope,
+        key: "insurance",
         title: "Insurance Carriers",
         icon: <Shield className="w-3.5 h-3.5" />,
         items: (carriers.data?.items ?? []).map((c) => ({
@@ -222,7 +242,10 @@ export default function GlobalSearchWidget() {
                           it.onClick ? "hover:bg-[#F7F9FC] cursor-pointer" : "cursor-default",
                         )}
                       >
-                        <p className="text-sm font-semibold text-[#1E293B] truncate">{it.primary}</p>
+                        <p className="flex items-center gap-2 text-sm font-semibold text-[#1E293B]">
+                          <span className="truncate">{it.primary}</span>
+                          {it.badge}
+                        </p>
                         {it.secondary && (
                           <p className="text-xs text-[#64748B] truncate">{it.secondary}</p>
                         )}

@@ -43,6 +43,10 @@ export default function RecallEditModal({
       await update.mutateAsync({
         itemId: recall.id,
         data: {
+          // Record-first: the recall keeps the office it was created in. Resent
+          // unchanged so a server-side office check sees it; a recall with no
+          // office stays that way (nothing is stamped on update).
+          ...(recall.office_id != null ? { office_id: recall.office_id } : {}),
           procedure_code: form.procedure_code || null,
           recall_type: form.recall_type || null,
           interval_months: months,

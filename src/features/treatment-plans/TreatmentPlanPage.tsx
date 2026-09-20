@@ -17,13 +17,16 @@ import {
 import { useListPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
 import { getOffice } from '@/api/generated/endpoints/organization/organization';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import {
-  EMPTY_FEE_CONTEXT,
+  priceProcedureFor as priceProcedure,
   loadFeeScheduleContext,
+  loadCoverageContext,
+  EMPTY_FEE_CONTEXT,
+  EMPTY_COVERAGE_CONTEXT,
   type FeeScheduleContext,
-} from '@/services/feeScheduleResolver';
-import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
-import { priceProcedure } from '@/services/procedurePricing';
+  type CoverageContext,
+} from '@/features/pricing';
 import { openSchedulerForBooking } from '@/services/schedulerHandoff';
 import {
   planProcedure,
@@ -61,7 +64,7 @@ import TxPlanReportModal from './TxPlanReportModal';
 import { buildTxPlanPdf, filterReportRows, type ReportHeader, type ReportOptions } from './txReport';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number };
+  patient: { id: string; name: string; age?: number };
 }
 
 const TX_ITEMS_KEY = 'tx-plan-items';
@@ -76,7 +79,7 @@ export default function TreatmentPlanPage() {
 
   const numericId = Number(patient?.id ?? patientId);
   const validId = !Number.isNaN(numericId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ---------------------------------------------------------------
   const plansQuery = useListTreatmentPlans({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
@@ -565,26 +568,60 @@ export default function TreatmentPlanPage() {
     if (postable.length < selectedRows.length) {
       toast.info(`${selectedRows.length - postable.length} already-completed procedure(s) skipped`);
     }
-    if (!window.confirm(`Post ${postable.length} selected procedure(s) to the ledger?`)) return;
+    // A planned item stores the fee it was priced at when it was planned (at its
+    // plan's office). Posting it at a DIFFERENT office (Phase 4: the posting
+    // office can differ from where the plan was created) re-prices it at the
+    // posting office so the ledger charge reflects that office's fee schedule.
+    const planOfficeById = new Map(plans.map((p) => [p.id, p.office_id ?? null]));
+    const itemPlanOffice = (item: TreatmentPlanItemRead): number | null =>
+      planOfficeById.get(item.plan_id) ?? null;
+    const postableItems = postable
+      .map((r) => ({ r, item: items.find((it) => it.id === r.id) }))
+      .filter((x): x is { r: (typeof postable)[number]; item: TreatmentPlanItemRead } => !!x.item);
+    const repriceCount = officeId != null
+      ? postableItems.filter((x) => {
+          const po = itemPlanOffice(x.item);
+          return po != null && po !== officeId;
+        }).length
+      : 0;
+    const confirmMsg =
+      `Post ${postable.length} selected procedure(s) to the ledger?` +
+      (repriceCount > 0
+        ? `\n\n${repriceCount} item(s) were planned at a different office and will be re-priced at the posting office.`
+        : '');
+    if (!window.confirm(confirmMsg)) return;
     void run('Post to ledger', async () => {
       let posted = 0;
-      for (const r of postable) {
+      for (const { r, item } of postableItems) {
         const provider_id = r.provider_id || entry.provider_id;
         if (!provider_id) {
           toast.error(`${r.code}: assign a provider before posting to the ledger`);
           continue;
         }
-        const item = items.find((it) => it.id === r.id);
-        if (!item) continue;
+        // Re-price at the posting office when the item was planned elsewhere.
+        // Only override when the resolver actually prices the code (never post $0
+        // by accident — fall back to the item's stored fee otherwise).
+        let feeOverride: { fee: number; insurance_estimate: number } | undefined;
+        const plan_office = itemPlanOffice(item);
+        if (officeId != null && plan_office != null && plan_office !== officeId) {
+          const priced = await priceProcedure(feeCtx, coverageCtx, item.procedure_code, {
+            default_fee: item.fee,
+            on_date: tranDate,
+          }).catch(() => null);
+          if (priced && priced.fee_source !== 'none') {
+            feeOverride = { fee: priced.fee, insurance_estimate: priced.insurance_estimate };
+          }
+        }
         // Shared Post to Ledger: the charge is linked to the plan and the item
         // is closed, so the chart shows it COMPLETED and this grid shows "C".
         await postPlanItemToLedger({
           patient_id: numericId,
-          office_id: officeId ?? 0,
+          office_id: officeId,
           item,
           provider_id,
           date_of_service: tranDate,
           announce: false,
+          ...(feeOverride ?? {}),
         });
         posted += 1;
       }

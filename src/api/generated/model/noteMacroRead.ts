@@ -19,4 +19,5 @@ export interface NoteMacroRead {
   updated_at?: string | null;
   created_by_name?: string | null;
   updated_by_name?: string | null;
+  category_label?: string | null;
 }
