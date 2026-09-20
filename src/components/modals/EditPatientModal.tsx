@@ -177,7 +177,7 @@ export default function EditPatientModal({ isOpen, onClose, onSave, patientData 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-[calc(95vh/var(--app-zoom,0.8))] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-red-600 text-white p-4 flex items-center justify-between z-10">
           <div>

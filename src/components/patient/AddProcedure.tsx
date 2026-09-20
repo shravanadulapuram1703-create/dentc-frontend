@@ -160,7 +160,7 @@ export default function AddProcedure({ isOpen, onClose, patientName, patientId, 
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-2xl w-full max-w-[95vw] h-[90vh] flex flex-col">
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-[calc(95vw/var(--app-zoom,0.8))] h-[calc(90vh/var(--app-zoom,0.8))] flex flex-col">
           {/* Header - Slate Blue */}
           <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between rounded-t-lg">
             <div>

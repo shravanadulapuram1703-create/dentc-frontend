@@ -111,7 +111,7 @@ export default function Patient({ onLogout, currentOffice, setCurrentOffice }: P
               </div>
             </div>
             
-            <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
+            <div className="overflow-y-auto max-h-[calc(100vh/var(--app-zoom,0.8)_-_300px)]">
               {filteredPatients.map((patient) => (
                 <div
                   key={patient.id}

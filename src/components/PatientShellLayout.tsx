@@ -86,7 +86,7 @@ export default function PatientShellLayout({
           currentOffice={currentOffice}
           setCurrentOffice={setCurrentOffice}
         />
-        <div className="flex items-center justify-center h-[calc(100vh-180px)]">
+        <div className="flex items-center justify-center h-[calc(100vh/var(--app-zoom,0.8)_-_180px)]">
           <div className="text-center">
             <div className="inline-block w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-slate-600 font-medium">Loading patient...</p>
@@ -192,7 +192,7 @@ export default function PatientShellLayout({
       </div>
 
       {/* PATIENT CONTENT AREA - This changes based on route */}
-      <div className="min-h-[calc(100vh-400px)]">
+      <div className="min-h-[calc(100vh/var(--app-zoom,0.8)_-_400px)]">
         <Outlet context={{ patient }} />
       </div>
     </div>

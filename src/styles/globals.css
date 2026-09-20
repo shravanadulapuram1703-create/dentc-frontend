@@ -6,6 +6,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Global UI scale — single source of truth.
+     0.8 renders the whole app at what used to be 80% browser zoom, making
+     that "80% feel" the default at 100% zoom. Applied via `zoom` on <html>
+     (see the html rule below); viewport-height utilities divide by this so
+     full-height layouts still fill the screen. Change here to retune. */
+  --app-zoom: 0.8;
+
   /* Medical Professional Color Palette */
   --color-white: #FFFFFF;
   --color-soft-white: #FAFBFC;
@@ -159,6 +166,14 @@
   }
 
   html {
+    /* Global UI scale.
+       Renders the whole app at the size it previously had at 80% browser
+       zoom, so 100% zoom now matches the intended "80% feel" for everyone.
+       The CSS `zoom` property (unlike `transform: scale`) reflows layout,
+       so fixed/sticky elements and portals stay correct. Viewport-height
+       units resolve against the un-zoomed viewport, so anything sized to
+       fill the screen divides by --app-zoom (see the utilities below). */
+    zoom: var(--app-zoom, 0.8);
     font-size: var(--font-size-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -169,7 +184,8 @@
     font-family: var(--font-primary);
     background: var(--color-bg-secondary);
     color: var(--color-text-primary);
-    min-height: 100vh;
+    /* Divide by the global zoom so the page still fills the viewport. */
+    min-height: calc(100vh / var(--app-zoom, 0.8));
     overflow-x: hidden;
     line-height: 1.6;
   }
@@ -192,6 +208,32 @@
   
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-medical-blue);
+  }
+}
+
+/**
+ * Global-zoom compensation for viewport-height utilities.
+ *
+ * The <html> `zoom` shrinks everything to 80%, but `vh` still resolves
+ * against the full (un-zoomed) viewport, so a `100vh` box would only paint
+ * 80% of the screen and leave a gap at the bottom. Dividing by --app-zoom
+ * re-expands these so full-height layouts fill the visible viewport exactly,
+ * matching how the app looked at 80% browser zoom.
+ *
+ * These override Tailwind's generated utilities (same specificity, later in
+ * source order within the utilities layer).
+ */
+@layer utilities {
+  .min-h-screen {
+    min-height: calc(100vh / var(--app-zoom, 0.8));
+  }
+
+  .h-screen {
+    height: calc(100vh / var(--app-zoom, 0.8));
+  }
+
+  .max-h-screen {
+    max-height: calc(100vh / var(--app-zoom, 0.8));
   }
 }
 

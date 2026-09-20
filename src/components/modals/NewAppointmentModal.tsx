@@ -85,7 +85,7 @@ export default function NewAppointmentModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] overflow-y-auto border-2 border-[#E2E8F0]">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[calc(95vh/var(--app-zoom,0.8))] overflow-y-auto border-2 border-[#E2E8F0]">
         {/* Header - Medical Slate Theme */}
         <div className="sticky top-0 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between z-10 border-b-2 border-[#162942]">
           <h2 className="font-bold text-white">NEW APPOINTMENT</h2>

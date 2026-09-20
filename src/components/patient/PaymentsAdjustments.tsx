@@ -210,7 +210,7 @@ export default function PaymentsAdjustments({ isOpen, onClose, patientName, pati
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col border-2 border-[#E2E8F0]">
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[calc(90vh/var(--app-zoom,0.8))] flex flex-col border-2 border-[#E2E8F0]">
           {/* Header - Medical Slate */}
           <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between rounded-t-lg border-b-2 border-[#16293B]">
             <div>

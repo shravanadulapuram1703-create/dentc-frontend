@@ -342,7 +342,7 @@ export default function Scheduler({ onLogout, currentOffice, setCurrentOffice }:
       </div>
 
       {/* Scheduler Grid */}
-      <div className="overflow-auto" style={{ height: 'calc(100vh - 220px)' }}>
+      <div className="overflow-auto" style={{ height: 'calc(100vh / var(--app-zoom, 0.8) - 220px)' }}>
         <div className="inline-block min-w-full">
           <div className="flex">
             {/* Time Column */}
