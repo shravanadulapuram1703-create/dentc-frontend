@@ -7,6 +7,13 @@ import { type ProviderOption } from '@/services/providerDirectory';
 import ProviderSelect from './ProviderSelect';
 import { RequireRight, RIGHT } from '@/features/access-control';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   fmtDate,
   genId,
   money,
@@ -345,27 +352,46 @@ export default function PaymentsTab({
             {/* Row 2: Apply To | Provider | Exp. Date (card only) */}
             <div className="grid grid-cols-3 gap-3">
               <Labeled label="Apply To">
-                <select
+                <Select
                   value={payment_type}
-                  onChange={(e) => setPaymentType(e.target.value as 'patient' | 'insurance')}
-                  className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+                  onValueChange={(v) => setPaymentType(v as 'patient' | 'insurance')}
                 >
-                  {PAYMENT_APPLY_TO.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    aria-label="Apply To"
+                    className="grid w-full grid-cols-[minmax(0,1fr)_auto] rounded-md border-2 border-slate-300 bg-white px-2 py-1.5 text-xs font-medium tracking-normal shadow-sm data-[size=default]:h-auto focus-visible:border-[#1f6fc4] focus-visible:ring-2 focus-visible:ring-[#1f6fc4]/20 [&>svg]:col-start-2 [&>svg]:row-start-1 [&>[data-slot=select-value]]:col-start-1 [&>[data-slot=select-value]]:row-start-1"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    align="start"
+                    side="bottom"
+                    collisionPadding={8}
+                    className="z-[60] min-w-[var(--radix-select-trigger-width)] rounded-md border-slate-200 bg-white shadow-md"
+                  >
+                    {PAYMENT_APPLY_TO.map((o) => (
+                      <SelectItem
+                        key={o.value}
+                        value={o.value}
+                        className="min-h-8 rounded-sm py-1.5 pl-3 pr-8 text-xs font-normal text-slate-700 transition-colors focus:bg-blue-50 focus:text-[#1f6fc4] data-[highlighted]:bg-blue-50 data-[highlighted]:text-[#1f6fc4] data-[state=checked]:bg-[#1f6fc4] data-[state=checked]:text-white data-[state=checked]:focus:bg-[#1f6fc4] data-[state=checked]:focus:text-white data-[state=checked]:data-[highlighted]:bg-[#1f6fc4] data-[state=checked]:data-[highlighted]:text-white [&_svg:not([class*='text-'])]:text-current"
+                      >
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Labeled>
               <Labeled label="Provider">
                 <ProviderSelect
+                  presentation="pms"
+                  size="sm"
                   kind="treating"
                   value={provider_id}
                   onChange={setProviderId}
                   officeProviders={providers}
                   allProviders={allProviders}
                   placeholder="-- No Provider --"
-                  className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+                  className="w-full"
                   title="Provider credited with this payment"
                 />
               </Labeled>

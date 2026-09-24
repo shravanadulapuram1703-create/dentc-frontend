@@ -146,6 +146,7 @@ export default function TransactionEntryModal({
           {tab === 'add' && (
             <div className="ml-auto flex items-center gap-2">
               <ProviderSelect
+                presentation="pms"
                 kind="treating"
                 value={providerId}
                 onChange={(id) => {
@@ -159,6 +160,7 @@ export default function TransactionEntryModal({
                 title="Treating provider for procedures added here"
               />
               <ProviderSelect
+                presentation="pms"
                 kind="hygienist"
                 value={hygienistId}
                 onChange={(id) => {

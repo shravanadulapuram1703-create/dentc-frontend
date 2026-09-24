@@ -285,6 +285,8 @@ export default function AdjustmentsTab({
               </Labeled>
               <Labeled label="Provider">
                 <ProviderSelect
+                  presentation="pms"
+                  size="sm"
                   kind="treating"
                   value={provider_id}
                   onChange={(id) => {
@@ -294,7 +296,7 @@ export default function AdjustmentsTab({
                   officeProviders={providers}
                   allProviders={allProviders}
                   placeholder="All Providers"
-                  className="tx-select w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+                  className="w-full"
                   title="Provider the adjustment is booked against"
                 />
               </Labeled>

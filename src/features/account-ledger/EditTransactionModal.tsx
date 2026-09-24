@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Trash2, Save, X, AlertTriangle } from 'lucide-react';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
-import { providerOptionLabel } from '@/services/providerDirectory';
+import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { useDefinitions } from '@/hooks/useDefinitions';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import {
@@ -115,7 +115,7 @@ export default function EditTransactionModal({
   }, [onClose]);
 
   // Scope the provider picker to the transaction's own office, not the patient's.
-  const { providers, providerLabel } = useProviderDirectory(row.office_id);
+  const { officeProviders, allProviders, providerLabel } = useProviderDirectory(row.office_id);
   const { definitions: paymentDefs } = useDefinitions('payment_method');
 
   // ---- Load the source record -------------------------------------------
@@ -309,20 +309,17 @@ export default function EditTransactionModal({
                   <div className="bg-white">
                     <Field label="Patient Name">{proc?.patient_name || row.patient}</Field>
                     <Field label="Treating Provider">
-                      <select
+                      <ProviderSelect
                         value={provider_id}
-                        onChange={(e) => setProviderId(e.target.value)}
-                        className={input}
-                      >
-                        <option value="">— Select provider —</option>
-                        {providers.map((p) => (
-                          <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>
-                        ))}
-                        {/* Keep a provider who no longer works at this office selectable. */}
-                        {provider_id && !providers.some((p) => p.id === provider_id) && (
-                          <option value={provider_id}>{providerLabel(provider_id)}</option>
-                        )}
-                      </select>
+                        onChange={setProviderId}
+                        officeProviders={officeProviders}
+                        allProviders={allProviders}
+                        kind="treating"
+                        placeholder="— Select provider —"
+                        presentation="pms"
+                        size="sm"
+                        className="w-full"
+                      />
                     </Field>
                     <Field label="Description">
                       <span>{codeDescription(proc?.procedure_code ?? '') || '—'}</span>
