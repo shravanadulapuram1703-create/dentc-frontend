@@ -47,6 +47,8 @@ interface Props {
   disabled?: boolean;
   /** Opt in only on the ledger modal; other consumers retain their native control. */
   presentation?: 'native' | 'pms';
+  /** 'sm' matches compact form inputs (py-1.5 px-2); 'default' uses the larger toolbar size (py-3 px-4). */
+  size?: 'default' | 'sm';
 }
 
 function partitionProviders(
@@ -84,6 +86,7 @@ export default function ProviderSelect({
   title,
   disabled,
   presentation = 'native',
+  size = 'default',
 }: Props) {
   const { inOffice, others } = useMemo(
     () => partitionProviders(officeProviders, allProviders, kind, value || undefined),
@@ -102,12 +105,13 @@ export default function ProviderSelect({
       + 'data-[state=checked]:data-[highlighted]:bg-[#1f6fc4] '
       + 'data-[state=checked]:data-[highlighted]:text-white [&_svg:not([class*="text-"])]:text-current';
     const labelClass = 'rounded-sm bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-600';
+    const triggerPadding = size === 'sm' ? 'px-2 py-1.5' : 'px-4 py-3';
     return (
       <Select value={value || emptyValue} onValueChange={(id) => onChange(id === emptyValue ? '' : id)} disabled={disabled}>
         <SelectTrigger
           title={title}
           aria-label={kind === 'hygienist' ? 'Hygienist' : 'Provider'}
-          className={cn(className, 'grid w-auto max-w-[calc(100vw-2rem)] grid-cols-[minmax(0,1fr)_auto] rounded-md border-2 border-slate-300 bg-white px-4 py-3 text-xs font-medium tracking-normal shadow-sm data-[size=default]:h-auto focus-visible:border-[#1f6fc4] focus-visible:ring-2 focus-visible:ring-[#1f6fc4]/20 [&>svg]:col-start-2 [&>svg]:row-start-1 [&>[data-slot=select-value]]:col-start-1 [&>[data-slot=select-value]]:row-start-1', !value && 'text-slate-500')}
+          className={cn(className, 'grid w-auto max-w-[calc(100vw-2rem)] grid-cols-[minmax(0,1fr)_auto] rounded-md border-2 border-slate-300 bg-white text-xs font-medium tracking-normal shadow-sm data-[size=default]:h-auto focus-visible:border-[#1f6fc4] focus-visible:ring-2 focus-visible:ring-[#1f6fc4]/20 [&>svg]:col-start-2 [&>svg]:row-start-1 [&>[data-slot=select-value]]:col-start-1 [&>[data-slot=select-value]]:row-start-1', triggerPadding, !value && 'text-slate-500')}
         >
           {/* Like a native select, keep the width stable across selections. */}
           <span aria-hidden="true" className="invisible col-start-1 row-start-1 grid h-0 overflow-hidden pointer-events-none">
