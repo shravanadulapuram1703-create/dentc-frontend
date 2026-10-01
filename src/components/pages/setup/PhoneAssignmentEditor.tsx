@@ -1,7 +1,7 @@
 /**
  * Phone Number Assignment editor (Account Setup → Communications).
  *
- * One row per office. Each row picks an `assignment_type` and the Twilio
+ * One row per office. Each row picks an `assignment_type` and the sender
  * number (`phone_number`, stored in E.164) the office sends SMS from, plus the
  * `is_model_office` flag. The "Resolved sender" column mirrors what the SMS
  * gateway will actually use (`GET /api/v1/sms/sender?office_id=`), so the user
@@ -72,10 +72,10 @@ export function PhoneAssignmentEditor({
     <div className="bg-[#F7F9FC] p-4 rounded-lg border-2 border-[#E2E8F0]" data-testid="phone-assignment-editor">
       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 mb-4">
         <p className="text-xs text-blue-900">
-          <span className="font-bold">Twilio &ldquo;From&rdquo; number per office.</span> Enter numbers in E.164 format
+          <span className="font-bold">Sender &ldquo;From&rdquo; number per office.</span> Enter numbers in E.164 format
           (e.g. <span className="font-mono">+14125551234</span>). Offices without an assignment fall back to the tenant
-          or platform default. Maximum {MAX_OFFICE_SPECIFIC} offices for Office-Specific Number (Twilio toll-free
-          limit). Office-specific: {officeSpecificCount}/{MAX_OFFICE_SPECIFIC}.
+          or platform default. Maximum {MAX_OFFICE_SPECIFIC} offices for Office-Specific Number. Office-specific:{" "}
+          {officeSpecificCount}/{MAX_OFFICE_SPECIFIC}.
         </p>
       </div>
 
@@ -88,7 +88,7 @@ export function PhoneAssignmentEditor({
             <tr className="bg-[#EEF2F7] text-xs font-bold text-[#1E293B] text-left">
               <th className="px-3 py-2">Office</th>
               <th className="px-3 py-2">Assignment</th>
-              <th className="px-3 py-2">Twilio number (E.164)</th>
+              <th className="px-3 py-2">Sender number (E.164)</th>
               <th className="px-3 py-2 text-center">Model office</th>
               <th className="px-3 py-2">
                 Resolved sender
@@ -148,7 +148,7 @@ export function PhoneAssignmentEditor({
                           disabled={!assigned}
                           placeholder="+14125551234"
                           className={`${inputClass(invalid)} font-mono disabled:bg-[#F7F9FC] disabled:text-[#94A3B8]`}
-                          aria-label={`Twilio number for ${row.office_name}`}
+                          aria-label={`Sender number for ${row.office_name}`}
                           aria-invalid={invalid}
                         />
                         {invalid && (
@@ -178,13 +178,11 @@ export function PhoneAssignmentEditor({
                   </td>
                   <td className="px-3 py-2 min-w-[200px]">
                     {sender ? (
-                      sender.from_phone || sender.messaging_service_sid ? (
+                      sender.from_phone ? (
                         <div className="flex items-start gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-[#0D9488] mt-0.5 flex-shrink-0" />
                           <div>
-                            <div className="text-xs font-mono text-[#1E293B]">
-                              {sender.from_phone ?? sender.messaging_service_sid}
-                            </div>
+                            <div className="text-xs font-mono text-[#1E293B]">{sender.from_phone}</div>
                             <div className="text-[11px] text-[#64748B]">
                               {SENDER_SOURCE_LABEL[sender.source] ?? sender.source}
                             </div>

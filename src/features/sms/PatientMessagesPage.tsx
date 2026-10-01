@@ -76,7 +76,7 @@ export default function PatientMessagesPage() {
     async (payload: ComposerSubmit) => {
       const row = await sms.send({ ...payload, office_id });
       if (row) {
-        if (sms.capability === "log_only") toast.warning("Saved to the SMS log as Queued — the Twilio gateway is not deployed yet.");
+        if (sms.capability === "log_only") toast.warning("Saved to the SMS log as Queued — the SMS gateway is not configured yet.");
         else if (sms.capability === "simulated") toast.success("Demo text sent");
         else toast.success("Text sent");
       }

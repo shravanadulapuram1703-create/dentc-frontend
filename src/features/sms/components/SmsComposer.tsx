@@ -168,7 +168,7 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
   };
 
   const sendLabel =
-    capability === "twilio" ? "Send" : capability === "simulated" ? "Send (demo)" : capability === "log_only" ? "Log only" : "Send";
+    capability === "live" ? "Send" : capability === "simulated" ? "Send (demo)" : capability === "log_only" ? "Log only" : "Send";
 
   return (
     <div className={cn("flex flex-col gap-2 bg-white", !compact && "border-t border-slate-200 px-4 py-3")}>

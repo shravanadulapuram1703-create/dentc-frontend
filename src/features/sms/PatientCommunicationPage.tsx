@@ -73,7 +73,7 @@ export default function PatientCommunicationPage() {
     const row = await sms.send({ ...payload, office_id });
     if (row) {
       setComposeOpen(false);
-      if (sms.capability === "log_only") toast.warning("Saved to the SMS log as Queued — the Twilio gateway is not deployed yet.");
+      if (sms.capability === "log_only") toast.warning("Saved to the SMS log as Queued — the SMS gateway is not configured yet.");
       else toast.success(sms.capability === "simulated" ? "Demo text sent" : "Text sent");
     }
   };

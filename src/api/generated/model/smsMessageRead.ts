@@ -30,7 +30,14 @@ export interface SmsMessageRead {
   from_phone?: string | null;
   direction?: string | null;
   sent_at?: string | null;
-  error_code?: number | null;
+  /**
+   * Hand-patched: backend widened this column to string (RingCentral uses
+   * alphanumeric codes like "MSG-242", not Twilio's numeric ones). The
+   * checked-in openapi.json/this file were never regenerated after that
+   * migration — diverges from the last full `npm run api:sync` until one is
+   * run.
+   */
+  error_code?: string | null;
   error_message?: string | null;
   segments?: number | null;
   client_id?: string | null;

@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/components/ui/utils";
-import type { SmsStatus } from "../smsModel";
+import { isFailedStatus, type SmsStatus } from "../smsModel";
 
 interface StatusMeta {
   label: string;
@@ -21,15 +21,21 @@ interface StatusMeta {
 
 const STATUS_META: Record<SmsStatus, StatusMeta> = {
   queued: { label: "Queued", icon: Clock, tone: "text-amber-700 bg-amber-50 border-amber-200" },
+  sent: { label: "Sent", icon: Check, tone: "text-slate-700 bg-slate-50 border-slate-200" },
+  delivered: { label: "Delivered", icon: CheckCheck, tone: "text-emerald-700 bg-emerald-50 border-emerald-200" },
+  // Rejected before it ever reached the carrier (e.g. a bad/unauthorized number).
+  sendingfailed: { label: "Send failed", icon: XCircle, tone: "text-red-700 bg-red-50 border-red-200" },
+  // Accepted by the carrier but couldn't reach the handset.
+  deliveryfailed: { label: "Delivery failed", icon: AlertTriangle, tone: "text-red-700 bg-red-50 border-red-200" },
+  received: { label: "Received", icon: Inbox, tone: "text-sky-700 bg-sky-50 border-sky-200" },
+  // Twilio-era values — only ever seen on a row sent/migrated before the
+  // 2026-10 RingCentral cutover (see the SmsStatus doc comment).
   accepted: { label: "Accepted", icon: Clock, tone: "text-amber-700 bg-amber-50 border-amber-200" },
   scheduled: { label: "Scheduled", icon: Clock, tone: "text-indigo-700 bg-indigo-50 border-indigo-200" },
   sending: { label: "Sending", icon: Loader2, tone: "text-slate-600 bg-slate-50 border-slate-200", spin: true },
-  sent: { label: "Sent", icon: Check, tone: "text-slate-700 bg-slate-50 border-slate-200" },
-  delivered: { label: "Delivered", icon: CheckCheck, tone: "text-emerald-700 bg-emerald-50 border-emerald-200" },
   undelivered: { label: "Undelivered", icon: AlertTriangle, tone: "text-red-700 bg-red-50 border-red-200" },
   failed: { label: "Failed", icon: XCircle, tone: "text-red-700 bg-red-50 border-red-200" },
   canceled: { label: "Canceled", icon: XCircle, tone: "text-slate-600 bg-slate-50 border-slate-200" },
-  received: { label: "Received", icon: Inbox, tone: "text-sky-700 bg-sky-50 border-sky-200" },
   unknown: { label: "Sent (legacy)", icon: Send, tone: "text-slate-600 bg-slate-50 border-slate-200" },
 };
 
@@ -66,7 +72,7 @@ export function SmsStatusTick({ status }: { status: SmsStatus }) {
   const color =
     status === "delivered"
       ? "text-emerald-300"
-      : status === "failed" || status === "undelivered"
+      : isFailedStatus(status)
         ? "text-red-300"
         : "text-white/70";
   return (

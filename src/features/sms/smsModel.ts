@@ -6,31 +6,49 @@
 // `reply_received_on`). A modern inbox needs one entry per direction, so
 // {@link rowToEntries} fans a row out into up to two {@link SmsEntry} items.
 //
-// Field identifiers stay snake_case (CLAUDE.md). Status/type vocabularies are
-// Twilio's, so the backend can persist Twilio callbacks verbatim
-// (docs/sms/SMS_BACKEND_DEVREPORT.md, SMS-1..3).
+// Field identifiers stay snake_case (CLAUDE.md). The backend sends texts via
+// RingCentral (migrated off Twilio 2026-10); its lowercase status vocabulary
+// is persisted verbatim (docs/sms/SMS_BACKEND_DEVREPORT.md, SMS-1..3).
 
 import type { SmsMessageRead } from "@/api/generated/model";
 
 export type SmsDirection = "outbound" | "inbound";
 
 /**
- * Twilio message status vocabulary (+ `unknown` for legacy rows). Outbound
- * messages walk queued → sending → sent → delivered (or undelivered/failed);
- * inbound messages are always `received`.
+ * RingCentral's message status vocabulary (+ `unknown` for legacy rows).
+ * Outbound messages walk queued → sent → delivered (or sendingfailed /
+ * deliveryfailed); inbound messages are always `received`.
+ *
+ * `accepted` / `scheduled` / `sending` / `undelivered` / `canceled` are
+ * Twilio-era values with no RingCentral equivalent — kept so a row migrated
+ * or sent before the 2026-10 cutover still displays correctly; they will
+ * never appear on a new row. `undelivered` in particular is Twilio's old
+ * name for what RingCentral calls `deliveryfailed` — both are treated as a
+ * failure everywhere (see {@link isFailedStatus}).
  */
 export type SmsStatus =
   | "queued"
+  | "sent"
+  | "delivered"
+  | "sendingfailed"
+  | "deliveryfailed"
+  | "received"
   | "accepted"
   | "scheduled"
   | "sending"
-  | "sent"
-  | "delivered"
   | "undelivered"
   | "failed"
   | "canceled"
-  | "received"
   | "unknown";
+
+/** Every status that represents a send failure, Twilio- and RingCentral-era
+ * alike — the one place this list is defined; everywhere that needs to know
+ * "did this fail" imports this instead of re-deriving its own comparison. */
+const FAILED_STATUSES: readonly SmsStatus[] = ["failed", "undelivered", "sendingfailed", "deliveryfailed"];
+
+export function isFailedStatus(status: SmsStatus): boolean {
+  return FAILED_STATUSES.includes(status);
+}
 
 /** What kind of text this is — drives filters, chips and template defaults. */
 export type SmsMessageType =
@@ -104,7 +122,7 @@ export interface SmsEntry {
   intent?: ReplyIntent;
 }
 
-/** Twilio's status vocabulary is lowercase; legacy rows say "Success"/null. */
+/** RingCentral's status vocabulary is lowercase; legacy rows say "Success"/null. */
 export function normalizeStatus(raw: string | null | undefined, direction: SmsDirection): SmsStatus {
   if (direction === "inbound") return "received";
   const s = (raw ?? "").trim().toLowerCase();
@@ -113,15 +131,18 @@ export function normalizeStatus(raw: string | null | undefined, direction: SmsDi
   if (s === "error" || s === "failure") return "failed";
   const known: SmsStatus[] = [
     "queued",
+    "sent",
+    "delivered",
+    "sendingfailed",
+    "deliveryfailed",
+    "received",
+    // Twilio-era values — see the SmsStatus doc comment.
     "accepted",
     "scheduled",
     "sending",
-    "sent",
-    "delivered",
     "undelivered",
     "failed",
     "canceled",
-    "received",
   ];
   return (known as string[]).includes(s) ? (s as SmsStatus) : "unknown";
 }
@@ -177,7 +198,7 @@ export const REPLY_INTENT_LABEL: Record<ReplyIntent, string> = {
 function outboundAt(row: SmsMessageRead): string {
   // Migrated legacy rows carry the migration date in `created_at`; the real
   // send time is `delivered_on`. Newly created rows have `delivered_on=null`
-  // until the Twilio status callback lands, so fall back to `created_at`.
+  // until the carrier's status notification lands, so fall back to `created_at`.
   return row.delivered_on ?? row.created_at;
 }
 
@@ -207,10 +228,10 @@ export function rowToEntries(row: SmsMessageRead): SmsEntry[] {
       at: row.sent_at ?? outboundAt(row),
       // Outbound texts are "read" by definition; unread only applies to replies.
       is_read: true,
-      // Twilio's failure reason, persisted by the gateway (SMS-1/SMS-3).
+      // The carrier's failure reason, persisted by the gateway (SMS-1/SMS-3).
       error: row.error_message
         ? row.error_code
-          ? `${row.error_message} (Twilio ${row.error_code})`
+          ? `${row.error_message} (${row.error_code})`
           : row.error_message
         : null,
     });
@@ -255,7 +276,7 @@ export function computeStats(entries: SmsEntry[]): SmsStats {
   for (const e of entries) {
     if (e.direction === "outbound") {
       stats.sent += 1;
-      if (e.status === "failed" || e.status === "undelivered") stats.failed += 1;
+      if (isFailedStatus(e.status)) stats.failed += 1;
     } else {
       stats.received += 1;
       if (!e.is_read) stats.unread += 1;
@@ -305,7 +326,7 @@ export function applyFilter(entries: SmsEntry[], filter: SmsFilter, search: stri
       case "outbound":
         return e.direction === "outbound";
       case "failed":
-        return e.status === "failed" || e.status === "undelivered";
+        return isFailedStatus(e.status);
       case "manual":
         return e.direction === "outbound" && (e.message_type === "manual" || e.message_type === "other");
       default:

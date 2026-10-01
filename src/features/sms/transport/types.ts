@@ -3,13 +3,14 @@
 //
 //   - apiSmsTransport.ts   — the default. Reads/writes the real
 //                            `/api/v1/sms-messages` log and sends through
-//                            `POST /api/v1/sms/send` (the Twilio gateway the
-//                            backend still has to build — gap SMS-1). Until
-//                            that route exists, sends are persisted as
-//                            `send_status: "queued"` log rows so nothing is lost.
+//                            `POST /api/v1/sms/send` (the RingCentral
+//                            gateway, SMS-1 — migrated off Twilio 2026-10).
+//                            If the gateway isn't configured on the backend,
+//                            sends are persisted as `send_status: "queued"`
+//                            log rows so nothing is lost.
 //   - localSmsTransport.ts — labelled client-side simulation (localStorage) that
-//                            fakes the Twilio lifecycle + patient replies so the
-//                            whole screen can be demoed offline.
+//                            fakes the carrier lifecycle + patient replies so
+//                            the whole screen can be demoed offline.
 //
 // Selected by `VITE_SMS_BACKEND` in ../smsService.ts.
 
@@ -20,9 +21,9 @@ export type SmsTransportMode = "api" | "local";
 
 /** Whether outbound texts actually reach a carrier right now. */
 export type SmsSendCapability =
-  /** Backend Twilio gateway is live — texts are really delivered. */
-  | "twilio"
-  /** Gateway route missing (404/405) — sends are logged as `queued` only. */
+  /** Backend gateway is configured — texts are really delivered. */
+  | "live"
+  /** Gateway not configured on the backend — sends are logged as `queued` only. */
   | "log_only"
   /** Client-side simulation. */
   | "simulated"

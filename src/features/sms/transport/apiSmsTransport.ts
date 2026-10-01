@@ -1,30 +1,32 @@
 // Real transport: wraps the generated Orval client for `/api/v1/sms-messages`
-// and the (pending) Twilio send gateway.
+// and the RingCentral send gateway (SMS-1).
 //
 // Send path:
 //   1. POST /api/v1/sms/send  { patient_id, office_id, appointment_id, to_phone,
 //                               body, message_type, client_id }
-//      → backend calls Twilio, persists the sms_messages row with the Twilio
-//        SID + status, returns SmsMessageRead.               (gap SMS-1)
-//   2. If that route is missing (404/405) we fall back to writing the log row
+//      → backend calls RingCentral, persists the sms_messages row with the
+//        provider message id + status, returns SmsMessageRead.
+//   2. If the backend isn't configured (no RC_* credentials set — reported by
+//      GET /api/v1/sms/gateway as mode: "log_only") we write the log row
 //      ourselves with `send_status: "queued"` so the practice's intent is
 //      recorded and the screen keeps working. The banner tells the user the
-//      gateway isn't deployed. Once SMS-1 ships, step 2 never runs.
+//      gateway isn't configured yet.
 //
 // Inbound replies + delivery status updates arrive ONLY through the backend's
-// Twilio webhooks (gaps SMS-2/SMS-3); the UI polls the list to pick them up.
+// RingCentral webhook (SMS-2); the UI polls the list to pick them up.
 
 import { isAxiosError } from "axios";
 import api from "@/services/api";
 import {
   createSmsMessage,
+  getSmsGatewayStatus,
   listSmsMessages,
   updateSmsMessage,
 } from "@/api/generated/endpoints/communications/communications";
 import type { SmsMessageRead } from "@/api/generated/model";
 import type { SmsSendCapability, SmsSendInput, SmsTransport } from "./types";
 
-/** Gateway route the backend is expected to expose (SMS-1). */
+/** Gateway send route (SMS-1). */
 export const SMS_SEND_PATH = "/api/v1/sms/send";
 
 const PAGE_SIZE = 200; // backend max
@@ -43,15 +45,26 @@ function probeCapability(): Promise<SmsSendCapability> {
 }
 
 async function runProbe(): Promise<SmsSendCapability> {
+  // Ask the backend directly rather than inferring from an HTTP status code:
+  // GET /api/v1/sms/gateway reports real configuration state (RC_APP_CLIENT_ID
+  // / RC_APP_CLIENT_SECRET / RC_USER_JWT all set), not just "does the route
+  // exist" — the route always exists once the backend is deployed, so a
+  // 404/405 probe can only ever tell you the deploy is stale, never whether
+  // sends actually reach a carrier.
   try {
-    // GET on a POST-only FastAPI route is side-effect free: 405 when the route
-    // exists, 404 when it doesn't. (Never probe with POST — an empty body
-    // could be persisted by a lenient handler.)
-    await api.get(SMS_SEND_PATH);
-    capability = "twilio";
-  } catch (err) {
-    const status = isAxiosError(err) ? err.response?.status : undefined;
-    capability = status === 404 ? "log_only" : "twilio";
+    const status = await getSmsGatewayStatus();
+    capability = status.mode === "live" ? "live" : "log_only";
+  } catch {
+    // Backend unreachable or the route itself is genuinely missing (a stale
+    // deploy) — fall back to the old route-existence probe so the banner at
+    // least distinguishes "not deployed" from "assume it's fine".
+    try {
+      await api.get(SMS_SEND_PATH);
+      capability = "live";
+    } catch (err) {
+      const httpStatus = isAxiosError(err) ? err.response?.status : undefined;
+      capability = httpStatus === 404 ? "log_only" : "live";
+    }
   }
   return capability;
 }
@@ -81,7 +94,7 @@ export class ApiSmsTransport implements SmsTransport {
 
   async send(input: SmsSendInput): Promise<SmsMessageRead> {
     const cap = await probeCapability();
-    if (cap === "twilio") {
+    if (cap === "live") {
       try {
         const { data } = await api.post<SmsMessageRead>(SMS_SEND_PATH, {
           patient_id: input.patient_id,
@@ -99,7 +112,7 @@ export class ApiSmsTransport implements SmsTransport {
         capability = "log_only";
       }
     }
-    // Gateway not deployed — record the intent in the log so it isn't lost.
+    // Gateway not configured — record the intent in the log so it isn't lost.
     return createSmsMessage({
       patient_id: input.patient_id,
       office_id: input.office_id,

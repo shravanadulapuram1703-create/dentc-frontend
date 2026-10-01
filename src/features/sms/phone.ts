@@ -1,6 +1,6 @@
 // Phone-number helpers for the patient SMS module.
 //
-// Twilio requires E.164 (`+14125551234`). Legacy DentC rows store bare
+// The SMS gateway requires E.164 (`+14125551234`). Legacy DentC rows store bare
 // 10-digit US numbers (`4125551234`) and occasionally already-normalized
 // `+1…` values, so every send normalizes first and every render formats.
 
