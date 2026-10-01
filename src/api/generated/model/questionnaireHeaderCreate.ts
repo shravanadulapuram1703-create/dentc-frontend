@@ -7,6 +7,7 @@
  */
 
 export interface QuestionnaireHeaderCreate {
+  /** @maxLength 255 */
   description: string;
   is_multi_select?: boolean | null;
   is_active?: boolean | null;

@@ -6,7 +6,7 @@
  *   GET /api/v1/offices/{officeId}/schedule
  *     -> OfficeScheduleDayRead[] (array of day rows; missing days may be absent)
  *   PUT /api/v1/offices/{officeId}/schedule
- *     body ScheduleReplace { days: ScheduleDayInput[] } (1..7) — full replace
+ *     body AppSchemasOfficeSetupScheduleReplace { days: AppSchemasOfficeSetupScheduleDayInput[] } (1..7) — full replace
  *     -> OfficeScheduleDayRead[]
  *
  * day_of_week is an integer 0..6 where 0=Monday … 6=Sunday.
@@ -19,8 +19,8 @@ import {
 } from "@/api/generated/endpoints/office-setup/office-setup";
 import type {
   OfficeScheduleDayRead,
-  ScheduleDayInput,
-  ScheduleReplace,
+  AppSchemasOfficeSetupScheduleDayInput,
+  AppSchemasOfficeSetupScheduleReplace,
 } from "@/api/generated/model";
 
 /**
@@ -91,7 +91,7 @@ export async function fetchOfficeSchedule(
 }
 
 /**
- * PUT the full 7-day schedule (idempotent replace). Builds ScheduleReplace from
+ * PUT the full 7-day schedule (idempotent replace). Builds AppSchemasOfficeSetupScheduleReplace from
  * all 7 UI rows, converting "HH:MM" inputs to "HH:MM:SS" and treating empty
  * inputs as null. Returns the persisted rows.
  */
@@ -99,7 +99,7 @@ export async function saveOfficeSchedule(
   officeId: number,
   days: OfficeScheduleDayUi[]
 ): Promise<OfficeScheduleDayRead[]> {
-  const inputDays: ScheduleDayInput[] = days.map((d) => ({
+  const inputDays: AppSchemasOfficeSetupScheduleDayInput[] = days.map((d) => ({
     day_of_week: d.day_of_week,
     is_closed: d.is_closed,
     start_time: d.is_closed ? null : toApiTime(d.start_time),
@@ -108,6 +108,6 @@ export async function saveOfficeSchedule(
     lunch_end: d.is_closed ? null : toApiTime(d.lunch_end),
   }));
 
-  const body: ScheduleReplace = { days: inputDays };
+  const body: AppSchemasOfficeSetupScheduleReplace = { days: inputDays };
   return setOfficeSchedule(officeId, body);
 }

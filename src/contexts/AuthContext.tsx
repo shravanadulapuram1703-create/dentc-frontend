@@ -16,6 +16,18 @@ import {
   getLastPatient,
   setLastPatient,
 } from "@/features/patient-context/lastPatientStorage";
+import { officeKey, officeKeyToId } from "@/services/officeLookup";
+import {
+  deriveOfficeAccess,
+  resolveInitialOffice,
+} from "@/features/office-scope/officeScopeModel";
+import {
+  clearTabOffice,
+  getLastOffice,
+  getTabOffice,
+  setLastOffice,
+  setTabOffice,
+} from "@/features/office-scope/officeScopeStorage";
 
 /* -------------------- TYPES -------------------- */
 
@@ -46,6 +58,7 @@ interface Organization {
 }
 
 export type UserRole =
+  | "super_admin"
   | "owner"
   | "admin"
   | "manager"
@@ -63,6 +76,13 @@ interface User {
   isActive?: boolean;
   isOrgOwner?: boolean;
   organizationId?: string;
+  /** `MeFull.permissions` — right codes; empty until the backend defines office rights. */
+  permissions?: string[];
+  /** `MeFull.permissions_enforced` — false until the backend enforces assignments (OFF-SCOPE-13). */
+  permissions_enforced?: boolean;
+  /** `MeFull.provider_id` — the provider record linked to this user, if any. */
+  provider_id?: string | null;
+  groups?: string[];
 }
 
 interface ActivePatient {
@@ -127,6 +147,10 @@ function buildAuthState(me: MeFull): {
     isActive: u.is_active,
     isOrgOwner: u.role === "owner",
     organizationId: String(me.tenant?.id ?? u.tenant_id),
+    permissions: me.permissions ?? [],
+    permissions_enforced: me.permissions_enforced ?? false,
+    provider_id: me.provider_id ?? null,
+    groups: me.groups ?? [],
   };
 
   const organizations: Organization[] = me.tenant
@@ -165,6 +189,29 @@ function storedUserId(): string | null {
   }
 }
 
+/**
+ * The working office to seed for `u`, as the canonical `OFF-<id>` key ("" when
+ * nothing can seed one — tenant-wide with a banner, never a lockout).
+ * Precedence: the given candidates (this tab, the user's last-used office,
+ * the legacy mirror) → home office (`is_primary`) → first assigned office.
+ */
+function seedWorkingOffice(
+  u: User,
+  offices: Office[] | undefined,
+  candidates: (string | null | undefined)[],
+): string {
+  const id = resolveInitialOffice(
+    candidates,
+    deriveOfficeAccess({
+      role: u.role,
+      offices: offices ?? [],
+      permissions: u.permissions,
+      permissions_enforced: u.permissions_enforced,
+    }),
+  );
+  return id != null ? officeKey(id) : "";
+}
+
 /* -------------------- CONTEXT -------------------- */
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -192,9 +239,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem("current_org") ?? ""
   );
 
-  const [currentOffice, setCurrentOffice] = useState(
-    localStorage.getItem("current_office") ?? ""
-  );
+  // Working office: this tab's selection → the user's last-used office (kept
+  // across logout/401 by clearAuthStorageKeepRemembered) → the legacy mirror.
+  // Tabs are independent on purpose; nothing adopts another tab's selection.
+  const [currentOffice, setCurrentOffice] = useState(() => {
+    const uid = storedUserId();
+    return (
+      getTabOffice(uid) ??
+      getLastOffice(uid) ??
+      localStorage.getItem("current_office") ??
+      ""
+    );
+  });
 
   // Restored synchronously from per-user localStorage so the persistent
   // default patient is available on the very first render (no prompt flash).
@@ -240,7 +296,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem("current_office", currentOffice);
-  }, [currentOffice]);
+    // Per-tab + per-user memory. Only a real selection is remembered, so the ""
+    // written by logout never erases the user's last office.
+    if (currentOffice) {
+      const uid = user?.id ?? storedUserId();
+      setTabOffice(uid, currentOffice);
+      setLastOffice(uid, currentOffice);
+    }
+  }, [currentOffice, user?.id]);
+
+  /* ---------- BACKGROUND IDENTITY REFRESH ---------- */
+  // Re-reads /auth/me-full without touching the working office or the active
+  // patient. Used on session restore so `MeFull.offices` / `permissions` are
+  // current even though the cached `me_full` may predate those fields.
+  const refreshIdentity = async () => {
+    try {
+      const me = await getMeFull();
+      const { user: freshUser, organizations: orgs } = buildAuthState(me);
+      setUser(freshUser);
+      setOrganizations(orgs);
+      localStorage.setItem("me_full", JSON.stringify(freshUser));
+      localStorage.setItem("access_ctx", JSON.stringify(orgs));
+    } catch {
+      /* a 401 is handled by the axios interceptor; anything else keeps the cached identity */
+    }
+  };
 
   /* ---------- RESTORE SESSION ON REFRESH ---------- */
 
@@ -250,9 +330,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    // If already restored from storage → skip API calls
+    // Already restored from storage → skip the blocking API calls, but
+    //  (1) re-seed an empty/invalid working office synchronously from the cached
+    //      assignments (last-used → home → first assigned). This branch used to
+    //      leave `currentOffice` "" after every refresh, which silently turned
+    //      every office filter tenant-wide; and
+    //  (2) refresh the identity in the background so assignments / permissions
+    //      changed mid-session reach the office switcher without a re-login.
     if (user && organizations.length > 0) {
       setIsAuthenticated(true);
+      if (officeKeyToId(currentOffice) == null) {
+        const activeOrg =
+          organizations.find((o) => o.id === currentOrganization) ?? organizations[0];
+        setCurrentOffice(
+          seedWorkingOffice(user, activeOrg?.offices, [getLastOffice(user.id)]),
+        );
+      }
+      void refreshIdentity();
       return;
     }
 
@@ -275,11 +369,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (activeOrg) {
           setCurrentOrganization(activeOrg.id);
 
-          const office =
-            activeOrg.offices?.find((o) => o.is_current) ??
-            activeOrg.offices?.[0];
-
-          setCurrentOffice(office?.id ?? "");
+          // This tab → last-used → whatever the initializer found → home → first assigned.
+          setCurrentOffice(
+            seedWorkingOffice(restoredUser, activeOrg.offices, [
+              getTabOffice(restoredUser.id),
+              getLastOffice(restoredUser.id),
+              currentOffice,
+            ]),
+          );
         }
 
         setIsAuthenticated(true);
@@ -327,11 +424,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (activeOrg) {
         setCurrentOrganization(activeOrg.id);
 
-        const office =
-          activeOrg.offices?.find((o) => o.is_current) ??
-          activeOrg.offices?.[0];
-
-        setCurrentOffice(office?.id ?? "");
+        // The office this user last worked in (remembered per user across
+        // logout) wins over the home office; home → first assigned otherwise.
+        setCurrentOffice(
+          seedWorkingOffice(newUser, activeOrg.offices, [getLastOffice(newUser.id)]),
+        );
       }
 
       setIsAuthenticated(true);
@@ -359,6 +456,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Logout API error:", err);
       // Continue with logout even if API fails
     } finally {
+      // This tab's office selection ends with the session; the per-user
+      // last-used office key is preserved by clearAuthStorageKeepRemembered.
+      clearTabOffice(user?.id ?? storedUserId());
       clearAuthStorageKeepRemembered();
       delete api.defaults.headers.common["Authorization"];
 

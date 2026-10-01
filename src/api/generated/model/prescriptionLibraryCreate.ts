@@ -6,11 +6,21 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * RX-4: an active row with the same drug name + dispense + sig is a 409
+ * ``duplicate_prescription``. ``allow_duplicate`` is the API half of the
+ * dialog's override — the seed legitimately lists one drug twice with different
+ * configurations, so the server refuses the *accidental* duplicate, never the
+ * duplicate. ``sig`` over 240 characters is a 422 ``sig_too_long`` (RX-2).
+ */
 export interface PrescriptionLibraryCreate {
+  /** @maxLength 255 */
   drug_name: string;
   dispense?: string | null;
   sig?: string | null;
   refills?: number | null;
   is_as_written?: boolean | null;
   is_active?: boolean | null;
+  allergy_keys?: unknown | null;
+  allow_duplicate?: boolean;
 }

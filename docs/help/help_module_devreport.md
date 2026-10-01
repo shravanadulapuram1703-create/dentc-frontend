@@ -15,8 +15,8 @@ Code lives under `src/components/help/**` (mirrors `src/components/reports/**`).
   Content is data-driven in `content/helpContent.ts` — writers extend it without
   touching components.
 - **Report an Issue** — reachable from anywhere:
-  - global floating button (`ReportIssueFab`, bottom-left, hidden on auth + the
-    Help Center which has its own button),
+  - global header button (`ReportIssueButton`, GlobalNav top bar beside the
+    Messages launcher and AppointNow bell; formerly a bottom-left FAB),
   - the Help nav dropdown ("Report an Issue" → opens the dialog, not a route),
   - the Help Center hero / sidebar / Contact section.
   All routed through `HelpProvider` (`useHelp().openReportIssue()`), mounted once

@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { ItemIcdCodeRead } from './itemIcdCodeRead';
 
 export interface TreatmentPlanItemRead {
   id: string;
@@ -33,4 +34,26 @@ export interface TreatmentPlanItemRead {
   created_at: string;
   updated_at?: string | null;
   procedure_id?: string | null;
+  notes?: string | null;
+  accepted_date?: string | null;
+  scheduled_date?: string | null;
+  duration_minutes?: number | null;
+  created_by?: number | null;
+  updated_by?: number | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
+  referral_id?: number | null;
+  referral_type?: string | null;
+  referral_name?: string | null;
+  update_end_date_at_posting?: boolean;
+  re_estimate_at_posting?: boolean;
+  fee_schedule_id?: number | null;
+  fee_schedule_name?: string | null;
+  counselor_user_id?: number | null;
+  counselor_name?: string | null;
+  icd_code_ids?: number[];
+  icd_codes?: ItemIcdCodeRead[];
+  appointment_id?: string | null;
+  appointment_ids?: string[];
+  status_before_scheduled?: string | null;
 }

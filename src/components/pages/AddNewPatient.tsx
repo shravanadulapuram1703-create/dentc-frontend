@@ -2,33 +2,27 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
-import { checkDuplicatePatient } from "../../services/patient.service";
-import { DuplicatePatient } from "../../types/patient";
+import { checkDuplicatePatient, toDuplicatePatient } from "../../services/patient.service";
+import type { DuplicatePatient } from "../../types/patient";
 import { 
   getFeeSchedules, 
   type FeeSchedule,
   getProcedureCodesByFeeSchedule 
 } from "../../api/feeSchedules";
-import { 
+import {
   fetchPatientMetadata,
   type PatientMetadataResponse,
-  type TitleOption,
-  type PronounOption,
-  type StateOption,
-  type MaritalStatusOption,
-  type GenderOption,
-  type ResponsiblePartyRelationshipOption,
-  type ContactPreferenceOption,
-  type ReferralTypeOption,
   type PatientTypeOption,
 } from "../../services/patientMetadataApi";
 import {
   registerPatientResilient,
+  isDuplicatePatientError,
   buildPatientCreate,
   type PatientCreateRequestFull,
 } from "../../services/patientApi";
 import type { RegisterRequest } from "@/api/generated/model";
 import { fetchProviders, isHygienist, type Provider } from "../../services/schedulerApi";
+import { OfficeRequiredBanner, ProviderOptionGroups, useOfficeScope } from "@/features/office-scope";
 import { listReferrals } from "@/api/generated/endpoints/patients/patients";
 import type { ReferralRead } from "@/api/generated/model";
 import { resolveOffice, officeKeyToId, type OfficeOption } from "../../services/officeLookup";
@@ -36,6 +30,12 @@ import { MIN_DOB_ISO, todayIsoDate, validateDob, ageFromDob } from "../../utils/
 
 /** referral_type direction codes: "0" = Referred By, "1" = Referred To. */
 const REFERRAL_DIRECTION_TO = "1";
+/**
+ * Backend `patients.middle_initial` is VARCHAR(10) and the API returns HTTP 500
+ * (not 422) on overflow — see docs/patients/add_patient_backend_devreport.md
+ * GAP-AP-19. Clamp client-side until the column is widened / `middle_name` added.
+ */
+const MIDDLE_NAME_MAX_LENGTH = 10;
 import { Loader2 } from "lucide-react";
 import {
   createPatientInsurance,
@@ -144,7 +144,7 @@ interface AddNewPatientProps {
   initialValues?: Partial<
     Pick<
       PatientFormData,
-      "birthdate" | "lastName" | "firstName" | "email" | "phone" | "cellPhone" | "workPhone"
+      "birthdate" | "lastName" | "firstName" | "middle_initial" | "email" | "phone" | "cellPhone" | "workPhone"
     >
   >;
 }
@@ -154,6 +154,11 @@ interface PatientFormData {
   birthdate: string;
   lastName: string;
   firstName: string;
+  /**
+   * Optional middle name. Bound to the backend column `middle_initial`, which is
+   * VARCHAR(10) — longer values 500 on save (GAP-AP-19), so the input is capped.
+   */
+  middle_initial: string;
 
   // Additional Details
   title: string;
@@ -239,13 +244,6 @@ interface PatientFormData {
 }
 
 /**
- * Provider option label. The seeded data has many providers sharing a name
- * (e.g. several "Dhileep Jinna"), so append the title to tell them apart.
- */
-const providerLabel = (p: Provider): string =>
-  p.title ? `${p.name}, ${p.title}` : p.name;
-
-/**
  * Pull the legacy "Emergency Contact" block out of the Medical Questionnaire
  * answers so it can be stored in the real `patient-emergency-contacts` resource
  * (LEG-3) rather than living on as questionnaire rows.
@@ -276,6 +274,8 @@ export default function AddNewPatient({
       ? NaN
       : (propPatientId ?? (routePatientId ? Number(routePatientId) : NaN));
   const isEditMode = Number.isFinite(editPatientId);
+  // Working office — registration stamps it as the new patient's home office.
+  const officeScope = useOfficeScope();
 
   // Age beside the Birth Date field. Blank whenever the date isn't usable, so a
   // rejected DOB never reads as if it were accepted.
@@ -287,6 +287,7 @@ export default function AddNewPatient({
     birthdate: initialValues?.birthdate ?? "",
     lastName: initialValues?.lastName ?? "",
     firstName: initialValues?.firstName ?? "",
+    middle_initial: initialValues?.middle_initial ?? "",
 
     // Additional Details
     title: "",
@@ -416,6 +417,12 @@ export default function AddNewPatient({
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicatePatients, setDuplicatePatients] = useState<DuplicatePatient[]>([]);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  /**
+   * A registration the server refused with 409 `duplicate_patient`, parked
+   * while the duplicate modal is open. Confirming the modal re-runs it with
+   * `force_create` (GAP-AP-21).
+   */
+  const [pendingRegistration, setPendingRegistration] = useState<{ full: boolean } | null>(null);
 
   // ✅ Identity Gate Logic
   // The DOB must be *valid*, not merely filled in — a future or out-of-range
@@ -495,12 +502,21 @@ export default function AddNewPatient({
         setFeeScheduleError(
           response.feeSchedules.length === 0 ? "No fee schedules are set up for this organization." : null,
         );
-        // Default to the office's usual schedule when none is chosen yet.
+        // Default a new patient to the office's configured default patient fee
+        // schedule (offices.default_fee_schedule_id — the list a new patient is
+        // registered with, per docs/pricing §1.3), falling back to the first
+        // schedule when the office has no pointer or it isn't in the loaded list.
+        // (Resolved here rather than reading `homeOffice`, which loads
+        // concurrently and may not be set yet; resolveOffice is session-cached.)
+        const office = await resolveOffice(currentOffice).catch(() => null);
+        if (cancelled) return;
         setFormData((prev) => {
           if (prev.feeScheduleId || response.feeSchedules.length === 0) return prev;
+          const defaultId = office?.default_fee_schedule_id;
           const preferred =
-            response.feeSchedules.find((fs) => fs.feeScheduleName === "CP-50") ??
-            response.feeSchedules[0]!;
+            (defaultId != null
+              ? response.feeSchedules.find((fs) => fs.feeScheduleId === String(defaultId))
+              : undefined) ?? response.feeSchedules[0]!;
           return {
             ...prev,
             feeSchedule: preferred.feeScheduleName,
@@ -607,7 +623,7 @@ export default function AddNewPatient({
   // Metadata state
   const [metadata, setMetadata] = useState<PatientMetadataResponse | null>(null);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
-  const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [, setMetadataError] = useState<string | null>(null);
   
   // Providers and Hygienists state
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -623,7 +639,7 @@ export default function AddNewPatient({
   const [homeOffice, setHomeOffice] = useState<OfficeOption | null>(null);
   
   // Patient Types metadata
-  const [patientTypesMetadata, setPatientTypesMetadata] = useState<PatientTypeOption[]>([]);
+  const [, setPatientTypesMetadata] = useState<PatientTypeOption[]>([]);
   
   // Loading and saving states
   const [isSaving, setIsSaving] = useState(false);
@@ -863,10 +879,9 @@ export default function AddNewPatient({
 
     try {
       const duplicates = await checkDuplicatePatient({
-        birthdate: formData.birthdate,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        office: currentOffice,
+        dob: formData.birthdate,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
       });
 
       if (duplicates && duplicates.length > 0) {
@@ -960,6 +975,7 @@ export default function AddNewPatient({
         identity: {
           first_name: formData.firstName,
           last_name: formData.lastName,
+          middle_initial: formData.middle_initial.trim().slice(0, MIDDLE_NAME_MAX_LENGTH) || undefined,
           preferred_name: formData.preferredName || undefined,
           dob: dobFormatted,
           gender: genderCode as "M" | "F" | "O",
@@ -996,9 +1012,7 @@ export default function AddNewPatient({
           preferred_provider_id: formData.preferredProvider || undefined,
           preferred_hygienist_id: formData.preferredHygienist !== "None" ? formData.preferredHygienist : undefined,
         },
-        fee_schedule: formData.feeScheduleId ? {
-          fee_schedule_id: formData.feeScheduleId,
-        } : undefined,
+        fee_schedule_id: formData.feeScheduleId || undefined,
         patient_type: patientType,
         patient_flags: {
           is_ortho: patientTypes.OR,
@@ -1146,10 +1160,18 @@ export default function AddNewPatient({
     return warnings;
   };
 
-  // Quick Save — atomic register of just the patient (+ self-RP link + opening
-  // balance), then straight to Overview (skips the rest of the wizard).
-  const handleQuickSave = async () => {
-    if (!validateStep1()) return;
+  /**
+   * Shared create path for Quick Save (`full` = false: patient + self-RP link +
+   * opening balance) and Finish (`full` = true: every wizard section).
+   *
+   * A server-side duplicate block (HTTP 409 `duplicate_patient`) is not an
+   * error: the candidates go into the same modal Check Patient uses, and the
+   * modal's Continue button re-runs this registration with `force_create`. The
+   * atomic `/patients/register` path is therefore kept — previously the 409
+   * silently dropped into the chained fallback, which bypassed the duplicate
+   * guard, lost the non-self guarantor and took minutes (GAP-AP-21).
+   */
+  const runRegistration = async (full: boolean, forceCreate: boolean) => {
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -1159,11 +1181,18 @@ export default function AddNewPatient({
         alert(" Invalid office ID — please select an office.");
         return;
       }
-      const res = await registerPatientResilient(buildRegisterRequest(officeIdNum, false));
-      if (res.warnings.length > 0) {
-        alert(` Patient saved. Some items need attention:\n• ${res.warnings.join("\n• ")}`);
+      const request = buildRegisterRequest(officeIdNum, full);
+      if (forceCreate) request.force_create = true;
+      const res = await registerPatientResilient(request);
+      const warnings = [...res.warnings];
+      // Everything that cannot ride inside the composite (insurance, recalls,
+      // emergency contact) is attached afterwards, best-effort.
+      if (full) warnings.push(...(await persistPostRegister(res.patient_id, officeIdNum)));
+      const verb = full ? "registered" : "saved";
+      if (warnings.length > 0) {
+        alert(` Patient ${verb}. Some items need attention:\n• ${warnings.join("\n• ")}`);
       } else {
-        alert(" Patient saved successfully!");
+        alert(` Patient ${verb} successfully!`);
       }
       // Embedded (modal) create: hand the new patient back to the host flow
       // instead of navigating away (e.g. Scheduler continues to the appointment).
@@ -1173,18 +1202,34 @@ export default function AddNewPatient({
       }
       navigate(`/patient/${res.patient_id}/overview`);
     } catch (error: any) {
-      console.error("Error saving patient:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Failed to save patient";
+      if (isDuplicatePatientError(error)) {
+        setDuplicatePatients(error.candidates.map(toDuplicatePatient));
+        setPendingRegistration({ full });
+        setShowDuplicateModal(true);
+        return;
+      }
+      console.error(full ? "Error registering patient:" : "Error saving patient:", error);
+      const errorMessage =
+        error.response?.data?.error?.message ||
+        error.response?.data?.detail ||
+        error.message ||
+        (full ? "Failed to register patient" : "Failed to save patient");
       setSaveError(errorMessage);
-      alert(` Error saving patient: ${errorMessage}`);
+      alert(` Error ${full ? "registering" : "saving"} patient: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Finish — one atomic register (patient + RP + alerts + questionnaires + recalls
-  // + opening balance), then attach insurance. A register failure rolls back the
-  // whole patient; insurance is best-effort and surfaced as a warning.
+  // Quick Save — atomic register of just the patient (+ self-RP link + opening
+  // balance), then straight to Overview (skips the rest of the wizard).
+  const handleQuickSave = async () => {
+    if (!validateStep1()) return;
+    await runRegistration(false, false);
+  };
+
+  // Finish — one atomic register (patient + RP + alerts + questionnaires +
+  // opening balance), then attach insurance / recalls / emergency contact.
   const handleFinish = async () => {
     if (!validateStep1()) {
       goToStep(0);
@@ -1198,39 +1243,21 @@ export default function AddNewPatient({
       if (rpIndex >= 0) goToStep(rpIndex);
       return;
     }
-    setIsSaving(true);
-    setSaveError(null);
-    try {
-      const officeIdNum = getOfficeIdNum();
-      if (!officeIdNum) {
-        setSaveError("Invalid office ID");
-        alert(" Invalid office ID — please select an office.");
-        return;
-      }
-      const res = await registerPatientResilient(buildRegisterRequest(officeIdNum, true));
-      const warnings = [
-        ...res.warnings,
-        ...(await persistPostRegister(res.patient_id, officeIdNum)),
-      ];
-      if (warnings.length > 0) {
-        alert(` Patient registered. Some items need attention:\n• ${warnings.join("\n• ")}`);
-      } else {
-        alert(" Patient registered successfully!");
-      }
-      // Embedded (modal) create: hand the new patient back to the host flow.
-      if (isModal) {
-        onSaved?.(res.patient_id);
-        return;
-      }
-      navigate(`/patient/${res.patient_id}/overview`);
-    } catch (error: any) {
-      console.error("Error registering patient:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Failed to register patient";
-      setSaveError(errorMessage);
-      alert(` Error registering patient: ${errorMessage}`);
-    } finally {
-      setIsSaving(false);
-    }
+    await runRegistration(true, false);
+  };
+
+  /** Duplicate modal — "Continue": resume a server-blocked registration, forced. */
+  const handleDuplicateContinue = () => {
+    setShowDuplicateModal(false);
+    const pending = pendingRegistration;
+    setPendingRegistration(null);
+    if (pending) void runRegistration(pending.full, true);
+  };
+
+  /** Duplicate modal — dismiss without creating anything. */
+  const handleDuplicateDismiss = () => {
+    setShowDuplicateModal(false);
+    setPendingRegistration(null);
   };
 
   /**
@@ -1418,6 +1445,14 @@ export default function AddNewPatient({
         />
 
         <div className={isModal ? "p-6" : "max-w-[1600px] mx-auto p-6"}>
+          {/* Registration stamps the working office as the home office, so it
+              needs one — a banner above the wizard, never a gate. Editing keeps
+              the patient's own home office and does not need it. */}
+          {!isEditMode && officeScope.office_id == null && (
+            <div className="mb-4">
+              <OfficeRequiredBanner action="register a patient" />
+            </div>
+          )}
           {isLoadingPatient && (
             <div className="mb-4 flex items-center gap-3 rounded-lg border-2 border-[#E2E8F0] bg-white px-4 py-3 text-sm text-[#1F3A5F]">
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1490,8 +1525,8 @@ export default function AddNewPatient({
                     />
                   </div>
 
-                  {/* Last Name - takes 4 columns */}
-                  <div className="col-span-4">
+                  {/* Last Name - takes 3 columns */}
+                  <div className="col-span-3">
                     <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                       Last Name <span className="text-[#EF4444]">*</span>
                     </label>
@@ -1505,8 +1540,8 @@ export default function AddNewPatient({
                     />
                   </div>
 
-                  {/* First Name - takes 4 columns */}
-                  <div className="col-span-4">
+                  {/* First Name - takes 3 columns */}
+                  <div className="col-span-3">
                     <label className="block text-[#1E293B] font-normal mb-1 text-sm">
                       First Name <span className="text-[#EF4444]">*</span>
                     </label>
@@ -1515,6 +1550,29 @@ export default function AddNewPatient({
                       value={formData.firstName}
                       onChange={(e) =>
                         setFormData({ ...formData, firstName: e.target.value })
+                      }
+                      className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
+                    />
+                  </div>
+
+                  {/* Middle Name - takes 2 columns. Optional; not part of the
+                      identity gate. Stored in the backend's `middle_initial`
+                      column (VARCHAR(10) — see GAP-AP-19), hence the cap. */}
+                  <div className="col-span-2" data-field="middle_initial">
+                    <label className="block text-[#1E293B] font-normal mb-1 text-sm">
+                      Middle Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.middle_initial}
+                      maxLength={MIDDLE_NAME_MAX_LENGTH}
+                      placeholder="Optional"
+                      aria-label="Middle Name (optional)"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          middle_initial: e.target.value.slice(0, MIDDLE_NAME_MAX_LENGTH),
+                        })
                       }
                       className="w-full px-3 py-1.5 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3A6EA5] focus:border-[#3A6EA5] text-sm"
                     />
@@ -2175,14 +2233,12 @@ export default function AddNewPatient({
                           {loadingProviders
                             ? "Loading providers…"
                             : providers.length === 0
-                              ? "No providers for this office"
+                              ? "No providers found"
                               : "Select Provider"}
                         </option>
-                        {providers.map((provider) => (
-                          <option key={provider.id} value={provider.id}>
-                            {providerLabel(provider)}
-                          </option>
-                        ))}
+                        {/* This office's roster first, every other provider below —
+                            a sparse roster must never block registration (NA-F6). */}
+                        <ProviderOptionGroups providers={providers} />
                       </select>
                       {errors.preferredProvider && (
                         <p className="text-xs text-[#EF4444] mt-1">{errors.preferredProvider}</p>
@@ -2211,11 +2267,7 @@ export default function AddNewPatient({
                               ? "None (no hygienists for this office)"
                               : "None"}
                         </option>
-                        {hygienists.map((hygienist) => (
-                          <option key={hygienist.id} value={hygienist.id}>
-                            {providerLabel(hygienist)}
-                          </option>
-                        ))}
+                        <ProviderOptionGroups providers={hygienists} />
                       </select>
                     </div>
                   </div>
@@ -2773,6 +2825,7 @@ export default function AddNewPatient({
               patient={{
                 first_name: formData.firstName,
                 last_name: formData.lastName,
+                middle_initial: formData.middle_initial,
                 dob: formData.birthdate,
                 sex: formData.sex,
                 marital_status: formData.maritalStatus,
@@ -2955,7 +3008,7 @@ export default function AddNewPatient({
                 ⚠️ Identical Patients Found
               </h2>
               <button
-                onClick={() => setShowDuplicateModal(false)}
+                onClick={handleDuplicateDismiss}
                 className="text-white hover:text-gray-200"
               >
                 <X className="w-6 h-6" />
@@ -2964,8 +3017,9 @@ export default function AddNewPatient({
 
             <div className="p-6">
               <p className="text-sm text-[#64748B] mb-4">
-                The following patients match the identity information entered. Review
-                before creating a new patient.
+                {pendingRegistration
+                  ? "The save was blocked because these existing patients strongly match the details entered (same SSN, chart number, or name + date of birth). Review them — continuing creates a separate new patient."
+                  : "The following patients match the identity information entered. Review before creating a new patient."}
               </p>
 
               <div className="overflow-x-auto">
@@ -3004,12 +3058,12 @@ export default function AddNewPatient({
                         key={index}
                         className="border-b border-[#E2E8F0] hover:bg-[#F7F9FC]"
                       >
-                        <td className="px-4 py-2">{patient.birthdate}</td>
+                        <td className="px-4 py-2">{patient.dob}</td>
                         <td className="px-4 py-2 font-semibold text-[#1F3A5F]">
                           {patient.name}
                         </td>
-                        <td className="px-4 py-2">{patient.officeShortId}</td>
-                        <td className="px-4 py-2">{patient.patientId}</td>
+                        <td className="px-4 py-2">{patient.home_office_short_id}</td>
+                        <td className="px-4 py-2">{patient.patient_id}</td>
                         <td className="px-4 py-2">{patient.email}</td>
                         <td className="px-4 py-2">{patient.provider}</td>
                         <td className="px-4 py-2">
@@ -3031,11 +3085,19 @@ export default function AddNewPatient({
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
+                {pendingRegistration && (
+                  <button
+                    onClick={handleDuplicateDismiss}
+                    className="px-6 py-2 border border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#F7F9FC] transition-colors font-semibold text-sm"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
-                  onClick={() => setShowDuplicateModal(false)}
+                  onClick={handleDuplicateContinue}
                   className="px-6 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-semibold text-sm"
                 >
-                  Close & Continue Creating Patient
+                  {pendingRegistration ? "Create Anyway" : "Close & Continue Creating Patient"}
                 </button>
               </div>
             </div>

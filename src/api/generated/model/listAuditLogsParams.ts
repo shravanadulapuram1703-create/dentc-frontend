@@ -12,6 +12,14 @@ user_id?: number | null;
 resource_type?: string | null;
 resource_id?: string | null;
 /**
+ * MH-19: only entries for this chart
+ */
+patient_id?: number | null;
+/**
+ * OFF-SCOPE-17: access-by-location — only entries made in this office
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

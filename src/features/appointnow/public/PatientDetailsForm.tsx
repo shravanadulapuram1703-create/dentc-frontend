@@ -1,4 +1,8 @@
-import type { BookingContactDetails } from "../transport/types";
+import {
+  BOOKING_CONSENT_TEXT,
+  BOOKING_DISCLAIMER_TEXT,
+  type BookingContactDetails,
+} from "../transport/types";
 import type { ContactErrors } from "./bookingUtils";
 
 interface PatientDetailsFormProps {
@@ -32,6 +36,54 @@ function Field({
 
 const inputCls =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20";
+
+/** A mandatory Yes/No acknowledgement with its explanatory text underneath. */
+function YesNoAcknowledgement({
+  name,
+  label,
+  text,
+  value,
+  error,
+  onChange,
+}: {
+  name: string;
+  label: string;
+  text: string;
+  value: boolean | null;
+  error?: string;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="mb-1 block text-sm font-semibold text-slate-700">
+        {label}
+        <span className="text-red-500"> *</span>
+      </legend>
+      <div className="flex flex-col gap-1.5">
+        {[
+          { v: true, l: "Yes" },
+          { v: false, l: "No" },
+        ].map((opt) => (
+          <label
+            key={opt.l}
+            className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-700"
+          >
+            <input
+              type="radio"
+              name={name}
+              className="h-4 w-4 border-slate-300 text-[#3A6EA5] focus:ring-[#3A6EA5]"
+              checked={value === opt.v}
+              onChange={() => onChange(opt.v)}
+            />
+            {opt.l}
+          </label>
+        ))}
+      </div>
+      <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{text}</p>
+      {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
+    </fieldset>
+  );
+}
 
 /** The basic-details form captured on the public page. */
 export default function PatientDetailsForm({
@@ -111,9 +163,36 @@ export default function PatientDetailsForm({
           className={`${inputCls} min-h-[80px] resize-y`}
           value={value.notes ?? ""}
           onChange={(e) => onChange({ notes: e.target.value || null })}
-          placeholder="Reason for visit, symptoms, insurance, etc."
+          placeholder="Reason for visit, symptoms, etc."
         />
       </Field>
+
+      <Field label="Name of Dental Insurance Provider & Member ID number">
+        <input
+          className={inputCls}
+          value={value.insurance_info ?? ""}
+          onChange={(e) => onChange({ insurance_info: e.target.value || null })}
+          placeholder="e.g. Delta Dental — Member ID 123456789"
+        />
+      </Field>
+
+      <YesNoAcknowledgement
+        name="disclaimer_accepted"
+        label="Disclaimer"
+        text={BOOKING_DISCLAIMER_TEXT}
+        value={value.disclaimer_accepted}
+        error={errors.disclaimer_accepted}
+        onChange={(v) => onChange({ disclaimer_accepted: v })}
+      />
+
+      <YesNoAcknowledgement
+        name="consent_accepted"
+        label="Consent"
+        text={BOOKING_CONSENT_TEXT}
+        value={value.consent_accepted}
+        error={errors.consent_accepted}
+        onChange={(v) => onChange({ consent_accepted: v })}
+      />
     </div>
   );
 }

@@ -14,6 +14,11 @@
  * them. The full catalog (left pane) comes from the existing tenant-wide list
  * endpoints; the assigned set (right pane) from the office-scoped GET.
  */
+import { queryClient } from "@/shared/config/queryClient";
+import {
+  invalidateProviderDirectoryCache,
+  providerDirectoryKeys,
+} from "@/services/providerDirectory";
 import {
   listOfficeProcedureCodes,
   setOfficeProcedureCodes,
@@ -163,6 +168,10 @@ export const providersResource: AssignmentResource = {
     })),
   save: async (officeId, ids) => {
     await setOfficeProviders(officeId, { ids });
+    // The roster feeds every provider picker's "This office" group — drop both
+    // the module TTL cache and the React Query entry so the change shows at once.
+    invalidateProviderDirectoryCache();
+    await queryClient.invalidateQueries({ queryKey: providerDirectoryKeys.office(officeId) });
   },
 };
 
@@ -190,21 +199,25 @@ export const noteMacrosResource: AssignmentResource = {
 /* --------------------------------------------------------------------------
  * RX (#30) — int id. Catalog: /prescription-library.
  * ------------------------------------------------------------------------ */
+// Same-name library rows (e.g. two Chlorhexidine configurations) are told apart
+// by dispense / sig in the secondary line, never by name alone.
+const rxRow = (r: {
+  id: number;
+  drug_name: string;
+  dispense?: string | null;
+  sig?: string | null;
+  is_active?: boolean | null;
+}): AssignmentRow => ({
+  id: String(r.id),
+  primary: r.drug_name,
+  secondary: [`Rx #${r.id}`, r.dispense?.trim(), r.sig?.trim()].filter(Boolean).join(" · "),
+  active: r.is_active,
+});
+
 export const rxResource: AssignmentResource = {
   loadCatalog: async () =>
-    (await pageAll((page) => listPrescriptionLibrary({ page, size: PAGE_SIZE }))).map((r) => ({
-      id: String(r.id),
-      primary: r.drug_name,
-      secondary: `Rx #${r.id}`,
-      active: r.is_active,
-    })),
-  loadAssigned: async (officeId) =>
-    (await listOfficePrescriptionLibrary(officeId)).map((r) => ({
-      id: String(r.id),
-      primary: r.drug_name,
-      secondary: `Rx #${r.id}`,
-      active: r.is_active,
-    })),
+    (await pageAll((page) => listPrescriptionLibrary({ page, size: PAGE_SIZE }))).map(rxRow),
+  loadAssigned: async (officeId) => (await listOfficePrescriptionLibrary(officeId)).map(rxRow),
   save: async (officeId, ids) => {
     await setOfficePrescriptionLibrary(officeId, { ids: toInt(ids) });
   },

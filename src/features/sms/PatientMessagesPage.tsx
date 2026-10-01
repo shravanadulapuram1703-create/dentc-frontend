@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { CheckCheck, FlaskConical, MessageCircle, RefreshCw, Search, TableProperties } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/components/ui/utils";
+import { usePatientOffice } from "@/features/office-scope";
 import { applyFilter, type SmsEntry, type SmsFilter } from "./smsModel";
 import { BUILTIN_TEMPLATES } from "./smsTemplates";
 import { usePatientSms } from "./hooks/usePatientSms";
@@ -23,7 +24,7 @@ import SmsDetailsPanel from "./components/SmsDetailsPanel";
 import SmsModeBanner from "./components/SmsModeBanner";
 
 interface OutletContext {
-  patient: { id: string; name: string; officeId?: string };
+  patient: { id: string; name: string };
 }
 
 const VALID_FILTERS: SmsFilter[] = [
@@ -43,7 +44,7 @@ export default function PatientMessagesPage() {
   const { patient: shellPatient } = useOutletContext<OutletContext>();
   const navigate = useNavigate();
   const patient_id = Number(shellPatient.id);
-  const office_hint = shellPatient.officeId ? Number(shellPatient.officeId) : null;
+  const { posting_office_id: office_hint } = usePatientOffice();
   const [params, setParams] = useSearchParams();
 
   const sms = usePatientSms(patient_id);

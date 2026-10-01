@@ -7,6 +7,7 @@
  */
 
 export interface ProviderRouteSlipCreate {
+  /** @maxLength 50 */
   provider_id: string;
   procedure_code?: string | null;
   num_times?: number | null;

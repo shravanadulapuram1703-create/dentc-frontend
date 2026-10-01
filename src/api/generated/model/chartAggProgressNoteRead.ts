@@ -18,6 +18,7 @@ export interface ChartAggProgressNoteRead {
   region?: string | null;
   signed_by?: number | null;
   signed_at?: string | null;
+  content_hash?: string | null;
   is_struck_off: boolean;
   struck_off_at?: string | null;
   struck_off_by?: number | null;
@@ -25,6 +26,8 @@ export interface ChartAggProgressNoteRead {
   drawing_doc_id?: number | null;
   is_deleted: boolean;
   created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

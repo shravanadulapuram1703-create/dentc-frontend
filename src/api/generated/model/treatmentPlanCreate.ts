@@ -7,9 +7,11 @@
  */
 
 export interface TreatmentPlanCreate {
+  /** @maxLength 50 */
   id: string;
   patient_id: number;
   office_id?: number | null;
+  /** @maxLength 200 */
   name: string;
   status?: string | null;
 }

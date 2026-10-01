@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
 import {
   listProviderReferralOffices,
   setProviderReferralOffices,
 } from "@/api/generated/endpoints/provider-setup/provider-setup";
-import type { OfficeRead } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
+import type { OfficeOption } from "@/services/officeLookup";
 import DualListPicker, { type DualListItem } from "../../offices/DualListPicker";
 
 interface ReferralsTabProps {
@@ -18,7 +18,9 @@ interface ReferralsTabProps {
  * wholesale via PUT /providers/{id}/referral-offices ({ office_ids }).
  */
 export default function ReferralsTab({ providerId }: ReferralsTabProps) {
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Office labels from the shared office catalog (id / name / short_id).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set());
   const [originalIds, setOriginalIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -29,11 +31,7 @@ export default function ReferralsTab({ providerId }: ReferralsTabProps) {
     setLoading(true);
     setError(null);
     try {
-      const [offRes, assigned] = await Promise.all([
-        listOffices({ size: 200 }),
-        listProviderReferralOffices(providerId),
-      ]);
-      setOffices(offRes.items ?? []);
+      const assigned = await listProviderReferralOffices(providerId);
       const ids = new Set((assigned ?? []).map((o) => o.id));
       setAssignedIds(new Set(ids));
       setOriginalIds(new Set(ids));
@@ -48,7 +46,7 @@ export default function ReferralsTab({ providerId }: ReferralsTabProps) {
     void load();
   }, [load]);
 
-  const toItem = (o: OfficeRead): DualListItem => ({
+  const toItem = (o: OfficeOption): DualListItem => ({
     id: String(o.id),
     primary: o.name,
     secondary: `Office ID: ${o.id}${o.short_id ? ` · ${o.short_id}` : ""}`,
@@ -120,7 +118,7 @@ export default function ReferralsTab({ providerId }: ReferralsTabProps) {
         onChange={(ids) => setAssignedIds(new Set(ids.map(Number)))}
         leftTitle="Available Offices"
         rightTitle="Referral Offices"
-        loading={loading}
+        loading={loading || officesQuery.isLoading}
         disabled={saving}
         emptyAvailableLabel="No more offices"
         emptyAssignedLabel="No referral offices"

@@ -8,7 +8,9 @@
 
 export interface AppointNowReasonCreate {
   office_id: number;
+  /** @maxLength 50 */
   reason_code: string;
+  /** @maxLength 200 */
   label: string;
   duration_minutes?: number | null;
   requires_provider?: boolean | null;

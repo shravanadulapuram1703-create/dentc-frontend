@@ -74,7 +74,7 @@ export default function Dashboard({
       case "search":
         return <GlobalSearchWidget key={key} />;
       case "quickActions":
-        return <QuickActionsPanel key={key} currentOffice={currentOffice} />;
+        return <QuickActionsPanel key={key} />;
       default:
         return null;
     }

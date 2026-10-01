@@ -31,13 +31,24 @@ export interface QuestionGroup {
   questions: QuestionItem[];
 }
 
+/**
+ * Hard cap on a derived catalog code. The backend stores these in
+ * `patient_questionnaire_responses.question_code` and
+ * `patient_medical_alerts.alert_code`, both `VARCHAR(50)`, and an overflow
+ * surfaces as HTTP 500 (`internal_error`), not 422 — it rolled back the whole
+ * `POST /patients/register` transaction whenever one of the 12 longest legacy
+ * questions was answered (GAP-AP-20). Keep this equal to the column width; the
+ * 50-char prefixes of every legacy label are verified unique per catalog.
+ */
+export const CATALOG_CODE_MAX_LENGTH = 50;
+
 /** Label → stable snake_case code (letters/digits only, collapsed underscores). */
 export function toCode(label: string): string {
   return label
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
-    .slice(0, 60);
+    .slice(0, CATALOG_CODE_MAX_LENGTH);
 }
 
 const alerts = (labels: string[]): MedicalAlertItem[] =>

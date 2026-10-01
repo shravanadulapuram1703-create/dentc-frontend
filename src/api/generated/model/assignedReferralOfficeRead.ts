@@ -35,7 +35,15 @@ export interface AssignedReferralOfficeRead {
   opening_date?: string | null;
   default_fee_schedule_id?: number | null;
   default_ucr_fee_schedule_id?: number | null;
+  unpriced_charge_policy: string;
   created_by?: number | null;
+  npi?: string | null;
+  taxonomy_code?: string | null;
+  treatment_address_line1?: string | null;
+  treatment_address_line2?: string | null;
+  treatment_city?: string | null;
+  treatment_state?: string | null;
+  treatment_zip?: string | null;
   id: number;
   created_at: string;
   updated_at?: string | null;

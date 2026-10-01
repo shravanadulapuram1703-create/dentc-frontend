@@ -18,4 +18,7 @@ export interface ScheduleDayInput {
   end_time?: string | null;
   lunch_start?: string | null;
   lunch_end?: string | null;
+  effective_from?: string | null;
+  /** NULL = applies to every office */
+  office_id?: number | null;
 }

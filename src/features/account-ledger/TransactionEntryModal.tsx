@@ -234,6 +234,7 @@ export default function TransactionEntryModal({
               outstanding={outstanding}
               providers={providers}
               allProviders={allProviders}
+              defaultProviderId={providerId}
               providerLabel={providerLabel}
               codeDescription={codeDescription}
               onApplied={handlePosted}

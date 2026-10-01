@@ -7,10 +7,13 @@
  */
 
 export interface AppointmentProcedureCreate {
+  /** @maxLength 50 */
   appointment_id: string;
+  /** @maxLength 20 */
   procedure_code: string;
   provider_id?: string | null;
   treatment_plan_id?: string | null;
+  treatment_plan_item_id?: string | null;
   tooth?: string | null;
   surface?: string | null;
   description?: string | null;

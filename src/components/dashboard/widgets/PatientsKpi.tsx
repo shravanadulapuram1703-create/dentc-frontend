@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Users, UserPlus, BellRing } from "lucide-react";
 import { useListPatients } from "@/api/generated/endpoints/patients/patients";
+import { homeOfficeFilter } from "@/features/office-scope";
 import WidgetCard from "../components/WidgetCard";
 import KpiStat from "../components/KpiStat";
 import { toOfficeId } from "../lib/useDashboardData";
@@ -16,12 +17,18 @@ export default function PatientsKpi({ currentOffice }: Props) {
   const navigate = useNavigate();
   const home_office_id = toOfficeId(currentOffice);
 
-  const newToday = useListPatients({ created_at_from: todayISO(), home_office_id: home_office_id ?? null, size: 1 });
-  const active = useListPatients({ is_active: true, home_office_id: home_office_id ?? null, size: 1 });
+  const newToday = useListPatients({ created_at_from: todayISO(), ...homeOfficeFilter(home_office_id), size: 1 });
+  const active = useListPatients({ is_active: true, ...homeOfficeFilter(home_office_id), size: 1 });
   const recall = useRecallDue(currentOffice);
 
   const recallDue =
     (recall.data?.overdue ?? 0) + (recall.data?.dueToday ?? 0) + (recall.data?.dueWeek ?? 0);
+  // Recalls with no office are excluded from the in-office count but never hidden.
+  const recallHint = recall.data
+    ? recall.data.unassigned > 0
+      ? `${recall.data.overdue} overdue · Unassigned ${recall.data.unassigned}`
+      : `${recall.data.overdue} overdue`
+    : undefined;
 
   return (
     <WidgetCard title="Patients" icon={<Users className="w-4 h-4" />}>
@@ -48,7 +55,7 @@ export default function PatientsKpi({ currentOffice }: Props) {
           tone={recall.data && recall.data.overdue > 0 ? "red" : "amber"}
           icon={<BellRing className="w-4 h-4" />}
           loading={recall.isLoading}
-          hint={recall.data ? `${recall.data.overdue} overdue` : undefined}
+          hint={recallHint}
         />
       </div>
     </WidgetCard>

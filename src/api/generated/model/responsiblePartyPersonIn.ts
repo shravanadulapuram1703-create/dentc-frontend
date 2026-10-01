@@ -8,6 +8,10 @@
 
 /**
  * LEG-10: a full non-self guarantor to create inline during registration.
+ *
+ * GAP-AP-19/20/26: every bounded string carries the column's ``max_length``
+ * so an over-long value is a 422 naming the field, not a 500 that rolls the
+ * whole registration back.
  */
 export interface ResponsiblePartyPersonIn {
   title?: string | null;
@@ -15,6 +19,7 @@ export interface ResponsiblePartyPersonIn {
   last_name?: string | null;
   first_name?: string | null;
   middle_initial?: string | null;
+  middle_name?: string | null;
   address_line1?: string | null;
   address_line2?: string | null;
   city?: string | null;

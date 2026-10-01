@@ -5,9 +5,14 @@ import {
 } from "../../services/officeScheduleApi";
 import SendEmailModal from "../modals/SendEmailModal";
 import SendSmsModal from "../modals/SendSmsModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
+  bookingRequestFromState,
+  type SchedulerBookingRequest,
+} from "../../services/schedulerHandoff";
+import {
+  Building2,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -25,6 +30,8 @@ import CancelAppointmentDialog, {
   type CancellationResult,
 } from "../scheduler/CancelAppointmentDialog";
 import MedicalAlertPopover from "../scheduler/MedicalAlertPopover";
+import { RequireRight, RIGHT } from "@/features/access-control";
+import { fetchPatientMedicalAlertSummary } from "@/features/medical-alerts/patientMedicalAlerts";
 import {
   CONFIRMATION_STATUSES,
   SAMEDAY_STATUSES,
@@ -37,6 +44,7 @@ import {
   providerColorFor,
   type ProviderColor,
 } from "../../utils/providerColor";
+import { OFFICE_CHANGED_EVENT, OfficeRequiredBanner, useOfficeScope } from "@/features/office-scope";
 import {
   fetchAppointments,
   fetchOperatories,
@@ -46,6 +54,7 @@ import {
   fetchAppointmentStatuses,
   fetchPatientAlerts,
   fetchPatientBalance,
+  type PatientMedicalAlert,
   createAppointment,
   updateAppointment,
   deleteAppointment,
@@ -60,8 +69,9 @@ import {
   type AppointmentCreateRequest,
   type AppointmentUpdateRequest,
 } from "../../services/schedulerApi";
-import { getPatientContext } from "@/api/generated/endpoints/patients/patients";
+import { getPatient, getPatientContext } from "@/api/generated/endpoints/patients/patients";
 import type { SchedulerPatientRead } from "@/api/generated/model";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** Fallback status options used only if the backend `definitions` fetch fails
  *  or returns nothing — the live list comes from fetchAppointmentStatuses. */
@@ -189,6 +199,8 @@ export default function Scheduler({
   currentOffice,
   setCurrentOffice,
 }: SchedulerProps) {
+  // Working-office name for the header (the raw "OFF-<id>" key was rendered).
+  const officeScope = useOfficeScope();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showCalendarPicker, setShowCalendarPicker] =
@@ -250,20 +262,6 @@ export default function Scheduler({
   const SUBMENU_MAX_HEIGHT = 420;
   const SUBMENU_MARGIN = 8;
 
-  const getSubmenuLeftPosition = () => {
-    if (!activeSubmenu.anchorRect) return 0;
-
-    const spaceOnRight =
-      window.innerWidth - activeSubmenu.anchorRect.right;
-
-    // Not enough space → open to the LEFT
-    if (spaceOnRight < SUBMENU_WIDTH + 10) {
-      return activeSubmenu.anchorRect.left - SUBMENU_WIDTH - 6;
-    }
-
-    // Default → open to the RIGHT
-    return activeSubmenu.anchorRect.right + 6;
-  };
   const closeSubmenu = () => {
     setActiveSubmenu({
       type: null,
@@ -279,6 +277,45 @@ export default function Scheduler({
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
 
+  // Pending booking handed over from a patient screen (Tx Plan / Restorative
+  // "New Appt", Overview "Add New Appt"). Held until the user clicks a slot;
+  // the New Appointment modal then opens with this patient preselected and the
+  // plan items seeded as procedure lines. Cleared on a successful save or via
+  // the banner's dismiss button.
+  const location = useLocation();
+  const [pendingBooking, setPendingBooking] =
+    useState<SchedulerBookingRequest | null>(null);
+  useEffect(() => {
+    const request = bookingRequestFromState(location.state);
+    if (!request) return;
+    setPendingBooking(request);
+    // Consume the state so a refresh / back-navigation doesn't re-arm it.
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+  // Banner label — the request carries a display name when the caller had one;
+  // otherwise resolve it from the patient record.
+  useEffect(() => {
+    if (!pendingBooking || pendingBooking.patient_name) return;
+    let cancelled = false;
+    void getPatient(pendingBooking.patient_id)
+      .then((p) => {
+        if (cancelled) return;
+        const name = `${p.last_name ?? ""}, ${p.first_name ?? ""}`.replace(/^, |, $/g, "");
+        setPendingBooking((cur) =>
+          cur && cur.patient_id === p.id && !cur.patient_name
+            ? { ...cur, patient_name: name || cur.patient_name }
+            : cur,
+        );
+      })
+      .catch(() => {
+        /* banner falls back to the id */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingBooking]);
+
   // Left-click "Appointment Details" pop-out (PDF pages 5–7).
   const [detailsAppt, setDetailsAppt] = useState<Appointment | null>(null);
   const [detailsAnchor, setDetailsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -289,12 +326,21 @@ export default function Scheduler({
 
   // Medical-alert popover (PDF page 18) + per-patient active-alert cache.
   const [alertPopover, setAlertPopover] = useState<{
+    patient_id: number | null;
     patientName: string;
-    alerts: string[];
     x: number;
     y: number;
   } | null>(null);
-  const [alertsByPatient, setAlertsByPatient] = useState<Map<number, string[]>>(new Map());
+  // patient_id -> active alerts (Medical History "yes" answers + patient alerts)
+  // and the Medical History "Additional Comments" text.
+  const [alertsByPatient, setAlertsByPatient] = useState<
+    Map<number, { alerts: PatientMedicalAlert[]; comments: string }>
+  >(new Map());
+  /** Red cross on a block: the feed's has_alert flag OR the per-patient summary. */
+  const patientHasAlert = (appointment: Appointment): boolean =>
+    appointment.has_alert === true ||
+    (appointment.patient_id != null &&
+      (alertsByPatient.get(appointment.patient_id)?.alerts.length ?? 0) > 0);
   // Per-patient computed balance (drives the $ badge on the block).
   const [balanceByPatient, setBalanceByPatient] = useState<Map<number, PatientBalanceInfo>>(
     new Map(),
@@ -333,6 +379,19 @@ export default function Scheduler({
   useEffect(() => {
     const id = window.setInterval(() => setNowTick(new Date()), 60_000);
     return () => window.clearInterval(id);
+  }, []);
+
+  // Office switch: the provider / operatory / status filters belonged to the
+  // office that was on screen (its chairs, its roster), so they are cleared;
+  // the selected date is the user's place in the calendar and stays.
+  useEffect(() => {
+    const onOfficeChanged = () => {
+      setFilterStatus("");
+      setFilterProvider("");
+      setFilterOperatory("");
+    };
+    window.addEventListener(OFFICE_CHANGED_EVENT, onOfficeChanged);
+    return () => window.removeEventListener(OFFICE_CHANGED_EVENT, onOfficeChanged);
   }, []);
 
   // Loading and error states
@@ -459,7 +518,7 @@ export default function Scheduler({
 
   // provider_id -> name, for resolving operatory.provider_id in column headers.
   const providerNameById = useMemo(
-    () => new Map(providers.map((p) => [p.id, p.name])),
+    () => new Map(providers.map((p) => [p.id, providerDisplayLabel(p)])),
     [providers],
   );
 
@@ -562,8 +621,9 @@ export default function Scheduler({
   // Background: for the patients on the *current day*, load their active medical
   // alerts (red-cross badge, PDF pages 4/18) and computed account balance ($
   // badge). Daily view only, deduped by patient_id, capped, and non-blocking.
-  // The scheduler feed carries neither a has_alert flag nor the balance — both
-  // are documented backend gaps (SCHED-APPT-4/7) that would remove this fan-out.
+  // The feed's `has_alert` only reflects /patient-alerts, not the Medical
+  // History "yes" answers (gap MA-1), and it carries no balance (SCHED-APPT-7),
+  // so this fan-out stays until the backend denormalizes both onto the feed.
   useEffect(() => {
     if (viewMode !== "daily") return;
     const currentDate = formatDateYYYYMMDD(selectedDate);
@@ -584,12 +644,15 @@ export default function Scheduler({
         ids.map(
           async (
             id,
-          ): Promise<[number, string[], PatientBalanceInfo | null]> => {
-            const [alerts, balance] = await Promise.all([
+          ): Promise<
+            [number, { alerts: PatientMedicalAlert[]; comments: string }, PatientBalanceInfo | null]
+          > => {
+            const [alerts, summary, balance] = await Promise.all([
               fetchPatientAlerts(id).catch(() => []),
+              fetchPatientMedicalAlertSummary(id).catch(() => null),
               fetchPatientBalance(id).catch(() => null),
             ]);
-            return [id, alerts.map((al) => al.alert), balance];
+            return [id, { alerts, comments: summary?.comments ?? "" }, balance];
           },
         ),
       );
@@ -1067,16 +1130,6 @@ export default function Scheduler({
     );
   }, [selectedDate]);
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   // Step the selected date by one unit of the current view (day/week/month).
   const stepDate = (dir: number) => {
     const d = new Date(selectedDate);
@@ -1160,6 +1213,7 @@ export default function Scheduler({
         console.error("Error refreshing appointments:", err);
         // Don't show error alert - appointment was already saved successfully
       }
+      setPendingBooking(null);
       return true;
     }
     
@@ -1230,6 +1284,10 @@ export default function Scheduler({
         // Create new appointment
         const createData: AppointmentCreateRequest = {
           patient_id: patientId,
+          // Office stamp = the WORKING office (STAMP.appointment); the service
+          // verifies the operatory belongs to it. Omitted when none is selected
+          // so the legacy derive-from-operatory path still applies.
+          ...(officeScope.office_id != null && { office_id: officeScope.office_id }),
           date: a.date ?? formatDateYYYYMMDD(selectedDate),
           start_time: a.start_time ?? a.startTime ?? a.time ?? selectedSlot?.time ?? "09:00",
           duration: a.duration ?? 30,
@@ -1275,6 +1333,7 @@ export default function Scheduler({
         const newAppointment = await createAppointment(createData);
         setAppointments([...appointments, newAppointment]);
       }
+      setPendingBooking(null);
       return true;
     } catch (err: any) {
       setError(`Failed to save appointment: ${err.message}`);
@@ -1636,16 +1695,25 @@ export default function Scheduler({
     appointment: Appointment,
   ) => {
     e.stopPropagation();
-    const alerts =
-      appointment.patient_id != null
-        ? alertsByPatient.get(appointment.patient_id) ?? []
-        : [];
     setAlertPopover({
+      patient_id: appointment.patient_id,
       patientName: appointment.patient_name,
-      alerts,
       x: e.clientX,
       y: e.clientY,
     });
+    // Feed-flagged block whose summary is not fetched yet (week/month -> day
+    // switch, or beyond the 40-patient cap): load it on demand.
+    const pid = appointment.patient_id;
+    if (pid != null && !alertsByPatient.has(pid)) {
+      Promise.all([
+        fetchPatientAlerts(pid).catch(() => []),
+        fetchPatientMedicalAlertSummary(pid).catch(() => null),
+      ]).then(([alerts, summary]) =>
+        setAlertsByPatient((prev) =>
+          new Map(prev).set(pid, { alerts, comments: summary?.comments ?? "" }),
+        ),
+      );
+    }
   };
 
   // Delete appointment
@@ -1676,6 +1744,17 @@ export default function Scheduler({
     });
   };
 
+  // A hand-off that names an office other than the working one: booking would
+  // land in the wrong office's chairs, so offer the switch instead of guessing.
+  const bookingOfficeId = pendingBooking?.office_id ?? null;
+  const bookingOfficeMismatch =
+    bookingOfficeId != null && bookingOfficeId !== officeScope.office_id;
+  const bookingOfficeName =
+    bookingOfficeId != null
+      ? officeScope.office_options.find((o) => o.id === bookingOfficeId)?.name ??
+        `office ${bookingOfficeId}`
+      : "";
+
   // Layout note:
   // We let flexbox handle column widths so that columns expand/shrink
   // with the number of operatories, avoiding empty gaps on the right.
@@ -1700,7 +1779,9 @@ export default function Scheduler({
               </div>
               <div className="leading-tight">
                 <h1 className="text-lg font-bold text-white">Scheduler</h1>
-                <p className="text-[11px] text-white/80">Office: {currentOffice}</p>
+                <p className="text-[11px] text-white/80">
+                  Office: {officeScope.office?.name ?? (officeScope.office_id != null ? "…" : "none selected")}
+                </p>
               </div>
             </div>
 
@@ -1786,7 +1867,7 @@ export default function Scheduler({
                 <option className="bg-white text-slate-800" value="">All providers</option>
                 {providers.map((p) => (
                   <option className="bg-white text-slate-800" key={p.id} value={p.id}>
-                    {p.name}
+                    {providerDisplayLabel(p)}
                   </option>
                 ))}
               </select>
@@ -1854,6 +1935,12 @@ export default function Scheduler({
                 </span>
                 New patient (first visit)
               </span>
+              <span className="flex items-center gap-1.5 text-xs text-[#1E293B] mr-2">
+                <span className="text-red-600 font-bold" aria-hidden>
+                  ✚
+                </span>
+                Medical alert (click for details)
+              </span>
               <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">
                 Providers:
               </span>
@@ -1875,6 +1962,68 @@ export default function Scheduler({
             </div>
           )}
         </div>
+
+        {/* No working office: the grid still renders (tenant-wide feed) but
+            nothing can be booked without one — a banner, never a gate. */}
+        {officeScope.office_id == null && (
+          <div className="mx-6 mt-4">
+            <OfficeRequiredBanner action="view the schedule" />
+          </div>
+        )}
+
+        {/* Pending booking handed over from a patient screen */}
+        {pendingBooking && (
+          <div
+            className="mx-6 mt-4 flex flex-wrap items-center gap-3 rounded border-l-4 border-[#1F3A5F] bg-[#EEF3F9] px-4 py-3 text-sm text-[#1E293B]"
+            role="status"
+            data-testid="scheduler-pending-booking"
+          >
+            <Calendar className="h-4 w-4 shrink-0 text-[#1F3A5F]" />
+            <span>
+              <span className="font-semibold">
+                Booking for {pendingBooking.patient_name || `patient #${pendingBooking.patient_id}`}
+              </span>
+              {pendingBooking.plan_item_ids.length > 0 && (
+                <>
+                  {" "}
+                  · {pendingBooking.plan_item_ids.length} planned procedure
+                  {pendingBooking.plan_item_ids.length === 1 ? "" : "s"} from the treatment plan
+                </>
+              )}
+              {" — "}click an open slot to schedule the appointment.
+            </span>
+            <button
+              type="button"
+              onClick={() => setPendingBooking(null)}
+              className="ml-auto rounded border border-[#1F3A5F]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1F3A5F] hover:bg-[#1F3A5F]/5"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* The hand-off names another office: offer to switch rather than book
+            into the working office's chairs by mistake. */}
+        {bookingOfficeMismatch && bookingOfficeId != null && (
+          <div
+            className="mx-6 mt-2 flex flex-wrap items-center gap-3 rounded border-l-4 border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            role="status"
+            data-testid="scheduler-booking-office-mismatch"
+          >
+            <Building2 className="h-4 w-4 shrink-0" />
+            <span>
+              This booking is for <span className="font-semibold">{bookingOfficeName}</span>
+              {officeScope.office ? ` — you are working in ${officeScope.office.name}` : ""}.
+            </span>
+            <button
+              type="button"
+              onClick={() => void officeScope.switchOffice(bookingOfficeId)}
+              className="ml-auto rounded border border-amber-500 bg-white px-2.5 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            >
+              Switch to {bookingOfficeName}
+            </button>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -2123,9 +2272,7 @@ export default function Scheduler({
                       appointment.provider_id,
                       providerColorMap,
                     );
-                    const hasAlerts =
-                      appointment.patient_id != null &&
-                      (alertsByPatient.get(appointment.patient_id)?.length ?? 0) > 0;
+                    const hasAlerts = patientHasAlert(appointment);
                     // $ badge when the patient owes an outstanding balance.
                     const patientBalance =
                       appointment.patient_id != null
@@ -2248,8 +2395,16 @@ export default function Scheduler({
                                 onClick={(e) =>
                                   handleShowMedicalAlert(e, appointment)
                                 }
-                                className="text-red-600 hover:text-red-800 flex-shrink-0"
-                                title="Medical alert"
+                                className="text-red-600 hover:text-red-800 flex-shrink-0 font-bold"
+                                title={
+                                  appointment.patient_id != null &&
+                                  alertsByPatient.get(appointment.patient_id)?.alerts.length
+                                    ? `Medical alert: ${alertsByPatient
+                                        .get(appointment.patient_id)!
+                                        .alerts.map((al) => al.alert)
+                                        .join(", ")}`
+                                    : "Medical alert - click for details"
+                                }
                                 aria-label="View medical alert"
                               >
                                 <span aria-hidden>✚</span>
@@ -2291,6 +2446,7 @@ export default function Scheduler({
               getProviderColor={(appt) =>
                 providerColorFor(appt.provider_id, providerColorMap)
               }
+              hasAlert={patientHasAlert}
             />
           )}
 
@@ -2303,6 +2459,7 @@ export default function Scheduler({
               getProviderColor={(appt) =>
                 providerColorFor(appt.provider_id, providerColorMap)
               }
+              hasAlert={patientHasAlert}
             />
           )}
         </div>
@@ -2357,17 +2514,20 @@ export default function Scheduler({
                 >
                   Reschedule
                 </button>
-                <button
-                  onClick={() =>
-                    handleDeleteAppointment(
-                      contextMenu.appointment!,
-                    )
-                  }
-                  className="w-full px-3 py-1.5 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
-                  role="menuitem"
-                >
-                  Delete
-                </button>
+                {/* RBAC: deleting an appointment is backend-enforced. */}
+                <RequireRight code={RIGHT.appointments.delete}>
+                  <button
+                    onClick={() =>
+                      handleDeleteAppointment(
+                        contextMenu.appointment!,
+                      )
+                    }
+                    className="w-full px-3 py-1.5 text-left hover:bg-red-50 text-red-600 font-medium text-sm border-b border-[#E2E8F0]"
+                    role="menuitem"
+                  >
+                    Delete
+                  </button>
+                </RequireRight>
                 {/* STEP 3.2: Divider between actions and submenus */}
                 <div className="my-1 border-t border-[#E2E8F0]" />
                 {/* ✅ STEP 4: Go To - Click-based trigger */}
@@ -2442,6 +2602,15 @@ export default function Scheduler({
             currentOffice={currentOffice}
             editingAppointment={editingAppointment}
             selectedDate={selectedDate}
+            preselectedPatientId={
+              editingAppointment ? null : pendingBooking?.patient_id ?? null
+            }
+            initialPlanItemIds={
+              editingAppointment ? [] : pendingBooking?.plan_item_ids ?? []
+            }
+            preselectedProviderId={
+              editingAppointment ? null : pendingBooking?.provider_id ?? null
+            }
           />
         )}
 
@@ -2735,8 +2904,21 @@ export default function Scheduler({
         {/* Medical Alert popover — PDF page 18 */}
         {alertPopover && (
           <MedicalAlertPopover
+            patient_id={alertPopover.patient_id}
             patientName={alertPopover.patientName}
-            alerts={alertPopover.alerts}
+            alerts={
+              alertPopover.patient_id != null
+                ? alertsByPatient.get(alertPopover.patient_id)?.alerts ?? []
+                : []
+            }
+            comments={
+              alertPopover.patient_id != null
+                ? alertsByPatient.get(alertPopover.patient_id)?.comments
+                : undefined
+            }
+            loading={
+              alertPopover.patient_id != null && !alertsByPatient.has(alertPopover.patient_id)
+            }
             anchor={{ x: alertPopover.x, y: alertPopover.y }}
             onClose={() => setAlertPopover(null)}
           />

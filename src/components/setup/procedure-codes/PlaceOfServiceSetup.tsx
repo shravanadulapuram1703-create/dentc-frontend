@@ -7,8 +7,8 @@ import {
   updatePlaceOfServiceCode,
   deletePlaceOfServiceCode,
 } from "@/api/generated/endpoints/procedures/procedures";
-import { listOffices } from "@/api/generated/endpoints/organization/organization";
-import type { PlaceOfServiceCodeRead, OfficeRead } from "@/api/generated/model";
+import type { PlaceOfServiceCodeRead } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
 
 // ============================================================================
 // Place of Service Codes — dedicated tenant-scoped resource place-of-service-codes.
@@ -44,7 +44,9 @@ const inputCls =
 
 export default function PlaceOfServiceSetup() {
   const [rows, setRows] = useState<PlaceOfServiceCodeRead[]>([]);
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Office picker / labels from the shared office catalog (id → name only).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -67,12 +69,8 @@ export default function PlaceOfServiceSetup() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [posRes, offRes] = await Promise.all([
-        listPlaceOfServiceCodes({ size: 200, sort: "code", order: "asc" }),
-        listOffices({ size: 200 }).catch(() => null),
-      ]);
+      const posRes = await listPlaceOfServiceCodes({ size: 200, sort: "code", order: "asc" });
       setRows(posRes.items ?? []);
-      setOffices(offRes?.items ?? []);
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : "Failed to load place-of-service codes");
       setRows([]);

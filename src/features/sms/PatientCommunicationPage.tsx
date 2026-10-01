@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Mail, MessageSquare, MessageSquarePlus, RefreshCw, Search } from "lucide-react";
 import { cn } from "@/components/ui/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { usePatientOffice } from "@/features/office-scope";
 import { applyFilter, SMS_FILTER_LABEL, type SmsFilter } from "./smsModel";
 import { usePatientSms } from "./hooks/usePatientSms";
 import { useFillHeight } from "./hooks/useFillHeight";
@@ -21,7 +22,7 @@ import SmsComposer, { type ComposerHandle, type ComposerSubmit } from "./compone
 import SmsModeBanner from "./components/SmsModeBanner";
 
 interface OutletContext {
-  patient: { id: string; name: string; officeId?: string };
+  patient: { id: string; name: string };
 }
 
 type Tab = "sms" | "email";
@@ -43,7 +44,7 @@ export default function PatientCommunicationPage() {
   const { patient: shellPatient } = useOutletContext<OutletContext>();
   const navigate = useNavigate();
   const patient_id = Number(shellPatient.id);
-  const office_hint = shellPatient.officeId ? Number(shellPatient.officeId) : null;
+  const { posting_office_id: office_hint } = usePatientOffice();
 
   const sms = usePatientSms(patient_id);
   const fill = useFillHeight();

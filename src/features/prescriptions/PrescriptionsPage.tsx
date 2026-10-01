@@ -21,6 +21,7 @@ import {
 import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import { formatProviderName } from '@/services/providerDirectory';
 import type { PrescriptionLibraryRead, ProviderRead } from '@/api/generated/model';
 import { loadRxLibrary } from './prescriptionsService';
@@ -44,16 +45,21 @@ import RxList from './RxList';
 import RxEditPanel from './RxEditPanel';
 import RxToolbar from './RxToolbar';
 import RxPrintDialog, { type RxPrintRequest, type RxPrintScope } from './RxPrintDialog';
+import MedicalAlertBanner from '@/features/medical-alerts/MedicalAlertBanner';
+import {
+  summarizeAlerts,
+  usePatientMedicalAlerts,
+} from '@/features/medical-alerts/patientMedicalAlerts';
 
 interface OutletContext {
-  patient: { id: string; name: string; officeId?: string; age?: number; dob?: string };
+  patient: { id: string; name: string; age?: number; dob?: string };
 }
 
 export default function PrescriptionsPage() {
   const { patient } = useOutletContext<OutletContext>();
   const numericId = Number(patient.id);
   const validId = Number.isFinite(numericId) && numericId > 0;
-  const officeId = patient.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ----
   const rxQuery = useListPrescriptions(
@@ -79,6 +85,11 @@ export default function PrescriptionsPage() {
   const createRx = useCreatePrescription();
   const updateRx = useUpdatePrescription();
 
+  // The patient's active medical alerts (Medical History "yes" answers +
+  // account alerts). Shown as a banner on this screen and re-stated in the
+  // Save confirm, so a prescriber never writes an Rx without seeing them.
+  const medicalAlerts = usePatientMedicalAlerts(validId ? numericId : null);
+
   // ePrescribe is only live with a DoseSpot subscription — inferred from any
   // provider carrying a dosespot_user_id.
   const ePrescribeEnabled = providers.some((p) => !!p.dosespot_user_id);
@@ -100,7 +111,8 @@ export default function PrescriptionsPage() {
     setMode('view');
   };
   const handleAddNew = () => {
-    setDraft(blankDraft());
+    // Prescriber defaults to the patient's preferred provider (legacy behaviour).
+    setDraft({ ...blankDraft(), provider_id: patientQuery.data?.preferred_provider_id ?? '' });
     setSelectedId(null);
     setMode('add');
   };
@@ -131,6 +143,31 @@ export default function PrescriptionsPage() {
     if (!draft.drug_name) {
       toast.error('Select a Drug Name.');
       return;
+    }
+    // Safety stop: restate the alerts (or their absence) at the moment of
+    // saving. The backend performs no drug↔allergy check (gap MA-6), so the
+    // acknowledgement is the only guard against prescribing against an alert.
+    if (medicalAlerts.alerts.length > 0) {
+      const lines = summarizeAlerts(medicalAlerts.alerts)
+        .map((l) => `• ${l}`)
+        .join('\n');
+      const ok = window.confirm(
+        `MEDICAL ALERT — ${patient.name} has ${medicalAlerts.alerts.length} active medical alert(s):\n${lines}\n\n` +
+          `Prescribe ${draft.drug_name} anyway?`,
+      );
+      if (!ok) return;
+    } else if (
+      medicalAlerts.error ||
+      (medicalAlerts.summary && !medicalAlerts.summary.history_on_file)
+    ) {
+      const ok = window.confirm(
+        `${
+          medicalAlerts.error
+            ? 'Medical alerts could not be loaded for this patient.'
+            : 'No medical history (allergies / conditions) is on file for this patient.'
+        }\n\nPrescribe ${draft.drug_name} without a medical-alert check?`,
+      );
+      if (!ok) return;
     }
     try {
       const created = await createRx.mutateAsync({
@@ -262,6 +299,18 @@ export default function PrescriptionsPage() {
           <p className="text-xs text-slate-500">{patient.name}</p>
         </div>
       </div>
+
+      {/* Medical alerts — compact strip while browsing, full list while adding
+          (the prescriber must see allergies/conditions before choosing a drug). */}
+      {validId && (
+        <MedicalAlertBanner
+          patient_id={numericId}
+          patient_name={patient.name}
+          state={medicalAlerts}
+          variant={mode === 'add' ? 'full' : 'compact'}
+          context={mode === 'add' ? 'Review before prescribing' : undefined}
+        />
+      )}
 
       <RxList
         rows={rows}

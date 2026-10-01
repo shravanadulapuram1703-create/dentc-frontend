@@ -11,7 +11,8 @@ import { money } from "./planModel";
 
 interface Props {
   patient_id: number;
-  office_id?: string | null;
+  /** The office the contract posts to (patient shell `posting_office_id`). */
+  office_id?: number | null;
   patient_name: string;
   balance: PatientBalance | null;
   insurance_slots: InsuranceSlotOption[];
@@ -53,7 +54,7 @@ export default function PlanPatientSummary({
         ))}
       </div>
       <div className="text-[11px] font-bold text-[#1F3A5F] whitespace-nowrap">
-        PGID :{patient_id} / OID :{office_id || "-"}
+        PGID :{patient_id} / OID :{office_id ?? "-"}
       </div>
     </div>
   );

@@ -12,4 +12,5 @@ export interface PerioExamCreate {
   exam_date: string;
   notes?: string | null;
   is_voided?: boolean | null;
+  provider_id?: string | null;
 }

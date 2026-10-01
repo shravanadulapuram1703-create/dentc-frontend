@@ -9,19 +9,25 @@ import {
   useUpdateTreatmentPlanItem,
   useDeleteTreatmentPlanItem,
   listTreatmentPlanItems,
+  reEstimateTreatmentPlan,
   getListTreatmentPlansQueryKey,
+  createTreatmentPlanInsuranceDetail,
+  updateTreatmentPlanInsuranceDetail,
 } from '@/api/generated/endpoints/treatment-plans/treatment-plans';
 import { useListPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
 import { getOffice } from '@/api/generated/endpoints/organization/organization';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import {
-  EMPTY_FEE_CONTEXT,
+  priceProcedureFor as priceProcedure,
   loadFeeScheduleContext,
-  resolveProcedureFee,
+  loadCoverageContext,
+  EMPTY_FEE_CONTEXT,
+  EMPTY_COVERAGE_CONTEXT,
   type FeeScheduleContext,
-} from '@/services/feeScheduleResolver';
-import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
-import { priceProcedure } from '@/services/procedurePricing';
+  type CoverageContext,
+} from '@/features/pricing';
+import { openSchedulerForBooking } from '@/services/schedulerHandoff';
 import {
   planProcedure,
   postPlanItemToLedger,
@@ -37,18 +43,18 @@ import {
   assignTids,
   buildRows,
   encodePhase,
-  decodePhase,
   genId,
+  money,
+  num,
   planNameForTid,
   type TxStatus,
   type SettableTxStatus,
-  type TxRow,
 } from './txModel';
 import {
   loadProcedureCodes,
   codeDescription,
-  loadProviderEligibility,
-  providerEligibleFor,
+  cachedProcedureCode,
+  loadEligibleProviderIds,
 } from './treatmentPlanService';
 import TxPlanGrid from './TxPlanGrid';
 import TxPlanToolbar, { type IdChange, type ReEstimateArgs } from './TxPlanToolbar';
@@ -58,7 +64,7 @@ import TxPlanReportModal from './TxPlanReportModal';
 import { buildTxPlanPdf, filterReportRows, type ReportHeader, type ReportOptions } from './txReport';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number };
+  patient: { id: string; name: string; age?: number };
 }
 
 const TX_ITEMS_KEY = 'tx-plan-items';
@@ -73,7 +79,7 @@ export default function TreatmentPlanPage() {
 
   const numericId = Number(patient?.id ?? patientId);
   const validId = !Number.isNaN(numericId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ---------------------------------------------------------------
   const plansQuery = useListTreatmentPlans({ patient_id: numericId, size: 200 }, { query: { enabled: validId } });
@@ -84,6 +90,7 @@ export default function TreatmentPlanPage() {
     queryKey: [TX_ITEMS_KEY, numericId, planIds],
     enabled: validId && planIds.length > 0,
     queryFn: async () => {
+      // DELETE is a soft delete; the list endpoint hides archived rows by default (PLAN-24).
       const results = await Promise.all(planIds.map((id) => listTreatmentPlanItems({ plan_id: id, size: 200 })));
       return results.flatMap((r) => r.items ?? []);
     },
@@ -132,6 +139,15 @@ export default function TreatmentPlanPage() {
 
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
 
+  // Treating office name for the Edit Treatment window's record column.
+  const treatingOfficeId = officeId ?? patientQuery.data?.home_office_id ?? null;
+  const officeQuery = useQuery({
+    queryKey: ['office', treatingOfficeId],
+    enabled: treatingOfficeId != null,
+    staleTime: 5 * 60_000,
+    queryFn: () => getOffice(treatingOfficeId as number),
+  });
+
   // Procedure-code descriptions (cached; triggers a re-render when loaded).
   const [codesLoaded, setCodesLoaded] = useState(false);
   useEffect(() => {
@@ -167,6 +183,12 @@ export default function TreatmentPlanPage() {
     order: 1,
     provider_id: '',
   });
+  // Default the entry provider to the patient's preferred provider (legacy
+  // behaviour); never overwrite a provider the user already picked.
+  const preferredProviderId = patientQuery.data?.preferred_provider_id ?? '';
+  useEffect(() => {
+    if (preferredProviderId) setEntry((e) => (e.provider_id ? e : { ...e, provider_id: preferredProviderId }));
+  }, [preferredProviderId]);
   const [reportOpen, setReportOpen] = useState(false);
   const [sortByTooth, setSortByTooth] = useState(false);
   // Edit Treatment modal — the item id being edited (legacy: click Diag Date).
@@ -215,21 +237,21 @@ export default function TreatmentPlanPage() {
     [selectedRows],
   );
 
-  // Provider eligibility for the legacy "Change Provider" restriction. Fetched
-  // lazily (only after the Provider panel is first opened) and cached; each
-  // provider's assigned procedure-code allow-list decides whether they can be
-  // assigned to the selected procedures. See providerEligibleFor / PLAN-16.
-  const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
+  // Provider eligibility for the legacy "Change Provider" restriction — one
+  // batched `GET /procedure-codes/eligibility?codes=` for the selected codes,
+  // fetched lazily (after the Provider panel is first opened) and cached.
+  // `null` = nothing restricted, everyone is eligible (PLAN-16).
   const eligibilityQuery = useQuery({
-    queryKey: ['tx-provider-eligibility', providerIds],
-    enabled: eligibilityWanted && providerIds.length > 0,
+    queryKey: ['tx-code-eligibility', selectedCodes],
+    enabled: eligibilityWanted && selectedCodes.length > 0,
     staleTime: 5 * 60 * 1000,
-    queryFn: () => loadProviderEligibility(providerIds),
+    queryFn: () => loadEligibleProviderIds(selectedCodes),
   });
   const eligibleProviders = useMemo(() => {
-    if (selectedCodes.length === 0 || !eligibilityQuery.data) return providers;
-    return providers.filter((p) => providerEligibleFor(eligibilityQuery.data, p.id, selectedCodes));
-  }, [providers, selectedCodes, eligibilityQuery.data]);
+    const eligible = eligibilityQuery.data;
+    if (!eligible) return providers;
+    return providers.filter((p) => eligible.has(p.id));
+  }, [providers, eligibilityQuery.data]);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -429,37 +451,39 @@ export default function TreatmentPlanPage() {
         toast.error(`No Tx Plan ${args.tid}`);
         return;
       }
-      const targets = items.filter(
-        (it) => it.plan_id === planId && (args.phase == null || decodePhase(it.billing_order) === args.phase),
-      );
-      if (targets.length === 0) {
+      // Server-side re-estimate (PLAN-3): recomputes every line's insurance /
+      // patient estimate from the patient's coverage (category-aware band
+      // matching, deductible + annual max) and writes the per-item insurance
+      // detail the Edit Treatment ADVANCED panel reads. `use_new_fees` is the
+      // legacy "Use New Fees" checkbox — re-prices each line through the server
+      // fee resolver and stamps the fee schedule used (PLAN-29).
+      const res = await reEstimateTreatmentPlan(planId, { phase: args.phase, use_new_fees: args.use_new_fees });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [TX_ITEMS_KEY] }),
+        queryClient.invalidateQueries({ queryKey: ['tx-item-ins-detail'] }),
+      ]);
+      const n = res.lines.length;
+      if (n === 0) {
         toast.info('No procedures matched');
         return;
       }
-      if (args.use_new_fees) {
-        const map = await loadProcedureCodes();
-        for (const it of targets) {
-          const priced = await resolveProcedureFee(feeCtx, it.procedure_code, {
-            default_fee: map.get(it.procedure_code)?.default_fee,
-          });
-          await updateItem.mutateAsync({
-            itemId: it.id,
-            data: { fee: priced.fee, insurance_estimate: priced.insurance_estimate },
-          });
-        }
-        toast.success(`Refreshed fees on ${targets.length} procedure(s) from the current fee schedules`);
+      toast.success(
+        res.insured
+          ? `Re-estimated ${n} procedure(s): Est Ins ${money(num(res.total_insurance_estimate))}, Est Pat ${money(num(res.total_patient_estimate))}`
+          : `Re-estimated ${n} procedure(s) — no active insurance on file, Est Pat ${money(num(res.total_patient_estimate))}`,
+      );
+      if (args.use_new_billing_order) {
+        toast.info('Use New Billing Order has no server-side effect yet (billing order is free text on the item).');
       }
-      // The insurance figure above is the fee schedule's stated insurance portion.
-      // Re-estimating against plan coverage %, deductibles and annual maximums
-      // still needs a backend estimate endpoint (see PLAN-3 in the dev report).
     });
 
-  // ---- Edit Treatment modal (click Diag Date) -----------------------------
+  // ---- Edit Treatment window (double-click a row / click Diag Date) -------
   const editingItem = useMemo(
     () => (editingItemId ? items.find((it) => it.id === editingItemId) ?? null : null),
     [editingItemId, items],
   );
   const editingTid = editingItem ? tidByPlan.get(editingItem.plan_id) ?? 1 : 1;
+  const editingCompleted = editingItem ? allRows.find((r) => r.id === editingItem.id)?.status === 'completed' : false;
 
   const onSaveEdit = (save: EditTreatmentSave) => {
     if (!editingItem) return;
@@ -471,6 +495,23 @@ export default function TreatmentPlanPage() {
         if (targetPlan !== editingItem.plan_id) data.plan_id = targetPlan;
       }
       await updateItem.mutateAsync({ itemId: editingItem.id, data });
+      // Pre Auth Date / Status live on the item's insurance-detail row (one per item).
+      const det = save.insurance_detail;
+      if (det) {
+        if (det.id != null) {
+          await updateTreatmentPlanInsuranceDetail(det.id, {
+            preauth_date: det.preauth_date,
+            preauth_status: det.preauth_status,
+          });
+        } else if (det.preauth_date || det.preauth_status) {
+          await createTreatmentPlanInsuranceDetail({
+            plan_item_id: editingItem.id,
+            preauth_date: det.preauth_date,
+            preauth_status: det.preauth_status,
+          });
+        }
+        await queryClient.invalidateQueries({ queryKey: ['tx-item-ins-detail', editingItem.id] });
+      }
       setEditingItemId(null);
       toast.success('Treatment updated');
     });
@@ -527,26 +568,60 @@ export default function TreatmentPlanPage() {
     if (postable.length < selectedRows.length) {
       toast.info(`${selectedRows.length - postable.length} already-completed procedure(s) skipped`);
     }
-    if (!window.confirm(`Post ${postable.length} selected procedure(s) to the ledger?`)) return;
+    // A planned item stores the fee it was priced at when it was planned (at its
+    // plan's office). Posting it at a DIFFERENT office (Phase 4: the posting
+    // office can differ from where the plan was created) re-prices it at the
+    // posting office so the ledger charge reflects that office's fee schedule.
+    const planOfficeById = new Map(plans.map((p) => [p.id, p.office_id ?? null]));
+    const itemPlanOffice = (item: TreatmentPlanItemRead): number | null =>
+      planOfficeById.get(item.plan_id) ?? null;
+    const postableItems = postable
+      .map((r) => ({ r, item: items.find((it) => it.id === r.id) }))
+      .filter((x): x is { r: (typeof postable)[number]; item: TreatmentPlanItemRead } => !!x.item);
+    const repriceCount = officeId != null
+      ? postableItems.filter((x) => {
+          const po = itemPlanOffice(x.item);
+          return po != null && po !== officeId;
+        }).length
+      : 0;
+    const confirmMsg =
+      `Post ${postable.length} selected procedure(s) to the ledger?` +
+      (repriceCount > 0
+        ? `\n\n${repriceCount} item(s) were planned at a different office and will be re-priced at the posting office.`
+        : '');
+    if (!window.confirm(confirmMsg)) return;
     void run('Post to ledger', async () => {
       let posted = 0;
-      for (const r of postable) {
+      for (const { r, item } of postableItems) {
         const provider_id = r.provider_id || entry.provider_id;
         if (!provider_id) {
           toast.error(`${r.code}: assign a provider before posting to the ledger`);
           continue;
         }
-        const item = items.find((it) => it.id === r.id);
-        if (!item) continue;
+        // Re-price at the posting office when the item was planned elsewhere.
+        // Only override when the resolver actually prices the code (never post $0
+        // by accident — fall back to the item's stored fee otherwise).
+        let feeOverride: { fee: number; insurance_estimate: number } | undefined;
+        const plan_office = itemPlanOffice(item);
+        if (officeId != null && plan_office != null && plan_office !== officeId) {
+          const priced = await priceProcedure(feeCtx, coverageCtx, item.procedure_code, {
+            default_fee: item.fee,
+            on_date: tranDate,
+          }).catch(() => null);
+          if (priced && priced.fee_source !== 'none') {
+            feeOverride = { fee: priced.fee, insurance_estimate: priced.insurance_estimate };
+          }
+        }
         // Shared Post to Ledger: the charge is linked to the plan and the item
         // is closed, so the chart shows it COMPLETED and this grid shows "C".
         await postPlanItemToLedger({
           patient_id: numericId,
-          office_id: officeId ?? 0,
+          office_id: officeId,
           item,
           provider_id,
           date_of_service: tranDate,
           announce: false,
+          ...(feeOverride ?? {}),
         });
         posted += 1;
       }
@@ -561,17 +636,39 @@ export default function TreatmentPlanPage() {
       toast.success('All changes are saved');
     });
 
-  /** New Appt — open the scheduler to book an appointment for these procedures. */
+  /** New Appt — open the scheduler to book an appointment for these procedures.
+   *  The patient and the selected (not yet completed) plan items travel with the
+   *  navigation; the scheduler opens the New Appointment modal for this patient
+   *  when a slot is clicked, with those items already in the TREATMENTS grid. */
   const onNewAppt = () => {
-    navigate('/scheduler');
+    if (!validId) return;
+    const schedulable = selectedRows.filter((r) => r.status !== 'completed');
+    if (selectedRows.length > 0 && schedulable.length === 0) {
+      toast.info('The selected procedure(s) are already completed — pick planned procedures to schedule');
+      return;
+    }
+    if (selectedRows.length === 0) {
+      toast.info('No procedures selected — pick an open slot to book a plain appointment for this patient');
+    }
+    // The appointment defaults to the provider chosen on the plan item(s) (first
+    // row with one), then the entry panel's provider — not the operatory default.
+    const provider_id =
+      schedulable.find((r) => r.provider_id)?.provider_id || entry.provider_id || null;
+    openSchedulerForBooking(navigate, {
+      patient_id: numericId,
+      patient_name: patient?.name,
+      plan_item_ids: schedulable.map((r) => r.id),
+      provider_id,
+      source: 'treatment-plan',
+    });
   };
 
   // Actions with no backend support yet — enabled, but honestly flagged.
   const onPreAuth = () =>
-    toast.info('Pre-authorization submission is not available yet (backend gap PLAN-9).');
-  const onDiscount = () => toast.info('Treatment-plan discounts are not available yet (backend gap PLAN-10).');
+    toast.info('Pre-auth date and Sent/Closed status are tracked per procedure in Edit Treatment (double-click a row). Clearinghouse submission is not available yet (PLAN-9).');
+  const onDiscount = () => toast.info('Set Discount % per procedure in Edit Treatment (double-click a row).');
   const onTxCounselor = () =>
-    toast.info('Treatment Counselor presentation is not available yet (backend gap PLAN-11).');
+    toast.info('Assign the Treatment Counselor per procedure in Edit Treatment (double-click a row). Case-presentation tracking is not available yet (PLAN-11).');
 
   const buildHeader = async (): Promise<ReportHeader> => {
     const p = patientQuery.data;
@@ -645,12 +742,7 @@ export default function TreatmentPlanPage() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 p-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-slate-800">Treatment Plan</h1>
-        <span className="text-xs text-slate-500">{patient?.name}</span>
-      </div>
-
+    <div className="flex h-full flex-col gap-3 bg-slate-50 p-3 text-[#1E293B]">
       <TxPlanToolbar
         selectedCount={selectedRows.length}
         providers={eligibleProviders}
@@ -702,6 +794,7 @@ export default function TreatmentPlanPage() {
         <ProcedureDetailsDialog
           mode="plan"
           office_id={officeId}
+          patient_id={validId ? numericId : null}
           rows={[{ code: enforcing }]}
           header={{ provider_id: entry.provider_id, date: entry.diag_date, tid: entry.tid, phase: entry.phase }}
           busy={busy}
@@ -716,6 +809,10 @@ export default function TreatmentPlanPage() {
           providers={providers}
           availableTids={availableTids}
           currentTid={editingTid}
+          completed={editingCompleted}
+          officeName={officeQuery.data?.name ?? ''}
+          procedureCode={cachedProcedureCode(editingItem.procedure_code)}
+          feeCtx={feeCtx}
           descriptionFallback={codeMap(editingItem.procedure_code)}
           busy={busy}
           onSave={onSaveEdit}

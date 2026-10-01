@@ -19,6 +19,8 @@ export interface PatientDocumentRead {
   storage_backend: string;
   storage_bucket?: string | null;
   storage_path?: string | null;
+  procedure_id?: string | null;
+  claim_id?: string | null;
   is_deleted: boolean;
   created_by?: number | null;
   id: number;

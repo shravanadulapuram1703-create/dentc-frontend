@@ -17,6 +17,10 @@ patient_id?: number | null;
  */
 is_active?: boolean | null;
 /**
+ * Filter by patient_ids
+ */
+patient_ids?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

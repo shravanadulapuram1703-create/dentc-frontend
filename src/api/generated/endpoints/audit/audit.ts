@@ -21,9 +21,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ErrorResponse,
   HTTPValidationError,
   ListAuditLogsParams,
-  PaginatedResponseAuditLogRead
+  ListPatientAuditLogsParams,
+  ListSignatureAuditEventsParams,
+  PaginatedResponseAuditLogRead,
+  PaginatedResponseSignatureAuditEventRead
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -116,6 +120,204 @@ export function useListAuditLogs<TData = Awaited<ReturnType<typeof listAuditLogs
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListAuditLogsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Every audited mutation whose ``patient_id`` resolved to this chart, newest
+ * first, with the ``details`` block (``row_id`` / ``before`` / ``after``) the
+ * CRUD engine recorded. Entries older than the MH-19 change carry no
+ * ``patient_id`` and are not listed here — the Medical History screen's own
+ * field-level log (``/medical-history/changes``) covers those answers.
+ * @summary Audit-log entries for one patient's chart (MH-19, any authenticated user)
+ */
+export const listPatientAuditLogs = (
+    patientId: number,
+    params?: ListPatientAuditLogsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseAuditLogRead>(
+      {url: `/api/v1/patients/${patientId}/audit-logs`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientAuditLogsQueryKey = (patientId: number,
+    params?: ListPatientAuditLogsParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/audit-logs`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientAuditLogsQueryOptions = <TData = Awaited<ReturnType<typeof listPatientAuditLogs>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: ListPatientAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientAuditLogsQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientAuditLogs>>> = ({ signal }) => listPatientAuditLogs(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientAuditLogs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientAuditLogsQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientAuditLogs>>>
+export type ListPatientAuditLogsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPatientAuditLogs<TData = Awaited<ReturnType<typeof listPatientAuditLogs>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  ListPatientAuditLogsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAuditLogs>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientAuditLogs>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientAuditLogs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientAuditLogs<TData = Awaited<ReturnType<typeof listPatientAuditLogs>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListPatientAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAuditLogs>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientAuditLogs>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientAuditLogs>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientAuditLogs<TData = Awaited<ReturnType<typeof listPatientAuditLogs>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListPatientAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Audit-log entries for one patient's chart (MH-19, any authenticated user)
+ */
+
+export function useListPatientAuditLogs<TData = Awaited<ReturnType<typeof listPatientAuditLogs>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: ListPatientAuditLogsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientAuditLogs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientAuditLogsQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Signature lifecycle audit trail — who signed on which pad from which workstation (SIG-8)
+ */
+export const listSignatureAuditEvents = (
+    params?: ListSignatureAuditEventsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaginatedResponseSignatureAuditEventRead>(
+      {url: `/api/v1/signature-audit-events`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListSignatureAuditEventsQueryKey = (params?: ListSignatureAuditEventsParams,) => {
+    return [
+    `/api/v1/signature-audit-events`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSignatureAuditEventsQueryOptions = <TData = Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError = ErrorType<ErrorResponse>>(params?: ListSignatureAuditEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSignatureAuditEventsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSignatureAuditEvents>>> = ({ signal }) => listSignatureAuditEvents(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSignatureAuditEventsQueryResult = NonNullable<Awaited<ReturnType<typeof listSignatureAuditEvents>>>
+export type ListSignatureAuditEventsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListSignatureAuditEvents<TData = Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListSignatureAuditEventsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSignatureAuditEvents>>,
+          TError,
+          Awaited<ReturnType<typeof listSignatureAuditEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSignatureAuditEvents<TData = Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListSignatureAuditEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSignatureAuditEvents>>,
+          TError,
+          Awaited<ReturnType<typeof listSignatureAuditEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSignatureAuditEvents<TData = Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListSignatureAuditEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Signature lifecycle audit trail — who signed on which pad from which workstation (SIG-8)
+ */
+
+export function useListSignatureAuditEvents<TData = Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListSignatureAuditEventsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSignatureAuditEvents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSignatureAuditEventsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -3,6 +3,7 @@ import { ImageIcon, Trash2, Loader2, Tag } from 'lucide-react';
 import type { GalleryImage } from '../types';
 import { fileHref } from '../utils/imageFilters';
 import { parseTeeth } from '../utils/toothCodes';
+import { RequireRight, RIGHT } from '@/features/access-control';
 
 interface ImageThumbnailProps {
   image: GalleryImage;
@@ -80,19 +81,22 @@ export default function ImageThumbnail({
         >
           <Tag className="w-3.5 h-3.5" />
         </button>
-        <button
-          type="button"
-          onClick={() => onDelete(image)}
-          disabled={isDeleting}
-          className="p-1.5 bg-white/90 hover:bg-white rounded-lg text-[#DC2626] shadow-sm disabled:opacity-50"
-          title="Delete image"
-        >
-          {isDeleting ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="w-3.5 h-3.5" />
-          )}
-        </button>
+        {/* RBAC: deleting an image is backend-enforced. */}
+        <RequireRight code={RIGHT.imaging.deleteImage}>
+          <button
+            type="button"
+            onClick={() => onDelete(image)}
+            disabled={isDeleting}
+            className="p-1.5 bg-white/90 hover:bg-white rounded-lg text-[#DC2626] shadow-sm disabled:opacity-50"
+            title="Delete image"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+          </button>
+        </RequireRight>
       </div>
 
       {/* Caption */}

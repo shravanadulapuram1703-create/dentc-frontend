@@ -20,5 +20,7 @@ export interface TreatmentPlanInsuranceDetailUpdate {
   preauth_date?: string | null;
   preauth_expires?: string | null;
   preauth_amount?: number | string | null;
+  preauth_status?: string | null;
+  preauth_status_at?: string | null;
   notes?: string | null;
 }

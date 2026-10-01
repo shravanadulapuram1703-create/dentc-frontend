@@ -7,6 +7,7 @@
  */
 
 export interface CollectionAgencyCreate {
+  /** @maxLength 255 */
   name: string;
   address?: string | null;
   address2?: string | null;

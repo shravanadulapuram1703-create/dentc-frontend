@@ -63,6 +63,10 @@ flag**, no age/gender, no attached-service summary, and **no insurance-eligibili
   flag would eliminate.
 - Age/gender and the attached-services list are shown only in the on-demand Details pop-out.
 - The **insurance-eligibility icon is not rendered** (no data source).
+> **Update 2026-09-10:** `has_alert` shipped but is derived from `patient_alerts` only, so Medical History
+> YES answers never set it — see **MA-1** in
+> [`../medical-history/medical_alerts_surfacing_backend_devreport.md`](../medical-history/medical_alerts_surfacing_backend_devreport.md).
+
 **Ask:** denormalize onto the feed: `has_alert: bool`, `patient_age`, `patient_gender`,
 `service_summary` (or count), and `insurance_eligibility: 'eligible'|'ineligible'|'unknown'|null`.
 

@@ -46,10 +46,12 @@ import ProgressNoteEditor from './features/progress-notes/ProgressNoteEditor';
 import ClaimDetail from './components/patient/ClaimDetail';
 import UserSetup from './components/pages/setup/UserSetup';
 import GroupSetup from './components/setup/security/groups/GroupSetup';
+import { RequireRight, AccessDenied, RIGHT } from '@/features/access-control';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import OfficeAssignment from './components/setup/offices/OfficeAssignment';
 import OfficeGroupsSetup from './components/setup/office-groups/OfficeGroupsSetup';
 import ChangeMyPassword from './components/setup/security/ChangeMyPassword';
+import SignaturePadDiagnosticsPage from './features/signature/SignaturePadDiagnosticsPage';
 import ProviderSetup from './components/setup/providers/ProviderSetup';
 import CarrierSetup from './components/setup/insurance/CarrierSetup';
 import EmployerSetup from './components/setup/insurance/EmployerSetup';
@@ -70,6 +72,7 @@ import PerioTemplateSetup from './components/setup/charting/PerioTemplateSetup';
 import TenantSetup from './components/pages/setup/TenantSetup';
 import AccountSetup from "./components/pages/setup/AccountSetup";
 import ReferralSetup from './components/setup/referrals/ReferralSetup';
+import LabSetup from './components/setup/labs/LabSetup';
 import PickListSetup from './components/setup/pick-list/PickListSetup';
 import NoteMacroSetup from './components/setup/notes-macros/NoteMacroSetup';
 import MedicalAlertsSetup from './components/setup/medical/MedicalAlertsSetup';
@@ -85,6 +88,7 @@ import { HelpProvider } from './components/help';
 import PublicBookingPage from './features/appointnow/public/PublicBookingPage';
 import RequestInbox from './features/appointnow/requests/RequestInbox';
 import { AppointNowProvider } from './features/appointnow/AppointNowContext';
+import { OfficeScopeProvider } from './features/office-scope';
 
 // Wrapper for global admin pages
 function AdminPageWrapper({ 
@@ -181,7 +185,7 @@ function AppRoutes() {
         <Route path="ledger" element={<LedgerPage defaultScope="patient" />} />
         <Route path="account-ledger" element={<LedgerPage defaultScope="account" />} />
         <Route path="transaction" element={<TransactionsEntryPage />} />
-        <Route path="restorative" element={<RestorativeChart />} />
+        <Route path="restorative" element={<RequireRight code={[RIGHT.charting.restorativeFull, RIGHT.charting.restorativeView]} fallback={<AccessDenied />}><RestorativeChart /></RequireRight>} />
         
         {/* Payment Plan */}
         <Route path="payment-plan/regular" element={<RegularPaymentPlanPage />} />
@@ -203,7 +207,7 @@ function AppRoutes() {
         <Route path="insurance-forms/medical" element={<PlaceholderPage title="Medical Insurance Forms" />} />
         
         {/* Other Patient Pages */}
-        <Route path="perio" element={<PerioChart />} />
+        <Route path="perio" element={<RequireRight code={[RIGHT.charting.perioFull, RIGHT.charting.perioView]} fallback={<AccessDenied />}><PerioChart /></RequireRight>} />
         <Route path="notes" element={<PatientNotesListing />} />
         <Route path="notes/new" element={<AddEditPatientNote mode="add" />} />
         <Route path="notes/edit/:noteId" element={<AddEditPatientNote mode="edit" />} />
@@ -219,7 +223,7 @@ function AppRoutes() {
         <Route path="medical-history" element={<MedicalHistoryPage />} />
         <Route path="documents" element={<PatientDocuments />} />
         <Route path="letters" element={<LettersPage />} />
-        <Route path="imaging" element={<ImagingWorkspace />} />
+        <Route path="imaging" element={<RequireRight code={[RIGHT.imaging.full, RIGHT.imaging.view]} fallback={<AccessDenied />}><ImagingWorkspace /></RequireRight>} />
         <Route path="emergency-contacts" element={<EmergencyContacts />} />
         {/* Patient SMS — two-way texting inbox + SMS/Email log (src/features/sms) */}
         <Route path="messages" element={<PatientMessagesPage />} />
@@ -362,10 +366,16 @@ function AppRoutes() {
       <Route path="/setup/tenant" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><TenantSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* Setup - Security */}
-      <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><UserSetup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><GroupSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+      {/* RBAC reference wiring: opening the screen needs Full OR View; destructive
+          actions inside gate on Full (see UserSetup / GroupSetup). Dark until the
+          access-control kill-switch is flipped, so this renders normally today. */}
+      <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><RequireRight code={[RIGHT.setup.securityUsersFull, RIGHT.setup.securityUsersView]} fallback={<AccessDenied />}><UserSetup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /></RequireRight></AdminPageWrapper> : <Navigate to="/login" />} />
+      <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><RequireRight code={[RIGHT.setup.securityGroupsFull, RIGHT.setup.securityGroupsView]} fallback={<AccessDenied />}><GroupSetup /></RequireRight></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ChangeMyPassword /></AdminPageWrapper> : <Navigate to="/login" />} />
       
+      {/* Setup - Devices (Topaz signature pad diagnostics) */}
+      <Route path="/setup/devices/signature-pad" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><SignaturePadDiagnosticsPage /></AdminPageWrapper> : <Navigate to="/login" />} />
+
       {/* Setup - Providers */}
       <Route path="/setup/providers/provider-setup" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ProviderSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       {/* Provider has a single office_id; no per-office settings model — see backend_devreport.md #20 */}
@@ -380,6 +390,9 @@ function AppRoutes() {
       <Route path="/setup/insurance/employees" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Employees" /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/insurance/employers" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><EmployerSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       
+      {/* Setup - Lab Tracking */}
+      <Route path="/setup/lab-tracking/labs" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><LabSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
+
       {/* Setup - Referrals */}
       <Route path="/setup/referrals/referral-sources" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ReferralSetup /></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/referrals/custom-demographics" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Custom Demographics" /></AdminPageWrapper> : <Navigate to="/login" />} />
@@ -505,13 +518,13 @@ function AppContent() {
         transition: 'margin-right 0.3s ease-in-out'
       }}
     >
-      {/* HelpProvider exposes Report-an-Issue app-wide (nav menu, floating button,
-          Help Center) and owns the single support-ticket dialog. */}
+      {/* HelpProvider exposes Report-an-Issue app-wide (nav header button, nav
+          menu, Help Center) and owns the single support-ticket dialog. */}
       <HelpProvider>
         <AppRoutes />
       </HelpProvider>
       <LogoutOverlay />
-      {/* Global Direct Messaging - floating launcher + slide-in panel, all screens */}
+      {/* Global Direct Messaging - slide-in panel (launcher lives in GlobalNav) */}
       <Chat />
     </div>
   );
@@ -521,13 +534,17 @@ export default function App() {
   return (
     <AppProviders>
       <AuthProvider>
-        <ChatProvider>
-          <AppointNowProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </AppointNowProvider>
-        </ChatProvider>
+        {/* Working-office model (numeric id, access set, switch behaviour) derived
+            from AuthContext — every office-aware screen reads useOfficeScope(). */}
+        <OfficeScopeProvider>
+          <ChatProvider>
+            <AppointNowProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </AppointNowProvider>
+          </ChatProvider>
+        </OfficeScopeProvider>
       </AuthProvider>
     </AppProviders>
   );

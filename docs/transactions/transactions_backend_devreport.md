@@ -507,3 +507,186 @@ courtesy / discount); both pickers populate. What is missing is `key2` — see C
   so there is nothing to group by, and the filters are hidden.
 - **Suggested:** seed `key2` on both groups, and widen the seed itself — three adjustment codes is
   far short of a real practice's expense-code list.
+
+## Payment & Adjustment code catalog (Transactions Entry + Ledger Pay/Adj) — SHIPPED 2026-09-09
+Reported as: "the Payments option tab must offer the legacy payment codes on the left and open the matching
+entry form (Cash / Check / Credit / Direct Dep / Third-party Financing / NONE) on the right; the Adjustments
+tab must offer the legacy adjustment codes with their +/- and Production/Collection columns — on the
+Transactions screen **and** in the Account Ledger's Pay/Adj popup".
+
+Both places now render the same two components (`src/features/transactions/PaymentsTab.tsx` /
+`AdjustmentsTab.tsx`; the ledger's `TransactionEntryModal.tsx` mounts them unchanged), driven by one catalog
+module `src/features/transactions/transactionCodes.ts`. Live-verified on patient **83923** at `:5173`:
+18 payment codes + tender filter (All / Cash / Check / Credit Card / Direct Dep. / Third-party Financing / -),
+46 adjustment codes + sign filter (All / + / -) + group filter (All / Production / Collection); a Check
+payment (`PP009`, check # 1001, bank # BK-7), a Credit adjustment (`AC014`) and a Debit adjustment (`AD003`)
+posted end-to-end and appeared in the grid with the right sign; the ledger popup shows the identical pickers.
+
+### How the pickers are populated (frontend contract the backend seed must honour)
+`GET /definitions?group_code=payment_method|adjustment` is still the source of truth, but today it seeds
+only a generic handful (`cash`, `check`, `credit_card`, `write_off`, `courtesy`, …) with none of the legacy
+metadata — so the legacy catalog below is compiled into the frontend as the **baseline** and definitions are
+merged over it:
+
+| Rule | Behaviour |
+| --- | --- |
+| Legacy code, no matching definition | offered as-is from the compiled catalog |
+| Definition whose `key1` equals a legacy code (case-insensitive) | overlays the legacy row: `description` and `is_active` win; category / group / sign are taken from `key2` / `section` when they parse, else the legacy value |
+| Definition with no legacy match **and** full metadata (payments: `key2` is a tender category; adjustments: `key2` ∈ production/collection **and** `section` ∈ `+`/`-`) | appended after the legacy list — new practice codes need no release |
+| Definition with no legacy match and no metadata (today's `cash` / `write_off` rows) | **not offered** as a pick; still resolves to its `description` on the grid / ledger for historical rows |
+
+Tender category → entry panel: **Check** = Amount* · Check #* · Bank # · Apply To · Provider · Notes;
+**Credit Card** = Amount* · Credit Card # (last 4) · Exp. Date (month/year) · Apply To · Provider · Notes;
+**Cash / Direct Dep. / Third-party Financing / NONE** = Amount* · Apply To · Provider · Notes.
+`Apply To` = `payment_type` (`patient` = Responsible Party, `insurance`); the picked code is stored verbatim in
+`payment_method` / `adjustment_type`.
+
+### Legacy payment codes (`group_code = payment_method`)
+| key1 | key2 (tender category) | description |
+| --- | --- | --- |
+| PP006 | Credit Card | PMT PAT-American Express |
+| PF001 | Third-party Financing | PMT PAT-Care Credit |
+| PP005 | Cash | PMT PAT-Cash |
+| PP009 | Check | PMT PAT-Check |
+| PP001 | Credit Card | PMT PAT-Debit Card |
+| PP007 | Credit Card | PMT PAT-Discover |
+| PP002 | Check | PMT PAT-E Check |
+| PP008 | Credit Card | PMT PAT-Master Card / Visa |
+| PP004 | Check | PMT- Collection Agency - Check |
+| PA003 | Direct Dep. | PMT-AUTO/RECUR-American Expres |
+| PA001 | Direct Dep. | PMT-AUTO/RECUR-Check |
+| PA004 | Direct Dep. | PMT-AUTO/RECUR-Discover |
+| PA005 | Direct Dep. | PMT-AUTO/RECUR-EZPAY Check |
+| PA002 | Direct Dep. | PMT-AUTO/RECUR-Master Card/Vis |
+| APBAC | Cash | Previous Balance, Credit |
+| APBIC | Cash | Previous Balance, Ins Credit |
+| COLPY | *(blank — no tender)* | PT Paymt To Collections Agency |
+| PF005 | Third-party Financing | Sunbit Payment |
+
+### Legacy adjustment codes (`group_code = adjustment`)
+`section` = sign (`+` raises the patient balance / debit, `-` lowers it / credit); `key2` = group.
+
+| key1 | section | key2 | description |
+| --- | --- | --- | --- |
+| AC013 | - | production | ADJ OFF - Admin Adjustment |
+| AC009 | - | production | ADJ OFF - Bankruptcy |
+| AC012 | - | production | ADJ OFF - Collection Fee |
+| AFEED | - | production | ADJ OFF - Contract Adjustments |
+| AC006 | - | production | ADJ OFF - Coupon |
+| AC014 | - | production | ADJ OFF - Courtesy Discount |
+| AC003 | - | production | ADJ OFF - Failed Treatment |
+| AC015 | - | production | ADJ OFF - Ins Agreement |
+| AC001 | - | production | ADJ OFF - Late Charge |
+| AC004 | - | production | ADJ OFF - Over Charged Revenue |
+| AC011 | - | production | ADJ OFF - Reinstate Credit |
+| AC005 | - | production | ADJ OFF - Special Promotion |
+| AC007 | - | production | ADJ OFF - Tr to Coll Agency |
+| AC002 | - | production | ADJ OFF - Treatment Incomplete |
+| AC008 | - | production | ADJ OFF - Uncollectable Balanc |
+| AD900 | + | collection | ADJ ON - Capitation Adjustment |
+| AFEEI | + | production | ADJ ON - Contract Adjustments |
+| AD004 | + | production | ADJ ON - Increase Patient |
+| AD002 | + | production | ADJ ON - Ins Agreement |
+| AD001 | + | production | ADJ ON - Reinstate Balance |
+| AINSO | + | collection | AUTO - Insurance Adjustment |
+| ACCNC | + | collection | Cancel Contract (+) |
+| ACCNN | - | collection | Cancel Contract (-) |
+| COLFE | - | collection | Collection Agency Fee For Serv |
+| ACRED | - | collection | Credit Adjustment |
+| ADEBT | + | collection | Debit Adjustment |
+| AFCHG | + | production | FEE - Finance Charge (Account) |
+| ALCHG | + | production | FEE - Late Charge |
+| AD003 | + | production | FEE - NSF |
+| APBAL | + | production | Previous Balance |
+| APBAI | + | production | Previous Balance Insurance |
+| AR007 | + | collection | REFUND - 3rd Party Finance |
+| AR002 | + | collection | REFUND - Credit Card |
+| AR003 | + | collection | REFUND - Insurance |
+| AR001 | + | collection | REFUND - Patient |
+| AR004 | + | collection | REFUND - State |
+| AI001 | - | collection | REFUND - Voided |
+| AR008 | + | collection | REV PMT - Non-sufficient funds |
+| AR006 | + | collection | REV PMT - Payment (corp) |
+| AR005 | + | collection | REV PMT - TransFirst CC AutoRF |
+| ATAX | + | collection | Sales Tax |
+| SUNBR | + | collection | Sunbit Refund |
+| AC010 | - | production | TRANSFER - Charges From |
+| AD010 | + | production | TRANSFER - Charges To |
+| AR010 | + | collection | TRANSFER - Payment From |
+| AI010 | - | collection | TRANSFER - Payment to |
+
+### PAY-1 — Seed the legacy payment codes with the tender category on `key2` 🟡
+- **Screen:** Payments tab (Transactions Entry + Ledger Pay/Adj) — left picker, "All" filter, right entry panel.
+- **Current status:** `payment_method` holds 11 generic rows (`cash`, `check`, `credit_card`, `debit_card`,
+  `money_order`, `ach`, `care_credit`, `eft`, `insurance`, `insurance_check`, `insurance_eft`) whose `key2`
+  is `patient` / `insurance` (the CHG-10 "who paid" convention). None of the 18 legacy codes exist, so the
+  frontend ships them compiled in, and any office edit (rename / retire / add) cannot reach the picker.
+- **Suggested:** seed the 18 rows above (table = exact `key1` / `key2` / `description`), and settle **`key2`
+  as the tender category** (`Cash` / `Check` / `Credit Card` / `Direct Dep.` / `Third-party Financing`,
+  blank for COLPY). The frontend parses `key2` case-insensitively and also accepts `credit_card`,
+  `direct_dep`, `eft`, `ach`, `third_party_financing`. If "who paid" is still wanted, put it in `section`
+  (`patient` / `insurance`) — the Payments tab already captures that on the row itself as `payment_type`.
+  Update `scripts/seed_transaction_definitions.py` accordingly (it currently writes the `patient`/`insurance`
+  values into `key2`, which the picker ignores).
+- **Impact if skipped:** the picker keeps working from the compiled catalog, but the code list is frozen in a
+  release instead of being practice-editable through `/definitions`.
+
+### PAY-2 — No card reference columns on `patient_payments` 🟡
+- **Screen:** Payments tab, Credit-Card panel (`Credit Card # (last 4)`, `Exp. Date`).
+- **Current status:** `PatientPaymentCreate` has `check_number` / `bank_number` / `eob_number` /
+  `eft_trace_number` but nothing for a card. The frontend keeps **only the last four digits** and folds them
+  into `notes` in a fixed shape — `CC ****1234 exp 01/2026` — ahead of any free-text note (joined with ` — `).
+- **Suggested:** add `card_last4` (char 4), `card_exp_month` (1–12), `card_exp_year` to `patient_payments`
+  and the Create/Read/Update schemas (never a full PAN — keep the model PCI-clean). When these land the
+  frontend stops writing the note prefix.
+
+### PAY-3 — Validate `payment_type` and Check-category `check_number` server-side 🟢
+- **Current status:** `payment_type` is a free string. Values in use: `patient`, `insurance`, and
+  `adjustment` (the signed-delta row `ledger_sign.py` recognises — see ADJ-2). `check_number` is optional
+  regardless of the code's tender. The frontend enforces Check # for Check-category codes and offers only
+  Responsible Party / Insurance in Apply To.
+- **Suggested:** document `payment_type` as an enum (`patient | insurance | adjustment`) in `openapi.json`,
+  and — once PAY-1 puts the tender on the definition — reject a Check-category `payment_method` without a
+  `check_number` (422) so the rule holds for API callers too.
+
+### ADJ-2 — A `+` (debit) adjustment has no first-class representation 🔴
+- **Screen:** Adjustments tab — every `+` code (refunds, NSF, late/finance charges, reinstate balance,
+  transfers-to, sales tax, previous balance — 25 of the 46 legacy codes).
+- **Current status:** `POST /patient-adjustments` is always applied as a **credit**: `ledger_service`
+  emits `credit = amount`, `transactions_service` negates it, `billing_service` sums it into
+  `adjusted_to_date`. A negative `amount` is accepted but then rendered as a negative credit (the ledger's
+  `signedAmount` takes `abs`), so it cannot express a debit either. The only row type whose stored sign the
+  backend honours as a balance delta is `patient_payments` with `payment_type = 'adjustment'`
+  (`ledger_sign.py`, "a late fee debits").
+- **Frontend interim:** a `+` code is persisted as `POST /patient-payments` `{payment_type: 'adjustment',
+  payment_method: <code>, amount: +X}`; the Transactions grid renders such rows as an adjustment with a
+  positive amount, and the ledger shows them on the debit side via the feed's `charge`. The per-procedure
+  split (New Amt grid) is disabled for `+` codes because `allocatePayment` would count the debit as money
+  *paid* on the procedure. `-` codes keep using `/patient-adjustments` (account-level or one row per
+  procedure with `procedure_id`).
+- **Suggested:** give `patient_adjustments` an explicit direction — either `sign` (`+`/`-`) or a
+  `direction` enum (`debit`/`credit`) — honoured by `ledger_service._adjustment_rows` (debit → `charge`),
+  `transactions_service`, `billing_service.adjusted_to_date` (net, not abs) and `allocate_adjustment`
+  (a debit allocation *raises* `remaining_amount`). Then migrate the interim `payment_type='adjustment'`
+  rows into it, and the frontend switches both signs to one endpoint. Ties to ADJ-1 (per-procedure
+  allocation) and REF-1/2 (refund / reverse), which are the same "money out" gap seen from other screens.
+
+### ADJ-3 — Seed the legacy adjustment codes with group on `key2` and sign on `section` 🟡
+- **Current status:** `adjustment` holds 12 generic rows (`write_off`, `courtesy`, `discount`,
+  `contractual`, `senior_discount`, `employee_discount`, `prompt_pay_discount`, `charge_correction`,
+  `bad_debt`, `nsf`, `collection_agency`, `account_transfer`) with `key2` = production/collection and no
+  sign anywhere. None of the 46 legacy codes exist.
+- **Suggested:** seed the 46 rows above. `key2` = `production` | `collection` (already the CHG-10
+  convention), **`section` = `+` | `-`** (the frontend also accepts `debit` / `credit`). A definition that
+  has a group but no sign is treated as unknown and is not offered as a pick — the sign decides which
+  endpoint the row is written to (ADJ-2), so guessing it would post money the wrong way.
+- **Note on `write_off_type`:** the Adjustments tab now sends the picked code's group (`production` /
+  `collection`) in `PatientAdjustmentCreate.write_off_type` (previously never sent). If that column means
+  something else in the migration, say so and it will be dropped.
+
+### ADJ-4 — `PatientAdjustmentRead` / account-ledger rows carry no sign or group 🟢
+- **Current status:** grids resolve the sign and Production/Collection group from the compiled catalog by
+  `adjustment_type`; an unknown (practice-added) code renders as a credit with no group.
+- **Suggested:** once ADJ-2/ADJ-3 land, denormalise `sign` and `group` onto `PatientAdjustmentRead` and
+  `AccountLedgerRow` (as `provider_name` / `office_short_id` already are) so the ledger and the
+  Transactions grid never depend on the frontend catalog.

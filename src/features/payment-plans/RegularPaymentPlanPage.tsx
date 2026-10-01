@@ -18,6 +18,7 @@ import { Loader2, Save, X, Trash2, Printer, Ticket, ListOrdered, ArrowRight, Era
 import type { PatientBalance, PatientPaymentPlanRead } from "@/api/generated/model";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDefinitions } from "@/hooks/useDefinitions";
+import { usePatientOffice } from "@/features/office-scope";
 import {
   loadBalance,
   loadPlanContext,
@@ -72,7 +73,6 @@ interface OutletContext {
     name: string;
     dob?: string;
     chartNo?: string;
-    officeId?: string;
     balance?: number;
   };
 }
@@ -86,7 +86,10 @@ export default function RegularPaymentPlanPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const patient_id = Number(patient.id);
-  const office_id = patient.officeId ? Number(patient.officeId) : null;
+  // A payment plan is a contract owned by the patient's HOME office (stampPolicy
+  // = home), not the office the user happens to be posting other work at — so it
+  // stays on home_office_id even after Phase 4 flips posting to the working office.
+  const { home_office_id: office_id } = usePatientOffice();
 
   const [loading, set_loading] = useState(true);
   const [saving, set_saving] = useState(false);
@@ -299,7 +302,7 @@ export default function RegularPaymentPlanPage() {
       <div className="border-2 border-t-0 border-[#E2E8F0] rounded-b-md bg-[#F7F9FC] p-2 sm:p-3 pb-14 space-y-3">
         <PlanPatientSummary
           patient_id={patient_id}
-          office_id={patient.officeId}
+          office_id={office_id}
           patient_name={patient.name}
           balance={balance}
           insurance_slots={ctx?.insurance_slots ?? []}

@@ -8,6 +8,7 @@
 
 export interface ProviderHolidayCreate {
   holiday_date: string;
+  /** @maxLength 255 */
   holiday_name: string;
   status?: string | null;
   holiday_type?: string | null;

@@ -20,4 +20,20 @@ export interface PatientSignatureUpdate {
   superseded_by_id?: number | null;
   voided_at?: string | null;
   voided_by?: number | null;
+  sig_string?: string | null;
+  sig_format?: string | null;
+  sig_compression?: number | null;
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  captured_user_agent?: string | null;
+  progress_note_id?: number | null;
+  consent_id?: number | null;
+  claim_id?: string | null;
+  signer_name?: string | null;
+  signer_relationship?: string | null;
+  signer_provider_id?: string | null;
 }

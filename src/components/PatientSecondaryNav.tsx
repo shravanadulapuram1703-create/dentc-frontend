@@ -1,7 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
-  Calendar,
   User,
   CreditCard,
   BookOpen,
@@ -29,9 +28,41 @@ import {
   HeartPulse,
   ShieldCheck,
 } from "lucide-react";
+import { PatientShellToggle } from "./PatientShellToggle";
+import { useRights, type RightCode } from "@/features/access-control";
+
+// RBAC: view-or-full right(s) that grant each patient tab, keyed by label. A tab
+// with any of its codes is shown; tabs NOT listed here are always shown
+// (default-allow — utility/search actions and anything not yet mapped). While the
+// access-control kill-switch is dark, `hasAny` grants everything, so nothing hides.
+const TAB_RIGHTS: Record<string, RightCode[]> = {
+  Overview: ["patient_patient_overview_view_only", "patient_patient_overview_screen_full_control"],
+  Transaction: ["transactions_transaction_entry_view_only", "transactions_transaction_entry_screen_full_control"],
+  Ledger: ["transactions_patient_ledger_view_only", "transactions_patient_ledger_screen_full_control"],
+  Insurance: ["patient_insurance_plan_information_view_only", "patient_insurance_plan_information_screen_full_control"],
+  Restorative: ["charting_restorative_view_only", "charting_restorative_full_control"],
+  Perio: ["charting_perio_view_only", "charting_perio_full_control"],
+  "X-Ray": ["imaging_view_only", "imaging_full_control"],
+  Progress: ["patient_view_progress_notes", "patient_add_progress_notes", "patient_edit_progress_notes"],
+  Treatment: ["transactions_treatment_plan_view_only", "transactions_treatment_plan_screen_full_control"],
+  Prescriptions: ["patient_prescription_view_only", "patient_prescription_screen_full_control"],
+  "Lab Tracking": ["patient_lab_cases_view_only", "patient_lab_cases_full_control"],
+  "Medical Hx": ["patient_medical_history_view_only", "patient_medical_history_full_control"],
+  Notes: ["patient_patient_notes_view_only", "patient_patient_notes_add", "patient_patient_notes_edit"],
+  Documents: ["patient_documents_view_only", "patient_documents_full_control"],
+  Emergency: ["patient_emergency_contacts_view_only", "patient_emergency_contacts_full_control"],
+  Letters: ["patient_letters_view_only", "patient_letters_full_control"],
+  Messages: ["patient_messaging_hub_view_only", "patient_messaging_hub_user_full_control"],
+  "SMS/Email": ["patient_email_or_text_message_view_only", "patient_email_or_text_message_full_control"],
+  "New Patient": ["patient_add_new_patient_full_control", "patient_add_new_patient_quick_save"],
+  "New Member": ["patient_add_new_member_full_control", "patient_add_new_member_quick_save"],
+};
 
 interface PatientSecondaryNavProps {
   patientId: string;
+  /** Minimized: the icon strip is replaced by a slim bar naming the current tab. */
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 interface PatientAction {
@@ -50,13 +81,12 @@ interface PatientAction {
 
 export default function PatientSecondaryNav({
   patientId,
+  collapsed,
+  onToggleCollapsed,
 }: PatientSecondaryNavProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-
-  const handleSchedulerClick = () => {
-    window.open("/scheduler", "_blank");
-  };
+  const { hasAny } = useRights();
 
   const handleNavigation = (path: string) => {
     navigate(`/patient/${patientId}${path}`);
@@ -66,13 +96,6 @@ export default function PatientSecondaryNav({
   // Restorative → Perio → X-Ray(Imaging) → Progress → Treatment — which now lives
   // only here (the duplicate in-chart tab row was removed).
   const patientActions: PatientAction[] = [
-    {
-      icon: Calendar,
-      label: "Scheduler",
-      gradient: "from-blue-600 to-cyan-600",
-      onClick: handleSchedulerClick,
-      description: "Open Scheduler (New Window)",
-    },
     {
       icon: User,
       label: "Overview",
@@ -164,7 +187,7 @@ export default function PatientSecondaryNav({
       label: "New Patient",
       gradient: "from-green-600 to-emerald-600",
       onClick: () => {
-        window.open("/patient/new", "_blank");
+        navigate("/patient/new");
       },
       description: "Add New Patient",
     },
@@ -270,17 +293,65 @@ export default function PatientSecondaryNav({
     },
   ];
 
+  // RBAC: hide a tab when the user holds none of its mapped rights (unmapped =
+  // always shown). Kill-switch dark → hasAny grants → all tabs visible.
+  const visibleActions = patientActions.filter((a) => {
+    const codes = TAB_RIGHTS[a.label];
+    return !codes || hasAny(codes);
+  });
+
   const base = `/patient/${patientId}`;
+  const isActionActive = (action: PatientAction) => {
+    const matchSeg = action.activeMatch ?? action.path;
+    return !!matchSeg && pathname.startsWith(base + matchSeg);
+  };
+  const activeAction = visibleActions.find(isActionActive);
+
+  if (collapsed) {
+    return (
+      <div className="flex items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-6 py-1">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500">
+          <span className="font-semibold uppercase tracking-wide text-[11px]">Patient tabs</span>
+          {activeAction && (
+            <>
+              <span className="text-slate-300">|</span>
+              <span className={`flex h-5 w-5 items-center justify-center rounded bg-gradient-to-br ${activeAction.gradient}`}>
+                <activeAction.icon className="h-3 w-3 text-white" strokeWidth={2.5} />
+              </span>
+              <span className="truncate font-semibold text-slate-800">{activeAction.label}</span>
+            </>
+          )}
+        </div>
+        <PatientShellToggle
+          collapsed
+          onClick={onToggleCollapsed}
+          target="patient tabs"
+          caption={{ collapsed: "Show tabs", expanded: "Hide tabs" }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white border-t-2 border-slate-200">
-      {/* Patient Action Icons - Medical Theme */}
+    <div className="relative bg-white border-t-2 border-slate-200">
+      {/* Minimize control — floats over the right edge with a white fade so
+          the scrolling icon strip slides underneath it. */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center bg-gradient-to-l from-white via-white to-transparent pl-10 pr-4">
+        <div className="pointer-events-auto">
+          <PatientShellToggle
+            collapsed={false}
+            onClick={onToggleCollapsed}
+            target="patient tabs"
+            caption={{ collapsed: "Show tabs", expanded: "Hide tabs" }}
+          />
+        </div>
+      </div>
 
-      <div className="px-6 py-3 overflow-x-auto overflow-y-visible">
+      {/* Patient Action Icons - Medical Theme */}
+      <div className="px-6 pr-32 py-3 overflow-x-auto overflow-y-visible">
         <div className="flex items-center gap-2.5 min-w-max">
-          {patientActions.map((action, index) => {
-            const matchSeg = action.activeMatch ?? action.path;
-            const isActive = !!matchSeg && pathname.startsWith(base + matchSeg);
+          {visibleActions.map((action, index) => {
+            const isActive = isActionActive(action);
             const onClick = action.onClick ?? (() => handleNavigation(action.path!));
             return (
               <button

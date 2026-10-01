@@ -18,11 +18,9 @@ import {
   newRowId,
   type AppointmentProcedureLine,
 } from "../../services/appointmentProceduresApi";
-import {
-  resolveProcedureFee,
-  type FeeScheduleContext,
-} from "../../services/feeScheduleResolver";
+import { resolveProcedureFeeFor as resolveProcedureFee, type FeeScheduleContext } from "@/features/pricing";
 import type { ProcedureCode, Provider } from "../../services/schedulerApi";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 interface Props {
   isOpen: boolean;
@@ -389,7 +387,7 @@ export default function AppointmentProcedurePicker({
                       <option value="">— Select provider —</option>
                       {providers.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {providerDisplayLabel(p)}
                         </option>
                       ))}
                     </select>

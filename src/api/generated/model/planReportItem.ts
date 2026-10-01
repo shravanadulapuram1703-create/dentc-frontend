@@ -25,4 +25,5 @@ export interface PlanReportItem {
   diagnosed_by?: string | null;
   provider_id?: string | null;
   diagnosed_date?: string | null;
+  deductible_applied?: string | null;
 }

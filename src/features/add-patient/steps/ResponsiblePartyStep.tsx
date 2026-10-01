@@ -16,6 +16,8 @@ import type { CollectionAgencyRead } from "@/api/generated/model";
 export interface PatientSnapshot {
   first_name: string;
   last_name: string;
+  /** Optional middle name (backend `middle_initial`). */
+  middle_initial?: string;
   dob: string;
   sex: string;
   marital_status: string;
@@ -87,6 +89,7 @@ export default function ResponsiblePartyStep({ value, onChange, patient, account
         ...value,
         first_name: patient.first_name,
         last_name: patient.last_name,
+        middle_initial: patient.middle_initial ?? "",
         relationship: "Self",
         dob: patient.dob,
         sex: patient.sex,

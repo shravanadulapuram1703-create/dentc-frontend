@@ -10,18 +10,23 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   listFeeScheduleAssignments,
   createFeeScheduleAssignment,
+  updateFeeScheduleAssignment,
   deleteFeeScheduleAssignment,
 } from "@/api/generated/endpoints/procedures/procedures";
 import type { FeeScheduleAssignmentRead } from "@/api/generated/model";
 import {
   type AssignmentForm,
   emptyAssignmentForm,
+  assignmentToForm,
   buildAssignmentCreate,
+  buildAssignmentUpdate,
+  assignmentRankLabel,
 } from "./feeScheduleData";
 import {
   ensureOfficeNames,
@@ -82,7 +87,8 @@ export default function FeeScheduleAssignments() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [assignOpen, setAssignOpen] = useState(false);
+  // null = closed, "new" = create, a row = edit that assignment.
+  const [editing, setEditing] = useState<FeeScheduleAssignmentRead | "new" | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -224,7 +230,7 @@ export default function FeeScheduleAssignments() {
                 <button onClick={exportCsv} disabled={rows.length === 0} className="flex items-center gap-2 px-3 py-2 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#E8EFF7] font-bold text-sm disabled:opacity-40">
                   <Download className="w-4 h-4" /> Export CSV
                 </button>
-                <button onClick={() => setAssignOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] font-bold text-sm">
+                <button onClick={() => setEditing("new")} className="flex items-center gap-2 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] font-bold text-sm">
                   <Plus className="w-4 h-4" /> Assign New
                 </button>
               </div>
@@ -271,7 +277,7 @@ export default function FeeScheduleAssignments() {
               <Network className="w-12 h-12 text-[#CBD5E1]" />
               <p className="text-[#64748B] font-bold text-sm">{hasFilters ? "No assignments match your filters" : "No fee schedule assignments yet"}</p>
               {!hasFilters && (
-                <button onClick={() => setAssignOpen(true)} className="inline-flex items-center gap-2 mt-1 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] font-bold text-sm">
+                <button onClick={() => setEditing("new")} className="inline-flex items-center gap-2 mt-1 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] font-bold text-sm">
                   <Plus className="w-4 h-4" /> Assign your first fee schedule
                 </button>
               )}
@@ -285,7 +291,7 @@ export default function FeeScheduleAssignments() {
                       <th className="px-3 py-3 w-10">
                         <input type="checkbox" checked={selected.size === rows.length && rows.length > 0} onChange={toggleAll} className="w-4 h-4 accent-[#3A6EA5]" />
                       </th>
-                      {["Office", "Carrier", "Carrier ID", "Plan", "Specialty", "Provider", "Fee ID", "Fee Schedule", "Created By", "Created On", ""].map((h) => (
+                      {["Office", "Carrier", "Carrier ID", "Plan", "Specialty", "Provider", "Fee ID", "Fee Schedule", "Rank", "Created By", "Created On", ""].map((h) => (
                         <th key={h} className="px-3 py-3 text-left text-xs font-bold text-[#1F3A5F] uppercase tracking-wide whitespace-nowrap">
                           {h}
                         </th>
@@ -306,9 +312,13 @@ export default function FeeScheduleAssignments() {
                         <td className="px-3 py-2.5 text-sm text-[#64748B]">{providerName(r.provider_id)}</td>
                         <td className="px-3 py-2.5 text-sm text-[#64748B]">{r.fee_schedule_id}</td>
                         <td className="px-3 py-2.5 text-sm text-[#1E293B] font-semibold">{feeScheduleName(r.fee_schedule_id)}</td>
+                        <td className="px-3 py-2.5 text-xs font-bold text-[#1F3A5F] whitespace-nowrap">{assignmentRankLabel(r)}</td>
                         <td className="px-3 py-2.5 text-sm text-[#64748B]">{r.created_by || "—"}</td>
                         <td className="px-3 py-2.5 text-xs text-[#64748B] whitespace-nowrap">{r.created_at ? r.created_at.slice(0, 10) : "—"}</td>
-                        <td className="px-3 py-2.5 text-right">
+                        <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                          <button onClick={() => setEditing(r)} className="p-2 hover:bg-[#E8EFF7] rounded-lg" title="Edit">
+                            <Pencil className="w-4 h-4 text-[#3A6EA5]" />
+                          </button>
                           <button onClick={() => void deleteOne(r)} disabled={deletingId === r.id} className="p-2 hover:bg-[#FEE2E2] rounded-lg disabled:opacity-50" title="Delete">
                             {deletingId === r.id ? <Loader2 className="w-4 h-4 animate-spin text-[#DC2626]" /> : <Trash2 className="w-4 h-4 text-[#DC2626]" />}
                           </button>
@@ -337,11 +347,12 @@ export default function FeeScheduleAssignments() {
         </div>
       </div>
 
-      {assignOpen && (
+      {editing && (
         <AssignModal
-          onClose={() => setAssignOpen(false)}
+          existing={editing === "new" ? null : editing}
+          onClose={() => setEditing(null)}
           onDone={async () => {
-            setAssignOpen(false);
+            setEditing(null);
             await loadData();
           }}
         />
@@ -354,23 +365,64 @@ export default function FeeScheduleAssignments() {
 // Assign New modal
 // ---------------------------------------------------------------------------
 
-function AssignModal({ onClose, onDone }: { onClose: () => void; onDone: () => Promise<void> }) {
-  const [form, setForm] = useState<AssignmentForm>(() => emptyAssignmentForm());
-  const [labels, setLabels] = useState({ feeSchedule: "", carrier: "", plan: "", provider: "", office: "" });
+/** Best-effort human message from the backend's coded error envelope. */
+function assignErrorMessage(e: unknown): string {
+  const anyE = e as { response?: { data?: { error?: { code?: string; message?: string } } }; message?: string };
+  const code = anyE?.response?.data?.error?.code;
+  if (code === "assignment_duplicate_target") return "Another assignment already binds this exact target.";
+  if (code === "assignment_needs_target") return "An assignment must name a payer or provider — office/group only narrow a row.";
+  if (code === "assignment_schedule_invalid") return "That fee schedule is inactive or from another tenant.";
+  return anyE?.response?.data?.error?.message ?? (e instanceof Error ? e.message : "Please try again.");
+}
+
+function AssignModal({
+  existing,
+  onClose,
+  onDone,
+}: {
+  existing: FeeScheduleAssignmentRead | null;
+  onClose: () => void;
+  onDone: () => Promise<void>;
+}) {
+  const isEdit = existing != null;
+  const [form, setForm] = useState<AssignmentForm>(() =>
+    existing ? assignmentToForm(existing) : emptyAssignmentForm(),
+  );
+  const [labels, setLabels] = useState(() => ({
+    feeSchedule: existing ? feeScheduleName(existing.fee_schedule_id) : "",
+    carrier: existing?.carrier_id != null ? carrierName(existing.carrier_id) : "",
+    plan: existing?.ins_plan_id != null ? planLabel(existing.ins_plan_id) : "",
+    provider: existing ? providerName(existing.provider_id) : "",
+    office: existing ? officeName(existing.office_id) : "",
+  }));
   const [saving, setSaving] = useState(false);
+
+  const hasTarget =
+    form.ins_plan_id != null || form.carrier_id != null || !!form.provider_id || !!form.specialty_id;
 
   const save = async () => {
     if (form.fee_schedule_id == null) {
       toast.error("A fee schedule is required");
       return;
     }
+    if (!hasTarget) {
+      toast.error("Name a target", {
+        description: "An assignment must name a payer or provider (plan, carrier, provider, or specialty). Office-wide defaults live in Office Setup.",
+      });
+      return;
+    }
     setSaving(true);
     try {
-      await createFeeScheduleAssignment(buildAssignmentCreate(form));
-      toast.success("Fee schedule assigned");
+      if (isEdit) {
+        await updateFeeScheduleAssignment(existing.id, buildAssignmentUpdate(form));
+        toast.success("Assignment updated");
+      } else {
+        await createFeeScheduleAssignment(buildAssignmentCreate(form));
+        toast.success("Fee schedule assigned");
+      }
       await onDone();
     } catch (e: unknown) {
-      toast.error("Assign failed", { description: e instanceof Error ? e.message : undefined });
+      toast.error(isEdit ? "Update failed" : "Assign failed", { description: assignErrorMessage(e) });
     } finally {
       setSaving(false);
     }
@@ -380,14 +432,15 @@ function AssignModal({ onClose, onDone }: { onClose: () => void; onDone: () => P
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-lg border-2 border-[#E2E8F0] shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b-2 border-[#E2E8F0] bg-[#F7F9FC]">
-          <h2 className="text-lg font-bold text-[#1F3A5F]">Assign Fee Schedule</h2>
+          <h2 className="text-lg font-bold text-[#1F3A5F]">{isEdit ? "Edit Assignment" : "Assign Fee Schedule"}</h2>
           <button onClick={onClose} className="p-1.5 hover:bg-[#E8EFF7] rounded-lg">
             <X className="w-5 h-5 text-[#64748B]" />
           </button>
         </div>
         <div className="p-5 space-y-4">
           <p className="text-xs text-[#64748B]">
-            Pick the fee schedule and the target(s) it applies to. Leave a target blank to make it apply broadly.
+            Bind the fee schedule to a payer or provider. <strong>Office-wide defaults are set in Office
+            Setup</strong>, not here — office / office group only <em>narrow</em> an assignment.
           </p>
           <Labeled label="Fee Schedule" required>
             <EntityPicker valueId={form.fee_schedule_id} valueLabel={labels.feeSchedule} onChange={(id, label) => { setForm((f) => ({ ...f, fee_schedule_id: id as number | null })); setLabels((l) => ({ ...l, feeSchedule: label })); }} search={searchFeeSchedules} placeholder="Select fee schedule…" />
@@ -402,20 +455,28 @@ function AssignModal({ onClose, onDone }: { onClose: () => void; onDone: () => P
             <Labeled label="Provider">
               <EntityPicker valueId={form.provider_id} valueLabel={labels.provider} onChange={(id, label) => { setForm((f) => ({ ...f, provider_id: id as string | null })); setLabels((l) => ({ ...l, provider: label })); }} search={searchProviders} placeholder="Any provider…" allowClear />
             </Labeled>
-            <Labeled label="Office">
+            <Labeled label="Office (narrow only)">
               <EntityPicker valueId={form.office_id} valueLabel={labels.office} onChange={(id, label) => { setForm((f) => ({ ...f, office_id: id as number | null })); setLabels((l) => ({ ...l, office: label })); }} search={searchOffices} placeholder="Any office…" allowClear />
+            </Labeled>
+            <Labeled label="Office Group (id, narrow only)">
+              <input value={form.office_group_id ?? ""} onChange={(e) => setForm((f) => ({ ...f, office_group_id: e.target.value ? Number(e.target.value) : null }))} className={INPUT_CLS} inputMode="numeric" placeholder="optional" />
             </Labeled>
             <Labeled label="Specialty (code)">
               <input value={form.specialty_id ?? ""} onChange={(e) => setForm((f) => ({ ...f, specialty_id: e.target.value || null }))} className={INPUT_CLS} placeholder="optional" />
             </Labeled>
           </div>
+          {!hasTarget && (
+            <p className="text-xs font-semibold text-[#B45309]">
+              Add a plan, carrier, provider or specialty — an office/group alone can't own an assignment.
+            </p>
+          )}
         </div>
         <div className="flex justify-end gap-2 p-4 border-t-2 border-[#E2E8F0] bg-[#F7F9FC]">
           <button onClick={onClose} disabled={saving} className="px-4 py-2 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg font-bold text-sm disabled:opacity-50">
             Cancel
           </button>
           <button onClick={() => void save()} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-[#3A6EA5] text-white rounded-lg font-bold text-sm disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Assign
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {isEdit ? "Save" : "Assign"}
           </button>
         </div>
       </div>

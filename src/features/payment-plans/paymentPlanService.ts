@@ -46,6 +46,7 @@ import type {
   OfficeRead,
 } from "@/api/generated/model";
 import type { ScheduleRow } from "./planModel";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 // ---------------------------------------------------------------------------
 // Ortho plan
@@ -306,15 +307,28 @@ export async function loadBalance(patient_id: number): Promise<PatientBalance | 
   return getPatientBalance(patient_id).catch(() => null);
 }
 
-/** Office name + phone for the printed contract header. */
+/**
+ * Office name + phone for the printed contract header.
+ *
+ * Only the office the contract belongs to is ever printed — a financing
+ * contract must not carry another office's letterhead, so there is no fallback
+ * to the first office in the catalog. When the office is unknown (no id, or an
+ * id the catalog does not list) the header carries an explicit placeholder.
+ */
 export function office_header(
   offices: OfficeRead[],
   office_id: number | null,
 ): { office_name: string; office_phone: string } {
-  const office = offices.find((o) => o.id === office_id) ?? offices[0];
+  const office = office_id == null ? undefined : offices.find((o) => o.id === office_id);
+  if (!office) {
+    return {
+      office_name: office_id == null ? "Office not on file" : `Office ${office_id} (not on file)`,
+      office_phone: "",
+    };
+  }
   return {
-    office_name: office?.name ?? "",
-    office_phone: office?.phone ?? office?.phone_2 ?? "",
+    office_name: office.name ?? "",
+    office_phone: office.phone ?? office.phone_2 ?? "",
   };
 }
 
@@ -322,12 +336,7 @@ function cap(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-/** Display label for a provider, legacy style: "736TC : Jinna, Dhileep DMD". */
+/** Display label for a provider — the app-wide "Name (ID)" format. */
 export function provider_label(p: ProviderRead): string {
-  const name =
-    p.last_name || p.first_name
-      ? [p.last_name, p.first_name].filter(Boolean).join(", ")
-      : p.name;
-  const suffix = p.title ? ` ${p.title}` : "";
-  return `${p.short_id ?? p.legacy_id ?? p.id} : ${name}${suffix}`;
+  return providerDisplayLabel(p);
 }

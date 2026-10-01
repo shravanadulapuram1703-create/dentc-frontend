@@ -6,8 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * PN-6: ``category`` is the stored value (the dropdown's filter key);
+ * ``label`` is what to render — the ``NOTESMACROS`` definition's description
+ * when the stored value is still a Denticon category *code*, else the value
+ * itself.
+ */
 export interface NoteMacroCategory {
   category: string;
+  /** Human-readable label for the Category dropdown */
+  label: string;
   /** Number of macros in this category */
   macro_count: number;
 }

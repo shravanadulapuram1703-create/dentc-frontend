@@ -1,5 +1,6 @@
 import type { ProcedureCodeForm } from "../procedureCodeData";
 import type { ProviderRead, NoteMacroRead } from "@/api/generated/model";
+import { providerOptionLabel } from "@/services/providerDirectory";
 
 interface MainTabProps {
   formData: ProcedureCodeForm;
@@ -112,21 +113,17 @@ export default function MainTab({
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Default Fee</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#64748B]">$</span>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={formData.default_fee}
-                onChange={(e) => updateFormData({ default_fee: e.target.value })}
-                placeholder="0.00"
-                className={`${inputCls} pl-7`}
-              />
-            </div>
+            <label className={labelCls}>Insurance Coverage Category</label>
+            <input
+              type="text"
+              value={formData.coverage_category}
+              onChange={(e) => updateFormData({ coverage_category: e.target.value })}
+              placeholder="e.g. 01 (Diagnostic), 03A (Crowns)"
+              className={inputCls}
+            />
             <p className="mt-1 text-[11px] text-[#94A3B8]">
-              Office UCR fee. Per-schedule pricing lives in the Fee Schedules tab.
+              The band insurance plans price this code against. Pricing itself lives in the Fee
+              Schedules tab; coverage % lives on the Insurance Plan.
             </p>
           </div>
           <div className="flex items-end pb-1">
@@ -233,8 +230,7 @@ export default function MainTab({
               <option value="">— None —</option>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.short_id ? ` (${p.short_id})` : ""}
+                  {providerOptionLabel(p)}
                 </option>
               ))}
             </select>

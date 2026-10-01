@@ -5,6 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { RegisteredInsuranceRead } from './registeredInsuranceRead';
+import type { RegisterResponseContradictionsItem } from './registerResponseContradictionsItem';
 
 export interface RegisterResponse {
   patient_id: number;
@@ -13,5 +15,7 @@ export interface RegisterResponse {
   medical_alert_ids?: number[];
   questionnaire_response_ids?: number[];
   recall_ids?: number[];
+  insurance?: RegisteredInsuranceRead[];
   opening_balance_seeded?: boolean;
+  contradictions?: RegisterResponseContradictionsItem[];
 }

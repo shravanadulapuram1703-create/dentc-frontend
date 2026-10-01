@@ -28,10 +28,12 @@ import type {
   AccountHolidayCreate,
   AccountHolidayRead,
   AccountHolidayUpdate,
+  AppSchemasOfficeSetupScheduleReplace,
   BodyUploadOfficeStatementLogo,
   BulkDeleteOfficeHolidays200,
   ErrorResponse,
   FederalHolidaysImport,
+  FeeDefaultsUpdate,
   HTTPValidationError,
   HolidayBulkDelete,
   HolidayRangeCreate,
@@ -50,7 +52,6 @@ import type {
   ProductionTypeCreate,
   ProductionTypeRead,
   ProductionTypeUpdate,
-  ScheduleReplace,
   SmartAssistRead,
   SmartAssistUpdate
 } from '../../model';
@@ -64,6 +65,70 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Set the office UCR list, default patient list and unpriced-charge policy
+ */
+export const updateOfficeFeeDefaults = (
+    officeId: number,
+    feeDefaultsUpdate: BodyType<FeeDefaultsUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/offices/${officeId}/fee-defaults`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: feeDefaultsUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateOfficeFeeDefaultsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOfficeFeeDefaults>>, TError,{officeId: number;data: BodyType<FeeDefaultsUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOfficeFeeDefaults>>, TError,{officeId: number;data: BodyType<FeeDefaultsUpdate>}, TContext> => {
+
+const mutationKey = ['updateOfficeFeeDefaults'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOfficeFeeDefaults>>, {officeId: number;data: BodyType<FeeDefaultsUpdate>}> = (props) => {
+          const {officeId,data} = props ?? {};
+
+          return  updateOfficeFeeDefaults(officeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOfficeFeeDefaultsMutationResult = NonNullable<Awaited<ReturnType<typeof updateOfficeFeeDefaults>>>
+    export type UpdateOfficeFeeDefaultsMutationBody = BodyType<FeeDefaultsUpdate>
+    export type UpdateOfficeFeeDefaultsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Set the office UCR list, default patient list and unpriced-charge policy
+ */
+export const useUpdateOfficeFeeDefaults = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOfficeFeeDefaults>>, TError,{officeId: number;data: BodyType<FeeDefaultsUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateOfficeFeeDefaults>>,
+        TError,
+        {officeId: number;data: BodyType<FeeDefaultsUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateOfficeFeeDefaultsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get Office Metadata
  */
 export const getOfficeMetadata = (
@@ -691,7 +756,7 @@ export function useGetOfficeSchedule<TData = Awaited<ReturnType<typeof getOffice
  */
 export const setOfficeSchedule = (
     officeId: number,
-    scheduleReplace: BodyType<ScheduleReplace>,
+    appSchemasOfficeSetupScheduleReplace: BodyType<AppSchemasOfficeSetupScheduleReplace>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -699,7 +764,7 @@ export const setOfficeSchedule = (
       return customInstance<OfficeScheduleDayRead[]>(
       {url: `/api/v1/offices/${officeId}/schedule`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: scheduleReplace, signal
+      data: appSchemasOfficeSetupScheduleReplace, signal
     },
       options);
     }
@@ -707,8 +772,8 @@ export const setOfficeSchedule = (
 
 
 export const getSetOfficeScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}, TContext> => {
 
 const mutationKey = ['setOfficeSchedule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -720,7 +785,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOfficeSchedule>>, {officeId: number;data: BodyType<ScheduleReplace>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOfficeSchedule>>, {officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}> = (props) => {
           const {officeId,data} = props ?? {};
 
           return  setOfficeSchedule(officeId,data,requestOptions)
@@ -734,18 +799,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SetOfficeScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof setOfficeSchedule>>>
-    export type SetOfficeScheduleMutationBody = BodyType<ScheduleReplace>
+    export type SetOfficeScheduleMutationBody = BodyType<AppSchemasOfficeSetupScheduleReplace>
     export type SetOfficeScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
 
     /**
  * @summary Set Schedule
  */
 export const useSetOfficeSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setOfficeSchedule>>,
         TError,
-        {officeId: number;data: BodyType<ScheduleReplace>},
+        {officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>},
         TContext
       > => {
       return useMutation(getSetOfficeScheduleMutationOptions(options), queryClient);
@@ -1794,6 +1859,7 @@ export function useGetProductionType<TData = Awaited<ReturnType<typeof getProduc
 
 
 /**
+ * Partial update of one production type.
  * @summary Update production type
  */
 export const updateProductionType = (
@@ -1858,6 +1924,7 @@ export const useUpdateProductionType = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProductionTypeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one production type.
  * @summary Delete production type
  */
 export const deleteProductionType = (

@@ -13,6 +13,7 @@ export interface InsuranceSubscriberCreate {
   sub_first_name?: string | null;
   sub_last_name?: string | null;
   sub_mi?: string | null;
+  sub_suffix?: string | null;
   sub_address?: string | null;
   sub_address2?: string | null;
   sub_city?: string | null;

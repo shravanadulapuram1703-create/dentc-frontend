@@ -8,6 +8,7 @@
 
 export interface PatientInsuranceRead {
   patient_id: number;
+  legacy_id?: string | null;
   ins_plan_id?: number | null;
   subscriber_id?: number | null;
   legacy_plan_type?: string | null;

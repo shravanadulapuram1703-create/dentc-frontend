@@ -27,6 +27,7 @@ import type {
   PatientSignatureRead,
   PatientDocumentRead,
 } from '@/api/generated/model';
+import { signatureBodyFields, type SignatureResult } from '@/features/signature/signatureModel';
 
 const PAGE_SIZE = 200;
 
@@ -254,13 +255,17 @@ export async function loadMySignature(patientId: number): Promise<string | null>
 }
 
 /** Persist a drawn/loaded provider signature image (data URL) for the patient. */
-export function saveUserSignature(patientId: number, dataUrl: string): Promise<PatientSignatureRead> {
+export function saveUserSignature(
+  patientId: number,
+  signature: SignatureResult,
+  progressNoteId?: number | null,
+): Promise<PatientSignatureRead> {
   return createPatientSignature({
     patient_id: patientId,
-    signature_data: dataUrl,
-    signature_len: dataUrl.length,
-    device_source: 'web-pad',
+    ...signatureBodyFields(signature),
     is_user_sig: true,
+    signature_type: 'progress_note',
+    progress_note_id: progressNoteId ?? null,
   });
 }
 

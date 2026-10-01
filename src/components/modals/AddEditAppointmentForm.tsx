@@ -8,7 +8,7 @@ import {
   Loader2,
   ClipboardList,
 } from "lucide-react";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import AddNewPatient from "../pages/AddNewPatient";
 import SendEmailModal from "./SendEmailModal";
 import TxPlansTab from "./TxPlansTab";
@@ -49,12 +49,21 @@ import {
   type AppointmentProcedureLine,
 } from "../../services/appointmentProceduresApi";
 import {
+  resolveProcedureFeeFor as resolveProcedureFee,
   loadFeeScheduleContext,
-  resolveProcedureFee,
   EMPTY_FEE_CONTEXT,
   type FeeScheduleContext,
-} from "../../services/feeScheduleResolver";
+} from "@/features/pricing";
 import { loadProcedureCodes } from "@/components/setup/insurance/procedureCodeService";
+import { providerDisplayLabel } from "@/services/providerDirectory";
+import {
+  ProviderOptionGroups,
+  officeKeyToId,
+  useOfficeOptions,
+  useOfficeScope,
+} from "@/features/office-scope";
+import { listLabs } from "@/api/generated/endpoints/appointments/appointments";
+import type { LabRead } from "@/api/generated/model";
 
 interface PatientSearchResult {
   patientId: string;
@@ -95,6 +104,10 @@ interface AddEditAppointmentFormProps {
     operatory?: string;
     provider?: string;
     notes?: string;
+    /** treatment_plan_items.id values handed over from a patient screen
+     *  (Tx Plan / Restorative "New Appt"); seeded into TREATMENTS once the
+     *  patient's plans load. */
+    plan_item_ids?: string[];
   };
 }
 
@@ -133,12 +146,19 @@ export default function AddEditAppointmentForm({
   editingAppointment,
   initialAppointmentData,
 }: AddEditAppointmentFormProps) {
-  const { currentOrganization, organizations, currentOffice: currentOfficeId } = useAuth();
-  
-  // Find current organization and office details
-  const currentOrg = organizations.find((org) => org.id === currentOrganization);
-  const currentOfficeObj = currentOrg?.offices.find((office) => office.id === currentOfficeId);
-  
+  const { currentOrganization, currentOffice: currentOfficeId } = useAuth();
+  // Working office (numeric id + catalog name) for the header and for stamping.
+  const officeScope = useOfficeScope();
+  // Office catalog for id → name (the cross-office note below).
+  const { data: officeOptions } = useOfficeOptions();
+  // The appointment's office stamp (STAMP.appointment = "working"): the office
+  // model first; the legacy "OFF-<id>" prop only as a fallback, and only ever
+  // through the ONE parser — never parseInt.
+  const working_office_id =
+    officeScope.office_id ?? officeKeyToId(currentOfficeId ?? currentOffice) ?? null;
+  const officeNameById = (id: number): string =>
+    officeOptions?.find((o) => o.id === id)?.name ?? `office ${id}`;
+
   // Extract numeric tenant ID from organization ID (e.g., "ORG-1" -> 1, "1" -> 1)
   const getTenantId = (): string => {
     if (!currentOrganization) return "N/A";
@@ -168,6 +188,13 @@ export default function AddEditAppointmentForm({
   const [procedureCodes, setProcedureCodes] = useState<ApiProcedureCode[]>([]);
   const [procedureCategories, setProcedureCategories] = useState<ProcedureCategory[]>([]);
   const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
+  // Lab vendors (the `labs` catalog) for the LAB section's "Lab" picker.
+  const [labs, setLabs] = useState<LabRead[]>([]);
+  useEffect(() => {
+    listLabs({ is_active: true, size: 200, sort: "name", order: "asc" })
+      .then((res) => setLabs(res.items ?? []))
+      .catch(() => setLabs([]));
+  }, []);
   
   // Ensure procedureCodes is always an array (defensive check)
   const safeProcedureCodes = procedureCodes || [];
@@ -175,7 +202,7 @@ export default function AddEditAppointmentForm({
   // Loading states
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
   const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
-  const [appointmentLoaded, setAppointmentLoaded] = useState(false);
+  const [, setAppointmentLoaded] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [appointmentError, setAppointmentError] = useState<string | null>(null);
 
@@ -251,7 +278,7 @@ export default function AddEditAppointmentForm({
           duration: fullAppointment.duration,
           procedureType: fullAppointment.procedure_label || prev.procedureType,
           operatory: fullAppointment.operatory_id || prev.operatory,
-          provider: fullAppointment.provider_name || prev.provider,
+          provider: fullAppointment.provider_id || prev.provider,
           status: fullAppointment.status || prev.status,
           
           // Lab information - handle both camelCase (labDds, labCost, labSentOn) and snake_case (lab_dds, lab_cost, lab_sent_on)
@@ -262,6 +289,8 @@ export default function AddEditAppointmentForm({
           labSentOn: appointment.labSentOn || appointment.lab_sent_on || "",
           labDueOn: appointment.labDueOn || appointment.lab_due_on || "",
           labRecvdOn: appointment.labRecvdOn || appointment.lab_recvd_on || "",
+          labVendorId: appointment.lab_vendor_id != null ? String(appointment.lab_vendor_id) : "",
+          labShortNotice: !!appointment.lab_short_notice,
           
           // Flags
           missed: appointment.missed || false,
@@ -507,14 +536,21 @@ export default function AddEditAppointmentForm({
         // provider is resolved from the operatory's provider_id (backend Gap 1),
         // falling back to the first provider.
         if (operatories.length > 0) {
-          const opId = prev.operatory || operatories[0]?.id || "";
+          // A provider handed over with the booking (plan item's provider) may
+          // already be set while no operatory is: prefer the operatory assigned
+          // to that provider over the first one in the list.
+          const byProvider =
+            !prev.operatory && prev.provider
+              ? operatories.find((o) => o.provider_id === prev.provider)?.id
+              : undefined;
+          const opId = prev.operatory || byProvider || operatories[0]?.id || "";
           if (!prev.operatory) updates.operatory = opId;
           if (!prev.provider) {
             const op = operatories.find((o) => o.id === opId);
             const byOp = op?.provider_id
-              ? providers.find((p) => p.id === op.provider_id)?.name
+              ? providers.find((p) => p.id === op.provider_id)?.id
               : undefined;
-            const fallback = providers.length > 0 ? providers[0]?.name || "" : "";
+            const fallback = providers.length > 0 ? providers[0]?.id || "" : "";
             if (byOp || fallback) updates.provider = byOp || fallback;
           }
         }
@@ -535,17 +571,19 @@ export default function AddEditAppointmentForm({
   const getDefaultProvider = (operatoryId: string) => {
     const op = operatories.find((o) => o.id === operatoryId);
     const byOp = op?.provider_id
-      ? providers.find((p) => p.id === op.provider_id)?.name
+      ? providers.find((p) => p.id === op.provider_id)?.id
       : undefined;
-    return byOp || (providers.length > 0 ? providers[0]?.name || "" : "");
+    return byOp || (providers.length > 0 ? providers[0]?.id || "" : "");
   };
 
-  /** The appointment form binds the provider *name*; procedure lines carry the
-   *  backend provider_id. These two translate between them. */
-  const providerIdByName = (name: string): string =>
-    providers.find((p) => p.name === name)?.id ?? "";
-  const providerNameById = (id: string): string =>
-    providers.find((p) => p.id === id)?.name ?? "";
+  /** The appointment form binds the provider *id* — providers share names, so
+   *  a name is not a safe key. Every label is "Name (ID)". */
+  const providerNameById = (id: string): string => {
+    const p = providers.find((x) => x.id === id);
+    if (p) return providerDisplayLabel(p);
+    // The id is seeded before the provider list arrives — never flash a raw id.
+    return providers.length === 0 && isLoadingMetadata ? "Loading..." : id;
+  };
 
   /** Same-day visits post as completed ("C"); anything else is treatment-planned. */
   const defaultLineStatus = editingAppointment ? "C" : "TP";
@@ -606,6 +644,8 @@ export default function AddEditAppointmentForm({
     labSentOn: "",
     labDueOn: "",
     labRecvdOn: "",
+    labVendorId: "",
+    labShortNotice: false,
 
     // Notes & Campaign
     notes: initialAppointmentData?.notes || "",
@@ -747,7 +787,7 @@ export default function AddEditAppointmentForm({
     void loadFeeScheduleContext({
       patient_id: patientNumericId,
       office_id: officeIdNum(currentOfficeId ?? currentOffice) ?? null,
-      provider_id: providerIdByName(formData.provider) || null,
+      provider_id: formData.provider || null,
     })
       .then((ctx) => {
         if (!cancelled) setFeeContext(ctx);
@@ -811,7 +851,7 @@ export default function AddEditAppointmentForm({
         description: proc.description,
         bill_to: "Patient",
         duration: proc.defaultDuration ?? 30,
-        provider_id: providerIdByName(formData.provider),
+        provider_id: formData.provider,
         provider_units: 1,
         est_patient: priced?.patient_estimate ?? Math.max(fee - est_insurance, 0),
         est_insurance,
@@ -820,6 +860,68 @@ export default function AddEditAppointmentForm({
       },
     ]);
   };
+
+  /**
+   * Plan items handed over from a patient screen (Tx Plan / Restorative "New
+   * Appt"). Once this patient's plans are in, the matching items become
+   * TREATMENTS lines — the same mapping the Tx Plans tab uses when the user
+   * picks them by hand — so the appointment saves with its procedures and each
+   * line keeps its `treatment_plan_id` link.
+   */
+  const seededPlanItemsRef = useRef(false);
+  useEffect(() => {
+    const ids = initialAppointmentData?.plan_item_ids ?? [];
+    if (seededPlanItemsRef.current || editingAppointment?.id || ids.length === 0) return;
+    // Wait for the plans *and* the procedure-code catalogue (default durations).
+    if (isLoadingTreatmentPlans || isLoadingMetadata || treatmentPlans.length === 0) return;
+
+    const wanted = new Set(ids.map(String));
+    const lines: Treatment[] = [];
+    for (const plan of treatmentPlans) {
+      for (const phase of plan.phases) {
+        for (const proc of phase.procedures) {
+          if (!wanted.has(String(proc.id))) continue;
+          lines.push({
+            row_id: newRowId(),
+            status: "TP",
+            procedure_code: proc.code,
+            tooth: proc.tooth || "",
+            surface: proc.surface || "",
+            description: proc.description,
+            bill_to: "Patient",
+            duration:
+              safeProcedureCodes.find((c) => c.code === proc.code)?.defaultDuration ?? 30,
+            provider_id: proc.diagnosedProvider || formData.provider,
+            provider_units: 1,
+            est_patient: Math.max(proc.fee - proc.insuranceEstimate, 0),
+            est_insurance: proc.insuranceEstimate,
+            fee: proc.fee,
+            treatment_plan_id: plan.id,
+          });
+        }
+      }
+    }
+    seededPlanItemsRef.current = true;
+    if (lines.length === 0) {
+      console.warn("None of the handed-over plan items were found on this patient's plans:", ids);
+      return;
+    }
+    if (lines.length < wanted.size) {
+      console.warn(`${wanted.size - lines.length} handed-over plan item(s) not found on this patient's plans`);
+    }
+    setTreatments((prev) => {
+      const have = new Set(
+        prev.map((t) => `${t.treatment_plan_id ?? ""}|${t.procedure_code}|${t.tooth}|${t.surface}`),
+      );
+      return [
+        ...prev,
+        ...lines.filter(
+          (l) => !have.has(`${l.treatment_plan_id ?? ""}|${l.procedure_code}|${l.tooth}|${l.surface}`),
+        ),
+      ];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treatmentPlans, isLoadingTreatmentPlans, isLoadingMetadata, editingAppointment?.id]);
 
   // Procedure categories for Quick Add (from API, with "All" option)
   const procedureCategoriesForDisplay = useMemo(() => {
@@ -855,9 +957,16 @@ export default function AddEditAppointmentForm({
     if (!formData.lastName) validationErrors.push("Last Name is required");
     if (!formData.firstName) validationErrors.push("First Name is required");
 
-    // Check required contact information
-    if (!formData.cellPhone && !formData.homePhone && !formData.workPhone) {
-      validationErrors.push("At least one phone number is required");
+    // Check required contact information. The "Bypass" checkbox under Cell
+    // Phone (legacy parity) lets the appointment be saved when the patient's
+    // phone is unavailable; every other required field is still enforced.
+    if (
+      !formData.bypassPhone &&
+      !formData.cellPhone &&
+      !formData.homePhone &&
+      !formData.workPhone
+    ) {
+      validationErrors.push("At least one phone number is required (or check Bypass)");
     }
 
     // Check required scheduling information
@@ -925,27 +1034,13 @@ export default function AddEditAppointmentForm({
         
         const dobFormatted = mmddyyyyToIso(formData.birthdate) || undefined;
         
-        // Extract office ID from currentOffice string or use currentOfficeId from auth
-        const extractOfficeId = (officeStr: string | undefined): number | undefined => {
-          if (!officeStr) return undefined;
-          const trimmed = officeStr.trim();
-          if (/^\d+$/.test(trimmed)) {
-            return parseInt(trimmed, 10);
-          }
-          const bracketMatch = officeStr.match(/\[(\d+)\]/);
-          if (bracketMatch && bracketMatch[1]) {
-            return parseInt(bracketMatch[1], 10);
-          }
-          const offMatch = officeStr.match(/(?:OFF-|OFF\s*)(\d+)/i);
-          if (offMatch && offMatch[1]) {
-            return parseInt(offMatch[1], 10);
-          }
-          const trailingMatch = officeStr.match(/(\d+)$/);
-          if (trailingMatch && trailingMatch[1]) {
-            return parseInt(trailingMatch[1], 10);
-          }
-          return undefined;
-        };
+        // Registration stamps the working office as the new patient's home
+        // office. The key is "OFF-<id>" — it must be parsed (parseInt gave NaN
+        // and the backend received home_office_id: NaN) and it must exist.
+        const homeOfficeId = officeIdNum(currentOfficeId ?? currentOffice);
+        if (homeOfficeId == null) {
+          throw new Error("Select an office in the top bar to register a patient.");
+        }
 
         // Validate required fields
         if (!formData.firstName || !formData.lastName) {
@@ -964,7 +1059,7 @@ export default function AddEditAppointmentForm({
           ...(formData.workPhone && { work_phone: digitsOnly(formData.workPhone) }),
           ...(formData.homePhone && { phone: digitsOnly(formData.homePhone) }),
           ...(formData.email && { email: formData.email }),
-          home_office_id: currentOfficeId ? parseInt(String(currentOfficeId), 10) : extractOfficeId(currentOffice),
+          home_office_id: homeOfficeId,
         };
 
         // Gender is free-text on this backend ("Male"/"Female"/"M"/…); forward
@@ -999,6 +1094,9 @@ export default function AddEditAppointmentForm({
       // Build appointment payload
       const appointmentPayload: any = {
         patient_id: patientIdNum,
+        // Working-office stamp; the service verifies the operatory belongs to
+        // it. Dropped below when no office is selected (legacy derive path).
+        office_id: working_office_id ?? undefined,
         date: convertDateToYYYYMMDD(formData.appointmentDate),
         start_time: convertTimeTo24Hour(formData.startsAt),
         duration: formData.duration,
@@ -1011,7 +1109,12 @@ export default function AddEditAppointmentForm({
         // Lab information
         lab: formData.lab || false,
         lab_dds: formData.labDDS || undefined,
-        lab_cost: formData.labCost ? parseFloat(formData.labCost.toString()) : undefined,
+        lab_vendor_id: formData.labVendorId ? Number(formData.labVendorId) : null,
+        lab_short_notice: !!formData.labShortNotice,
+        // Backend validates lab_cost >= 0 with at most two decimals (no rounding server-side).
+        lab_cost: formData.labCost
+          ? Math.max(0, Math.round(parseFloat(formData.labCost.toString()) * 100) / 100)
+          : undefined,
         // Date inputs return YYYY-MM-DD format, but convert if needed (MM/DD/YYYY -> YYYY-MM-DD)
         lab_sent_on: formData.labSentOn 
           ? (formData.labSentOn.includes("/") ? convertDateToYYYYMMDD(formData.labSentOn) : formData.labSentOn)
@@ -1134,6 +1237,17 @@ export default function AddEditAppointmentForm({
   const totalEstInsurance = treatments.reduce((sum, t) => sum + t.est_insurance, 0);
   const totalFee = treatments.reduce((sum, t) => sum + t.fee, 0);
 
+  // Cross-office booking note: the patient is homed in another office. Purely
+  // informational — the office is a working context, never a fence on who can
+  // be booked. The loaded record wins over the thin search-result view-model.
+  const patient_home_office_id = patientRecord?.home_office_id ?? patient.homeOfficeId ?? null;
+  const crossOfficeNote =
+    patient_home_office_id != null &&
+    working_office_id != null &&
+    patient_home_office_id !== working_office_id
+      ? { home: officeNameById(patient_home_office_id), working: officeNameById(working_office_id) }
+      : null;
+
   // Progressive loading: Show form immediately, load data in background
   // No blocking loader - form opens instantly with placeholders
 
@@ -1159,8 +1273,9 @@ export default function AddEditAppointmentForm({
                 <span className="text-[#B0C4DE] font-medium">
                   OID:
                 </span>
-                <span className="ml-2 font-semibold">
-                  {currentOfficeObj?.id || currentOfficeId || "N/A"}
+                <span className="ml-2 font-semibold" title={officeScope.office?.name ?? undefined}>
+                  {officeScope.office_id ?? "N/A"}
+                  {officeScope.office ? ` · ${officeScope.office.name}` : ""}
                 </span>
               </div>
             </div>
@@ -1241,6 +1356,17 @@ export default function AddEditAppointmentForm({
               Patient Information
             </button>
           </div>
+          {crossOfficeNote && (
+            <p
+              role="note"
+              data-testid="appointment-cross-office-note"
+              className="mb-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-900"
+            >
+              Patient&apos;s home office is{" "}
+              <span className="font-semibold">{crossOfficeNote.home}</span> — booking at{" "}
+              <span className="font-semibold">{crossOfficeNote.working}</span>
+            </p>
+          )}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-[#1E293B] font-medium mb-1 text-sm">
@@ -1382,7 +1508,10 @@ export default function AddEditAppointmentForm({
                     <MessageSquare className="w-4 h-4" />
                   </button>
                 </div>
-                <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
+                <label
+                  className="flex items-center gap-2 mt-1.5 cursor-pointer"
+                  title="Allow saving this appointment without a phone number"
+                >
                   <input
                     type="checkbox"
                     checked={formData.bypassPhone}
@@ -1457,12 +1586,16 @@ export default function AddEditAppointmentForm({
                   Assigned Provider
                 </label>
                 <span className="text-[#2FB9A7] text-xs font-semibold">
-                  Auto-populated from Operatory
+                  {initialAppointmentData?.provider &&
+                  formData.provider === initialAppointmentData.provider &&
+                  (initialAppointmentData.plan_item_ids?.length ?? 0) > 0
+                    ? "From the treatment plan"
+                    : "Auto-populated from Operatory"}
                 </span>
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex-1 px-3 py-1.5 bg-white border-2 border-[#3A6EA5] rounded-lg text-sm font-semibold text-[#1F3A5F]">
-                  {formData.provider}
+                  {formData.provider ? providerNameById(formData.provider) : "—"}
                 </div>
               </div>
               <div>
@@ -1482,11 +1615,7 @@ export default function AddEditAppointmentForm({
                   {providers.length === 0 ? (
                     <option value="">{isLoadingMetadata ? "Loading..." : "No providers available"}</option>
                   ) : (
-                    providers.map((provider) => (
-                      <option key={provider.id} value={provider.name}>
-                        {provider.name}
-                    </option>
-                    ))
+                    <ProviderOptionGroups providers={providers} keep_id={formData.provider || null} />
                   )}
                 </select>
               </div>
@@ -1755,13 +1884,39 @@ export default function AddEditAppointmentForm({
           </label>
 
           {formData.lab && (
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[#1E293B] font-medium mb-1 text-sm">
+                  Lab
+                </label>
+                <select
+                  value={formData.labVendorId}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      labVendorId: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white"
+                >
+                  <option value="">— No lab —</option>
+                  {labs.map((l) => (
+                    <option key={l.id} value={String(l.id)}>
+                      {l.code ? `${l.name} (${l.code})` : l.name}
+                    </option>
+                  ))}
+                  {formData.labVendorId && !labs.some((l) => String(l.id) === formData.labVendorId) && (
+                    <option value={formData.labVendorId}>Lab #{formData.labVendorId} (inactive)</option>
+                  )}
+                </select>
+              </div>
               <div>
                 <label className="block text-[#1E293B] font-medium mb-1 text-sm">
                   DDS
                 </label>
                 <input
                   type="text"
+                  maxLength={100}
                   value={formData.labDDS}
                   onChange={(e) =>
                     setFormData({
@@ -1835,6 +1990,22 @@ export default function AddEditAppointmentForm({
                   }
                   className="w-full px-3 py-1.5 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
                 />
+              </div>
+              <div className="flex items-end pb-1.5">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-[#1E293B]">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.labShortNotice}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        labShortNotice: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 rounded border-[#CBD5E1] text-[#3A6EA5] focus:ring-[#3A6EA5]"
+                  />
+                  Short Notice
+                </label>
               </div>
             </div>
           )}
@@ -2045,11 +2216,7 @@ export default function AddEditAppointmentForm({
                             ) : (
                               <>
                                 <option value="">&mdash; None &mdash;</option>
-                                {providers.map((provider) => (
-                                  <option key={provider.id} value={provider.id}>
-                                    {provider.name}
-                                  </option>
-                                ))}
+                                <ProviderOptionGroups providers={providers} />
                               </>
                             )}
                           </select>
@@ -2141,7 +2308,7 @@ export default function AddEditAppointmentForm({
                 patientId={patientNumericId}
                 officeId={officeIdNum(currentOfficeId ?? currentOffice) ?? null}
                 providers={providers}
-                defaultProviderId={providerIdByName(formData.provider)}
+                defaultProviderId={formData.provider}
                 procedureCodes={safeProcedureCodes}
                 feeContext={feeContext}
                 onRefresh={reloadTreatmentPlans}
@@ -2160,7 +2327,7 @@ export default function AddEditAppointmentForm({
                     duration:
                       safeProcedureCodes.find((c) => c.code === proc.code)
                         ?.defaultDuration ?? 30,
-                    provider_id: proc.diagnosedProvider || providerIdByName(formData.provider),
+                    provider_id: proc.diagnosedProvider || formData.provider,
                     provider_units: 1,
                     est_patient: Math.max(proc.fee - proc.insuranceEstimate, 0),
                     est_insurance: proc.insuranceEstimate,
@@ -2499,7 +2666,7 @@ export default function AddEditAppointmentForm({
           procedureCodes={safeProcedureCodes}
           categories={procedureCategories}
           providers={providers}
-          defaultProviderId={providerIdByName(formData.provider)}
+          defaultProviderId={formData.provider}
           feeContext={feeContext}
           defaultStatus={defaultLineStatus}
           initialCode={selectedProcedureForAdd}

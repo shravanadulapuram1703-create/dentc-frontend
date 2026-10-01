@@ -8,6 +8,7 @@
 
 export interface ImagingTemplateCreate {
   office_id: number;
+  /** @maxLength 255 */
   name: string;
   template_type?: string | null;
   dentition?: string | null;

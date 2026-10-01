@@ -6,11 +6,21 @@
 //   surface_rules {min,max,allowed} · min_surfaces / max_surfaces          — surface count
 //   valid_teeth[] · tooth_area ('anterior' | 'posterior')                 — tooth restriction
 //   default_material_id                                                    — material preset
+//   requires_attachment / requires_perio_chart / requires_photo /
+//   requires_xray / requires_missing_tooth_info                            — supporting records
+//     (PROC-7, Setup → Procedure Codes → Charting; see procedureCodeExtras.ts).
+//     Whether they are SATISFIED is judged server-side — supportingRecords.ts
+//     wraps the readiness endpoints; the claim submit enforces them.
 // Only the flags are populated for every code today; the structured rules are
 // seeded on a handful, so sensible fallbacks apply (see PROC-INT-5..7 in
 // docs/procedures/procedure_entry_integration.md).
 
 import type { ProcedureCodeRead } from '@/api/generated/model';
+import {
+  PROCEDURE_CODE_EXTRA_KEYS,
+  PROCEDURE_CODE_EXTRA_LABELS,
+  resolveProcedureCodeExtras,
+} from './procedureCodeExtras';
 
 export const QUADRANTS = [
   { code: 'UR', label: 'Upper Right' },
@@ -125,6 +135,12 @@ export interface ProcedureRequirements {
   valid_teeth: string[];
   tooth_area: 'anterior' | 'posterior' | null;
   default_material_id: number | null;
+  /** Supporting records the code demands (PROC-7); readiness via supportingRecords.ts. */
+  attachment: boolean;
+  perio_chart: boolean;
+  photo: boolean;
+  xray: boolean;
+  missing_tooth_info: boolean;
 }
 
 /** "One Surface" / "Two Surfaces" / "Three+" / "Four Or More" in a CDT description. */
@@ -157,6 +173,7 @@ export function procedureRequirements(code: ProcedureCodeRead): ProcedureRequire
   const min = sr?.min ?? code.min_surfaces ?? inferred?.min ?? 1;
   const max = Math.max(min, sr?.max ?? code.max_surfaces ?? inferred?.max ?? 5);
   const area = (code.tooth_area ?? '').trim().toLowerCase();
+  const extras = resolveProcedureCodeExtras(code);
   return {
     tooth: !!code.requires_tooth || !!code.requires_surface,
     surface: !!code.requires_surface,
@@ -167,7 +184,21 @@ export function procedureRequirements(code: ProcedureCodeRead): ProcedureRequire
     valid_teeth: (code.valid_teeth ?? []).map((t) => String(t).toUpperCase()),
     tooth_area: area === 'anterior' || area === 'posterior' ? area : null,
     default_material_id: code.default_material_id ?? null,
+    attachment: extras.requires_attachment,
+    perio_chart: extras.requires_perio_chart,
+    photo: extras.requires_photo,
+    xray: extras.requires_xray,
+    missing_tooth_info: extras.requires_missing_tooth_info,
   };
+}
+
+/**
+ * Labels of the supporting records this code requires (PROC-7), in Setup order —
+ * for a "have these on file?" prompt or a claim-attachment checklist. Empty = none.
+ */
+export function supportingRecordsRequired(code: ProcedureCodeRead): string[] {
+  const extras = resolveProcedureCodeExtras(code);
+  return PROCEDURE_CODE_EXTRA_KEYS.filter((k) => extras[k]).map((k) => PROCEDURE_CODE_EXTRA_LABELS[k].label);
 }
 
 /** Does adding this code need the Add Procedure Details pop-up? */

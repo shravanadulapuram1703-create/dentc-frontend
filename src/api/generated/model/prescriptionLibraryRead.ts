@@ -15,8 +15,12 @@ export interface PrescriptionLibraryRead {
   refills: number;
   is_as_written: boolean;
   is_active: boolean;
+  allergy_keys?: unknown | null;
+  created_by?: number | null;
   updated_by?: number | null;
   id: number;
   created_at: string;
   updated_at?: string | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
 }

@@ -105,6 +105,7 @@ export const CONSENT_STATUS_LABEL: Record<string, string> = {
 };
 
 export const SIGNATURE_METHOD_LABEL: Record<string, string> = {
+  topaz: 'Signed on Topaz pad',
   drawn: 'Signed on screen',
   scanned: 'Scanned copy',
   verbal: 'Verbal consent',

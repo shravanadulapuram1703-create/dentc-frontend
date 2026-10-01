@@ -41,6 +41,18 @@ tooth?: string | null;
  */
 material_id?: number | null;
 /**
+ * Filter by counselor_user_id
+ */
+counselor_user_id?: number | null;
+/**
+ * Filter by referral_id
+ */
+referral_id?: number | null;
+/**
+ * Filter by fee_schedule_id
+ */
+fee_schedule_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -21,6 +21,8 @@ export interface ProviderForm {
   license: string;
   tax_id: string;
   dea_id: string;
+  /** Business phone — ADA claim Item 57 (ProviderRead.phone). */
+  phone: string;
   is_active: boolean;
   // Provider settings (legacy "Provider Settings" / "Advanced Settings").
   scheduler_color: string;
@@ -51,6 +53,7 @@ export function emptyProviderForm(): ProviderForm {
     license: "",
     tax_id: "",
     dea_id: "",
+    phone: "",
     is_active: true,
     scheduler_color: "",
     is_ortho_provider: false,
@@ -81,6 +84,7 @@ export function providerToForm(p: ProviderRead): ProviderForm {
     license: p.license ?? "",
     tax_id: p.tax_id ?? "",
     dea_id: p.dea_id ?? "",
+    phone: p.phone ?? "",
     is_active: p.is_active ?? true,
     scheduler_color: p.scheduler_color ?? "",
     is_ortho_provider: p.is_ortho_provider ?? false,
@@ -111,6 +115,7 @@ function commonBody(f: ProviderForm) {
     license: f.license.trim() || null,
     tax_id: f.tax_id.trim() || null,
     dea_id: f.dea_id.trim() || null,
+    phone: f.phone.trim() || null,
     is_active: f.is_active,
     scheduler_color: f.scheduler_color.trim() || null,
     is_ortho_provider: f.is_ortho_provider,

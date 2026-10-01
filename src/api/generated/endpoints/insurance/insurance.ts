@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AffectedTreatmentPlansResponse,
   CheckEmployerNameAvailabilityParams,
   CheckInsuranceCarrierNameAvailabilityParams,
   CheckInsurancePlanGroupAvailabilityParams,
@@ -34,6 +35,7 @@ import type {
   EmployerRead,
   EmployerUpdate,
   ErrorResponse,
+  GetInsurancePlanHistoryParams,
   GroupAvailabilityResult,
   HTTPValidationError,
   InsCustomCoverageCreate,
@@ -59,6 +61,7 @@ import type {
   ListInsCustomCoverageParams,
   ListInsuranceCarriersParams,
   ListInsuranceCoverageRulesParams,
+  ListInsurancePlanAffectedTreatmentPlansParams,
   ListInsurancePlanFrequencyGroupsParams,
   ListInsurancePlansParams,
   ListInsuranceSubscribersParams,
@@ -72,7 +75,11 @@ import type {
   PaginatedResponseInsuranceSubscriberRead,
   PlanCopyRequest,
   PlanCoverageReplaceRequest,
-  PlanCoverageResponse
+  PlanCoverageResponse,
+  PlanHistoryResponse,
+  PlanReEstimateRequest,
+  PlanReEstimateResult,
+  PlanUsage
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -148,6 +155,101 @@ export const useVerifySubscriberEligibility = <TError = ErrorType<ErrorResponse 
       return useMutation(getVerifySubscriberEligibilityMutationOptions(options), queryClient);
     }
     /**
+ * Read-only: the schedule (if any) bound to this plan or its carrier through
+ * ``fee_schedule_assignments``, ranked as the resolver ranks them. The wizard
+ * shows this with a deep link to Assignments; it never picks a schedule here.
+ * @summary Which fee schedule this plan binds, via the payer assignment tiers (§3.5)
+ */
+export const getInsurancePlanFeeBinding = (
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/insurance-plans/${planId}/fee-binding`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsurancePlanFeeBindingQueryKey = (planId: number,) => {
+    return [
+    `/api/v1/insurance-plans/${planId}/fee-binding`
+    ] as const;
+    }
+
+
+export const getGetInsurancePlanFeeBindingQueryOptions = <TData = Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsurancePlanFeeBindingQueryKey(planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>> = ({ signal }) => getInsurancePlanFeeBinding(planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsurancePlanFeeBindingQueryResult = NonNullable<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>>
+export type GetInsurancePlanFeeBindingQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetInsurancePlanFeeBinding<TData = Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanFeeBinding<TData = Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanFeeBinding<TData = Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Which fee schedule this plan binds, via the payer assignment tiers (§3.5)
+ */
+
+export function useGetInsurancePlanFeeBinding<TData = Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanFeeBinding>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsurancePlanFeeBindingQueryOptions(planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * ``taken`` is the answer the save path enforces: an **active** plan on the
  * same carrier already holds this group number, so ``POST/PATCH
  * /insurance-plans`` will 409 unless ``allow_duplicate_group`` is sent.
@@ -444,6 +546,11 @@ export function useGetInsurancePlanCoverage<TData = Awaited<ReturnType<typeof ge
  * ``legacy_id`` survive), an item without one is inserted, and existing rows
  * not mentioned are deleted. Any failure rolls the whole call back — no
  * partial table.
+ *
+ * EDIT-PLAN-1: send ``expected_updated_at`` (the plan's ``updated_at`` you
+ * read) or ``If-Match`` / ``If-Unmodified-Since`` and the write is **412**
+ * if the plan changed since — the plan row is the version of the whole
+ * coverage document. EDIT-PLAN-5: **423 plan_locked** on a locked plan.
  * @summary Replace a plan's coverage rules and/or frequency code groups atomically (PLAN-DTL-8)
  */
 export const replaceInsurancePlanCoverage = (
@@ -571,6 +678,381 @@ export const useCopyInsurancePlanFrom = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getCopyInsurancePlanFromMutationOptions(options), queryClient);
+    }
+    /**
+ * The shared-plan banner in one call. ``patients`` is **distinct** (a
+ * patient holding the plan in two slots counts once; ``patient_links`` is
+ * the raw slot count), ``claims_open`` excludes closed / paid / denied /
+ * voided claims, ``treatment_plans`` / ``treatment_plan_items_pending`` are
+ * what ``POST …/re-estimate`` would touch. Every count is index-backed.
+ * @summary Who is on this plan — distinct patients, subscribers, open claims, pending treatment plans (EDIT-PLAN-2)
+ */
+export const getInsurancePlanUsage = (
+    planId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlanUsage>(
+      {url: `/api/v1/insurance-plans/${planId}/usage`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsurancePlanUsageQueryKey = (planId: number,) => {
+    return [
+    `/api/v1/insurance-plans/${planId}/usage`
+    ] as const;
+    }
+
+
+export const getGetInsurancePlanUsageQueryOptions = <TData = Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsurancePlanUsageQueryKey(planId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsurancePlanUsage>>> = ({ signal }) => getInsurancePlanUsage(planId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsurancePlanUsageQueryResult = NonNullable<Awaited<ReturnType<typeof getInsurancePlanUsage>>>
+export type GetInsurancePlanUsageQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetInsurancePlanUsage<TData = Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanUsage>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanUsage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanUsage<TData = Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanUsage>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanUsage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanUsage<TData = Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Who is on this plan — distinct patients, subscribers, open claims, pending treatment plans (EDIT-PLAN-2)
+ */
+
+export function useGetInsurancePlanUsage<TData = Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsurancePlanUsageQueryOptions(planId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Aggregates ``audit_logs`` rows for the plan itself, for every coverage
+ * rule / frequency group written under it (``details.scope.ins_plan_id``,
+ * plus older rows matched on the plan's current rule ids), and the bulk
+ * coverage PUT / copy (``changes[]`` lists each row-level change). Newest
+ * first; the response also carries the "Modified by / on" strip.
+ * @summary Change log for one plan — plan fields, coverage rules and frequency groups, with user names (EDIT-PLAN-6)
+ */
+export const getInsurancePlanHistory = (
+    planId: number,
+    params?: GetInsurancePlanHistoryParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlanHistoryResponse>(
+      {url: `/api/v1/insurance-plans/${planId}/history`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInsurancePlanHistoryQueryKey = (planId: number,
+    params?: GetInsurancePlanHistoryParams,) => {
+    return [
+    `/api/v1/insurance-plans/${planId}/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetInsurancePlanHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(planId: number,
+    params?: GetInsurancePlanHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInsurancePlanHistoryQueryKey(planId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInsurancePlanHistory>>> = ({ signal }) => getInsurancePlanHistory(planId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInsurancePlanHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getInsurancePlanHistory>>>
+export type GetInsurancePlanHistoryQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetInsurancePlanHistory<TData = Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params: undefined |  GetInsurancePlanHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanHistory<TData = Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params?: GetInsurancePlanHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInsurancePlanHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getInsurancePlanHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInsurancePlanHistory<TData = Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params?: GetInsurancePlanHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Change log for one plan — plan fields, coverage rules and frequency groups, with user names (EDIT-PLAN-6)
+ */
+
+export function useGetInsurancePlanHistory<TData = Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params?: GetInsurancePlanHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInsurancePlanHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInsurancePlanHistoryQueryOptions(planId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Same set as ``GET /treatment-plans?ins_plan_id=`` restricted to plans
+ * that still have an open (not completed, not archived) item, with the
+ * patient name, the open-item count and whether the patient's *active* slot
+ * is still this plan (``coverage_source``).
+ * @summary Treatment plans with open items a change to this plan's coverage re-prices (EDIT-PLAN-3)
+ */
+export const listInsurancePlanAffectedTreatmentPlans = (
+    planId: number,
+    params?: ListInsurancePlanAffectedTreatmentPlansParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AffectedTreatmentPlansResponse>(
+      {url: `/api/v1/insurance-plans/${planId}/affected-treatment-plans`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListInsurancePlanAffectedTreatmentPlansQueryKey = (planId: number,
+    params?: ListInsurancePlanAffectedTreatmentPlansParams,) => {
+    return [
+    `/api/v1/insurance-plans/${planId}/affected-treatment-plans`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListInsurancePlanAffectedTreatmentPlansQueryOptions = <TData = Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(planId: number,
+    params?: ListInsurancePlanAffectedTreatmentPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListInsurancePlanAffectedTreatmentPlansQueryKey(planId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>> = ({ signal }) => listInsurancePlanAffectedTreatmentPlans(planId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: planId !== null && planId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListInsurancePlanAffectedTreatmentPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>>
+export type ListInsurancePlanAffectedTreatmentPlansQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListInsurancePlanAffectedTreatmentPlans<TData = Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params: undefined |  ListInsurancePlanAffectedTreatmentPlansParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>,
+          TError,
+          Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListInsurancePlanAffectedTreatmentPlans<TData = Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params?: ListInsurancePlanAffectedTreatmentPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>,
+          TError,
+          Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListInsurancePlanAffectedTreatmentPlans<TData = Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params?: ListInsurancePlanAffectedTreatmentPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Treatment plans with open items a change to this plan's coverage re-prices (EDIT-PLAN-3)
+ */
+
+export function useListInsurancePlanAffectedTreatmentPlans<TData = Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ planId: number,
+    params?: ListInsurancePlanAffectedTreatmentPlansParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInsurancePlanAffectedTreatmentPlans>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListInsurancePlanAffectedTreatmentPlansQueryOptions(planId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Runs ``POST /treatment-plans/{id}/re-estimate`` for each affected plan
+ * inline, under ``max_plans``; one plan's failure is recorded on its line
+ * and the sweep continues. ``dry_run`` returns the same shape without
+ * writing — the "re-estimate N pending treatment plans?" prompt. Open claims
+ * on the plan are re-summed from their lines (``recalculate_claims``).
+ * @summary Re-estimate every affected treatment plan (and re-sum open claims) after a coverage change (EDIT-PLAN-3)
+ */
+export const reEstimateInsurancePlan = (
+    planId: number,
+    planReEstimateRequestNull?: BodyType<PlanReEstimateRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlanReEstimateResult>(
+      {url: `/api/v1/insurance-plans/${planId}/re-estimate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: planReEstimateRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getReEstimateInsurancePlanMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reEstimateInsurancePlan>>, TError,{planId: number;data?: BodyType<PlanReEstimateRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof reEstimateInsurancePlan>>, TError,{planId: number;data?: BodyType<PlanReEstimateRequest | null>}, TContext> => {
+
+const mutationKey = ['reEstimateInsurancePlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reEstimateInsurancePlan>>, {planId: number;data?: BodyType<PlanReEstimateRequest | null>}> = (props) => {
+          const {planId,data} = props ?? {};
+
+          return  reEstimateInsurancePlan(planId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReEstimateInsurancePlanMutationResult = NonNullable<Awaited<ReturnType<typeof reEstimateInsurancePlan>>>
+    export type ReEstimateInsurancePlanMutationBody = BodyType<PlanReEstimateRequest | null> | undefined
+    export type ReEstimateInsurancePlanMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Re-estimate every affected treatment plan (and re-sum open claims) after a coverage change (EDIT-PLAN-3)
+ */
+export const useReEstimateInsurancePlan = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reEstimateInsurancePlan>>, TError,{planId: number;data?: BodyType<PlanReEstimateRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reEstimateInsurancePlan>>,
+        TError,
+        {planId: number;data?: BodyType<PlanReEstimateRequest | null>},
+        TContext
+      > => {
+      return useMutation(getReEstimateInsurancePlanMutationOptions(options), queryClient);
     }
     /**
  * @summary Check whether a carrier name is already used (INS-PT-13)
@@ -1007,6 +1489,7 @@ export function useGetEmployer<TData = Awaited<ReturnType<typeof getEmployer>>, 
 
 
 /**
+ * Partial update of one employer. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update employer
  */
 export const updateEmployer = (
@@ -1071,6 +1554,7 @@ export const useUpdateEmployer = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateEmployerMutationOptions(options), queryClient);
     }
     /**
+ * Delete one employer. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete employer
  */
 export const deleteEmployer = (
@@ -1380,6 +1864,7 @@ export function useGetInsuranceCarrier<TData = Awaited<ReturnType<typeof getInsu
 
 
 /**
+ * Partial update of one insurance carrier. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update insurance carrier
  */
 export const updateInsuranceCarrier = (
@@ -1444,6 +1929,7 @@ export const useUpdateInsuranceCarrier = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateInsuranceCarrierMutationOptions(options), queryClient);
     }
     /**
+ * Delete one insurance carrier. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete insurance carrier
  */
 export const deleteInsuranceCarrier = (
@@ -1753,6 +2239,7 @@ export function useGetInsurancePlan<TData = Awaited<ReturnType<typeof getInsuran
 
 
 /**
+ * Partial update of one insurance plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update insurance plan
  */
 export const updateInsurancePlan = (
@@ -1817,6 +2304,7 @@ export const useUpdateInsurancePlan = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateInsurancePlanMutationOptions(options), queryClient);
     }
     /**
+ * Delete one insurance plan. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete insurance plan
  */
 export const deleteInsurancePlan = (
@@ -2126,6 +2614,7 @@ export function useGetInsuranceSubscriber<TData = Awaited<ReturnType<typeof getI
 
 
 /**
+ * Partial update of one insurance subscriber. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update insurance subscriber
  */
 export const updateInsuranceSubscriber = (
@@ -2190,6 +2679,7 @@ export const useUpdateInsuranceSubscriber = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateInsuranceSubscriberMutationOptions(options), queryClient);
     }
     /**
+ * Delete one insurance subscriber. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete insurance subscriber
  */
 export const deleteInsuranceSubscriber = (
@@ -2499,6 +2989,7 @@ export function useGetInsuranceCoverageRule<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Partial update of one insurance coverage rule. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update insurance coverage rule
  */
 export const updateInsuranceCoverageRule = (
@@ -2563,6 +3054,7 @@ export const useUpdateInsuranceCoverageRule = <TError = ErrorType<ErrorResponse>
       return useMutation(getUpdateInsuranceCoverageRuleMutationOptions(options), queryClient);
     }
     /**
+ * Delete one insurance coverage rule. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete insurance coverage rule
  */
 export const deleteInsuranceCoverageRule = (
@@ -2872,6 +3364,7 @@ export function useGetInsurancePlanFrequencyGroup<TData = Awaited<ReturnType<typ
 
 
 /**
+ * Partial update of one insurance plan frequency group. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update insurance plan frequency group
  */
 export const updateInsurancePlanFrequencyGroup = (
@@ -2936,6 +3429,7 @@ export const useUpdateInsurancePlanFrequencyGroup = <TError = ErrorType<ErrorRes
       return useMutation(getUpdateInsurancePlanFrequencyGroupMutationOptions(options), queryClient);
     }
     /**
+ * Delete one insurance plan frequency group. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete insurance plan frequency group
  */
 export const deleteInsurancePlanFrequencyGroup = (
@@ -3245,6 +3739,7 @@ export function useGetInsCustomCoverage<TData = Awaited<ReturnType<typeof getIns
 
 
 /**
+ * Partial update of one ins custom coverage.
  * @summary Update ins custom coverage
  */
 export const updateInsCustomCoverage = (
@@ -3309,6 +3804,7 @@ export const useUpdateInsCustomCoverage = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateInsCustomCoverageMutationOptions(options), queryClient);
     }
     /**
+ * Delete one ins custom coverage.
  * @summary Delete ins custom coverage
  */
 export const deleteInsCustomCoverage = (

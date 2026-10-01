@@ -8,6 +8,7 @@
 
 export interface InsurancePlanFrequencyGroupCreate {
   ins_plan_id: number;
+  /** @maxLength 20 */
   code_group: string;
   description?: string | null;
   freq_limit?: number | null;

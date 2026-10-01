@@ -149,24 +149,35 @@ export function FieldTable({ rows }: { rows: Array<[ReactNode, ReactNode, ReactN
   );
 }
 
-/** Dense data grid matching the legacy tables. */
+/**
+ * Dense data grid matching the legacy tables.
+ *
+ * The wrapper scrolls on both axes and the header row is sticky, so a grid can
+ * be height-capped (`className="max-h-…"` or `flex-1 min-h-0`) without the
+ * column titles scrolling out of view. Panels on the overview are sized to
+ * their shorter sibling and scroll inside instead of stretching the row.
+ */
 export function DataGrid({
   columns,
   children,
   empty,
   is_empty,
   min_width,
+  className = "",
 }: {
   columns: string[];
   children: ReactNode;
   empty: string;
   is_empty: boolean;
   min_width?: number;
+  className?: string;
 }) {
   return (
-    <div className="overflow-x-auto border-2 border-[#E2E8F0] rounded">
+    <div
+      className={`overflow-auto border-2 border-[#E2E8F0] rounded print:max-h-none print:overflow-visible ${className}`}
+    >
       <table className="w-full text-[12px]" style={min_width ? { minWidth: min_width } : undefined}>
-        <thead className="bg-[#3A6EA5] text-white">
+        <thead className="bg-[#3A6EA5] text-white sticky top-0 z-10">
           <tr>
             {columns.map((c) => (
               <th

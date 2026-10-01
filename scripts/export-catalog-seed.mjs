@@ -20,13 +20,17 @@ const src = readFileSync(
   "utf8",
 );
 
-/** Same slug rule as `toCode()` in legacyCatalogs.ts — codes must match the UI. */
+/**
+ * Same slug rule as `toCode()` in legacyCatalogs.ts — codes must match the UI.
+ * 50 = `CATALOG_CODE_MAX_LENGTH` = backend `question_code` / `alert_code`
+ * VARCHAR(50) (GAP-AP-20).
+ */
 const toCode = (label) =>
   label
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
-    .slice(0, 60);
+    .slice(0, 50);
 
 /** Pull the string literals out of an `alerts([...])` call. */
 function parseAlertGroups() {

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Screens** | Setup → Insurance → Plans → *Add Plan* / row click; Patient → Insurance → *Add New Insurance Plan*; Patient → Insurance → *View Plan* |
+| **Screens** | Setup → Insurance → Plans → *Add Plan* / row click; Patient → Insurance → *Add New Insurance Plan*; Patient → Insurance → *View Plan* / *Edit Plan* (edit host: `features/patient-insurance/EditPlanModal.tsx`, see `docs/patient-insurance/edit_insurance_plan_backend_devreport.md`) |
 | **Frontend** | `src/components/setup/insurance/plan-details/**` (one `InsuranceDetailsWizard` shared by every host) |
 | **Legacy parity target** | Denticon "INSURANCE DETAILS" 4-step dialog: PLAN · BENEFITS · COVERAGE & LIMITATIONS · FREQ LIMITATION CODE GRP, with COPY FROM EXISTING |
 | **Verified against** | running backend `127.0.0.1:8000`, tenant 1, 2026-09-04 (created plan #89895 end-to-end from the UI; edited it; deleted probe rows) |
@@ -93,6 +93,11 @@ Every row is one `insurance_coverage_rules` record (`ins_plan_id`-scoped).
   `per_visit_copay` numeric(10,2), `lifetime_ortho_benefits` bool, `plan_notes` text.
   Once they exist the frontend swap is one function (`splitPlanDetails` stops
   splitting; `planExtrasStore` is deleted).
+  **Status 2026-09-11: delivered and wired.** All nine are columns on `insurance_plans`
+  (`InsurancePlanCreate/Update/Read`), verified persisting through `PATCH /insurance-plans/{id}`.
+  The wizard now reads/writes them via the API; the localStorage copy is read once as a fallback
+  while the server row is still NULL and removed after the first save. Remaining wrinkle:
+  migrated rows are NULL, so the first edit persists the legacy defaults (EDIT-PLAN-9).
 
 - **PLAN-DTL-2 — No resource for per-plan frequency-limitation code groups.**
   Legacy "FREQ LIMITATION CODE GRP" rows (code group × frequency × whole-mouth × per-day
@@ -181,6 +186,9 @@ Every row is one `insurance_coverage_rules` record (`ins_plan_id`-scoped).
   legacy "Modified On/By" cannot be shown (same family as INS-PT-8).
   **Status 2026-09-07:** `InsuranceCoverageRuleRead` now carries `created_by`, `updated_by`,
   `updated_at`. Plans unchanged.
+  **Status 2026-09-11:** plans too — `InsurancePlanRead.updated_at` / `updated_by` /
+  `updated_by_name` are populated by PATCH (verified). `modified_on` / `modified_by` stay null
+  and can be dropped. **Delivered.**
 
 ---
 

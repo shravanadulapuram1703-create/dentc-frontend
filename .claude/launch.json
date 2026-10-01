@@ -4,16 +4,34 @@
     {
       "name": "dentc-frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173,
       "autoPort": true
     },
     {
       "name": "dentc-prod",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
+      "runtimeArgs": [
+        "server.js"
+      ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "dentc-frontend-3000",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3000",
+        "--strictPort"
+      ],
+      "port": 3000
     }
   ]
 }

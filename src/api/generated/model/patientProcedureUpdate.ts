@@ -38,4 +38,13 @@ export interface PatientProcedureUpdate {
   pat_paid?: number | string | null;
   pat_adjust?: number | string | null;
   fee_schedule_id?: number | null;
+  fee_source?: string | null;
+  fee_effective_date?: string | null;
+  fee_override_reason?: string | null;
+  coverage_pct?: number | string | null;
+  coverage_rule_id?: number | null;
+  estimated_deductible?: number | string | null;
+  sec_insurance_estimate?: number | string | null;
+  diagnosis_pointers?: string | null;
+  quantity?: number | null;
 }

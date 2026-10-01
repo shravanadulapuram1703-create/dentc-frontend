@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 import { X, ChevronRight, Save, Plus, Loader2, ArrowLeft } from "lucide-react";
 import type { Operatory, Provider, ProcedureType } from "../../services/schedulerApi";
 import { resolveOffice } from "../../services/officeLookup";
+import { ProviderOptionGroups } from "@/features/office-scope";
 import { MIN_DOB_ISO, todayIsoDate, validateDob } from "../../utils/datetime";
 import NoteMacroPickerModal from "../patient/NoteMacroPickerModal";
 
@@ -239,7 +240,7 @@ export default function QuickNewPatientAppointment({
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-3 flex items-center justify-between border-b-2 border-[#162942]">
-          <h2 id="quick-new-patient-appt-title" className="font-bold tracking-wide">
+          <h2 id="quick-new-patient-appt-title" className="font-bold tracking-wide text-white">
             New Patient Appointment
           </h2>
           <button
@@ -342,11 +343,7 @@ export default function QuickNewPatientAppointment({
                     ) : (
                       <>
                         {!formData.provider && <option value="">Select provider</option>}
-                        {providers.map((p) => (
-                          <option key={p.id} value={p.name}>
-                            {p.id} : {p.name}
-                          </option>
-                        ))}
+                        <ProviderOptionGroups providers={providers} />
                       </>
                     )}
                   </select>

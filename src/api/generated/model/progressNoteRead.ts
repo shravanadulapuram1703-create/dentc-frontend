@@ -19,6 +19,8 @@ export interface ProgressNoteRead {
   region?: string | null;
   signed_by?: number | null;
   signed_at?: string | null;
+  content_hash?: string | null;
+  signature_status?: string | null;
   is_struck_off: boolean;
   struck_off_at?: string | null;
   struck_off_by?: number | null;
@@ -27,9 +29,14 @@ export interface ProgressNoteRead {
   is_deleted: boolean;
   created_by?: number | null;
   created_at: string;
+  updated_at?: string | null;
+  updated_by?: number | null;
   created_by_name?: string | null;
+  updated_by_name?: string | null;
   signed_by_name?: string | null;
   struck_off_by_name?: string | null;
   is_locked?: boolean;
+  locks_at?: string | null;
+  timezone?: string | null;
   attachment_count?: number;
 }

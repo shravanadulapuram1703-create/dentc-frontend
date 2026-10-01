@@ -4,6 +4,7 @@ import type { AppointmentSchedulerRead } from "@/api/generated/model";
 import WidgetCard from "../../dashboard/components/WidgetCard";
 import { deriveApptStatus, formatTime } from "../../dashboard/lib/dashboardUtils";
 import type { MyScheduleResult } from "../lib/useMyDay";
+import { useProviderDirectory } from "@/hooks/useProviderDirectory";
 import { utils } from "../../../styles/theme.js";
 
 interface MyScheduleWidgetProps {
@@ -16,6 +17,7 @@ interface MyScheduleWidgetProps {
  * the whole office feed and say so, rather than showing an empty chair.
  */
 export default function MyScheduleWidget({ schedule }: MyScheduleWidgetProps) {
+  const { providerLabel } = useProviderDirectory();
   const navigate = useNavigate();
   const { rows, isLoading, isError, scoped } = schedule;
 
@@ -74,7 +76,7 @@ export default function MyScheduleWidget({ schedule }: MyScheduleWidgetProps) {
                   {appt.patient_name || "(no patient)"}
                 </p>
                 <p className="text-xs text-[#64748B] truncate">
-                  {[!scoped ? appt.provider_name : null, appt.operatory_name]
+                  {[!scoped ? providerLabel(appt.provider_id) || appt.provider_name : null, appt.operatory_name]
                     .filter(Boolean)
                     .join(" · ") ||
                     appt.procedure_label ||

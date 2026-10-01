@@ -15,12 +15,14 @@ import {
   listFeeSchedules,
   createFeeSchedule,
   updateFeeSchedule,
-  deleteFeeSchedule,
   listFeeScheduleEntries,
   createFeeScheduleEntry,
   updateFeeScheduleEntry,
   deleteFeeScheduleEntry,
+  adjustFeeScheduleEntries,
+  retireFeeSchedule,
 } from "@/api/generated/endpoints/procedures/procedures";
+import { todayIsoDate } from "@/utils/datetime";
 import type { FeeScheduleRead, FeeScheduleEntryRead } from "@/api/generated/model";
 import {
   type FeeScheduleForm,
@@ -37,6 +39,7 @@ import {
 import { loadProcedureCodes, codeDescription, searchProcedureCodes } from "./procedureCodeService";
 import { feeScheduleName, ensureFeeScheduleNames } from "./lookupService";
 import EntityPicker from "./EntityPicker";
+import { useFeeVocab, isCopayCapableFeeType, useFeeScheduleUsage, PricingHealthPanel } from "@/features/pricing";
 
 // ============================================================================
 // Fee Schedule Setup — two-pane (schedule list ⇄ code table) over
@@ -69,6 +72,7 @@ export default function FeeScheduleSetup() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <div className="max-w-[1600px] mx-auto p-6">
+        <PricingHealthPanel />
         <div className="bg-white rounded-lg border-2 border-[#E2E8F0] shadow-sm overflow-hidden">
           {/* Header + tabs */}
           <div className="bg-[#F7F9FC] border-b-2 border-[#E2E8F0] p-4">
@@ -199,14 +203,17 @@ function ViewBySchedule({ codesReady }: { codesReady: boolean }) {
 
   const deleteSchedule = async () => {
     if (!selected) return;
-    if (!confirm(`Delete fee schedule "${selected.name}" and its entries? This cannot be undone.`)) return;
+    if (!confirm(`Retire fee schedule "${selected.name}"? It will stop pricing new charges. Posted history is unaffected, and it can be restored.`)) return;
     try {
-      await deleteFeeSchedule(selected.id);
-      toast.success("Fee schedule deleted");
+      // Retire (deactivate) rather than delete — the server refuses (409) while the
+      // schedule is still referenced by an assignment, office pointer or patient.
+      await retireFeeSchedule(selected.id);
+      toast.success("Fee schedule retired");
       setSelectedId(null);
       await loadSchedules();
     } catch (e: unknown) {
-      toast.error("Delete failed", { description: e instanceof Error ? e.message : undefined });
+      const msg = e instanceof Error ? e.message : undefined;
+      toast.error("Cannot retire — this schedule is still in use", { description: msg });
     }
   };
 
@@ -328,6 +335,7 @@ function ScheduleDetail({
   const [savingEntry, setSavingEntry] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const { usage } = useFeeScheduleUsage(schedule.id);
 
   const loadEntries = useCallback(async () => {
     setLoading(true);
@@ -431,6 +439,8 @@ function ScheduleDetail({
     }
   };
 
+  const isCopay = schedule.pricing_model === "copay";
+
   return (
     <div>
       {/* Schedule header */}
@@ -442,19 +452,38 @@ function ScheduleDetail({
           </div>
           <div>
             <span className="text-xs font-bold text-[#94A3B8] uppercase">Type</span>
-            <div className="font-bold text-[#1E293B]">{schedule.fee_type || "—"}</div>
+            <div className="font-bold text-[#1E293B]">
+              {schedule.fee_type || "—"}
+              {isCopay && (
+                <span className="ml-1.5 text-[10px] font-bold text-[#B45309] bg-[#FEF3C7] px-1.5 py-0.5 rounded align-middle">COPAY</span>
+              )}
+            </div>
           </div>
           <div className="col-span-2">
             <span className="text-xs font-bold text-[#94A3B8] uppercase">Name</span>
             <div className="font-bold text-[#1E293B]">{schedule.name}</div>
           </div>
+          {usage && (
+            <div className="col-span-2">
+              <span className="text-xs font-bold text-[#94A3B8] uppercase">Where used</span>
+              <div className="text-xs text-[#64748B]">
+                {usage.counts.assignments} assignment{usage.counts.assignments === 1 ? "" : "s"} ·{" "}
+                {usage.counts.offices} office{usage.counts.offices === 1 ? "" : "s"} ·{" "}
+                {usage.counts.patients.toLocaleString()} patient{usage.counts.patients === 1 ? "" : "s"} ·{" "}
+                {usage.counts.entries} code{usage.counts.entries === 1 ? "" : "s"}
+                {!usage.can_retire && (
+                  <span className="ml-1.5 text-[10px] font-bold text-[#B45309] bg-[#FEF3C7] px-1.5 py-0.5 rounded">IN USE — cannot retire</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#E8EFF7] font-bold text-xs">
             <Pencil className="w-3.5 h-3.5" /> Edit Schedule
           </button>
           <button onClick={onDelete} className="flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#FCA5A5] text-[#DC2626] rounded-lg hover:bg-[#FEE2E2] font-bold text-xs">
-            <Trash2 className="w-3.5 h-3.5" /> Delete
+            <Trash2 className="w-3.5 h-3.5" /> Retire
           </button>
         </div>
       </div>
@@ -493,7 +522,7 @@ function ScheduleDetail({
       </div>
 
       {editingId === "new" && (
-        <EntryEditor form={entryForm} setForm={setEntryForm} onSave={() => void saveEntry()} onCancel={cancelEntry} saving={savingEntry} />
+        <EntryEditor form={entryForm} setForm={setEntryForm} onSave={() => void saveEntry()} onCancel={cancelEntry} saving={savingEntry} isCopay={isCopay} />
       )}
 
       {loading ? (
@@ -507,7 +536,7 @@ function ScheduleDetail({
           <table className="w-full text-sm">
             <thead className="bg-[#F7F9FC] border-b-2 border-[#E2E8F0]">
               <tr>
-                {["Code", "Description", "Patient Fee", "Insurance Fee", "Effective", ""].map((h) => (
+                {["Code", "Description", isCopay ? "Patient Copay" : "Patient Fee", ...(isCopay ? ["Plan Pays"] : []), "Effective", ""].map((h) => (
                   <th key={h} className="px-3 py-2 text-left text-xs font-bold text-[#1F3A5F] uppercase">
                     {h}
                   </th>
@@ -518,16 +547,16 @@ function ScheduleDetail({
               {visible.map((e) =>
                 editingId === e.id ? (
                   <tr key={e.id}>
-                    <td colSpan={6} className="p-2 bg-[#F7F9FC]">
-                      <EntryEditor form={entryForm} setForm={setEntryForm} onSave={() => void saveEntry()} onCancel={cancelEntry} saving={savingEntry} lockCode />
+                    <td colSpan={isCopay ? 6 : 5} className="p-2 bg-[#F7F9FC]">
+                      <EntryEditor form={entryForm} setForm={setEntryForm} onSave={() => void saveEntry()} onCancel={cancelEntry} saving={savingEntry} isCopay={isCopay} lockCode />
                     </td>
                   </tr>
                 ) : (
                   <tr key={e.id} className="hover:bg-[#F7F9FC]">
                     <td className="px-3 py-2 font-bold text-[#1E293B]">{e.procedure_code}</td>
                     <td className="px-3 py-2 text-[#64748B]">{codesReady ? codeDescription(e.procedure_code) || "—" : "…"}</td>
-                    <td className="px-3 py-2 text-[#64748B]">{fmtFee(e.patient_fee)}</td>
-                    <td className="px-3 py-2 text-[#64748B]">{fmtFee(e.insurance_fee)}</td>
+                    <td className="px-3 py-2 text-[#64748B]">{e.is_no_charge ? <span className="text-[#059669] font-semibold">No charge</span> : fmtFee(e.patient_fee)}</td>
+                    {isCopay && <td className="px-3 py-2 text-[#64748B]">{fmtFee(e.insurance_fee)}</td>}
                     <td className="px-3 py-2 text-[#64748B]">{e.effective_date || "—"}</td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
                       <button onClick={() => startEdit(e)} disabled={editingId !== null} className="p-1.5 hover:bg-[#E8EFF7] rounded disabled:opacity-40" title="Edit">
@@ -547,6 +576,7 @@ function ScheduleDetail({
 
       {bulkOpen && (
         <BulkAdjustModal
+          scheduleId={schedule.id}
           count={visible.length}
           entries={visible}
           onClose={() => setBulkOpen(false)}
@@ -570,6 +600,7 @@ function EntryEditor({
   onSave,
   onCancel,
   saving,
+  isCopay,
   lockCode,
 }: {
   form: EntryForm;
@@ -577,6 +608,8 @@ function EntryEditor({
   onSave: () => void;
   onCancel: () => void;
   saving: boolean;
+  /** Copay list → the entry carries a Plan-Pays amount and the fee is the patient copay. */
+  isCopay?: boolean;
   lockCode?: boolean;
 }) {
   const upd = (u: Partial<EntryForm>) => setForm({ ...form, ...u });
@@ -598,18 +631,24 @@ function EntryEditor({
           )}
         </div>
         <label className="text-xs font-bold text-[#1F3A5F]">
-          Patient Fee
-          <input value={form.patient_fee} onChange={(e) => upd({ patient_fee: e.target.value })} className={INPUT_CLS} inputMode="decimal" placeholder="0.00" />
+          {isCopay ? "Patient Copay" : "Patient Fee"}
+          <input value={form.patient_fee} onChange={(e) => upd({ patient_fee: e.target.value })} className={INPUT_CLS} inputMode="decimal" placeholder="0.00" disabled={form.is_no_charge} />
         </label>
-        <label className="text-xs font-bold text-[#1F3A5F]">
-          Insurance Fee
-          <input value={form.insurance_fee} onChange={(e) => upd({ insurance_fee: e.target.value })} className={INPUT_CLS} inputMode="decimal" placeholder="0.00" />
-        </label>
+        {isCopay && (
+          <label className="text-xs font-bold text-[#1F3A5F]">
+            Plan Pays
+            <input value={form.insurance_fee} onChange={(e) => upd({ insurance_fee: e.target.value })} className={INPUT_CLS} inputMode="decimal" placeholder="0.00" />
+          </label>
+        )}
         <label className="text-xs font-bold text-[#1F3A5F]">
           Effective Date
           <input type="date" value={form.effective_date} onChange={(e) => upd({ effective_date: e.target.value })} className={INPUT_CLS} />
         </label>
       </div>
+      <label className="flex items-center gap-2 text-xs font-bold text-[#1F3A5F] mb-2">
+        <input type="checkbox" checked={form.is_no_charge} onChange={(e) => upd({ is_no_charge: e.target.checked })} className="w-4 h-4 accent-[#3A6EA5]" />
+        No charge (this code is deliberately $0 — not a blank/unpriced entry)
+      </label>
       <div className="flex justify-end gap-2">
         <button onClick={onCancel} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg font-bold text-xs disabled:opacity-50">
           <X className="w-3.5 h-3.5" /> Cancel
@@ -641,7 +680,16 @@ function ScheduleEditorModal({
   onSave: () => void;
   onClose: () => void;
 }) {
-  const upd = (u: Partial<FeeScheduleForm>) => setForm({ ...form, ...u });
+  const { vocab } = useFeeVocab();
+  // Copay pricing is only valid on payer-bound lists (plan/carrier); on any other
+  // type the model is forced to percentage (docs/pricing §3.1).
+  const copayCapable = isCopayCapableFeeType(form.fee_type, vocab);
+  const upd = (u: Partial<FeeScheduleForm>) => {
+    const next = { ...form, ...u };
+    // Keep pricing_model consistent with the type: a non-payer type can only be percentage.
+    if (!isCopayCapableFeeType(next.fee_type, vocab)) next.pricing_model = "percentage";
+    setForm(next);
+  };
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-lg border-2 border-[#E2E8F0] shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
@@ -658,12 +706,34 @@ function ScheduleEditorModal({
           </label>
           <label className="block text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
             Type
-            <input value={form.fee_type} onChange={(e) => upd({ fee_type: e.target.value })} className={INPUT_CLS} list="fee-types" placeholder="e.g. carrier, plan, office" />
-            <datalist id="fee-types">
-              {["carrier", "plan", "office", "provider", "specialty"].map((t) => (
-                <option key={t} value={t} />
+            <select value={form.fee_type} onChange={(e) => upd({ fee_type: e.target.value })} className={INPUT_CLS}>
+              <option value="">Select a type…</option>
+              {vocab.fee_types.map((t) => (
+                <option key={t.code} value={t.code}>
+                  {t.label}
+                </option>
               ))}
-            </datalist>
+            </select>
+          </label>
+          <label className="block text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
+            Pricing Model
+            <select
+              value={form.pricing_model}
+              onChange={(e) => upd({ pricing_model: e.target.value })}
+              disabled={!copayCapable}
+              className={`${INPUT_CLS} disabled:bg-[#F1F5F9] disabled:text-[#94A3B8]`}
+            >
+              {vocab.pricing_models.map((m) => (
+                <option key={m.code} value={m.code}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+            {!copayCapable && (
+              <span className="block mt-1 text-[10px] font-normal normal-case text-[#94A3B8]">
+                Copay pricing is only available on Assign-to-Plan / Assign-to-Carrier lists.
+              </span>
+            )}
           </label>
           <label className="flex items-center gap-2 text-sm font-bold text-[#1F3A5F]">
             <input type="checkbox" checked={form.is_active} onChange={(e) => upd({ is_active: e.target.checked })} className="w-4 h-4 accent-[#3A6EA5]" />
@@ -689,59 +759,53 @@ function ScheduleEditorModal({
 // ---------------------------------------------------------------------------
 
 function BulkAdjustModal({
+  scheduleId,
   count,
   entries,
   onClose,
   onDone,
 }: {
+  scheduleId: number;
   count: number;
   entries: FeeScheduleEntryRead[];
   onClose: () => void;
   onDone: () => Promise<void>;
 }) {
-  const [target, setTarget] = useState<"both" | "patient" | "insurance">("both");
   const [direction, setDirection] = useState<"increase" | "decrease">("increase");
   const [mode, setMode] = useState<"percent" | "amount">("percent");
   const [value, setValue] = useState("");
+  const [effectiveDate, setEffectiveDate] = useState(todayIsoDate());
   const [running, setRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  const apply = (fee: string | null | undefined): string | null => {
-    if (fee == null || fee === "") return fee ?? null;
-    const n = Number(fee);
-    if (Number.isNaN(n)) return fee;
-    const v = Number(value);
-    if (Number.isNaN(v)) return fee;
-    const delta = mode === "percent" ? (n * v) / 100 : v;
-    const next = direction === "increase" ? n + delta : n - delta;
-    return Math.max(0, next).toFixed(2);
-  };
 
   const run = async () => {
-    if (!value.trim() || Number.isNaN(Number(value))) {
+    const v = Number(value);
+    if (!value.trim() || Number.isNaN(v)) {
       toast.error("Enter a numeric value");
       return;
     }
-    setRunning(true);
-    setProgress(0);
-    let ok = 0;
-    let fail = 0;
-    for (const e of entries) {
-      const body: { patient_fee?: string | null; insurance_fee?: string | null } = {};
-      if (target !== "insurance") body.patient_fee = apply(e.patient_fee);
-      if (target !== "patient") body.insurance_fee = apply(e.insurance_fee);
-      try {
-        await updateFeeScheduleEntry(e.id, body);
-        ok++;
-      } catch {
-        fail++;
-      }
-      setProgress((p) => p + 1);
+    if (!effectiveDate) {
+      toast.error("Pick an effective date for the new prices");
+      return;
     }
-    setRunning(false);
-    if (fail === 0) toast.success(`Adjusted ${ok} ${ok === 1 ? "entry" : "entries"}`);
-    else toast.warning(`Adjusted ${ok}, ${fail} failed`);
-    await onDone();
+    setRunning(true);
+    try {
+      // Server writes a NEW dated set adjusted from each code's most recent entry
+      // (docs/pricing §3.5) — history is preserved, unlike overwriting in place.
+      // `value` sign carries the direction; the server floors results at 0.
+      const codes = [...new Set(entries.map((e) => e.procedure_code))];
+      await adjustFeeScheduleEntries(scheduleId, {
+        mode,
+        value: direction === "decrease" ? -Math.abs(v) : Math.abs(v),
+        effective_date: effectiveDate,
+        codes,
+      });
+      toast.success(`New prices effective ${effectiveDate} written for ${count} ${count === 1 ? "code" : "codes"}`);
+      await onDone();
+    } catch (e: unknown) {
+      toast.error("Adjustment failed", { description: e instanceof Error ? e.message : undefined });
+    } finally {
+      setRunning(false);
+    }
   };
 
   return (
@@ -755,17 +819,11 @@ function BulkAdjustModal({
         </div>
         <div className="p-5 space-y-3">
           <p className="text-xs text-[#64748B]">
-            Applies to <strong>{count}</strong> displayed {count === 1 ? "entry" : "entries"}.
+            Writes a <strong>new dated set of prices</strong> for the <strong>{count}</strong> displayed{" "}
+            {count === 1 ? "code" : "codes"}, adjusted from each code's most recent fee. The old prices are
+            kept — charges before the effective date keep pricing at the old fee.
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs font-bold text-[#1F3A5F]">
-              Fees
-              <select value={target} onChange={(e) => setTarget(e.target.value as typeof target)} className={INPUT_CLS}>
-                <option value="both">Patient + Insurance</option>
-                <option value="patient">Patient only</option>
-                <option value="insurance">Insurance only</option>
-              </select>
-            </label>
             <label className="text-xs font-bold text-[#1F3A5F]">
               Direction
               <select value={direction} onChange={(e) => setDirection(e.target.value as typeof direction)} className={INPUT_CLS}>
@@ -784,12 +842,11 @@ function BulkAdjustModal({
               Value
               <input value={value} onChange={(e) => setValue(e.target.value)} className={INPUT_CLS} inputMode="decimal" placeholder={mode === "percent" ? "e.g. 5" : "e.g. 10.00"} />
             </label>
+            <label className="text-xs font-bold text-[#1F3A5F]">
+              New Effective Date
+              <input type="date" value={effectiveDate} onChange={(e) => setEffectiveDate(e.target.value)} className={INPUT_CLS} />
+            </label>
           </div>
-          {running && (
-            <div className="text-xs font-bold text-[#3A6EA5]">
-              Updating… {progress}/{count}
-            </div>
-          )}
         </div>
         <div className="flex justify-end gap-2 p-4 border-t-2 border-[#E2E8F0] bg-[#F7F9FC]">
           <button onClick={onClose} disabled={running} className="px-4 py-2 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg font-bold text-sm disabled:opacity-50">

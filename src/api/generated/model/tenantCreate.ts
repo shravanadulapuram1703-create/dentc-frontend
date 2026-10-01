@@ -7,7 +7,9 @@
  */
 
 export interface TenantCreate {
+  /** @maxLength 255 */
   name: string;
+  /** @maxLength 80 */
   code: string;
   is_active?: boolean | null;
 }

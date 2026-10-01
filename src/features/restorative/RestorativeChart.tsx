@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { RequireRight, RIGHT } from '@/features/access-control';
 import {
   useListChartConditions,
   useCreateChartCondition,
@@ -16,7 +17,7 @@ import {
   getListProgressNotesQueryKey,
 } from '@/api/generated/endpoints/clinical/clinical';
 import { useListChartMaterials } from '@/api/generated/endpoints/procedures/procedures';
-import { uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
+import { uploadPatientDocument, useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import {
   useListTreatmentPlans,
   useListTreatmentPlanItems,
@@ -31,10 +32,17 @@ import {
   todayIso,
 } from '@/features/procedures/procedureEntryService';
 import { announceProcedureChange, useProcedureSync } from '@/features/procedures/procedureSync';
-import { loadFeeScheduleContext, EMPTY_FEE_CONTEXT, type FeeScheduleContext } from '@/services/feeScheduleResolver';
-import { loadCoverageContext, EMPTY_COVERAGE_CONTEXT, type CoverageContext } from '@/services/coverageResolver';
+import {
+  loadFeeScheduleContext,
+  loadCoverageContext,
+  EMPTY_FEE_CONTEXT,
+  EMPTY_COVERAGE_CONTEXT,
+  type FeeScheduleContext,
+  type CoverageContext,
+} from '@/features/pricing';
 import PostToLedgerDialog from './PostToLedgerDialog';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
+import { usePatientOffice } from '@/features/office-scope';
 import type { ChartConditionRead, ChartMaterialRead, PatientProcedureRead, ProviderRead, TreatmentPlanItemRead } from '@/api/generated/model';
 import AddAdaCodeModal, { type AdaEntry } from './AddAdaCodeModal';
 import InsuranceBenefitsModal from './InsuranceBenefitsModal';
@@ -76,9 +84,12 @@ import { draftFromRead } from '@/features/perio/perioModel';
 import { examDateLabel } from '@/features/perio/perioService';
 import type { RestorationTemplate } from './restorationTemplates';
 import type { ActiveSelection, ChartTab, GridRow, PaletteItem, ToothArea } from './types';
+import { providerOptionLabel } from '@/services/providerDirectory';
+import { openSchedulerForBooking } from '@/services/schedulerHandoff';
+import { noteDisplayText } from '@/features/progress-notes/noteContent';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number };
+  patient: { id: string; name: string; age?: number };
 }
 
 const TAB_TITLE: Record<ChartTab, string> = {
@@ -104,7 +115,7 @@ export default function RestorativeChart() {
 
   const numericId = Number(patient?.id ?? patientId);
   const validId = !Number.isNaN(numericId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ---------------------------------------------------------------
   const conditionsParams = { patient_id: numericId, size: 200 };
@@ -215,6 +226,14 @@ export default function RestorativeChart() {
   const [propDate, setPropDate] = useState(today);
   const [prefProvider, setPrefProvider] = useState('');
   const [prefHygienist, setPrefHygienist] = useState('');
+  // Legacy seeds both pickers from the patient record; a user's own pick wins.
+  const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
+  useEffect(() => {
+    const p = patientQuery.data;
+    if (!p) return;
+    setPrefProvider((cur) => cur || p.preferred_provider_id || '');
+    setPrefHygienist((cur) => cur || p.preferred_hygienist_id || '');
+  }, [patientQuery.data]);
   const [phase, setPhase] = useState('ALL');
   const [hideUnaccepted, setHideUnaccepted] = useState(true);
 
@@ -375,7 +394,7 @@ export default function RestorativeChart() {
       (progressQuery.data?.items ?? [])
         .filter((p) => !p.is_deleted)
         .filter((p) => inRange(p.note_date ?? p.created_at, timelineFrom, timelineTo))
-        .map((p) => ({ id: `pn-${p.id}`, date: fmtDate(p.note_date ?? p.created_at), note: p.notes ?? '', tooth: p.tooth ?? '' })),
+        .map((p) => ({ id: `pn-${p.id}`, date: fmtDate(p.note_date ?? p.created_at), note: noteDisplayText(p), tooth: p.tooth ?? '' })),
     [progressQuery.data, timelineFrom, timelineTo],
   );
 
@@ -584,7 +603,7 @@ export default function RestorativeChart() {
       // code/tooth is still planned, that planned item is completed by it.
       const result = await postCompletedProcedure({
         patient_id: numericId,
-        office_id: officeId ?? 0,
+        office_id: officeId,
         procedure_code: e.procedure_code,
         date_of_service: tranDate,
         provider_id: e.provider_id || prefProvider || '',
@@ -630,7 +649,7 @@ export default function RestorativeChart() {
   const postPlanItem = async (it: TreatmentPlanItemRead, provider_id: string, date: string) => {
     await postPlanItemToLedger({
       patient_id: numericId,
-      office_id: officeId ?? 0,
+      office_id: officeId,
       item: it,
       provider_id,
       date_of_service: date,
@@ -871,7 +890,28 @@ export default function RestorativeChart() {
             <label className="flex items-center gap-1">
               <input type="checkbox" checked={hideUnaccepted} onChange={(e) => setHideUnaccepted(e.target.checked)} /> Hide Unaccepted
             </label>
-            <button onClick={() => navigate('/scheduler')} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50">New Appt.</button>
+            <button
+              onClick={() =>
+                openSchedulerForBooking(navigate, {
+                  patient_id: numericId,
+                  patient_name: patient?.name,
+                  // Every still-open item on the active plan rides along so the
+                  // appointment's TREATMENTS grid starts filled in.
+                  plan_item_ids: postableItems.map((it) => it.id),
+                  // Default the appointment to the plan item's provider (then
+                  // the chart's Preferred Provider), not the operatory default.
+                  provider_id:
+                    postableItems.find((it) => it.provider_id || it.diagnosed_by)?.provider_id ||
+                    postableItems.find((it) => it.diagnosed_by)?.diagnosed_by ||
+                    prefProvider ||
+                    null,
+                  source: 'restorative',
+                })
+              }
+              disabled={!validId}
+              title={postableItems.length ? `Book an appointment for ${postableItems.length} planned procedure(s)` : 'Book an appointment for this patient'}
+              className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >New Appt.</button>
             <button onClick={() => setShowPost(true)} disabled={!currentPlan || postableItems.length === 0}
               title={postableItems.length ? `Post ${postableItems.length} planned procedure(s) to the ledger` : 'No planned procedures to post'}
               className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Post…</button>
@@ -879,10 +919,13 @@ export default function RestorativeChart() {
           </>
         )}
 
-        <button onClick={deleteSelectedRow} disabled={!selectedRowId || deleteCondition.isPending} className="ml-auto flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-1 font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50">
-          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 6h10M8 6V4h4v2M6 6l1 10h6l1-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Delete…
-        </button>
+        {/* RBAC: deleting a charted condition/procedure is backend-enforced. */}
+        <RequireRight code={RIGHT.charting.restorativeDeleteCondition}>
+          <button onClick={deleteSelectedRow} disabled={!selectedRowId || deleteCondition.isPending} className="ml-auto flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-1 font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 6h10M8 6V4h4v2M6 6l1 10h6l1-10" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Delete…
+          </button>
+        </RequireRight>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -936,9 +979,20 @@ export default function RestorativeChart() {
           )}
         </div>
 
-        {/* Right: condition palette — full height, down to the bottom. */}
+        {/* Right: condition palette — full height, down to the bottom.
+            RBAC: applying conditions/procedures needs Full Control; a view-only
+            user sees the chart but not the palette. */}
         <div className="w-[320px] shrink-0">
-          <ConditionPalette tab={paletteTab} onTabChange={setPaletteTab} onApply={applyPaletteItem} disabled={!selection} selectionArea={selection?.area ?? null} isArchSelection={isArchSelection} />
+          <RequireRight
+            code={RIGHT.charting.restorativeFull}
+            fallback={
+              <div className="rounded border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500">
+                View-only access — charting edits are disabled.
+              </div>
+            }
+          >
+            <ConditionPalette tab={paletteTab} onTabChange={setPaletteTab} onApply={applyPaletteItem} disabled={!selection} selectionArea={selection?.area ?? null} isArchSelection={isArchSelection} />
+          </RequireRight>
         </div>
       </div>
 
@@ -1002,6 +1056,7 @@ export default function RestorativeChart() {
         <AddAdaCodeModal
           mode={paletteTab === 'completed' ? 'completed' : 'tx-plans'}
           officeId={officeId}
+          patientId={validId ? numericId : null}
           teeth={adaModal.teeth}
           surface={adaModal.surface}
           providers={providers}
@@ -1214,7 +1269,7 @@ function ProviderSelect({ value, onChange, providers, placeholder }: { value: st
     <select value={value} onChange={(e) => onChange(e.target.value)} title={placeholder} className="rounded border border-slate-300 bg-white px-2 py-1 text-slate-700">
       <option value="">{placeholder}</option>
       {providers.map((p) => (
-        <option key={p.id} value={p.id}>{p.name || `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.id}</option>
+        <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>
       ))}
     </select>
   );

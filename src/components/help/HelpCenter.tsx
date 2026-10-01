@@ -1,6 +1,8 @@
-// Modern Help Center. A searchable, categorized hub — user guides, FAQs,
-// troubleshooting, release notes, and contact — with a prominent, always-present
-// "Report an Issue" action that files a tracked support ticket via Jira.
+// Modern Help Center. "My Tickets" is the primary section (a filterable,
+// scrollable table of the user's support tickets); the searchable knowledge
+// base — user guides, FAQs, troubleshooting, release notes, contact — lives in
+// a compact sidebar, with a prominent, always-present "Report an Issue" action
+// that files a tracked support ticket via Jira.
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -118,84 +120,45 @@ export default function HelpCenter() {
         </div>
       </div>
 
-      {/* Category chips */}
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Chip active={tab === "all" && !searching} onClick={() => { setTab("all"); setQuery(""); }} icon={Sparkles}>
-          All
-        </Chip>
-        {CATEGORIES.map((c) => {
-          const Icon = CAT_ICON[c.id];
-          return (
-            <Chip
-              key={c.id}
-              active={tab === c.id && !searching}
-              onClick={() => { setTab(c.id); setQuery(""); }}
-              icon={Icon}
-            >
-              {c.label}
-            </Chip>
-          );
-        })}
-      </div>
-
       <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main content */}
-        <div className="space-y-6 lg:col-span-2">
-          {searching ? (
-            <section>
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-[#1F3A5F]">
-                {searchResults.length} result{searchResults.length === 1 ? "" : "s"} for “{query.trim()}”
-              </h2>
-              <ArticleAccordion articles={searchResults} query={query} />
-            </section>
-          ) : tab === "contact" ? (
-            <ContactSection onReport={() => openReportIssue()} />
-          ) : tab === "release-notes" ? (
-            <ReleaseNotesSection />
-          ) : tab === "all" ? (
-            <>
-              {(["guides", "faqs", "troubleshooting"] as HelpCategoryId[]).map((cat) => {
-                const meta = CATEGORIES.find((c) => c.id === cat)!;
-                const Icon = CAT_ICON[cat];
-                return (
-                  <section key={cat}>
-                    <div className="mb-3 flex items-center gap-2">
-                      <Icon className="h-5 w-5 text-[#3A6EA5]" />
-                      <div>
-                        <h2 className="text-sm font-bold uppercase tracking-wide text-[#1F3A5F]">{meta.label}</h2>
-                        <p className="text-xs text-[#64748B]">{meta.blurb}</p>
-                      </div>
-                    </div>
-                    <ArticleAccordion articles={byCategory(cat)} />
-                  </section>
-                );
-              })}
-            </>
-          ) : (
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                {(() => {
-                  const Icon = CAT_ICON[tab];
-                  const meta = CATEGORIES.find((c) => c.id === tab)!;
-                  return (
-                    <>
-                      <Icon className="h-5 w-5 text-[#3A6EA5]" />
-                      <div>
-                        <h2 className="text-sm font-bold uppercase tracking-wide text-[#1F3A5F]">{meta.label}</h2>
-                        <p className="text-xs text-[#64748B]">{meta.blurb}</p>
-                      </div>
-                    </>
-                  );
-                })()}
+        {/* Primary: the user's tickets */}
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          <MyTicketsPanel />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <WidgetCard title="Contact Support" icon={<MessageCircle className="h-4 w-4" />}>
+              <div className="space-y-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <Phone className="mt-0.5 h-4 w-4 text-[#3A6EA5]" />
+                  <div>
+                    <p className="font-semibold text-[#1E293B]">{CONTACT.phone}</p>
+                    <p className="text-xs text-[#64748B]">{CONTACT.phoneHours}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Mail className="mt-0.5 h-4 w-4 text-[#3A6EA5]" />
+                  <div>
+                    <a href={`mailto:${CONTACT.email}`} className="font-semibold text-[#3A6EA5] hover:underline">
+                      {CONTACT.email}
+                    </a>
+                    <p className="text-xs text-[#64748B]">{CONTACT.emailSla}</p>
+                  </div>
+                </div>
               </div>
-              <ArticleAccordion articles={byCategory(tab)} />
-            </section>
-          )}
+            </WidgetCard>
+
+            <WidgetCard title="System Information" icon={<FileText className="h-4 w-4" />}>
+              <dl className="space-y-2 text-sm">
+                <Row label="Version" value={SYSTEM_INFO.version} />
+                <Row label="License" value={SYSTEM_INFO.license} />
+              </dl>
+            </WidgetCard>
+          </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Report CTA card */}
+        {/* Sidebar: report CTA + knowledge base */}
+        {/* On lg+ the sidebar is pinned to the left column's height (h-0 + min-h-full
+            grid trick) so Help Topics stretches — and scrolls — to end on the same line. */}
+        <aside className="flex min-w-0 flex-col gap-6 lg:h-0 lg:min-h-full">
           <div className="rounded-lg border-2 border-[#3A6EA5] bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2">
               <Bug className="h-5 w-5 text-[#3A6EA5]" />
@@ -213,38 +176,56 @@ export default function HelpCenter() {
             </button>
           </div>
 
-          <MyTicketsPanel />
+          <WidgetCard
+            title="Help Topics"
+            icon={<BookOpen className="h-4 w-4" />}
+            className="lg:min-h-0 lg:flex-1"
+            bodyClassName="flex min-h-0 flex-col p-0"
+          >
+            {/* Category chips */}
+            <div className="flex flex-wrap gap-1.5 border-b border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2.5">
+              <Chip active={tab === "all" && !searching} onClick={() => { setTab("all"); setQuery(""); }} icon={Sparkles}>
+                All
+              </Chip>
+              {CATEGORIES.map((c) => {
+                const Icon = CAT_ICON[c.id];
+                return (
+                  <Chip
+                    key={c.id}
+                    active={tab === c.id && !searching}
+                    onClick={() => { setTab(c.id); setQuery(""); }}
+                    icon={Icon}
+                  >
+                    {c.label}
+                  </Chip>
+                );
+              })}
+            </div>
 
-          {/* Contact */}
-          <WidgetCard title="Contact Support" icon={<MessageCircle className="h-4 w-4" />}>
-            <div className="space-y-4 text-sm">
-              <div className="flex items-start gap-3">
-                <Phone className="mt-0.5 h-4 w-4 text-[#3A6EA5]" />
-                <div>
-                  <p className="font-semibold text-[#1E293B]">{CONTACT.phone}</p>
-                  <p className="text-xs text-[#64748B]">{CONTACT.phoneHours}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-4 w-4 text-[#3A6EA5]" />
-                <div>
-                  <a href={`mailto:${CONTACT.email}`} className="font-semibold text-[#3A6EA5] hover:underline">
-                    {CONTACT.email}
-                  </a>
-                  <p className="text-xs text-[#64748B]">{CONTACT.emailSla}</p>
-                </div>
-              </div>
+            {/* Articles — bounded height so the sidebar never outgrows the page */}
+            <div className="max-h-[60vh] min-h-0 space-y-5 overflow-y-auto p-4 lg:max-h-none lg:flex-1">
+              {searching ? (
+                <section>
+                  <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#1F3A5F]">
+                    {searchResults.length} result{searchResults.length === 1 ? "" : "s"} for “{query.trim()}”
+                  </h2>
+                  <ArticleAccordion articles={searchResults} query={query} />
+                </section>
+              ) : tab === "contact" ? (
+                <ContactSection onReport={() => openReportIssue()} />
+              ) : tab === "release-notes" ? (
+                <ReleaseNotesSection />
+              ) : tab === "all" ? (
+                (["guides", "faqs", "troubleshooting"] as HelpCategoryId[]).map((cat) => (
+                  <CategorySection key={cat} cat={cat} articles={byCategory(cat)} />
+                ))
+              ) : (
+                <CategorySection cat={tab} articles={byCategory(tab)} />
+              )}
             </div>
           </WidgetCard>
 
-          {/* System info */}
-          <WidgetCard title="System Information" icon={<FileText className="h-4 w-4" />}>
-            <dl className="space-y-2 text-sm">
-              <Row label="Version" value={SYSTEM_INFO.version} />
-              <Row label="License" value={SYSTEM_INFO.license} />
-            </dl>
-          </WidgetCard>
-        </div>
+        </aside>
       </div>
     </div>
   );
@@ -266,15 +247,32 @@ function Chip({
       type="button"
       onClick={onClick}
       className={utils.cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
         active
           ? "border-[#3A6EA5] bg-[#3A6EA5] text-white"
           : "border-[#E2E8F0] bg-white text-[#475569] hover:border-[#3A6EA5] hover:text-[#3A6EA5]",
       )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-3.5 w-3.5" />
       {children}
     </button>
+  );
+}
+
+function CategorySection({ cat, articles }: { cat: HelpCategoryId; articles: HelpArticle[] }) {
+  const meta = CATEGORIES.find((c) => c.id === cat)!;
+  const Icon = CAT_ICON[cat];
+  return (
+    <section>
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-[#3A6EA5]" />
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-wide text-[#1F3A5F]">{meta.label}</h2>
+          <p className="text-[11px] text-[#64748B]">{meta.blurb}</p>
+        </div>
+      </div>
+      <ArticleAccordion articles={articles} />
+    </section>
   );
 }
 
@@ -290,10 +288,10 @@ function Row({ label, value }: { label: string; value: string }) {
 function ReleaseNotesSection() {
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2">
-        <FileText className="h-5 w-5 text-[#3A6EA5]" />
+      <div className="mb-2 flex items-center gap-2">
+        <FileText className="h-4 w-4 text-[#3A6EA5]" />
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[#1F3A5F]">Release Notes</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wide text-[#1F3A5F]">Release Notes</h2>
           <p className="text-xs text-[#64748B]">What's new, improved, and fixed.</p>
         </div>
       </div>
@@ -319,14 +317,14 @@ function ReleaseNotesSection() {
 function ContactSection({ onReport }: { onReport: () => void }) {
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2">
-        <MessageCircle className="h-5 w-5 text-[#3A6EA5]" />
+      <div className="mb-2 flex items-center gap-2">
+        <MessageCircle className="h-4 w-4 text-[#3A6EA5]" />
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[#1F3A5F]">Contact Support</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wide text-[#1F3A5F]">Contact Support</h2>
           <p className="text-xs text-[#64748B]">Reach a human when you need one.</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4">
         <div className="rounded-lg border-2 border-[#3A6EA5] bg-white p-5">
           <Bug className="h-6 w-6 text-[#3A6EA5]" />
           <h3 className="mt-2 font-bold text-[#1F3A5F]">Report an Issue</h3>

@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { ConsentSignatureRead } from './consentSignatureRead';
 
 export interface PatientConsentRead {
   tenant_id: number;
@@ -24,6 +25,27 @@ export interface PatientConsentRead {
   declined_reason?: string | null;
   is_deleted: boolean;
   created_by?: number | null;
+  sig_format?: string | null;
+  sig_compression?: number | null;
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_source?: string | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  captured_user_agent?: string | null;
+  content_hash?: string | null;
+  signed_document_id?: number | null;
+  captured_at?: string | null;
+  signed_at_source?: string | null;
+  signed_rendered_html?: string | null;
   id: number;
   created_at: string;
+  has_sig_string?: boolean;
+  signature_status?: string | null;
+  has_image?: boolean;
+  image_omitted?: boolean;
+  capture_method?: string | null;
+  countersigns?: ConsentSignatureRead[];
 }

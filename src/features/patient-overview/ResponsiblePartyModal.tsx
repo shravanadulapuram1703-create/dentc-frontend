@@ -43,9 +43,15 @@ export default function ResponsiblePartyModal({
     try {
       await update.mutateAsync({
         itemId: rp.id,
-        data: Object.fromEntries(
-          Object.entries(form).map(([k, v]) => [k, v.trim() === "" ? null : v]),
-        ),
+        data: {
+          ...Object.fromEntries(
+            Object.entries(form).map(([k, v]) => [k, v.trim() === "" ? null : v]),
+          ),
+          // Record-first: the responsible party keeps its own home office.
+          // Resent unchanged so a server-side office check sees it; a record
+          // with no office stays that way (nothing is stamped on update).
+          ...(rp.home_office_id != null ? { home_office_id: rp.home_office_id } : {}),
+        },
       });
       on_saved();
     } catch (err) {

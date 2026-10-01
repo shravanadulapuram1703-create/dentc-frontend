@@ -43,6 +43,21 @@ export interface LetterPdfOptions {
   /** Fallbacks when the template has no dvfrom/dvto address divs. */
   fallback_from: string[];
   fallback_to: string[];
+  /** Captured signatures to stamp on the lines (in-viewer signing). */
+  signatures?: {
+    patient?: SignatureStamp | null;
+    countersign?: SignatureStamp | null;
+  };
+}
+
+/** One captured signature drawn onto its line in the consent's signature block. */
+export interface SignatureStamp {
+  /** PNG or JPEG data URL. */
+  image_data_url: string;
+  /** ISO timestamp printed in the Date column. */
+  signed_at: string;
+  /** Overrides the printed name under the line (e.g. a guardian). */
+  signer_name?: string | null;
 }
 
 interface Word {
@@ -257,7 +272,8 @@ export function build_letter_pdf(
   // --- Signature block (consent forms) -------------------------------------
   if (opts.is_consent) {
     y = ensure_space(y + 18);
-    if (y + 96 > bottom) {
+    const stamp_room = (opts.signatures?.patient ? 24 : 0) + (opts.signatures?.countersign ? 24 : 0);
+    if (y + 96 + stamp_room > bottom) {
       doc.addPage('letter', 'portrait');
       doc.setFontSize(FONT_SIZE);
       y = MARGIN + LINE_H;
@@ -283,9 +299,20 @@ function draw_signature_block(
   y += 22;
 
   const half = width * 0.62;
-  const rule = (label: string, value: string) => {
+  const rule = (label: string, value: string, stamp?: SignatureStamp | null) => {
     doc.setFont('helvetica', 'normal').setFontSize(9);
     doc.text(pdf_safe(label), x, y);
+    // A captured signature sits on the line, sized like a wet signature.
+    if (stamp) {
+      const box_w = half - 118 - 8;
+      const box_h = 34;
+      const fmt = /^data:image\/png/i.test(stamp.image_data_url) ? 'PNG' : 'JPEG';
+      try {
+        doc.addImage(stamp.image_data_url, fmt, x + 122, y - box_h + 4, box_w, box_h);
+      } catch {
+        /* an unreadable image must not break the whole PDF */
+      }
+    }
     doc.line(x + 118, y + 2, x + half, y + 2);
     if (value) {
       doc.setFontSize(10).text(pdf_safe(value), x + 122, y);
@@ -293,25 +320,39 @@ function draw_signature_block(
     }
     doc.text('Date', x + half + 24, y);
     doc.line(x + half + 52, y + 2, x + width, y + 2);
+    if (stamp) {
+      doc.setFontSize(9).text(pdf_safe(fmt_stamp_date(stamp.signed_at)), x + half + 56, y - 1);
+    }
     y += 30;
   };
 
-  rule('Patient / Guardian', '');
-  doc.setFontSize(8).setTextColor(110);
-  doc.text(pdf_safe(`Print name: ${header.patient_name}`), x + 122, y - 20);
-  doc.setTextColor(0);
+  const print_name = (name: string) => {
+    doc.setFontSize(8).setTextColor(110);
+    doc.text(pdf_safe(`Print name: ${name}`), x + 122, y - 20);
+    doc.setTextColor(0);
+  };
+
+  const patient_stamp = opts.signatures?.patient ?? null;
+  // The signature block needs headroom for the image above the first line.
+  if (patient_stamp) y += 24;
+  rule('Patient / Guardian', '', patient_stamp);
+  print_name(patient_stamp?.signer_name || header.patient_name);
 
   const line = signature_line(opts.signature_type);
   if (line) {
-    rule(line, '');
-    if (opts.signer_name) {
-      doc.setFontSize(8).setTextColor(110);
-      doc.text(pdf_safe(`Print name: ${opts.signer_name}`), x + 122, y - 20);
-      doc.setTextColor(0);
-    }
+    const counter_stamp = opts.signatures?.countersign ?? null;
+    if (counter_stamp) y += 24;
+    rule(line, '', counter_stamp);
+    if (opts.signer_name) print_name(opts.signer_name);
   }
   doc.setFontSize(FONT_SIZE);
   return y;
+}
+
+function fmt_stamp_date(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
 
 function stamp_footers(doc: jsPDF, header: LetterPdfHeader, has_envelope: boolean) {

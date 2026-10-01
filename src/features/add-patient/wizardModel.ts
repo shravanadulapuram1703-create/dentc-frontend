@@ -330,7 +330,8 @@ export const MARITAL_OPTIONS = ["Single", "Married", "Divorced", "Widowed", "Sep
 export const SEX_OPTIONS = [
   { value: "M", label: "Male" },
   { value: "F", label: "Female" },
-  { value: "O", label: "Other" },
+  { value: "U", label: "Unknown" },
+  { value: "O", label: "Other (prints as U on claims)" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -451,6 +452,10 @@ export function buildSubscriberCreateForSlot(
     sub_city: nz(slot.sub_city),
     sub_state: nz(slot.sub_state),
     sub_zip: nz(slot.sub_zip),
+    // Captured on the insurance step but previously never sent (verified live:
+    // subscriber 65314 came back with sub_phone / marital_status null).
+    sub_phone: nz(slot.sub_phone),
+    marital_status: nz(slot.sub_marital_status),
     group_number: nz(slot.group_number),
     effective_date: nz(slot.plan_effective_date),
     notes: nz(slot.notes),
@@ -586,7 +591,9 @@ export function buildMedicalAlertsIn(
   labels: Record<string, string>,
 ): MedicalAlertIn[] {
   const rows: MedicalAlertIn[] = Object.entries(form.responses)
-    .filter(([, ans]) => ans === "yes" || ans === "no")
+    // Type-guarded so `ans` narrows to the "yes" | "no" enum: the generated
+    // MedicalAlertIn.response no longer accepts the "" (unanswered) sentinel.
+    .filter((e): e is [string, "yes" | "no"] => e[1] === "yes" || e[1] === "no")
     .map(([code, ans]) => ({
       alert_code: code,
       alert_label: labels[code] ?? undefined,

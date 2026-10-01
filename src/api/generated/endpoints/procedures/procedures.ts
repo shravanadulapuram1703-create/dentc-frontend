@@ -25,16 +25,22 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdjustRequest,
   AppSchemasProcedureSetupFeeScheduleOption,
+  BulkEntriesRequest,
   ChartMaterialCreate,
   ChartMaterialRead,
   ChartMaterialUpdate,
+  CheckNoteMacroAvailabilityParams,
+  CheckPrescriptionLibraryAvailabilityParams,
+  ClaimReadiness,
   CodeBundleCreate,
   CodeBundleItemCreate,
   CodeBundleItemRead,
   CodeBundleItemUpdate,
   CodeBundleRead,
   CodeBundleUpdate,
+  EligibleProviderRead,
   ErrorResponse,
   ExplosionCodeCreate,
   ExplosionCodeItemCreate,
@@ -51,6 +57,11 @@ import type {
   FeeScheduleEntryUpdate,
   FeeScheduleRead,
   FeeScheduleUpdate,
+  GetClaimReadinessParams,
+  GetPatientProcedureReadinessParams,
+  GetPricingHealthParams,
+  GetProcedureCodeEligibilityParams,
+  GetProcedureReadinessParams,
   HTTPValidationError,
   IcdBulkStatusRequest,
   IcdBulkStatusResult,
@@ -72,8 +83,10 @@ import type {
   ListProcedureCodeCategoriesParams,
   ListProcedureCodesParams,
   NewFeeScheduleVersionRequest,
+  NoteMacroAvailabilityResult,
   NoteMacroCategory,
   NoteMacroCreate,
+  NoteMacroLimits,
   NoteMacroRead,
   NoteMacroUpdate,
   PaginatedResponseChartMaterialRead,
@@ -92,7 +105,9 @@ import type {
   PlaceOfServiceCodeCreate,
   PlaceOfServiceCodeRead,
   PlaceOfServiceCodeUpdate,
+  PrescriptionAvailabilityResult,
   PrescriptionLibraryCreate,
+  PrescriptionLibraryLimits,
   PrescriptionLibraryRead,
   PrescriptionLibraryUpdate,
   ProcedureCodeCategory,
@@ -100,9 +115,13 @@ import type {
   ProcedureCodeRead,
   ProcedureCodeStats,
   ProcedureCodeUpdate,
+  ProcedureEligibilityResult,
   ProcedureInsuranceRuleCreate,
   ProcedureInsuranceRuleRead,
-  ProcedureInsuranceRuleUpdate
+  ProcedureInsuranceRuleUpdate,
+  ProcedureReadiness,
+  QuoteRequest,
+  ReassignPatientsRequest
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -110,6 +129,308 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * The pre-post checklist for the Add Procedure pop-up / treatment-plan post: ``requires`` lists the code's supporting-record flags, ``satisfied`` / ``missing`` what the patient's chart already holds, ``deferred`` what can only be judged once the charge exists (an attachment). Posting is never blocked by this; claim submission is (422 supporting_records_missing).
+ * @summary Which supporting records a code requires and which are already on file (PROC-7c)
+ */
+export const getProcedureReadiness = (
+    patientId: number,
+    params: GetProcedureReadinessParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureReadiness>(
+      {url: `/api/v1/patients/${patientId}/procedure-readiness`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetProcedureReadinessQueryKey = (patientId: number,
+    params?: GetProcedureReadinessParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/procedure-readiness`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProcedureReadinessQueryOptions = <TData = Awaited<ReturnType<typeof getProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params: GetProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProcedureReadinessQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProcedureReadiness>>> = ({ signal }) => getProcedureReadiness(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProcedureReadiness>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProcedureReadinessQueryResult = NonNullable<Awaited<ReturnType<typeof getProcedureReadiness>>>
+export type GetProcedureReadinessQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetProcedureReadiness<TData = Awaited<ReturnType<typeof getProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetProcedureReadinessParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureReadiness>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureReadiness<TData = Awaited<ReturnType<typeof getProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureReadiness>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureReadiness<TData = Awaited<ReturnType<typeof getProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Which supporting records a code requires and which are already on file (PROC-7c)
+ */
+
+export function useGetProcedureReadiness<TData = Awaited<ReturnType<typeof getProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: GetProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProcedureReadinessQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Supporting-records readiness of one posted charge (PROC-7c)
+ */
+export const getPatientProcedureReadiness = (
+    procedureId: string,
+    params?: GetPatientProcedureReadinessParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureReadiness>(
+      {url: `/api/v1/patient-procedures/${procedureId}/readiness`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientProcedureReadinessQueryKey = (procedureId: string,
+    params?: GetPatientProcedureReadinessParams,) => {
+    return [
+    `/api/v1/patient-procedures/${procedureId}/readiness`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientProcedureReadinessQueryOptions = <TData = Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(procedureId: string,
+    params?: GetPatientProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientProcedureReadinessQueryKey(procedureId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientProcedureReadiness>>> = ({ signal }) => getPatientProcedureReadiness(procedureId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: procedureId !== null && procedureId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientProcedureReadinessQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientProcedureReadiness>>>
+export type GetPatientProcedureReadinessQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientProcedureReadiness<TData = Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ procedureId: string,
+    params: undefined |  GetPatientProcedureReadinessParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientProcedureReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientProcedureReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientProcedureReadiness<TData = Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ procedureId: string,
+    params?: GetPatientProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientProcedureReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientProcedureReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientProcedureReadiness<TData = Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ procedureId: string,
+    params?: GetPatientProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Supporting-records readiness of one posted charge (PROC-7c)
+ */
+
+export function useGetPatientProcedureReadiness<TData = Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ procedureId: string,
+    params?: GetPatientProcedureReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientProcedureReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientProcedureReadinessQueryOptions(procedureId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * ``missing`` is exactly what ``POST /insurance-claims/{id}/submit`` will refuse on (422 supporting_records_missing) unless ``allow_missing_records`` is sent. ``enclosures`` pre-populates the ADA claim form's Enclosures box from the claim's attachments and says which attachment types the claim's codes still ask for.
+ * @summary Every procedure on a claim judged against its supporting-record flags, plus the derived Enclosures box (PROC-7c/7d)
+ */
+export const getClaimReadiness = (
+    claimId: string,
+    params?: GetClaimReadinessParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ClaimReadiness>(
+      {url: `/api/v1/insurance-claims/${claimId}/readiness`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetClaimReadinessQueryKey = (claimId: string,
+    params?: GetClaimReadinessParams,) => {
+    return [
+    `/api/v1/insurance-claims/${claimId}/readiness`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClaimReadinessQueryOptions = <TData = Awaited<ReturnType<typeof getClaimReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(claimId: string,
+    params?: GetClaimReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClaimReadinessQueryKey(claimId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClaimReadiness>>> = ({ signal }) => getClaimReadiness(claimId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: claimId !== null && claimId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClaimReadiness>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetClaimReadinessQueryResult = NonNullable<Awaited<ReturnType<typeof getClaimReadiness>>>
+export type GetClaimReadinessQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetClaimReadiness<TData = Awaited<ReturnType<typeof getClaimReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params: undefined |  GetClaimReadinessParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimReadiness>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimReadiness<TData = Awaited<ReturnType<typeof getClaimReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetClaimReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimReadiness>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimReadiness<TData = Awaited<ReturnType<typeof getClaimReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetClaimReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Every procedure on a claim judged against its supporting-record flags, plus the derived Enclosures box (PROC-7c/7d)
+ */
+
+export function useGetClaimReadiness<TData = Awaited<ReturnType<typeof getClaimReadiness>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ claimId: string,
+    params?: GetClaimReadinessParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimReadiness>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetClaimReadinessQueryOptions(claimId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 
@@ -331,6 +652,605 @@ export const useCreateFeeScheduleVersion = <TError = ErrorType<ErrorResponse | H
       return useMutation(getCreateFeeScheduleVersionMutationOptions(options), queryClient);
     }
     /**
+ * Fee types, pricing models, fee sources, assignment keys, the precedence
+ * card, and the warning/error code tables — served verbatim from ``fee_vocab``
+ * so the UI cannot paraphrase the hierarchy wrong.
+ * @summary The pricing vocabulary + precedence card the Setup screens render (§3.1)
+ */
+export const getFeeScheduleMetadata = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/metadata`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetFeeScheduleMetadataQueryKey = () => {
+    return [
+    `/api/v1/fee-schedules/metadata`
+    ] as const;
+    }
+
+
+export const getGetFeeScheduleMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeeScheduleMetadataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeeScheduleMetadata>>> = ({ signal }) => getFeeScheduleMetadata(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFeeScheduleMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeScheduleMetadata>>>
+export type GetFeeScheduleMetadataQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The pricing vocabulary + precedence card the Setup screens render (§3.1)
+ */
+
+export function useGetFeeScheduleMetadata<TData = Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFeeScheduleMetadataQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Where a fee schedule is used, and whether it can be retired (§3.5)
+ */
+export const getFeeScheduleUsage = (
+    scheduleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/usage`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetFeeScheduleUsageQueryKey = (scheduleId: number,) => {
+    return [
+    `/api/v1/fee-schedules/${scheduleId}/usage`
+    ] as const;
+    }
+
+
+export const getGetFeeScheduleUsageQueryOptions = <TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeeScheduleUsageQueryKey(scheduleId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeeScheduleUsage>>> = ({ signal }) => getFeeScheduleUsage(scheduleId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: scheduleId !== null && scheduleId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFeeScheduleUsageQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeScheduleUsage>>>
+export type GetFeeScheduleUsageQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleUsage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Where a fee schedule is used, and whether it can be retired (§3.5)
+ */
+
+export function useGetFeeScheduleUsage<TData = Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleUsage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFeeScheduleUsageQueryOptions(scheduleId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Soft-retire a fee schedule (refused while it is still referenced)
+ */
+export const retireFeeSchedule = (
+    scheduleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<FeeScheduleRead>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/retire`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getRetireFeeScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retireFeeSchedule>>, TError,{scheduleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof retireFeeSchedule>>, TError,{scheduleId: number}, TContext> => {
+
+const mutationKey = ['retireFeeSchedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof retireFeeSchedule>>, {scheduleId: number}> = (props) => {
+          const {scheduleId} = props ?? {};
+
+          return  retireFeeSchedule(scheduleId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RetireFeeScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof retireFeeSchedule>>>
+
+    export type RetireFeeScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Soft-retire a fee schedule (refused while it is still referenced)
+ */
+export const useRetireFeeSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retireFeeSchedule>>, TError,{scheduleId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof retireFeeSchedule>>,
+        TError,
+        {scheduleId: number},
+        TContext
+      > => {
+      return useMutation(getRetireFeeScheduleMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Upsert many entries at once; a shared effective_date is the New Effective Date workflow
+ */
+export const bulkUpsertFeeScheduleEntries = (
+    scheduleId: number,
+    bulkEntriesRequest: BodyType<BulkEntriesRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/entries/bulk`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkEntriesRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkUpsertFeeScheduleEntriesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BulkEntriesRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BulkEntriesRequest>}, TContext> => {
+
+const mutationKey = ['bulkUpsertFeeScheduleEntries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, {scheduleId: number;data: BodyType<BulkEntriesRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  bulkUpsertFeeScheduleEntries(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkUpsertFeeScheduleEntriesMutationResult = NonNullable<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>>
+    export type BulkUpsertFeeScheduleEntriesMutationBody = BodyType<BulkEntriesRequest>
+    export type BulkUpsertFeeScheduleEntriesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Upsert many entries at once; a shared effective_date is the New Effective Date workflow
+ */
+export const useBulkUpsertFeeScheduleEntries = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BulkEntriesRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkUpsertFeeScheduleEntries>>,
+        TError,
+        {scheduleId: number;data: BodyType<BulkEntriesRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkUpsertFeeScheduleEntriesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Write a new dated set of prices adjusted from the current ones (percent or amount)
+ */
+export const adjustFeeScheduleEntries = (
+    scheduleId: number,
+    adjustRequest: BodyType<AdjustRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/adjust`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adjustRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getAdjustFeeScheduleEntriesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<AdjustRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<AdjustRequest>}, TContext> => {
+
+const mutationKey = ['adjustFeeScheduleEntries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, {scheduleId: number;data: BodyType<AdjustRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  adjustFeeScheduleEntries(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdjustFeeScheduleEntriesMutationResult = NonNullable<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>>
+    export type AdjustFeeScheduleEntriesMutationBody = BodyType<AdjustRequest>
+    export type AdjustFeeScheduleEntriesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Write a new dated set of prices adjusted from the current ones (percent or amount)
+ */
+export const useAdjustFeeScheduleEntries = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adjustFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<AdjustRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adjustFeeScheduleEntries>>,
+        TError,
+        {scheduleId: number;data: BodyType<AdjustRequest>},
+        TContext
+      > => {
+      return useMutation(getAdjustFeeScheduleEntriesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Move patients off this schedule onto another (Change Patient Fee Schedule)
+ */
+export const reassignFeeSchedulePatients = (
+    scheduleId: number,
+    reassignPatientsRequest: BodyType<ReassignPatientsRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/reassign-patients`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: reassignPatientsRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getReassignFeeSchedulePatientsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, TError,{scheduleId: number;data: BodyType<ReassignPatientsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, TError,{scheduleId: number;data: BodyType<ReassignPatientsRequest>}, TContext> => {
+
+const mutationKey = ['reassignFeeSchedulePatients'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, {scheduleId: number;data: BodyType<ReassignPatientsRequest>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  reassignFeeSchedulePatients(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReassignFeeSchedulePatientsMutationResult = NonNullable<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>>
+    export type ReassignFeeSchedulePatientsMutationBody = BodyType<ReassignPatientsRequest>
+    export type ReassignFeeSchedulePatientsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Move patients off this schedule onto another (Change Patient Fee Schedule)
+ */
+export const useReassignFeeSchedulePatients = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reassignFeeSchedulePatients>>, TError,{scheduleId: number;data: BodyType<ReassignPatientsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reassignFeeSchedulePatients>>,
+        TError,
+        {scheduleId: number;data: BodyType<ReassignPatientsRequest>},
+        TContext
+      > => {
+      return useMutation(getReassignFeeSchedulePatientsMutationOptions(options), queryClient);
+    }
+    /**
+ * With a ``patient_id`` this is the full estimate (fee + coverage split); with
+ * none it is a fee-only quote for the office/provider/plan/date context, so a
+ * screen can price before a patient or a date of service exists.
+ * @summary Price one or more lines for a context (scheduler / template / add-patient)
+ */
+export const quoteProcedureFees = (
+    quoteRequest: BodyType<QuoteRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/pricing/quote`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: quoteRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getQuoteProcedureFeesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quoteProcedureFees>>, TError,{data: BodyType<QuoteRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof quoteProcedureFees>>, TError,{data: BodyType<QuoteRequest>}, TContext> => {
+
+const mutationKey = ['quoteProcedureFees'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof quoteProcedureFees>>, {data: BodyType<QuoteRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  quoteProcedureFees(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type QuoteProcedureFeesMutationResult = NonNullable<Awaited<ReturnType<typeof quoteProcedureFees>>>
+    export type QuoteProcedureFeesMutationBody = BodyType<QuoteRequest>
+    export type QuoteProcedureFeesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Price one or more lines for a context (scheduler / template / add-patient)
+ */
+export const useQuoteProcedureFees = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quoteProcedureFees>>, TError,{data: BodyType<QuoteRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof quoteProcedureFees>>,
+        TError,
+        {data: BodyType<QuoteRequest>},
+        TContext
+      > => {
+      return useMutation(getQuoteProcedureFeesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Coded pricing-setup findings, each naming the screen that owns the fix
+ */
+export const getPricingHealth = (
+    params?: GetPricingHealthParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/setup/pricing-health`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPricingHealthQueryKey = (params?: GetPricingHealthParams,) => {
+    return [
+    `/api/v1/setup/pricing-health`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPricingHealthQueryOptions = <TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPricingHealthQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPricingHealth>>> = ({ signal }) => getPricingHealth(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPricingHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getPricingHealth>>>
+export type GetPricingHealthQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  GetPricingHealthParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPricingHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getPricingHealth>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPricingHealth>>,
+          TError,
+          Awaited<ReturnType<typeof getPricingHealth>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Coded pricing-setup findings, each naming the screen that owns the fix
+ */
+
+export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricingHealth>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: GetPricingHealthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPricingHealth>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPricingHealthQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Catalog KPI counts (total / active / inactive / ortho / by-category)
  */
 export const getProcedureCodeStats = (
@@ -411,6 +1331,194 @@ export function useGetProcedureCodeStats<TData = Awaited<ReturnType<typeof getPr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetProcedureCodeStatsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Replaces the per-provider fan-out the Change Provider dropdown was doing.
+ * A code with no assignment rows is **unrestricted** (`restricted=false`) — every
+ * provider may perform it and it does not narrow `eligible_for_all`.
+ * @summary Which providers may perform these codes, in one call (PLAN-16)
+ */
+export const getProcedureCodeEligibility = (
+    params: GetProcedureCodeEligibilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ProcedureEligibilityResult>(
+      {url: `/api/v1/procedure-codes/eligibility`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetProcedureCodeEligibilityQueryKey = (params?: GetProcedureCodeEligibilityParams,) => {
+    return [
+    `/api/v1/procedure-codes/eligibility`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetProcedureCodeEligibilityQueryOptions = <TData = Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: GetProcedureCodeEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProcedureCodeEligibilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProcedureCodeEligibility>>> = ({ signal }) => getProcedureCodeEligibility(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProcedureCodeEligibilityQueryResult = NonNullable<Awaited<ReturnType<typeof getProcedureCodeEligibility>>>
+export type GetProcedureCodeEligibilityQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetProcedureCodeEligibility<TData = Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetProcedureCodeEligibilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureCodeEligibility>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureCodeEligibility>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureCodeEligibility<TData = Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetProcedureCodeEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProcedureCodeEligibility>>,
+          TError,
+          Awaited<ReturnType<typeof getProcedureCodeEligibility>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProcedureCodeEligibility<TData = Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetProcedureCodeEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Which providers may perform these codes, in one call (PLAN-16)
+ */
+
+export function useGetProcedureCodeEligibility<TData = Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: GetProcedureCodeEligibilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProcedureCodeEligibility>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProcedureCodeEligibilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Providers assigned this code (PLAN-16 reverse lookup); empty = unrestricted
+ */
+export const listProcedureCodeProviders = (
+    code: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<EligibleProviderRead[]>(
+      {url: `/api/v1/procedure-codes/${code}/providers`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProcedureCodeProvidersQueryKey = (code: string,) => {
+    return [
+    `/api/v1/procedure-codes/${code}/providers`
+    ] as const;
+    }
+
+
+export const getListProcedureCodeProvidersQueryOptions = <TData = Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProcedureCodeProvidersQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProcedureCodeProviders>>> = ({ signal }) => listProcedureCodeProviders(code, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: code !== null && code !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProcedureCodeProvidersQueryResult = NonNullable<Awaited<ReturnType<typeof listProcedureCodeProviders>>>
+export type ListProcedureCodeProvidersQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListProcedureCodeProviders<TData = Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProcedureCodeProviders>>,
+          TError,
+          Awaited<ReturnType<typeof listProcedureCodeProviders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProcedureCodeProviders<TData = Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProcedureCodeProviders>>,
+          TError,
+          Awaited<ReturnType<typeof listProcedureCodeProviders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProcedureCodeProviders<TData = Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Providers assigned this code (PLAN-16 reverse lookup); empty = unrestricted
+ */
+
+export function useListProcedureCodeProviders<TData = Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ code: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProcedureCodeProviders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProcedureCodeProvidersQueryOptions(code,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -956,6 +2064,387 @@ export function useListNoteMacroCategories<TData = Awaited<ReturnType<typeof lis
 
 
 /**
+ * @summary Field caps + duplicate rule the API enforces on note macros (NM-5)
+ */
+export const getNoteMacroLimits = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NoteMacroLimits>(
+      {url: `/api/v1/note-macros/limits`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetNoteMacroLimitsQueryKey = () => {
+    return [
+    `/api/v1/note-macros/limits`
+    ] as const;
+    }
+
+
+export const getGetNoteMacroLimitsQueryOptions = <TData = Awaited<ReturnType<typeof getNoteMacroLimits>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoteMacroLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNoteMacroLimitsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNoteMacroLimits>>> = ({ signal }) => getNoteMacroLimits(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNoteMacroLimits>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetNoteMacroLimitsQueryResult = NonNullable<Awaited<ReturnType<typeof getNoteMacroLimits>>>
+export type GetNoteMacroLimitsQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetNoteMacroLimits<TData = Awaited<ReturnType<typeof getNoteMacroLimits>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoteMacroLimits>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getNoteMacroLimits>>,
+          TError,
+          Awaited<ReturnType<typeof getNoteMacroLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetNoteMacroLimits<TData = Awaited<ReturnType<typeof getNoteMacroLimits>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoteMacroLimits>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getNoteMacroLimits>>,
+          TError,
+          Awaited<ReturnType<typeof getNoteMacroLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetNoteMacroLimits<TData = Awaited<ReturnType<typeof getNoteMacroLimits>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoteMacroLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Field caps + duplicate rule the API enforces on note macros (NM-5)
+ */
+
+export function useGetNoteMacroLimits<TData = Awaited<ReturnType<typeof getNoteMacroLimits>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoteMacroLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetNoteMacroLimitsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * ``taken`` means a macro with the identical name exists in this category, so
+ * a save will 409 unless ``allow_duplicate`` is sent. ``other_category_matches``
+ * (same name, another category) are reported and never block.
+ * @summary Check whether a macro name is already taken in a category (NM-5)
+ */
+export const checkNoteMacroAvailability = (
+    params: CheckNoteMacroAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<NoteMacroAvailabilityResult>(
+      {url: `/api/v1/note-macros/availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCheckNoteMacroAvailabilityQueryKey = (params?: CheckNoteMacroAvailabilityParams,) => {
+    return [
+    `/api/v1/note-macros/availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCheckNoteMacroAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError = ErrorType<ErrorResponse>>(params: CheckNoteMacroAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckNoteMacroAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkNoteMacroAvailability>>> = ({ signal }) => checkNoteMacroAvailability(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckNoteMacroAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkNoteMacroAvailability>>>
+export type CheckNoteMacroAvailabilityQueryError = ErrorType<ErrorResponse>
+
+
+export function useCheckNoteMacroAvailability<TData = Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: CheckNoteMacroAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkNoteMacroAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkNoteMacroAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckNoteMacroAvailability<TData = Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: CheckNoteMacroAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkNoteMacroAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkNoteMacroAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckNoteMacroAvailability<TData = Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: CheckNoteMacroAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Check whether a macro name is already taken in a category (NM-5)
+ */
+
+export function useCheckNoteMacroAvailability<TData = Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError = ErrorType<ErrorResponse>>(
+ params: CheckNoteMacroAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkNoteMacroAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckNoteMacroAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * ``sig_max_length`` is the legacy 240-character rule, now a 422
+ * ``sig_too_long`` server-side; ``duplicate_key_fields`` + ``override_field``
+ * describe the 409 ``duplicate_prescription`` guard.
+ * @summary Field caps + duplicate rule the API enforces on the Rx library (RX-2/RX-4)
+ */
+export const getPrescriptionLibraryLimits = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PrescriptionLibraryLimits>(
+      {url: `/api/v1/prescription-library/limits`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPrescriptionLibraryLimitsQueryKey = () => {
+    return [
+    `/api/v1/prescription-library/limits`
+    ] as const;
+    }
+
+
+export const getGetPrescriptionLibraryLimitsQueryOptions = <TData = Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPrescriptionLibraryLimitsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>> = ({ signal }) => getPrescriptionLibraryLimits(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPrescriptionLibraryLimitsQueryResult = NonNullable<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>>
+export type GetPrescriptionLibraryLimitsQueryError = ErrorType<unknown>
+
+
+export function useGetPrescriptionLibraryLimits<TData = Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>,
+          TError,
+          Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPrescriptionLibraryLimits<TData = Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>,
+          TError,
+          Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPrescriptionLibraryLimits<TData = Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Field caps + duplicate rule the API enforces on the Rx library (RX-2/RX-4)
+ */
+
+export function useGetPrescriptionLibraryLimits<TData = Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPrescriptionLibraryLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPrescriptionLibraryLimitsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * ``taken`` means an **active** row with the identical name + dispense + sig
+ * exists, so a save will 409 unless ``allow_duplicate`` is sent.
+ * ``inactive_matches`` (same configuration, deactivated — offer to reactivate)
+ * and ``same_name_matches`` (same drug, different dispense/sig — the
+ * *Chlorhexidine* case) are reported and never block.
+ * @summary Check whether a drug name + dispense + sig is already in the library (RX-4)
+ */
+export const checkPrescriptionLibraryAvailability = (
+    params: CheckPrescriptionLibraryAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PrescriptionAvailabilityResult>(
+      {url: `/api/v1/prescription-library/availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCheckPrescriptionLibraryAvailabilityQueryKey = (params?: CheckPrescriptionLibraryAvailabilityParams,) => {
+    return [
+    `/api/v1/prescription-library/availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCheckPrescriptionLibraryAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError = ErrorType<HTTPValidationError>>(params: CheckPrescriptionLibraryAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckPrescriptionLibraryAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>> = ({ signal }) => checkPrescriptionLibraryAvailability(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CheckPrescriptionLibraryAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>>
+export type CheckPrescriptionLibraryAvailabilityQueryError = ErrorType<HTTPValidationError>
+
+
+export function useCheckPrescriptionLibraryAvailability<TData = Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError = ErrorType<HTTPValidationError>>(
+ params: CheckPrescriptionLibraryAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckPrescriptionLibraryAvailability<TData = Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError = ErrorType<HTTPValidationError>>(
+ params: CheckPrescriptionLibraryAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCheckPrescriptionLibraryAvailability<TData = Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError = ErrorType<HTTPValidationError>>(
+ params: CheckPrescriptionLibraryAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Check whether a drug name + dispense + sig is already in the library (RX-4)
+ */
+
+export function useCheckPrescriptionLibraryAvailability<TData = Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError = ErrorType<HTTPValidationError>>(
+ params: CheckPrescriptionLibraryAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof checkPrescriptionLibraryAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCheckPrescriptionLibraryAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List procedure codes
  */
 export const listProcedureCodes = (
@@ -1204,6 +2693,7 @@ export function useGetProcedureCode<TData = Awaited<ReturnType<typeof getProcedu
 
 
 /**
+ * Partial update of one procedure code.
  * @summary Update procedure code
  */
 export const updateProcedureCode = (
@@ -1268,6 +2758,7 @@ export const useUpdateProcedureCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProcedureCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one procedure code.
  * @summary Delete procedure code
  */
 export const deleteProcedureCode = (
@@ -1577,6 +3068,7 @@ export function useGetFeeSchedule<TData = Awaited<ReturnType<typeof getFeeSchedu
 
 
 /**
+ * Partial update of one fee schedule.
  * @summary Update fee schedule
  */
 export const updateFeeSchedule = (
@@ -1641,6 +3133,7 @@ export const useUpdateFeeSchedule = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateFeeScheduleMutationOptions(options), queryClient);
     }
     /**
+ * Delete one fee schedule.
  * @summary Delete fee schedule
  */
 export const deleteFeeSchedule = (
@@ -1950,6 +3443,7 @@ export function useGetFeeScheduleEntry<TData = Awaited<ReturnType<typeof getFeeS
 
 
 /**
+ * Partial update of one fee schedule entry. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update fee schedule entry
  */
 export const updateFeeScheduleEntry = (
@@ -2014,6 +3508,7 @@ export const useUpdateFeeScheduleEntry = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateFeeScheduleEntryMutationOptions(options), queryClient);
     }
     /**
+ * Delete one fee schedule entry. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete fee schedule entry
  */
 export const deleteFeeScheduleEntry = (
@@ -2323,6 +3818,7 @@ export function useGetCodeBundle<TData = Awaited<ReturnType<typeof getCodeBundle
 
 
 /**
+ * Partial update of one code bundle.
  * @summary Update code bundle
  */
 export const updateCodeBundle = (
@@ -2387,6 +3883,7 @@ export const useUpdateCodeBundle = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCodeBundleMutationOptions(options), queryClient);
     }
     /**
+ * Delete one code bundle.
  * @summary Delete code bundle
  */
 export const deleteCodeBundle = (
@@ -2696,6 +4193,7 @@ export function useGetCodeBundleItem<TData = Awaited<ReturnType<typeof getCodeBu
 
 
 /**
+ * Partial update of one code bundle item.
  * @summary Update code bundle item
  */
 export const updateCodeBundleItem = (
@@ -2760,6 +4258,7 @@ export const useUpdateCodeBundleItem = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCodeBundleItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one code bundle item.
  * @summary Delete code bundle item
  */
 export const deleteCodeBundleItem = (
@@ -3069,6 +4568,7 @@ export function useGetChartMaterial<TData = Awaited<ReturnType<typeof getChartMa
 
 
 /**
+ * Partial update of one chart material. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update chart material
  */
 export const updateChartMaterial = (
@@ -3133,6 +4633,7 @@ export const useUpdateChartMaterial = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateChartMaterialMutationOptions(options), queryClient);
     }
     /**
+ * Delete one chart material. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete chart material
  */
 export const deleteChartMaterial = (
@@ -3442,6 +4943,7 @@ export function useGetNoteMacro<TData = Awaited<ReturnType<typeof getNoteMacro>>
 
 
 /**
+ * Partial update of one note macro. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update note macro
  */
 export const updateNoteMacro = (
@@ -3506,6 +5008,7 @@ export const useUpdateNoteMacro = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateNoteMacroMutationOptions(options), queryClient);
     }
     /**
+ * Delete one note macro. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete note macro
  */
 export const deleteNoteMacro = (
@@ -3815,6 +5318,7 @@ export function useGetPrescriptionLibraryItem<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Partial update of one prescription library item. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update prescription library item
  */
 export const updatePrescriptionLibraryItem = (
@@ -3879,6 +5383,7 @@ export const useUpdatePrescriptionLibraryItem = <TError = ErrorType<ErrorRespons
       return useMutation(getUpdatePrescriptionLibraryItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one prescription library item. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete prescription library item
  */
 export const deletePrescriptionLibraryItem = (
@@ -4188,6 +5693,7 @@ export function useGetPlaceOfServiceCode<TData = Awaited<ReturnType<typeof getPl
 
 
 /**
+ * Partial update of one place of service code.
  * @summary Update place of service code
  */
 export const updatePlaceOfServiceCode = (
@@ -4252,6 +5758,7 @@ export const useUpdatePlaceOfServiceCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePlaceOfServiceCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one place of service code.
  * @summary Delete place of service code
  */
 export const deletePlaceOfServiceCode = (
@@ -4561,6 +6068,7 @@ export function useGetIcdCode<TData = Awaited<ReturnType<typeof getIcdCode>>, TE
 
 
 /**
+ * Partial update of one icd code.
  * @summary Update icd code
  */
 export const updateIcdCode = (
@@ -4625,6 +6133,7 @@ export const useUpdateIcdCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateIcdCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one icd code.
  * @summary Delete icd code
  */
 export const deleteIcdCode = (
@@ -4934,6 +6443,7 @@ export function useGetExplosionCode<TData = Awaited<ReturnType<typeof getExplosi
 
 
 /**
+ * Partial update of one explosion code.
  * @summary Update explosion code
  */
 export const updateExplosionCode = (
@@ -4998,6 +6508,7 @@ export const useUpdateExplosionCode = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateExplosionCodeMutationOptions(options), queryClient);
     }
     /**
+ * Delete one explosion code.
  * @summary Delete explosion code
  */
 export const deleteExplosionCode = (
@@ -5307,6 +6818,7 @@ export function useGetExplosionCodeItem<TData = Awaited<ReturnType<typeof getExp
 
 
 /**
+ * Partial update of one explosion code item.
  * @summary Update explosion code item
  */
 export const updateExplosionCodeItem = (
@@ -5371,6 +6883,7 @@ export const useUpdateExplosionCodeItem = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateExplosionCodeItemMutationOptions(options), queryClient);
     }
     /**
+ * Delete one explosion code item.
  * @summary Delete explosion code item
  */
 export const deleteExplosionCodeItem = (
@@ -5680,6 +7193,7 @@ export function useGetFeeScheduleAssignment<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Partial update of one fee schedule assignment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update fee schedule assignment
  */
 export const updateFeeScheduleAssignment = (
@@ -5744,6 +7258,7 @@ export const useUpdateFeeScheduleAssignment = <TError = ErrorType<ErrorResponse>
       return useMutation(getUpdateFeeScheduleAssignmentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one fee schedule assignment. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete fee schedule assignment
  */
 export const deleteFeeScheduleAssignment = (

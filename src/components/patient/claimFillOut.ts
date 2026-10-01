@@ -50,6 +50,32 @@ export interface ClaimFillOutForm {
   is_replacement_of_prosthesis: boolean;
   prosthesis_prior_placement_date: string;
   remarks: string;
+  // ---- ADA 2024 form boxes that the fill-out window never had ----------------
+  /** ADA Item 1 — EPSDT / Title XIX transaction. */
+  is_epsdt: boolean;
+  /** ADA Item 53a — treating dentist is providing services as locum tenens. */
+  is_locum_tenens: boolean;
+  /** ADA Item 39a — date of the last scaling and root planing (YYYY-MM-DD); blank = derive from history. */
+  date_last_srp: string;
+  /** ADA Item 31a — other fee(s) such as sales tax (decimal string; blank prints nothing). */
+  other_fees: string;
+  /** ADA Items 20 / 12 — name suffix (Jr., III); no backend column (ADA-BE-10). */
+  patient_name_suffix: string;
+  subscriber_name_suffix: string;
+  /**
+   * Per-procedure ADA Items 29a (diagnosis pointer letters A–D, primary first)
+   * and 29b (quantity 01–99), keyed by patient_procedures.id (ADA-BE-3/4).
+   */
+  line_overrides: Record<string, ClaimLineOverride>;
+  /** ADA Item 33 — explicit missing-teeth list for this claim; null = derive from the chart (ADA-BE-6). */
+  missing_teeth_override: string[] | null;
+  /** patient_signatures ids captured for Items 36 / 37 / 53 of this claim (no claim binding on the row — SIG-11). */
+  signature_ids: { patient_consent: number | null; assign_benefits: number | null; treating_dentist: number | null };
+}
+
+export interface ClaimLineOverride {
+  diagnosis_pointer: string;
+  quantity: string;
 }
 
 /** Fields the backend really stores (on the patient record). */
@@ -92,6 +118,15 @@ export function emptyClaimFillOut(): ClaimFillOutForm {
     is_replacement_of_prosthesis: false,
     prosthesis_prior_placement_date: "",
     remarks: "",
+    is_epsdt: false,
+    is_locum_tenens: false,
+    date_last_srp: "",
+    other_fees: "",
+    patient_name_suffix: "",
+    subscriber_name_suffix: "",
+    line_overrides: {},
+    missing_teeth_override: null,
+    signature_ids: { patient_consent: null, assign_benefits: null, treating_dentist: null },
   };
 }
 
@@ -141,10 +176,11 @@ export function loadLocalClaimFillOut(claimId: string): StoredClaimFillOut | nul
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<StoredClaimFillOut>;
     if (!parsed || typeof parsed !== "object" || !parsed.form) return null;
-    return {
-      form: { ...emptyClaimFillOut(), ...parsed.form },
-      saved_at: parsed.saved_at || "",
-    };
+    const form = { ...emptyClaimFillOut(), ...parsed.form };
+    if (!form.line_overrides || typeof form.line_overrides !== "object") form.line_overrides = {};
+    if (!Array.isArray(form.missing_teeth_override)) form.missing_teeth_override = null;
+    form.signature_ids = { ...emptyClaimFillOut().signature_ids, ...(form.signature_ids ?? {}) };
+    return { form, saved_at: parsed.saved_at || "" };
   } catch {
     return null;
   }

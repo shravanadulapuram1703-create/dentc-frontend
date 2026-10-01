@@ -19,6 +19,11 @@ export interface AssignedProcedureCodeRead {
   requires_surface: boolean;
   requires_quadrant: boolean;
   requires_lab: boolean;
+  requires_attachment: boolean;
+  requires_perio_chart: boolean;
+  requires_photo: boolean;
+  requires_xray: boolean;
+  requires_missing_tooth_info: boolean;
   is_ortho: boolean;
   billing_order?: string | null;
   recall_interval?: number | null;

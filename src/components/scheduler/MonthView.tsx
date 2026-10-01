@@ -12,6 +12,8 @@ interface MonthViewProps {
   isDayClosed?: (date: Date) => boolean;
   /** Resolve an appointment's provider color (matches the day view / legend). */
   getProviderColor: (appointment: Appointment) => ProviderColor;
+  /** Does the patient have an active medical alert? Renders the red ✚ badge. */
+  hasAlert?: (appointment: Appointment) => boolean;
 }
 
 const fmtYMD = (d: Date): string =>
@@ -30,6 +32,7 @@ export default function MonthView({
   appointments,
   onSelectDay,
   getProviderColor,
+  hasAlert,
   isDayClosed,
 }: MonthViewProps) {
   const year = selectedDate.getFullYear();
@@ -124,6 +127,15 @@ export default function MonthView({
                     }}
                     title={`${appt.start_time} ${appt.patient_name} — ${appt.procedure_label}`}
                   >
+                    {hasAlert?.(appt) && (
+                      <span
+                        className="text-red-600 font-bold mr-0.5"
+                        title="Medical alert — see the patient's Medical History"
+                        aria-label="Medical alert"
+                      >
+                        ✚
+                      </span>
+                    )}
                     {appt.start_time} {appt.patient_name}
                   </div>
                   );

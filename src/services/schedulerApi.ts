@@ -24,7 +24,6 @@ import {
 } from "@/api/generated/endpoints/appointments/appointments";
 import {
   listOperatories,
-  listProviders,
   getOffice,
 } from "@/api/generated/endpoints/organization/organization";
 import { listProcedureCodes } from "@/api/generated/endpoints/procedures/procedures";
@@ -35,11 +34,20 @@ import {
 } from "@/api/generated/endpoints/treatment-plans/treatment-plans";
 import { listDefinitions } from "@/api/generated/endpoints/metadata/metadata";
 import { getPatientBalance } from "@/api/generated/endpoints/billing/billing";
-import { fetchProvidersForOffice } from "@/services/providerDirectory";
+import {
+  fetchPatientMedicalAlertSummary,
+  type ActiveMedicalAlert,
+} from "@/features/medical-alerts/patientMedicalAlerts";
+import {
+  fetchProviderDirectory,
+  fetchProvidersForOfficeGrouped,
+  providerLabelMap,
+  type ProviderOption,
+} from "@/services/providerDirectory";
+import { listOfficeOptions, officeKeyToId } from "@/services/officeLookup";
 import {
   getPatient,
   getPatientContext,
-  listPatientAlerts,
 } from "@/api/generated/endpoints/patients/patients";
 import type {
   AppointmentRead,
@@ -47,7 +55,6 @@ import type {
   AppointmentProcedureRead,
   ProcedureCodeRead,
   SchedulerPatientRead,
-  PatientAlertRead,
   PatientBalance,
 } from "@/api/generated/model";
 
@@ -57,13 +64,10 @@ import type {
 const PAGE = { size: 200 } as const;
 
 /** "OFF-1" | "1" -> 1 (numeric office id the backend filters expect).
- *  Exported so screens can scope their reference-data fetches to the
- *  selected office instead of loading every office's data. */
-export const officeIdNum = (officeId?: string | number | null): number | undefined => {
-  if (officeId == null || officeId === "") return undefined;
-  const m = String(officeId).match(/(\d+)/);
-  return m ? Number(m[1]) : undefined;
-};
+ *  @deprecated Alias of the canonical `officeKeyToId` (src/services/officeLookup.ts),
+ *  kept so the many existing importers keep working. New code reads
+ *  `useOfficeScope().office_id` or imports `officeKeyToId` directly. */
+export const officeIdNum = officeKeyToId;
 
 /** Coerce any patient identifier the calendar may carry to the numeric
  *  patient_id the backend contract requires (number | null). Non-numeric
@@ -115,6 +119,9 @@ export interface Appointment {
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string;
+  lab_short_notice?: boolean;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
@@ -123,6 +130,10 @@ export interface Appointment {
   cancelled?: boolean;
   is_new_patient?: boolean;
   is_blocked?: boolean;
+  /** Feed flag `has_alert`. Today the backend derives it from /patient-alerts
+   *  only (not Medical History "yes" answers) — gap MA-1 — so the UI ORs it
+   *  with the per-patient summary from patientMedicalAlerts.ts. */
+  has_alert?: boolean;
   /** Server-owned status timestamps (set by PATCH /appointments/{id}/status). */
   confirmed_on?: string | null;
   checked_in_on?: string | null;
@@ -144,6 +155,9 @@ export interface Operatory {
 export interface Provider {
   id: string;
   name: string;
+  /** Legacy provider code (ProviderRead.short_id) — part of every provider label
+   *  because many providers share a name. See providerDisplayLabel(). */
+  short_id?: string | null;
   office?: string;
   /** Hex color set on the Provider Setup screen (ProviderRead.scheduler_color).
    *  Drives the provider's appointment color on the scheduler. */
@@ -153,6 +167,8 @@ export interface Provider {
   role?: string;
   /** Display title (DMD/DDS…), handy for disambiguating duplicate names. */
   title?: string | null;
+  /** True when the provider serves the office the list was fetched for (roster ∪ home office). */
+  in_office?: boolean;
 }
 
 export interface ProcedureType {
@@ -172,6 +188,13 @@ export interface AppointmentCreateRequest {
    *  is number | null). null is only valid for a not-yet-created patient — the
    *  caller must create the patient first and pass the returned numeric id. */
   patient_id: number | null;
+  /**
+   * Office stamp (STAMP.appointment = "working"): the WORKING office at the
+   * time of booking. When supplied, the chosen operatory must belong to it —
+   * `createAppointment` verifies that and throws otherwise. Legacy callers
+   * that omit it get the operatory's own office.
+   */
+  office_id?: number;
   date: string;
   start_time: string;
   duration: number;
@@ -182,6 +205,9 @@ export interface AppointmentCreateRequest {
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string;
+  lab_short_notice?: boolean;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
@@ -197,6 +223,8 @@ export interface AppointmentCreateRequest {
 export interface AppointmentUpdateRequest {
   id: string;
   patient_id?: number | null;
+  /** Re-stamp the office (see AppointmentCreateRequest.office_id); validated against the operatory. */
+  office_id?: number;
   date?: string;
   start_time?: string;
   duration?: number;
@@ -207,6 +235,9 @@ export interface AppointmentUpdateRequest {
   notes?: string;
   lab?: boolean;
   lab_dds?: string;
+  lab_vendor_id?: number | null;
+  lab_vendor_name?: string;
+  lab_short_notice?: boolean;
   lab_cost?: number;
   lab_sent_on?: string;
   lab_due_on?: string;
@@ -262,6 +293,34 @@ const newAppointmentId = (): string => {
   return `APPT-${uuid}`;
 };
 
+/**
+ * Guard for the appointment office stamp. The working office is the stamp
+ * (STAMP.appointment = "working"), so the chosen operatory must belong to it —
+ * otherwise the appointment lands on one office's calendar while its chair
+ * lives in another's. Checks the office-scoped operatory list (the same call
+ * the calendar columns use); if that call fails, falls back to the unscoped
+ * row's own `office_id` so a transient error never blocks a save. An operatory
+ * that did not resolve at all is left to the backend to validate.
+ */
+const assertOperatoryInOffice = async (
+  op: { id: string | number; name: string; office_id?: number | null } | undefined,
+  office_id: number,
+): Promise<void> => {
+  if (!op) return;
+  const scoped = await listOperatories({ office_id, ...PAGE }).catch(() => null);
+  const in_office = scoped
+    ? (scoped.items ?? []).some((o) => String(o.id) === String(op.id))
+    : op.office_id == null || op.office_id === office_id;
+  if (in_office) return;
+  const owner_id = op.office_id ?? null;
+  const owner =
+    owner_id != null
+      ? ((await listOfficeOptions().catch(() => [])).find((o) => o.id === owner_id)?.name ??
+        `office ${owner_id}`)
+      : "another office";
+  throw new Error(`Operatory ${op.name} belongs to ${owner}, not the working office`);
+};
+
 const mapAppointment = (
   a: AppointmentRead,
   names?: {
@@ -295,6 +354,10 @@ const mapAppointment = (
     "",
   notes: a.notes ?? undefined,
   lab: a.has_lab ?? undefined,
+  lab_dds: a.lab_dds ?? undefined,
+  lab_vendor_id: a.lab_vendor_id ?? null,
+  lab_vendor_name: a.lab_vendor_name ?? undefined,
+  lab_short_notice: a.lab_short_notice ?? undefined,
   lab_cost: a.lab_cost != null ? Number(a.lab_cost) : undefined,
   lab_sent_on: a.lab_sent_on ?? undefined,
   lab_due_on: a.lab_due_on ?? undefined,
@@ -339,6 +402,15 @@ const resolvePatientNames = async (
   return new Map(entries);
 };
 
+/** provider id -> "Name (ID)" label map, from the shared (cached) directory. */
+const providerNamesMap = async (): Promise<Map<string, string>> => {
+  try {
+    return providerLabelMap(await fetchProviderDirectory());
+  } catch {
+    return new Map();
+  }
+};
+
 /** id -> name map from a list endpoint result. */
 const namesMap = (
   items: Array<{ id: string | number; name: string }> | null | undefined,
@@ -371,6 +443,7 @@ const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
   missed: a.is_missed ?? undefined,
   cancelled: a.is_cancelled ?? undefined,
   is_blocked: a.is_blocked ?? undefined,
+  has_alert: a.has_alert === true ? true : undefined,
   confirmed_on: a.confirmed_on ?? null,
   checked_in_on: a.checked_in_on ?? null,
   checked_out_on: a.checked_out_on ?? null,
@@ -461,7 +534,9 @@ export const fetchAppointments = async (
   // the feed still returns (gap SCHED-DEL-1).
   // The new-patient lookup also runs in parallel: the feed omits
   // `is_new_patient` (gap SCHED-NP-1), so the flag is overlaid from the plain list.
-  const [rows, archivedIds, newPatientIds] = await Promise.all([
+  // The feed's provider_name is the bare name; providers share names, so the
+  // view-model label is re-resolved to "Name (ID)" from the shared directory.
+  const [rows, archivedIds, newPatientIds, providerLabels] = await Promise.all([
     listSchedulerAppointments({
       date_from: startDate,
       date_to: to,
@@ -469,14 +544,20 @@ export const fetchAppointments = async (
     }),
     fetchArchivedAppointmentIds(startDate, to, oid),
     fetchNewPatientAppointmentIds(startDate, to, oid),
+    providerNamesMap(),
   ]);
 
   let mapped = (rows ?? [])
     .filter((a) => !archivedIds.has(a.id))
-    .map((a) => ({
-      ...mapSchedulerAppointment(a),
-      is_new_patient: newPatientIds.has(a.id) || undefined,
-    }));
+    .map((a) => {
+      const vm = mapSchedulerAppointment(a);
+      return {
+        ...vm,
+        provider_name:
+          (vm.provider_id && providerLabels.get(vm.provider_id)) || vm.provider_name,
+        is_new_patient: newPatientIds.has(a.id) || undefined,
+      };
+    });
   if (filters?.status)
     mapped = mapped.filter((a) => a.status === filters.status);
   if (filters?.provider_id)
@@ -491,14 +572,14 @@ export const fetchAppointments = async (
  *  single-appointment return so create/update/status results never leak ids
  *  or "Patient <id>" into the calendar/edit form. */
 const enrichOne = async (a: AppointmentRead): Promise<Appointment> => {
-  const [providersRes, operatoriesRes, patientNames] = await Promise.all([
-    listProviders(PAGE).catch(() => null),
+  const [providerLabels, operatoriesRes, patientNames] = await Promise.all([
+    providerNamesMap(),
     listOperatories(PAGE).catch(() => null),
     resolvePatientNames([a.patient_id]),
   ]);
   return mapAppointment(a, {
     patients: patientNames,
-    providers: namesMap(providersRes?.items),
+    providers: providerLabels,
     operatories: namesMap(operatoriesRes?.items),
   });
 };
@@ -515,19 +596,22 @@ export const createAppointment = async (
 
   // AppointmentCreate requires id/provider_id/office_id/end_time. The calendar
   // may pass provider/operatory as ids OR names — resolve against the canonical
-  // lists, and derive office_id from the chosen operatory when not provided.
-  const [providersRes, operatoriesRes] = await Promise.all([
-    listProviders(PAGE).catch(() => null),
+  // (unscoped) lists for name resolution. The office stamp is the caller's
+  // working office when supplied (and the operatory must then belong to it);
+  // legacy callers that omit it get the operatory's own office.
+  const [providerRows, operatoriesRes] = await Promise.all([
+    fetchProviderDirectory().catch(() => null),
     listOperatories(PAGE).catch(() => null),
   ]);
   const provider_id = resolveByIdOrName(
-    providersRes?.items,
+    providerRows,
     data.provider_id ?? data.provider,
   );
   const op = findByIdOrName(operatoriesRes?.items, data.operatory_id ?? data.operatory);
   const operatory_id = op ? String(op.id) : (data.operatory_id ?? data.operatory ?? null);
-  const office_id =
-    officeIdNum(data.office_id ?? data.officeId) ?? op?.office_id ?? undefined;
+  const requested_office_id = officeKeyToId(data.office_id);
+  if (requested_office_id != null) await assertOperatoryInOffice(op, requested_office_id);
+  const office_id = requested_office_id ?? op?.office_id ?? undefined;
 
   const created = await createAppointmentApi({
     id: data.id ?? newAppointmentId(),
@@ -547,6 +631,9 @@ export const createAppointment = async (
     procedure_label: data.procedure_type ?? data.procedureType ?? null,
     notes: data.notes ?? null,
     has_lab: data.lab ?? undefined,
+    lab_dds: data.lab_dds ?? undefined,
+    lab_vendor_id: data.lab_vendor_id ?? undefined,
+    lab_short_notice: data.lab_short_notice ?? undefined,
     lab_cost: data.lab_cost ?? undefined,
     lab_sent_on: data.lab_sent_on ?? undefined,
     lab_due_on: data.lab_due_on ?? undefined,
@@ -569,23 +656,33 @@ export const updateAppointment = async (
     data.duration != null ? Number(data.duration) : undefined;
 
   // Resolve provider/operatory (id or name) only when the edit touches them.
+  // A re-stamped office (`office_id`) is validated against the operatory the
+  // appointment will have after this edit — the one in the patch, or, when the
+  // patch leaves the chair alone, the one already stored on the appointment.
+  const requested_office_id = officeKeyToId(data.office_id);
   let providerId = data.provider_id ?? data.provider;
   let operatoryId = data.operatory_id ?? data.operatory;
-  if (providerId != null || operatoryId != null) {
-    const [pRes, oRes] = await Promise.all([
-      listProviders(PAGE).catch(() => null),
+  if (providerId != null || operatoryId != null || requested_office_id != null) {
+    const [pRows, oRes] = await Promise.all([
+      fetchProviderDirectory().catch(() => null),
       listOperatories(PAGE).catch(() => null),
     ]);
-    if (providerId != null) providerId = resolveByIdOrName(pRes?.items, providerId);
-    if (operatoryId != null) {
-      const opMatch = findByIdOrName(oRes?.items, operatoryId);
-      operatoryId = opMatch ? String(opMatch.id) : operatoryId;
+    if (providerId != null) providerId = resolveByIdOrName(pRows, providerId);
+    let opMatch = operatoryId != null ? findByIdOrName(oRes?.items, operatoryId) : undefined;
+    if (operatoryId != null) operatoryId = opMatch ? String(opMatch.id) : operatoryId;
+    if (requested_office_id != null) {
+      if (operatoryId == null) {
+        const current = await getAppointmentApi(id).catch(() => null);
+        opMatch = findByIdOrName(oRes?.items, current?.operatory_id ?? null);
+      }
+      await assertOperatoryInOffice(opMatch, requested_office_id);
     }
   }
 
   const rawPatientId = data.patient_id ?? data.patientId;
   const patch: Record<string, unknown> = {
     patient_id: rawPatientId != null ? toPatientId(rawPatientId) : undefined,
+    office_id: requested_office_id,
     provider_id: providerId,
     operatory_id: operatoryId,
     date: data.date,
@@ -600,6 +697,9 @@ export const updateAppointment = async (
     procedure_label: data.procedure_type ?? data.procedureType,
     notes: data.notes,
     has_lab: data.lab,
+    lab_dds: data.lab_dds,
+    lab_vendor_id: data.lab_vendor_id,
+    lab_short_notice: data.lab_short_notice,
     lab_cost: data.lab_cost,
     lab_sent_on: data.lab_sent_on,
     lab_due_on: data.lab_due_on,
@@ -659,11 +759,17 @@ export interface RelatedAppointment {
   patient_name?: string;
 }
 
-/** A per-patient medical alert (the red-cross badge on the appointment). */
+/** A per-patient medical alert (the red-cross badge on the appointment).
+ *  Sourced from the shared summary in patientMedicalAlerts.ts: Medical History
+ *  "yes" answers (with their legacy section) plus free-text patient alerts. */
 export interface PatientMedicalAlert {
   id: number;
   alert: string;
+  /** Legacy group ("Allergic To", "Medical Conditions", "Account Alert", …). */
+  section: string;
+  comments: string;
   blocks_charges: boolean;
+  is_flash_alert: boolean;
 }
 
 /** A patient's computed account balance (drives the $ badge on the block and
@@ -752,9 +858,9 @@ export const fetchAppointmentDetails = async (
 ): Promise<AppointmentDetails> => {
   const today = appt.date;
 
-  const [providersRes, operatoriesRes, proceduresRes, ctxRes, alertsRes, rawRes] =
+  const [providerNames, operatoriesRes, proceduresRes, ctxRes, alertsRes, rawRes] =
     await Promise.all([
-      listProviders(PAGE).catch(() => null),
+      providerNamesMap(),
       listOperatories(PAGE).catch(() => null),
       listAppointmentProcedures({ appointment_id: appt.id, ...PAGE }).catch(
         () => null,
@@ -762,15 +868,10 @@ export const fetchAppointmentDetails = async (
       appt.patient_id != null
         ? getPatientContext(appt.patient_id).catch(() => null)
         : Promise.resolve(null),
-      appt.patient_id != null
-        ? listPatientAlerts({ patient_id: appt.patient_id, is_active: true, ...PAGE }).catch(
-            () => null,
-          )
-        : Promise.resolve(null),
+      fetchPatientAlerts(appt.patient_id).catch(() => []),
       getAppointmentApi(appt.id).catch(() => null),
     ]);
 
-  const providerNames = namesMap(providersRes?.items);
   const operatoryNames = namesMap(operatoriesRes?.items);
 
   // DELETE on appointment-procedures only sets is_archived and the list
@@ -826,7 +927,9 @@ export const fetchAppointmentDetails = async (
       work: patient?.work_phone ?? "",
       cell: patient?.cell_phone ?? "",
     },
-    provider_name: appt.provider_name,
+    provider_name:
+      (appt.provider_id != null && providerNames.get(String(appt.provider_id))) ||
+      appt.provider_name,
     preferred_provider,
     responsible_party_type: patient?.patient_type ?? "",
     preferred_language: patient?.preferred_language ?? "",
@@ -841,29 +944,28 @@ export const fetchAppointmentDetails = async (
     // Same-day family/account appointments require a responsible-party linkage
     // the backend does not expose on the feed — documented as a gap; left empty.
     family: [],
-    alerts: (alertsRes?.items ?? []).map((a: PatientAlertRead) => ({
-      id: a.id,
-      alert: a.alert,
-      blocks_charges: a.blocks_charges,
-    })),
+    alerts: alertsRes,
   };
 };
 
-/** Fetch just the patient's active medical alerts (red-cross badge / popover). */
+const toPatientMedicalAlert = (a: ActiveMedicalAlert): PatientMedicalAlert => ({
+  id: a.id,
+  alert: a.label,
+  section: a.section,
+  comments: a.comments,
+  blocks_charges: a.blocks_charges,
+  is_flash_alert: a.is_flash_alert,
+});
+
+/** Fetch just the patient's active medical alerts (red-cross badge / popover /
+ *  Details pop-out). Reads the shared, cached summary so the scheduler shows
+ *  exactly what the Medical History tab and the Prescriptions screen show. */
 export const fetchPatientAlerts = async (
   patientId: number | null | undefined,
 ): Promise<PatientMedicalAlert[]> => {
   if (patientId == null) return [];
-  const res = await listPatientAlerts({
-    patient_id: patientId,
-    is_active: true,
-    ...PAGE,
-  }).catch(() => null);
-  return (res?.items ?? []).map((a: PatientAlertRead) => ({
-    id: a.id,
-    alert: a.alert,
-    blocks_charges: a.blocks_charges,
-  }));
+  const summary = await fetchPatientMedicalAlertSummary(patientId).catch(() => null);
+  return (summary?.alerts ?? []).map(toPatientMedicalAlert);
 };
 
 /** Fetch a patient's computed account balance (the $ badge on the block). Uses
@@ -906,20 +1008,34 @@ export const fetchOperatories = async (
  * office-assignment join with that scalar and falls back to the full list when the
  * office resolves to nobody.
  */
+/**
+ * Every ACTIVE provider in the tenant, with the given office's roster first and
+ * flagged `in_office` — "prefer, never exclude". An office-scoped picker used to
+ * get only the roster, which is genuinely sparse (office 4 → one test provider),
+ * so registration and booking could not select the provider who actually treats
+ * the patient (NA-F6). Callers render the two groups with
+ * `<ProviderOptionGroups>`; the operatory → default-provider auto-fill now
+ * resolves against everyone, so a cross-office default provider survives.
+ * With no office, every provider is returned unflagged (scheduler legend).
+ */
 export const fetchProviders = async (
-  officeId?: string,
+  officeId?: string | number | null,
 ): Promise<Provider[]> => {
-  const scoped = await fetchProvidersForOffice(officeId);
-  return scoped
-    .filter((p) => p.is_active)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      office: p.office_id != null ? String(p.office_id) : undefined,
-      scheduler_color: p.scheduler_color,
-      role: p.role ?? undefined,
-      title: p.title,
-    }));
+  const { in_office, others } = await fetchProvidersForOfficeGrouped(officeId);
+  const toView = (p: ProviderOption, in_office: boolean): Provider => ({
+    id: p.id,
+    name: p.name,
+    short_id: p.short_id,
+    office: p.office_id != null ? String(p.office_id) : undefined,
+    scheduler_color: p.scheduler_color,
+    role: p.role ?? undefined,
+    title: p.title,
+    in_office,
+  });
+  return [
+    ...in_office.filter((p) => p.is_active).map((p) => toView(p, true)),
+    ...others.filter((p) => p.is_active).map((p) => toView(p, false)),
+  ];
 };
 
 /** True when the provider's role marks them as a hygienist. */

@@ -5,8 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { AppSchemasMedicalHistoryMedicalAlertIn } from './appSchemasMedicalHistoryMedicalAlertIn';
 import type { EmergencyContactIn } from './emergencyContactIn';
+import type { MedicalAlertIn } from './medicalAlertIn';
 import type { MedicalHistorySaveRequestMarkCompletedItem } from './medicalHistorySaveRequestMarkCompletedItem';
 import type { QuestionnaireAnswerIn } from './questionnaireAnswerIn';
 
@@ -20,7 +20,7 @@ import type { QuestionnaireAnswerIn } from './questionnaireAnswerIn';
  */
 export interface MedicalHistorySaveRequest {
   comments?: string | null;
-  alerts?: AppSchemasMedicalHistoryMedicalAlertIn[] | null;
+  alerts?: MedicalAlertIn[] | null;
   dental_responses?: QuestionnaireAnswerIn[] | null;
   medical_responses?: QuestionnaireAnswerIn[] | null;
   emergency_contacts?: EmergencyContactIn[] | null;

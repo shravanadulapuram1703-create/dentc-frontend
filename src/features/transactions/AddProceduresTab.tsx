@@ -3,12 +3,15 @@ import { Loader2, Plus } from 'lucide-react';
 import type { ProcedureCodeRead, ExplosionCodeRead } from '@/api/generated/model';
 import { loadProcedureCodes } from '@/components/setup/insurance/procedureCodeService';
 import {
-  EMPTY_FEE_CONTEXT,
+  priceProcedureFor as priceProcedure,
   loadFeeScheduleContext,
+  loadCoverageContext,
+  EMPTY_FEE_CONTEXT,
+  EMPTY_COVERAGE_CONTEXT,
   type FeeScheduleContext,
-} from '@/services/feeScheduleResolver';
-import { EMPTY_COVERAGE_CONTEXT, loadCoverageContext, type CoverageContext } from '@/services/coverageResolver';
-import { priceProcedure, type PricedProcedure } from '@/services/procedurePricing';
+  type CoverageContext,
+  type PricedProcedure,
+} from '@/features/pricing';
 import { postCompletedProcedure } from '@/features/procedures/procedureEntryService';
 import { needsProcedureDetails } from '@/features/procedures/procedureRequirements';
 import ProcedureDetailsDialog, {
@@ -421,6 +424,7 @@ export default function AddProceduresTab({
         <ProcedureDetailsDialog
           mode="charge"
           office_id={officeId}
+          patient_id={patientId}
           rows={details}
           header={{ provider_id: providerId, date: transactionDateIso }}
           busy={posting}

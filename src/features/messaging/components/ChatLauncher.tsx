@@ -3,32 +3,33 @@ import { cn } from "@/components/ui/utils";
 import { useChat } from "@/contexts/ChatContext";
 
 /**
- * Floating launcher for the messaging panel (replaces the old AI chat button).
- * Shows a live unread badge and hides itself while the panel is open.
+ * Header launcher for the messaging panel. Lives in the GlobalNav top bar next
+ * to the AppointNow bell (it used to be a floating bottom-right FAB, which sat
+ * on top of page footers and action buttons). Shows a live unread badge and a
+ * pressed state while the slide-in panel is open.
  */
 export default function ChatLauncher() {
   const { isOpen, togglePanel, unreadTotal } = useChat();
 
   return (
     <button
+      type="button"
       onClick={togglePanel}
-      aria-label="Open messages"
+      aria-label={isOpen ? "Close messages" : "Open messages"}
+      aria-pressed={isOpen}
       title="Messages"
       className={cn(
-        "fixed bottom-6 right-6 z-[9998] w-14 h-14 sm:w-16 sm:h-16 rounded-full",
-        "bg-gradient-to-br from-[#3A6EA5] to-[#1F3A5F] shadow-lg hover:shadow-xl",
-        "flex items-center justify-center group transition-all duration-300 ease-in-out",
-        isOpen ? "scale-90 opacity-0 pointer-events-none" : "scale-100 opacity-100 hover:scale-110",
+        "relative flex h-10 w-10 items-center justify-center rounded-lg border transition-all backdrop-blur-sm",
+        isOpen
+          ? "bg-white text-[#1F3A5F] border-white shadow-inner"
+          : "bg-white/10 hover:bg-white/20 border-white/30 text-white",
       )}
     >
-      <MessageSquare className="w-6 h-6 text-white group-hover:scale-110 transition-transform" strokeWidth={2.3} />
+      <MessageSquare className="w-5 h-5" strokeWidth={2} />
       {unreadTotal > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 bg-[#EF4444] text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+        <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#EF4444] px-1 text-[11px] font-bold text-white shadow">
           {unreadTotal > 99 ? "99+" : unreadTotal}
         </span>
-      )}
-      {!isOpen && (
-        <span className="absolute inset-0 rounded-full bg-[#3A6EA5] animate-ping opacity-20" />
       )}
     </button>
   );

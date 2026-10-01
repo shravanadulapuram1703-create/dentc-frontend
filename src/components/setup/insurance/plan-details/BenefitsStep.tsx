@@ -2,22 +2,19 @@
 //
 // Three blue-banded boxes (Deductible / Maximum / Ortho Max Information) and
 // the Plan Notes area. Backend-backed: individual_deductible, family_deductible,
-// individual_max, family_max, ortho_max. Browser-stored (PLAN-DTL-1):
-// lifetime_ortho_benefits, plan_notes.
+// individual_max, family_max, ortho_max, lifetime_ortho_benefits, plan_notes.
 
 import type { PlanDetailsForm } from "./planDetailsModel";
-import { BandHeader, WzMoney, Note } from "./wizardUi";
+import { BandHeader, WzMoney } from "./wizardUi";
 
 export default function BenefitsStep({
   form,
   onChange,
   disabled = false,
-  showExtrasNote = true,
 }: {
   form: PlanDetailsForm;
   onChange: (patch: Partial<PlanDetailsForm>) => void;
   disabled?: boolean;
-  showExtrasNote?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -84,13 +81,6 @@ export default function BenefitsStep({
           placeholder="Plan notes, limitations wording, “Other – see plan notes” details…"
         />
       </div>
-
-      {showExtrasNote && (
-        <Note tone="warn">
-          Lifetime Ortho Benefits and Plan Notes have no column on the insurance-plan record yet — they are kept in this browser
-          for the plan (backend report PLAN-DTL-1).
-        </Note>
-      )}
     </div>
   );
 }

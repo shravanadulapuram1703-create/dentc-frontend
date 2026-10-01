@@ -8,9 +8,11 @@
 
 export interface FeeScheduleEntryCreate {
   fee_schedule_id: number;
+  /** @maxLength 20 */
   procedure_code: string;
   amb_code?: string | null;
   patient_fee?: number | string | null;
   insurance_fee?: number | string | null;
+  is_no_charge?: boolean | null;
   effective_date?: string | null;
 }

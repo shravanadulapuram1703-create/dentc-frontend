@@ -7,24 +7,28 @@ import {
   listPatientPaymentPlans,
   listPatientInsPaymentPlans,
   listPatientSecInsPaymentPlans,
+  listOrthoPlans,
 } from '@/api/generated/endpoints/billing/billing';
 import { getPatient, listPatients } from '@/api/generated/endpoints/patients/patients';
 import { listPatientProcedures } from '@/api/generated/endpoints/clinical/clinical';
-import { listOffices } from '@/api/generated/endpoints/organization/organization';
 import { listUsers } from '@/api/generated/endpoints/users/users';
+import { listOfficeOptions, type OfficeOption } from '@/services/officeLookup';
+import { patient_display_name } from '@/features/patient-overview/format';
+import { isDeletedClaim } from '@/components/patient/claimLifecycle';
 import type {
   AccountLedgerRow,
   InsuranceClaimRead,
-  OfficeRead,
   UserRead,
   PatientRead,
   PatientPaymentPlanRead,
   PatientInsPaymentPlanRead,
   PatientSecInsPaymentPlanRead,
+  OrthoPlanRead,
 } from '@/api/generated/model';
 
 /** The backend's per-request row ceiling on the account-ledger feed. */
-const FEED_SIZE = 500;
+// PRINT-3: the feed accepts up to 5,000 rows per call (was 500).
+const FEED_SIZE = 5000;
 
 /** `GET /patient-procedures` caps `size` at 200; page up to the feed ceiling. */
 const PROC_PAGE = 200;
@@ -39,8 +43,9 @@ export interface AccountMember {
 }
 
 export function memberName(p: PatientRead): string {
-  const base = `${p.last_name ?? ''}, ${p.first_name ?? ''}`.replace(/^, |, $/, '');
-  return p.preferred_name ? `${base} (${p.preferred_name})` : base || String(p.id);
+  // "Last, First Middle (Preferred)"; falls back to the id when the name is blank.
+  const name = patient_display_name(p);
+  return name === '-' ? String(p.id) : name;
 }
 
 /**
@@ -95,7 +100,8 @@ export interface MemberFeed {
 
 export interface LedgerFeed {
   feeds: MemberFeed[];
-  offices: OfficeRead[];
+  /** Office label table (id / name / short_id / office_code) from the shared catalog. */
+  offices: OfficeOption[];
   users: UserRead[];
 }
 
@@ -148,7 +154,7 @@ export async function loadLedgerFeed(
     size: FEED_SIZE,
   };
 
-  const [feeds, officeRes, userRes] = await Promise.all([
+  const [feeds, offices, userRes] = await Promise.all([
     Promise.all(
       members.map(async (member): Promise<MemberFeed> => {
         const [ledger, claims, held] = await Promise.all([
@@ -161,34 +167,42 @@ export async function loadLedgerFeed(
         return {
           member,
           rows: ledger?.rows ?? [],
-          claims: claims.items ?? [],
+          // DELETE on a claim is a soft delete (`is_active=false`, status left as
+          // "draft") and the list has no is_deleted filter, so a deleted claim
+          // would otherwise render as a "Pri Claim - Draft" row (CLM-LC-1).
+          claims: (claims.items ?? []).filter((c) => !isDeletedClaim(c)),
           held,
           truncated: (ledger?.total ?? 0) > (ledger?.rows?.length ?? 0),
         };
       }),
     ),
-    listOffices({ size: 200 }).catch(() => ({ items: [] as OfficeRead[] })),
+    listOfficeOptions().catch(() => [] as OfficeOption[]),
     listUsers({ size: 200 }).catch(() => ({ items: [] as UserRead[] })),
   ]);
 
-  return { feeds, offices: officeRes.items ?? [], users: userRes.items ?? [] };
+  return { feeds, offices, users: userRes.items ?? [] };
 }
 
 export interface PaymentPlans {
   regular: PatientPaymentPlanRead | null; // Regular - Patient Payment Plan
-  orthoIns: PatientInsPaymentPlanRead | null; // Ortho - Insurance Payment Plan
+  /** Ortho contract (`/ortho-plans`): `pat_*` = patient sub-plan, `ins_*` = insurance sub-plan. */
+  ortho: OrthoPlanRead | null;
+  orthoIns: PatientInsPaymentPlanRead | null; // legacy Ortho - Insurance Payment Plan rows
   secIns: PatientSecInsPaymentPlanRead | null; // (secondary insurance — backend nearest match)
 }
 
 /**
- * Fetch the CONTRACTS-tab payment plans. The backend exposes three distinct
- * plan resources; the legacy screen's "Ortho - Patient Payment Plan" panel has
- * no clean backend counterpart (see gap report AL-3).
+ * Fetch the CONTRACTS-tab payment plans. The Ortho Payment Plan screen writes
+ * to `/ortho-plans`, whose `pat_*` / `ins_*` columns fill both ortho cards
+ * (AL-3 resolved); the legacy ins-plan rows remain as a fallback.
  */
 export async function loadPaymentPlans(patientId: number): Promise<PaymentPlans> {
-  const [regRes, insRes, secRes] = await Promise.all([
+  const [regRes, orthoRes, insRes, secRes] = await Promise.all([
     listPatientPaymentPlans({ patient_id: patientId, size: 50 }).catch(
       () => ({ items: [] as PatientPaymentPlanRead[] }),
+    ),
+    listOrthoPlans({ patient_id: patientId, is_active: true, size: 50 }).catch(
+      () => ({ items: [] as OrthoPlanRead[] }),
     ),
     listPatientInsPaymentPlans({ patient_id: patientId, size: 50 }).catch(
       () => ({ items: [] as PatientInsPaymentPlanRead[] }),
@@ -203,6 +217,7 @@ export async function loadPaymentPlans(patientId: number): Promise<PaymentPlans>
 
   return {
     regular: firstActive(regRes.items ?? []),
+    ortho: firstActive(orthoRes.items ?? []),
     orthoIns: (insRes.items ?? [])[0] ?? null,
     secIns: (secRes.items ?? [])[0] ?? null,
   };

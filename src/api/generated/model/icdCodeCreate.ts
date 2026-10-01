@@ -7,7 +7,9 @@
  */
 
 export interface IcdCodeCreate {
+  /** @maxLength 20 */
   code: string;
+  /** @maxLength 500 */
   description: string;
   icd9?: string | null;
   icd10?: string | null;

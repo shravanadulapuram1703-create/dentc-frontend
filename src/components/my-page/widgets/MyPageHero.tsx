@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, CalendarDays, Clock, UserCircle2, LogIn } from "lucide-react";
-import { useAuth } from "../../../contexts/AuthContext.js";
 import type { UserRole } from "../../../contexts/AuthContext.js";
+import { useOfficeScope } from "@/features/office-scope";
 import { roleLabel } from "../../dashboard/lib/dashboardUtils";
 
 interface MyPageHeroProps {
   name?: string;
   role?: UserRole;
-  currentOffice: string;
+  /** Kept for the route wrapper's props contract; the office comes from useOfficeScope(). */
+  currentOffice?: string;
   imageUrl?: string | null;
   lastLoginAt?: string | null;
 }
@@ -36,11 +37,10 @@ function formatLastLogin(iso?: string | null): string | null {
 export default function MyPageHero({
   name,
   role,
-  currentOffice,
   imageUrl,
   lastLoginAt,
 }: MyPageHeroProps) {
-  const { organizations, currentOrganization } = useAuth();
+  const { office, office_id } = useOfficeScope();
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -48,11 +48,8 @@ export default function MyPageHero({
     return () => clearInterval(id);
   }, []);
 
-  const officeName = useMemo(() => {
-    const org = organizations.find((o) => o.id === currentOrganization);
-    const office = org?.offices.find((o) => o.id === currentOffice);
-    return office?.displayName || office?.name || currentOffice || "No office selected";
-  }, [organizations, currentOrganization, currentOffice]);
+  // The catalog name — never the raw "OFF-<id>" key.
+  const officeName = office?.name ?? (office_id != null ? `Office ${office_id}` : "No office selected");
 
   const greeting =
     now.getHours() < 12 ? "Good morning" : now.getHours() < 18 ? "Good afternoon" : "Good evening";

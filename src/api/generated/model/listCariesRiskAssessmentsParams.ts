@@ -17,6 +17,10 @@ patient_id?: number | null;
  */
 risk_level?: string | null;
 /**
+ * Filter by office_id
+ */
+office_id?: number | null;
+/**
  * @minimum 1
  */
 page?: number;
@@ -34,4 +38,20 @@ order?: ListCariesRiskAssessmentsOrder;
  * Free-text search
  */
 search?: string | null;
+/**
+ * OFF-SCOPE-2: read across all offices (needs office_scope_view_all_offices)
+ */
+all_offices?: boolean;
+/**
+ * OFF-SCOPE-8: restrict to these offices (repeatable)
+ */
+office_ids?: number[] | null;
+/**
+ * OFF-SCOPE-8: restrict to an office group
+ */
+office_group_id?: number | null;
+/**
+ * OFF-SCOPE-4: include office_id IS NULL (global) rows (default: true for catalogs, false for day-data)
+ */
+include_global?: boolean | null;
 };

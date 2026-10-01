@@ -17,6 +17,10 @@ exam_id?: number | null;
  */
 tooth_no?: string | null;
 /**
+ * Filter by exam_ids
+ */
+exam_ids?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

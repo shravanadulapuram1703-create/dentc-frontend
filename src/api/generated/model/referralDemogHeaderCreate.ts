@@ -7,5 +7,6 @@
  */
 
 export interface ReferralDemogHeaderCreate {
+  /** @maxLength 255 */
   description: string;
 }

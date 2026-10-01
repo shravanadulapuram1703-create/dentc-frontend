@@ -1,12 +1,21 @@
 // Aggregation hooks for dashboard KPI/analytics widgets. Each runs as a single
 // React Query entry whose queryFn pages the underlying list endpoint and reduces
 // it client-side (the backend has no roll-up endpoints).
+//
+// Office scope: every list that accepts an office param receives it SERVER-SIDE
+// (`officeFilter` / `homeOfficeFilter`), so the page cap in `fetchAllPages`
+// bounds the office's rows rather than the tenant's — a client-side post-filter
+// after the cap silently undercounted busy tenants. With no working office
+// (office_id null) the param is omitted and the figures are tenant-wide ("all
+// offices"). `/patient-recalls` has no office param, so it alone keeps a client
+// filter, and its null-office rows are surfaced as `unassigned` — never hidden.
 import { useQuery } from "@tanstack/react-query";
 import { listPatientPayments } from "@/api/generated/endpoints/billing/billing";
 import { listPatientProcedures } from "@/api/generated/endpoints/clinical/clinical";
 import { listPatientRecalls } from "@/api/generated/endpoints/patients/patients";
 import { listAppointments } from "@/api/generated/endpoints/appointments/appointments";
 import { listPatients } from "@/api/generated/endpoints/patients/patients";
+import { homeOfficeFilter, officeFilter } from "@/features/office-scope";
 import {
   parseDecimal,
   fetchAllPages,
@@ -35,13 +44,13 @@ export function useCollectionToday(currentOffice?: string) {
           payment_date_from: date,
           payment_date_to: date,
           is_void: false,
+          ...officeFilter(office),
           page,
           size,
         }),
       );
-      const rows = office != null ? items.filter((p) => p.office_id === office) : items;
-      const amount = rows.reduce((s, p) => s + parseDecimal(p.amount), 0);
-      return { amount, count: rows.length, truncated };
+      const amount = items.reduce((s, p) => s + parseDecimal(p.amount), 0);
+      return { amount, count: items.length, truncated };
     },
   });
 }
@@ -62,13 +71,13 @@ export function useCompletedProductionToday(currentOffice?: string) {
           date_of_service_from: date,
           date_of_service_to: date,
           is_void: false,
+          ...officeFilter(office),
           page,
           size,
         }),
       );
-      const rows = office != null ? items.filter((p) => p.office_id === office) : items;
-      const amount = rows.reduce((s, p) => s + parseDecimal(p.fee), 0);
-      return { amount, count: rows.length, truncated };
+      const amount = items.reduce((s, p) => s + parseDecimal(p.fee), 0);
+      return { amount, count: items.length, truncated };
     },
   });
 }
@@ -93,16 +102,16 @@ export function useRevenue(currentOffice?: string) {
             payment_date_from: rangeStart,
             payment_date_to: date,
             is_void: false,
+            ...officeFilter(office),
             page,
             size,
           }),
         { maxPages: 8 },
       );
-      const rows = office != null ? items.filter((p) => p.office_id === office) : items;
       let daily = 0;
       let weekly = 0;
       let monthly = 0;
-      for (const p of rows) {
+      for (const p of items) {
         const amt = parseDecimal(p.amount);
         const d = p.payment_date?.slice(0, 10) ?? "";
         if (d === date) daily += amt;
@@ -118,6 +127,15 @@ export function useRevenue(currentOffice?: string) {
 // Recalls due (active recalls, bucketed by due_date client-side)
 // ---------------------------------------------------------------------------
 
+/**
+ * `/patient-recalls` has no office param, so the office is applied client-side
+ * after the page cap (the only hook here that still does). When an office is
+ * selected, recalls with `office_id == null` are NOT counted as in-office; they
+ * are reported separately as `unassigned` (due in the same window as the KPI:
+ * overdue + today + next 7 days) so the widget can say "Unassigned n" instead
+ * of silently dropping them. With no office selected every row counts and
+ * `unassigned` is 0.
+ */
 export function useRecallDue(currentOffice?: string) {
   const office = toOfficeId(currentOffice);
   const date = today();
@@ -131,7 +149,8 @@ export function useRecallDue(currentOffice?: string) {
         (page, size) => listPatientRecalls({ is_active: true, sort: "due_date", order: "asc", page, size }),
         { maxPages: 8 },
       );
-      const rows = office != null ? items.filter((r) => r.office_id == null || r.office_id === office) : items;
+      const rows = office != null ? items.filter((r) => r.office_id === office) : items;
+      const unassignedRows = office != null ? items.filter((r) => r.office_id == null) : [];
       let overdue = 0;
       let dueToday = 0;
       let dueWeek = 0;
@@ -153,7 +172,12 @@ export function useRecallDue(currentOffice?: string) {
           dueMonth += 1;
         }
       }
-      return { overdue, dueToday, dueWeek, dueMonth, truncated, dueList: dueList.slice(0, 8) };
+      let unassigned = 0;
+      for (const r of unassignedRows) {
+        const d = r.due_date?.slice(0, 10);
+        if (d && d <= weekEnd) unassigned += 1;
+      }
+      return { overdue, dueToday, dueWeek, dueMonth, unassigned, truncated, dueList: dueList.slice(0, 8) };
     },
   });
 }
@@ -194,7 +218,7 @@ export function useAnalyticsSeries(
             listAppointments({
               date_from: start,
               date_to: end,
-              office_id: office ?? null,
+              ...officeFilter(office),
               is_archived: false,
               page,
               size,
@@ -203,12 +227,25 @@ export function useAnalyticsSeries(
         ),
         fetchAllPages(
           (page, size) =>
-            listPatientPayments({ payment_date_from: start, payment_date_to: end, is_void: false, page, size }),
+            listPatientPayments({
+              payment_date_from: start,
+              payment_date_to: end,
+              is_void: false,
+              ...officeFilter(office),
+              page,
+              size,
+            }),
           { maxPages: 3 },
         ),
         fetchAllPages(
           (page, size) =>
-            listPatients({ created_at_from: start, created_at_to: end, home_office_id: office ?? null, page, size }),
+            listPatients({
+              created_at_from: start,
+              created_at_to: end,
+              ...homeOfficeFilter(office),
+              page,
+              size,
+            }),
           { maxPages: 3 },
         ),
       ]);
@@ -226,7 +263,6 @@ export function useAnalyticsSeries(
         if (b) b.appointments += 1;
       }
       for (const p of pays.items) {
-        if (office != null && p.office_id !== office) continue;
         const b = buckets.get(p.payment_date?.slice(0, 10) ?? "");
         if (b) b.collections += parseDecimal(p.amount);
       }

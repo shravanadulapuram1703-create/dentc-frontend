@@ -9,6 +9,7 @@ import CategoryFilter from './CategoryFilter';
 import ImageViewer from './ImageViewer';
 import ToothAssociationPanel from './ToothAssociationPanel';
 import DicomStudySection from './DicomStudySection';
+import { RequireRight, RIGHT } from '@/features/access-control';
 
 interface ImagesTabProps {
   patientId: number;
@@ -63,7 +64,10 @@ export default function ImagesTab({ patientId, officeId }: ImagesTabProps) {
           </div>
         </div>
 
-        <UploadButton patientId={patientId} officeId={officeId} />
+        {/* RBAC: uploading/capturing images needs Imaging Full Control. */}
+        <RequireRight code={RIGHT.imaging.full}>
+          <UploadButton patientId={patientId} officeId={officeId} />
+        </RequireRight>
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <CategoryFilter

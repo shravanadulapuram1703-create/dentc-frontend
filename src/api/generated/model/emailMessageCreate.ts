@@ -10,8 +10,10 @@ export interface EmailMessageCreate {
   office_id?: number | null;
   patient_id?: number | null;
   appointment_id?: string | null;
+  /** @maxLength 255 */
   to_email: string;
   from_email?: string | null;
+  /** @maxLength 500 */
   subject: string;
   body_html?: string | null;
   body_text?: string | null;

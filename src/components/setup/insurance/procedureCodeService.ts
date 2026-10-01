@@ -51,6 +51,11 @@ export function codeDescription(code: string): string {
   return cache?.map.get(code)?.description ?? "";
 }
 
+/** Full cached code record for `code` (call loadProcedureCodes first). */
+export function cachedProcedureCode(code: string): ProcedureCodeRead | undefined {
+  return cache?.map.get(code);
+}
+
 /** Debounced-search source for the procedure-code picker (add entry). */
 export async function searchProcedureCodes(query: string): Promise<PickerOption[]> {
   const map = await loadProcedureCodes();

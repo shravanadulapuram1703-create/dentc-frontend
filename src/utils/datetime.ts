@@ -33,6 +33,41 @@ export function formatUsDateTime(
   });
 }
 
+/**
+ * Parse a backend timestamp. Most resources serialise `created_at` / `updated_at`
+ * WITHOUT a timezone designator even though the value is UTC (PN-10, MH-17);
+ * `new Date("2026-09-09T23:59:16")` would read that as local time and show a
+ * clock that is hours off. Naive values are pinned to UTC before parsing.
+ * Returns null for empty or unparseable input.
+ */
+export function parseServerDateTime(value?: string | null): Date | null {
+  if (!value) return null;
+  const naive = /T\d{2}:\d{2}/.test(value) && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+  const d = new Date(naive ? `${value}Z` : value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Legacy "Modified On" format for audit stamps — `MM/DD/YYYY hh:mm AM EDT` in
+ * the practice's US display zone. Accepts naive-UTC server timestamps.
+ */
+export function formatAuditDateTime(value?: string | null, fallback = "—"): string {
+  const d = parseServerDateTime(value);
+  if (!d) return fallback;
+  const text = d.toLocaleString("en-US", {
+    timeZone: US_DISPLAY_TIME_ZONE,
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
+  });
+  // "09/09/2026, 07:59 PM EDT" → "09/09/2026 07:59 PM EDT" (legacy prints no comma).
+  return text.replace(/,\s*/, " ");
+}
+
 // ── Date-of-birth entry (KAN-37) ────────────────────────────────────────────
 //
 // `<input type="date">` is not a hard stop on its own: the browser still lets a

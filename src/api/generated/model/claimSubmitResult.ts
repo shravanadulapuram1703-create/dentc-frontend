@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { ClaimSubmitResultFormWarningsItem } from './claimSubmitResultFormWarningsItem';
 
 export interface ClaimSubmitResult {
   claim_id: string;
@@ -14,4 +15,6 @@ export interface ClaimSubmitResult {
   sent_date: string;
   send_method: string;
   submission_id: number;
+  missing_records_overridden?: boolean;
+  form_warnings?: ClaimSubmitResultFormWarningsItem[];
 }

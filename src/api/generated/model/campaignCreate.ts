@@ -8,7 +8,9 @@
 
 export interface CampaignCreate {
   office_id?: number | null;
+  /** @maxLength 100 */
   code: string;
+  /** @maxLength 200 */
   name: string;
   description?: string | null;
   channel?: string | null;

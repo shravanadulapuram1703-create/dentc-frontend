@@ -7,7 +7,9 @@
  */
 
 export interface InsCustomCoverageCreate {
+  /** @maxLength 20 */
   start_code: string;
+  /** @maxLength 20 */
   end_code: string;
   description?: string | null;
   coverage_pct?: number | string | null;

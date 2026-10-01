@@ -27,6 +27,9 @@ import { BillingPanel, ContractPanel } from "./panels/BillingContractPanels";
 import { BalancesTabContent, ContractsTabContent, ReferralsTabContent } from "./panels/TabPanels";
 import ResponsiblePartyModal from "./ResponsiblePartyModal";
 import FutureFamilyAppointmentsModal from "./FutureFamilyAppointmentsModal";
+import { printPatientOverview } from "./overviewPrint";
+import { openServerReport } from "@/features/print/serverReport";
+import { getPatientOverviewReport } from "@/api/generated/endpoints/patients/patients";
 
 const TABS = ["summary", "balances", "contracts", "referrals"] as const;
 type Tab = (typeof TABS)[number];
@@ -78,7 +81,15 @@ export default function PatientOverviewPage() {
           </button>
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() =>
+              // Server-rendered report (PRINT-1); the jsPDF builder is the
+              // fallback when the route is unreachable.
+              openServerReport({
+                fetch_pdf: () => getPatientOverviewReport(patient_id),
+                fallback: () => printPatientOverview(data, patient_id),
+                label: "Patient Overview",
+              })
+            }
             title="Print this overview"
             className="p-1 rounded hover:bg-white/15 print:hidden"
           >
@@ -88,8 +99,12 @@ export default function PatientOverviewPage() {
       </div>
 
       <div className="border-2 border-t-0 border-[#E2E8F0] rounded-b-md bg-[#F7F9FC] p-2 sm:p-3 space-y-3">
-        {/* Row 1 — patient information | responsible party + insurance */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
+        {/* Row 1 — patient information | responsible party + insurance.
+            The right column has a fixed number of rows, so it sets the row
+            height; Patient Information (whose Patient Note / Medical Alerts
+            can run long) is sized to match and scrolls inside — see the
+            `xl:h-0 xl:min-h-full` idiom in PatientInformationPanel. */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           <PatientInformationPanel data={data} on_edit={() => set_show_edit_patient(true)} />
           <div className="space-y-3">
             <ResponsiblePartyPanel data={data} on_edit={() => set_show_edit_rp(true)} />
@@ -134,8 +149,14 @@ export default function PatientOverviewPage() {
 
           <div className="p-3">
             {tab === "summary" && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-                <div>
+              /* Both columns end on the same line. The left column asks for a
+                 fixed height (room for ~5 appointment rows) and otherwise
+                 stretches to the row (`xl:min-h-full`); the row itself is the
+                 taller of that and the Balances / Billing / Contract stack.
+                 Appointments scrolls instead of extending the row, and
+                 Balances grows to absorb any slack on the right. */
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="flex flex-col xl:h-[360px] xl:min-h-full print:h-auto print:min-h-0">
                   <AppointmentsPanel
                     data={data}
                     patient_id={patient_id}
@@ -143,9 +164,9 @@ export default function PatientOverviewPage() {
                   />
                   <RecallsPanel data={data} />
                 </div>
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   <BalancesPanel data={data} patient_id={patient_id} />
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 shrink-0">
                     <BillingPanel data={data} />
                     <ContractPanel data={data} patient_id={patient_id} />
                   </div>

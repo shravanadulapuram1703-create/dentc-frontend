@@ -320,6 +320,7 @@ export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeCl
 
 
 /**
+ * Partial update of one time clock entry.
  * @summary Update time clock entry
  */
 export const updateTimeClockEntry = (
@@ -384,6 +385,7 @@ export const useUpdateTimeClockEntry = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateTimeClockEntryMutationOptions(options), queryClient);
     }
     /**
+ * Delete one time clock entry.
  * @summary Delete time clock entry
  */
 export const deleteTimeClockEntry = (
@@ -693,6 +695,7 @@ export function useGetProviderInsuranceId<TData = Awaited<ReturnType<typeof getP
 
 
 /**
+ * Partial update of one provider insurance id.
  * @summary Update provider insurance id
  */
 export const updateProviderInsuranceId = (
@@ -757,6 +760,7 @@ export const useUpdateProviderInsuranceId = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProviderInsuranceIdMutationOptions(options), queryClient);
     }
     /**
+ * Delete one provider insurance id.
  * @summary Delete provider insurance id
  */
 export const deleteProviderInsuranceId = (
@@ -1066,6 +1070,7 @@ export function useGetProviderRouteSlip<TData = Awaited<ReturnType<typeof getPro
 
 
 /**
+ * Partial update of one provider route slip.
  * @summary Update provider route slip
  */
 export const updateProviderRouteSlip = (
@@ -1130,6 +1135,7 @@ export const useUpdateProviderRouteSlip = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateProviderRouteSlipMutationOptions(options), queryClient);
     }
     /**
+ * Delete one provider route slip.
  * @summary Delete provider route slip
  */
 export const deleteProviderRouteSlip = (
@@ -1439,6 +1445,7 @@ export function useGetUserPreference<TData = Awaited<ReturnType<typeof getUserPr
 
 
 /**
+ * Partial update of one user preference. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update user preference
  */
 export const updateUserPreference = (
@@ -1503,6 +1510,7 @@ export const useUpdateUserPreference = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateUserPreferenceMutationOptions(options), queryClient);
     }
     /**
+ * Delete one user preference. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete user preference
  */
 export const deleteUserPreference = (
@@ -1812,6 +1820,7 @@ export function useGetUserGroup<TData = Awaited<ReturnType<typeof getUserGroup>>
 
 
 /**
+ * Partial update of one user group.
  * @summary Update user group
  */
 export const updateUserGroup = (
@@ -1876,6 +1885,7 @@ export const useUpdateUserGroup = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateUserGroupMutationOptions(options), queryClient);
     }
     /**
+ * Delete one user group.
  * @summary Delete user group
  */
 export const deleteUserGroup = (
@@ -2185,6 +2195,7 @@ export function useGetUserGroupMembership<TData = Awaited<ReturnType<typeof getU
 
 
 /**
+ * Partial update of one user group membership.
  * @summary Update user group membership
  */
 export const updateUserGroupMembership = (
@@ -2249,6 +2260,7 @@ export const useUpdateUserGroupMembership = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateUserGroupMembershipMutationOptions(options), queryClient);
     }
     /**
+ * Delete one user group membership.
  * @summary Delete user group membership
  */
 export const deleteUserGroupMembership = (
@@ -2558,6 +2570,7 @@ export function useGetUserIpRule<TData = Awaited<ReturnType<typeof getUserIpRule
 
 
 /**
+ * Partial update of one user ip rule.
  * @summary Update user ip rule
  */
 export const updateUserIpRule = (
@@ -2622,6 +2635,7 @@ export const useUpdateUserIpRule = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateUserIpRuleMutationOptions(options), queryClient);
     }
     /**
+ * Delete one user ip rule.
  * @summary Delete user ip rule
  */
 export const deleteUserIpRule = (

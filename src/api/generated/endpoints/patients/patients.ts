@@ -30,15 +30,25 @@ import type {
   AccountNoteUpdate,
   AccountPlanRead,
   BodyUploadPatientDocument,
+  ConsentCountersignRequest,
+  ConsentCountersignVoidRequest,
   ConsentSignRequest,
+  ConsentSignatureRead,
+  DayTotals,
   DuplicateCheckRequest,
   DuplicateCheckResponse,
   ErrorResponse,
+  GetPatientDayTotalsParams,
+  GetPatientInsuranceReportParams,
+  GetPatientLedgerReportParams,
+  GetPatientTransactionsReportParams,
   HTTPValidationError,
   ListAccountNotesParams,
+  ListMedicalAlertSummariesParams,
   ListMedicalHistoryDetailsParams,
   ListMedicalHistoryRecordsParams,
   ListPatientAlertsParams,
+  ListPatientConsentSignaturesParams,
   ListPatientConsentsParams,
   ListPatientDocumentsParams,
   ListPatientEmergencyContactsParams,
@@ -54,6 +64,11 @@ import type {
   ListReferralDemogHeadersParams,
   ListReferralsParams,
   ListResponsiblePartiesParams,
+  MedicalAlertBulkRequest,
+  MedicalAlertBulkResponse,
+  MedicalAlertSummary,
+  MedicalAlertSummaryBatch,
+  MedicalHistoryAudit,
   MedicalHistoryChange,
   MedicalHistoryCopyRequest,
   MedicalHistoryDetailCreate,
@@ -94,7 +109,6 @@ import type {
   PatientAlertUpdate,
   PatientConsentCreate,
   PatientConsentRead,
-  PatientConsentSignedRead,
   PatientConsentUpdate,
   PatientContext,
   PatientCreate,
@@ -123,7 +137,10 @@ import type {
   PatientSignatureCreate,
   PatientSignatureRead,
   PatientSignatureUpdate,
+  PatientToothStatus,
   PatientUpdate,
+  QuestionnaireResponseBulkRequest,
+  QuestionnaireResponseBulkResponse,
   ReferralCreate,
   ReferralDemogDetailCreate,
   ReferralDemogDetailRead,
@@ -139,6 +156,8 @@ import type {
   ResponsiblePartyRead,
   ResponsiblePartyUpdate,
   RosterPatientRead,
+  SignatureCaptureRules,
+  SignatureVectorRead,
   SignatureVoidRequest,
   UploadLimits
 } from '../../model';
@@ -148,6 +167,594 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary Patient Overview as a printable PDF (PRINT-1)
+ */
+export const getPatientOverviewReport = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/patients/${patientId}/reports/overview`, method: 'GET',
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientOverviewReportQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/reports/overview`
+    ] as const;
+    }
+
+
+export const getGetPatientOverviewReportQueryOptions = <TData = Awaited<ReturnType<typeof getPatientOverviewReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverviewReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientOverviewReportQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientOverviewReport>>> = ({ signal }) => getPatientOverviewReport(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientOverviewReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientOverviewReportQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientOverviewReport>>>
+export type GetPatientOverviewReportQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientOverviewReport<TData = Awaited<ReturnType<typeof getPatientOverviewReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverviewReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientOverviewReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientOverviewReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientOverviewReport<TData = Awaited<ReturnType<typeof getPatientOverviewReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverviewReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientOverviewReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientOverviewReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientOverviewReport<TData = Awaited<ReturnType<typeof getPatientOverviewReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverviewReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Patient Overview as a printable PDF (PRINT-1)
+ */
+
+export function useGetPatientOverviewReport<TData = Awaited<ReturnType<typeof getPatientOverviewReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientOverviewReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientOverviewReportQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Account / Patient Ledger statement as a printable PDF (PRINT-1/3)
+ */
+export const getPatientLedgerReport = (
+    patientId: number,
+    params?: GetPatientLedgerReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/patients/${patientId}/reports/ledger`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientLedgerReportQueryKey = (patientId: number,
+    params?: GetPatientLedgerReportParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/reports/ledger`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientLedgerReportQueryOptions = <TData = Awaited<ReturnType<typeof getPatientLedgerReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: GetPatientLedgerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedgerReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientLedgerReportQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientLedgerReport>>> = ({ signal }) => getPatientLedgerReport(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientLedgerReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientLedgerReportQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientLedgerReport>>>
+export type GetPatientLedgerReportQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientLedgerReport<TData = Awaited<ReturnType<typeof getPatientLedgerReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientLedgerReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedgerReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientLedgerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientLedgerReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientLedgerReport<TData = Awaited<ReturnType<typeof getPatientLedgerReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientLedgerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedgerReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientLedgerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientLedgerReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientLedgerReport<TData = Awaited<ReturnType<typeof getPatientLedgerReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientLedgerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedgerReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Account / Patient Ledger statement as a printable PDF (PRINT-1/3)
+ */
+
+export function useGetPatientLedgerReport<TData = Awaited<ReturnType<typeof getPatientLedgerReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientLedgerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientLedgerReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientLedgerReportQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Transactions Entry day sheet as a printable PDF (PRINT-1/6)
+ */
+export const getPatientTransactionsReport = (
+    patientId: number,
+    params?: GetPatientTransactionsReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/patients/${patientId}/reports/transactions`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientTransactionsReportQueryKey = (patientId: number,
+    params?: GetPatientTransactionsReportParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/reports/transactions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientTransactionsReportQueryOptions = <TData = Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: GetPatientTransactionsReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientTransactionsReportQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientTransactionsReport>>> = ({ signal }) => getPatientTransactionsReport(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientTransactionsReportQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientTransactionsReport>>>
+export type GetPatientTransactionsReportQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientTransactionsReport<TData = Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientTransactionsReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientTransactionsReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientTransactionsReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientTransactionsReport<TData = Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientTransactionsReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientTransactionsReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientTransactionsReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientTransactionsReport<TData = Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientTransactionsReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Transactions Entry day sheet as a printable PDF (PRINT-1/6)
+ */
+
+export function useGetPatientTransactionsReport<TData = Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientTransactionsReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientTransactionsReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientTransactionsReportQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Insurance Details (one slot) as a printable PDF (PRINT-1/7/8)
+ */
+export const getPatientInsuranceReport = (
+    patientId: number,
+    params?: GetPatientInsuranceReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/patients/${patientId}/reports/insurance`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientInsuranceReportQueryKey = (patientId: number,
+    params?: GetPatientInsuranceReportParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/reports/insurance`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientInsuranceReportQueryOptions = <TData = Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: GetPatientInsuranceReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientInsuranceReportQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientInsuranceReport>>> = ({ signal }) => getPatientInsuranceReport(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientInsuranceReportQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientInsuranceReport>>>
+export type GetPatientInsuranceReportQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientInsuranceReport<TData = Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientInsuranceReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientInsuranceReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientInsuranceReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientInsuranceReport<TData = Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientInsuranceReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientInsuranceReport>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientInsuranceReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientInsuranceReport<TData = Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientInsuranceReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Insurance Details (one slot) as a printable PDF (PRINT-1/7/8)
+ */
+
+export function useGetPatientInsuranceReport<TData = Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientInsuranceReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientInsuranceReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientInsuranceReportQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Today's charges / est ins / est pat / est deductible for one date (PRINT-6, CHG-7)
+ */
+export const getPatientDayTotals = (
+    patientId: number,
+    params?: GetPatientDayTotalsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<DayTotals>(
+      {url: `/api/v1/patients/${patientId}/day-totals`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientDayTotalsQueryKey = (patientId: number,
+    params?: GetPatientDayTotalsParams,) => {
+    return [
+    `/api/v1/patients/${patientId}/day-totals`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPatientDayTotalsQueryOptions = <TData = Awaited<ReturnType<typeof getPatientDayTotals>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number,
+    params?: GetPatientDayTotalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDayTotals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientDayTotalsQueryKey(patientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientDayTotals>>> = ({ signal }) => getPatientDayTotals(patientId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientDayTotals>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientDayTotalsQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientDayTotals>>>
+export type GetPatientDayTotalsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientDayTotals<TData = Awaited<ReturnType<typeof getPatientDayTotals>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params: undefined |  GetPatientDayTotalsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDayTotals>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientDayTotals>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientDayTotals>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientDayTotals<TData = Awaited<ReturnType<typeof getPatientDayTotals>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientDayTotalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDayTotals>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientDayTotals>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientDayTotals>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientDayTotals<TData = Awaited<ReturnType<typeof getPatientDayTotals>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientDayTotalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDayTotals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Today's charges / est ins / est pat / est deductible for one date (PRINT-6, CHG-7)
+ */
+
+export function useGetPatientDayTotals<TData = Awaited<ReturnType<typeof getPatientDayTotals>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number,
+    params?: GetPatientDayTotalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDayTotals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientDayTotalsQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Per-tooth present / missing / extracted / implant from the chart, uncapped (ADA-BE-6)
+ */
+export const getPatientToothStatus = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientToothStatus>(
+      {url: `/api/v1/patients/${patientId}/tooth-status`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientToothStatusQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/tooth-status`
+    ] as const;
+    }
+
+
+export const getGetPatientToothStatusQueryOptions = <TData = Awaited<ReturnType<typeof getPatientToothStatus>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientToothStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientToothStatusQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientToothStatus>>> = ({ signal }) => getPatientToothStatus(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientToothStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientToothStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientToothStatus>>>
+export type GetPatientToothStatusQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetPatientToothStatus<TData = Awaited<ReturnType<typeof getPatientToothStatus>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientToothStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientToothStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientToothStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientToothStatus<TData = Awaited<ReturnType<typeof getPatientToothStatus>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientToothStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientToothStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientToothStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientToothStatus<TData = Awaited<ReturnType<typeof getPatientToothStatus>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientToothStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Per-tooth present / missing / extracted / implant from the chart, uncapped (ADA-BE-6)
+ */
+
+export function useGetPatientToothStatus<TData = Awaited<ReturnType<typeof getPatientToothStatus>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientToothStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientToothStatusQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 
@@ -341,7 +948,8 @@ export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPa
  *
  * ``context`` is what puts a Notes upload in the notes folder. It has to come
  * from the caller: the file is uploaded *before* the note row exists, so there
- * is nothing on the server to infer it from.
+ * is nothing on the server to infer it from. ``procedure_id`` / ``claim_id``
+ * are what let ``requires_attachment`` be judged per charge (PROC-7c).
  * @summary Upload Document
  */
 export const uploadPatientDocument = (
@@ -363,6 +971,12 @@ if(bodyUploadPatientDocument.description !== undefined && bodyUploadPatientDocum
  }
 if(bodyUploadPatientDocument.context !== undefined && bodyUploadPatientDocument.context !== null) {
  formData.append(`context`, bodyUploadPatientDocument.context);
+ }
+if(bodyUploadPatientDocument.procedure_id !== undefined && bodyUploadPatientDocument.procedure_id !== null) {
+ formData.append(`procedure_id`, bodyUploadPatientDocument.procedure_id);
+ }
+if(bodyUploadPatientDocument.claim_id !== undefined && bodyUploadPatientDocument.claim_id !== null) {
+ formData.append(`claim_id`, bodyUploadPatientDocument.claim_id);
  }
 
       return customInstance<PatientDocumentRead>(
@@ -868,7 +1482,7 @@ export const signPatientConsent = (
 ) => {
 
 
-      return customInstance<PatientConsentSignedRead>(
+      return customInstance<PatientConsentRead>(
       {url: `/api/v1/patient-consents/${consentId}/sign`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: consentSignRequest, signal
@@ -921,6 +1535,235 @@ export const useSignPatientConsent = <TError = ErrorType<ErrorResponse | HTTPVal
         TContext
       > => {
       return useMutation(getSignPatientConsentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary The countersignature lines on a consent (images with include_image=true)
+ */
+export const listPatientConsentSignatures = (
+    consentId: number,
+    params?: ListPatientConsentSignaturesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConsentSignatureRead[]>(
+      {url: `/api/v1/patient-consents/${consentId}/signatures`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientConsentSignaturesQueryKey = (consentId: number,
+    params?: ListPatientConsentSignaturesParams,) => {
+    return [
+    `/api/v1/patient-consents/${consentId}/signatures`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPatientConsentSignaturesQueryOptions = <TData = Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(consentId: number,
+    params?: ListPatientConsentSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientConsentSignaturesQueryKey(consentId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientConsentSignatures>>> = ({ signal }) => listPatientConsentSignatures(consentId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: consentId !== null && consentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientConsentSignaturesQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientConsentSignatures>>>
+export type ListPatientConsentSignaturesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPatientConsentSignatures<TData = Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ consentId: number,
+    params: undefined |  ListPatientConsentSignaturesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientConsentSignatures>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientConsentSignatures>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientConsentSignatures<TData = Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ consentId: number,
+    params?: ListPatientConsentSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientConsentSignatures>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientConsentSignatures>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientConsentSignatures<TData = Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ consentId: number,
+    params?: ListPatientConsentSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The countersignature lines on a consent (images with include_image=true)
+ */
+
+export function useListPatientConsentSignatures<TData = Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ consentId: number,
+    params?: ListPatientConsentSignaturesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientConsentSignatures>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientConsentSignaturesQueryOptions(consentId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Add a countersignature line to a consent (after the patient signed — the stored flow)
+ */
+export const countersignPatientConsent = (
+    consentId: number,
+    consentCountersignRequest: BodyType<ConsentCountersignRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConsentSignatureRead>(
+      {url: `/api/v1/patient-consents/${consentId}/countersign`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consentCountersignRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getCountersignPatientConsentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof countersignPatientConsent>>, TError,{consentId: number;data: BodyType<ConsentCountersignRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof countersignPatientConsent>>, TError,{consentId: number;data: BodyType<ConsentCountersignRequest>}, TContext> => {
+
+const mutationKey = ['countersignPatientConsent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof countersignPatientConsent>>, {consentId: number;data: BodyType<ConsentCountersignRequest>}> = (props) => {
+          const {consentId,data} = props ?? {};
+
+          return  countersignPatientConsent(consentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CountersignPatientConsentMutationResult = NonNullable<Awaited<ReturnType<typeof countersignPatientConsent>>>
+    export type CountersignPatientConsentMutationBody = BodyType<ConsentCountersignRequest>
+    export type CountersignPatientConsentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Add a countersignature line to a consent (after the patient signed — the stored flow)
+ */
+export const useCountersignPatientConsent = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof countersignPatientConsent>>, TError,{consentId: number;data: BodyType<ConsentCountersignRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof countersignPatientConsent>>,
+        TError,
+        {consentId: number;data: BodyType<ConsentCountersignRequest>},
+        TContext
+      > => {
+      return useMutation(getCountersignPatientConsentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Void a countersignature line
+ */
+export const voidPatientConsentSignature = (
+    consentId: number,
+    signatureId: number,
+    consentCountersignVoidRequestNull?: BodyType<ConsentCountersignVoidRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConsentSignatureRead>(
+      {url: `/api/v1/patient-consents/${consentId}/signatures/${signatureId}/void`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consentCountersignVoidRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getVoidPatientConsentSignatureMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voidPatientConsentSignature>>, TError,{consentId: number;signatureId: number;data?: BodyType<ConsentCountersignVoidRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof voidPatientConsentSignature>>, TError,{consentId: number;signatureId: number;data?: BodyType<ConsentCountersignVoidRequest | null>}, TContext> => {
+
+const mutationKey = ['voidPatientConsentSignature'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof voidPatientConsentSignature>>, {consentId: number;signatureId: number;data?: BodyType<ConsentCountersignVoidRequest | null>}> = (props) => {
+          const {consentId,signatureId,data} = props ?? {};
+
+          return  voidPatientConsentSignature(consentId,signatureId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VoidPatientConsentSignatureMutationResult = NonNullable<Awaited<ReturnType<typeof voidPatientConsentSignature>>>
+    export type VoidPatientConsentSignatureMutationBody = BodyType<ConsentCountersignVoidRequest | null> | undefined
+    export type VoidPatientConsentSignatureMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Void a countersignature line
+ */
+export const useVoidPatientConsentSignature = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voidPatientConsentSignature>>, TError,{consentId: number;signatureId: number;data?: BodyType<ConsentCountersignVoidRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof voidPatientConsentSignature>>,
+        TError,
+        {consentId: number;signatureId: number;data?: BodyType<ConsentCountersignVoidRequest | null>},
+        TContext
+      > => {
+      return useMutation(getVoidPatientConsentSignatureMutationOptions(options), queryClient);
     }
     /**
  * @summary Check Duplicate
@@ -2077,6 +2920,198 @@ export function useListPatientMedicalHistoryChanges<TData = Awaited<ReturnType<t
 
 
 /**
+ * Replaces the five list calls (two of them over soft-deleted rows, capped
+ * at one page) the header strip was issuing to derive ``min(created_at)`` /
+ * ``max(updated_at)``. Cleared answers and the field-level change log both
+ * count, so a removal reads as a modification.
+ * @summary Created / Modified stamps (overall + per section) and last-reviewed, server-computed (MH-18)
+ */
+export const getPatientMedicalHistoryAudit = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalHistoryAudit>(
+      {url: `/api/v1/patients/${patientId}/medical-history/audit`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientMedicalHistoryAuditQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-history/audit`
+    ] as const;
+    }
+
+
+export const getGetPatientMedicalHistoryAuditQueryOptions = <TData = Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientMedicalHistoryAuditQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>> = ({ signal }) => getPatientMedicalHistoryAudit(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientMedicalHistoryAuditQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>>
+export type GetPatientMedicalHistoryAuditQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientMedicalHistoryAudit<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistoryAudit<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalHistoryAudit<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Created / Modified stamps (overall + per section) and last-reviewed, server-computed (MH-18)
+ */
+
+export function useGetPatientMedicalHistoryAudit<TData = Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalHistoryAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientMedicalHistoryAuditQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * The shape the Prescriptions banner, the scheduler popover and the
+ * appointment Details pop-out all read. ``history_on_file`` separates *no
+ * history* from *no active alerts*; ``comments`` is the Additional Comments
+ * text (MA-7), so no consumer has to special-case a magic alert row.
+ * @summary Active medical alerts (Medical History YES answers + free-text patient alerts) in one call (MA-2)
+ */
+export const getPatientMedicalAlertSummary = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalAlertSummary>(
+      {url: `/api/v1/patients/${patientId}/medical-alerts/summary`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientMedicalAlertSummaryQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/medical-alerts/summary`
+    ] as const;
+    }
+
+
+export const getGetPatientMedicalAlertSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientMedicalAlertSummaryQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>> = ({ signal }) => getPatientMedicalAlertSummary(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientMedicalAlertSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>>
+export type GetPatientMedicalAlertSummaryQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientMedicalAlertSummary<TData = Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalAlertSummary<TData = Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientMedicalAlertSummary<TData = Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Active medical alerts (Medical History YES answers + free-text patient alerts) in one call (MA-2)
+ */
+
+export function useGetPatientMedicalAlertSummary<TData = Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientMedicalAlertSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientMedicalAlertSummaryQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Server-rendered medical-history form (MH-15)
  */
 export const getPatientMedicalHistoryPdf = (
@@ -2236,6 +3271,101 @@ export const useVoidPatientSignature = <TError = ErrorType<ErrorResponse>,
       return useMutation(getVoidPatientSignatureMutationOptions(options), queryClient);
     }
     /**
+ * One request for a whole scheduler day/week instead of two per patient.
+ * Patients outside the tenant are silently absent from ``items``.
+ * @summary Bulk per-patient alert summaries, ``?patient_ids=1,2,3`` (<= 200) (MA-2)
+ */
+export const listMedicalAlertSummaries = (
+    params: ListMedicalAlertSummariesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalAlertSummaryBatch>(
+      {url: `/api/v1/medical-alerts/summary`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListMedicalAlertSummariesQueryKey = (params?: ListMedicalAlertSummariesParams,) => {
+    return [
+    `/api/v1/medical-alerts/summary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListMedicalAlertSummariesQueryOptions = <TData = Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: ListMedicalAlertSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMedicalAlertSummariesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMedicalAlertSummaries>>> = ({ signal }) => listMedicalAlertSummaries(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMedicalAlertSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof listMedicalAlertSummaries>>>
+export type ListMedicalAlertSummariesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListMedicalAlertSummaries<TData = Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListMedicalAlertSummariesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMedicalAlertSummaries>>,
+          TError,
+          Awaited<ReturnType<typeof listMedicalAlertSummaries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMedicalAlertSummaries<TData = Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListMedicalAlertSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMedicalAlertSummaries>>,
+          TError,
+          Awaited<ReturnType<typeof listMedicalAlertSummaries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMedicalAlertSummaries<TData = Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListMedicalAlertSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Bulk per-patient alert summaries, ``?patient_ids=1,2,3`` (<= 200) (MA-2)
+ */
+
+export function useListMedicalAlertSummaries<TData = Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListMedicalAlertSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMedicalAlertSummaries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMedicalAlertSummariesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * Published so the form can grey out the boxes from the same table the
  * server validates against — a rule added in ``medical_history_rules`` reaches
  * the UI without a frontend release.
@@ -2319,6 +3449,418 @@ export function useGetMedicalHistoryRules<TData = Awaited<ReturnType<typeof getM
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMedicalHistoryRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Replaces one ``POST /patient-medical-alerts`` per row (~1.2 s each on a
+ * remote database; ~105 s for a full legacy catalog). Keyed by ``alert_code``:
+ * an active row for the code is updated in place, otherwise inserted; a null
+ * ``response`` **and** ``comments`` resets the code to Not Answered. Runs the
+ * same MH-12 contradiction rules, MA-3 catalog fill, MH-8 change log and MH-14
+ * flash-alert propagation as the single-row resource. All-or-nothing.
+ * @summary Create/update many medical-alert answers for one patient in one transaction (GAP-AP-22)
+ */
+export const bulkUpsertPatientMedicalAlerts = (
+    medicalAlertBulkRequest: BodyType<MedicalAlertBulkRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MedicalAlertBulkResponse>(
+      {url: `/api/v1/patient-medical-alerts/bulk`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: medicalAlertBulkRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkUpsertPatientMedicalAlertsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPatientMedicalAlerts>>, TError,{data: BodyType<MedicalAlertBulkRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPatientMedicalAlerts>>, TError,{data: BodyType<MedicalAlertBulkRequest>}, TContext> => {
+
+const mutationKey = ['bulkUpsertPatientMedicalAlerts'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkUpsertPatientMedicalAlerts>>, {data: BodyType<MedicalAlertBulkRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkUpsertPatientMedicalAlerts(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkUpsertPatientMedicalAlertsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkUpsertPatientMedicalAlerts>>>
+    export type BulkUpsertPatientMedicalAlertsMutationBody = BodyType<MedicalAlertBulkRequest>
+    export type BulkUpsertPatientMedicalAlertsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create/update many medical-alert answers for one patient in one transaction (GAP-AP-22)
+ */
+export const useBulkUpsertPatientMedicalAlerts = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPatientMedicalAlerts>>, TError,{data: BodyType<MedicalAlertBulkRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkUpsertPatientMedicalAlerts>>,
+        TError,
+        {data: BodyType<MedicalAlertBulkRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkUpsertPatientMedicalAlertsMutationOptions(options), queryClient);
+    }
+    /**
+ * Keyed by ``(questionnaire_type, question_code)``; a null ``answer`` resets
+ * the code to Not Answered. ``replace`` clears the stored codes of every
+ * questionnaire type *present in the payload* that the payload omits.
+ * All-or-nothing.
+ * @summary Create/update many questionnaire answers for one patient in one transaction (GAP-AP-22)
+ */
+export const bulkUpsertPatientQuestionnaireResponses = (
+    questionnaireResponseBulkRequest: BodyType<QuestionnaireResponseBulkRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<QuestionnaireResponseBulkResponse>(
+      {url: `/api/v1/patient-questionnaire-responses/bulk`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: questionnaireResponseBulkRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkUpsertPatientQuestionnaireResponsesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPatientQuestionnaireResponses>>, TError,{data: BodyType<QuestionnaireResponseBulkRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPatientQuestionnaireResponses>>, TError,{data: BodyType<QuestionnaireResponseBulkRequest>}, TContext> => {
+
+const mutationKey = ['bulkUpsertPatientQuestionnaireResponses'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkUpsertPatientQuestionnaireResponses>>, {data: BodyType<QuestionnaireResponseBulkRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkUpsertPatientQuestionnaireResponses(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkUpsertPatientQuestionnaireResponsesMutationResult = NonNullable<Awaited<ReturnType<typeof bulkUpsertPatientQuestionnaireResponses>>>
+    export type BulkUpsertPatientQuestionnaireResponsesMutationBody = BodyType<QuestionnaireResponseBulkRequest>
+    export type BulkUpsertPatientQuestionnaireResponsesMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create/update many questionnaire answers for one patient in one transaction (GAP-AP-22)
+ */
+export const useBulkUpsertPatientQuestionnaireResponses = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUpsertPatientQuestionnaireResponses>>, TError,{data: BodyType<QuestionnaireResponseBulkRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkUpsertPatientQuestionnaireResponses>>,
+        TError,
+        {data: BodyType<QuestionnaireResponseBulkRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkUpsertPatientQuestionnaireResponsesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary The clear Topaz SigString for one signature (admin, audited — SIG-4)
+ */
+export const getPatientSignatureSigString = (
+    signatureId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SignatureVectorRead>(
+      {url: `/api/v1/patient-signatures/${signatureId}/sig-string`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientSignatureSigStringQueryKey = (signatureId: number,) => {
+    return [
+    `/api/v1/patient-signatures/${signatureId}/sig-string`
+    ] as const;
+    }
+
+
+export const getGetPatientSignatureSigStringQueryOptions = <TData = Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError = ErrorType<ErrorResponse>>(signatureId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientSignatureSigStringQueryKey(signatureId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientSignatureSigString>>> = ({ signal }) => getPatientSignatureSigString(signatureId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: signatureId !== null && signatureId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientSignatureSigStringQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientSignatureSigString>>>
+export type GetPatientSignatureSigStringQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientSignatureSigString<TData = Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError = ErrorType<ErrorResponse>>(
+ signatureId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientSignatureSigString>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientSignatureSigString>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientSignatureSigString<TData = Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError = ErrorType<ErrorResponse>>(
+ signatureId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientSignatureSigString>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientSignatureSigString>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientSignatureSigString<TData = Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError = ErrorType<ErrorResponse>>(
+ signatureId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The clear Topaz SigString for one signature (admin, audited — SIG-4)
+ */
+
+export function useGetPatientSignatureSigString<TData = Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError = ErrorType<ErrorResponse>>(
+ signatureId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientSignatureSigString>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientSignatureSigStringQueryOptions(signatureId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary The clear Topaz SigString captured on a consent (admin, audited — SIG-4)
+ */
+export const getPatientConsentSigString = (
+    consentId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SignatureVectorRead>(
+      {url: `/api/v1/patient-consents/${consentId}/sig-string`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientConsentSigStringQueryKey = (consentId: number,) => {
+    return [
+    `/api/v1/patient-consents/${consentId}/sig-string`
+    ] as const;
+    }
+
+
+export const getGetPatientConsentSigStringQueryOptions = <TData = Awaited<ReturnType<typeof getPatientConsentSigString>>, TError = ErrorType<ErrorResponse>>(consentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsentSigString>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientConsentSigStringQueryKey(consentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientConsentSigString>>> = ({ signal }) => getPatientConsentSigString(consentId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: consentId !== null && consentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientConsentSigString>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientConsentSigStringQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientConsentSigString>>>
+export type GetPatientConsentSigStringQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientConsentSigString<TData = Awaited<ReturnType<typeof getPatientConsentSigString>>, TError = ErrorType<ErrorResponse>>(
+ consentId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsentSigString>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientConsentSigString>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientConsentSigString>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientConsentSigString<TData = Awaited<ReturnType<typeof getPatientConsentSigString>>, TError = ErrorType<ErrorResponse>>(
+ consentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsentSigString>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientConsentSigString>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientConsentSigString>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientConsentSigString<TData = Awaited<ReturnType<typeof getPatientConsentSigString>>, TError = ErrorType<ErrorResponse>>(
+ consentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsentSigString>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The clear Topaz SigString captured on a consent (admin, audited — SIG-4)
+ */
+
+export function useGetPatientConsentSigString<TData = Awaited<ReturnType<typeof getPatientConsentSigString>>, TError = ErrorType<ErrorResponse>>(
+ consentId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientConsentSigString>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientConsentSigStringQueryOptions(consentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Signature-capture vocabularies and limits the API enforces (SIG-2/5)
+ */
+export const getSignatureCaptureRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SignatureCaptureRules>(
+      {url: `/api/v1/metadata/signature-capture`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetSignatureCaptureRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/signature-capture`
+    ] as const;
+    }
+
+
+export const getGetSignatureCaptureRulesQueryOptions = <TData = Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSignatureCaptureRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSignatureCaptureRules>>> = ({ signal }) => getSignatureCaptureRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSignatureCaptureRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getSignatureCaptureRules>>>
+export type GetSignatureCaptureRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetSignatureCaptureRules<TData = Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSignatureCaptureRules>>,
+          TError,
+          Awaited<ReturnType<typeof getSignatureCaptureRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSignatureCaptureRules<TData = Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSignatureCaptureRules>>,
+          TError,
+          Awaited<ReturnType<typeof getSignatureCaptureRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSignatureCaptureRules<TData = Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Signature-capture vocabularies and limits the API enforces (SIG-2/5)
+ */
+
+export function useGetSignatureCaptureRules<TData = Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSignatureCaptureRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSignatureCaptureRulesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2768,6 +4310,7 @@ export function useGetPatient<TData = Awaited<ReturnType<typeof getPatient>>, TE
 
 
 /**
+ * Partial update of one patient. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient
  */
 export const updatePatient = (
@@ -2832,6 +4375,7 @@ export const useUpdatePatient = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient
  */
 export const deletePatient = (
@@ -3141,6 +4685,7 @@ export function useGetPatientInsurance<TData = Awaited<ReturnType<typeof getPati
 
 
 /**
+ * Partial update of one patient insurance. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient insurance
  */
 export const updatePatientInsurance = (
@@ -3205,6 +4750,7 @@ export const useUpdatePatientInsurance = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientInsuranceMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient insurance. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient insurance
  */
 export const deletePatientInsurance = (
@@ -3514,6 +5060,7 @@ export function useGetPatientAlert<TData = Awaited<ReturnType<typeof getPatientA
 
 
 /**
+ * Partial update of one patient alert.
  * @summary Update patient alert
  */
 export const updatePatientAlert = (
@@ -3578,6 +5125,7 @@ export const useUpdatePatientAlert = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientAlertMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient alert.
  * @summary Delete patient alert
  */
 export const deletePatientAlert = (
@@ -3887,6 +5435,7 @@ export function useGetAccountNote<TData = Awaited<ReturnType<typeof getAccountNo
 
 
 /**
+ * Partial update of one account note.
  * @summary Update account note
  */
 export const updateAccountNote = (
@@ -3951,6 +5500,7 @@ export const useUpdateAccountNote = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateAccountNoteMutationOptions(options), queryClient);
     }
     /**
+ * Delete one account note.
  * @summary Delete account note
  */
 export const deleteAccountNote = (
@@ -4260,6 +5810,7 @@ export function useGetPatientSignature<TData = Awaited<ReturnType<typeof getPati
 
 
 /**
+ * Partial update of one patient signature. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient signature
  */
 export const updatePatientSignature = (
@@ -4324,6 +5875,7 @@ export const useUpdatePatientSignature = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientSignatureMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient signature. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient signature
  */
 export const deletePatientSignature = (
@@ -4633,6 +6185,7 @@ export function useGetPatientConsent<TData = Awaited<ReturnType<typeof getPatien
 
 
 /**
+ * Partial update of one patient consent.
  * @summary Update patient consent
  */
 export const updatePatientConsent = (
@@ -4697,6 +6250,7 @@ export const useUpdatePatientConsent = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientConsentMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient consent.
  * @summary Delete patient consent
  */
 export const deletePatientConsent = (
@@ -5006,6 +6560,7 @@ export function useGetMedicalHistoryRecord<TData = Awaited<ReturnType<typeof get
 
 
 /**
+ * Partial update of one medical history record. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update medical history record
  */
 export const updateMedicalHistoryRecord = (
@@ -5070,6 +6625,7 @@ export const useUpdateMedicalHistoryRecord = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateMedicalHistoryRecordMutationOptions(options), queryClient);
     }
     /**
+ * Delete one medical history record. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete medical history record
  */
 export const deleteMedicalHistoryRecord = (
@@ -5379,6 +6935,7 @@ export function useGetReferral<TData = Awaited<ReturnType<typeof getReferral>>, 
 
 
 /**
+ * Partial update of one referral.
  * @summary Update referral
  */
 export const updateReferral = (
@@ -5443,6 +7000,7 @@ export const useUpdateReferral = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateReferralMutationOptions(options), queryClient);
     }
     /**
+ * Delete one referral.
  * @summary Delete referral
  */
 export const deleteReferral = (
@@ -5752,6 +7310,7 @@ export function useGetPatientNote<TData = Awaited<ReturnType<typeof getPatientNo
 
 
 /**
+ * Partial update of one patient note. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient note
  */
 export const updatePatientNote = (
@@ -5816,6 +7375,7 @@ export const useUpdatePatientNote = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientNoteMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient note. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient note
  */
 export const deletePatientNote = (
@@ -6125,6 +7685,7 @@ export function useGetPatientRecall<TData = Awaited<ReturnType<typeof getPatient
 
 
 /**
+ * Partial update of one patient recall. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient recall
  */
 export const updatePatientRecall = (
@@ -6189,6 +7750,7 @@ export const useUpdatePatientRecall = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientRecallMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient recall. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient recall
  */
 export const deletePatientRecall = (
@@ -6498,6 +8060,7 @@ export function useGetPatientMedicalAlert<TData = Awaited<ReturnType<typeof getP
 
 
 /**
+ * Partial update of one patient medical alert. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient medical alert
  */
 export const updatePatientMedicalAlert = (
@@ -6562,6 +8125,7 @@ export const useUpdatePatientMedicalAlert = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdatePatientMedicalAlertMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient medical alert. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient medical alert
  */
 export const deletePatientMedicalAlert = (
@@ -6871,6 +8435,7 @@ export function useGetPatientQuestionnaireResponse<TData = Awaited<ReturnType<ty
 
 
 /**
+ * Partial update of one patient questionnaire response. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient questionnaire response
  */
 export const updatePatientQuestionnaireResponse = (
@@ -6935,6 +8500,7 @@ export const useUpdatePatientQuestionnaireResponse = <TError = ErrorType<ErrorRe
       return useMutation(getUpdatePatientQuestionnaireResponseMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient questionnaire response. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient questionnaire response
  */
 export const deletePatientQuestionnaireResponse = (
@@ -7244,6 +8810,7 @@ export function useGetPatientEmergencyContact<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Partial update of one patient emergency contact. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update patient emergency contact
  */
 export const updatePatientEmergencyContact = (
@@ -7308,6 +8875,7 @@ export const useUpdatePatientEmergencyContact = <TError = ErrorType<ErrorRespons
       return useMutation(getUpdatePatientEmergencyContactMutationOptions(options), queryClient);
     }
     /**
+ * Delete one patient emergency contact. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete patient emergency contact
  */
 export const deletePatientEmergencyContact = (
@@ -7617,6 +9185,7 @@ export function useGetResponsibleParty<TData = Awaited<ReturnType<typeof getResp
 
 
 /**
+ * Partial update of one responsible party. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update responsible party
  */
 export const updateResponsibleParty = (
@@ -7681,6 +9250,7 @@ export const useUpdateResponsibleParty = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateResponsiblePartyMutationOptions(options), queryClient);
     }
     /**
+ * Delete one responsible party. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete responsible party
  */
 export const deleteResponsibleParty = (
@@ -7990,6 +9560,7 @@ export function useGetMedicalHistoryDetail<TData = Awaited<ReturnType<typeof get
 
 
 /**
+ * Partial update of one medical history detail.
  * @summary Update medical history detail
  */
 export const updateMedicalHistoryDetail = (
@@ -8054,6 +9625,7 @@ export const useUpdateMedicalHistoryDetail = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateMedicalHistoryDetailMutationOptions(options), queryClient);
     }
     /**
+ * Delete one medical history detail.
  * @summary Delete medical history detail
  */
 export const deleteMedicalHistoryDetail = (
@@ -8363,6 +9935,7 @@ export function useGetReferralDemogHeader<TData = Awaited<ReturnType<typeof getR
 
 
 /**
+ * Partial update of one referral demog header.
  * @summary Update referral demog header
  */
 export const updateReferralDemogHeader = (
@@ -8427,6 +10000,7 @@ export const useUpdateReferralDemogHeader = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateReferralDemogHeaderMutationOptions(options), queryClient);
     }
     /**
+ * Delete one referral demog header.
  * @summary Delete referral demog header
  */
 export const deleteReferralDemogHeader = (
@@ -8736,6 +10310,7 @@ export function useGetReferralDemogDetail<TData = Awaited<ReturnType<typeof getR
 
 
 /**
+ * Partial update of one referral demog detail.
  * @summary Update referral demog detail
  */
 export const updateReferralDemogDetail = (
@@ -8800,6 +10375,7 @@ export const useUpdateReferralDemogDetail = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateReferralDemogDetailMutationOptions(options), queryClient);
     }
     /**
+ * Delete one referral demog detail.
  * @summary Delete referral demog detail
  */
 export const deleteReferralDemogDetail = (

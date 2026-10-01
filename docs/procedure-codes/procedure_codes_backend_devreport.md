@@ -119,6 +119,17 @@ ortho, by_category }`. **Wired**: KPI cards now read from this endpoint; the cat
 filter prefers `by_category` keys (falls back to derived). The full-catalog load remains
 only for the client-side searchable list table.
 
+### ✅ PROC-7 — Supporting-records requirement flags — **DONE (backend aee911131850, FE switched 2026-09-11)**
+Charting tab has five requirement toggles next to Tooth/Surface/Quadrant Required:
+`requires_attachment`, `requires_perio_chart`, `requires_photo`, `requires_xray`,
+`requires_missing_tooth_info` — now real `procedure_codes` columns on list + detail + create/update.
+Readiness is server-judged (`GET /patients/{id}/procedure-readiness`, `…/patient-procedures/{id}/readiness`,
+`…/insurance-claims/{id}/readiness`) and enforced at **claim submit** (422 + `allow_missing_records`
+override). Wired: Add Procedure pop-up "Records" line, claim-screen strip, fill-out Enclosures seed,
+Update Status → Submitted through `/submit` with "Send anyway". The localStorage stopgap is gone.
+History + switch-over table: **`procedure_code_supporting_records_backend_devreport.md` §8**; backend
+answer: `procedure_code_supporting_records_backend_response.md`.
+
 ### ◑ PROC-6 — `fee-schedules` list latency — **OPEN (perf)**
 `GET /api/v1/fee-schedules?size=200` is still multi-second; the Fee Schedules tab needs it
 only to resolve `fee_schedule_id → name`. **Suggested**: denormalize
@@ -142,6 +153,7 @@ projection. Non-blocking.
 | KPI cards from `/procedure-codes/stats` (PROC-5) | ✅ wired |
 | Main tab billing/tax/defaults/NHS (PROC-4) | ✅ wired (provider + note-macro selects) |
 | Charting tab full config + valid-teeth grid (PROC-1) | ✅ wired |
+| Charting tab supporting-records toggles (PROC-7) | ✅ server round-trip (D2740 requires_xray) + readiness/submit gate wired |
 | Insurance tab CRUD (PROC-3) | ✅ wired |
 | `npx tsc -b` (whole project) | ✅ clean |
 | `npx eslint` (touched files) | ✅ clean |
@@ -167,7 +179,8 @@ projection. Non-blocking.
 No mock/hardcoded business data; categories from `stats.by_category`; provider / note-macro
 / chart-material selects from their respective endpoints.
 
-**Outstanding** — PROC-6 (fee-schedules list latency, perf, non-blocking) and the
+**Outstanding** — PROC-6 (fee-schedules list latency; backend now offers
+`GET /fee-schedules/options` — the Fee Schedules tab still uses the full list, follow-up) and the
 provider-side PROC-2 ("Procedure Codes" tab on **Provider Setup**, follow-up — endpoints
 exist).
 

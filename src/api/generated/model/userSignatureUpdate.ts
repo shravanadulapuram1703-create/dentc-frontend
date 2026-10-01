@@ -6,9 +6,29 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * SIG-6: ``PUT /users/{id}/signature`` (and ``/me/signature``) is the
+ * **canonical** user-signature write - the only path that accepts the Topaz
+ * block. The user PATCH still takes ``signature_data`` but clears the block.
+ */
 export interface UserSignatureUpdate {
+  /** Topaz SigString — clear text, lossless; encrypted at rest */
+  sig_string?: string | null;
+  sig_format?: string | null;
+  /** 0 none | 1 lossless | 2 lossy */
+  sig_compression?: number | null;
+  /** 0 clear | 1 DES | 2 high */
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  /** Workstation hint; defaults to the request User-Agent */
+  captured_user_agent?: string | null;
   /** Base64 / data-URL signature image */
   signature_data: string;
   signature_len?: number | null;
   device_source?: string | null;
+  signed_at?: string | null;
 }

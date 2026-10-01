@@ -7,8 +7,10 @@
  */
 
 export interface OperatoryCreate {
+  /** @maxLength 50 */
   id: string;
   office_id: number;
+  /** @maxLength 100 */
   name: string;
   display_order?: number | null;
   provider_id?: string | null;

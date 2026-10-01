@@ -7,6 +7,7 @@
  */
 
 export interface PlaceOfServiceCodeCreate {
+  /** @maxLength 10 */
   code: string;
   type?: string | null;
   name?: string | null;

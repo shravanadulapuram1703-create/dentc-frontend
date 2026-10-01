@@ -1,10 +1,14 @@
 // Patient-related type definitions
 
+/**
+ * One row of the "Identical Patients Found" table. Derived from the backend's
+ * `DuplicateCandidate` (snake_case, same names) by `toDuplicatePatient`.
+ */
 export interface DuplicatePatient {
-  birthdate: string;
+  dob: string;
   name: string;
-  officeShortId: string;
-  patientId: string;
+  home_office_short_id: string;
+  patient_id: string;
   email: string;
   provider: string;
   status: string;
@@ -12,8 +16,7 @@ export interface DuplicatePatient {
 }
 
 export interface CheckDuplicatePayload {
-  birthdate: string;
-  firstName: string;
-  lastName: string;
-  office: string;
+  dob: string;
+  first_name: string;
+  last_name: string;
 }

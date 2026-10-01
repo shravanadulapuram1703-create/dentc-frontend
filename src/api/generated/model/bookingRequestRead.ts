@@ -20,7 +20,16 @@ export interface BookingRequestRead {
   appointment_id?: string | null;
   patient_id?: number | null;
   decline_reason?: string | null;
+  actioned_by_id?: number | null;
+  actioned_by_name?: string | null;
   actioned_at?: string | null;
+  original_slot?: SlotOut | null;
+  reschedule_count?: number;
+  rescheduled_by_id?: number | null;
+  rescheduled_by_name?: string | null;
+  rescheduled_at?: string | null;
+  contact_notified_at?: string | null;
+  contact_notified_via?: string | null;
   created_at: string;
   updated_at?: string | null;
 }

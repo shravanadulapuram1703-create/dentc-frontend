@@ -114,7 +114,7 @@ const money = (v: unknown): string => {
 };
 
 /** Backend gender code → the display name the wizard's `sex` select holds. */
-const GENDER_NAME: Record<string, string> = { M: "Male", F: "Female", O: "Other" };
+const GENDER_NAME: Record<string, string> = { M: "Male", F: "Female", U: "Unknown", O: "Other" };
 
 /**
  * The wizard stores `sex` as a display name because that is what the metadata
@@ -208,6 +208,7 @@ export async function loadPatientForEdit(
     birthdate: s(patient.dob),
     lastName: s(patient.last_name),
     firstName: s(patient.first_name),
+    middle_initial: s(patient.middle_initial),
     title: s(patient.title),
     preferredName: s(patient.preferred_name),
     pronouns: s(patient.pronouns) || "Please Select",

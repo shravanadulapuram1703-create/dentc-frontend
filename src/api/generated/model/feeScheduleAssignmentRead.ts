@@ -12,11 +12,13 @@ export interface FeeScheduleAssignmentRead {
   ins_plan_id?: number | null;
   carrier_id?: number | null;
   provider_id?: string | null;
+  specialty_id?: string | null;
   office_id?: number | null;
   office_group_id?: number | null;
   fee_schedule_id: number;
-  specialty_id?: string | null;
   created_by?: string | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

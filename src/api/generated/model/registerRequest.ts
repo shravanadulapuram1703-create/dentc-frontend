@@ -5,7 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { MedicalAlertIn } from './medicalAlertIn';
+import type { AppSchemasPatientIntakeMedicalAlertIn } from './appSchemasPatientIntakeMedicalAlertIn';
+import type { InsuranceIn } from './insuranceIn';
 import type { OpeningBalanceIn } from './openingBalanceIn';
 import type { PatientCreate } from './patientCreate';
 import type { QuestionnaireResponseIn } from './questionnaireResponseIn';
@@ -20,10 +21,12 @@ import type { ResponsiblePartyIn } from './responsiblePartyIn';
 export interface RegisterRequest {
   patient: PatientCreate;
   responsible_party?: ResponsiblePartyIn | null;
-  medical_alerts?: MedicalAlertIn[];
+  medical_alerts?: AppSchemasPatientIntakeMedicalAlertIn[];
   questionnaire_responses?: QuestionnaireResponseIn[];
   recalls?: RecallIn[];
+  insurance?: InsuranceIn[];
   opening_balance?: OpeningBalanceIn | null;
   /** Create even if a strong duplicate match exists (user confirmed). */
   force_create?: boolean;
+  allow_contradictions?: boolean;
 }

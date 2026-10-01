@@ -12,4 +12,5 @@ export interface PerioExamUpdate {
   exam_date?: string | null;
   notes?: string | null;
   is_voided?: boolean | null;
+  provider_id?: string | null;
 }

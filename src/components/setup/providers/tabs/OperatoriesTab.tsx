@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
-  listOffices,
   listOperatories,
   updateOperatory,
 } from "@/api/generated/endpoints/organization/organization";
-import type { OfficeRead, OperatoryRead } from "@/api/generated/model";
+import type { OperatoryRead } from "@/api/generated/model";
+import { useOfficeOptions } from "@/features/office-scope";
 
 interface OperatoriesTabProps {
   providerId: string;
@@ -20,7 +20,9 @@ interface OperatoriesTabProps {
  * provider reassigns it — surfaced in the UI copy below.
  */
 export default function OperatoriesTab({ providerId, homeOfficeId }: OperatoriesTabProps) {
-  const [offices, setOffices] = useState<OfficeRead[]>([]);
+  // Office names from the shared office catalog (id → name only).
+  const officesQuery = useOfficeOptions();
+  const offices = useMemo(() => officesQuery.data ?? [], [officesQuery.data]);
   const [operatories, setOperatories] = useState<OperatoryRead[]>([]);
   const [officeFilter, setOfficeFilter] = useState<number | "all">(homeOfficeId ?? "all");
   const [loading, setLoading] = useState(true);
@@ -36,22 +38,16 @@ export default function OperatoriesTab({ providerId, homeOfficeId }: Operatories
     setLoading(true);
     setError(null);
     try {
-      const [offRes, opRes] = await Promise.all([
-        offices.length ? Promise.resolve({ items: offices }) : listOffices({ size: 200 }),
-        listOperatories({
-          size: 200,
-          ...(officeFilter !== "all" ? { office_id: officeFilter } : {}),
-        }),
-      ]);
-      if (!offices.length) setOffices(offRes.items ?? []);
+      const opRes = await listOperatories({
+        size: 200,
+        ...(officeFilter !== "all" ? { office_id: officeFilter } : {}),
+      });
       setOperatories(opRes.items ?? []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load operatories");
     } finally {
       setLoading(false);
     }
-    // offices intentionally excluded — only re-load on filter change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [officeFilter]);
 
   useEffect(() => {

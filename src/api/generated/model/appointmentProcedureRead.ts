@@ -11,6 +11,7 @@ export interface AppointmentProcedureRead {
   procedure_code: string;
   provider_id?: string | null;
   treatment_plan_id?: string | null;
+  treatment_plan_item_id?: string | null;
   tooth?: string | null;
   surface?: string | null;
   description?: string | null;

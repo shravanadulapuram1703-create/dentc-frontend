@@ -17,12 +17,15 @@
  * a fee still wins, so no existing caller changes.
  */
 export interface PatientProcedureCreate {
+  /** @maxLength 50 */
   id: string;
   patient_id: number;
   appointment_id?: string | null;
+  /** @maxLength 20 */
   procedure_code: string;
   is_archived?: boolean | null;
   date_of_service: string;
+  /** @maxLength 50 */
   provider_id: string;
   office_id: number;
   tooth?: string | null;
@@ -49,4 +52,13 @@ export interface PatientProcedureCreate {
   pat_paid?: number | string | null;
   pat_adjust?: number | string | null;
   fee_schedule_id?: number | null;
+  fee_source?: string | null;
+  fee_effective_date?: string | null;
+  fee_override_reason?: string | null;
+  coverage_pct?: number | string | null;
+  coverage_rule_id?: number | null;
+  estimated_deductible?: number | string | null;
+  sec_insurance_estimate?: number | string | null;
+  diagnosis_pointers?: string | null;
+  quantity?: number | null;
 }

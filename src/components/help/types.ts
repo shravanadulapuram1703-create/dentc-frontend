@@ -58,17 +58,23 @@ export interface TicketSubmitResult {
   error?: string;
 }
 
-/** Lifecycle status of a previously filed ticket. */
+/**
+ * Lifecycle status of a previously filed ticket. The backend maps Jira workflow
+ * statuses onto Open | In Progress | Done, but passes through any name it
+ * doesn't recognise (e.g. "Ready to Test"), hence the open string member.
+ */
 export type TicketStatus =
   | "Open"
   | "In Progress"
   | "Done"
   | "Submitted"
-  | "Failed";
+  | "Failed"
+  | (string & {});
 
 /** A ticket record persisted to the local audit log / "My Tickets" list. */
 export interface TicketRecord {
-  id: string;
+  /** Local records use a string key; backend rows come back with their numeric id. */
+  id: string | number;
   issue_key: string | null;
   issue_url: string | null;
   title: string;
@@ -76,7 +82,8 @@ export interface TicketRecord {
   priority: string;
   module: string;
   status: TicketStatus;
-  mode: "proxy" | "direct" | "demo";
+  /** `local` = persisted by the backend without a Jira mirror (LOCAL-<id>). */
+  mode: "proxy" | "direct" | "demo" | "local";
   created_at: string;
   reporter_id: string;
   /** Present when the submission failed — enables one-click retry. */

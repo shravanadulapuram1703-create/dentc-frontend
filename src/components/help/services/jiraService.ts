@@ -9,10 +9,11 @@
 // Everything returns a structured `TicketSubmitResult` (never throws to the UI),
 // and every attempt is written to the local audit log by the caller/provider.
 import { jiraConfig, isDemoMode, issueUrl } from "../config/jiraConfig";
-import { nextDemoKey, recordAttempt } from "../lib/ticketLog";
+import { nextDemoKey, recordAttempt, updateLocalTicketStatus } from "../lib/ticketLog";
 import type {
   TicketPayload,
   TicketRecord,
+  TicketStatus,
   TicketSubmitResult,
 } from "../types";
 
@@ -281,6 +282,53 @@ export async function fetchMyTickets(
     }
   }
   return { tickets: localFallback, source: "local" };
+}
+
+/**
+ * Change a ticket's status from "My Tickets". Tickets that came from the
+ * backend list are PATCHed there (the backend transitions the Jira issue first,
+ * so the two never disagree); locally stored tickets (demo mode, or the local
+ * fallback cache) are updated in the local log. Never throws.
+ */
+export async function updateTicketStatus(
+  ticket: TicketRecord,
+  status: TicketStatus,
+  source: "remote" | "local",
+): Promise<{ ok: boolean; ticket?: TicketRecord; error?: string }> {
+  if (source === "remote" && jiraConfig.mode === "proxy" && jiraConfig.proxyUrl) {
+    try {
+      const res = await fetch(`${jiraConfig.proxyUrl}/${encodeURIComponent(String(ticket.id))}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        // Backend error envelope: { error: { code, message, details } }.
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: { message?: string };
+          detail?: unknown;
+        };
+        const detail =
+          body.error?.message ??
+          (typeof body.detail === "string" ? body.detail : `${res.status} ${res.statusText}`);
+        return { ok: false, error: `Could not update status: ${detail}` };
+      }
+      const updated = (await res.json()) as TicketRecord;
+      return { ok: true, ticket: { ...ticket, ...updated } };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : "Could not reach the support service.",
+      };
+    }
+  }
+  const updated = updateLocalTicketStatus(ticket.id, status);
+  return updated
+    ? { ok: true, ticket: updated }
+    : { ok: false, error: "Ticket not found in local storage." };
 }
 
 // --- helpers ----------------------------------------------------------------

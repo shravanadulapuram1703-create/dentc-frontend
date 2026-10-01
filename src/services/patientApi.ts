@@ -9,8 +9,9 @@ import {
   createPatientQuestionnaireResponse,
   setPatientOpeningBalance,
   createPatientRecall,
+  createResponsibleParty as createResponsiblePartyApi,
 } from "@/api/generated/endpoints/patients/patients";
-import type { PatientInsuranceRead } from "@/api/generated/model";
+import type { DuplicateCandidate, PatientInsuranceRead } from "@/api/generated/model";
 import type {
   PatientCreate,
   PatientUpdate,
@@ -19,6 +20,7 @@ import type {
   RegisterResponse,
   PatientMedicalAlertCreate,
 } from "@/api/generated/model";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 // ===== TYPES =====
 // Comprehensive patient details interface (for Patient Overview)
@@ -27,6 +29,7 @@ export interface PatientDetails {
   chart_no: string;
   first_name: string;
   last_name: string;
+  middle_initial?: string; // Backend column is VARCHAR(10) — holds a short middle name
   preferred_name?: string;
   dob?: string;
   gender?: "M" | "F" | "O";
@@ -67,10 +70,11 @@ export interface PatientDetails {
     preferred_hygienist_name?: string;
   };
   
-  fee_schedule?: {
-    fee_schedule_id?: string;
-    fee_schedule_name?: string;
-  };
+  // Flat, backend-parity fields (patients.fee_schedule_id). `fee_schedule_name`
+  // is a convenience label the backend enriches onto the response; it is not a
+  // wire field. No nested `fee_schedule` object — see docs/pricing FE-PR-71.
+  fee_schedule_id?: number | null;
+  fee_schedule_name?: string | null;
   
   patient_type?: string;
   patient_flags?: {
@@ -201,6 +205,7 @@ export interface PatientCreateRequestFull {
   identity: {
     first_name: string;
     last_name: string;
+    middle_initial?: string; // ≤10 chars (backend VARCHAR(10), GAP-AP-19)
     preferred_name?: string;
     dob: string; // YYYY-MM-DD
     gender?: "M" | "F" | "O";
@@ -236,10 +241,10 @@ export interface PatientCreateRequestFull {
     preferred_hygienist_id?: string;
   };
   
-  fee_schedule?: {
-    fee_schedule_id?: string;
-  };
-  
+  // Flat wire shape (docs/pricing FE-PR-71). `flattenPatientPayload` coerces the
+  // form's string id to the backend's numeric `patients.fee_schedule_id`.
+  fee_schedule_id?: number | string | null;
+
   patient_type?: string;
   patient_flags?: {
     is_ortho?: boolean;
@@ -312,6 +317,7 @@ export interface PatientUpdateRequestFull {
   identity?: {
     first_name?: string;
     last_name?: string;
+    middle_initial?: string;
     preferred_name?: string;
     dob?: string; // YYYY-MM-DD
     gender?: "M" | "F" | "O";
@@ -347,10 +353,10 @@ export interface PatientUpdateRequestFull {
     preferred_hygienist_id?: string;
   };
   
-  fee_schedule?: {
-    fee_schedule_id?: string;
-  };
-  
+  // Flat wire shape (docs/pricing FE-PR-71). `flattenPatientPayload` coerces the
+  // form's string id to the backend's numeric `patients.fee_schedule_id`.
+  fee_schedule_id?: number | string | null;
+
   patient_type?: string;
   patient_flags?: {
     is_ortho?: boolean;
@@ -430,6 +436,7 @@ const toPatientDetails = (p: PatientRead): PatientDetails =>
     chart_no: p.chart_no ?? "",
     first_name: p.first_name ?? "",
     last_name: p.last_name ?? "",
+    middle_initial: p.middle_initial ?? undefined,
     preferred_name: p.preferred_name ?? undefined,
     dob: p.dob ?? undefined,
     gender: p.gender as PatientDetails["gender"],
@@ -466,9 +473,8 @@ const toPatientDetails = (p: PatientRead): PatientDetails =>
       preferred_provider_id: p.preferred_provider_id ?? undefined,
       preferred_hygienist_id: (p as any).preferred_hygienist_id ?? undefined,
     },
-    fee_schedule: (p as any).fee_schedule_id != null
-      ? { fee_schedule_id: String((p as any).fee_schedule_id) }
-      : undefined,
+    fee_schedule_id: p.fee_schedule_id ?? null,
+    fee_schedule_name: (p as any).fee_schedule_name ?? null,
     patient_flags: {
       is_active: p.is_active,
       hipaa_agreement: p.hipaa_agreement ?? undefined,
@@ -664,7 +670,7 @@ const enrichDisplayNames = async (details: PatientDetails, p: PatientRead): Prom
       if (!providerId && !hygienistId) return;
       const { fetchProviders } = await import("./schedulerApi");
       const list = await fetchProviders(officeId != null ? String(officeId) : undefined);
-      const byId = new Map(list.map((x) => [x.id, x.name]));
+      const byId = new Map(list.map((x) => [x.id, providerDisplayLabel(x)]));
       if (details.provider) {
         if (providerId) details.provider.preferred_provider_name = byId.get(String(providerId));
         if (hygienistId) details.provider.preferred_hygienist_name = byId.get(String(hygienistId));
@@ -676,10 +682,8 @@ const enrichDisplayNames = async (details: PatientDetails, p: PatientRead): Prom
       const res = await getFeeSchedules(officeId != null ? String(officeId) : undefined);
       const match = res.feeSchedules.find((f) => f.feeScheduleId === String(feeScheduleId));
       if (match) {
-        details.fee_schedule = {
-          fee_schedule_id: match.feeScheduleId,
-          fee_schedule_name: match.feeScheduleName,
-        };
+        // id is already set by toPatientDetails; enrichment supplies the label.
+        details.fee_schedule_name = match.feeScheduleName;
       }
     })(),
     (async () => {
@@ -757,11 +761,50 @@ export interface ResilientRegisterResult {
 }
 
 /**
+ * `POST /patients/register` refused the create because a strong duplicate
+ * exists (HTTP 409 `duplicate_patient`). The caller shows the candidates and,
+ * if the user confirms, re-submits with `force_create: true`.
+ */
+export class DuplicatePatientError extends Error {
+  readonly candidates: DuplicateCandidate[];
+  constructor(candidates: DuplicateCandidate[]) {
+    super("A patient matching these details already exists.");
+    this.name = "DuplicatePatientError";
+    this.candidates = candidates;
+  }
+}
+
+export const isDuplicatePatientError = (err: unknown): err is DuplicatePatientError =>
+  err instanceof DuplicatePatientError;
+
+/** HTTP status of an axios-style error, or undefined for network failures. */
+const httpStatus = (err: unknown): number | undefined =>
+  (err as { response?: { status?: number } } | null)?.response?.status;
+
+const errorCode = (err: unknown): string | undefined =>
+  (err as { response?: { data?: { error?: { code?: string } } } } | null)?.response?.data
+    ?.error?.code;
+
+const duplicateCandidates = (err: unknown): DuplicateCandidate[] =>
+  (
+    err as {
+      response?: { data?: { error?: { details?: { candidates?: DuplicateCandidate[] } } } };
+    } | null
+  )?.response?.data?.error?.details?.candidates ?? [];
+
+/**
  * Register a patient resiliently. Prefers the atomic `POST /patients/register`;
- * if that endpoint errors (e.g. the backend register handler is down), falls back
- * to the proven `POST /patients` plus best-effort persistence of each sub-section
- * through its own resource, so patient registration is never fully blocked by a
- * single endpoint. Sub-resource failures in the fallback are returned as warnings.
+ * if that endpoint is *unavailable* (network failure / 5xx), falls back to the
+ * proven `POST /patients` plus best-effort persistence of each sub-section
+ * through its own resource, so registration is never fully blocked by a single
+ * endpoint. Sub-resource failures in the fallback are returned as warnings.
+ *
+ * The fallback is NOT taken for client errors (4xx): a 409 `duplicate_patient`
+ * is surfaced as {@link DuplicatePatientError} so the user can confirm and the
+ * caller can retry with `force_create`, and a 422 is a payload bug that the
+ * chained path would only reproduce. Falling back on those used to bypass the
+ * server's duplicate guard entirely (plain `POST /patients` has none) and left
+ * the patient with a slow, non-atomic, partially-saved intake (GAP-AP-21).
  */
 export const registerPatientResilient = async (
   request: RegisterRequest,
@@ -770,6 +813,12 @@ export const registerPatientResilient = async (
     const res = await registerPatientApi(request);
     return { patient_id: res.patient_id, chart_no: res.chart_no, warnings: [], fellBack: false };
   } catch (err) {
+    const status = httpStatus(err);
+    if (status === 409 && errorCode(err) === "duplicate_patient") {
+      throw new DuplicatePatientError(duplicateCandidates(err));
+    }
+    if (status !== undefined && status < 500) throw err;
+
     // Fallback: create the patient row, then attach each sub-section individually.
     const created = await createPatientApi(request.patient);
     const patientId = created.id;
@@ -780,6 +829,31 @@ export const registerPatientResilient = async (
         await setPatientOpeningBalance(patientId, request.opening_balance);
       } catch {
         warnings.push("Opening balance could not be saved.");
+      }
+    }
+    // Responsible party — the composite creates/links the guarantor inside its
+    // transaction (LEG-10); plain `POST /patients` knows nothing about it, so
+    // it has to be replayed here or a non-self guarantor is silently lost
+    // (verified live: patient 83929 came back with responsible_party_id null).
+    const rp = request.responsible_party;
+    if (rp) {
+      try {
+        let rpId: string | null | undefined = rp.is_self
+          ? String(patientId)
+          : rp.responsible_party_id;
+        if (!rp.is_self && rp.person) {
+          const createdRp = await createResponsiblePartyApi({
+            ...rp.person,
+            home_office_id: request.patient.home_office_id ?? undefined,
+            is_active: true,
+          });
+          rpId = String(createdRp.id);
+        }
+        if (rpId) await updatePatientApi(patientId, { responsible_party_id: rpId });
+      } catch {
+        warnings.push(
+          "Responsible party could not be created/linked — set it from the Patient Overview.",
+        );
       }
     }
     for (const alert of request.medical_alerts ?? []) {

@@ -28,7 +28,9 @@ import type {
   ErrorResponse,
   SupportTicketCreate,
   SupportTicketList,
-  SupportTicketResult
+  SupportTicketRead,
+  SupportTicketResult,
+  SupportTicketStatusUpdate
 } from '../../model';
 
 import { customInstance } from '../../../mutator/axiosInstance';
@@ -194,3 +196,71 @@ export function useListMySupportTickets<TData = Awaited<ReturnType<typeof listMy
 
 
 
+/**
+ * Moves the ticket to ``Open`` / ``In Progress`` / ``Done``. When the ticket is
+ * mirrored in Jira, the matching workflow transition is applied there first so the
+ * two never disagree (409 if Jira offers no transition into that status, 502 if
+ * Jira is unreachable).
+ * @summary Change the status of one of the caller's tickets (HELP-6)
+ */
+export const updateSupportTicketStatus = (
+    ticketId: number,
+    supportTicketStatusUpdate: BodyType<SupportTicketStatusUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SupportTicketRead>(
+      {url: `/api/v1/support/tickets/${ticketId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: supportTicketStatusUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateSupportTicketStatusMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupportTicketStatus>>, TError,{ticketId: number;data: BodyType<SupportTicketStatusUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSupportTicketStatus>>, TError,{ticketId: number;data: BodyType<SupportTicketStatusUpdate>}, TContext> => {
+
+const mutationKey = ['updateSupportTicketStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSupportTicketStatus>>, {ticketId: number;data: BodyType<SupportTicketStatusUpdate>}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  updateSupportTicketStatus(ticketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSupportTicketStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateSupportTicketStatus>>>
+    export type UpdateSupportTicketStatusMutationBody = BodyType<SupportTicketStatusUpdate>
+    export type UpdateSupportTicketStatusMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Change the status of one of the caller's tickets (HELP-6)
+ */
+export const useUpdateSupportTicketStatus = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSupportTicketStatus>>, TError,{ticketId: number;data: BodyType<SupportTicketStatusUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateSupportTicketStatus>>,
+        TError,
+        {ticketId: number;data: BodyType<SupportTicketStatusUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateSupportTicketStatusMutationOptions(options), queryClient);
+    }

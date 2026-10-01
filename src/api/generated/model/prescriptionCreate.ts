@@ -6,11 +6,19 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * ``alerts_acknowledged`` says the prescriber saw the patient's active
+ * medical alerts before saving. Without it, a drug that matches an active
+ * allergy is a **409** ``prescription_alert_conflict`` (never stored). With
+ * it, ``acknowledged_alert_ids`` (Medical History row ids; defaults to every
+ * active one) and a full ``acknowledged_alerts`` snapshot are persisted.
+ */
 export interface PrescriptionCreate {
   patient_id: number;
   office_id?: number | null;
   library_rx_id?: number | null;
   rx_date?: string | null;
+  /** @maxLength 255 */
   drug_name: string;
   dispense?: string | null;
   sig?: string | null;
@@ -21,4 +29,6 @@ export interface PrescriptionCreate {
   is_active?: boolean | null;
   dosespot_rx_id?: string | null;
   dosespot_status?: string | null;
+  alerts_acknowledged?: boolean;
+  acknowledged_alert_ids?: number[] | null;
 }

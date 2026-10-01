@@ -50,6 +50,7 @@ import type {
   AppointmentRead,
 } from "@/api/generated/model";
 import { today_iso } from "./format";
+import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** How many account members we enrich with per-member balance/visit lookups. */
 const MEMBER_ENRICH_CAP = 25;
@@ -117,8 +118,9 @@ export function useOverviewData(patient_id: number) {
   const recalls_query = useListPatientRecalls({ patient_id, size: 50 }, enabled);
   const insurance_query = useListPatientInsurance({ patient_id, size: 50 }, enabled);
   const referrals_query = useListReferrals({ patient_id, size: 50 }, enabled);
+  // The legacy alert catalog has >50 rows; use the 200 cap so no "yes" is paged off.
   const medical_alerts_query = useListPatientMedicalAlerts(
-    { patient_id, is_active: true, size: 50 },
+    { patient_id, is_active: true, size: 200 },
     enabled,
   );
   const account_alerts_query = useListPatientAlerts(
@@ -314,6 +316,13 @@ export function useOverviewData(patient_id: number) {
     return (id?: number | null) => (id == null ? "-" : by_id.get(id) ?? `Office ${id}`);
   }, [offices_query.data]);
 
+  // The patient's home office record — the printed report header carries its
+  // name, address and phone.
+  const home_office = useMemo(
+    () => (offices_query.data?.items ?? []).find((o) => o.id === patient?.home_office_id) ?? null,
+    [offices_query.data, patient?.home_office_id],
+  );
+
   const office_code = useMemo(() => {
     const by_id = new Map(
       (offices_query.data?.items ?? []).map((o) => [o.id, o.office_code ?? o.short_id ?? null]),
@@ -323,10 +332,7 @@ export function useOverviewData(patient_id: number) {
 
   const provider_name = useMemo(() => {
     const by_id = new Map(
-      (providers_query.data?.items ?? []).map((p) => [
-        String(p.id),
-        p.name || [p.last_name, p.first_name].filter(Boolean).join(", "),
-      ]),
+      (providers_query.data?.items ?? []).map((p) => [String(p.id), providerDisplayLabel(p)]),
     );
     return (id?: string | number | null) =>
       id == null ? "-" : by_id.get(String(id)) ?? String(id);
@@ -469,6 +475,7 @@ export function useOverviewData(patient_id: number) {
     last_perio_exam: perio_query.data?.items?.[0] ?? null,
     visit_dates,
 
+    home_office,
     office_name,
     office_code,
     provider_name,

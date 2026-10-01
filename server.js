@@ -31,6 +31,21 @@ app.use(compression({
 
 // Security headers
 app.use((req, res, next) => {
+  // The public AppointNow booking page (/book/:office_code) is designed to be
+  // embedded in a practice's own website via <iframe>, so it must NOT carry the
+  // clickjacking denial the rest of the app gets. It is login-free and holds no
+  // PHI/session, so framing it is safe.
+  const isPublicBooking = req.path === '/book' || req.path.startsWith('/book/');
+  if (isPublicBooking) {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:; frame-ancestors *;"
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+    return;
+  }
   // Prevent clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
   // XSS Protection

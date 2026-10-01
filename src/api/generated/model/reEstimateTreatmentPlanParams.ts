@@ -11,4 +11,8 @@ export type ReEstimateTreatmentPlanParams = {
  * Limit to one Phase ID
  */
 phase?: number | null;
+/**
+ * Legacy 'Use New Fees': re-price every line through the server fee resolver (assignment -> plan -> office default -> code default) and record the schedule that priced it (PLAN-29) before re-estimating.
+ */
+use_new_fees?: boolean;
 };

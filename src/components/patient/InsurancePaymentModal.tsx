@@ -38,6 +38,7 @@ import { useDefinitions } from "@/hooks/useDefinitions";
 import { useProviderDirectory } from "@/hooks/useProviderDirectory";
 import { procedureCodes } from "../../data/procedureCodes";
 import { claimStatusLabel } from "./claimStatus";
+import { RequireRight, RIGHT } from "@/features/access-control";
 import {
   buildProcedureLines,
   cents,
@@ -899,18 +900,23 @@ export default function InsurancePaymentModal({
 
         {/* Footer */}
         <div className="bg-slate-100 border-t-2 border-slate-300 px-4 py-2 flex items-center justify-end gap-2 rounded-b">
-          <button
-            onClick={handlePost}
-            disabled={saving}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
-            ) : (
-              <DollarSign className="w-3.5 h-3.5" strokeWidth={2} />
-            )}
-            {saving ? "Posting…" : "Apply"}
-          </button>
+          {/* RBAC: posting is backend-enforced — this modal writes an insurance
+              payment or (for "check to previous balance") a patient payment, so
+              either right permits it. */}
+          <RequireRight code={[RIGHT.transactions.addPostInsurancePayments, RIGHT.transactions.addPostPatientPayments]}>
+            <button
+              onClick={handlePost}
+              disabled={saving}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-[#1F3A5F] text-white hover:bg-[#2d5080] font-semibold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+              ) : (
+                <DollarSign className="w-3.5 h-3.5" strokeWidth={2} />
+              )}
+              {saving ? "Posting…" : "Apply"}
+            </button>
+          </RequireRight>
           <button
             onClick={onClose}
             disabled={saving}

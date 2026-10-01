@@ -7,9 +7,12 @@
  */
 
 export interface DefinitionCreate {
+  /** @maxLength 50 */
   group_code: string;
+  /** @maxLength 50 */
   key1: string;
   key2?: string | null;
+  /** @maxLength 255 */
   description: string;
   color?: string | null;
   sort_order?: number | null;

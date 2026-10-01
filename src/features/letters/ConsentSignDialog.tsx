@@ -12,7 +12,7 @@
 
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Eraser, Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import { uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
 import Modal, {
   Field,
@@ -22,11 +22,13 @@ import Modal, {
 } from '@/features/patient-overview/Modal';
 import { DOC_TYPE_CONSENT } from './lettersModel';
 import { signConsent } from './lettersService';
+import SignatureCapture, { type SignatureCaptureHandle } from '@/features/signature/SignatureCapture';
+import { DEVICE_SOURCE, type SignatureResult } from '@/features/signature/signatureModel';
 
 type Outcome = 'drawn' | 'scanned' | 'verbal' | 'declined' | 'voided';
 
 const OUTCOMES: Array<{ value: Outcome; label: string; hint: string }> = [
-  { value: 'drawn', label: 'Sign on screen', hint: 'Patient signs in the box below.' },
+  { value: 'drawn', label: 'Sign now', hint: 'Patient signs on the Topaz pad, or on screen when no pad is connected.' },
   { value: 'scanned', label: 'Upload signed copy', hint: 'Attach the scanned wet-signed form.' },
   { value: 'verbal', label: 'Verbal consent', hint: 'Recorded by the staff member signed in.' },
   { value: 'declined', label: 'Patient declined', hint: 'Records the refusal and the reason.' },
@@ -57,65 +59,23 @@ export default function ConsentSignDialog({
   const [relationship, setRelationship] = useState('self');
   const [reason, setReason] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [has_ink, setHasInk] = useState(false);
+  const [signature, setSignature] = useState<SignatureResult | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const canvas_ref = useRef<HTMLCanvasElement | null>(null);
-  const drawing = useRef(false);
+  const pad_ref = useRef<SignatureCaptureHandle | null>(null);
 
   // ---- Signature pad -------------------------------------------------------
-  const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = canvas_ref.current;
-    if (!c) return null;
-    const r = c.getBoundingClientRect();
-    // The canvas is drawn at its backing-store resolution but laid out by CSS,
-    // so pointer coordinates have to be scaled or the ink lands off-cursor.
-    return {
-      x: ((e.clientX - r.left) / r.width) * c.width,
-      y: ((e.clientY - r.top) / r.height) * c.height,
-    };
-  };
-
-  const start = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const p = point(e);
-    const ctx = canvas_ref.current?.getContext('2d');
-    if (!p || !ctx) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    drawing.current = true;
-    ctx.lineWidth = 2.2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#0F172A';
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-  };
-
-  const move = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawing.current) return;
-    const p = point(e);
-    const ctx = canvas_ref.current?.getContext('2d');
-    if (!p || !ctx) return;
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    setHasInk(true);
-  };
-
-  const end = () => {
-    drawing.current = false;
-  };
-
-  const clear = () => {
-    const c = canvas_ref.current;
-    const ctx = c?.getContext('2d');
-    if (!c || !ctx) return;
-    ctx.clearRect(0, 0, c.width, c.height);
-    setHasInk(false);
-  };
+  // The pad itself is the shared <SignatureCapture/>: Topaz when a pad is
+  // connected to this workstation, mouse / touch drawing otherwise.
 
   // ---- Submit --------------------------------------------------------------
   const submit = async () => {
-    if (outcome === 'drawn' && !has_ink) {
-      toast.error('Ask the patient to sign in the box first.');
+    // Accept whatever is on the pad if the user went straight to Record.
+    let sig = signature;
+    if (outcome === 'drawn' && !sig) {
+      sig = (await pad_ref.current?.finish()) ?? null;
+    }
+    if (outcome === 'drawn' && !sig) {
+      toast.error('Ask the patient to sign first.');
       return;
     }
     if (outcome === 'scanned' && !file) {
@@ -146,13 +106,13 @@ export default function ConsentSignDialog({
       const status =
         outcome === 'declined' ? 'declined' : outcome === 'voided' ? 'voided' : 'signed';
 
+      // `signature_method` tells the record which device captured it; the
+      // SigString itself has nowhere to go yet (gap SIG-1).
+      const drawn_method = sig?.device_source === DEVICE_SOURCE.TOPAZ ? 'topaz' : 'drawn';
       await signConsent(consent_id, {
         status,
-        signature_method: status === 'signed' ? (outcome === 'drawn' ? 'drawn' : outcome) : null,
-        signature_data:
-          outcome === 'drawn'
-            ? (canvas_ref.current?.toDataURL('image/png') ?? null)
-            : null,
+        signature_method: status === 'signed' ? (outcome === 'drawn' ? drawn_method : outcome) : null,
+        signature_data: outcome === 'drawn' ? (sig?.signature_data ?? null) : null,
         document_id: document_id ?? null,
         signer_name: status === 'signed' ? signer_name.trim() || null : null,
         signer_relationship: status === 'signed' ? relationship.trim() || null : null,
@@ -209,27 +169,18 @@ export default function ConsentSignDialog({
 
         {outcome === 'drawn' && (
           <div>
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#475569]">
-                Signature
-              </span>
-              <button
-                type="button"
-                onClick={clear}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#3A6EA5] hover:underline"
-              >
-                <Eraser className="h-3 w-3" /> Clear
-              </button>
-            </div>
-            <canvas
-              ref={canvas_ref}
-              width={900}
-              height={260}
-              onPointerDown={start}
-              onPointerMove={move}
-              onPointerUp={end}
-              onPointerLeave={end}
-              className="h-[130px] w-full touch-none rounded border-2 border-dashed border-[#CBD5E1] bg-white"
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#475569]">
+              Signature
+            </span>
+            <SignatureCapture
+              ref={pad_ref}
+              value={signature}
+              onChange={setSignature}
+              always_open
+              height={150}
+              canvas_width={900}
+              canvas_height={300}
+              hint="Accepted — press Record to store it."
             />
           </div>
         )}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useHasRight, RIGHT } from '@/features/access-control';
 import {
   useListPerioExams,
   useCreatePerioExam,
@@ -14,7 +15,6 @@ import {
   useListPatientProcedures,
   useCreateChartCondition,
   useUpdateChartCondition,
-  listPerioExamDetails,
   getListPerioExamsQueryKey,
   getListPerioExamDetailsQueryKey,
   getListChartConditionsQueryKey,
@@ -23,7 +23,8 @@ import { useGetPatient } from '@/api/generated/endpoints/patients/patients';
 import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ChartConditionRead, PerioExamRead, PerioChartTemplateRead } from '@/api/generated/model';
 import { useProviderDirectory } from '@/hooks/useProviderDirectory';
-import { providerOptionLabel } from '@/services/providerDirectory';
+import { usePatientOffice } from '@/features/office-scope';
+import ProviderSelect from '@/features/transactions/ProviderSelect';
 import { PERMANENT_UPPER, PERMANENT_LOWER, upperTeeth, lowerTeeth } from '@/features/restorative/dentition';
 import { loadChartSettings } from '@/features/restorative/restorativeService';
 import { deriveToothStatuses, cellEnabled, planPerioSync, ABSENCE_LABEL, type ToothClinicalStatus } from '@/features/charting/toothStatusBridge';
@@ -33,7 +34,8 @@ import PerioDataEntryPanel from './PerioDataEntryPanel';
 import PerioGraphicalView from './PerioGraphicalView';
 import { ExamDetailsModal, NewExamPrompt } from './ExamDetailsModal';
 import { perioPrintHeader, printPerioExam } from './perioPrint';
-import { CompareDatesModal, PerioComparison, type CompareSeries } from './CompareDatesModal';
+import { CompareDatesModal, PerioComparison } from './CompareDatesModal';
+import { loadComparison, describeCompareError, type CompareSeries } from './perioCompare';
 import {
   MEASURES,
   buildCellOrder,
@@ -49,12 +51,12 @@ import {
   type PerioDetailDraft,
 } from './perioModel';
 import {
-  loadPerioPrefs, savePerioPrefs, resolveTemplate, prefsFromTemplate, examDateLabel,
-  loadExamProvider, saveExamProvider, type PerioPrefs,
+  loadPerioPrefs, savePerioPrefs, resolveTemplate, prefsFromTemplate, examDateLabel, type PerioPrefs,
 } from './perioService';
+import { providerBareName } from '@/services/providerDirectory';
 
 interface OutletCtx {
-  patient: { id: string; name: string; officeId?: string; age?: number; dob?: string; chartNo?: string };
+  patient: { id: string; name: string; age?: number; dob?: string; chartNo?: string };
 }
 
 const MAX_TEETH = PERMANENT_UPPER;          // 1..16
@@ -64,11 +66,14 @@ const FLUSH_MS = 700;
 export default function PerioChart() {
   const { patient } = useOutletContext<OutletCtx>();
   const { patientId } = useParams<{ patientId: string }>();
+  // RBAC: perio writes are backend-enforced on `charting_perio_full_control`.
+  // Without it the chart is read-only (grid + create/delete disabled).
+  const canEdit = useHasRight(RIGHT.charting.perioFull);
   const queryClient = useQueryClient();
 
   const numericId = Number(patient?.id ?? patientId);
   const validId = !Number.isNaN(numericId);
-  const officeId = patient?.officeId ? Number(patient.officeId) : null;
+  const { posting_office_id: officeId } = usePatientOffice();
 
   // ---- Data ---------------------------------------------------------------
   const examsParams = { patient_id: numericId, size: 200 };
@@ -127,7 +132,13 @@ export default function PerioChart() {
   // "Provider" block (Tax ID / License#) the legacy report prints for claims.
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
   const officesQuery = useListOffices({ size: 200 });
-  const { providers, providerRows, providerLabel } = useProviderDirectory(officeId);
+  // The office roster is sparse (office 4 lists one test provider), so the
+  // patient's preferred provider is pinned into the list and the picker offers
+  // the roster first with every other provider still reachable.
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+  const { providers, allProviders, allProviderRows } = useProviderDirectory(officeId, {
+    pinned: [patientQuery.data?.preferred_provider_id, examsQuery.data?.items.find((e) => e.id === selectedExamId)?.provider_id],
+  });
 
   const exams = useMemo<PerioExamRead[]>(
     () => [...(examsQuery.data?.items ?? [])].sort((a, b) => b.exam_date.localeCompare(a.exam_date)),
@@ -137,12 +148,12 @@ export default function PerioChart() {
 
   // ---- UI state -----------------------------------------------------------
   const [prefs, setPrefs] = useState<PerioPrefs>(() => loadPerioPrefs());
-  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [active, setActive] = useState<Cell | null>(null);
   const [showNewExam, setShowNewExam] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   const [comparison, setComparison] = useState<CompareSeries[] | null>(null);
+  const [compareError, setCompareError] = useState<string | null>(null);
   const [providerId, setProviderId] = useState('');
   const [, setDraftsVersion] = useState(0); // re-render trigger for the mutable draft map
 
@@ -150,10 +161,12 @@ export default function PerioChart() {
     setPrefs((prev) => { const next = { ...prev, ...patch }; savePerioPrefs(next); return next; });
   }, []);
 
-  // Default the active exam to the most recent once exams load.
+  // Default the active exam to the most recent LIVE exam once exams load — a
+  // voided exam is read-only, so opening on it (when a live one exists) reads
+  // as "the chart lost my data". Fall back to the newest voided one.
   useEffect(() => {
-    const first = exams[0];
-    if (selectedExamId == null && first) setSelectedExamId(first.id);
+    if (selectedExamId != null || !exams.length) return;
+    setSelectedExamId((exams.find((e) => !e.is_voided) ?? exams[0]!).id);
   }, [exams, selectedExamId]);
 
   // Fold the active template's thresholds / show-MGJ into prefs once on load.
@@ -165,7 +178,7 @@ export default function PerioChart() {
   }, [templates]);
 
   const selectedExam = useMemo(() => exams.find((e) => e.id === selectedExamId) ?? null, [exams, selectedExamId]);
-  const readOnly = !!selectedExam?.is_voided;
+  const readOnly = !!selectedExam?.is_voided || !canEdit;
   // Only the most recent live exam represents the patient's CURRENT periodontal
   // state, so only its findings are mirrored onto the restorative chart —
   // editing an old exam must never overwrite newer findings.
@@ -392,7 +405,9 @@ export default function PerioChart() {
           })
       : [];
     try {
-      const exam = await createExam.mutateAsync({ data: { patient_id: numericId, office_id: officeId, exam_date: today, is_voided: false } });
+      const exam = await createExam.mutateAsync({
+        data: { patient_id: numericId, office_id: officeId, exam_date: today, is_voided: false, provider_id: defaultProviderId || null },
+      });
       if (carry) {
         for (const d of carried) {
           if (isDraftEmpty(d)) continue;
@@ -440,27 +455,37 @@ export default function PerioChart() {
   // the directory qualify, so a stale legacy id can't select a blank option.
   const defaultProviderId = useMemo(() => {
     const known = (id: string | null | undefined) =>
-      !!id && providerRows.some((r) => String(r.id) === String(id)) ? String(id) : '';
+      !!id && allProviderRows.some((r) => String(r.id) === String(id)) ? String(id) : '';
     return known(patientQuery.data?.preferred_provider_id) || known(office?.billing_provider_id);
-  }, [patientQuery.data, office, providerRows]);
+  }, [patientQuery.data, office, allProviderRows]);
 
-  // Apply the stored pick on an exam switch; otherwise fill a still-empty pick
-  // once the directory resolves (it lands a tick after the first render).
-  const providerExamRef = useRef<number | null>(null);
+  // The exam's own `provider_id` (PERIO-BE-14, delivered) is the truth. An
+  // exam nobody has credited yet (legacy import, or created before the column
+  // existed) shows the seeded default without writing it — a pick is only
+  // persisted when the clinician makes one, or when a new exam is created.
   useEffect(() => {
-    if (selectedExamId == null) { providerExamRef.current = null; setProviderId(''); return; }
-    const stored = loadExamProvider(selectedExamId);
-    if (providerExamRef.current !== selectedExamId) {
-      providerExamRef.current = selectedExamId;
-      setProviderId(stored ?? defaultProviderId);
-    } else if (stored == null) {
-      setProviderId((cur) => cur || defaultProviderId);
-    }
-  }, [selectedExamId, defaultProviderId]);
+    if (!selectedExam) { setProviderId(''); return; }
+    setProviderId(selectedExam.provider_id ?? defaultProviderId);
+  }, [selectedExam, defaultProviderId]);
 
-  const onProviderChange = (id: string) => {
+  const [providerError, setProviderError] = useState<string | null>(null);
+  const onProviderChange = async (id: string) => {
+    if (!selectedExam) return;
+    const previous = providerId;
     setProviderId(id);
-    if (selectedExamId != null) saveExamProvider(selectedExamId, id);
+    setProviderError(null);
+    try {
+      await updateExam.mutateAsync({ itemId: selectedExam.id, data: { provider_id: id || null } });
+      queryClient.invalidateQueries({ queryKey: getListPerioExamsQueryKey(examsParams) });
+    } catch (err) {
+      setProviderId(previous);
+      const code = (err as { response?: { data?: { error?: { details?: { code?: string } } } } })?.response?.data?.error?.details?.code;
+      setProviderError(
+        code === 'provider_inactive' ? 'That provider is inactive and cannot be credited with a new exam.'
+          : code === 'provider_not_found' ? 'That provider is not available in this practice.'
+          : 'Could not save the provider on this exam.',
+      );
+    }
   };
 
   // Print — the legacy "Periodontal Examination Record" sheet. Pending edits are
@@ -469,7 +494,7 @@ export default function PerioChart() {
   const onPrint = async () => {
     if (!selectedExam) return;
     await flushDirty();
-    const provider = providerRows.find((r) => String(r.id) === providerId);
+    const provider = allProviderRows.find((r) => String(r.id) === providerId);
 
     printPerioExam(
       perioPrintHeader({
@@ -479,7 +504,7 @@ export default function PerioChart() {
         patientDob: patient?.dob ?? '',
         office,
         provider,
-        providerName: provider ? providerLabel(provider.id) : '',
+        providerName: provider ? providerBareName(provider) : (selectedExam.provider_name ?? ''),
       }),
       {
         maxTeeth: MAX_TEETH,
@@ -495,19 +520,20 @@ export default function PerioChart() {
     );
   };
 
-  // Compare: fetch details for each chosen exam and build read-only series.
+  // Compare: ONE GET /perio-exams/compare?include_details=true (PERIO-BE-15)
+  // brings back the tooth rows, the roll-up and the credited provider for every
+  // chosen date. A 404 / 422 means the selection is bad (deleted / other
+  // patient / voided without the flag) — reported as such, never as "no data".
   const runCompare = async (examIds: number[]) => {
     setShowCompare(false);
-    const series: CompareSeries[] = [];
-    for (const id of examIds) {
-      const ex = exams.find((e) => e.id === id);
-      if (!ex) continue;
-      const res = await listPerioExamDetails({ exam_id: id, size: 200 });
-      const map = new Map<string, PerioDetailDraft>();
-      for (const d of res.items ?? []) map.set(d.tooth_no, draftFromRead(d));
-      series.push({ examId: id, date: ex.exam_date, getDraft: (t) => map.get(t) });
+    setCompareError(null);
+    const chosen = examIds.map((id) => exams.find((e) => e.id === id)).filter((e): e is PerioExamRead => !!e);
+    try {
+      setComparison(await loadComparison(numericId, chosen));
+    } catch (err) {
+      setComparison([]);
+      setCompareError(describeCompareError(err));
     }
-    setComparison(series);
   };
 
   // ---- Render -------------------------------------------------------------
@@ -531,22 +557,24 @@ export default function PerioChart() {
           </select>
         </label>
         <label className="flex items-center gap-1.5 font-medium">Provider
-          <select
+          <ProviderSelect
             value={providerId}
-            onChange={(e) => onProviderChange(e.target.value)}
+            onChange={onProviderChange}
+            officeProviders={providers}
+            allProviders={allProviders}
+            kind="any"
+            placeholder="— Select Provider —"
             disabled={!selectedExam}
-            title="Provider printed on the Periodontal Examination Record"
+            title="Provider credited with this exam (printed on the Periodontal Examination Record)"
             className="max-w-[190px] rounded border border-slate-300 bg-white px-2 py-1 disabled:opacity-50"
-          >
-            <option value="">— Select Provider —</option>
-            {providers.map((p) => <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>)}
-          </select>
+          />
+          {providerError && <span className="text-rose-600">{providerError}</span>}
         </label>
-        <button onClick={onNewExam} disabled={!validId || createExam.isPending} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">New Exam</button>
+        <button onClick={onNewExam} disabled={!validId || createExam.isPending || !canEdit} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">New Exam</button>
         <button onClick={() => setShowDetails(true)} disabled={!selectedExam} className="flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">
           Exam Details{selectedExam?.notes ? <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> : null}
         </button>
-        <button onClick={deleteTodaysExam} disabled={!selectedExam} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Delete Exam</button>
+        <button onClick={deleteTodaysExam} disabled={!selectedExam || !canEdit} className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Delete Exam</button>
         <button
           onClick={() => { void onPrint(); }}
           disabled={!selectedExam}
@@ -556,7 +584,8 @@ export default function PerioChart() {
           <Printer className="h-3.5 w-3.5" />Print
         </button>
         <button onClick={() => setShowCompare(true)} disabled={exams.length === 0} className="ml-auto rounded border border-slate-300 bg-white px-2.5 py-1 font-medium hover:bg-slate-50 disabled:opacity-50">Compare by Dates</button>
-        {readOnly && <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-700">Voided — read only</span>}
+        {selectedExam?.is_voided && <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-700">Voided — read only</span>}
+        {!canEdit && !selectedExam?.is_voided && <span className="rounded bg-slate-200 px-2 py-1 font-medium text-slate-600">View only</span>}
       </div>
 
       {/* Restorative-chart link strip: which teeth are locked and why, and
@@ -589,11 +618,12 @@ export default function PerioChart() {
       <div className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1 overflow-auto p-3">
           {comparison ? (
-            <PerioComparison series={comparison} maxTeeth={MAX_TEETH} mandTeeth={MAND_TEETH} numberingSystem={prefs.numbering_system} getStatus={getStatus} onClose={() => setComparison(null)} />
+            <PerioComparison series={comparison} maxTeeth={MAX_TEETH} mandTeeth={MAND_TEETH} numberingSystem={prefs.numbering_system} getStatus={getStatus} error={compareError} onClose={() => { setComparison(null); setCompareError(null); }} />
           ) : selectedExam == null ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-slate-500">
               <p>No periodontal exam on file for {patient?.name}.</p>
-              <button onClick={onNewExam} disabled={!validId} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">+ New Exam</button>
+              <button onClick={onNewExam} disabled={!validId || !canEdit} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">+ New Exam</button>
+              {!canEdit && <p className="text-xs text-slate-400">You have view-only access to perio charting.</p>}
             </div>
           ) : prefs.graphical ? (
             <PerioGraphicalView

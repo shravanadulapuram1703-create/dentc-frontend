@@ -65,6 +65,26 @@ preferred_hygienist_id?: string | null;
  */
 fee_schedule_id?: number | null;
 /**
+ * Filter by legacy_id
+ */
+legacy_id?: string | null;
+/**
+ * Filter by id
+ */
+id?: number | null;
+/**
+ * Filter by seen_at_office_id
+ */
+seen_at_office_id?: number | null;
+/**
+ * Filter by search_scope
+ */
+search_scope?: string | null;
+/**
+ * Comma-separated list of ids to return (batch lookup)
+ */
+ids?: string | null;
+/**
  * created_at >= (inclusive lower bound)
  */
 created_at_from?: string | null;
@@ -98,4 +118,20 @@ order?: ListPatientsOrder;
  * Free-text search
  */
 search?: string | null;
+/**
+ * OFF-SCOPE-2: read across all offices (needs office_scope_view_all_offices)
+ */
+all_offices?: boolean;
+/**
+ * OFF-SCOPE-8: restrict to these offices (repeatable)
+ */
+office_ids?: number[] | null;
+/**
+ * OFF-SCOPE-8: restrict to an office group
+ */
+office_group_id?: number | null;
+/**
+ * OFF-SCOPE-4: include office_id IS NULL (global) rows (default: true for catalogs, false for day-data)
+ */
+include_global?: boolean | null;
 };

@@ -3,15 +3,20 @@ import type { ProcedureCodeRead, ProviderRead } from '@/api/generated/model';
 import { useListCodeBundles, useListCodeBundleItems } from '@/api/generated/endpoints/procedures/procedures';
 import { loadProcedureCodes } from '@/components/setup/insurance/procedureCodeService';
 import { codeAllowedOnTooth, classifyTooth } from './txPlanModel';
-import type { FeeScheduleContext } from '@/services/feeScheduleResolver';
-import type { CoverageContext } from '@/services/coverageResolver';
-import { priceProcedure, money2, type PricedProcedure } from './procedurePricing';
+import {
+  priceProcedureFor as priceProcedure,
+  money2,
+  type FeeScheduleContext,
+  type CoverageContext,
+  type PricedProcedure,
+} from '@/features/pricing';
 import { procedureRequirements, validateProcedureDetails } from '@/features/procedures/procedureRequirements';
 import ProcedureDetailsDialog, {
   type ProcedureDetailsHeader,
   type ProcedureDetailsRowInput,
   type ProcedureDetailsRowResult,
 } from '@/features/procedures/ProcedureDetailsDialog';
+import { providerOptionLabel } from '@/services/providerDirectory';
 
 // AMB / "A" codes = alternative-maximum-benefit downgrade codes (end in 'A').
 const isAmbCode = (c: { code: string; legacy_code?: string | null }) =>
@@ -78,6 +83,8 @@ interface AddAdaCodeModalProps {
   mode: 'completed' | 'tx-plans';
   /** Patient's office — scopes the provider list in the Add Procedure Details pop-up. */
   officeId?: number | null;
+  /** Real numeric patient id — drives the supporting-records readiness line in the pop-up. */
+  patientId?: number | null;
   teeth: string[];
   surface: string | null;
   providers: ProviderRead[];
@@ -103,7 +110,7 @@ interface AddAdaCodeModalProps {
  * enforcement, fee + insurance estimate, provider (Completed), Add Procedure with
  * auto-advance across the selected teeth.
  */
-export default function AddAdaCodeModal({ mode, officeId, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
+export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
   const [codeMap, setCodeMap] = useState<Map<string, ProcedureCodeRead>>(new Map());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(() => {
@@ -451,7 +458,7 @@ export default function AddAdaCodeModal({ mode, officeId, teeth, surface, provid
               {mode === 'completed' && (
                 <label className="block w-48 text-xs"><span className="text-slate-500">Provider</span>
                   <select value={providerId} onChange={(e) => setProviderId(e.target.value)} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm">
-                    {providers.map((p) => <option key={p.id} value={p.id}>{p.name || `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() || p.id}</option>)}
+                    {providers.map((p) => <option key={p.id} value={p.id}>{providerOptionLabel(p)}</option>)}
                   </select></label>
               )}
               <button onClick={addCurrent} disabled={!canAdd} className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
@@ -467,6 +474,7 @@ export default function AddAdaCodeModal({ mode, officeId, teeth, surface, provid
         <ProcedureDetailsDialog
           mode={mode === 'completed' ? 'charge' : 'plan'}
           office_id={officeId ?? null}
+          patient_id={patientId ?? null}
           rows={details.rows}
           header={{ provider_id: providerId, date: serviceDate }}
           providerLocked={mode !== 'completed'}

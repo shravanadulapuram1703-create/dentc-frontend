@@ -7,9 +7,29 @@
  */
 import type { MedicalHistorySignRequestScope } from './medicalHistorySignRequestScope';
 
+/**
+ * MH-6 sign body + the Topaz block (SIG-10: the same fields as
+ * ``POST /patient-signatures`` so switching paths loses no metadata).
+ */
 export interface MedicalHistorySignRequest {
+  /** Topaz SigString — clear text, lossless; encrypted at rest */
+  sig_string?: string | null;
+  sig_format?: string | null;
+  /** 0 none | 1 lossless | 2 lossy */
+  sig_compression?: number | null;
+  /** 0 clear | 1 DES | 2 high */
+  sig_encryption?: number | null;
+  point_count?: number | null;
+  stroke_count?: number | null;
+  device_vendor?: string | null;
+  device_model?: string | null;
+  device_serial?: string | null;
+  /** Workstation hint; defaults to the request User-Agent */
+  captured_user_agent?: string | null;
   signature_data: string;
+  signature_len?: number | null;
   device_source?: string | null;
+  signed_at?: string | null;
   is_user_sig?: boolean;
   signed_by_user_id?: number | null;
   signature_type?: string;

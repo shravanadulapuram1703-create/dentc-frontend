@@ -21,13 +21,15 @@ import {
 import { fetchUserForEdit } from "../../services/userApi";
 import { getUserSetupMetadata, deleteUserImage } from "../../api/generated/endpoints/users/users";
 import { listUserGroups } from "../../api/generated/endpoints/staff/staff";
-import {
-  useListOffices,
-  useListProviders,
-} from "../../api/generated/endpoints/organization/organization";
+import { useListProviders } from "../../api/generated/endpoints/organization/organization";
+import { useOfficeOptions } from "@/features/office-scope";
 import type { UserSetupMetadata } from "../../api/generated/model/userSetupMetadata";
 import type { BackendUser } from "../../types/backendUser";
 import { apiAssetUrl } from "../../utils/apiAsset";
+import { providerDisplayLabel } from "@/services/providerDirectory";
+import { officeKeyToId } from "@/services/officeLookup";
+import SignatureCapture from "@/features/signature/SignatureCapture";
+import type { SignatureResult } from "@/features/signature/signatureModel";
 
 // Re-export BackendUser for backward compatibility
 export type { BackendUser } from "../../types/backendUser";
@@ -53,7 +55,8 @@ export default function AddEditUserModal({
 }: AddEditUserModalProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [setup, setSetup] = useState<UserSetupMetadata | null>(null);
-  const [setupLoading, setSetupLoading] = useState(false);
+  // Setter-only for now: nothing renders the metadata-loading state yet.
+  const [, setSetupLoading] = useState(false);
   const [groupMembershipsMetadata, setGroupMembershipsMetadata] = useState<
     Array<{ code: string; name: string; description?: string }>
   >([]);
@@ -80,9 +83,10 @@ export default function AddEditUserModal({
 
   // Form Data State
   
-  // Offices for the assignment picker (generated client, OfficeRead).
-  const officesQ = useListOffices({ size: 200 }, { query: { enabled: isOpen } });
-  const availableOffices = officesQ.data?.items ?? [];
+  // Offices for the assignment picker — the shared office catalog (id / name /
+  // office_code). Never filtered: a user may be assigned to any tenant office.
+  const officesQ = useOfficeOptions({ enabled: isOpen });
+  const availableOffices = officesQ.data ?? [];
 
   // Providers for the Report Access Provider dropdown.
   const providersQ = useListProviders({ size: 200 }, { query: { enabled: isOpen } });
@@ -90,6 +94,9 @@ export default function AddEditUserModal({
 
   // User image + signature (image goes via the multipart endpoint after save).
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // "Sign on pad" dialog for the user signature (Topaz or on-screen).
+  const [sigPadOpen, setSigPadOpen] = useState(false);
+  const [sigDraft, setSigDraft] = useState<SignatureResult | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Dropdown metadata (roles, patient access levels, overtime methods, prefs
@@ -386,8 +393,10 @@ export default function AddEditUserModal({
         custom2: "",
         signatureData: "",
         active: true,
-        homeOffice: "",
-        assignedOffices: [],
+        // A user created while working in an office defaults to that office
+        // (home + assignment); edit mode overwrites these from the record.
+        homeOffice: officeKeyToId(currentOffice) != null ? String(officeKeyToId(currentOffice)) : "",
+        assignedOffices: officeKeyToId(currentOffice) != null ? [String(officeKeyToId(currentOffice))] : [],
         roles: [],
         groupMemberships: [],
         permittedIPs: [],
@@ -589,7 +598,8 @@ export default function AddEditUserModal({
     { id: 4, label: "User Settings", icon: Settings },
   ];
 
-  const [saving, setSaving] = useState(false);
+  // Setter-only for now: the footer SAVE button does not yet reflect the in-flight state.
+  const [, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaveAttempted(true);
@@ -731,16 +741,7 @@ export default function AddEditUserModal({
     }
   };
 
-  // Office Assignment Handlers
-  const moveOfficeToAssigned = (office: string) => {
-    if (!formData.assignedOffices.includes(office)) {
-      setFormData({
-        ...formData,
-        assignedOffices: [...formData.assignedOffices, office],
-      });
-    }
-  };
-
+  // Office Assignment Handlers (the "Available Offices" list assigns inline on click).
   const removeOfficeFromAssigned = (office: string) => {
     setFormData({
       ...formData,
@@ -1267,7 +1268,7 @@ export default function AddEditUserModal({
                       <option value="">None</option>
                       {availableProviders.map(p => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {providerDisplayLabel(p)}
                         </option>
                       ))}
                     </select>
@@ -1442,7 +1443,7 @@ export default function AddEditUserModal({
                               className="px-3 py-2 hover:bg-white rounded cursor-pointer text-sm border border-transparent hover:border-[#3A6EA5] mb-1"
                             >
                               <div className="font-bold text-[#1E293B]">{o.name}</div>
-                              <div className="text-xs text-[#64748B]">OID: {o.office_code}</div>
+                              <div className="text-xs text-[#64748B]">OID: {o.office_code || "—"}</div>
                             </div>
                         ))}
                     </div>
@@ -1538,7 +1539,7 @@ export default function AddEditUserModal({
                       .filter(o => formData.assignedOffices.includes(String(o.id)))
                       .map(o => (
                         <option key={o.id} value={String(o.id)}>
-                          {o.name} (OID: {o.office_code})
+                          {o.name} (OID: {o.office_code || "—"})
                         </option>
                       ))}
                   </select>
@@ -2144,6 +2145,16 @@ export default function AddEditUserModal({
                           onChange={(e) => onSignatureSelected(e.target.files?.[0] ?? null)}
                           className="text-sm"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSigDraft(null);
+                            setSigPadOpen(true);
+                          }}
+                          className="block text-xs font-semibold text-[#3A6EA5] hover:underline"
+                        >
+                          Sign on pad / screen…
+                        </button>
                         {formData.signatureData && (
                           <button
                             type="button"
@@ -2161,7 +2172,54 @@ export default function AddEditUserModal({
               </div>
             </div>
           )}
-            </>
+            {sigPadOpen && (
+              <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
+                <div className="w-full max-w-lg rounded-lg border-2 border-[#E2E8F0] bg-white shadow-xl">
+                  <div className="flex items-center justify-between rounded-t-md bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-4 py-2.5">
+                    <h3 className="text-sm font-bold uppercase tracking-wide text-white">Capture Signature</h3>
+                    <button
+                      type="button"
+                      onClick={() => setSigPadOpen(false)}
+                      className="text-white/80 hover:text-white"
+                      aria-label="Close"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    <SignatureCapture
+                      value={sigDraft}
+                      onChange={setSigDraft}
+                      always_open
+                      height={150}
+                      hint="Accepted — press Use signature."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 rounded-b-md border-t-2 border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setSigPadOpen(false)}
+                      className="rounded border-2 border-[#CBD5E1] bg-white px-4 py-1.5 text-sm font-bold text-[#1F3A5F] hover:bg-[#F1F5F9]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!sigDraft}
+                      onClick={() => {
+                        if (!sigDraft) return;
+                        setFormData((prev) => ({ ...prev, signatureData: sigDraft.signature_data }));
+                        setSigPadOpen(false);
+                      }}
+                      className="rounded bg-[#3A6EA5] px-4 py-1.5 text-sm font-bold text-white hover:bg-[#1F3A5F] disabled:opacity-50"
+                    >
+                      Use signature
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+    </>
           ) : null}
         </div>
 

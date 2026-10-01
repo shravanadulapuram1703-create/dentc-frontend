@@ -114,6 +114,7 @@ export default function InsuranceDashboard() {
       countClaims(),
       sumClaimStatuses(OUTSTANDING_STATUSES),
       sumClaimStatuses(DENIED_STATUSES),
+      // Deliberately tenant-wide (no office param) — the tile is labelled "All offices".
       getReportAccountsReceivable().catch(() => null),
       listInsuranceCarriers({ size: 1, carrier_type: "True" }).then((r) => r.meta?.total ?? 0).catch(() => null),
       listInsuranceCarriers({ size: 1, carrier_type: "False" }).then((r) => r.meta?.total ?? 0).catch(() => null),
@@ -226,7 +227,7 @@ export default function InsuranceDashboard() {
               icon={<Wallet className="w-4 h-4" />}
               tone="slate"
               loading={loading}
-              hint={arError ? "AR report unavailable" : "Outstanding insurance AR"}
+              hint={arError ? "AR report unavailable" : "All offices · outstanding insurance AR"}
             />
           </div>
         </WidgetCard>

@@ -7,6 +7,7 @@
  */
 
 export interface TreatmentPlanInsuranceDetailCreate {
+  /** @maxLength 50 */
   plan_item_id: string;
   ins_plan_id?: number | null;
   is_archived?: boolean | null;
@@ -20,5 +21,7 @@ export interface TreatmentPlanInsuranceDetailCreate {
   preauth_date?: string | null;
   preauth_expires?: string | null;
   preauth_amount?: number | string | null;
+  preauth_status?: string | null;
+  preauth_status_at?: string | null;
   notes?: string | null;
 }

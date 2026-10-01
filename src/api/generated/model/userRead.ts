@@ -28,6 +28,8 @@ export interface UserRead {
   custom_2?: string | null;
   signature_data?: string | null;
   image_url?: string | null;
+  current_office_id?: number | null;
+  last_patient_id?: number | null;
   created_at: string;
   created_by?: number | null;
   updated_at?: string | null;

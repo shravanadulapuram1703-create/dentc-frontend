@@ -17,6 +17,8 @@ export interface PerioExamRead {
   exam_date: string;
   notes?: string | null;
   is_voided: boolean;
+  provider_id?: string | null;
+  provider_name?: string | null;
   created_by?: number | null;
   updated_by?: number | null;
   created_at: string;

@@ -7,6 +7,7 @@
  */
 
 export interface CodeBundleCreate {
+  /** @maxLength 100 */
   name: string;
   display_code?: string | null;
   description?: string | null;

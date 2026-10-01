@@ -2,6 +2,11 @@
 // roll-up endpoints (see docs/reports/reports_backend_devreport.md gap #1), so
 // each hook pages CRUD list endpoints and reduces client-side, reusing the
 // dashboard aggregation helpers and surfacing truncation honestly.
+//
+// Office scope: the office is passed SERVER-SIDE on every list that accepts it
+// (`officeFilter` for office_id lists, `homeOfficeFilter` for /patients), so the
+// page cap bounds the office's rows — a client-side post-filter after the cap
+// silently undercounted. No working office = params omitted = tenant-wide.
 import { useQuery } from "@tanstack/react-query";
 import { listPatientProcedures } from "@/api/generated/endpoints/clinical/clinical";
 import { listPatients } from "@/api/generated/endpoints/patients/patients";
@@ -10,6 +15,7 @@ import {
   listInsuranceClaims,
 } from "@/api/generated/endpoints/billing/billing";
 import { listAppointments } from "@/api/generated/endpoints/appointments/appointments";
+import { homeOfficeFilter, officeFilter } from "@/features/office-scope";
 import { fetchAllPages, parseDecimal } from "../../dashboard/lib/aggregate";
 import { toOfficeId } from "../../dashboard/lib/useDashboardData";
 import {
@@ -71,6 +77,7 @@ export function useExecutiveSummary(currentOffice: string | undefined, range: Da
             date_of_service_from: range.from,
             date_of_service_to: range.to,
             is_void: false,
+            ...officeFilter(office),
             page,
             size,
           }),
@@ -80,17 +87,20 @@ export function useExecutiveSummary(currentOffice: string | undefined, range: Da
             payment_date_from: range.from,
             payment_date_to: range.to,
             is_void: false,
+            ...officeFilter(office),
             page,
             size,
           }),
         ),
-        fetchAllPages((page, size) => listInsuranceClaims({ is_active: true, page, size })),
+        fetchAllPages((page, size) =>
+          listInsuranceClaims({ is_active: true, ...officeFilter(office), page, size }),
+        ),
         fetchAllPages((page, size) =>
           // Deleted appointments are only archived (gap SCHED-DEL-1).
           listAppointments({
             date_from: range.from,
             date_to: range.to,
-            office_id: office ?? null,
+            ...officeFilter(office),
             is_archived: false,
             page,
             size,
@@ -100,19 +110,16 @@ export function useExecutiveSummary(currentOffice: string | undefined, range: Da
         listPatients({
           created_at_from: range.from,
           created_at_to: range.to,
-          home_office_id: office ?? null,
+          ...homeOfficeFilter(office),
           page: 1,
           size: 1,
         }),
-        listPatients({ is_active: true, home_office_id: office ?? null, page: 1, size: 1 }),
+        listPatients({ is_active: true, ...homeOfficeFilter(office), page: 1, size: 1 }),
       ]);
 
-      const inOffice = <T extends { office_id?: number | null }>(rows: T[]): T[] =>
-        office == null ? rows : rows.filter((r) => r.office_id === office);
-
-      const production = inOffice(procs.items).reduce((s, p) => s + parseDecimal(p.fee), 0);
-      const collections = inOffice(pays.items).reduce((s, p) => s + parseDecimal(p.amount), 0);
-      const insuranceReceivables = inOffice(claims.items)
+      const production = procs.items.reduce((s, p) => s + parseDecimal(p.fee), 0);
+      const collections = pays.items.reduce((s, p) => s + parseDecimal(p.amount), 0);
+      const insuranceReceivables = claims.items
         .filter((c) => isOutstandingClaim(c.status))
         .reduce(
           (s, c) => s + Math.max(0, parseDecimal(c.total_billed) - parseDecimal(c.total_paid)),
@@ -187,6 +194,7 @@ export function useReportTrends(
               date_of_service_from: range.from,
               date_of_service_to: range.to,
               is_void: false,
+              ...officeFilter(office),
               page,
               size,
             }),
@@ -198,6 +206,7 @@ export function useReportTrends(
               payment_date_from: range.from,
               payment_date_to: range.to,
               is_void: false,
+              ...officeFilter(office),
               page,
               size,
             }),
@@ -208,7 +217,7 @@ export function useReportTrends(
             listPatients({
               created_at_from: range.from,
               created_at_to: range.to,
-              home_office_id: office ?? null,
+              ...homeOfficeFilter(office),
               page,
               size,
             }),
@@ -228,7 +237,6 @@ export function useReportTrends(
 
       const procDist = new Map<string, number>();
       for (const p of procs.items) {
-        if (office != null && p.office_id !== office) continue;
         const d = p.date_of_service?.slice(0, 10);
         const fee = parseDecimal(p.fee);
         if (d) ensure(bucketKey(d, g)).production += fee;
@@ -236,7 +244,6 @@ export function useReportTrends(
         procDist.set(code, (procDist.get(code) ?? 0) + fee);
       }
       for (const p of pays.items) {
-        if (office != null && p.office_id !== office) continue;
         const d = p.payment_date?.slice(0, 10);
         if (d) ensure(bucketKey(d, g)).collections += parseDecimal(p.amount);
       }

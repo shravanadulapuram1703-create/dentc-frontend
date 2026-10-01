@@ -17,6 +17,7 @@ export interface ProviderUpdate {
   tax_id?: string | null;
   dea_id?: string | null;
   specialty?: string | null;
+  taxonomy_code?: string | null;
   is_active?: boolean | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -40,4 +41,5 @@ export interface ProviderUpdate {
   ortho_questionnaire_template?: string | null;
   custom_1?: string | null;
   custom_2?: string | null;
+  default_operatory_id?: string | null;
 }

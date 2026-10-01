@@ -7,12 +7,17 @@
  */
 
 export interface FeeScheduleEntryRead {
+  tenant_id?: number | null;
   fee_schedule_id: number;
   procedure_code: string;
   amb_code?: string | null;
   patient_fee?: string | null;
   insurance_fee?: string | null;
-  effective_date?: string | null;
+  is_no_charge: boolean;
+  effective_date: string;
+  created_by?: number | null;
+  updated_by?: number | null;
   id: number;
   created_at: string;
+  updated_at?: string | null;
 }

@@ -93,14 +93,23 @@ export const contact_pref_label = (code?: string | null): string => {
   return map[code] ?? code;
 };
 
-/** "Last, First (Preferred)" exactly as the legacy header renders it. */
+/**
+ * "Last, First Middle (Preferred)" as the legacy header renders it. The middle
+ * name (backend `middle_initial`, optional) follows the first name; every part
+ * is omitted when blank.
+ */
 export const patient_display_name = (p?: {
   first_name?: string | null;
   last_name?: string | null;
+  middle_initial?: string | null;
   preferred_name?: string | null;
 } | null): string => {
   if (!p) return "-";
-  const base = [p.last_name, p.first_name].filter(Boolean).join(", ");
+  const given = [p.first_name, p.middle_initial]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+  const base = [p.last_name?.trim(), given].filter(Boolean).join(", ");
   if (!base) return "-";
   return p.preferred_name ? `${base} (${p.preferred_name})` : base;
 };

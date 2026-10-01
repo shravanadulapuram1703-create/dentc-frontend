@@ -7,8 +7,10 @@
  */
 
 export interface ProviderCreate {
+  /** @maxLength 50 */
   id: string;
   office_id: number;
+  /** @maxLength 255 */
   name: string;
   title?: string | null;
   short_id?: string | null;
@@ -18,6 +20,7 @@ export interface ProviderCreate {
   tax_id?: string | null;
   dea_id?: string | null;
   specialty?: string | null;
+  taxonomy_code?: string | null;
   is_active?: boolean | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -41,4 +44,5 @@ export interface ProviderCreate {
   ortho_questionnaire_template?: string | null;
   custom_1?: string | null;
   custom_2?: string | null;
+  default_operatory_id?: string | null;
 }

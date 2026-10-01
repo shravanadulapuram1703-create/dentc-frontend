@@ -965,6 +965,7 @@ export function useGetImageGroup<TData = Awaited<ReturnType<typeof getImageGroup
 
 
 /**
+ * Partial update of one image group. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Update image group
  */
 export const updateImageGroup = (
@@ -1029,6 +1030,7 @@ export const useUpdateImageGroup = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateImageGroupMutationOptions(options), queryClient);
     }
     /**
+ * Delete one image group. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
  * @summary Delete image group
  */
 export const deleteImageGroup = (
@@ -1338,6 +1340,7 @@ export function useGetImageDetail<TData = Awaited<ReturnType<typeof getImageDeta
 
 
 /**
+ * Partial update of one image detail.
  * @summary Update image detail
  */
 export const updateImageDetail = (
@@ -1402,6 +1405,7 @@ export const useUpdateImageDetail = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateImageDetailMutationOptions(options), queryClient);
     }
     /**
+ * Delete one image detail.
  * @summary Delete image detail
  */
 export const deleteImageDetail = (
@@ -1711,6 +1715,7 @@ export function useGetCollectionAgency<TData = Awaited<ReturnType<typeof getColl
 
 
 /**
+ * Partial update of one collection agency.
  * @summary Update collection agency
  */
 export const updateCollectionAgency = (
@@ -1775,6 +1780,7 @@ export const useUpdateCollectionAgency = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateCollectionAgencyMutationOptions(options), queryClient);
     }
     /**
+ * Delete one collection agency.
  * @summary Delete collection agency
  */
 export const deleteCollectionAgency = (

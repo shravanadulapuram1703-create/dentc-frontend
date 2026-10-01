@@ -4,6 +4,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, SearchX } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useOfficeScope } from "@/features/office-scope";
 import UtilityShell from "../UtilityShell";
 import { getUtility } from "../utilityCatalog";
 
@@ -11,6 +12,9 @@ export default function UtilityRunnerPage() {
   const { utilityId } = useParams<{ utilityId: string }>();
   const navigate = useNavigate();
   const { currentOffice } = useAuth();
+  // The shell seeds its parameter values (including `__office`) in a useState
+  // initializer, so an office switch remounts it (key) to re-seed the office.
+  const { office_id } = useOfficeScope();
   const def = utilityId ? getUtility(utilityId) : undefined;
 
   if (!def) {
@@ -34,5 +38,5 @@ export default function UtilityRunnerPage() {
     );
   }
 
-  return <UtilityShell def={def} currentOffice={currentOffice} />;
+  return <UtilityShell key={office_id ?? "none"} def={def} currentOffice={currentOffice} />;
 }

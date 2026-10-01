@@ -24,10 +24,6 @@ interface QuickAction {
   reason?: string;
 }
 
-interface Props {
-  currentOffice: string;
-}
-
 /**
  * One-click actions, laid out newest-useful first:
  *   row 1  actions that need no patient context
@@ -40,7 +36,7 @@ interface Props {
  * active patient. With no patient chosen yet they fall back to `/patient`,
  * which resumes the last one or opens the search picker.
  */
-export default function QuickActionsPanel(_props: Props) {
+export default function QuickActionsPanel() {
   const navigate = useNavigate();
   const { activePatient } = useAuth();
 

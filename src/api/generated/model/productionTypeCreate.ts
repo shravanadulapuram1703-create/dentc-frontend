@@ -7,6 +7,7 @@
  */
 
 export interface ProductionTypeCreate {
+  /** @maxLength 100 */
   name: string;
   color?: string | null;
   description?: string | null;

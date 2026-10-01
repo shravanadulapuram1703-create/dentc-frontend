@@ -17,9 +17,21 @@ patient_id?: number | null;
  */
 office_id?: number | null;
 /**
+ * Filter by provider_id
+ */
+provider_id?: string | null;
+/**
  * Filter by is_voided
  */
 is_voided?: boolean | null;
+/**
+ * Filter by date_from
+ */
+date_from?: string | null;
+/**
+ * Filter by date_to
+ */
+date_to?: string | null;
 /**
  * exam_date >= (inclusive lower bound)
  */
@@ -46,4 +58,20 @@ order?: ListPerioExamsOrder;
  * Free-text search
  */
 search?: string | null;
+/**
+ * OFF-SCOPE-2: read across all offices (needs office_scope_view_all_offices)
+ */
+all_offices?: boolean;
+/**
+ * OFF-SCOPE-8: restrict to these offices (repeatable)
+ */
+office_ids?: number[] | null;
+/**
+ * OFF-SCOPE-8: restrict to an office group
+ */
+office_group_id?: number | null;
+/**
+ * OFF-SCOPE-4: include office_id IS NULL (global) rows (default: true for catalogs, false for day-data)
+ */
+include_global?: boolean | null;
 };

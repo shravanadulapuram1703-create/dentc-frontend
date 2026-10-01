@@ -8,6 +8,7 @@
 
 export interface ExplosionCodeItemCreate {
   explosion_code_id: number;
+  /** @maxLength 20 */
   procedure_code: string;
   display_order?: number | null;
   default_fee?: number | string | null;

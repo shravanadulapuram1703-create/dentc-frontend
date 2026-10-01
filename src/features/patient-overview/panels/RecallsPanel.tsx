@@ -23,7 +23,9 @@ export default function RecallsPanel({ data }: { data: OverviewData }) {
   const selected = data.recalls.find((r) => r.id === selected_id) ?? null;
 
   return (
-    <div>
+    // Sits under Appointments in the SUMMARY row; keeps its own height and
+    // caps the grid so a long recall list scrolls instead of growing the row.
+    <div className="shrink-0">
       <SectionBar
         title="Recalls"
         badge={
@@ -58,6 +60,7 @@ export default function RecallsPanel({ data }: { data: OverviewData }) {
           empty="No recalls"
           is_empty={data.recalls.length === 0}
           min_width={620}
+          className="max-h-40"
         >
           {data.recalls.map((r) => (
             <tr

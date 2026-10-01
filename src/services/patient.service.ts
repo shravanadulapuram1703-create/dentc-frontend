@@ -13,6 +13,24 @@ import type { DuplicateCandidate } from '@/api/generated/model';
 import { DuplicatePatient, CheckDuplicatePayload } from '../types/patient';
 
 /**
+ * Backend `DuplicateCandidate` -> table row. The candidate already carries the
+ * office / email / provider columns (the modal used to render them blank).
+ */
+export function toDuplicatePatient(c: DuplicateCandidate): DuplicatePatient {
+  const matched = (c.match_on ?? []).join(', ');
+  return {
+    dob: c.dob ?? '',
+    name: [c.last_name, c.first_name].filter(Boolean).join(', '),
+    home_office_short_id: c.home_office_short_id ?? '',
+    patient_id: c.chart_no || String(c.id),
+    email: c.email ?? '',
+    provider: c.preferred_provider_name ?? '',
+    status: c.is_active ? 'Active' : 'Inactive',
+    source: `Match ${c.match_score}%${matched ? ` (${matched})` : ''}`,
+  };
+}
+
+/**
  * Find likely-duplicate patients for the identity being registered.
  *
  * @returns matching patients ordered by the backend's match score (empty if none)
@@ -21,25 +39,13 @@ import { DuplicatePatient, CheckDuplicatePayload } from '../types/patient';
 export async function checkDuplicatePatient(
   payload: CheckDuplicatePayload,
 ): Promise<DuplicatePatient[]> {
-  const { firstName, lastName, birthdate } = payload;
-
   try {
     const res = await checkPatientDuplicate({
-      first_name: firstName || null,
-      last_name: lastName || null,
-      dob: birthdate || null,
+      first_name: payload.first_name || null,
+      last_name: payload.last_name || null,
+      dob: payload.dob || null,
     });
-
-    return res.candidates.map((c: DuplicateCandidate) => ({
-      birthdate: c.dob ?? '',
-      name: [c.last_name, c.first_name].filter(Boolean).join(', '),
-      officeShortId: '',
-      patientId: c.chart_no || String(c.id),
-      email: '',
-      provider: '',
-      status: c.is_active ? 'Active' : 'Inactive',
-      source: `Match ${c.match_score}%`,
-    }));
+    return res.candidates.map(toDuplicatePatient);
   } catch (error) {
     console.error('Duplicate patient check failed:', error);
     throw new Error('Unable to check for duplicate patients. Please try again.');

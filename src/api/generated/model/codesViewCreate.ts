@@ -8,5 +8,6 @@
 
 export interface CodesViewCreate {
   office_id: number;
+  /** @maxLength 20 */
   code: string;
 }

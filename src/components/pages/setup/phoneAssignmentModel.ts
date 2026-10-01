@@ -47,7 +47,7 @@ export function isAssignmentType(value: string): value is PhoneAssignmentType {
  * an inactive office) are kept so a PUT never silently drops them.
  */
 export function buildPhoneAssignmentRows(
-  offices: OfficeRead[],
+  offices: Pick<OfficeRead, 'id' | 'name'>[],
   assignments: OfficePhoneAssignmentRead[],
 ): PhoneAssignmentRow[] {
   const byOffice = new Map<number, OfficePhoneAssignmentRead>();

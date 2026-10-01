@@ -73,8 +73,9 @@ function addressLines(a: Addressable | undefined): string[] {
 /**
  * Compose the report header from the canonical records.
  *
- * A perio exam carries no provider of its own (backend gap PERIO-BE-14), so the
- * "Provider" block resolves to the patient's preferred provider and falls back
+ * The "Provider" block names the provider credited on the exam
+ * (`PerioExam.provider_id`, PERIO-BE-14 delivered 2026-09-11); an exam nobody has
+ * credited yet resolves to the patient's preferred provider and falls back
  * to the office's billing provider — and the provider's own address falls back
  * to the office address, which is what most tenants actually have populated.
  */

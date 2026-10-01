@@ -6,8 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * NM-5: a macro with the same name in the same category is a 409
+ * ``duplicate_note_macro``; ``allow_duplicate`` is the dialog's override.
+ */
 export interface NoteMacroCreate {
+  /** @maxLength 100 */
   name: string;
   content: string;
   category?: string | null;
+  allow_duplicate?: boolean;
 }

@@ -21,6 +21,10 @@ ins_plan_id?: number | null;
  */
 is_archived?: boolean | null;
 /**
+ * Filter by preauth_status
+ */
+preauth_status?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -30,6 +30,10 @@ export default tseslint.config(
     '**/*.optimized.*',
     'server.js',
     'ecosystem.config.js',
+    'playwright-report',
+    'test-results',
+    'e2e/.auth',
+    'e2e/__screenshots__',
   ]),
 
   // ---- Application source (browser, TypeScript + React) ----
@@ -57,6 +61,32 @@ export default tseslint.config(
     },
   },
 
+  // ---- Office-key parsing lives in ONE place ----
+  // `currentOffice` is the display key "OFF-<id>"; parsing it inline (parseInt /
+  // Number / regex) produced four disagreeing copies and a NaN home_office_id.
+  // Use officeKeyToId() from src/services/officeLookup.ts or useOfficeScope().
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/features/office-scope/**', 'src/services/officeLookup.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.name=/^(parseInt|Number)$/] > Identifier[name=/^currentOffice/]",
+          message:
+            'Parse office keys with officeKeyToId() (src/services/officeLookup.ts) or read useOfficeScope().office_id.',
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name=/^(match|replace)$/][callee.object.name=/^currentOffice/]",
+          message:
+            'Parse office keys with officeKeyToId() (src/services/officeLookup.ts) or read useOfficeScope().office_id.',
+        },
+      ],
+    },
+  },
+
   // ---- Build/config files & scripts (Node globals, TS-aware) ----
   {
     files: ['*.{js,ts}', 'scripts/**/*.{js,mjs,ts}'],
@@ -64,6 +94,18 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.node,
+      sourceType: 'module',
+    },
+    rules: relaxed,
+  },
+
+  // ---- Playwright E2E tests (Node + browser context) ----
+  {
+    files: ['e2e/**/*.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: { ...globals.node, ...globals.browser },
       sourceType: 'module',
     },
     rules: relaxed,

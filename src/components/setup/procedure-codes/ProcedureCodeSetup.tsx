@@ -41,7 +41,6 @@ import {
 } from "./procedureCodeData";
 import MainTab from "./tabs/MainTab";
 import ChartingTab from "./tabs/ChartingTab";
-import InsuranceTab from "./tabs/InsuranceTab";
 import FeeSchedulesTab from "./tabs/FeeSchedulesTab";
 
 // ============================================================================
@@ -52,12 +51,13 @@ import FeeSchedulesTab from "./tabs/FeeSchedulesTab";
 // Backend gaps documented in docs/procedure-codes/procedure_codes_backend_devreport.md.
 // ============================================================================
 
-type TabName = "main" | "charting" | "insurance" | "fee_schedules";
+// The per-procedure "Insurance" tab (procedure_insurance_rules) is retired —
+// coverage % lives only in Insurance Plans' coverage rules (docs/pricing §3.9).
+type TabName = "main" | "charting" | "fee_schedules";
 
 const TAB_LABELS: Record<TabName, string> = {
   main: "Main",
   charting: "Charting",
-  insurance: "Insurance",
   fee_schedules: "Fee Schedules",
 };
 
@@ -325,7 +325,7 @@ export default function ProcedureCodeSetup() {
     }
   };
 
-  const orderedTabs: TabName[] = ["main", "charting", "insurance", "fee_schedules"];
+  const orderedTabs: TabName[] = ["main", "charting", "fee_schedules"];
 
   /* -------------------- LIST VIEW -------------------- */
   if (showList) {
@@ -627,13 +627,6 @@ export default function ProcedureCodeSetup() {
             {activeTab === "charting" && (
               <ChartingTab formData={form} updateFormData={updateForm} materials={materials} />
             )}
-
-            {activeTab === "insurance" &&
-              (isNew ? (
-                <SaveCodeFirst what="insurance rules" />
-              ) : (
-                <InsuranceTab code={selectedCode} />
-              ))}
 
             {activeTab === "fee_schedules" &&
               (isNew ? (

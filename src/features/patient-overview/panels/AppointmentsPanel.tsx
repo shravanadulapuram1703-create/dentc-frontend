@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { openSchedulerForBooking } from "@/services/schedulerHandoff";
 import { Archive, Plus, Eye, Loader2, ArchiveRestore } from "lucide-react";
 import { SectionBar, ActionButton, DataGrid, Td } from "../ui";
 import { fmt_date, fmt_time } from "../format";
@@ -60,7 +61,10 @@ export default function AppointmentsPanel({
   };
 
   return (
-    <div className="mb-4">
+    // Fills the left column of the SUMMARY row; the grid is the only flexible
+    // child, so it shrinks (and scrolls) to whatever height the Balances /
+    // Billing column leaves, rather than pushing the row taller.
+    <div className="mb-4 flex flex-col flex-1 min-h-0">
       <SectionBar
         title="Appointments"
         actions={
@@ -88,7 +92,15 @@ export default function AppointmentsPanel({
             >
               {show_archived ? "Show Active" : "Show Archived"}
             </ActionButton>
-            <ActionButton onClick={() => navigate("/scheduler")}>
+            <ActionButton
+              onClick={() =>
+                openSchedulerForBooking(navigate, {
+                  patient_id,
+                  plan_item_ids: [],
+                  source: "patient-overview",
+                })
+              }
+            >
               <Plus className="w-3 h-3" /> Add New Appt
             </ActionButton>
             <ActionButton onClick={on_view_family}>
@@ -108,6 +120,7 @@ export default function AppointmentsPanel({
           empty={show_archived ? "No archived appointments" : "No appointments"}
           is_empty={rows.length === 0}
           min_width={820}
+          className="min-h-0 xl:min-h-[96px]"
         >
           {rows.map((a) => (
             <tr
@@ -130,7 +143,7 @@ export default function AppointmentsPanel({
         </DataGrid>
       )}
       {patient_id > 0 && rows.length > 0 && (
-        <p className="text-[11px] text-[#94A3B8] mt-1">
+        <p className="text-[11px] text-[#94A3B8] mt-1 shrink-0">
           Click a row to select it, then use Archive / Restore Appt.
         </p>
       )}

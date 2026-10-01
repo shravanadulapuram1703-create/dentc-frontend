@@ -7,10 +7,23 @@
 // update". The picker only offers values the backend acts on, and the save is
 // read back from the server before the dialog closes so a silent no-op cannot
 // look like a success.
+//
+// "Submitted" goes through POST /insurance-claims/{id}/submit (SVC-1), which is
+// where the supporting-records gate lives (PROC-7c): a 422
+// `supporting_records_missing` lists every line still lacking an X-ray / perio
+// chart / photo / attachment / missing-tooth info, and the sender can override
+// with "Send anyway" (allow_missing_records). Refusing outright would only push
+// staff to un-flag the code in Setup.
 
 import { useState } from "react";
-import { AlertTriangle, Loader2, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw, Send, X } from "lucide-react";
 import { getClaimDetail, setClaimStatus } from "@/api/generated/endpoints/billing/billing";
+import {
+  describeMissingRecord,
+  submitClaimWithRecords,
+  supportingRecordsError,
+  type ClaimMissingRecord,
+} from "@/features/procedures/supportingRecords";
 import {
   CLAIM_STATUS_OPTIONS,
   claimStatusLabel,
@@ -44,13 +57,59 @@ export default function UpdateClaimStatusModal({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Lines the submit refused for (PROC-7c). Set = the "Send anyway" path is offered. */
+  const [missingRecords, setMissingRecords] = useState<ClaimMissingRecord[] | null>(null);
 
   const option = CLAIM_STATUS_OPTIONS.find((o) => o.value === selected);
   const unchanged = selected !== "" && selected === currentKey;
 
+  // Read back rather than trusting the write: the reported bug was a status
+  // that appeared to save but never changed on the record.
+  const confirmSaved = async (expected: string): Promise<void> => {
+    const fresh = await getClaimDetail(claimId);
+    const saved = (fresh.claim.status || "").trim();
+    if (saved.toLowerCase() !== expected) {
+      setError(
+        `The server still reports this claim as "${claimStatusLabel(saved)}". The status was not saved.`,
+      );
+      return;
+    }
+    onUpdated(saved);
+    onClose();
+  };
+
+  const handleSubmit = async (allowMissing: boolean) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const result = await submitClaimWithRecords(claimId, { allow_missing_records: allowMissing });
+      // The submit records sent_date / batch / method; make sure the lifecycle
+      // status is stamped as well (it also sets Claim Sent Date if still blank).
+      if ((result.status || "").trim().toLowerCase() !== "submitted") {
+        await setClaimStatus(claimId, { status: "submitted" });
+      }
+      setMissingRecords(null);
+      await confirmSaved("submitted");
+    } catch (err) {
+      const gate = supportingRecordsError(err);
+      if (gate) {
+        setMissingRecords(gate.missing);
+        setError(null);
+      } else {
+        setError(errMsg(err) || "Failed to submit the claim.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!option) {
       setError("Select a claim status.");
+      return;
+    }
+    if (option.value === "submitted") {
+      await handleSubmit(false);
       return;
     }
     if (
@@ -65,18 +124,7 @@ export default function UpdateClaimStatusModal({
     setError(null);
     try {
       await setClaimStatus(claimId, { status: option.value });
-      // Read back rather than trusting the POST: the reported bug was a status
-      // that appeared to save but never changed on the record.
-      const fresh = await getClaimDetail(claimId);
-      const saved = (fresh.claim.status || "").trim();
-      if (saved.toLowerCase() !== option.value) {
-        setError(
-          `The server still reports this claim as "${claimStatusLabel(saved)}". The status was not saved.`,
-        );
-        return;
-      }
-      onUpdated(saved);
-      onClose();
+      await confirmSaved(option.value);
     } catch (err) {
       setError(errMsg(err) || "Failed to update the claim status.");
     } finally {
@@ -158,9 +206,47 @@ export default function UpdateClaimStatusModal({
               <span>{error}</span>
             </div>
           )}
+
+          {missingRecords && (
+            <div
+              role="alert"
+              className="rounded border-l-4 border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-900 space-y-1.5"
+            >
+              <div className="flex items-start gap-2 font-semibold">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={2} />
+                <span>
+                  Not submitted: supporting records are missing for {missingRecords.length} line
+                  {missingRecords.length === 1 ? "" : "s"}.
+                </span>
+              </div>
+              <ul className="list-disc pl-8 space-y-0.5">
+                {missingRecords.map((m, i) => (
+                  <li key={`${m.procedure_id}-${m.record}-${i}`}>{describeMissingRecord(m)}</li>
+                ))}
+              </ul>
+              <div className="pl-5 text-[11px]">
+                Attach the records (Claim Attachments, Imaging, Perio) and try again, or send the
+                claim as it is. The override is recorded on the submission.
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="border-t-2 border-[#E2E8F0] px-4 py-2 flex items-center justify-end gap-2 bg-slate-50 rounded-b">
+          {missingRecords && (
+            <button
+              onClick={() => void handleSubmit(true)}
+              disabled={saving}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-amber-600 text-white hover:bg-amber-700 font-semibold uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <Loader2 className="w-3 h-3 animate-spin" strokeWidth={2} />
+              ) : (
+                <Send className="w-3 h-3" strokeWidth={2} />
+              )}
+              Send Anyway
+            </button>
+          )}
           <button
             onClick={handleSave}
             disabled={saving || !option || unchanged}

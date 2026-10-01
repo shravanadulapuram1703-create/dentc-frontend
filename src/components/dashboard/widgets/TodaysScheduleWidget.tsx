@@ -7,6 +7,7 @@ import { useUpdateAppointmentStatus } from "@/api/generated/endpoints/appointmen
 import type { AppointmentSchedulerRead, DefinitionRead } from "@/api/generated/model";
 import WidgetCard from "../components/WidgetCard";
 import { useTodayScheduler } from "../lib/useDashboardData";
+import { useProviderDirectory } from "@/hooks/useProviderDirectory";
 import { deriveApptStatus, formatTime } from "../lib/dashboardUtils";
 import { utils } from "../../../styles/theme.js";
 
@@ -32,6 +33,7 @@ export default function TodaysScheduleWidget({ currentOffice }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { rows, isLoading, isError } = useTodayScheduler(currentOffice);
+  const { providerLabel } = useProviderDirectory();
   const defsQuery = useListDefinitions({ group_code: "appt_status", is_active: true, size: 200 });
   const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -113,7 +115,7 @@ export default function TodaysScheduleWidget({ currentOffice }: Props) {
                   {appt.patient_name || "(no patient)"}
                 </p>
                 <p className="text-xs text-[#64748B] truncate">
-                  {[appt.provider_name, appt.operatory_name].filter(Boolean).join(" · ") ||
+                  {[providerLabel(appt.provider_id) || appt.provider_name, appt.operatory_name].filter(Boolean).join(" · ") ||
                     appt.procedure_label ||
                     "—"}
                 </p>

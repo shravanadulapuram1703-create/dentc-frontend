@@ -11,4 +11,8 @@ export interface OfficeAssignment {
   name?: string | null;
   office_code?: string | null;
   is_primary?: boolean;
+  short_id?: string | null;
+  is_active?: boolean;
+  office_group_id?: number | null;
+  timezone?: string | null;
 }

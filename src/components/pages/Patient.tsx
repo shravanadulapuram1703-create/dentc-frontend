@@ -19,12 +19,32 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { components } from '../../styles/theme';
 import { useListPatients } from '@/api/generated/endpoints/patients/patients';
-import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { ListPatientsParams, PatientRead } from '@/api/generated/model';
+import { patient_display_name } from '@/features/patient-overview/format';
+import {
+  LEGACY_ID_GAP_MESSAGE,
+  lookup_patient_by_id,
+  lookup_patients_by_legacy_id,
+  parse_patient_id,
+  patient_in_offices,
+  patient_matches_scope,
+} from '@/features/patients/patientLookup';
 import { useDefinitions } from '../../hooks/useDefinitions';
+import {
+  OfficeBadge,
+  ScopeToggle,
+  allOfficesParam,
+  homeOfficeFilter,
+  useOfficeOptions,
+  useOfficeScope,
+  useReadScope,
+  type ReadScope,
+  type ReadScopeMode,
+} from '@/features/office-scope';
 
 interface PatientProps {
   onLogout: () => void;
@@ -35,9 +55,13 @@ interface PatientProps {
 const PAGE_SIZE = 25;
 
 // Search modes. `any` is free-text `search` (ILIKE over name/chart_no/email/
-// phone); the rest map to typed exact filters on listPatients.
+// phone); `id` is an exact GET /patients/{id}; `legacy_id` is the (pending,
+// PT-SEARCH-1) `legacy_id=` list filter; the rest map to typed exact filters
+// on listPatients.
 const searchByOptions = [
   { value: 'any', label: 'Name / Any', placeholder: 'Search name, email, or phone…' },
+  { value: 'id', label: 'Patient ID', placeholder: 'Enter patient ID (e.g. 12345 or PT-12345)…' },
+  { value: 'legacy_id', label: 'Legacy ID', placeholder: 'Enter legacy (pre-import) patient ID…' },
   { value: 'chart_no', label: 'Chart #', placeholder: 'Enter exact chart number…' },
   { value: 'ssn', label: 'SSN', placeholder: 'Enter SSN…' },
   { value: 'medicaid_id', label: 'Medicaid ID', placeholder: 'Enter Medicaid ID…' },
@@ -47,11 +71,14 @@ const searchByOptions = [
 ] as const;
 
 type SearchBy = (typeof searchByOptions)[number]['value'];
-type SearchScope = 'current' | 'all';
 type SortOrder = 'asc' | 'desc';
 
-// Maps a non-'any' searchBy to its ListPatientsParams key.
-const SEARCH_FIELD_PARAM: Record<Exclude<SearchBy, 'any'>, keyof ListPatientsParams> = {
+// Modes resolved by identifier lookups (not the paged list query).
+type LookupSearchBy = 'id' | 'legacy_id';
+const isLookupMode = (by: SearchBy): by is LookupSearchBy => by === 'id' || by === 'legacy_id';
+
+// Maps a list-filter searchBy to its ListPatientsParams key.
+const SEARCH_FIELD_PARAM: Record<Exclude<SearchBy, 'any' | LookupSearchBy>, keyof ListPatientsParams> = {
   chart_no: 'chart_no',
   ssn: 'ssn',
   medicaid_id: 'medicaid_id',
@@ -63,7 +90,8 @@ const SEARCH_FIELD_PARAM: Record<Exclude<SearchBy, 'any'>, keyof ListPatientsPar
 interface SearchSnapshot {
   searchText: string;
   searchBy: SearchBy;
-  scope: SearchScope;
+  /** Read-scope mode at the time of the search — LAST SEARCH restores it. */
+  mode: ReadScopeMode;
   includeInactive: boolean;
   order: SortOrder;
   gender: string;
@@ -71,13 +99,6 @@ interface SearchSnapshot {
   regTo: string;
   dobFrom: string;
   dobTo: string;
-}
-
-// Extract a numeric office id from the app's "OFF-3" display id.
-function extractOfficeIdNumber(officeId?: string): number | undefined {
-  if (!officeId) return undefined;
-  const match = officeId.match(/(\d+)/);
-  return match ? Number(match[1]) : undefined;
 }
 
 // YYYY-MM-DD -> MM/DD/YYYY for display.
@@ -103,36 +124,57 @@ function maskSsn(ssn?: string | null): string {
 }
 
 function patientName(p: PatientRead): string {
-  const last = p.last_name ?? '';
-  const first = p.first_name ?? '';
-  const base = [last, first].filter(Boolean).join(', ') || `Patient #${p.id}`;
-  return p.preferred_name ? `${base} (${p.preferred_name})` : base;
+  // "Last, First Middle (Preferred)"; falls back to the id when the name is blank.
+  const name = patient_display_name(p);
+  return name === '-' ? `Patient #${p.id}` : name;
 }
 
 function preferredPhone(p: PatientRead): string {
   return p.cell_phone || p.phone || p.work_phone || '—';
 }
 
-function buildParams(snap: SearchSnapshot, currentOffice: string, page: number): ListPatientsParams {
+/** Patients homed in the working office first; everything else keeps its server order (stable sort). */
+function sortOfficeFirst(rows: PatientRead[], working_office_id: number | null): PatientRead[] {
+  if (working_office_id == null) return rows;
+  const rank = (p: PatientRead) => (p.home_office_id === working_office_id ? 0 : 1);
+  return [...rows].sort((a, b) => rank(a) - rank(b));
+}
+
+/**
+ * Read scope → `GET /patients` params. "This office" is the server's
+ * `home_office_id=` filter; "All offices" flags the deliberate tenant-wide read
+ * (`all_offices`, ignored by the backend today); "My offices" sends nothing —
+ * the endpoint takes no office SET, so `patient_in_offices` filters the page
+ * client-side.
+ */
+function officeScopeParams(scope: Pick<ReadScope, 'mode' | 'office_id'>): ListPatientsParams {
+  return {
+    ...homeOfficeFilter(scope.mode === 'office' ? scope.office_id : null),
+    ...allOfficesParam(scope.mode === 'all'),
+  };
+}
+
+function buildParams(
+  snap: SearchSnapshot,
+  scope: Pick<ReadScope, 'mode' | 'office_id'>,
+  page: number,
+): ListPatientsParams {
   const params: ListPatientsParams = {
     page,
     size: PAGE_SIZE,
     sort: 'last_name',
     order: snap.order,
+    ...officeScopeParams(scope),
   };
 
   const text = snap.searchText.trim();
   if (text) {
     if (snap.searchBy === 'any') {
       params.search = text;
-    } else {
+    } else if (!isLookupMode(snap.searchBy)) {
       (params as Record<string, string | undefined>)[SEARCH_FIELD_PARAM[snap.searchBy]] = text;
     }
-  }
-
-  if (snap.scope === 'current') {
-    const officeId = extractOfficeIdNumber(currentOffice);
-    if (officeId) params.home_office_id = officeId;
+    // 'id' / 'legacy_id' are resolved by useIdentifierLookup, not by these params.
   }
 
   // Exclude inactive unless explicitly requested.
@@ -146,6 +188,63 @@ function buildParams(snap: SearchSnapshot, currentOffice: string, page: number):
   if (snap.dobTo) params.dob_to = snap.dobTo;
 
   return params;
+}
+
+interface IdentifierLookupResult {
+  items: PatientRead[];
+  /** Set when the backend ignored the `legacy_id` filter (PT-SEARCH-1 not deployed). */
+  gap_message: string | null;
+}
+
+/**
+ * Resolves the 'id' / 'legacy_id' search modes. Patient ID is an exact
+ * GET /patients/{id}; Legacy ID goes through the `legacy_id=` list filter.
+ * "This office" and Include Inactive are re-applied client-side for the by-id
+ * path because GET /patients/{id} cannot take them. The "my offices" set is
+ * applied by the page over BOTH paths (see `items` in PatientSearchPage), so
+ * it is not repeated here.
+ */
+function useIdentifierLookup(
+  committed: SearchSnapshot | null,
+  scope: Pick<ReadScope, 'mode' | 'office_id'>,
+) {
+  const enabled = committed != null && isLookupMode(committed.searchBy);
+  const { mode, office_id } = scope;
+  const home_office_id = mode === 'office' ? office_id : null;
+
+  return useQuery<IdentifierLookupResult>({
+    queryKey: [
+      'patient-identifier-lookup',
+      committed?.searchBy,
+      committed?.searchText.trim(),
+      mode,
+      home_office_id,
+      committed?.includeInactive,
+      committed?.order,
+    ],
+    enabled,
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const snap = committed as SearchSnapshot;
+      const text = snap.searchText.trim();
+      const match = { home_office_id, include_inactive: snap.includeInactive };
+
+      if (snap.searchBy === 'id') {
+        const p = await lookup_patient_by_id(text, signal);
+        return { items: p && patient_matches_scope(p, match) ? [p] : [], gap_message: null };
+      }
+
+      const listFilters: ListPatientsParams = {
+        size: 200,
+        sort: 'last_name',
+        order: snap.order,
+        ...officeScopeParams({ mode, office_id }),
+      };
+      if (!snap.includeInactive) listFilters.is_active = true;
+      const res = await lookup_patients_by_legacy_id(text, listFilters, signal);
+      return { items: res.items, gap_message: res.backend_supported ? null : LEGACY_ID_GAP_MESSAGE };
+    },
+  });
 }
 
 /**
@@ -171,10 +270,16 @@ export default function Patient(props: PatientProps) {
 function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: PatientProps) {
   const navigate = useNavigate();
 
+  // Read scope ("Search In"): remembered per user, shared with the scheduler's
+  // patient chooser. Default All — a visiting patient is homed elsewhere and
+  // there is no seen-at filter yet. Unlike the other criteria it applies LIVE:
+  // switching it re-runs the committed search.
+  const scope = useReadScope('patient-search', { allow: 'everyone', defaultMode: 'all' });
+  const { office_id: working_office_id } = useOfficeScope();
+
   // Form state (uncommitted until SEARCH is pressed).
   const [searchText, setSearchText] = useState('');
   const [searchBy, setSearchBy] = useState<SearchBy>('any');
-  const [scope, setScope] = useState<SearchScope>('all');
   const [includeInactive, setIncludeInactive] = useState(false);
   const [order, setOrder] = useState<SortOrder>('asc');
   // Advanced filters.
@@ -191,25 +296,69 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
   // Committed search (drives the query) + the snapshot LAST SEARCH restores.
   const [committed, setCommitted] = useState<SearchSnapshot | null>(null);
   const [lastSnapshot, setLastSnapshot] = useState<SearchSnapshot | null>(null);
-  const [page, setPage] = useState(1);
+  // The page is bound to the scope mode it was reached in: a scope switch
+  // lands on page 1 without an extra render/fetch of the stale page.
+  const [paging, setPaging] = useState<{ page: number; mode: ReadScopeMode }>({
+    page: 1,
+    mode: scope.mode,
+  });
+  const page = paging.mode === scope.mode ? paging.page : 1;
+  const setPage = (next: number) => setPaging({ page: next, mode: scope.mode });
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const params = committed ? buildParams(committed, currentOffice, page) : undefined;
+  const lookupMode = committed != null && isLookupMode(committed.searchBy);
+  const params = committed && !lookupMode ? buildParams(committed, scope, page) : undefined;
 
-  const patientsQuery = useListPatients(params, {
-    query: { enabled: committed != null },
+  const listQuery = useListPatients(params, {
+    query: { enabled: committed != null && !lookupMode },
   });
+  const lookupQuery = useIdentifierLookup(committed, scope);
 
-  // Resolve home_office_id -> office name without per-row calls.
-  const officesQuery = useListOffices({ size: 200 });
+  // One view over whichever query drives the current search mode.
+  const patientsQuery = lookupMode
+    ? {
+        isFetching: lookupQuery.isFetching,
+        isLoading: lookupQuery.isLoading,
+        isError: lookupQuery.isError,
+        refetch: lookupQuery.refetch,
+      }
+    : {
+        isFetching: listQuery.isFetching,
+        isLoading: listQuery.isLoading,
+        isError: listQuery.isError,
+        refetch: listQuery.refetch,
+      };
+  const gapMessage = lookupMode ? lookupQuery.data?.gap_message ?? null : null;
+  // A Patient ID that is not a number can never match; say so instead of "searching".
+  const invalidIdInput =
+    committed?.searchBy === 'id' && parse_patient_id(committed.searchText) == null;
+
+  // Resolve home_office_id -> office name for the expanded card (the shared
+  // office catalog; the row itself carries an OfficeBadge).
+  const { data: officeOptions } = useOfficeOptions();
   const officeName = useMemo(() => {
     const map = new Map<number, string>();
-    for (const o of officesQuery.data?.items ?? []) map.set(o.id, o.name);
+    for (const o of officeOptions ?? []) map.set(o.id, o.name);
     return (id?: number | null) => (id != null ? map.get(id) ?? '—' : '—');
-  }, [officesQuery.data]);
+  }, [officeOptions]);
 
-  const items = patientsQuery.data?.items ?? [];
-  const meta = patientsQuery.data?.meta;
+  const fetchedItems = lookupMode ? lookupQuery.data?.items : listQuery.data?.items;
+  // "My offices" is applied here, over both the list page and the identifier
+  // lookups; then the working office's own patients lead (stable otherwise).
+  const items = useMemo(() => {
+    const rows = fetchedItems ?? [];
+    const visible =
+      scope.mode === 'my_offices' ? rows.filter((p) => patient_in_offices(p, scope.office_ids)) : rows;
+    return sortOfficeFirst(visible, working_office_id);
+  }, [fetchedItems, scope.mode, scope.office_ids, working_office_id]);
+  // Rows the server returned for this page, before the client-side office filter.
+  const fetchedCount = fetchedItems?.length ?? 0;
+  // Lookups are single-page: synthesize the meta the results header/pager read.
+  const meta = lookupMode
+    ? lookupQuery.data
+      ? { total: items.length, pages: 1 }
+      : undefined
+    : listQuery.data?.meta;
   const totalPages = meta?.pages ?? 0;
 
   const runSearch = (snap: SearchSnapshot) => {
@@ -220,7 +369,18 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
   };
 
   const handleSearch = () => {
-    runSearch({ searchText, searchBy, scope, includeInactive, order, gender, regFrom, regTo, dobFrom, dobTo });
+    runSearch({
+      searchText,
+      searchBy,
+      mode: scope.mode,
+      includeInactive,
+      order,
+      gender,
+      regFrom,
+      regTo,
+      dobFrom,
+      dobTo,
+    });
   };
 
   const handleLastSearch = () => {
@@ -228,7 +388,7 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
     // Restore the form to the last executed search and re-run it.
     setSearchText(lastSnapshot.searchText);
     setSearchBy(lastSnapshot.searchBy);
-    setScope(lastSnapshot.scope);
+    scope.setMode(lastSnapshot.mode);
     setIncludeInactive(lastSnapshot.includeInactive);
     setOrder(lastSnapshot.order);
     setGender(lastSnapshot.gender);
@@ -250,6 +410,15 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
 
   const placeholder =
     searchByOptions.find((o) => o.value === searchBy)?.placeholder ?? 'Search…';
+
+  const scopeHint =
+    scope.mode === 'office'
+      ? scope.office_id != null
+        ? `Patients homed in ${scope.office_name}`
+        : 'No working office selected — searching every office'
+      : scope.mode === 'my_offices'
+        ? `Patients homed in any of your ${scope.office_ids.length} offices (filtered per page)`
+        : 'Every office in the practice';
 
   return (
     <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
@@ -343,33 +512,11 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
               </div>
             </div>
 
-            {/* Search In */}
+            {/* Search In — the shared per-user read scope; applies live. */}
             <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-3">
               <h3 className="text-xs font-bold text-[#1F3A5F] uppercase mb-2 tracking-wide">Search In</h3>
-              <div className="space-y-1">
-                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="current"
-                    checked={scope === 'current'}
-                    onChange={() => setScope('current')}
-                    className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                  />
-                  <span className="text-sm font-medium text-[#1E293B]">Current Office</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/50 px-2 py-1 rounded transition-colors">
-                  <input
-                    type="radio"
-                    name="scope"
-                    value="all"
-                    checked={scope === 'all'}
-                    onChange={() => setScope('all')}
-                    className="w-4 h-4 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                  />
-                  <span className="text-sm font-medium text-[#1E293B]">All Offices</span>
-                </label>
-              </div>
+              <ScopeToggle scope={scope} label="Search in" />
+              <p className="mt-2 text-xs text-[#64748B]">{scopeHint}</p>
             </div>
 
             {/* Options */}
@@ -484,7 +631,9 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
                   {patientsQuery.isError ? (
                     <span className="text-red-200">Failed to load patients</span>
                   ) : meta ? (
-                    `${meta.total} patient(s) found`
+                    scope.mode === 'my_offices' && !lookupMode
+                      ? `${items.length} of ${fetchedCount} on this page in my offices · ${meta.total} tenant-wide`
+                      : `${meta.total} patient(s) found`
                   ) : (
                     'Searching…'
                   )}
@@ -513,7 +662,44 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
               <div className="p-12 text-center">
                 <Users className="w-16 h-16 text-[#CBD5E1] mx-auto mb-4" strokeWidth={1.5} />
                 <h3 className="font-bold text-[#64748B] mb-2">No Patients Found</h3>
-                <p className="text-[#94A3B8]">Try adjusting your search criteria</p>
+                {gapMessage ? (
+                  <p
+                    className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800"
+                    role="status"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={2} />
+                    {gapMessage}
+                  </p>
+                ) : invalidIdInput ? (
+                  <p className="text-[#94A3B8]">
+                    Patient ID must be a number (e.g. 12345 or PT-12345)
+                  </p>
+                ) : scope.mode === 'office' && scope.office_id != null && scope.canToggle ? (
+                  <p className="text-[#94A3B8]">
+                    No match in {scope.office_name} —{' '}
+                    <button
+                      type="button"
+                      onClick={() => scope.setMode('all')}
+                      className="font-bold text-[#3A6EA5] hover:underline"
+                    >
+                      Search all offices
+                    </button>
+                  </p>
+                ) : scope.mode === 'my_offices' && fetchedCount > 0 ? (
+                  <p className="text-[#94A3B8]">
+                    None of the {fetchedCount} patient(s) on this page are homed in my offices — page
+                    through, or{' '}
+                    <button
+                      type="button"
+                      onClick={() => scope.setMode('all')}
+                      className="font-bold text-[#3A6EA5] hover:underline"
+                    >
+                      search all offices
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-[#94A3B8]">Try adjusting your search criteria</p>
+                )}
               </div>
             ) : (
               <div className="divide-y-2 divide-[#E2E8F0]">
@@ -535,7 +721,7 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
                             )}
                           </button>
 
-                          <div className="grid grid-cols-4 gap-6 flex-1">
+                          <div className="grid grid-cols-6 gap-6 flex-1">
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
                                 Patient Name
@@ -552,11 +738,21 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
                             </div>
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
+                                Patient ID
+                              </div>
+                              <div className="font-semibold text-[#1E293B]">{patient.id}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
+                                Legacy ID
+                              </div>
+                              <div className="font-semibold text-[#1E293B]">{patient.legacy_id || '—'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
                                 Office
                               </div>
-                              <div className="font-semibold text-[#1E293B]">
-                                {officeName(patient.home_office_id)}
-                              </div>
+                              <OfficeBadge office_id={patient.home_office_id} variant="name" />
                             </div>
                             <div>
                               <div className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">
@@ -680,7 +876,7 @@ function PatientSearchPage({ onLogout, currentOffice, setCurrentOffice }: Patien
             )}
 
             {/* Pagination */}
-            {!patientsQuery.isError && items.length > 0 && totalPages > 1 && (
+            {!patientsQuery.isError && fetchedCount > 0 && totalPages > 1 && (
               <div className="border-t-2 border-[#E2E8F0] px-4 py-3 bg-[#F7F9FC] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <PagerButton onClick={() => goToPage(1)} disabled={page === 1} title="First">

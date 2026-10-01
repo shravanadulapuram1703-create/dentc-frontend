@@ -1,6 +1,11 @@
 import type { ProcedureCodeForm } from "../procedureCodeData";
 import { PERMANENT_TEETH, PRIMARY_TEETH } from "../procedureCodeData";
 import type { ChartMaterialRead } from "@/api/generated/model";
+import {
+  PROCEDURE_CODE_EXTRA_KEYS,
+  PROCEDURE_CODE_EXTRA_LABELS,
+  type ProcedureCodeExtraKey,
+} from "@/features/procedures/procedureCodeExtras";
 
 interface ChartingTabProps {
   formData: ProcedureCodeForm;
@@ -13,11 +18,15 @@ const labelCls = "block text-xs font-bold text-[#1E293B] mb-1.5";
 const inputCls =
   "w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm";
 
-const REQUIREMENT_TOGGLES: Array<{
-  key: "requires_tooth" | "requires_surface" | "requires_quadrant";
+type RequirementKey = "requires_tooth" | "requires_surface" | "requires_quadrant" | ProcedureCodeExtraKey;
+
+interface RequirementToggle {
+  key: RequirementKey;
   label: string;
   hint: string;
-}> = [
+}
+
+const REQUIREMENT_TOGGLES: RequirementToggle[] = [
   {
     key: "requires_tooth",
     label: "Tooth Required",
@@ -34,6 +43,45 @@ const REQUIREMENT_TOGGLES: Array<{
     hint: "Charting requires a quadrant (UR, UL, LR, LL) — e.g. scaling/root planing.",
   },
 ];
+
+/** PROC-7 — supporting records the clinician must have on file for this code. */
+const SUPPORTING_RECORD_TOGGLES: RequirementToggle[] = PROCEDURE_CODE_EXTRA_KEYS.map((key) => ({
+  key,
+  ...PROCEDURE_CODE_EXTRA_LABELS[key],
+}));
+
+function RequirementToggleList({
+  toggles,
+  formData,
+  updateFormData,
+}: {
+  toggles: RequirementToggle[];
+  formData: ProcedureCodeForm;
+  updateFormData: (updates: Partial<ProcedureCodeForm>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      {toggles.map((t) => (
+        <label
+          key={t.key}
+          className="flex items-start gap-3 p-3 rounded-lg border-2 border-[#E2E8F0] hover:border-[#3A6EA5]/40 cursor-pointer transition-colors"
+        >
+          <input
+            type="checkbox"
+            name={t.key}
+            checked={formData[t.key]}
+            onChange={(e) => updateFormData({ [t.key]: e.target.checked })}
+            className="w-4 h-4 mt-0.5"
+          />
+          <span>
+            <span className="block text-sm font-bold text-[#1E293B]">{t.label}</span>
+            <span className="block text-xs text-[#64748B]">{t.hint}</span>
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 export default function ChartingTab({ formData, updateFormData, materials }: ChartingTabProps) {
   const toggleTooth = (tooth: string) => {
@@ -71,25 +119,28 @@ export default function ChartingTab({ formData, updateFormData, materials }: Cha
           These rules control what the clinician must select when charting or posting this procedure.
           They drive validation in the tooth chart, treatment planning, and the ledger.
         </p>
-        <div className="space-y-3">
-          {REQUIREMENT_TOGGLES.map((t) => (
-            <label
-              key={t.key}
-              className="flex items-start gap-3 p-3 rounded-lg border-2 border-[#E2E8F0] hover:border-[#3A6EA5]/40 cursor-pointer transition-colors"
-            >
-              <input
-                type="checkbox"
-                checked={formData[t.key]}
-                onChange={(e) => updateFormData({ [t.key]: e.target.checked })}
-                className="w-4 h-4 mt-0.5"
-              />
-              <span>
-                <span className="block text-sm font-bold text-[#1E293B]">{t.label}</span>
-                <span className="block text-xs text-[#64748B]">{t.hint}</span>
-              </span>
-            </label>
-          ))}
-        </div>
+        <RequirementToggleList
+          toggles={REQUIREMENT_TOGGLES}
+          formData={formData}
+          updateFormData={updateFormData}
+        />
+      </section>
+
+      {/* Supporting records (PROC-7) */}
+      <section>
+        <h3 className="text-sm font-bold text-[#1F3A5F] uppercase tracking-wide mb-3">
+          Supporting Records Required
+        </h3>
+        <p className="text-xs text-[#64748B] mb-4 max-w-2xl">
+          Records that must be on file (or attached) for this procedure. The Add Procedure pop-up
+          shows what is still missing, and the claim cannot be submitted until every line has its
+          records (or the sender overrides).
+        </p>
+        <RequirementToggleList
+          toggles={SUPPORTING_RECORD_TOGGLES}
+          formData={formData}
+          updateFormData={updateFormData}
+        />
       </section>
 
       {/* Chart display config */}

@@ -9,6 +9,7 @@ import {
   Plus,
   Trash2,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { components } from "../../styles/theme";
@@ -25,8 +26,24 @@ import {
   type ProcedureType,
 } from "../../services/schedulerApi";
 import { registerPatientResilient } from "../../services/patientApi";
+import {
+  allOfficesParam,
+  homeOfficeFilter,
+  useOfficeScope,
+  useReadScope,
+  READ_SCOPE_LABELS,
+  type ReadScopeMode,
+} from "@/features/office-scope";
 import { listPatients, getPatient } from "@/api/generated/endpoints/patients/patients";
 import type { PatientRead, ListPatientsParams, PatientCreate } from "@/api/generated/model";
+import {
+  LEGACY_ID_GAP_MESSAGE,
+  lookup_patient_by_id,
+  lookup_patients_by_legacy_id,
+  parse_patient_id,
+  patient_in_offices,
+  patient_matches_scope,
+} from "@/features/patients/patientLookup";
 import AddNewPatient from "../pages/AddNewPatient";
 import QuickNewPatientAppointment, {
   type QuickAppointmentFormData,
@@ -46,6 +63,29 @@ interface NewAppointmentModalProps {
   currentOffice: string;
   editingAppointment?: any; // Appointment data when editing
   selectedDate?: Date; // Selected date from scheduler (for default when no slot)
+  /**
+   * Patient handed over from a patient screen (Tx Plan / Restorative "New
+   * Appt"). When set (and not editing) the "Who is this appointment for?"
+   * chooser is skipped: the record is loaded and the appointment-details form
+   * opens for that patient directly.
+   */
+  preselectedPatientId?: number | null;
+  /** treatment_plan_items.id values to seed the TREATMENTS grid with. */
+  initialPlanItemIds?: string[];
+  /**
+   * Provider from the plan item(s) being booked. Becomes the appointment's
+   * provider (instead of the operatory's assigned provider) and, when no slot
+   * was clicked, selects the operatory assigned to that provider.
+   */
+  preselectedProviderId?: string | null;
+}
+
+/** "MM/DD/YYYY" (what the Birthdate radio invites) → "YYYY-MM-DD" for the `dob` filter; ISO passes through. */
+function toIsoDate(text: string): string {
+  const us = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!us) return text;
+  const [, mm, dd, yyyy] = us;
+  return `${yyyy}-${(mm ?? "").padStart(2, "0")}-${(dd ?? "").padStart(2, "0")}`;
 }
 
 interface PatientSearchResult {
@@ -62,6 +102,8 @@ interface PatientSearchResult {
   age: number;
   respId: string;
   chartNumber: string;
+  /** PatientRead.legacy_id — the id from the pre-import system. */
+  legacyId: string;
   patientType: string;
   office: string;
   email?: string;
@@ -80,6 +122,9 @@ export default function NewAppointmentModal({
   currentOffice,
   editingAppointment,
   selectedDate,
+  preselectedPatientId = null,
+  initialPlanItemIds,
+  preselectedProviderId = null,
 }: NewAppointmentModalProps) {
   const [appointmentType, setAppointmentType] = useState<
     "existing" | "new" | "family" | "block" | "quickfill"
@@ -112,6 +157,7 @@ export default function NewAppointmentModal({
           age: 0,
           respId: "",
           chartNumber: "",
+          legacyId: "",
           patientType: "",
           office: currentOffice,
         };
@@ -136,7 +182,12 @@ export default function NewAppointmentModal({
 
   // Patient Search State (consistent with Patient.tsx)
   const [searchBy, setSearchBy] = useState("lastName");
-  const [searchIn, setSearchIn] = useState<"current" | "all" | "group">("all");
+  // "Search In" — the per-user patient-search read scope shared with the
+  // Patient page (sessionStorage). The old "Office Group" radio was removed:
+  // it silently meant All (office-group scope is OFF-SCOPE-8).
+  const searchScope = useReadScope("patient-search", { allow: "everyone", defaultMode: "all" });
+  // Mode the LAST search actually ran in (the radio may have moved since).
+  const [searchedMode, setSearchedMode] = useState<ReadScopeMode | null>(null);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<
@@ -146,12 +197,17 @@ export default function NewAppointmentModal({
 
   // Dynamic metadata state
   const [providers, setProviders] = useState<Provider[]>([]);
+  // Working-office name for the read-only "Office" fields (the raw "OFF-<id>"
+  // key used to be rendered there).
+  const officeScope = useOfficeScope();
   const [operatories, setOperatories] = useState<Operatory[]>([]);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   
   // Patient search loading state
   const [isSearchingPatients, setIsSearchingPatients] = useState(false);
+  // Explanatory line under the results (invalid Patient ID, PT-SEARCH-1 gap).
+  const [searchNotice, setSearchNotice] = useState<string | null>(null);
   // Prevent background scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -239,7 +295,7 @@ export default function NewAppointmentModal({
           if (firstProvider) {
             setFormData((prev) => ({
               ...prev,
-              provider: firstProvider.name,
+              provider: firstProvider.id,
             }));
           }
         }
@@ -277,14 +333,14 @@ export default function NewAppointmentModal({
       // When slot is selected, update time and operatory (view-only mode)
       // Auto-fill the provider from the operatory's provider_id (backend Gap 1).
       const op = operatories.find((o) => o.id === selectedSlot.operatory);
-      const providerName = op?.provider_id
-        ? providers.find((p) => p.id === op.provider_id)?.name
+      const providerId = op?.provider_id
+        ? providers.find((p) => p.id === op.provider_id)?.id
         : undefined;
       setFormData((prev) => ({
         ...prev,
         time: selectedSlot.time,
         operatory: selectedSlot.operatory,
-        ...(providerName ? { provider: providerName } : {}),
+        ...(providerId ? { provider: providerId } : {}),
       }));
     } else if (selectedDate) {
       // When no slot selected but date is provided, update date (editable mode)
@@ -448,6 +504,7 @@ export default function NewAppointmentModal({
       // Real backend fields (PatientRead.responsible_party_id / patient_type).
       respId: p.responsible_party_id ?? "",
       chartNumber: p.chart_no || "",
+      legacyId: p.legacy_id ?? "",
       patientType: p.patient_type ?? "",
       // The patient's own home office, not the office currently selected in the
       // header (which made every search result look like it lived here).
@@ -461,33 +518,31 @@ export default function NewAppointmentModal({
     };
   };
 
-  // Helper to extract numeric office ID from currentOffice (e.g., "OFF-1" -> "1")
-  const extractOfficeIdNumber = (officeId?: string): string | undefined => {
-    if (!officeId) return undefined;
-    if (/^\d+$/.test(officeId)) return officeId;
-    const match = officeId.match(/(\d+)$/);
-    return match ? match[1] : officeId;
+  // Search-by radio → the typed `GET /patients` filter it maps to. Names have
+  // no typed filter (free-text `search` covers first/last name); the three
+  // phone radios all share the backend's single `phone` filter, which matches
+  // home/cell/work. `patId` and `legacyId` are identifier lookups (see
+  // patientLookup.ts) and are handled before this table is consulted.
+  const SEARCH_BY_FILTER: Record<string, keyof ListPatientsParams | "search"> = {
+    lastName: "search",
+    firstName: "search",
+    homePhone: "phone",
+    workPhone: "phone",
+    cellPhone: "phone",
+    ssn: "ssn",
+    respId: "responsible_party_id",
+    chart: "chart_no",
+    birthdate: "dob",
   };
 
-  // Map searchBy values to API format
-  const mapSearchByToAPI = (searchBy: string): string => {
-    const mapping: Record<string, string> = {
-      "lastName": "lastName",
-      "firstName": "firstName",
-      "homePhone": "homePhone",
-      "workPhone": "workPhone",
-      "cellPhone": "cellPhone",
-      "ssn": "ssn",
-      "respId": "responsiblePartyId",
-      "patId": "patientId",
-      "chart": "chartNumber",
-      "birthdate": "birthDate",
-    };
-    return mapping[searchBy] || searchBy;
-  };
-
-  const handlePatientSearch = async () => {
-    if (!searchText.trim()) {
+  /**
+   * Run the search in `scope_mode` — normally the live "Search In" choice; the
+   * zero-result hint passes "all" explicitly because the mode it just set has
+   * not rendered yet.
+   */
+  const runPatientSearch = async (scope_mode: ReadScopeMode) => {
+    const text = searchText.trim();
+    if (!text) {
       alert("Please enter search criteria");
       return;
     }
@@ -495,28 +550,72 @@ export default function NewAppointmentModal({
     setIsSearchingPatients(true);
     setHasSearched(false);
     setSearchResults([]);
+    setSearchNotice(null);
+    setSearchedMode(scope_mode);
 
     try {
-      // Map the search form to the backend /patients query params: exact
-      // chart_no for Chart # searches, otherwise free-text `search`.
-      const apiSearchBy = mapSearchByToAPI(searchBy);
-      const params: ListPatientsParams = { page: 1, size: 100 };
-      if (apiSearchBy === "chartNumber") {
-        params.chart_no = searchText.trim();
-      } else {
-        params.search = searchText.trim();
+      // "This office" scopes by the patient's HOME office (the only office
+      // filter GET /patients has); "My offices" sends nothing and filters the
+      // page client-side; "All offices" is tenant-wide.
+      const scopeOfficeId = scope_mode === "office" ? searchScope.office_id : null;
+      const scopeOfficeIds = scope_mode === "my_offices" ? searchScope.office_ids : [];
+      const inScope = (rows: PatientRead[]) => rows.filter((p) => patient_in_offices(p, scopeOfficeIds));
+
+      // Pat. ID — exact GET /patients/{id}; office scope + Incl. Inactive are
+      // re-applied here because the by-id endpoint takes no filters.
+      if (searchBy === "patId") {
+        const p = await lookup_patient_by_id(text);
+        const hit =
+          p &&
+          patient_matches_scope(p, {
+            home_office_id: scopeOfficeId,
+            home_office_ids: scopeOfficeIds,
+            include_inactive: includeInactive,
+          })
+            ? [p]
+            : [];
+        if (!p && parse_patient_id(text) == null) {
+          setSearchNotice("Patient ID must be a number (e.g. 12345 or PT-12345).");
+        }
+        setSearchResults(hit.map(convertPatientToSearchResult));
+        setHasSearched(true);
+        return;
       }
-      if (searchIn === "current") {
-        const officeIdNum = extractOfficeIdNumber(currentOffice);
-        if (officeIdNum) params.home_office_id = Number(officeIdNum);
-      }
+
+      const params: ListPatientsParams = {
+        page: 1,
+        size: 100,
+        ...homeOfficeFilter(scopeOfficeId),
+        ...allOfficesParam(scope_mode === "all"),
+      };
       if (!includeInactive) params.is_active = true;
+
+      // Legacy ID — `legacy_id=` list filter (PT-SEARCH-1); the helper tells
+      // us when the backend ignored it so we don't show a random page.
+      if (searchBy === "legacyId") {
+        const res = await lookup_patients_by_legacy_id(text, params);
+        if (!res.backend_supported) setSearchNotice(LEGACY_ID_GAP_MESSAGE);
+        setSearchResults(inScope(res.items).map(convertPatientToSearchResult));
+        setHasSearched(true);
+        return;
+      }
+
+      const filter = SEARCH_BY_FILTER[searchBy] ?? "search";
+      if (filter === "search") {
+        params.search = text;
+      } else if (filter === "dob") {
+        params.dob = toIsoDate(text);
+      } else if (filter === "phone") {
+        params.phone = text.replace(/\D/g, "") || text;
+      } else {
+        (params as Record<string, string | undefined>)[filter] = text;
+      }
 
       const response = await listPatients(params);
 
       // Convert backend patients to PatientSearchResult format
-      const results = response.items.map(convertPatientToSearchResult);
-      
+      const results = inScope(response.items).map(convertPatientToSearchResult);
+
       setSearchResults(results);
       setHasSearched(true);
     } catch (err: any) {
@@ -528,6 +627,49 @@ export default function NewAppointmentModal({
       setIsSearchingPatients(false);
     }
   };
+
+  const handlePatientSearch = () => runPatientSearch(searchScope.mode);
+
+  // Zero results in "This office": widen to All offices and search again.
+  const handleSearchAllOffices = () => {
+    searchScope.setMode("all");
+    void runPatientSearch("all");
+  };
+
+  // Patient handed over from a patient screen: skip the chooser and the search,
+  // load the record, and go straight to the appointment-details form.
+  useEffect(() => {
+    if (!isOpen || editingAppointment || preselectedPatientId == null) return;
+    let cancelled = false;
+    setIsLoadingNewPatient(true);
+    setAppointmentType("existing");
+    setShowPatientSearch(false);
+    setShowPatientForm(true);
+    void getPatient(preselectedPatientId)
+      .then((p) => {
+        if (cancelled) return;
+        setSelectedPatient(convertPatientToSearchResult(p));
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        console.error("Error loading preselected patient:", err);
+        alert(
+          `The patient could not be loaded to schedule the appointment: ${
+            err?.message ?? "unknown error"
+          }`,
+        );
+        // Fall back to the normal existing-patient search.
+        setShowPatientForm(false);
+        setShowPatientSearch(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingNewPatient(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, preselectedPatientId, editingAppointment?.id]);
 
   const handleSelectPatient = (
     patient: PatientSearchResult,
@@ -547,6 +689,15 @@ export default function NewAppointmentModal({
   };
   // Seed the appointment-details form from the slot / date+time the user picked
   // on the way in, so those choices carry into AddEditAppointmentForm.
+  //
+  // A booking handed over from a patient screen also carries the plan item's
+  // provider: that provider wins over the operatory's assigned provider, and —
+  // when no slot was clicked — the operatory assigned to that provider is
+  // selected (first operatory in this office whose provider_id matches).
+  const providerOperatory = (providerId: string | null): string | undefined =>
+    providerId
+      ? operatories.find((o) => o.provider_id === providerId)?.id
+      : undefined;
   const buildInitialAppointmentData = () => ({
     ...(formData.date && { date: formData.date }),
     ...((formData.time || selectedSlot?.time) && {
@@ -554,11 +705,26 @@ export default function NewAppointmentModal({
     }),
     ...(formData.duration && { duration: formData.duration }),
     ...(formData.procedureType && { procedureType: formData.procedureType }),
-    ...((formData.operatory || selectedSlot?.operatory) && {
-      operatory: formData.operatory || selectedSlot?.operatory,
+    // Precedence: the clicked slot's operatory, then the handed-over provider's
+    // operatory, then whatever the chooser holds. The chooser is skipped for a
+    // handed-over booking, so its `formData.operatory` / `formData.provider`
+    // are only the "first in the list" defaults set when metadata loaded —
+    // they must not beat the provider chosen on the treatment plan.
+    ...((selectedSlot?.operatory ||
+      providerOperatory(preselectedProviderId) ||
+      formData.operatory) && {
+      operatory:
+        selectedSlot?.operatory ||
+        providerOperatory(preselectedProviderId) ||
+        formData.operatory,
     }),
-    ...(formData.provider && { provider: formData.provider }),
+    ...((preselectedProviderId || formData.provider) && {
+      provider: preselectedProviderId || formData.provider,
+    }),
     ...(formData.notes && { notes: formData.notes }),
+    // Plan items handed over from the Tx Plan / Restorative "New Appt" button.
+    ...(initialPlanItemIds &&
+      initialPlanItemIds.length > 0 && { plan_item_ids: initialPlanItemIds }),
   });
 
   // Reusable Radio component (clean & safe)
@@ -718,7 +884,7 @@ export default function NewAppointmentModal({
                   Office:
                 </span>
                 <span className="ml-2 text-[#1E293B] font-semibold">
-                  {currentOffice}
+                  {officeScope.office?.name ?? currentOffice}
                 </span>
               </div>
               <div>
@@ -782,7 +948,7 @@ export default function NewAppointmentModal({
                   Office
                 </label>
                 <div className="px-3 py-2 bg-gray-100 border-2 border-[#E2E8F0] rounded-lg text-sm font-semibold text-[#1E293B]">
-                  {currentOffice}
+                  {officeScope.office?.name ?? currentOffice}
                 </div>
               </div>
             </div>
@@ -970,6 +1136,7 @@ export default function NewAppointmentModal({
                     <div className="space-y-2">
                       <Radio label="Resp. ID" value="respId" />
                       <Radio label="Pat. ID" value="patId" />
+                      <Radio label="Legacy ID" value="legacyId" />
                       <Radio label="Chart#" value="chart" />
                     </div>
 
@@ -998,56 +1165,33 @@ export default function NewAppointmentModal({
                 </div>
 
                 {/* Search In â†’ 1 column */}
-                <div className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-4 col-span-1">
+                <div
+                  className="bg-[#F7F9FC] rounded-lg border border-[#E2E8F0] p-4 col-span-1"
+                  role="group"
+                  aria-label="Search in"
+                >
                   <h4 className="text-xs font-bold text-[#1F3A5F] uppercase mb-3 tracking-wide">
                     Search In
                   </h4>
                   <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="searchIn"
-                        value="current"
-                        checked={searchIn === "current"}
-                        onChange={(e) =>
-                          setSearchIn(e.target.value as "current" | "all" | "group")
-                        }
-                        className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-xs text-[#1E293B]">
-                        Current Office
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="searchIn"
-                        value="all"
-                        checked={searchIn === "all"}
-                        onChange={(e) =>
-                          setSearchIn(e.target.value as "current" | "all" | "group")
-                        }
-                        className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-xs text-[#1E293B]">
-                        All Offices
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="searchIn"
-                        value="group"
-                        checked={searchIn === "group"}
-                        onChange={(e) =>
-                          setSearchIn(e.target.value as "current" | "all" | "group")
-                        }
-                        className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
-                      />
-                      <span className="text-xs text-[#1E293B]">
-                        Office Group
-                      </span>
-                    </label>
+                    {searchScope.modes.map((mode) => (
+                      <label key={mode} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="searchIn"
+                          value={mode}
+                          checked={searchScope.mode === mode}
+                          onChange={() => searchScope.setMode(mode)}
+                          className="w-3.5 h-3.5 text-[#3A6EA5] border-[#CBD5E1] focus:ring-[#3A6EA5]"
+                        />
+                        <span className="text-xs text-[#1E293B]">
+                          {READ_SCOPE_LABELS[mode]}
+                          {mode === "office" && searchScope.office_name
+                            ? ` (${searchScope.office_name})`
+                            : ""}
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1062,12 +1206,35 @@ export default function NewAppointmentModal({
                     found)
                   </h4>
 
+                  {searchNotice && (
+                    <p
+                      role="status"
+                      className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
+                    >
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {searchNotice}
+                    </p>
+                  )}
                   {searchResults.length === 0 ? (
                     <div className="bg-[#F7F9FC] border border-[#E2E8F0] rounded-lg p-8 text-center">
-                      <p className="text-[#64748B]">
-                        No patients found matching your search
-                        criteria.
-                      </p>
+                      {searchedMode === "office" && officeScope.office_id != null ? (
+                        <p className="text-[#64748B]">
+                          No match in {searchScope.office_name} —{" "}
+                          <button
+                            type="button"
+                            onClick={handleSearchAllOffices}
+                            disabled={isSearchingPatients}
+                            className="font-bold text-[#3A6EA5] hover:underline disabled:opacity-60"
+                          >
+                            Search all offices
+                          </button>
+                        </p>
+                      ) : (
+                        <p className="text-[#64748B]">
+                          No patients found matching your search
+                          criteria.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
@@ -1101,6 +1268,9 @@ export default function NewAppointmentModal({
                               </th>
                               <th className="px-3 py-2 text-left font-bold">
                                 Chart#
+                              </th>
+                              <th className="px-3 py-2 text-left font-bold">
+                                Legacy ID
                               </th>
                               <th className="px-3 py-2 text-left font-bold">
                                 Pat. Type
@@ -1150,6 +1320,9 @@ export default function NewAppointmentModal({
                                   </td>
                                   <td className="px-3 py-2 text-[#1E293B]">
                                     {patient.chartNumber}
+                                  </td>
+                                  <td className="px-3 py-2 text-[#64748B]">
+                                    {patient.legacyId}
                                   </td>
                                   <td className="px-3 py-2 text-[#1E293B]">
                                     {patient.patientType}
@@ -1215,6 +1388,14 @@ export default function NewAppointmentModal({
               editingAppointment={editingAppointment}
               initialAppointmentData={buildInitialAppointmentData()}
             />
+          ) : isLoadingNewPatient ? (
+            /* Preselected patient (handed over from a patient screen) loading */
+            <div className="flex items-center justify-center gap-3 py-16">
+              <Loader2 className="w-5 h-5 animate-spin text-[#1F3A5F]" />
+              <span className="text-sm font-medium text-[#1E293B]">
+                Loading patient…
+              </span>
+            </div>
           ) : null}
         </div>
       </div>

@@ -9,7 +9,8 @@ frontend either works around today or cannot do at all.
 | **Frontend modules** | `src/features/patient-insurance/**`, `src/components/setup/insurance/**` |
 | **Routes** | `/patient/:id/insurance/{dental\|medical}/{primary\|secondary\|tertiary\|quaternary}`, `/setup/insurance/insurance-plans` |
 | **Backend resources** | `patient_insurance`, `insurance_plans`, `insurance_carriers`, `employers`, `insurance_subscribers` |
-| **Open gaps** | 20 (INS-PT-1 … INS-PT-21; INS-PT-16 merged into INS-PT-19) |
+| **Open gaps** | 18 (INS-PT-1 … INS-PT-21; INS-PT-16 merged into INS-PT-19; INS-PT-8 and INS-PT-17 delivered 2026-09-11) |
+| **See also** | `edit_insurance_plan_backend_devreport.md` — Edit Plan from the patient screen (EDIT-PLAN-1 … 9) |
 
 ---
 
@@ -147,11 +148,10 @@ Priority reflects impact on users and on data quality, not implementation effort
   labels them (only `CLAIMSTATUS` exists). The field is free-text with datalist hints
   and shows the raw code. **Wanted:** a `CLAIMTYPE` definition group, or an enum.
 
-- **INS-PT-8 — Plans have no modified metadata.** `InsurancePlanRead` carries
-  `created_at` only — no `updated_at`, `created_by` or `modified_by`. The legacy grids
-  show **Created** and **Modified** as *date + user initials*; here Created is a bare
-  date and **Modified renders `—` on every row**. **Wanted:** `updated_at` plus
-  created/modified user on the plan read model.
+- **INS-PT-8 — Plans have no modified metadata.** ✅ **Delivered 2026-09-11.**
+  `InsurancePlanRead` now carries `updated_at`, `updated_by`, `updated_by_name`,
+  `created_by_name`, populated by PATCH (verified while building Edit Plan). Surfacing them in
+  the Setup grid / wizard header is a frontend follow-up.
 
 - **INS-PT-5 — No real eligibility verification.** "Update Status" stamps
   `elig_verified_on` client-side with today's date. `InsuranceCarrierRead` advertises
@@ -173,10 +173,9 @@ Priority reflects impact on users and on data quality, not implementation effort
   `is_dental`.
 - **INS-PT-13 — Quick-add can create duplicate carriers/employers.** Neither create
   endpoint reports a conflict on an existing name and there is no name-match probe.
-- **INS-PT-17 — No deep link to a single plan in Setup.**
-  `/setup/insurance/insurance-plans` takes no plan id, so "Edit in Setup" can only land
-  on the list and the user must search for the plan again.
-  **Wanted:** `/setup/insurance/insurance-plans/:planId`.
+- **INS-PT-17 — No deep link to a single plan in Setup.** ✅ **Resolved (frontend).**
+  `/setup/insurance/insurance-plans?plan_id=N` opens the wizard on that plan; the patient
+  screen's "Open in Setup" links use it.
 - **INS-PT-20 — No "is this group taken" endpoint.** The duplicate check reuses the
   list endpoint, paying a full paginated query plus a preflight on every save. A cheap
   count/HEAD endpoint (or the 409 from INS-PT-19) removes a round-trip from the save path.
@@ -193,8 +192,10 @@ Priority reflects impact on users and on data quality, not implementation effort
 - `patient_insurance` DELETE / deactivation is not wired from the patient screen
   (legacy has no delete there either; slots are toggled via `is_active`).
 - `size` on list endpoints caps at **200**.
-- The View Plan modal is read-only **by design**: an `insurance_plan` row is shared by
-  every patient linked to it, so editing it from a patient screen would silently change
-  other patients' coverage. Edits belong in Setup → Insurance → Plans.
+- The View Plan modal is read-only; since 2026-09-11 the slot screen also offers **Edit Plan**
+  (left rail and View Plan footer), which opens the same INSURANCE DETAILS wizard in edit
+  mode behind a shared-plan impact banner and a confirmation when more than this patient is
+  linked. The backend safeguards that edit still needs (concurrency, usage endpoint,
+  re-estimate cascade, permissions) are in `edit_insurance_plan_backend_devreport.md`.
 - `DefinitionField` now accepts and honours `disabled` — it previously ignored it,
   leaving Coverage Type interactive inside read-only forms.

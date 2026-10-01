@@ -117,10 +117,14 @@ export interface InsuranceForm {
   family_ded_remaining: string;
   family_max_remaining: string;
 
-  // Eligibility — subscriber.
+  // Eligibility — subscriber. The legacy grid keeps the plan-level dates next
+  // to the subscriber's on the enrolment (`plan_effective_date` /
+  // `plan_term_date`, INS-PT-6) — a plan row is shared by every subscriber.
   effective_date: string;
   term_date: string;
   anniversary_date: string;
+  plan_effective_date: string;
+  plan_term_date: string;
   elig_status: string;
   elig_verified_on: string;
   elig_verified_by: string;
@@ -144,15 +148,18 @@ export interface InsuranceForm {
   notes: string;
   is_active: boolean;
 
-  // ---- Fields with no backend column yet (see devreport, kept local) ----
+  // Subscriber demographics — subscriber (INS-PT-1/2).
   marital_status: string;
   sub_phone: string;
-  sec_rel_to_prim: string;
+  // patient_insurance.sec_sub_rel_to_prim_sub — "Sec. Sub Rel to Prim. Sub" (INS-PT-3).
+  sec_sub_rel_to_prim_sub: string;
 }
 
 /** Read-only values derived from the linked plan / carrier / employer. */
 export interface PlanDisplay {
   plan_id: number | null;
+  /** The plan's own group number (the slot's editable Group # lives on the subscriber). */
+  group_number: string;
   carrier_name: string;
   carrier_legacy_id: string;
   payer_id: string;
@@ -171,6 +178,7 @@ export interface PlanDisplay {
 
 export const EMPTY_PLAN_DISPLAY: PlanDisplay = {
   plan_id: null,
+  group_number: "",
   carrier_name: "",
   carrier_legacy_id: "",
   payer_id: "",
@@ -198,6 +206,8 @@ export function emptyForm(): InsuranceForm {
     effective_date: "",
     term_date: "",
     anniversary_date: "",
+    plan_effective_date: "",
+    plan_term_date: "",
     elig_status: "",
     elig_verified_on: "",
     elig_verified_by: "",
@@ -217,7 +227,7 @@ export function emptyForm(): InsuranceForm {
     is_active: true,
     marital_status: "",
     sub_phone: "",
-    sec_rel_to_prim: "",
+    sec_sub_rel_to_prim_sub: "",
   };
 }
 
@@ -257,6 +267,8 @@ export function formFromSlot(data: SlotData): InsuranceForm {
     effective_date: subscriber?.effective_date ?? "",
     term_date: subscriber?.term_date ?? "",
     anniversary_date: subscriber?.anniversary_date ?? "",
+    plan_effective_date: subscriber?.plan_effective_date ?? "",
+    plan_term_date: subscriber?.plan_term_date ?? "",
     elig_status: subscriber?.elig_status ?? "",
     elig_verified_on: subscriber?.elig_verified_on ?? "",
     elig_verified_by: subscriber?.elig_verified_by ?? "",
@@ -274,6 +286,9 @@ export function formFromSlot(data: SlotData): InsuranceForm {
     relationship: record?.relationship || "Self",
     notes: subscriber?.notes ?? "",
     is_active: record?.is_active ?? true,
+    marital_status: subscriber?.marital_status ?? "",
+    sub_phone: subscriber?.sub_phone ?? "",
+    sec_sub_rel_to_prim_sub: record?.sec_sub_rel_to_prim_sub ?? "",
   };
 }
 
@@ -296,6 +311,10 @@ export function subscriberFields(sub: InsuranceSubscriberRead): Partial<Insuranc
     effective_date: sub.effective_date ?? "",
     term_date: sub.term_date ?? "",
     anniversary_date: sub.anniversary_date ?? "",
+    plan_effective_date: sub.plan_effective_date ?? "",
+    plan_term_date: sub.plan_term_date ?? "",
+    marital_status: sub.marital_status ?? "",
+    sub_phone: sub.sub_phone ?? "",
     family_ded_remaining: sub.family_ded_remaining ?? "",
     family_max_remaining: sub.family_max_remaining ?? "",
     ortho_remaining: sub.ortho_remaining ?? "",
@@ -311,6 +330,7 @@ export function planDisplayFromSlot(data: SlotData): PlanDisplay {
   if (!plan) return EMPTY_PLAN_DISPLAY;
   return {
     plan_id: plan.id,
+    group_number: plan.group_number ?? "",
     carrier_name: carrier?.name ?? "",
     carrier_legacy_id: carrier?.legacy_id ?? (carrier ? String(carrier.id) : ""),
     payer_id: carrier?.payer_id ?? "",
@@ -352,6 +372,10 @@ export function buildSubscriberCreate(f: InsuranceForm, insPlanId: number): Insu
     effective_date: nz(f.effective_date),
     term_date: nz(f.term_date),
     anniversary_date: nz(f.anniversary_date),
+    plan_effective_date: nz(f.plan_effective_date),
+    plan_term_date: nz(f.plan_term_date),
+    marital_status: nz(f.marital_status),
+    sub_phone: nz(f.sub_phone),
     family_max_remaining: nz(f.family_max_remaining),
     family_ded_remaining: nz(f.family_ded_remaining),
     ortho_remaining: nz(f.ortho_remaining),
@@ -382,6 +406,7 @@ export function buildPatientInsuranceCreate(
     legacy_plan_type: slot.category,
     insurance_type: slot.order,
     relationship: nz(f.relationship),
+    sec_sub_rel_to_prim_sub: nz(f.sec_sub_rel_to_prim_sub),
     deductible_remaining: nz(f.deductible_remaining),
     max_remaining: nz(f.max_remaining),
     ortho_remaining: nz(f.ortho_remaining),
@@ -400,6 +425,7 @@ export function buildPatientInsuranceUpdate(
     legacy_plan_type: slot.category,
     insurance_type: slot.order,
     relationship: nz(f.relationship),
+    sec_sub_rel_to_prim_sub: nz(f.sec_sub_rel_to_prim_sub),
     deductible_remaining: nz(f.deductible_remaining),
     max_remaining: nz(f.max_remaining),
     ortho_remaining: nz(f.ortho_remaining),
@@ -420,11 +446,23 @@ export interface InsuranceSubscriberOption {
 
 export const RELATIONSHIP_OPTIONS = ["Self", "Spouse", "Child", "Dependent", "Other"];
 export const SEC_REL_OPTIONS = ["Spouse", "Child", "Dependent", "Other"];
-export const MARITAL_OPTIONS = ["Single", "Married", "Divorced", "Widowed", "Separated"];
+// insurance_subscribers.marital_status is the legacy single-letter code
+// (S = 535 / M = 424 / D = 22 / W = 5 rows on the dev DB), so the select
+// stores the code and shows the word.
+export const MARITAL_OPTIONS = [
+  { value: "S", label: "Single" },
+  { value: "M", label: "Married" },
+  { value: "D", label: "Divorced" },
+  { value: "W", label: "Widowed" },
+];
+export const marital_label = (code?: string | null): string =>
+  MARITAL_OPTIONS.find((m) => m.value === (code ?? "").trim().toUpperCase())?.label ?? (code ?? "");
+// ADA claim form Items 7/14/22 accept M / F / U only; "O" prints as U.
 export const GENDER_OPTIONS = [
   { value: "M", label: "Male" },
   { value: "F", label: "Female" },
-  { value: "O", label: "Other" },
+  { value: "U", label: "Unknown" },
+  { value: "O", label: "Other (prints as U on claims)" },
 ];
 
 export function moneyDisplay(v: string | null | undefined): string {

@@ -1,14 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { OfficeBadge, useOfficeOptions, useOfficeScope } from '@/features/office-scope';
 import AppShell from './layout/AppShell';
 import PatientSecondaryNav from './PatientSecondaryNav';
+import { PatientShellToggle } from './PatientShellToggle';
+import { usePatientShellCollapse } from '@/hooks/usePatientShellCollapse';
 import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useGetPatient, useListPatientAlerts } from '@/api/generated/endpoints/patients/patients';
 import { useListAppointments } from '@/api/generated/endpoints/appointments/appointments';
 import { useGetPatientBalance } from '@/api/generated/endpoints/billing/billing';
-import { useListOffices } from '@/api/generated/endpoints/organization/organization';
 import type { PatientRead } from '@/api/generated/model';
+import { patient_display_name } from '@/features/patient-overview/format';
 
 interface PatientShellLayoutProps {
   onLogout: () => void;
@@ -27,7 +30,6 @@ interface PatientDisplayData {
   phone: string;
   email: string;
   office: string;
-  officeId?: string; // Office ID for API calls
   balance: number;
   nextAppointment: string;
   alerts: string[];
@@ -43,12 +45,15 @@ export default function PatientShellLayout({
   const { setActivePatient } = useAuth();
   const numericId = patientId ? Number(patientId) : NaN;
   const validId = !Number.isNaN(numericId);
+  // Per-block minimize state for the sticky shell (persists in localStorage).
+  const { header_collapsed, nav_collapsed, toggleHeader, toggleNav } = usePatientShellCollapse();
 
   const today = new Date().toISOString().slice(0, 10);
 
   const patientQuery = useGetPatient(numericId, { query: { enabled: validId } });
   const balanceQuery = useGetPatientBalance(numericId, { query: { enabled: validId } });
-  const officesQuery = useListOffices({ size: 200 });
+  // Office name from the shared office catalog (same entry the OfficeBadge reads).
+  const officesQuery = useOfficeOptions();
   const appointmentsQuery = useListAppointments(
     { patient_id: numericId, date_from: today, size: 50 },
     { query: { enabled: validId } },
@@ -159,15 +164,13 @@ export default function PatientShellLayout({
 
   // Compose the display model from the canonical resources:
   // identity (/patients/{id}) + balance (/patients/{id}/balance) + office name
-  // (/offices) + next upcoming appointment (/appointments) + active alerts
-  // (/patient-alerts).
+  // (shared office catalog) + next upcoming appointment (/appointments) + active
+  // alerts (/patient-alerts).
   const patient = useMemo<PatientDisplayData | null>(() => {
     const p = patientQuery.data;
     if (!p) return null;
 
-    const officeName = officesQuery.data?.items.find(
-      (o) => o.id === p.home_office_id,
-    )?.name;
+    const officeName = officesQuery.data?.find((o) => o.id === p.home_office_id)?.name;
     const bal = balanceQuery.data;
 
     // Earliest upcoming appointment (already filtered to date_from = today).
@@ -187,16 +190,14 @@ export default function PatientShellLayout({
       id: String(p.id),
       legacyId: p.legacy_id || undefined,
       chartNo: p.chart_no || `CH-${p.id}`,
-      name: p.preferred_name
-        ? `${p.last_name}, ${p.first_name} (${p.preferred_name})`
-        : `${p.last_name}, ${p.first_name}`,
+      // "Last, First Middle (Preferred)" — the middle name is optional.
+      name: patient_display_name(p),
       age: calculateAge(p.dob),
       gender: formatGender(p.gender),
       dob: formatDate(p.dob),
       phone: getPreferredPhone(p),
       email: p.email || '—',
       office: officeName || '—',
-      officeId: p.home_office_id != null ? String(p.home_office_id) : undefined,
       balance: bal?.account_balance ?? bal?.balance ?? 0,
       nextAppointment: upcoming
         ? `${formatDate(upcoming.date)} ${upcoming.start_time ?? ''}`.trim()
@@ -210,6 +211,33 @@ export default function PatientShellLayout({
     appointmentsQuery.data,
     alertsQuery.data,
   ]);
+
+  // ---- The patient's office, fanned out to every patient screen ----
+  // home_office_id is the record's own (live) home office. posting_office_id is
+  // the office new rows for this patient are stamped with: a SNAPSHOT taken when
+  // the chart opens (shell mount / patient id change) and held while it stays
+  // open, so a refetch of the patient record mid-session never moves it.
+  // Phase 4: a chart posts to the WORKING office selected in the top bar (live) —
+  // "you post where you are working" — falling back to the patient's home office
+  // when no office is selected. The office is chosen once, in the top-bar OFFICE
+  // selector; there is no second per-chart selector. Records stampPolicy marks
+  // `home` (payment plans) keep using home_office_id, not this.
+  const { office_id: working_office_id, office: working_office, office_options } = useOfficeScope();
+  const home_office_id = patientQuery.data?.home_office_id ?? null;
+  const posting_office_id = working_office_id ?? home_office_id;
+  const is_cross_office =
+    home_office_id != null && working_office_id != null && home_office_id !== working_office_id;
+  const working_office_name =
+    working_office?.name ?? (working_office_id != null ? `Office ${working_office_id}` : '');
+  // Same catalog the OfficeBadge reads, so the notice and the badge always agree.
+  const home_office_name =
+    office_options.find((o) => o.id === home_office_id)?.name ??
+    (home_office_id != null ? `Office ${home_office_id}` : '');
+
+  const outletContext = useMemo(
+    () => ({ patient, home_office_id, posting_office_id }),
+    [patient, home_office_id, posting_office_id],
+  );
 
   // Persist whichever patient is in context as this user's default, so it
   // reopens automatically everywhere (no patient prompt) until they switch.
@@ -273,7 +301,52 @@ export default function PatientShellLayout({
       {/* PATIENT CONTEXT SHELL - Persistent, sticks right below the fixed nav so
           the patient identity + tab bar stay visible while content scrolls. */}
       <div className="bg-white border-b-2 border-slate-200 shadow-sm sticky top-[var(--app-nav-height)] z-30">
-          {/* Patient Summary Header */}
+          {/* Patient Summary Header — full banner, or a slim one-line strip when
+              minimized so the content area gets the vertical space back. */}
+          {header_collapsed ? (
+            <div className="flex items-center justify-between gap-4 px-6 py-1.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 shadow-sm">
+                  <User className="h-4 w-4 text-white" strokeWidth={2.5} />
+                </div>
+                <h2 className="truncate text-sm font-bold text-slate-900">{patient.name}</h2>
+                <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700" title="DentC patient id">
+                  ID: {patient.id}
+                </span>
+                {patient.age > -1 && (
+                  <span className="hidden shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 md:inline">
+                    {patient.age}y • {patient.gender}
+                  </span>
+                )}
+                {patient.alerts.length > 0 && (
+                  <span className="hidden shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 lg:inline-flex">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {patient.alerts.length} Alert(s)
+                  </span>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="text-xs font-medium text-slate-500">
+                  Balance{' '}
+                  <span className={`text-sm font-bold ${patient.balance > 0 ? 'text-red-600' : patient.balance < 0 ? 'text-green-600' : 'text-slate-600'}`}>
+                    ${Math.abs(patient.balance).toFixed(2)}
+                  </span>
+                </span>
+                {patient.nextAppointment !== '—' && (
+                  <span className="hidden text-xs font-medium text-slate-500 xl:inline">
+                    Next Appt <span className="font-semibold text-slate-900">{patient.nextAppointment}</span>
+                  </span>
+                )}
+                <button
+                  onClick={handleClosePatient}
+                  className="rounded-md border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200 hover:border-slate-400"
+                >
+                  Close Patient
+                </button>
+                <PatientShellToggle collapsed onClick={toggleHeader} target="patient header" />
+              </div>
+            </div>
+          ) : (
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               {/* Patient Info */}
@@ -329,13 +402,19 @@ export default function PatientShellLayout({
                         <span>DOB: {patient.dob}</span>
                       </div>
                     )}
-                    {/* {patient.office !== '—' && (
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4" />
-                        <span>{patient.office}</span>
-                      </div>
-                    )} */}
+                    {/* Home office — neutral when it is the working office,
+                        amber "Other office: …" when it is not, "Unassigned"
+                        when the record has none. Never hidden. */}
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4" />
+                      <OfficeBadge office_id={home_office_id} variant="name" />
+                    </div>
                   </div>
+                  {is_cross_office && (
+                    <p className="text-xs font-medium text-amber-700">
+                      Home office: {home_office_name} — new records post to {working_office_name} (your working office)
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -375,17 +454,22 @@ export default function PatientShellLayout({
                 >
                   Close Patient
                 </button>
+                <PatientShellToggle collapsed={false} onClick={toggleHeader} target="patient header" />
               </div>
             </div>
           </div>
+          )}
 
-          {/* Patient Secondary Navigation - Icon Bar */}
-          <PatientSecondaryNav patientId={patient.id} />
+          {/* Patient Secondary Navigation - Icon Bar (minimizable on its own) */}
+          <PatientSecondaryNav patientId={patient.id} collapsed={nav_collapsed} onToggleCollapsed={toggleNav} />
         </div>
+
+        {/* The cross-office warning lives once, in the patient header above
+            ("Home office: … — new records post to …"). No duplicate bar here. */}
 
         {/* PATIENT CONTENT AREA - This changes based on route */}
         <div className="min-h-[calc(100vh-400px)]">
-          <Outlet context={{ patient }} />
+          <Outlet context={outletContext} />
         </div>
     </AppShell>
   );

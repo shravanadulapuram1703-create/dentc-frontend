@@ -10,9 +10,12 @@
 // Backend gap RX-P1: "Internal Note" has no backend field (single `notes`),
 // so it is gated (disabled) in 'add' mode.
 
+import { useMemo } from 'react';
 import type { RxDraft } from './rxModel';
 import { fmtRxDate } from './rxModel';
 import type { PrescriptionLibraryRead, ProviderRead, PrescriptionRead } from '@/api/generated/model';
+import { providerOptionLabel } from '@/services/providerDirectory';
+import { rxDrugOptionLabels } from './prescriptionsService';
 
 interface Props {
   mode: 'add' | 'view' | 'empty';
@@ -38,6 +41,8 @@ export default function RxEditPanel({
   onPickDrug,
 }: Props) {
   const readOnly = mode !== 'add';
+  // Same-name drugs with different dispense/sig get a disambiguating suffix.
+  const drugLabels = useMemo(() => rxDrugOptionLabels(library), [library]);
 
   // Display values: draft when adding, the selected row when viewing.
   const v = readOnly
@@ -55,8 +60,7 @@ export default function RxEditPanel({
 
   const dosespotId = selected?.dosespot_rx_id || '0';
 
-  const providerLabel = (p: ProviderRead) =>
-    `${p.short_id ? p.short_id + ' : ' : ''}${p.name}`;
+  const providerLabel = (p: ProviderRead) => providerOptionLabel(p);
 
   return (
     <div className="border border-slate-300 rounded-md bg-slate-50">
@@ -91,7 +95,7 @@ export default function RxEditPanel({
               <option value="">— Please Select —</option>
               {library.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.drug_name}
+                  {drugLabels.get(d.id) ?? d.drug_name}
                 </option>
               ))}
             </select>

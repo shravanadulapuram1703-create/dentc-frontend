@@ -1,11 +1,10 @@
-// Browser-side persistence for the INSURANCE DETAILS fields that have NO column
-// on `insurance_plans` (Fees to Print, Claim Options, Form to Print, Reporting
-// Subtype, Network Type, NOA Only, Per Visit Co-Pay, Lifetime Ortho Benefits,
-// Plan Notes). Same pattern as the claim fill-out form: keyed by plan id, held
-// in localStorage until the backend grows the columns (devreport PLAN-DTL-1).
-//
-// The wizard labels these plainly as "not yet stored on the server" rather than
-// pretending they round-trip.
+// LEGACY read fallback for the INSURANCE DETAILS fields that had NO column on
+// `insurance_plans` until 2026-09 (Fees to Print, Claim Options, Form to Print,
+// Reporting Subtype, Network Type, NOA Only, Per Visit Co-Pay, Lifetime Ortho
+// Benefits, Plan Notes — devreport PLAN-DTL-1). They were kept per plan id in
+// localStorage; now that the backend has the columns nothing is WRITTEN here
+// any more. `loadPlanDetails` reads a stored entry once when the server row is
+// still empty, and `savePlanDetails` removes it after the values land server-side.
 
 import { type PlanExtras, emptyPlanExtras, PLAN_EXTRA_KEYS } from "./planDetailsModel";
 
@@ -33,10 +32,10 @@ export function loadPlanExtras(plan_id: number): PlanExtras {
   }
 }
 
-export function savePlanExtras(plan_id: number, extras: PlanExtras): boolean {
+/** True when this browser still holds a pre-column copy for the plan. */
+export function hasLegacyPlanExtras(plan_id: number): boolean {
   try {
-    localStorage.setItem(key(plan_id), JSON.stringify(extras));
-    return true;
+    return localStorage.getItem(key(plan_id)) != null;
   } catch {
     return false;
   }

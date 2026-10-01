@@ -135,7 +135,10 @@ export default function OrganizationSwitcher() {
   // }
 
   const handleOrgSwitch = (org: Organization) => {
-    setCurrentOrganization(org.name);
+    // The canonical "ORG-<id>" key — every `organizations.find(o => o.id === …)`
+    // lookup and the numeric `tenantId` derivation depend on it (storing the
+    // display name broke both).
+    setCurrentOrganization(org.id);
     setIsOpen(false);
   };
 

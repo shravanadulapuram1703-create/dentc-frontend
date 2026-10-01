@@ -15,9 +15,10 @@ export interface OperatoryUi {
   display_order: number;
   is_active: boolean;
   has_future_appointments?: boolean;
-  /** Local-only until the operatory model gains the field (backend gap #23). */
-  default_provider_id?: string;
-  default_provider_name?: string;
+  /** Default provider (`OperatoryRead.provider_id`) — auto-fills appointments booked in this room. */
+  provider_id?: string | null;
+  /** Display-only label for `provider_id`. */
+  provider_name?: string;
 }
 
 /**
@@ -52,6 +53,8 @@ export interface OfficeForm {
   schedule_end_hour?: number | null;
 
   // Billing / fee schedules (gap #11 — now backed by OfficeRead/Update)
+  /** Legal billing name printed in ADA claim Item 48 (falls back to `name`). */
+  corporate_name?: string | null;
   tax_id?: string | null;
   billing_provider_id?: string | null;
   use_billing_license?: boolean | null;
@@ -59,6 +62,8 @@ export interface OfficeForm {
   opening_date?: string | null;
   default_fee_schedule_id?: number | null;
   default_ucr_fee_schedule_id?: number | null;
+  /** "flag" (post $0 + flag) | "refuse" (block unpriced charges) — docs/pricing §3.4. */
+  unpriced_charge_policy?: string | null;
 
   is_active?: boolean | null;
 

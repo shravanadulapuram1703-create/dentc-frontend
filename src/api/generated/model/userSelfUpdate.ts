@@ -11,4 +11,6 @@ export interface UserSelfUpdate {
   last_name?: string | null;
   phone?: string | null;
   email?: string | null;
+  current_office_id?: number | null;
+  last_patient_id?: number | null;
 }

@@ -34,6 +34,20 @@ export function listTickets(reporterId: string): TicketRecord[] {
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
+/** Change a locally stored ticket's status. Returns the updated record, or null if unknown. */
+export function updateLocalTicketStatus(
+  id: TicketRecord["id"],
+  status: TicketStatus,
+): TicketRecord | null {
+  const all = readAll();
+  const current = all.find((r) => String(r.id) === String(id));
+  if (!current) return null;
+  const updated: TicketRecord = { ...current, status };
+  writeAll(all.map((r) => (r === current ? updated : r)));
+  console.info(`[help] ticket status → ${status} (local)`, { id, issue_key: updated.issue_key });
+  return updated;
+}
+
 /** Next synthetic Jira-style key for demo mode, e.g. "SUP-1", "SUP-2". */
 export function nextDemoKey(projectKey: string): string {
   let n = 0;

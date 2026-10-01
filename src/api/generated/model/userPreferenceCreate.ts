@@ -8,6 +8,7 @@
 
 export interface UserPreferenceCreate {
   user_id: number;
+  /** @maxLength 100 */
   pref_key: string;
   pref_value?: string | null;
 }
