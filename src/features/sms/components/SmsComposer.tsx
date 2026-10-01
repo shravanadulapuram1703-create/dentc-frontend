@@ -242,7 +242,7 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
       {/* Row 2: editor */}
       <div
         className={cn(
-          "rounded-xl border bg-white transition-shadow focus-within:ring-2 focus-within:ring-blue-500/30",
+          "overflow-hidden rounded-xl border bg-white transition-shadow focus-within:ring-2 focus-within:ring-blue-500/30",
           trimmed.length > SMS_MAX_CHARS ? "border-red-300" : "border-slate-300",
         )}
       >
@@ -276,7 +276,9 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
             </span>
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-3 py-2">
+        {/* Insert tools: quiet, free to wrap on its own — never pushes Send around. */}
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-3 py-1.5">
+          <span className="mr-0.5 text-[9.5px] font-bold uppercase tracking-wide text-slate-300">Insert</span>
           {MERGE_FIELDS.map((f) => (
             <button
               key={f.key}
@@ -289,26 +291,28 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
               {f.label}
             </button>
           ))}
-          <div className={cn("ml-auto flex items-center gap-3", !compact && "lg:mr-16")}>
-            <span
-              className={cn(
-                "text-[11px] tabular-nums",
-                trimmed.length > SMS_MAX_CHARS ? "font-semibold text-red-600" : seg.segments > 1 ? "text-amber-700" : "text-slate-400",
-              )}
-              title={`${seg.encoding} encoding · ${seg.per_segment} chars per segment`}
-            >
-              {seg.length}/{seg.per_segment} · {seg.segments || 1} seg{seg.segments > 1 ? "s" : ""}
-              {seg.encoding === "UCS-2" && " · emoji/unicode"}
-            </span>
-            <button
-              type="button"
-              onClick={() => void submit()}
-              disabled={blocked}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#1F3A5F] px-3.5 text-xs font-semibold text-white shadow-sm hover:bg-[#2d5080] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : sendLabel}
-            </button>
-          </div>
+        </div>
+
+        {/* Action row: always the same two things, same place — never shares space with the chips above. */}
+        <div className={cn("flex items-center justify-end gap-3.5 border-t border-slate-200 bg-slate-50 px-3 py-2", !compact && "lg:mr-16")}>
+          <span
+            className={cn(
+              "text-[11px] tabular-nums",
+              trimmed.length > SMS_MAX_CHARS ? "font-semibold text-red-600" : seg.segments > 1 ? "text-amber-700" : "text-slate-400",
+            )}
+            title={`${seg.encoding} encoding · ${seg.per_segment} chars per segment`}
+          >
+            {seg.length}/{seg.per_segment} · {seg.segments || 1} seg{seg.segments > 1 ? "s" : ""}
+            {seg.encoding === "UCS-2" && " · emoji/unicode"}
+          </span>
+          <button
+            type="button"
+            onClick={() => void submit()}
+            disabled={blocked}
+            className="inline-flex h-[34px] items-center gap-1.5 rounded-md bg-[#1F3A5F] px-4 text-xs font-bold text-white shadow-sm hover:bg-[#2d5080] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : sendLabel}
+          </button>
         </div>
       </div>
 
