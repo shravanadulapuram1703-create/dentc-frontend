@@ -1,6 +1,7 @@
 import { CalendarClock, Info, RotateCcw, X } from "lucide-react";
 import { cn } from "@/components/ui/utils";
 import {
+  isFailedStatus,
   REPLY_INTENT_LABEL,
   SMS_MESSAGE_TYPE_LABEL,
   type SmsEntry,
@@ -27,7 +28,7 @@ const INTENT_TONE: Record<NonNullable<SmsEntry["intent"]>, string> = {
 
 export default function SmsBubble({ entry, selected, onSelect, onRetry, onDismiss, onMarkRead }: SmsBubbleProps) {
   const out = entry.direction === "outbound";
-  const failed = entry.status === "failed" || entry.status === "undelivered";
+  const failed = isFailedStatus(entry.status);
   const unread = !out && !entry.is_read;
 
   return (

@@ -1,7 +1,7 @@
 // Staff-side actions for the three patient responses (YES / NO / STOP).
 //
 // In production the backend webhook (gap SMS-2) applies these automatically
-// the moment Twilio delivers the reply. Until it ships — and for replies the
+// the moment the carrier delivers the reply. Until it ships — and for replies the
 // webhook could not match — staff can apply the same outcome from the
 // details pane. Both paths write the same fields, so the audit trail is
 // identical:

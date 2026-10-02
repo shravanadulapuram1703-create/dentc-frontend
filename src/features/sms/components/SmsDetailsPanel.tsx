@@ -48,7 +48,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 const INTENT_PANEL: Record<ReplyIntent, { tone: string; blurb: string }> = {
   confirm: { tone: "border-emerald-200 bg-emerald-50 text-emerald-900", blurb: "The patient replied YES — the appointment can be marked confirmed." },
   decline: { tone: "border-amber-200 bg-amber-50 text-amber-900", blurb: "The patient replied NO — cancel the slot and follow up from the call list." },
-  opt_out: { tone: "border-red-200 bg-red-50 text-red-900", blurb: "The patient replied STOP — Twilio blocks further texts; turn on No Auto SMS so DentC stops too." },
+  opt_out: { tone: "border-red-200 bg-red-50 text-red-900", blurb: "The patient replied STOP — the carrier blocks further texts; turn on No Auto SMS so DentC stops too." },
   help: { tone: "border-sky-200 bg-sky-50 text-sky-900", blurb: "The patient asked for help — reply manually or call them." },
   other: { tone: "border-slate-200 bg-slate-50 text-slate-800", blurb: "Free-text reply — read it and respond manually." },
 };

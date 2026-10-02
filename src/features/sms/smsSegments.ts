@@ -1,4 +1,4 @@
-// SMS segment math (GSM-7 vs UCS-2), mirroring how Twilio bills a message.
+// SMS segment math (GSM-7 vs UCS-2), mirroring how carriers bill a message.
 //
 //   GSM-7 : 160 chars single segment, 153 per segment when concatenated.
 //   UCS-2 : 70 chars single segment, 67 per segment when concatenated.

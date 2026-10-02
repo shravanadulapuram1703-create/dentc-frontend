@@ -25,7 +25,7 @@ export const ASSIGNMENT_TYPE_LABEL: Record<PhoneAssignmentType, string> = {
   MULTI_OFFICE_SHARED: 'Multi-office shared number',
 };
 
-/** Twilio toll-free verification allows at most this many office-specific numbers. */
+/** At most this many office-specific numbers are allowed per tenant. */
 export const MAX_OFFICE_SPECIFIC = 5;
 
 /** Labels for `SmsSenderResolution.source`. */
@@ -96,11 +96,11 @@ export function validatePhoneAssignmentRows(rows: PhoneAssignmentRow[]): string 
   const assigned = rows.filter((r) => r.assignment_type !== '');
   const missing = assigned.filter((r) => !toE164(r.phone_number));
   if (missing.length > 0) {
-    return `Enter a valid Twilio number in E.164 format (+1…) for: ${missing.map((r) => r.office_name).join(', ')}`;
+    return `Enter a valid number in E.164 format (+1…) for: ${missing.map((r) => r.office_name).join(', ')}`;
   }
   const specific = assigned.filter((r) => r.assignment_type === 'OFFICE_SPECIFIC');
   if (specific.length > MAX_OFFICE_SPECIFIC) {
-    return `Maximum ${MAX_OFFICE_SPECIFIC} offices allowed for Office-Specific Number (Twilio toll-free limit)`;
+    return `Maximum ${MAX_OFFICE_SPECIFIC} offices allowed for Office-Specific Number`;
   }
   return null;
 }

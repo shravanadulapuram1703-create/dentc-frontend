@@ -691,7 +691,7 @@ export function useListConsentForms<TData = Awaited<ReturnType<typeof listConsen
 
 
 /**
- * @summary Send a text to a patient via Twilio (SMS-1)
+ * @summary Send a text to a patient via RingCentral (SMS-1)
  */
 export const sendSms = (
     smsSendRequest: BodyType<SmsSendRequest>,
@@ -741,7 +741,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SendSmsMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Send a text to a patient via Twilio (SMS-1)
+ * @summary Send a text to a patient via RingCentral (SMS-1)
  */
 export const useSendSms = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendSms>>, TError,{data: BodyType<SmsSendRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
@@ -754,7 +754,7 @@ export const useSendSms = <TError = ErrorType<ErrorResponse>,
       return useMutation(getSendSmsMutationOptions(options), queryClient);
     }
     /**
- * @summary Is Twilio configured (live) or is the gateway in log-only mode?
+ * @summary Is RingCentral configured (live) or is the gateway in log-only mode?
  */
 export const getSmsGatewayStatus = (
 
@@ -825,7 +825,7 @@ export function useGetSmsGatewayStatus<TData = Awaited<ReturnType<typeof getSmsG
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Is Twilio configured (live) or is the gateway in log-only mode?
+ * @summary Is RingCentral configured (live) or is the gateway in log-only mode?
  */
 
 export function useGetSmsGatewayStatus<TData = Awaited<ReturnType<typeof getSmsGatewayStatus>>, TError = ErrorType<ErrorResponse>>(

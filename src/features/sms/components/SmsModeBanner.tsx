@@ -19,18 +19,19 @@ export default function SmsModeBanner({ mode, capability }: { mode: SmsTransport
       <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-[11px] text-amber-800">
         <ServerOff className="h-3.5 w-3.5" />
         <span>
-          <b>Twilio gateway not deployed</b> — the backend has the SMS log but no <code>POST /api/v1/sms/send</code>
-          yet (gap SMS-1). New texts are saved as <i>Queued</i> and will not reach the patient until it ships.
+          <b>SMS gateway not configured</b> — texts are saved to the log as <i>Queued</i> but will not reach the
+          patient until the practice's text-messaging account is connected.
         </span>
       </div>
     );
   }
-  if (capability === "twilio") {
+  if (capability === "live") {
     return (
       <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[11px] text-emerald-800">
         <Radio className="h-3.5 w-3.5" />
         <span>
-          <b>Live</b> — texts are delivered through Twilio. Replies and delivery receipts refresh every 15 seconds.
+          <b>Live</b> — texts are delivered through the practice's connected SMS account. Replies and delivery
+          receipts refresh every 15 seconds.
         </span>
       </div>
     );

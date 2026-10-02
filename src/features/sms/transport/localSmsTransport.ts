@@ -1,10 +1,11 @@
-// Labelled client-side simulation of the SMS backend + Twilio.
+// Labelled client-side simulation of the SMS backend + carrier.
 //
 // Enabled with `VITE_SMS_BACKEND=local`. Rows persist in localStorage
 // (`dentc:sms:sim:<patient_id>`) in the exact `SmsMessageRead` shape so the
-// UI code path is identical to production. A send walks the Twilio lifecycle
-// (queued → sent → delivered) on timers, and confirmation-style texts get a
-// scripted patient reply so the inbound path is demonstrable offline.
+// UI code path is identical to production. A send walks the carrier
+// lifecycle (queued → sent → delivered) on timers, and confirmation-style
+// texts get a scripted patient reply so the inbound path is demonstrable
+// offline.
 
 import type { SmsMessageRead } from "@/api/generated/model";
 import { classifyReply } from "../smsModel";
@@ -82,7 +83,7 @@ export class LocalSmsTransport implements SmsTransport {
     };
     save(input.patient_id, [...rows, row]);
 
-    // Scripted Twilio lifecycle.
+    // Scripted carrier lifecycle.
     const pid = input.patient_id;
     const id = row.id;
     const failed = /\bfail\b/i.test(input.body); // type "fail" to demo an error
@@ -91,7 +92,7 @@ export class LocalSmsTransport implements SmsTransport {
       patch(pid, id, { send_status: "sent" });
       await wait(1600);
       if (failed) {
-        patch(pid, id, { send_status: "undelivered" });
+        patch(pid, id, { send_status: "deliveryfailed" });
         return;
       }
       patch(pid, id, { send_status: "delivered", delivered_on: new Date().toISOString() });
@@ -130,7 +131,7 @@ export class LocalSmsTransport implements SmsTransport {
 
   async simulateInbound(patient_id: number, from_phone: string, body: string): Promise<void> {
     const rows = load(patient_id);
-    // Twilio inbound webhook → backend stores a reply-only row.
+    // Carrier inbound webhook → backend stores a reply-only row.
     const now = new Date().toISOString();
     const intent = classifyReply(body);
     rows.push({

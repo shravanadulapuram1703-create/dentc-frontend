@@ -1,7 +1,7 @@
 // React Query wiring for one patient's SMS thread.
 //
 // - Polls the log every SMS_POLL_MS while the tab is visible so replies and
-//   Twilio delivery-status updates (written by backend webhooks) show up
+//   carrier delivery-status updates (written by backend webhooks) show up
 //   without a reload. Push (WebSocket/SSE) is gap SMS-4.
 // - Sends render optimistically (`optimistic: true`) and are reconciled by
 //   the refetch that follows the mutation.

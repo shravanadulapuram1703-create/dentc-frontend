@@ -1,7 +1,7 @@
 // Transport selection for the patient SMS module.
 //
 //   VITE_SMS_BACKEND=local → client-side simulation (offline demo)
-//   anything else          → real backend (`/api/v1/sms-messages` + Twilio gateway)
+//   anything else          → real backend (`/api/v1/sms-messages` + SMS gateway)
 
 import { ApiSmsTransport } from "./transport/apiSmsTransport";
 import { LocalSmsTransport } from "./transport/localSmsTransport";
@@ -19,7 +19,7 @@ export function getSmsTransport(): SmsTransport {
   return instance;
 }
 
-/** Poll cadence for picking up Twilio webhooks (replies / status) — gap SMS-4 is push. */
+/** Poll cadence for picking up carrier webhooks (replies / status) — gap SMS-4 is push. */
 export const SMS_POLL_MS = 15_000;
 
 export function newClientId(): string {
