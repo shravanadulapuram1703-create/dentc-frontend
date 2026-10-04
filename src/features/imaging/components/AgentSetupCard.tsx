@@ -10,7 +10,10 @@ interface AgentSetupCardProps {
 /**
  * First-time setup card shown when the local imaging agent is not detected
  * (connection refused). Offers a one-click download (when an installer URL is
- * configured) plus a "recheck" that re-probes the agent after install.
+ * configured); once installed, `useDeviceScan` auto-detects it in the
+ * background (see its silent-recheck effect) — this card just disappears on
+ * its own, no manual step needed. "Recheck" here is only for someone who
+ * doesn't want to wait the few seconds for the next automatic check.
  */
 export default function AgentSetupCard({ detecting, onRecheck }: AgentSetupCardProps) {
   const downloadUrl = env.imagingAgentDownloadUrl;
@@ -40,7 +43,9 @@ export default function AgentSetupCard({ detecting, onRecheck }: AgentSetupCardP
             </li>
             <li className="flex gap-2">
               <span className="font-bold text-[#3A6EA5]">3.</span>
-              Come back here and select <strong>Recheck</strong> — scanning unlocks.
+              Scanning unlocks automatically within a few seconds — no need to come
+              back or click anything, but <strong>Recheck</strong> is here if you don't
+              want to wait.
             </li>
           </ol>
 

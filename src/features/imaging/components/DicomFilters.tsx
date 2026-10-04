@@ -30,8 +30,18 @@ export default function DicomFilters({
     <div className="flex items-end gap-3 flex-wrap">
       <label className="flex flex-col gap-1">
         <span className="text-[11px] font-semibold text-[#64748B]">Modality</span>
+        {/* globals.css has a global `select { padding: 0.75rem 1rem !important; ... }`
+            rule (@layer base — "medical-grade input & select system") that
+            no plain utility class can override, since !important always
+            wins over a normal Tailwind class regardless of source order.
+            With that much vertical padding forced into a fixed h-9, the
+            selected value's line-height doesn't fit and gets clipped.
+            `.tx-select` is this codebase's own established override for
+            exactly this (see TxPlanToolbar.tsx et al.) — class-qualified
+            selector + !important beats the bare `select` rule in the
+            cascade and restores compact padding. */}
         <select
-          className={fieldClass}
+          className={`${fieldClass} tx-select`}
           value={value.modality ?? ''}
           disabled={disabled}
           onChange={(e) => onChange({ ...value, modality: e.target.value || null })}

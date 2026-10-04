@@ -6,6 +6,9 @@ Endpoints (consumed by `src/features/imaging/services/imagingDevice.ts`):
   POST /scan/start             → begin a capture session
   GET  /scan/{scan_id}/status  → poll capture state
   GET  /scan/{scan_id}/image   → download captured bytes (served once)
+  WS   /ws                     → push variant of status + scan start/complete
+                                  (v1.1; browser falls back to the polling
+                                  routes above when this isn't available)
 
 Security posture: bound to loopback only, CORS restricted to the configured app
 origins, and an optional shared token (`X-DentC-Agent-Token`). The agent never
@@ -15,7 +18,9 @@ DentC backend.
 
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+import asyncio
+
+from fastapi import Depends, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -25,6 +30,11 @@ from . import __version__
 from .config import Config, config
 from .scan import ScanManager
 from .vatech import is_software_running, launch_patient
+
+# How often a `/ws` connection re-checks `software_running` for a status push.
+# Same tasklist-based check `/status` does; a few seconds of staleness is fine
+# for a "is the vendor app open" indicator.
+_STATUS_PUSH_INTERVAL_S = 4.0
 
 
 class LaunchRequest(BaseModel):
@@ -54,9 +64,19 @@ def create_app(cfg: Config = config) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.allowed_origins,
+        allow_origin_regex=cfg.allowed_origin_regex,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "X-DentC-Agent-Token"],
+        # A public HTTPS page (e.g. reckondental.com) fetching this loopback
+        # agent trips Chrome's Private Network Access check, on top of normal
+        # CORS: the preflight OPTIONS carries
+        # `Access-Control-Request-Private-Network: true` and Starlette
+        # rejects it with 400 "Disallowed CORS private-network" unless this
+        # is set. curl doesn't perform this check, which is why plain CORS
+        # headers looked correct there while the browser still silently
+        # failed to reach the agent.
+        allow_private_network=True,
     )
 
     manager = ScanManager(cfg)
@@ -121,6 +141,99 @@ def create_app(cfg: Config = config) -> FastAPI:
         response = FileResponse(path, media_type=media_type)
         manager.mark_served_and_schedule_cleanup(session)
         return response
+
+    @app.websocket("/ws")
+    async def ws(websocket: WebSocket) -> None:
+        """Push variant of the status/scan-poll routes above.
+
+        Protocol (JSON text frames both ways):
+          → {"type": "auth", "token": "..."}            (always sent first)
+          ← {"type": "auth_result", "ok": true}
+          ← {"type": "status", "software_running": bool} (on connect, then on change)
+          → {"type": "start_scan", "patient_id": ..., "scan_type": "..."}
+          ← {"type": "scan_started", "scan_id": "..."}
+          ← {"type": "scan_completed", "scan_id": "...", "image_path": "...", "content_type": "..."}
+          ← {"type": "scan_failed", "scan_id": "...", "error": "..."}
+
+        One connection can drive multiple sequential scans. A completed/failed
+        scan's image bytes are still fetched with the plain `GET
+        /scan/{id}/image` route — this socket only replaces the polling loop
+        that used to discover *when* those bytes were ready.
+        """
+        origin = websocket.headers.get("origin")
+        if not cfg.is_origin_allowed(origin):
+            await websocket.close(code=4403)
+            return
+        await websocket.accept()
+
+        loop = asyncio.get_running_loop()
+        outbox: asyncio.Queue[dict] = asyncio.Queue()
+        authed = cfg.token is None
+
+        def notify(event: dict) -> None:
+            # Called from a ScanManager worker thread — never the event loop.
+            loop.call_soon_threadsafe(outbox.put_nowait, event)
+
+        async def sender() -> None:
+            while True:
+                event = await outbox.get()
+                await websocket.send_json(event)
+
+        async def status_pusher() -> None:
+            # is_software_running() shells out to `tasklist` — genuinely
+            # blocking, so it must run off the event loop or it stalls every
+            # connection's send/receive (including this one's own auth/
+            # start_scan handling) for the subprocess's duration, every
+            # _STATUS_PUSH_INTERVAL_S.
+            last: bool | None = None
+            while True:
+                current = await loop.run_in_executor(None, is_software_running)
+                if current != last:
+                    outbox.put_nowait({"type": "status", "software_running": current})
+                    last = current
+                await asyncio.sleep(_STATUS_PUSH_INTERVAL_S)
+
+        sender_task = asyncio.create_task(sender())
+        status_task = asyncio.create_task(status_pusher())
+        try:
+            while True:
+                msg = await websocket.receive_json()
+                msg_type = msg.get("type")
+
+                if msg_type == "auth":
+                    authed = cfg.token is None or msg.get("token") == cfg.token
+                    outbox.put_nowait({"type": "auth_result", "ok": authed})
+                    if not authed:
+                        break
+                elif not authed:
+                    outbox.put_nowait({"type": "error", "error": "Not authenticated"})
+                elif msg_type == "start_scan":
+                    patient_id = msg.get("patient_id")
+                    if patient_id is None:
+                        outbox.put_nowait({"type": "error", "error": "patient_id is required"})
+                        continue
+                    session = manager.start_scan(
+                        patient_id, msg.get("scan_type", "periapical"), notify=notify
+                    )
+                    if session.status == "failed":
+                        outbox.put_nowait(
+                            {
+                                "type": "scan_failed",
+                                "scan_id": session.scan_id,
+                                "error": session.error,
+                            }
+                        )
+                    else:
+                        outbox.put_nowait({"type": "scan_started", "scan_id": session.scan_id})
+                elif msg_type == "ping":
+                    outbox.put_nowait({"type": "pong"})
+                else:
+                    outbox.put_nowait({"type": "error", "error": f"Unknown message type: {msg_type}"})
+        except WebSocketDisconnect:
+            pass
+        finally:
+            status_task.cancel()
+            sender_task.cancel()
 
     @app.on_event("shutdown")
     def _shutdown() -> None:
