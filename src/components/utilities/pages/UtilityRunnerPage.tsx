@@ -1,7 +1,7 @@
 // Generic utility runner route — /utilities/run/:utilityId. Looks the utility up
 // in the catalog and hands it to the UtilityShell. Unknown ids fall back to a
 // not-found notice. Page chrome (GlobalNav) is provided by AdminPageWrapper.
-import { useParams, useNavigate } from "react-router-dom";
+import { Navigate, useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, SearchX } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useOfficeScope } from "@/features/office-scope";
@@ -37,6 +37,9 @@ export default function UtilityRunnerPage() {
       </div>
     );
   }
+
+  // Utilities with a dedicated screen (e.g. Time Clock) never use the generic runner.
+  if (def.route) return <Navigate to={def.route} replace />;
 
   return <UtilityShell key={office_id ?? "none"} def={def} currentOffice={currentOffice} />;
 }

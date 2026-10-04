@@ -114,8 +114,11 @@ export async function loadPatientPlans(patient_id: number): Promise<TreatmentPla
 /** Every plan item of the patient across all plans (patient endpoint, with a per-plan fallback). */
 export async function loadPatientPlanItems(patient_id: number, plans?: readonly TreatmentPlanRead[]): Promise<TreatmentPlanItemRead[]> {
   try {
-    const rows = await listPatientTreatmentPlanItems(patient_id);
-    if (Array.isArray(rows)) return rows;
+    // `{items, meta}` envelope since PROC-INT-4; older backends returned a bare array.
+    const res: unknown = await listPatientTreatmentPlanItems(patient_id, { size: 200 });
+    if (Array.isArray(res)) return res as TreatmentPlanItemRead[];
+    const items = (res as { items?: TreatmentPlanItemRead[] } | null)?.items;
+    if (Array.isArray(items)) return items;
   } catch {
     /* endpoint not deployed on this backend — fall back to per-plan lists */
   }

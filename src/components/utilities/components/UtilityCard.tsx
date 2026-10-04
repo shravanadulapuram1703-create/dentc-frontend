@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Star, ChevronRight, ShieldAlert } from "lucide-react";
 import { BackendBadge, RunningBadge } from "./StatusBadge";
 import type { UtilityDefinition } from "../types";
+import { utilityPath } from "../utilityCatalog";
 
 interface Props {
   def: UtilityDefinition;
@@ -21,7 +22,7 @@ export default function UtilityCard({ def, favorite, running, onToggleFavorite }
     <div className="group relative flex items-start gap-3 p-4 bg-white border border-[#E2E8F0] rounded-lg hover:border-[#3A6EA5] hover:shadow-sm transition-all">
       <button
         type="button"
-        onClick={() => navigate(`/utilities/run/${def.id}`)}
+        onClick={() => navigate(utilityPath(def))}
         className="flex items-start gap-3 text-left flex-1 min-w-0"
         aria-label={`Open ${def.title}`}
       >

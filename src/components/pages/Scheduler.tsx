@@ -33,6 +33,12 @@ import MedicalAlertPopover from "../scheduler/MedicalAlertPopover";
 import { RequireRight, RIGHT } from "@/features/access-control";
 import { fetchPatientMedicalAlertSummary } from "@/features/medical-alerts/patientMedicalAlerts";
 import {
+  fetchPendingTreatment,
+  pendingTreatmentTitle,
+  type PendingTreatmentSummary,
+} from "@/features/treatment-plans/pendingTreatment";
+import { useAnyProcedureSync } from "@/features/procedures/procedureSync";
+import {
   CONFIRMATION_STATUSES,
   SAMEDAY_STATUSES,
   statusMetaFor,
@@ -344,6 +350,22 @@ export default function Scheduler({
   // Per-patient computed balance (drives the $ badge on the block).
   const [balanceByPatient, setBalanceByPatient] = useState<Map<number, PatientBalanceInfo>>(
     new Map(),
+  );
+
+  // Per-patient pending treatment-plan items (drives the PT badge). Absent =
+  // not loaded yet; count 0 = nothing left.
+  const [pendingTxByPatient, setPendingTxByPatient] = useState<
+    Map<number, PendingTreatmentSummary>
+  >(new Map());
+  // A procedure posted / plan edited anywhere (this tab or another): drop that
+  // patient's cached summary so the next pass reloads it.
+  useAnyProcedureSync(({ patient_id }) =>
+    setPendingTxByPatient((prev) => {
+      if (!prev.has(patient_id)) return prev;
+      const next = new Map(prev);
+      next.delete(patient_id);
+      return next;
+    }),
   );
 
   // Provider color legend (opt-in strip below the toolbar).
@@ -673,6 +695,47 @@ export default function Scheduler({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appointments, selectedDate, viewMode]);
+
+  // Background: pending treatment-plan items (PT badge) for the patients on the
+  // current day. Same shape as the alert fan-out above, keyed separately so a
+  // procedure-change invalidation reloads just this. The feed has no
+  // pending-treatment flag yet (SCHED-PT-1).
+  useEffect(() => {
+    if (viewMode !== "daily") return;
+    const currentDate = formatDateYYYYMMDD(selectedDate);
+    const ids = [
+      ...new Set(
+        appointments
+          .filter((a) => a.date === currentDate && a.patient_id != null)
+          .map((a) => a.patient_id as number),
+      ),
+    ]
+      .filter((id) => !pendingTxByPatient.has(id))
+      .slice(0, 40);
+    if (ids.length === 0) return;
+
+    let alive = true;
+    (async () => {
+      const entries = await Promise.all(
+        ids.map(async (id): Promise<[number, PendingTreatmentSummary | null]> => [
+          id,
+          await fetchPendingTreatment(id).catch(() => null),
+        ]),
+      );
+      if (!alive) return;
+      setPendingTxByPatient((prev) => {
+        const next = new Map(prev);
+        // A failed read is cached as "none" so it isn't retried every render.
+        entries.forEach(([id, s]) =>
+          next.set(id, s ?? { count: 0, scheduled_count: 0, total_fee: 0, items: [] }),
+        );
+        return next;
+      });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [appointments, selectedDate, viewMode, pendingTxByPatient]);
 
   // Load the office's weekly hours; the day grid's range comes from the row for
   // whichever weekday is on screen.
@@ -1941,6 +2004,12 @@ export default function Scheduler({
                 </span>
                 Medical alert (click for details)
               </span>
+              <span className="flex items-center gap-1.5 text-xs text-[#1E293B] mr-2">
+                <span className="inline-flex items-center justify-center rounded bg-purple-700 text-white px-1 py-px text-[9px] font-extrabold leading-none" aria-hidden>
+                  PT
+                </span>
+                Pending treatment on the treatment plan (click to open)
+              </span>
               <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wide">
                 Providers:
               </span>
@@ -2273,6 +2342,10 @@ export default function Scheduler({
                       providerColorMap,
                     );
                     const hasAlerts = patientHasAlert(appointment);
+                    const pendingTx =
+                      appointment.patient_id != null
+                        ? pendingTxByPatient.get(appointment.patient_id)
+                        : undefined;
                     // $ badge when the patient owes an outstanding balance.
                     const patientBalance =
                       appointment.patient_id != null
@@ -2408,6 +2481,21 @@ export default function Scheduler({
                                 aria-label="View medical alert"
                               >
                                 <span aria-hidden>✚</span>
+                              </button>
+                            )}
+                            {pendingTx && pendingTx.count > 0 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/patient/${appointment.patient_id}/treatment`);
+                                }}
+                                onDoubleClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center justify-center rounded bg-purple-700 hover:bg-purple-800 text-white px-1 py-px text-[9px] font-extrabold leading-none tracking-wide flex-shrink-0"
+                                title={pendingTreatmentTitle(pendingTx)}
+                                aria-label={`Pending treatment: ${pendingTx.count} item${pendingTx.count === 1 ? "" : "s"} on the treatment plan`}
+                              >
+                                PT
                               </button>
                             )}
                           </div>

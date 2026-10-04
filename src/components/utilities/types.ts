@@ -145,6 +145,11 @@ export interface UtilityDefinition {
   backend: BackendStatus;
   /** External URL for kind "launch". */
   launchUrl?: string;
+  /**
+   * A dedicated in-app screen that replaces the generic runner (e.g. Time Clock
+   * → /time-clock). Cards, legacy redirects and /utilities/run/:id go here.
+   */
+  route?: string;
   /** Extra guidance shown on the run screen (e.g. backend-gap reference). */
   runNote?: string;
   /** Override the confirm button label. */

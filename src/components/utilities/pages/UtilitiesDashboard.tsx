@@ -18,7 +18,7 @@ import {
 import { useAuth } from "../../../contexts/AuthContext";
 import WidgetCard from "../../dashboard/components/WidgetCard";
 import KpiStat from "../../dashboard/components/KpiStat";
-import { UTILITIES, CATEGORIES, CATEGORY_MAP, getUtility } from "../utilityCatalog";
+import { UTILITIES, CATEGORIES, CATEGORY_MAP, getUtility, utilityPath } from "../utilityCatalog";
 import { authorizedUtilities } from "../lib/rbac";
 import { useRunningUtilities } from "../lib/useUtilityRun";
 import {
@@ -207,7 +207,7 @@ export default function UtilitiesDashboard() {
                     <button
                       key={u.id}
                       type="button"
-                      onClick={() => navigate(`/utilities/run/${u.id}`)}
+                      onClick={() => navigate(utilityPath(u))}
                       className="w-full flex items-center gap-3 py-2.5 text-left group"
                     >
                       <span className="p-1.5 rounded-lg bg-[#F1F5F9]">
