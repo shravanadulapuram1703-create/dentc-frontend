@@ -134,6 +134,38 @@ export function defaultPatientRelationship(rpSource: string): string {
   }
 }
 
+/** `resp_party_type` codes (seeded definitions group + legacy fallback) that steer the flow. */
+export const RESP_PARTY_TYPE_CASH = "CA";
+export const RESP_PARTY_TYPE_INSURANCE = "IN";
+
+/**
+ * The Resp. Party Type picks the registration branch:
+ *   Insurance → 1 Patient · 2 Resp. Party · 3 Primary Dental Ins · 4 Alerts · 5 Questions · 6 Recall
+ *   Cash      → 1 Patient · 2 Resp. Party · 3 Alerts · 4 Questions · 5 Recall
+ * The insurance screens are driven by the Step-1 Coverage Type flags, so the type
+ * is mapped onto those flags rather than becoming a second source of truth.
+ * Returns the coverage change to apply, or null for types that don't steer
+ * (Collection, Discount, …).
+ */
+export function coverageChangeForRespPartyType(
+  type: string,
+): { field: "primaryDental" | "noCoverage"; checked: true } | null {
+  if (type === RESP_PARTY_TYPE_INSURANCE) return { field: "primaryDental", checked: true };
+  if (type === RESP_PARTY_TYPE_CASH) return { field: "noCoverage", checked: true };
+  return null;
+}
+
+/**
+ * The reverse mapping, for a Step-1 coverage change: ticking any coverage on a
+ * Cash patient makes them Insurance, and clearing all coverage on an Insurance
+ * patient makes them Cash. Any other type is left as the user chose it.
+ */
+export function respPartyTypeForCoverage(type: string, hasCoverage: boolean): string {
+  if (hasCoverage && type === RESP_PARTY_TYPE_CASH) return RESP_PARTY_TYPE_INSURANCE;
+  if (!hasCoverage && type === RESP_PARTY_TYPE_INSURANCE) return RESP_PARTY_TYPE_CASH;
+  return type;
+}
+
 /**
  * Legacy "Step 2: Add Responsible Party Information". `rp_source` is the
  * new-app selector that decides whether the billing identity is the patient's

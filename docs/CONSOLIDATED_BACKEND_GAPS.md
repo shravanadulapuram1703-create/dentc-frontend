@@ -131,6 +131,7 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | SCHED-APPT-4 | Per-block enrichment | Feed missing `has_alert`, `patient_age/gender`, `service_summary`, `insurance_eligibility`; N+1 fan-outs. | `GET /appointments/scheduler` | Medium |
 | SCHED-APPT-6 | Per-line estimated-patient portion | `est_patient` missing; FE derives `max(fee − ins_est, 0)`, ignoring COB/write-offs. | `GET /appointment-procedures` | Medium |
 | SCHED-APPT-7 | Account balance on feed | Needed for the $ badge; per-patient only → capped daily fan-out. | `GET /appointments/scheduler` | Medium |
+| **SCHED-PT-1…5** | **Pending-treatment (PT) badge** *(new 2026-10-03)* | Feed has no `pending_tx_count` → capped per-patient fan-out, day view only (no PT on Week/Month); `include_completed=false` ignores `end_date`/`procedure_id`/archived/referred; no batch summary; untyped item `status`; confirm which statuses count. Detail in `docs/scheduler/pending_treatment_badge_backend_devreport.md`. | `GET /appointments/scheduler`, `/patients/{id}/treatment-plan-items` | High |
 | SCHED-CONS-G7 | No per-provider / per-weekday working hours | Column gray-out uses the single office-level start/end for every column. | provider schedule feed | Medium |
 | SCHED-APPT-5 | `posted_on` timestamp | Only `is_posted`; Posted cell blank. | `GET /appointments/{id}` | Low |
 | SCHED-CONS-G9 | No appointment print/report endpoint | Routing slip / walkout / day sheet actions removed. | `POST /reports/routing-slip` | Low |
@@ -174,7 +175,7 @@ These patterns appear across most modules. Addressing them centrally resolves do
 | PO-5 | `/appointments` has no `is_archived` filter | Related to SCHED-DEL-1. | `/appointments` | Medium |
 | PO-8 | `first_visit` / `last_visit` / `next_recall` never populated | Patient 72462 has 4 appointments and all three are null. Either maintain them on write or drop them from `PatientRead`. | `patients` | Medium |
 | PO-9 | `patient_insurance.relationship` has no definitions entry | Single-letter legacy codes render raw. | `resp_party_rel` group | Low |
-| PO-10 | No patient photo storage | — | `photo_document_id` | Low |
+| PO-10 | Patient photo — ✅ `photo_document_id` delivered; take/upload wired 2026-10-03 | Follow-ups PHOTO-BE-1…8 (atomic `PUT /patients/{id}/photo`, **validate `photo_document_id` belongs to the patient + is an image (High, PHI)**, `photo` upload context, superseded photos in Documents, GCS photos skipped in print, cache headers). See `docs/patient-photo/patient_photo_backend_devreport.md`. | `/patients/{id}`, `/patient-documents` | Medium |
 | PO-11 | `responsible_parties` has no office | — | add `home_office_id` | Low |
 | PO-12 | `/patients/{id}/account-plans` is misnamed | It returns insurance plans. | rename/alias | Low |
 | **NOTE-DOC-1** | **A patient note cannot reference a document** | Uploaded documents orphan at the patient level; progress-notes already has the attachment pattern. | `document_id` on `PatientNote*` or `/patient-notes/{id}/attachments` | **Blocker** |
@@ -606,6 +607,25 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 
 ---
 
+### 8x. Time Clock (TC-BE) *(added 2026-10-03)*
+
+> Frontend: every user can clock in/out from the top bar or `/time-clock` (own time card); managers get the all-staff hours report + entry editor at `/time-clock/report`. Built on the existing `/time-clock-entries` CRUD. Full detail: `docs/time-clock/time_clock_backend_devreport.md`.
+
+| ID | Gap | Severity |
+|----|-----|----------|
+| TC-BE-1 | Server-stamped clock-in/out actions (times are client-supplied today) | **Blocker** |
+| TC-BE-2 | One open shift per user (duplicate open punches accepted) → 409 | **Blocker** |
+| TC-BE-5 | Caller-based authorization (anyone can list/patch/delete anyone's punches) | **Blocker** |
+| TC-BE-3 | Compute `total_hours` server-side; reject clock-out before clock-in | High |
+| TC-BE-4 | `clock_in_from` / `clock_in_to` filter on the list | High |
+| TC-BE-6 | Soft delete + edit audit trail (who/when/why/original times) | High |
+| TC-BE-9 | Legacy rows store office wall clock as `Z` — back-fill to real UTC | High |
+| TC-BE-7 | Overtime method enum + thresholds | Medium |
+| TC-BE-8 | Server hours report (JSON/PDF/CSV) | Medium |
+| TC-BE-10 | Clean up / auto-close legacy forgotten clock-outs | Medium |
+| TC-BE-11 | `user_name` / `office_name` on `TimeClockEntryRead` | Low |
+| TC-BE-12…14 | Breaks, pay-rate wages export, pay-period approval/lock | Low |
+
 ### 8y. Consent forms — sign in the Report Viewer (CS) *(added 2026-09-12)*
 
 > Frontend: consent forms are signed on the document inside the Report Viewer (generated letters and stored consents from history); the signature is stamped into the stored PDF and recorded through `/patient-consents/{id}/sign` with the full SIG field set. Full detail: `docs/letters/consent_inline_signing_backend_devreport.md`.
@@ -665,6 +685,8 @@ See §3 — these are platform-level and blocking, so they are listed there in f
 
 | Area | Report |
 |------|--------|
+| Patient Photo (take/upload) | `docs/patient-photo/patient_photo_backend_devreport.md` |
+| Time Clock | `docs/time-clock/time_clock_backend_devreport.md` |
 | Consent sign-in-viewer | `docs/letters/consent_inline_signing_backend_devreport.md` |
 | Signature capture (Topaz) | `docs/signature/topaz_signature_backend_devreport.md` (+ `topaz_workstation_setup.md`) |
 | Account Ledger, Claims | `docs/account-ledger/account_ledger_backend_devreport.md` |

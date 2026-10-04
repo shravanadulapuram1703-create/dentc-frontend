@@ -505,31 +505,27 @@ export const UTILITIES: UtilityDefinition[] = [
   {
     id: "user-timeclock",
     title: "TimeClock",
-    description: "Clock in / out and view your current timeclock status.",
+    description: "Clock in / out and view your time card.",
     category: "user-functions",
     icon: Clock,
     kind: "batch",
     legacyPath: "/utilities/user-functions/timeclock",
-    roles: ["owner", "admin", "manager", "front_desk", "staff", "doctor", "provider"],
-    backend: "pending",
-    steps: ["Reading timeclock", "Recording punch"],
+    route: "/time-clock",
+    backend: "live",
     keywords: ["clock in", "clock out", "time"],
   },
   {
     id: "user-timeclock-editor",
-    title: "TimeClock Editor",
-    description: "Adjust and approve staff timeclock entries.",
+    title: "TimeClock Editor & Report",
+    description: "Staff hours report — review, correct and export timeclock entries.",
     category: "user-functions",
     icon: Clock,
     kind: "batch",
     legacyPath: "/utilities/user-functions/timeclock-editor",
+    route: "/time-clock/report",
     roles: ["owner", "admin", "manager"],
-    destructive: true,
-    officeScoped: true,
-    backend: "pending",
-    confirmLabel: "Save adjustments",
-    steps: ["Loading entries", "Applying adjustments", "Recording approvals"],
-    keywords: ["timeclock", "approve", "payroll"],
+    backend: "live",
+    keywords: ["timeclock", "hours", "report", "payroll", "overtime"],
   },
 
   // ---- Fee Schedules -------------------------------------------------------
@@ -727,11 +723,16 @@ export function utilitiesByCategory(category: UtilityCategoryKey): UtilityDefini
   return UTILITIES.filter((u) => u.category === category);
 }
 
+/** Where a utility opens: its dedicated screen when it has one, else the generic runner. */
+export function utilityPath(u: Pick<UtilityDefinition, "id" | "route">): string {
+  return u.route ?? `/utilities/run/${u.id}`;
+}
+
 /** All (utility, legacyPath) pairs — used to generate nav redirect routes. */
 export function legacyRedirects(): { from: string; to: string }[] {
   return UTILITIES.filter((u) => u.legacyPath).map((u) => ({
     from: u.legacyPath as string,
-    to: `/utilities/run/${u.id}`,
+    to: utilityPath(u),
   }));
 }
 

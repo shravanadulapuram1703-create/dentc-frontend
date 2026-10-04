@@ -142,7 +142,13 @@ function needsRecords(req: ProcedureRequirements): boolean {
 }
 
 export default function ProcedureDetailsDialog({ mode, office_id, patient_id, rows, header, providerLocked, onSave, onClose, busy }: Props) {
-  const [hdr, setHdr] = useState<ProcedureDetailsHeader>(header);
+  // Plan mode: Tx Plan ID / Phase ID default to 1 in STATE (not just the input's
+  // displayed value), so what the user sees is what gets saved.
+  const [hdr, setHdr] = useState<ProcedureDetailsHeader>(() =>
+    mode === 'plan'
+      ? { ...header, tid: header.tid && header.tid > 0 ? header.tid : 1, phase: header.phase && header.phase > 0 ? header.phase : 1 }
+      : header,
+  );
   const reqs = useMemo(() => rows.map((r) => procedureRequirements(r.code)), [rows]);
   const [state, setState] = useState<RowState[]>(() =>
     rows.map((r, i) => ({
@@ -247,7 +253,6 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
     const errs: string[] = [];
     if (mode === 'charge' && !hdr.provider_id) errs.push('Please select a treating provider.');
     if (!hdr.date) errs.push(`Please specify the ${mode === 'plan' ? 'diagnosis' : 'transaction'} date.`);
-    if (mode === 'plan' && !(hdr.tid && hdr.tid > 0)) errs.push('Please specify a Tx Plan ID.');
     const out = results();
     out.forEach((r, i) => errs.push(...requirementMessages(r.code, reqs[i]!, r)));
     if (errs.length) {
@@ -382,7 +387,7 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
           </label>
           {mode === 'plan' && (
             <>
-              <label className="flex items-center gap-2">Tx Plan ID<span className="text-rose-500">*</span>
+              <label className="flex items-center gap-2">Tx Plan ID
                 <input type="number" min={1} value={hdr.tid ?? 1} onChange={(e) => setHdr((h) => ({ ...h, tid: Math.max(1, Number(e.target.value) || 1) }))} className={`${field} w-32`} />
               </label>
               <label className="flex items-center gap-2">Phase ID
