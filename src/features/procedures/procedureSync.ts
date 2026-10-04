@@ -128,3 +128,29 @@ export function useProcedureSync(
     };
   }, [patient_id]);
 }
+
+/**
+ * Subscribe to procedure changes for ANY patient (this tab and others) — for
+ * multi-patient screens like the scheduler that cache per-patient facts.
+ */
+export function useAnyProcedureSync(onChange: (change: ProcedureChange) => void): void {
+  const cbRef = useRef(onChange);
+  cbRef.current = onChange;
+
+  useEffect(() => {
+    const onWindow = (e: Event) => {
+      const c = (e as CustomEvent<ProcedureChange>).detail;
+      if (c) cbRef.current(c);
+    };
+    window.addEventListener(PROCEDURE_CHANGED_EVENT, onWindow);
+    const ch = getChannel();
+    const onMessage = (e: MessageEvent<ProcedureChange>) => {
+      if (e.data && e.data.origin !== TAB_ID) cbRef.current(e.data);
+    };
+    ch?.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener(PROCEDURE_CHANGED_EVENT, onWindow);
+      ch?.removeEventListener('message', onMessage);
+    };
+  }, []);
+}

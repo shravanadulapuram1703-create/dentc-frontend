@@ -1026,7 +1026,8 @@ export default function ClaimDetail() {
           </div>
 
           {/* 5️⃣ PROCEDURES IN THIS CLAIM (FULL WIDTH TABLE) */}
-          <div className="bg-white border-2 border-[#E2E8F0] rounded overflow-hidden">
+          {/* isolate: keeps the sticky thead's z-30/z-40 inside this card so it can't paint over the sticky patient shell header (also z-30) on page scroll */}
+          <div className="isolate bg-white border-2 border-[#E2E8F0] rounded overflow-hidden">
             <div className="bg-[#E8EFF7] px-3 py-1.5 border-b-2 border-[#E2E8F0]">
               <h2 className="text-xs font-bold text-[#1F3A5F] uppercase tracking-wide">
                 Procedures in This Claim

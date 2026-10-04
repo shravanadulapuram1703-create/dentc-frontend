@@ -55,9 +55,12 @@ app.use((req, res, next) => {
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Content Security Policy (adjust as needed)
+  // frame-src/object-src allow blob: so client-generated PDFs (jsPDF bloburl —
+  // ADA claim form preview, report viewers) can render in an <iframe>; without
+  // them the frame falls back to default-src 'self' and Chrome blocks it.
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss:; frame-src 'self' blob:; object-src 'self' blob:;"
   );
   next();
 });

@@ -82,6 +82,7 @@ import { officeKeyToId } from "@/services/officeLookup";
 import { useMessagingContext } from "../contexts/ChatContext.js";
 import ChatLauncher from "../features/messaging/components/ChatLauncher";
 import ReportIssueButton from "./help/components/ReportIssueButton";
+import { TimeClockButton, useLogoutClockGuard } from "../features/time-clock";
 import { useHelp } from "./help";
 import { useAppointNow } from "@/features/appointnow/AppointNowContext";
 import { useRights, type RightCode } from "@/features/access-control";
@@ -164,6 +165,8 @@ interface MenuPathNode {
 // route elements that still pass them, but the nav reads the working office
 // from useOfficeScope() and switches through it (guards, toasts, access).
 export default function GlobalNav({ onLogout }: GlobalNavProps) {
+  // Logging out while on the clock asks whether to clock out first.
+  const logoutGuard = useLogoutClockGuard(onLogout);
   const navigate = useNavigate();
   const location = useLocation();
   const { hasAny } = useRights();
@@ -804,11 +807,11 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
         },
         {
           label: "TimeClock",
-          path: "/utilities/user-functions/timeclock",
+          path: "/time-clock",
         },
         {
-          label: "TimeClock Editor",
-          path: "/utilities/user-functions/timeclock-editor",
+          label: "TimeClock Editor & Report",
+          path: "/time-clock/report",
         },
       ],
     },
@@ -1499,6 +1502,9 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
 
         {/* Office Selector & Organization Switcher */}
         <div className="flex items-center gap-3">
+          {/* Time clock: punch in / out (every signed-in user) */}
+          <TimeClockButton />
+
           {/* Direct Messaging launcher (opens the slide-in panel) */}
           <ChatLauncher />
 
@@ -1848,12 +1854,13 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
 
         {/* Logout */}
         <button
-          onClick={onLogout}
+          onClick={logoutGuard.requestLogout}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:bg-[#EF4444] font-semibold transition-all ml-auto"
         >
           <LogOut className="w-5 h-5" strokeWidth={2} />
           Logout
         </button>
+        {logoutGuard.dialog}
       </div>
       
       {/* Render Portal Submenus */}

@@ -29,6 +29,7 @@ import Reports from './components/pages/Reports';
 import ReportRunnerPage from './components/reports/pages/ReportRunnerPage';
 import Utilities from './components/pages/Utilities';
 import UtilityRunnerPage from './components/utilities/pages/UtilityRunnerPage';
+import { TimeClockPage, TimeClockReportPage } from './features/time-clock';
 import { legacyRedirects as utilityLegacyRedirects } from './components/utilities/utilityCatalog';
 import Setup from './components/pages/Setup';
 import Help from './components/pages/Help';
@@ -314,6 +315,28 @@ function AppRoutes() {
           isAuthenticated ?
           <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
             <UtilityRunnerPage />
+          </AdminPageWrapper> :
+          <Navigate to="/login" />
+        }
+      />
+
+      {/* Time Clock — punch in/out + own time card (everyone); all-staff report (managers). */}
+      <Route
+        path="/time-clock"
+        element={
+          isAuthenticated ?
+          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+            <TimeClockPage />
+          </AdminPageWrapper> :
+          <Navigate to="/login" />
+        }
+      />
+      <Route
+        path="/time-clock/report"
+        element={
+          isAuthenticated ?
+          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
+            <TimeClockReportPage />
           </AdminPageWrapper> :
           <Navigate to="/login" />
         }
