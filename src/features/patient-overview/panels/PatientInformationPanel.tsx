@@ -2,7 +2,8 @@
 // label/value table, row-for-row with the legacy screen.
 
 import { Cake, Mail, User, Edit2, Info } from "lucide-react";
-import { useAssetObjectUrl } from "@/services/documentAccess";
+import { usePatientOffice } from "@/features/office-scope";
+import { PatientPhoto } from "@/features/patient-photo";
 import { Panel, PanelButton, FieldTable } from "../ui";
 import {
   fmt_date,
@@ -24,11 +25,9 @@ export default function PatientInformationPanel({
   const p = data.patient;
   const age = age_from_dob(p?.dob);
 
-  // Patient photo (PO-10): `patients.photo_document_id` points at a
-  // patient-documents row; the content proxy needs the bearer token.
-  const photo = useAssetObjectUrl(
-    p?.photo_document_id != null ? `/api/v1/patient-documents/${p.photo_document_id}/content` : null,
-  );
+  // Patient photo (PO-10): `patients.photo_document_id` → a patient-documents
+  // row. Clicking the box takes / uploads a new one (stamped like a document).
+  const { posting_office_id } = usePatientOffice();
 
   // Only "yes" answers + account alerts are alerts (shared reader; "no" rows hidden).
   const medical_alert_text = alertDisplayLines(data.medical_alerts, data.account_alerts);
@@ -50,13 +49,19 @@ export default function PatientInformationPanel({
       {/* Identity block — pinned; only the field table below scrolls. */}
       <div className="flex gap-3 p-3 border-b-2 border-[#E2E8F0] shrink-0">
         <div className="shrink-0 w-[74px]">
-          <div className="w-[74px] h-[74px] rounded border-2 border-[#3A6EA5] bg-[#EEF4FB] flex items-center justify-center overflow-hidden">
-            {photo.src && !photo.error ? (
-              <img src={photo.src} alt="" className="w-full h-full object-cover" />
-            ) : (
+          {p?.id != null ? (
+            <PatientPhoto
+              patient_id={p.id}
+              photo_document_id={p.photo_document_id}
+              office_id={posting_office_id}
+              className="w-[74px] h-[74px] rounded border-2 border-[#3A6EA5]"
+              fallbackClassName="bg-[#EEF4FB] text-[#3A6EA5]"
+            />
+          ) : (
+            <div className="w-[74px] h-[74px] rounded border-2 border-[#3A6EA5] bg-[#EEF4FB] flex items-center justify-center">
               <User className="w-9 h-9 text-[#3A6EA5]" strokeWidth={1.75} />
-            )}
-          </div>
+            </div>
+          )}
           <div className="text-center text-[10px] font-bold text-[#3A6EA5] uppercase mt-0.5">
             Photo
           </div>

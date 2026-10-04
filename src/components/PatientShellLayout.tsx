@@ -6,12 +6,13 @@ import AppShell from './layout/AppShell';
 import PatientSecondaryNav from './PatientSecondaryNav';
 import { PatientShellToggle } from './PatientShellToggle';
 import { usePatientShellCollapse } from '@/hooks/usePatientShellCollapse';
-import { User, Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { Phone, Mail, Calendar, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useGetPatient, useListPatientAlerts } from '@/api/generated/endpoints/patients/patients';
 import { useListAppointments } from '@/api/generated/endpoints/appointments/appointments';
 import { useGetPatientBalance } from '@/api/generated/endpoints/billing/billing';
 import type { PatientRead } from '@/api/generated/model';
 import { patient_display_name } from '@/features/patient-overview/format';
+import { PatientPhoto } from '@/features/patient-photo';
 
 interface PatientShellLayoutProps {
   onLogout: () => void;
@@ -306,9 +307,12 @@ export default function PatientShellLayout({
           {header_collapsed ? (
             <div className="flex items-center justify-between gap-4 px-6 py-1.5">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 shadow-sm">
-                  <User className="h-4 w-4 text-white" strokeWidth={2.5} />
-                </div>
+                <PatientPhoto
+                  patient_id={numericId}
+                  photo_document_id={patientQuery.data?.photo_document_id}
+                  office_id={posting_office_id}
+                  className="h-7 w-7 rounded-full shadow-sm"
+                />
                 <h2 className="truncate text-sm font-bold text-slate-900">{patient.name}</h2>
                 <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700" title="DentC patient id">
                   ID: {patient.id}
@@ -351,10 +355,13 @@ export default function PatientShellLayout({
             <div className="flex items-center justify-between">
               {/* Patient Info */}
               <div className="flex items-center gap-4">
-                {/* Patient Avatar */}
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 shadow-md">
-                  <User className="w-8 h-8 text-white" strokeWidth={2.5} />
-                </div>
+                {/* Patient photo — click to take (camera / tablet) or upload one. */}
+                <PatientPhoto
+                  patient_id={numericId}
+                  photo_document_id={patientQuery.data?.photo_document_id}
+                  office_id={posting_office_id}
+                  className="w-16 h-16 rounded-full shadow-md"
+                />
 
                 {/* Patient Details */}
                 <div className="space-y-1">

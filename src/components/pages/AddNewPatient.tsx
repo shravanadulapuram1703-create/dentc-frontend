@@ -51,6 +51,8 @@ import QuestionnairesStep from "../../features/add-patient/steps/QuestionnairesS
 import RecallStep from "../../features/add-patient/steps/RecallStep";
 import {
   buildWizardSteps,
+  coverageChangeForRespPartyType,
+  respPartyTypeForCoverage,
   COVERAGE_SLOTS,
   DEFAULT_RECALLS,
   emptyResponsibleParty,
@@ -87,6 +89,7 @@ import {
 import {
   applyCoverageChange,
   applyStatusChange,
+  hasAnyCoverage,
   applyPatientTypeChange,
   coverageLockReason,
   statusLockReason,
@@ -328,7 +331,7 @@ export default function AddNewPatient({
     // Status Flags
     active: true,
     assignBenefits: false,
-    hipaaAgreement: false,
+    hipaaAgreement: true, // checked by default for new patients, like Active
     noCorrespondence: false,
     noAutoEmail: false,
     noAutoSMS: false,
@@ -390,12 +393,25 @@ export default function AddNewPatient({
   // "No Coverage"; a patient marked both Child and Senior Citizen). Every click
   // now goes through the rules in features/add-patient/patientFlagRules, which
   // tick what a choice implies and clear what it contradicts.
-  const setCoverageFlag = (field: CoverageField, checked: boolean) =>
+  const applyCoverageFlag = (field: CoverageField, checked: boolean) =>
     setFormData((prev) => {
       const coverage = applyCoverageChange(pickCoverage(prev), field, checked);
       const status = reconcileStatusWithCoverage(pickStatus(prev), coverage);
       return { ...prev, ...coverage, ...status };
     });
+
+  // A Step-1 coverage click also keeps Step 2's Resp. Party Type on the same
+  // branch (any coverage ⇒ Insurance, none ⇒ Cash) — see respPartyTypeForCoverage.
+  // Create only: editing never shows the insurance screens.
+  const setCoverageFlag = (field: CoverageField, checked: boolean) => {
+    applyCoverageFlag(field, checked);
+    if (isEditMode) return;
+    const has_coverage = hasAnyCoverage(applyCoverageChange(pickCoverage(formData), field, checked));
+    setRespParty((rp) => {
+      const resp_party_type = respPartyTypeForCoverage(rp.resp_party_type, has_coverage);
+      return resp_party_type === rp.resp_party_type ? rp : { ...rp, resp_party_type };
+    });
+  };
 
   const setStatusFlag = (field: StatusField, checked: boolean) =>
     setFormData((prev) => ({
@@ -867,6 +883,16 @@ export default function AddNewPatient({
       const base = prev[key] ?? emptyInsuranceSlot(slotDef);
       return { ...prev, [key]: { ...base, ...patch } };
     });
+
+  // Step 2's Resp. Party Type picks the branch: Insurance adds the Primary Dental
+  // Insurance screen as Step 3, Cash goes straight to Medical Alerts.
+  const handleRespPartyChange = (next: ResponsiblePartyForm) => {
+    if (!isEditMode && next.resp_party_type !== respParty.resp_party_type) {
+      const change = coverageChangeForRespPartyType(next.resp_party_type);
+      if (change) applyCoverageFlag(change.field, change.checked);
+    }
+    setRespParty(next);
+  };
 
   const goToStep = (i: number) => {
     setStepIndex(i);
@@ -2821,7 +2847,7 @@ export default function AddNewPatient({
           {currentStep?.id === "responsible-party" && (
             <ResponsiblePartyStep
               value={respParty}
-              onChange={setRespParty}
+              onChange={handleRespPartyChange}
               patient={{
                 first_name: formData.firstName,
                 last_name: formData.lastName,
