@@ -16,4 +16,6 @@ export interface AppointNowReasonCreate {
   requires_provider?: boolean | null;
   display_order?: number | null;
   is_active?: boolean | null;
+  requires_payment?: boolean | null;
+  payment_amount?: number | string | null;
 }

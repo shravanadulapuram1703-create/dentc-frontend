@@ -11,6 +11,7 @@
  */
 export interface StatusCounts {
   pending?: number;
+  awaiting_payment?: number;
   approved?: number;
   declined?: number;
   expired?: number;

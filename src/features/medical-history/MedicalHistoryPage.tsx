@@ -38,6 +38,7 @@ import {
   loadMedicalHistoryAudit,
   loadSignatures,
   saveMedicalHistory,
+  MedicalAlertContradictionError,
   saveSignature,
   AUDIT_SECTION_LABELS,
   COPY_SCOPE_LABELS,
@@ -252,7 +253,7 @@ export default function MedicalHistoryPage() {
   );
 
   // ---- Save ---------------------------------------------------------------
-  const persist = useCallback(async (): Promise<boolean> => {
+  const persist = useCallback(async (allow_contradictions = false): Promise<boolean> => {
     if (!validId) return false;
     setSaving(true);
     try {
@@ -262,6 +263,7 @@ export default function MedicalHistoryPage() {
         form,
         alert_labels: labels.alerts,
         question_labels: { dental: labels.dental, medical: labels.medical },
+        allow_contradictions,
       });
       // Adopt the post-save ids, or a second save would duplicate every row the
       // first one created.
@@ -303,6 +305,16 @@ export default function MedicalHistoryPage() {
       else toast.success("Medical history saved.");
       return true;
     } catch (err) {
+      if (err instanceof MedicalAlertContradictionError && !allow_contradictions) {
+        setSaving(false);
+        if (window.confirm(`${err.message}
+
+Save these answers anyway?`)) {
+          return persist(true);
+        }
+        toast.warning("Not saved — review the conflicting alert answers.");
+        return false;
+      }
       toast.error((err as Error)?.message || "Could not save the medical history.");
       return false;
     } finally {
@@ -577,7 +589,7 @@ export default function MedicalHistoryPage() {
             )}
             <button
               type="button"
-              onClick={persist}
+              onClick={() => void persist()}
               disabled={loading || saving}
               className={`flex items-center gap-1.5 px-5 py-2 rounded text-sm font-semibold ${
                 loading || saving

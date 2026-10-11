@@ -8,7 +8,13 @@
 
 export interface TimeClockConfig {
   pay_rate?: number | string | null;
+  /** TC-BE-7: none | weekly | daily | daily_weekly (legacy weekly_40 / daily_8 / california accepted and folded); null = the practice default. */
   overtime_method?: string | null;
+  /** Overtime multiplier, e.g. 1.5. */
   overtime_rate?: number | string | null;
   clock_in_required?: boolean;
+  daily_threshold_hours?: number | string | null;
+  weekly_threshold_hours?: number | string | null;
+  /** sunday … saturday; null = practice default */
+  week_start_day?: string | null;
 }

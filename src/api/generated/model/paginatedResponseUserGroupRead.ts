@@ -5,10 +5,10 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { PageMeta } from './pageMeta';
+import type { AppSchemasCommonPageMeta } from './appSchemasCommonPageMeta';
 import type { UserGroupRead } from './userGroupRead';
 
 export interface PaginatedResponseUserGroupRead {
   items: UserGroupRead[];
-  meta: PageMeta;
+  meta: AppSchemasCommonPageMeta;
 }

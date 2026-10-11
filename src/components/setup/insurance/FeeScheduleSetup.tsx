@@ -39,6 +39,7 @@ import {
 import { loadProcedureCodes, codeDescription, searchProcedureCodes } from "./procedureCodeService";
 import { feeScheduleName, ensureFeeScheduleNames } from "./lookupService";
 import EntityPicker from "./EntityPicker";
+import FeeScheduleWizard from "./FeeScheduleWizard";
 import { useFeeVocab, isCopayCapableFeeType, useFeeScheduleUsage, PricingHealthPanel } from "@/features/pricing";
 
 // ============================================================================
@@ -128,6 +129,8 @@ function ViewBySchedule({ codesReady }: { codesReady: boolean }) {
   const [editorMode, setEditorMode] = useState<"add" | "edit">("add");
   const [form, setForm] = useState<FeeScheduleForm>(() => emptyFeeScheduleForm());
   const [savingSchedule, setSavingSchedule] = useState(false);
+  // "Add New Schedule" runs the legacy 4-step wizard (type → offices → providers → fees).
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const loadSchedules = useCallback(async () => {
     setLoading(true);
@@ -165,11 +168,7 @@ function ViewBySchedule({ codesReady }: { codesReady: boolean }) {
 
   const selected = schedules.find((s) => s.id === selectedId) ?? null;
 
-  const openAdd = () => {
-    setForm(emptyFeeScheduleForm());
-    setEditorMode("add");
-    setEditorOpen(true);
-  };
+  const openAdd = () => setWizardOpen(true);
   const openEdit = () => {
     if (!selected) return;
     setForm(feeScheduleToForm(selected));
@@ -297,6 +296,18 @@ function ViewBySchedule({ codesReady }: { codesReady: boolean }) {
           />
         )}
       </div>
+
+      {wizardOpen && (
+        <FeeScheduleWizard
+          schedules={schedules}
+          onClose={() => setWizardOpen(false)}
+          onCreated={(id) => {
+            setWizardOpen(false);
+            setSelectedId(id);
+            void loadSchedules();
+          }}
+        />
+      )}
 
       {editorOpen && (
         <ScheduleEditorModal

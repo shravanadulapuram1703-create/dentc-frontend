@@ -5,13 +5,13 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { AppSchemasMessagingPageMeta } from './appSchemasMessagingPageMeta';
 import type { ConversationRead } from './conversationRead';
+import type { PageMeta } from './pageMeta';
 
 /**
  * Matches the existing DentC `PaginatedResponse*` envelope.
  */
 export interface ConversationPage {
   items: ConversationRead[];
-  meta: AppSchemasMessagingPageMeta;
+  meta: PageMeta;
 }

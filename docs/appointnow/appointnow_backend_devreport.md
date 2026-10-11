@@ -194,6 +194,37 @@ Email/SMS the office on a new request and the patient on approve/decline/resched
 ### AN-25 — Expiry sweep is lazy
 `expire_stale_requests` runs only when a staff user lists requests. A pending request whose slot passed still holds its soft-hold in availability until someone opens the inbox. A periodic job (or running the sweep inside availability) would keep public availability truthful.
 
+### AN-26 — Persist the payment acknowledgement (P1, added 2026-10-11)
+The public Details step now has a third mandatory Yes/No acknowledgement, **Payment** (`BOOKING_PAYMENT_TEXT` in `types.ts`): *"…If payment is required, the office will send me a secure payment link, and my appointment will be confirmed only after the payment has been completed."* The review step and the confirmation screen repeat it.
+- Add `payment_terms_accepted: bool` to `ContactInput` / `ContactOut` / `booking_requests` (back-fill existing rows as `NULL` = "asked before this existed", not `false`).
+- Include it in the `acknowledgement_required` 422 check alongside `disclaimer_accepted` / `consent_accepted`.
+- Store the acknowledgement text version (or a hash) + `created_at` with the row so the office can prove which wording the patient agreed to — this applies to all three acknowledgements.
+- **Interim (frontend, today):** `ContactInput` has no such field, so the frontend appends `Payment terms accepted: Yes` to `contact.notes` on submit and strips it back out on read (`realTransport.ts` → `MARK_PAYMENT`). The inbox shows "Payment terms: Yes" and approve copies it into the appointment notes. Once the column ships, the frontend sends the field directly and drops the marker.
+
+### AN-27 — Payment-required confirmation flow (P1, product + backend)
+The acknowledgement promises behaviour that does not exist anywhere in the backend: there is no payment link, no "awaiting payment" state, and approve books the appointment immediately. Needed:
+1. **Per-office / per-reason config** — `requires_payment: bool` + `payment_amount` (deposit or full fee) on the office or on each AppointNow reason, returned by `GET /offices/{office_code}` so the public page can say up front whether *this* visit needs payment and how much (today the page can only say "if payment is required").
+2. **Request status** — a new `awaiting_payment` status between `pending` and `approved` (and in `counts`), plus `payment_status` (`not_required | link_sent | paid | expired | refunded`), `payment_link_url`, `payment_link_sent_at`, `paid_at`, `payment_reference` on `BookingRequestRead`.
+3. **Staff action** — `POST /requests/{id}/request-payment` (amount, optional note) → creates a hosted payment link with the payment provider, sends it via SMS (Twilio is already integrated) and/or email, and moves the request to `awaiting_payment`. The slot soft-hold must be extended while a link is open (AN-8 hold is 15 min today).
+4. **Payment webhook** — provider webhook (e.g. Stripe `checkout.session.completed`) marks the request `paid`, then books the appointment atomically (same path as approve / AN-5) and posts the payment to the patient ledger (or as an unapplied credit if the patient is not a PMS patient yet — AN-22). Publish an `appointnow.request` `updated` envelope (AN-6) so the inbox refreshes.
+5. **Expiry** — an unpaid link expires after a configurable window, releases the hold and moves the request to `expired`, notifying the patient.
+6. **Patient-facing status** — a public, token-protected `GET /requests/{id}/status` (or the confirmation code) so the patient can check whether payment/confirmation is still outstanding.
+7. **Refunds** — define the cancellation/refund policy (ties into the 24 h notice in the consent text).
+
+Until AN-27 lands, staff must collect any required payment outside DentC before approving. The inbox does not offer a "Request payment" action.
+
+### AN-28 — Operatory pick on the public page (DONE 2026-10-11, implemented in dentc-backend)
+Step 1 of `/book/:office_code` now asks **New / Existing patient**, then lists the office's **operatories** plus an always-present **Emergency** choice; only the chosen chair's free slots are shown.
+- `GET /offices/{office_code}` → `operatories[] {id, name, provider_id, provider_name}` (every active operatory, `display_order` order).
+- `GET /offices/{office_code}/availability?operatory_id=` → only times the chair is free (active appointments + live holds in that operatory); slots carry `operatory_id` / `operatory_name`; the chair's default provider is preferred. Unknown/inactive/other-office chair → `[]`. Cache key includes the operatory.
+- Submit `slot.operatory_id` → re-checked per chair (409 `slot_unavailable`), stored as `booking_requests.operatory_id` (alembic `a28e9c1d0b7f`), holds that chair; approve books into it unless staff pass `operatory_id`; reschedule keeps it (or takes `slot.operatory_id`) and checks operatory conflicts too.
+- Reads: `slot.operatory_id` / `slot.operatory_name`. Inbox shows the chair after the reason.
+- Frontend fallback: an office with no operatories (or the local simulation) shows a single "Any available operatory" choice.
+
+### AN-29 — Emergency requests are not slot-enforced (DONE 2026-10-11)
+`SubmitRequestInput.is_emergency: true` → the slot is the patient's **preferred** time: no availability re-check (any time, closed days included), only `end > start` and "not already over" (422 `slot_in_past`). No chair is sent. `BookingRequestRead.is_emergency` drives the red **Emergency** badge + "(requested, not slot-checked)" in the inbox; approve still runs the normal conflict check (409 → staff reschedule). The public slot step shows open times as suggestions plus a free "request a specific time" input.
+- Open product question: should emergencies skip the AN-8 soft-hold (today they hold like any request) and trigger an urgent SMS/e-mail to the office instead of the normal notification?
+
 ---
 
 ## 6. Status matrix (original contract)
@@ -214,6 +245,8 @@ Email/SMS the office on a new request and the patient on approve/decline/resched
 | AN-12 | Never 401 on public routes | **Shipped** |
 | AN-14 | Reschedule | **Open** |
 | AN-15 | Server-side double-booking guard | **Shipped inside approve** (`slot_conflict` 409); generic `POST /appointments` overlap guard still open |
+| AN-26 | Payment acknowledgement column | **Open** (frontend uses a `notes` marker) |
+| AN-27 | Payment-required confirmation flow (link → paid → book) | **Open** (nothing server-side) |
 
 ---
 
@@ -235,3 +268,4 @@ Email/SMS the office on a new request and the patient on approve/decline/resched
 - **2026-07-31:** frontend shipped against a client-side simulation; original contract AN-1..AN-12 written here.
 - **2026-09-09:** intake acknowledgements (`insurance_info`, `disclaimer_accepted`, `consent_accepted`), staff Reschedule, client-side double-booking guard; AN-13..AN-15 added. Backend `POST /appointments` verified to accept overlapping appointments (201).
 - **2026-09-12:** backend surface found shipped; production incident traced to the `local` build flag; frontend cut over to `api`; approve blocker AN-BUG-1 found; this report rewritten as the current status.
+- **2026-10-11:** public page gains a mandatory **Payment** acknowledgement (payment link → confirmed once paid); AN-26 (persist it) and AN-27 (the payment flow itself) added.

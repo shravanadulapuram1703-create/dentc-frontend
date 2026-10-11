@@ -9,7 +9,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
   bookingRequestFromState,
+  focusRequestFromState,
   type SchedulerBookingRequest,
+  type SchedulerFocusRequest,
 } from "../../services/schedulerHandoff";
 import {
   Building2,
@@ -616,6 +618,9 @@ export default function Scheduler({
 
   // Fetch appointments when date changes
   useEffect(() => {
+    // A slower, superseded load (e.g. the initial "today" fetch racing a jump
+    // to another date) must not overwrite the newer one.
+    let stale = false;
     const loadAppointments = async () => {
       setIsLoadingAppointments(true);
       setError(null);
@@ -628,17 +633,92 @@ export default function Scheduler({
           provider_id: filterProvider || undefined,
           operatory_id: filterOperatory || undefined,
         });
-        setAppointments(data);
+        if (!stale) setAppointments(data);
       } catch (err: any) {
+        if (stale) return;
         setError(`Failed to load appointments: ${err.message}`);
         console.error("Error loading appointments:", err);
       } finally {
-        setIsLoadingAppointments(false);
+        if (!stale) setIsLoadingAppointments(false);
       }
     };
 
     loadAppointments();
+    return () => {
+      stale = true;
+    };
   }, [selectedDate, currentOffice, viewMode, filterStatus, filterProvider, filterOperatory]);
+
+  // "Go to appointment" hand-off (Patient Overview → Appointments → date).
+  // Jump to the day view of that date in the appointment's office, clear the
+  // filters that could hide it, then — once that day's feed has loaded —
+  // scroll to the block, flash it and open its details pop-out.
+  const [focusRequest, setFocusRequest] = useState<SchedulerFocusRequest | null>(null);
+  const [highlightApptId, setHighlightApptId] = useState<string | null>(null);
+  // "<date>|<office id>" of the most recent appointment load seen while a
+  // focus request was pending — the request only gives up once the load for
+  // exactly its own day + office has finished without the appointment.
+  const focusLoadKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    const request = focusRequestFromState(location.state);
+    if (!request) return;
+    const [y = 0, m = 1, d = 1] = request.date.split("-").map(Number);
+    setSelectedDate(new Date(y, m - 1, d));
+    setViewMode("daily");
+    setFilterStatus("");
+    setFilterProvider("");
+    setFilterOperatory("");
+    if (request.office_id != null && request.office_id !== officeScope.office_id) {
+      void officeScope.switchOffice(request.office_id);
+    }
+    focusLoadKeyRef.current = null;
+    setFocusRequest(request);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    if (isLoadingAppointments) {
+      focusLoadKeyRef.current = `${formatDateYYYYMMDD(selectedDate)}|${officeIdNum(currentOffice) ?? ""}`;
+      return;
+    }
+    const target = appointments.find((a) => String(a.id) === focusRequest.appointment_id);
+    if (!target) {
+      const expectedKey = `${focusRequest.date}|${
+        focusRequest.office_id ?? officeIdNum(currentOffice) ?? ""
+      }`;
+      if (focusLoadKeyRef.current === expectedKey) {
+        setFocusRequest(null);
+        setError("That appointment is not on this day's schedule (it may have been moved or deleted).");
+      }
+      return;
+    }
+    setFocusRequest(null);
+    setHighlightApptId(target.id);
+    // Wait a frame so the day grid has painted the block.
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(
+        `[data-appointment-id="${CSS.escape(String(target.id))}"]`,
+      );
+      // Instant scroll so the rect below is the block's final position.
+      el?.scrollIntoView({ block: "center", inline: "center" });
+      const rect = el?.getBoundingClientRect();
+      setDetailsAnchor(
+        rect
+          ? { x: rect.left + Math.min(rect.width, 160), y: rect.top + 12 }
+          : { x: window.innerWidth / 2, y: window.innerHeight / 3 },
+      );
+      setDetailsAppt(target);
+    });
+  }, [focusRequest, appointments, isLoadingAppointments, selectedDate, currentOffice]);
+
+  // The flash fades after a few seconds.
+  useEffect(() => {
+    if (!highlightApptId) return;
+    const t = window.setTimeout(() => setHighlightApptId(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [highlightApptId]);
 
   // Background: for the patients on the *current day*, load their active medical
   // alerts (red-cross badge, PDF pages 4/18) and computed account balance ($
@@ -2369,7 +2449,12 @@ export default function Scheduler({
                           dragAppointmentId ? "pointer-events-none" : ""
                         } ${isDragging ? "opacity-40" : ""} ${
                           isMoving ? "opacity-70 animate-pulse" : ""
+                        } ${
+                          highlightApptId === appointment.id
+                            ? "ring-4 ring-[#F59E0B] ring-offset-1 z-20 animate-pulse"
+                            : ""
                         }`}
+                        data-appointment-id={appointment.id}
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,

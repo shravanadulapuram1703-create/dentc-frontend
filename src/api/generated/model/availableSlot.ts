@@ -13,4 +13,6 @@ export interface AvailableSlot {
   duration_minutes: number;
   provider_id?: string | null;
   provider_name?: string | null;
+  operatory_id?: string | null;
+  operatory_name?: string | null;
 }
