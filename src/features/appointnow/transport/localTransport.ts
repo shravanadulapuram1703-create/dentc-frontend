@@ -228,6 +228,7 @@ export class LocalBookingTransport implements BookingTransport {
       reason_label: input.reason_label,
       slot: input.slot,
       contact: input.contact,
+      is_emergency: input.is_emergency ?? false,
       created_at: ts,
       updated_at: ts,
       appointment_id: null,

@@ -123,3 +123,34 @@ export async function validateFeeScheduleUpload(file: File): Promise<ValidationR
 
   return { total_rows: dataRows.length, valid_rows: valid, errors, header_ok };
 }
+
+export interface ParsedFeeRow {
+  procedure_code: string;
+  fee: string;
+}
+
+/**
+ * Parse an uploaded template into code → fee rows (the New Fee Schedule Wizard's
+ * "Import From Excel File"). Runs the same validation as the Utilities upload and
+ * returns only the valid rows alongside the report.
+ */
+export async function parseFeeScheduleUpload(
+  file: File,
+): Promise<{ rows: ParsedFeeRow[]; report: ValidationReport }> {
+  const report = await validateFeeScheduleUpload(file);
+  if (!report.header_ok) return { rows: [], report };
+  const raw = await file.text();
+  const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  const bad = new Set(report.errors.map((e) => e.row));
+  const rows: ParsedFeeRow[] = [];
+  text
+    .split(/\r?\n/)
+    .filter((l) => l.trim().length > 0)
+    .slice(1)
+    .forEach((line, idx) => {
+      if (bad.has(idx + 1)) return;
+      const [code, , fee] = splitCsvLine(line).map((c) => (c ?? "").trim());
+      if (code && fee) rows.push({ procedure_code: code.toUpperCase(), fee });
+    });
+  return { rows, report };
+}

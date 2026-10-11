@@ -38,6 +38,7 @@ import type {
   AppointmentUpdate,
   AppointnowListRequestsParams,
   AppointnowPublicAvailabilityParams,
+  AppointnowPublicRequestStatusParams,
   AppointnowPurgeRequest200,
   AppointnowPurgeRequestParams,
   ApproveInput,
@@ -62,15 +63,20 @@ import type {
   ListLabCasesParams,
   ListLabsParams,
   ListSchedulerAppointmentsParams,
+  MarkPaidInput,
   PaginatedResponseAppointNowReasonRead,
   PaginatedResponseAppointmentProcedureRead,
   PaginatedResponseAppointmentRead,
   PaginatedResponseLabRead,
   PatientMatch,
+  PaymentWebhookAck,
   PrintLabCostReportParams,
   PrintLabReportParams,
   PublicOfficeInfo,
+  PublicRequestStatus,
+  RefundInput,
   RequestListResponse,
+  RequestPaymentInput,
   RescheduleInput,
   SubmitRequestInput
 } from '../../model';
@@ -1221,6 +1227,174 @@ export const useAppointnowPublicSubmitRequest = <TError = ErrorType<ErrorRespons
       return useMutation(getAppointnowPublicSubmitRequestMutationOptions(options), queryClient);
     }
     /**
+ * AN-27.6: the patient checks whether payment / confirmation is still
+ * outstanding. 404 for an unknown id *or* a wrong token (never 401, AN-12);
+ * returns the open payment link while one is payable.
+ * @summary Public Request Status
+ */
+export const appointnowPublicRequestStatus = (
+    requestId: string,
+    params: AppointnowPublicRequestStatusParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PublicRequestStatus>(
+      {url: `/api/v1/appointnow/requests/${requestId}/status`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAppointnowPublicRequestStatusQueryKey = (requestId: string,
+    params?: AppointnowPublicRequestStatusParams,) => {
+    return [
+    `/api/v1/appointnow/requests/${requestId}/status`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getAppointnowPublicRequestStatusQueryOptions = <TData = Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError = ErrorType<ErrorResponse>>(requestId: string,
+    params: AppointnowPublicRequestStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAppointnowPublicRequestStatusQueryKey(requestId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>> = ({ signal }) => appointnowPublicRequestStatus(requestId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: requestId !== null && requestId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AppointnowPublicRequestStatusQueryResult = NonNullable<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>>
+export type AppointnowPublicRequestStatusQueryError = ErrorType<ErrorResponse>
+
+
+export function useAppointnowPublicRequestStatus<TData = Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError = ErrorType<ErrorResponse>>(
+ requestId: string,
+    params: AppointnowPublicRequestStatusParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointnowPublicRequestStatus>>,
+          TError,
+          Awaited<ReturnType<typeof appointnowPublicRequestStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointnowPublicRequestStatus<TData = Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError = ErrorType<ErrorResponse>>(
+ requestId: string,
+    params: AppointnowPublicRequestStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointnowPublicRequestStatus>>,
+          TError,
+          Awaited<ReturnType<typeof appointnowPublicRequestStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointnowPublicRequestStatus<TData = Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError = ErrorType<ErrorResponse>>(
+ requestId: string,
+    params: AppointnowPublicRequestStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Public Request Status
+ */
+
+export function useAppointnowPublicRequestStatus<TData = Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError = ErrorType<ErrorResponse>>(
+ requestId: string,
+    params: AppointnowPublicRequestStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointnowPublicRequestStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAppointnowPublicRequestStatusQueryOptions(requestId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * AN-27.4: Stripe event sink. Verifies ``Stripe-Signature`` against
+ * ``STRIPE_WEBHOOK_SECRET`` (refused outright when the secret is unset).
+ * ``checkout.session.completed`` marks the request paid and books it
+ * atomically; ``checkout.session.expired`` lapses the current link.
+ * @summary Stripe Webhook
+ */
+export const appointnowStripeWebhook = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PaymentWebhookAck>(
+      {url: `/api/v1/appointnow/payments/webhooks/stripe`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowStripeWebhookMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowStripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowStripeWebhook>>, TError,void, TContext> => {
+
+const mutationKey = ['appointnowStripeWebhook'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowStripeWebhook>>, void> = () => {
+
+
+          return  appointnowStripeWebhook(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowStripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowStripeWebhook>>>
+
+    export type AppointnowStripeWebhookMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Stripe Webhook
+ */
+export const useAppointnowStripeWebhook = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowStripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowStripeWebhook>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getAppointnowStripeWebhookMutationOptions(options), queryClient);
+    }
+    /**
  * AN-4 / AN-13: the inbox — server-side filter/search/sort/paging + an
  * unfiltered per-status count summary for the tab badges.
  * @summary List Requests
@@ -1766,6 +1940,209 @@ export const useAppointnowRescheduleRequest = <TError = ErrorType<ErrorResponse>
         TContext
       > => {
       return useMutation(getAppointnowRescheduleRequestMutationOptions(options), queryClient);
+    }
+    /**
+ * AN-27.3: create the secure payment link (Stripe Checkout; provider
+ * ``manual`` when Stripe is not configured), text/e-mail it to the patient,
+ * move the request to ``awaiting_payment`` and hold the slot for the link's
+ * life. ``booking`` steers the appointment booked when the payment lands.
+ * Calling it again re-sends a fresh link and kills the old one.
+ * @summary Request Payment
+ */
+export const appointnowRequestPayment = (
+    requestId: string,
+    requestPaymentInput: BodyType<RequestPaymentInput>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BookingRequestRead>(
+      {url: `/api/v1/appointnow/requests/${requestId}/request-payment`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: requestPaymentInput, signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowRequestPaymentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowRequestPayment>>, TError,{requestId: string;data: BodyType<RequestPaymentInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowRequestPayment>>, TError,{requestId: string;data: BodyType<RequestPaymentInput>}, TContext> => {
+
+const mutationKey = ['appointnowRequestPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowRequestPayment>>, {requestId: string;data: BodyType<RequestPaymentInput>}> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  appointnowRequestPayment(requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowRequestPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowRequestPayment>>>
+    export type AppointnowRequestPaymentMutationBody = BodyType<RequestPaymentInput>
+    export type AppointnowRequestPaymentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Request Payment
+ */
+export const useAppointnowRequestPayment = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowRequestPayment>>, TError,{requestId: string;data: BodyType<RequestPaymentInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowRequestPayment>>,
+        TError,
+        {requestId: string;data: BodyType<RequestPaymentInput>},
+        TContext
+      > => {
+      return useMutation(getAppointnowRequestPaymentMutationOptions(options), queryClient);
+    }
+    /**
+ * AN-27: record a payment taken outside the link (phone / terminal) and, by
+ * default, book it. A booking that cannot complete leaves the request paid
+ * with ``payment.booking_error`` set — the payment is never rolled back.
+ * @summary Mark Paid
+ */
+export const appointnowMarkPaid = (
+    requestId: string,
+    markPaidInput: BodyType<MarkPaidInput>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BookingRequestRead>(
+      {url: `/api/v1/appointnow/requests/${requestId}/mark-paid`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: markPaidInput, signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowMarkPaidMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowMarkPaid>>, TError,{requestId: string;data: BodyType<MarkPaidInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowMarkPaid>>, TError,{requestId: string;data: BodyType<MarkPaidInput>}, TContext> => {
+
+const mutationKey = ['appointnowMarkPaid'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowMarkPaid>>, {requestId: string;data: BodyType<MarkPaidInput>}> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  appointnowMarkPaid(requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowMarkPaidMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowMarkPaid>>>
+    export type AppointnowMarkPaidMutationBody = BodyType<MarkPaidInput>
+    export type AppointnowMarkPaidMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Mark Paid
+ */
+export const useAppointnowMarkPaid = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowMarkPaid>>, TError,{requestId: string;data: BodyType<MarkPaidInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowMarkPaid>>,
+        TError,
+        {requestId: string;data: BodyType<MarkPaidInput>},
+        TContext
+      > => {
+      return useMutation(getAppointnowMarkPaidMutationOptions(options), queryClient);
+    }
+    /**
+ * AN-27.7 (admin): refund a recorded payment — at Stripe for a Stripe
+ * payment, plus the ledger reversal / refund when it had been posted. An
+ * unbooked request is declined; a booked appointment is left for staff.
+ * @summary Refund Payment
+ */
+export const appointnowRefundPayment = (
+    requestId: string,
+    refundInput: BodyType<RefundInput>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BookingRequestRead>(
+      {url: `/api/v1/appointnow/requests/${requestId}/refund`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: refundInput, signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowRefundPaymentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowRefundPayment>>, TError,{requestId: string;data: BodyType<RefundInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowRefundPayment>>, TError,{requestId: string;data: BodyType<RefundInput>}, TContext> => {
+
+const mutationKey = ['appointnowRefundPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowRefundPayment>>, {requestId: string;data: BodyType<RefundInput>}> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  appointnowRefundPayment(requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowRefundPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowRefundPayment>>>
+    export type AppointnowRefundPaymentMutationBody = BodyType<RefundInput>
+    export type AppointnowRefundPaymentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Refund Payment
+ */
+export const useAppointnowRefundPayment = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowRefundPayment>>, TError,{requestId: string;data: BodyType<RefundInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowRefundPayment>>,
+        TError,
+        {requestId: string;data: BodyType<RefundInput>},
+        TContext
+      > => {
+      return useMutation(getAppointnowRefundPaymentMutationOptions(options), queryClient);
     }
     /**
  * @summary List appointments

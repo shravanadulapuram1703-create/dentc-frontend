@@ -12,4 +12,5 @@ export interface ApproveInput {
   create_patient?: boolean;
   provider_id?: string | null;
   operatory_id?: string | null;
+  waive_payment?: boolean;
 }

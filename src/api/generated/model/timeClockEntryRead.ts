@@ -7,13 +7,50 @@
  */
 
 export interface TimeClockEntryRead {
+  id: number;
   tenant_id: number;
-  office_id?: number | null;
   user_id: number;
+  office_id?: number | null;
   legacy_id?: string | null;
   clock_in: string;
   clock_out?: string | null;
+  /** TC-BE-3: server-computed (clock_out - clock_in) in hours, 2dp. */
   total_hours?: string | null;
-  id: number;
+  /** TC-BE-12: work | break | lunch */
+  entry_type?: string;
+  /** punch (server-stamped) | manual | legacy */
+  source?: string;
+  /** TC-BE-9: utc | wall_clock (legacy office wall time stored with a Z — render in UTC) | utc_converted (legacy row moved to real UTC — render in office tz) */
+  clock_basis?: string;
+  notes?: string | null;
   created_at: string;
+  created_by?: number | null;
+  updated_at?: string | null;
+  updated_by?: number | null;
+  is_edited?: boolean;
+  original_clock_in?: string | null;
+  original_clock_out?: string | null;
+  edit_reason?: string | null;
+  is_active?: boolean;
+  deleted_at?: string | null;
+  deleted_by?: number | null;
+  delete_reason?: string | null;
+  auto_closed?: boolean;
+  auto_closed_at?: string | null;
+  auto_close_reason?: string | null;
+  user_name?: string | null;
+  username?: string | null;
+  office_name?: string | null;
+  /** The office's IANA timezone (render zone). */
+  timezone?: string | null;
+  /** Office-local date of clock_in. */
+  work_date?: string | null;
+  created_by_name?: string | null;
+  updated_by_name?: string | null;
+  deleted_by_name?: string | null;
+  /** A running shift (no clock_out, not auto-closed). */
+  is_open?: boolean;
+  /** Open longer than the practice's auto_close_after_hours. */
+  is_stale?: boolean;
+  issues?: string[];
 }

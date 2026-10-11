@@ -20,9 +20,6 @@ import {
   updatePatientMedicalAlert,
   deletePatientMedicalAlert,
   listPatientQuestionnaireResponses,
-  createPatientQuestionnaireResponse,
-  updatePatientQuestionnaireResponse,
-  deletePatientQuestionnaireResponse,
   listPatientSignatures,
   createPatientSignature,
   listPatientEmergencyContacts,
@@ -30,6 +27,7 @@ import {
   updatePatientEmergencyContact,
   listPatients,
   getPatient,
+  savePatientMedicalHistory,
 } from "@/api/generated/endpoints/patients/patients";
 import { looks_like_legacy_id, lookup_patients_by_legacy_id } from "@/features/patients/patientLookup";
 import type {
@@ -38,6 +36,10 @@ import type {
   PatientSignatureRead,
   PatientRead,
   PatientMedicalAlertCreateResponse,
+  MedicalAlertIn,
+  MedicalHistoryDocument,
+  MedicalHistorySaveRequest,
+  QuestionnaireAnswerIn,
 } from "@/api/generated/model";
 import { parseServerDateTime } from "@/utils/datetime";
 import { toCode } from "@/features/add-patient/legacyCatalogs";
@@ -536,6 +538,8 @@ export interface SaveMedicalHistoryInput {
   form: MedicalHistoryForm;
   alert_labels: Record<string, string>;
   question_labels: { dental: Record<string, string>; medical: Record<string, string> };
+  /** Store answers the server flags as contradictory (user confirmed). */
+  allow_contradictions?: boolean;
 }
 
 export interface SaveMedicalHistoryResult {
@@ -547,9 +551,49 @@ export interface SaveMedicalHistoryResult {
 }
 
 /**
- * Persist all three data tabs. Sections are independent and best-effort: a
- * failure is reported and the remaining sections still save. Reconciling
- * against `baseline` makes repeated saves idempotent.
+ * The server refused the alert answers because they break a published rule
+ * (e.g. "Yes" to two mutually exclusive alerts). Retry with
+ * `allow_contradictions: true` once the user confirms.
+ */
+export class MedicalAlertContradictionError extends Error {
+  constructor(message?: string) {
+    super(message || "These medical alert answers contradict each other.");
+    this.name = "MedicalAlertContradictionError";
+  }
+}
+
+/** Replace the alert / questionnaire ids in `next` with what the server now holds. */
+function adoptDocumentIds(next: MedicalHistoryBaseline, doc: MedicalHistoryDocument): void {
+  for (const code of Object.keys(next.alert_ids)) {
+    if (code === COMMENTS_ALERT_CODE) continue;
+    delete next.alert_ids[code];
+    delete next.alert_values[code];
+  }
+  for (const row of doc.alerts ?? []) {
+    if (row.alert_code === COMMENTS_ALERT_CODE) continue;
+    next.alert_ids[row.alert_code] = row.id;
+    next.alert_values[row.alert_code] = s(row.response).toLowerCase();
+  }
+  next.question_ids = {};
+  next.question_values = {};
+  for (const [type, rows] of [
+    ["dental", doc.dental_responses],
+    ["medical", doc.medical_responses],
+  ] as const) {
+    for (const row of rows ?? []) {
+      const key = questionKey(type, row.question_code);
+      next.question_ids[key] = row.id;
+      next.question_values[key] = s(row.answer).trim();
+    }
+  }
+}
+
+/**
+ * Persist all three data tabs. Alerts and both questionnaires go in one atomic
+ * composite write; comments and the emergency-contact mirror are separate,
+ * best-effort calls whose failures are reported as warnings. Reconciling
+ * against `baseline` makes repeated saves idempotent. Throws
+ * {@link MedicalAlertContradictionError} when the server rejects the alerts.
  */
 export async function saveMedicalHistory(
   input: SaveMedicalHistoryInput,
@@ -568,37 +612,81 @@ export async function saveMedicalHistory(
   };
   let changed = false;
 
-  // ── Medical Alerts ──────────────────────────────────────────────────────
-  try {
-    const answered = new Set<string>();
-    for (const [code, answer] of Object.entries(form.alerts.responses)) {
-      if (answer !== "yes" && answer !== "no") continue;
-      answered.add(code);
-      const existing_id = baseline.alert_ids[code];
-      const response = answer as PatientMedicalAlertCreateResponse;
-      const alert_label = input.alert_labels[code] ?? undefined;
-      if (existing_id != null) {
-        // Unchanged rows are left alone so their Modified stamp stays honest.
-        if (baseline.alert_values[code] === answer) continue;
-        await updatePatientMedicalAlert(existing_id, { response, alert_label, is_active: true });
-      } else {
-        const created = await createPatientMedicalAlert({
-          patient_id,
-          alert_code: code,
-          alert_label,
-          response,
-          is_active: true,
-        });
-        next.alert_ids[code] = created.id;
-      }
-      next.alert_values[code] = answer;
-      changed = true;
-    }
+  // ── Alerts + both questionnaires: ONE composite write (MH-3) ─────────────
+  // This used to be one sequential POST/PATCH/DELETE per answer, ~1s each on
+  // the hosted backend, so NO TO ALL ALERTS + Save sat on "Saving..." for well
+  // over a minute. The composite PUT reconciles everything in one transaction.
+  // Only codes whose value differs from the baseline are sent (the server only
+  // touches codes present), so unchanged rows keep honest Modified stamps; a
+  // null response/answer resets that code to Not Answered.
+  const alerts: MedicalAlertIn[] = [];
+  for (const [code, answer] of Object.entries(form.alerts.responses)) {
+    if (answer !== "yes" && answer !== "no") continue;
+    if (baseline.alert_ids[code] != null && baseline.alert_values[code] === answer) continue;
+    alerts.push({
+      alert_code: code,
+      alert_label: input.alert_labels[code] ?? undefined,
+      response: answer,
+    });
+  }
+  for (const code of Object.keys(baseline.alert_ids)) {
+    if (code === COMMENTS_ALERT_CODE) continue;
+    const answer = form.alerts.responses[code];
+    if (answer === "yes" || answer === "no") continue;
+    alerts.push({ alert_code: code, response: null, comments: null });
+  }
 
+  const answers = (type: QuestionnaireType): QuestionnaireAnswerIn[] => {
+    const out: QuestionnaireAnswerIn[] = [];
+    const kept = new Set<string>();
+    for (const [code, raw] of Object.entries(form[type])) {
+      const answer = (raw ?? "").trim();
+      if (!answer) continue;
+      const key = questionKey(type, code);
+      kept.add(key);
+      if (baseline.question_ids[key] != null && baseline.question_values[key] === answer) continue;
+      out.push({
+        question_code: code,
+        question_text: input.question_labels[type][code] ?? undefined,
+        answer,
+      });
+    }
+    for (const key of Object.keys(baseline.question_ids)) {
+      if (!key.startsWith(`${type}::`) || kept.has(key)) continue;
+      out.push({ question_code: key.slice(type.length + 2), answer: null });
+    }
+    return out;
+  };
+  const dental_responses = answers("dental");
+  const medical_responses = answers("medical");
+
+  if (alerts.length || dental_responses.length || medical_responses.length) {
+    const body: MedicalHistorySaveRequest = {};
+    if (alerts.length) body.alerts = alerts;
+    if (dental_responses.length) body.dental_responses = dental_responses;
+    if (medical_responses.length) body.medical_responses = medical_responses;
+    if (input.allow_contradictions) body.allow_contradictions = true;
+    try {
+      const doc = await savePatientMedicalHistory(patient_id, body);
+      adoptDocumentIds(next, doc);
+      changed = true;
+    } catch (err) {
+      const error = (err as { response?: { data?: { error?: { code?: string; message?: string } } } })
+        ?.response?.data?.error;
+      if (error?.code === "contradictory_medical_alerts") {
+        throw new MedicalAlertContradictionError(error.message);
+      }
+      warnings.push("Medical alerts and questionnaire answers could not be saved.");
+    }
+  }
+
+  // ── Additional Comments (legacy ADDITIONAL_COMMENTS alert row) ──────────
+  // Kept on the row the loader reads; sending `comments` to the composite PUT
+  // would move it to the history header, which this screen does not read yet.
+  try {
     const comments = form.alerts.comments.trim();
     const comments_id = baseline.alert_ids[COMMENTS_ALERT_CODE];
     if (comments) {
-      answered.add(COMMENTS_ALERT_CODE);
       if (comments_id != null) {
         if (baseline.alert_values[COMMENTS_ALERT_CODE] !== comments) {
           await updatePatientMedicalAlert(comments_id, { comments, is_active: true });
@@ -616,64 +704,14 @@ export async function saveMedicalHistory(
         changed = true;
       }
       next.alert_values[COMMENTS_ALERT_CODE] = comments;
-    }
-
-    // Rows the user reset to Not Answered.
-    for (const [code, id] of Object.entries(baseline.alert_ids)) {
-      if (answered.has(code)) continue;
-      await deletePatientMedicalAlert(id);
-      delete next.alert_ids[code];
-      delete next.alert_values[code];
+    } else if (comments_id != null) {
+      await deletePatientMedicalAlert(comments_id);
+      delete next.alert_ids[COMMENTS_ALERT_CODE];
+      delete next.alert_values[COMMENTS_ALERT_CODE];
       changed = true;
     }
   } catch {
-    warnings.push("Medical alerts could not be saved.");
-  }
-
-  // ── Questionnaires ──────────────────────────────────────────────────────
-  for (const type of ["dental", "medical"] as const) {
-    try {
-      const kept = new Set<string>();
-      for (const [code, raw] of Object.entries(form[type])) {
-        const answer = (raw ?? "").trim();
-        if (!answer) continue;
-        const key = questionKey(type, code);
-        kept.add(key);
-        const existing_id = baseline.question_ids[key];
-        const question_text = input.question_labels[type][code] ?? undefined;
-        if (existing_id != null) {
-          if (baseline.question_values[key] === answer) continue;
-          await updatePatientQuestionnaireResponse(existing_id, {
-            answer,
-            question_text,
-            is_active: true,
-          });
-        } else {
-          const created = await createPatientQuestionnaireResponse({
-            patient_id,
-            questionnaire_type: type,
-            question_code: code,
-            question_text,
-            answer,
-            is_active: true,
-          });
-          next.question_ids[key] = created.id;
-        }
-        next.question_values[key] = answer;
-        changed = true;
-      }
-      for (const [key, id] of Object.entries(baseline.question_ids)) {
-        if (!key.startsWith(`${type}::`) || kept.has(key)) continue;
-        await deletePatientQuestionnaireResponse(id);
-        delete next.question_ids[key];
-        delete next.question_values[key];
-        changed = true;
-      }
-    } catch {
-      warnings.push(
-        `${type === "dental" ? "Dental" : "Medical"} questionnaire answers could not be saved.`,
-      );
-    }
+    warnings.push("Additional comments could not be saved.");
   }
 
   // ── Emergency contact mirror ────────────────────────────────────────────

@@ -12,4 +12,7 @@ export interface TimeClockConfigRead {
   overtime_method?: string | null;
   overtime_rate?: string | null;
   clock_in_required?: boolean;
+  daily_threshold_hours?: string | null;
+  weekly_threshold_hours?: string | null;
+  week_start_day?: string | null;
 }

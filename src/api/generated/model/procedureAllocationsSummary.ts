@@ -5,8 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { AppSchemasBillingPaymentAllocationRead } from './appSchemasBillingPaymentAllocationRead';
 import type { PatientAdjustmentSummary } from './patientAdjustmentSummary';
+import type { PaymentAllocationRead } from './paymentAllocationRead';
 
 /**
  * CHG-5: what has already been applied to one procedure, and by what.
@@ -45,6 +45,6 @@ export interface ProcedureAllocationsSummary {
      * @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
      */
   outstanding_amount?: string;
-  allocations?: AppSchemasBillingPaymentAllocationRead[];
+  allocations?: PaymentAllocationRead[];
   adjustments?: PatientAdjustmentSummary[];
 }

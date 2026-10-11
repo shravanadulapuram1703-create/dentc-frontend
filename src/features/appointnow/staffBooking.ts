@@ -255,6 +255,9 @@ export async function bookRequestIntoScheduler(
     contact.insurance_info ? `Insurance: ${contact.insurance_info}` : null,
     `Disclaimer accepted: ${contact.disclaimer_accepted ? "Yes" : "No"}`,
     `Contact consent: ${contact.consent_accepted ? "Yes" : "No"}`,
+    contact.payment_terms_accepted != null
+      ? `Payment terms accepted: ${contact.payment_terms_accepted ? "Yes" : "No"}`
+      : null,
     contact.notes ? `Notes: ${contact.notes}` : null,
   ]
     .filter(Boolean)

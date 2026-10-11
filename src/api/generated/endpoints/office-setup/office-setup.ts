@@ -28,7 +28,6 @@ import type {
   AccountHolidayCreate,
   AccountHolidayRead,
   AccountHolidayUpdate,
-  AppSchemasOfficeSetupScheduleReplace,
   BodyUploadOfficeStatementLogo,
   BulkDeleteOfficeHolidays200,
   ErrorResponse,
@@ -52,6 +51,7 @@ import type {
   ProductionTypeCreate,
   ProductionTypeRead,
   ProductionTypeUpdate,
+  ScheduleReplace,
   SmartAssistRead,
   SmartAssistUpdate
 } from '../../model';
@@ -756,7 +756,7 @@ export function useGetOfficeSchedule<TData = Awaited<ReturnType<typeof getOffice
  */
 export const setOfficeSchedule = (
     officeId: number,
-    appSchemasOfficeSetupScheduleReplace: BodyType<AppSchemasOfficeSetupScheduleReplace>,
+    scheduleReplace: BodyType<ScheduleReplace>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -764,7 +764,7 @@ export const setOfficeSchedule = (
       return customInstance<OfficeScheduleDayRead[]>(
       {url: `/api/v1/offices/${officeId}/schedule`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: appSchemasOfficeSetupScheduleReplace, signal
+      data: scheduleReplace, signal
     },
       options);
     }
@@ -772,8 +772,8 @@ export const setOfficeSchedule = (
 
 
 export const getSetOfficeScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext> => {
 
 const mutationKey = ['setOfficeSchedule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -785,7 +785,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOfficeSchedule>>, {officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOfficeSchedule>>, {officeId: number;data: BodyType<ScheduleReplace>}> = (props) => {
           const {officeId,data} = props ?? {};
 
           return  setOfficeSchedule(officeId,data,requestOptions)
@@ -799,18 +799,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SetOfficeScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof setOfficeSchedule>>>
-    export type SetOfficeScheduleMutationBody = BodyType<AppSchemasOfficeSetupScheduleReplace>
+    export type SetOfficeScheduleMutationBody = BodyType<ScheduleReplace>
     export type SetOfficeScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
 
     /**
  * @summary Set Schedule
  */
 export const useSetOfficeSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setOfficeSchedule>>,
         TError,
-        {officeId: number;data: BodyType<AppSchemasOfficeSetupScheduleReplace>},
+        {officeId: number;data: BodyType<ScheduleReplace>},
         TContext
       > => {
       return useMutation(getSetOfficeScheduleMutationOptions(options), queryClient);

@@ -1,4 +1,4 @@
-import { CheckCircle2, CalendarClock } from "lucide-react";
+import { CheckCircle2, CalendarClock, Siren } from "lucide-react";
 import type { BookingRequest, PublicOfficeInfo } from "../transport/types";
 import { formatDateLong, formatTime12 } from "./bookingUtils";
 
@@ -35,6 +35,15 @@ export default function ConfirmationScreen({
         </div>
         <div className="mt-2 text-sm text-slate-700">
           <div className="font-semibold">{request.reason_label}</div>
+          {request.is_emergency ? (
+            <div className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-red-700">
+              <Siren className="h-3.5 w-3.5" /> Emergency
+            </div>
+          ) : (
+            request.slot.operatory_name && (
+              <div className="text-xs text-slate-500">{request.slot.operatory_name}</div>
+            )
+          )}
           <div>
             {formatDateLong(request.slot.date)} at {formatTime12(request.slot.start_time)}
           </div>
@@ -47,7 +56,11 @@ export default function ConfirmationScreen({
 
       <p className="mx-auto mt-4 max-w-md text-xs text-amber-700">
         This is a booking <strong>request</strong>, not a confirmed appointment.
-        Your slot is held until the office confirms.
+        {request.is_emergency
+          ? " As an emergency, the office will call you as soon as possible to agree a time."
+          : " Your slot is held until the office confirms."} If payment is required, the
+        office will send you a payment link — your appointment is confirmed once
+        the payment is completed.
       </p>
 
       <button

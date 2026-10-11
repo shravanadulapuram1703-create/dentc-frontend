@@ -326,7 +326,19 @@ export default function RestorativeChart() {
       for (const src of [procG, planG]) {
         for (const [tooth, glyphs] of src) {
           const st = merged.get(tooth) ?? { surfaces: new Set(), surfaceGlyphs: new Map(), glyphs: [], missing: false, groups: new Set() };
-          merged.set(tooth, { ...st, glyphs: [...st.glyphs, ...glyphs] });
+          // Surface-charted procedures/plan items colour the surface wheel
+          // (ToothFigure skips area='surface' glyphs — the wheel draws them).
+          const surfaces = new Set(st.surfaces);
+          const surfaceGlyphs = new Map(st.surfaceGlyphs);
+          for (const g of glyphs) {
+            if (g.area !== 'surface' || !g.surface) continue;
+            for (const ch of g.surface.toUpperCase().split('')) {
+              if (!'MDBLOIF'.includes(ch)) continue;
+              surfaces.add(ch as SurfaceKey);
+              surfaceGlyphs.set(ch as SurfaceKey, { code: g.code, color: g.color });
+            }
+          }
+          merged.set(tooth, { ...st, surfaces, surfaceGlyphs, glyphs: [...st.glyphs, ...glyphs] });
         }
       }
     }
