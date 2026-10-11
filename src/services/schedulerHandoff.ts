@@ -90,3 +90,52 @@ export const openSchedulerForBooking = (
     state: { [SCHEDULER_BOOKING_STATE_KEY]: request },
   });
 };
+
+// ---------------------------------------------------------------------------
+// "Go to appointment": open the scheduler's day view on an EXISTING
+// appointment (Patient Overview → Appointments → click the date). The
+// scheduler jumps to the date, switches to the appointment's office when it
+// differs from the working one, then scrolls to / highlights the block and
+// opens its details pop-out.
+
+export interface SchedulerFocusRequest {
+  /** AppointmentRead.id */
+  appointment_id: string;
+  /** Appointment date, "YYYY-MM-DD". */
+  date: string;
+  /** Office that owns the appointment's operatory. */
+  office_id?: number | null;
+}
+
+export const SCHEDULER_FOCUS_STATE_KEY = "scheduler_focus";
+
+/** Pull a well-formed focus request out of `location.state`, or null. */
+export const focusRequestFromState = (
+  state: unknown,
+): SchedulerFocusRequest | null => {
+  if (!isRecord(state)) return null;
+  const raw = state[SCHEDULER_FOCUS_STATE_KEY];
+  if (!isRecord(raw)) return null;
+  const appointment_id = raw.appointment_id != null ? String(raw.appointment_id) : "";
+  const date = typeof raw.date === "string" ? raw.date.slice(0, 10) : "";
+  if (!appointment_id || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const office_id =
+    typeof raw.office_id === "number" || typeof raw.office_id === "string"
+      ? officeKeyToId(raw.office_id)
+      : null;
+  return {
+    appointment_id,
+    date,
+    office_id: office_id != null && office_id > 0 ? office_id : null,
+  };
+};
+
+/** Open the scheduler on an existing appointment's day and focus it. */
+export const openSchedulerAtAppointment = (
+  navigate: NavigateFunction,
+  request: SchedulerFocusRequest,
+): void => {
+  navigate("/scheduler", {
+    state: { [SCHEDULER_FOCUS_STATE_KEY]: request },
+  });
+};

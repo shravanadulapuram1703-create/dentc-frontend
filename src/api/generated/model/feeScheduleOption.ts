@@ -9,4 +9,5 @@
 export interface FeeScheduleOption {
   id: number;
   name: string;
+  fee_type?: string | null;
 }

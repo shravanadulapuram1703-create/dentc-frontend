@@ -25,10 +25,19 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AutoCloseResult,
+  AutoCloseTimeClockEntriesParams,
+  ClockInRequest,
+  ClockOutRequest,
+  DeleteTimeClockEntryParams,
   ErrorResponse,
+  GetTimeClockReportCsvParams,
+  GetTimeClockReportParams,
+  GetTimeClockReportPdfParams,
   ListProviderInsuranceIdsParams,
   ListProviderRouteSlipsParams,
   ListTimeClockEntriesParams,
+  ListTimeClockPeriodsParams,
   ListUserGroupMembershipsParams,
   ListUserGroupsParams,
   ListUserIpRulesParams,
@@ -46,9 +55,18 @@ import type {
   ProviderRouteSlipCreate,
   ProviderRouteSlipRead,
   ProviderRouteSlipUpdate,
+  RestoreTimeClockEntryParams,
   TimeClockEntryCreate,
+  TimeClockEntryEditRead,
   TimeClockEntryRead,
   TimeClockEntryUpdate,
+  TimeClockMetadata,
+  TimeClockPeriodCreate,
+  TimeClockPeriodRead,
+  TimeClockPeriodUpdate,
+  TimeClockReport,
+  TimeClockSettingsRead,
+  TimeClockSettingsUpdate,
   UserGroupCreate,
   UserGroupMembershipCreate,
   UserGroupMembershipRead,
@@ -72,6 +90,227 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Opens a shift for the **caller**; the time is the server's clock, never the client's. `office_id` defaults to `X-Office-ID`. **409 `already_clocked_in`** (the open entry in `error.details.entry`) when a shift is already running. A shift left open past the practice's `auto_close_after_hours` is first flagged as a missing clock-out (TC-BE-10), so yesterday's forgotten punch never blocks today's.
+ * @summary Clock in — the server stamps now() (TC-BE-1/2)
+ */
+export const clockInTimeClock = (
+    clockInRequestNull?: BodyType<ClockInRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockEntryRead>(
+      {url: `/api/v1/time-clock-entries/clock-in`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: clockInRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getClockInTimeClockMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clockInTimeClock>>, TError,{data?: BodyType<ClockInRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clockInTimeClock>>, TError,{data?: BodyType<ClockInRequest | null>}, TContext> => {
+
+const mutationKey = ['clockInTimeClock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clockInTimeClock>>, {data?: BodyType<ClockInRequest | null>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  clockInTimeClock(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClockInTimeClockMutationResult = NonNullable<Awaited<ReturnType<typeof clockInTimeClock>>>
+    export type ClockInTimeClockMutationBody = BodyType<ClockInRequest | null> | undefined
+    export type ClockInTimeClockMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Clock in — the server stamps now() (TC-BE-1/2)
+ */
+export const useClockInTimeClock = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clockInTimeClock>>, TError,{data?: BodyType<ClockInRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clockInTimeClock>>,
+        TError,
+        {data?: BodyType<ClockInRequest | null>},
+        TContext
+      > => {
+      return useMutation(getClockInTimeClockMutationOptions(options), queryClient);
+    }
+    /**
+ * **409 `not_clocked_in`** when the caller has no running shift. A shift past the auto-close threshold is flagged as a missing clock-out instead of paying the elapsed hours (`error.details.auto_closed_entry`).
+ * @summary Clock out — closes the caller's open shift at now() (TC-BE-1/2)
+ */
+export const clockOutTimeClock = (
+    clockOutRequestNull?: BodyType<ClockOutRequest | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockEntryRead>(
+      {url: `/api/v1/time-clock-entries/clock-out`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: clockOutRequestNull, signal
+    },
+      options);
+    }
+
+
+
+export const getClockOutTimeClockMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clockOutTimeClock>>, TError,{data?: BodyType<ClockOutRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clockOutTimeClock>>, TError,{data?: BodyType<ClockOutRequest | null>}, TContext> => {
+
+const mutationKey = ['clockOutTimeClock'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clockOutTimeClock>>, {data?: BodyType<ClockOutRequest | null>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  clockOutTimeClock(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClockOutTimeClockMutationResult = NonNullable<Awaited<ReturnType<typeof clockOutTimeClock>>>
+    export type ClockOutTimeClockMutationBody = BodyType<ClockOutRequest | null> | undefined
+    export type ClockOutTimeClockMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Clock out — closes the caller's open shift at now() (TC-BE-1/2)
+ */
+export const useClockOutTimeClock = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clockOutTimeClock>>, TError,{data?: BodyType<ClockOutRequest | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clockOutTimeClock>>,
+        TError,
+        {data?: BodyType<ClockOutRequest | null>},
+        TContext
+      > => {
+      return useMutation(getClockOutTimeClockMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary The caller's running shift — 200, or 204 when not clocked in
+ */
+export const getMyActiveTimeClockEntry = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockEntryRead | void>(
+      {url: `/api/v1/time-clock-entries/me/active`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMyActiveTimeClockEntryQueryKey = () => {
+    return [
+    `/api/v1/time-clock-entries/me/active`
+    ] as const;
+    }
+
+
+export const getGetMyActiveTimeClockEntryQueryOptions = <TData = Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyActiveTimeClockEntryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>> = ({ signal }) => getMyActiveTimeClockEntry(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyActiveTimeClockEntryQueryResult = NonNullable<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>>
+export type GetMyActiveTimeClockEntryQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetMyActiveTimeClockEntry<TData = Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>,
+          TError,
+          Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyActiveTimeClockEntry<TData = Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>,
+          TError,
+          Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyActiveTimeClockEntry<TData = Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The caller's running shift — 200, or 204 when not clocked in
+ */
+
+export function useGetMyActiveTimeClockEntry<TData = Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyActiveTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyActiveTimeClockEntryQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * A non-manager always gets **their own** rows (another `user_id` is 403 `time_clock_forbidden`); managers follow the usual office scope (`office_id`, `office_ids`, `all_offices`). `clock_in_from` / `clock_in_to` take an ISO date (a whole office-local day, inclusive) or datetime; a bare date is read in `tz`, else the `office_id` office's zone, else the `X-Office-ID` office's. Soft-deleted rows are hidden unless `include_deleted=true` (managers). `search` matches the employee name / username and notes. Sort: clock_in (default), clock_out, created_at, updated_at, total_hours, user_id.
  * @summary List time clock entries
  */
 export const listTimeClockEntries = (
@@ -165,7 +404,8 @@ export function useListTimeClockEntries<TData = Awaited<ReturnType<typeof listTi
 
 
 /**
- * @summary Create time clock entry
+ * Managers (owner / admin / manager, or the Time Clock Editor right) add any user's entry with explicit times; `total_hours` is computed and the client value ignored. For anyone else, a self entry with no `clock_out` is treated as **clock-in** (server time, the body's `clock_in` discarded) — the path today's FE uses until it moves to `/clock-in`; any other body is 403 `time_clock_manager_required`.
+ * @summary Create a time clock entry (manager) — or a self punch (transitional)
  */
 export const createTimeClockEntry = (
     timeClockEntryCreate: BodyType<TimeClockEntryCreate>,
@@ -215,7 +455,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateTimeClockEntryMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Create time clock entry
+ * @summary Create a time clock entry (manager) — or a self punch (transitional)
  */
 export const useCreateTimeClockEntry = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTimeClockEntry>>, TError,{data: BodyType<TimeClockEntryCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
@@ -231,13 +471,13 @@ export const useCreateTimeClockEntry = <TError = ErrorType<ErrorResponse>,
  * @summary Get time clock entry by id
  */
 export const getTimeClockEntry = (
-    itemId: number,
+    entryId: number,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<TimeClockEntryRead>(
-      {url: `/api/v1/time-clock-entries/${itemId}`, method: 'GET', signal
+      {url: `/api/v1/time-clock-entries/${entryId}`, method: 'GET', signal
     },
       options);
     }
@@ -245,29 +485,29 @@ export const getTimeClockEntry = (
 
 
 
-export const getGetTimeClockEntryQueryKey = (itemId: number,) => {
+export const getGetTimeClockEntryQueryKey = (entryId: number,) => {
     return [
-    `/api/v1/time-clock-entries/${itemId}`
+    `/api/v1/time-clock-entries/${entryId}`
     ] as const;
     }
 
 
-export const getGetTimeClockEntryQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetTimeClockEntryQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockEntryQueryKey(itemId);
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockEntryQueryKey(entryId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockEntry>>> = ({ signal }) => getTimeClockEntry(itemId, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockEntry>>> = ({ signal }) => getTimeClockEntry(entryId, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: itemId !== null && itemId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: entryId !== null && entryId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type GetTimeClockEntryQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockEntry>>>
@@ -275,7 +515,7 @@ export type GetTimeClockEntryQueryError = ErrorType<ErrorResponse>
 
 
 export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
- itemId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>> & Pick<
+ entryId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTimeClockEntry>>,
           TError,
@@ -285,7 +525,7 @@ export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeCl
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
- itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>> & Pick<
+ entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTimeClockEntry>>,
           TError,
@@ -295,7 +535,7 @@ export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeCl
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
- itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -303,11 +543,11 @@ export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeCl
  */
 
 export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeClockEntry>>, TError = ErrorType<ErrorResponse>>(
- itemId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntry>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetTimeClockEntryQueryOptions(itemId,options)
+  const queryOptions = getGetTimeClockEntryQueryOptions(entryId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -320,18 +560,18 @@ export function useGetTimeClockEntry<TData = Awaited<ReturnType<typeof getTimeCl
 
 
 /**
- * Partial update of one time clock entry.
- * @summary Update time clock entry
+ * Records the change in the entry's history (TC-BE-6) and keeps the first pre-edit times in `original_clock_in` / `original_clock_out`. `reason` is required for another user's entry when the practice sets `require_edit_reason`. 422 `clock_out_before_clock_in`, `punch_in_future`, `shift_too_long`; 409 `period_locked`, `already_clocked_in`. Honours `If-Match` / `If-Unmodified-Since` / `expected_updated_at` (412). A non-manager's `{clock_out}` on their own running shift is treated as **clock-out** at server time.
+ * @summary Correct a time clock entry (manager)
  */
 export const updateTimeClockEntry = (
-    itemId: number,
+    entryId: number,
     timeClockEntryUpdate: BodyType<TimeClockEntryUpdate>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<TimeClockEntryRead>(
-      {url: `/api/v1/time-clock-entries/${itemId}`, method: 'PATCH',
+      {url: `/api/v1/time-clock-entries/${entryId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: timeClockEntryUpdate, signal
     },
@@ -341,8 +581,8 @@ export const updateTimeClockEntry = (
 
 
 export const getUpdateTimeClockEntryMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockEntry>>, TError,{itemId: number;data: BodyType<TimeClockEntryUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockEntry>>, TError,{itemId: number;data: BodyType<TimeClockEntryUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockEntry>>, TError,{entryId: number;data: BodyType<TimeClockEntryUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockEntry>>, TError,{entryId: number;data: BodyType<TimeClockEntryUpdate>}, TContext> => {
 
 const mutationKey = ['updateTimeClockEntry'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -354,10 +594,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTimeClockEntry>>, {itemId: number;data: BodyType<TimeClockEntryUpdate>}> = (props) => {
-          const {itemId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTimeClockEntry>>, {entryId: number;data: BodyType<TimeClockEntryUpdate>}> = (props) => {
+          const {entryId,data} = props ?? {};
 
-          return  updateTimeClockEntry(itemId,data,requestOptions)
+          return  updateTimeClockEntry(entryId,data,requestOptions)
         }
 
 
@@ -372,30 +612,32 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateTimeClockEntryMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Update time clock entry
+ * @summary Correct a time clock entry (manager)
  */
 export const useUpdateTimeClockEntry = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockEntry>>, TError,{itemId: number;data: BodyType<TimeClockEntryUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockEntry>>, TError,{entryId: number;data: BodyType<TimeClockEntryUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateTimeClockEntry>>,
         TError,
-        {itemId: number;data: BodyType<TimeClockEntryUpdate>},
+        {entryId: number;data: BodyType<TimeClockEntryUpdate>},
         TContext
       > => {
       return useMutation(getUpdateTimeClockEntryMutationOptions(options), queryClient);
     }
     /**
- * Delete one time clock entry.
- * @summary Delete time clock entry
+ * Soft delete (TC-BE-6): the row stays, flagged `is_active=false` with who / when / why.
+ * @summary Delete a time clock entry (manager, soft)
  */
 export const deleteTimeClockEntry = (
-    itemId: number,
+    entryId: number,
+    params?: DeleteTimeClockEntryParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
       return customInstance<void>(
-      {url: `/api/v1/time-clock-entries/${itemId}`, method: 'DELETE', signal
+      {url: `/api/v1/time-clock-entries/${entryId}`, method: 'DELETE',
+        params, signal
     },
       options);
     }
@@ -403,8 +645,8 @@ export const deleteTimeClockEntry = (
 
 
 export const getDeleteTimeClockEntryMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockEntry>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockEntry>>, TError,{itemId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockEntry>>, TError,{entryId: number;params?: DeleteTimeClockEntryParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockEntry>>, TError,{entryId: number;params?: DeleteTimeClockEntryParams}, TContext> => {
 
 const mutationKey = ['deleteTimeClockEntry'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -416,10 +658,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTimeClockEntry>>, {itemId: number}> = (props) => {
-          const {itemId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTimeClockEntry>>, {entryId: number;params?: DeleteTimeClockEntryParams}> = (props) => {
+          const {entryId,params} = props ?? {};
 
-          return  deleteTimeClockEntry(itemId,requestOptions)
+          return  deleteTimeClockEntry(entryId,params,requestOptions)
         }
 
 
@@ -434,19 +676,1108 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteTimeClockEntryMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Delete time clock entry
+ * @summary Delete a time clock entry (manager, soft)
  */
 export const useDeleteTimeClockEntry = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockEntry>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockEntry>>, TError,{entryId: number;params?: DeleteTimeClockEntryParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteTimeClockEntry>>,
         TError,
-        {itemId: number},
+        {entryId: number;params?: DeleteTimeClockEntryParams},
         TContext
       > => {
       return useMutation(getDeleteTimeClockEntryMutationOptions(options), queryClient);
     }
     /**
+ * @summary Restore a soft-deleted time clock entry (manager)
+ */
+export const restoreTimeClockEntry = (
+    entryId: number,
+    params?: RestoreTimeClockEntryParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockEntryRead>(
+      {url: `/api/v1/time-clock-entries/${entryId}/restore`, method: 'POST',
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getRestoreTimeClockEntryMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreTimeClockEntry>>, TError,{entryId: number;params?: RestoreTimeClockEntryParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreTimeClockEntry>>, TError,{entryId: number;params?: RestoreTimeClockEntryParams}, TContext> => {
+
+const mutationKey = ['restoreTimeClockEntry'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreTimeClockEntry>>, {entryId: number;params?: RestoreTimeClockEntryParams}> = (props) => {
+          const {entryId,params} = props ?? {};
+
+          return  restoreTimeClockEntry(entryId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreTimeClockEntryMutationResult = NonNullable<Awaited<ReturnType<typeof restoreTimeClockEntry>>>
+
+    export type RestoreTimeClockEntryMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Restore a soft-deleted time clock entry (manager)
+ */
+export const useRestoreTimeClockEntry = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreTimeClockEntry>>, TError,{entryId: number;params?: RestoreTimeClockEntryParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreTimeClockEntry>>,
+        TError,
+        {entryId: number;params?: RestoreTimeClockEntryParams},
+        TContext
+      > => {
+      return useMutation(getRestoreTimeClockEntryMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Who changed this punch, when, why, and the times before / after (TC-BE-6)
+ */
+export const getTimeClockEntryHistory = (
+    entryId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockEntryEditRead[]>(
+      {url: `/api/v1/time-clock-entries/${entryId}/history`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTimeClockEntryHistoryQueryKey = (entryId: number,) => {
+    return [
+    `/api/v1/time-clock-entries/${entryId}/history`
+    ] as const;
+    }
+
+
+export const getGetTimeClockEntryHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError = ErrorType<ErrorResponse>>(entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockEntryHistoryQueryKey(entryId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockEntryHistory>>> = ({ signal }) => getTimeClockEntryHistory(entryId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: entryId !== null && entryId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimeClockEntryHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockEntryHistory>>>
+export type GetTimeClockEntryHistoryQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTimeClockEntryHistory<TData = Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError = ErrorType<ErrorResponse>>(
+ entryId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockEntryHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockEntryHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockEntryHistory<TData = Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError = ErrorType<ErrorResponse>>(
+ entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockEntryHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockEntryHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockEntryHistory<TData = Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError = ErrorType<ErrorResponse>>(
+ entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Who changed this punch, when, why, and the times before / after (TC-BE-6)
+ */
+
+export function useGetTimeClockEntryHistory<TData = Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError = ErrorType<ErrorResponse>>(
+ entryId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockEntryHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimeClockEntryHistoryQueryOptions(entryId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Vocabularies, practice settings, the caller's capabilities and overtime rule
+ */
+export const getTimeClockMetadata = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockMetadata>(
+      {url: `/api/v1/time-clock/metadata`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTimeClockMetadataQueryKey = () => {
+    return [
+    `/api/v1/time-clock/metadata`
+    ] as const;
+    }
+
+
+export const getGetTimeClockMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockMetadata>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockMetadataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockMetadata>>> = ({ signal }) => getTimeClockMetadata(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockMetadata>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimeClockMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockMetadata>>>
+export type GetTimeClockMetadataQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTimeClockMetadata<TData = Awaited<ReturnType<typeof getTimeClockMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockMetadata>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockMetadata<TData = Awaited<ReturnType<typeof getTimeClockMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockMetadata>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockMetadata>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockMetadata>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockMetadata<TData = Awaited<ReturnType<typeof getTimeClockMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Vocabularies, practice settings, the caller's capabilities and overtime rule
+ */
+
+export function useGetTimeClockMetadata<TData = Awaited<ReturnType<typeof getTimeClockMetadata>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockMetadata>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimeClockMetadataQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Practice-level time-clock defaults (TC-BE-7/10)
+ */
+export const getTimeClockSettings = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockSettingsRead>(
+      {url: `/api/v1/time-clock/settings`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTimeClockSettingsQueryKey = () => {
+    return [
+    `/api/v1/time-clock/settings`
+    ] as const;
+    }
+
+
+export const getGetTimeClockSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockSettings>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockSettings>>> = ({ signal }) => getTimeClockSettings(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimeClockSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockSettings>>>
+export type GetTimeClockSettingsQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTimeClockSettings<TData = Awaited<ReturnType<typeof getTimeClockSettings>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockSettings<TData = Awaited<ReturnType<typeof getTimeClockSettings>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockSettings<TData = Awaited<ReturnType<typeof getTimeClockSettings>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Practice-level time-clock defaults (TC-BE-7/10)
+ */
+
+export function useGetTimeClockSettings<TData = Awaited<ReturnType<typeof getTimeClockSettings>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockSettings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimeClockSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update the practice-level time-clock defaults (manager)
+ */
+export const updateTimeClockSettings = (
+    timeClockSettingsUpdate: BodyType<TimeClockSettingsUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockSettingsRead>(
+      {url: `/api/v1/time-clock/settings`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: timeClockSettingsUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateTimeClockSettingsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockSettings>>, TError,{data: BodyType<TimeClockSettingsUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockSettings>>, TError,{data: BodyType<TimeClockSettingsUpdate>}, TContext> => {
+
+const mutationKey = ['updateTimeClockSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTimeClockSettings>>, {data: BodyType<TimeClockSettingsUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateTimeClockSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTimeClockSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateTimeClockSettings>>>
+    export type UpdateTimeClockSettingsMutationBody = BodyType<TimeClockSettingsUpdate>
+    export type UpdateTimeClockSettingsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update the practice-level time-clock defaults (manager)
+ */
+export const useUpdateTimeClockSettings = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockSettings>>, TError,{data: BodyType<TimeClockSettingsUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTimeClockSettings>>,
+        TError,
+        {data: BodyType<TimeClockSettingsUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTimeClockSettingsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Flag / close shifts left open past the threshold (TC-BE-10, manager)
+ */
+export const autoCloseTimeClockEntries = (
+    params?: AutoCloseTimeClockEntriesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AutoCloseResult>(
+      {url: `/api/v1/time-clock/auto-close`, method: 'POST',
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getAutoCloseTimeClockEntriesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof autoCloseTimeClockEntries>>, TError,{params?: AutoCloseTimeClockEntriesParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof autoCloseTimeClockEntries>>, TError,{params?: AutoCloseTimeClockEntriesParams}, TContext> => {
+
+const mutationKey = ['autoCloseTimeClockEntries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof autoCloseTimeClockEntries>>, {params?: AutoCloseTimeClockEntriesParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  autoCloseTimeClockEntries(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AutoCloseTimeClockEntriesMutationResult = NonNullable<Awaited<ReturnType<typeof autoCloseTimeClockEntries>>>
+
+    export type AutoCloseTimeClockEntriesMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Flag / close shifts left open past the threshold (TC-BE-10, manager)
+ */
+export const useAutoCloseTimeClockEntries = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof autoCloseTimeClockEntries>>, TError,{params?: AutoCloseTimeClockEntriesParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof autoCloseTimeClockEntries>>,
+        TError,
+        {params?: AutoCloseTimeClockEntriesParams},
+        TContext
+      > => {
+      return useMutation(getAutoCloseTimeClockEntriesMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Pay periods (TC-BE-14)
+ */
+export const listTimeClockPeriods = (
+    params?: ListTimeClockPeriodsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockPeriodRead[]>(
+      {url: `/api/v1/time-clock/periods`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListTimeClockPeriodsQueryKey = (params?: ListTimeClockPeriodsParams,) => {
+    return [
+    `/api/v1/time-clock/periods`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTimeClockPeriodsQueryOptions = <TData = Awaited<ReturnType<typeof listTimeClockPeriods>>, TError = ErrorType<ErrorResponse>>(params?: ListTimeClockPeriodsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeClockPeriods>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTimeClockPeriodsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTimeClockPeriods>>> = ({ signal }) => listTimeClockPeriods(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTimeClockPeriods>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTimeClockPeriodsQueryResult = NonNullable<Awaited<ReturnType<typeof listTimeClockPeriods>>>
+export type ListTimeClockPeriodsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListTimeClockPeriods<TData = Awaited<ReturnType<typeof listTimeClockPeriods>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListTimeClockPeriodsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeClockPeriods>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTimeClockPeriods>>,
+          TError,
+          Awaited<ReturnType<typeof listTimeClockPeriods>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTimeClockPeriods<TData = Awaited<ReturnType<typeof listTimeClockPeriods>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListTimeClockPeriodsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeClockPeriods>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTimeClockPeriods>>,
+          TError,
+          Awaited<ReturnType<typeof listTimeClockPeriods>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTimeClockPeriods<TData = Awaited<ReturnType<typeof listTimeClockPeriods>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListTimeClockPeriodsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeClockPeriods>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Pay periods (TC-BE-14)
+ */
+
+export function useListTimeClockPeriods<TData = Awaited<ReturnType<typeof listTimeClockPeriods>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListTimeClockPeriodsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeClockPeriods>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTimeClockPeriodsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Create a pay period (manager); 409 period_overlap
+ */
+export const createTimeClockPeriod = (
+    timeClockPeriodCreate: BodyType<TimeClockPeriodCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockPeriodRead>(
+      {url: `/api/v1/time-clock/periods`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: timeClockPeriodCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateTimeClockPeriodMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTimeClockPeriod>>, TError,{data: BodyType<TimeClockPeriodCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTimeClockPeriod>>, TError,{data: BodyType<TimeClockPeriodCreate>}, TContext> => {
+
+const mutationKey = ['createTimeClockPeriod'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTimeClockPeriod>>, {data: BodyType<TimeClockPeriodCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTimeClockPeriod(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTimeClockPeriodMutationResult = NonNullable<Awaited<ReturnType<typeof createTimeClockPeriod>>>
+    export type CreateTimeClockPeriodMutationBody = BodyType<TimeClockPeriodCreate>
+    export type CreateTimeClockPeriodMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create a pay period (manager); 409 period_overlap
+ */
+export const useCreateTimeClockPeriod = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTimeClockPeriod>>, TError,{data: BodyType<TimeClockPeriodCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTimeClockPeriod>>,
+        TError,
+        {data: BodyType<TimeClockPeriodCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateTimeClockPeriodMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Edit a pay period's dates / notes (manager)
+ */
+export const updateTimeClockPeriod = (
+    periodId: number,
+    timeClockPeriodUpdate: BodyType<TimeClockPeriodUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockPeriodRead>(
+      {url: `/api/v1/time-clock/periods/${periodId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: timeClockPeriodUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateTimeClockPeriodMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockPeriod>>, TError,{periodId: number;data: BodyType<TimeClockPeriodUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockPeriod>>, TError,{periodId: number;data: BodyType<TimeClockPeriodUpdate>}, TContext> => {
+
+const mutationKey = ['updateTimeClockPeriod'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTimeClockPeriod>>, {periodId: number;data: BodyType<TimeClockPeriodUpdate>}> = (props) => {
+          const {periodId,data} = props ?? {};
+
+          return  updateTimeClockPeriod(periodId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTimeClockPeriodMutationResult = NonNullable<Awaited<ReturnType<typeof updateTimeClockPeriod>>>
+    export type UpdateTimeClockPeriodMutationBody = BodyType<TimeClockPeriodUpdate>
+    export type UpdateTimeClockPeriodMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Edit a pay period's dates / notes (manager)
+ */
+export const useUpdateTimeClockPeriod = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTimeClockPeriod>>, TError,{periodId: number;data: BodyType<TimeClockPeriodUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateTimeClockPeriod>>,
+        TError,
+        {periodId: number;data: BodyType<TimeClockPeriodUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTimeClockPeriodMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete an unlocked pay period (manager)
+ */
+export const deleteTimeClockPeriod = (
+    periodId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/time-clock/periods/${periodId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteTimeClockPeriodMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockPeriod>>, TError,{periodId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockPeriod>>, TError,{periodId: number}, TContext> => {
+
+const mutationKey = ['deleteTimeClockPeriod'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTimeClockPeriod>>, {periodId: number}> = (props) => {
+          const {periodId} = props ?? {};
+
+          return  deleteTimeClockPeriod(periodId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTimeClockPeriodMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTimeClockPeriod>>>
+
+    export type DeleteTimeClockPeriodMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete an unlocked pay period (manager)
+ */
+export const useDeleteTimeClockPeriod = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeClockPeriod>>, TError,{periodId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTimeClockPeriod>>,
+        TError,
+        {periodId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteTimeClockPeriodMutationOptions(options), queryClient);
+    }
+    /**
+ * A locked period refuses every entry change inside it with 409 `period_locked`.
+ * @summary approve | lock | unlock | reopen a pay period (manager)
+ */
+export const setTimeClockPeriodState = (
+    periodId: number,
+    action: 'approve' | 'lock' | 'unlock' | 'reopen',
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockPeriodRead>(
+      {url: `/api/v1/time-clock/periods/${periodId}/${action}`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getSetTimeClockPeriodStateMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTimeClockPeriodState>>, TError,{periodId: number;action: 'approve' | 'lock' | 'unlock' | 'reopen'}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setTimeClockPeriodState>>, TError,{periodId: number;action: 'approve' | 'lock' | 'unlock' | 'reopen'}, TContext> => {
+
+const mutationKey = ['setTimeClockPeriodState'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setTimeClockPeriodState>>, {periodId: number;action: 'approve' | 'lock' | 'unlock' | 'reopen'}> = (props) => {
+          const {periodId,action} = props ?? {};
+
+          return  setTimeClockPeriodState(periodId,action,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetTimeClockPeriodStateMutationResult = NonNullable<Awaited<ReturnType<typeof setTimeClockPeriodState>>>
+
+    export type SetTimeClockPeriodStateMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary approve | lock | unlock | reopen a pay period (manager)
+ */
+export const useSetTimeClockPeriodState = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTimeClockPeriodState>>, TError,{periodId: number;action: 'approve' | 'lock' | 'unlock' | 'reopen'}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setTimeClockPeriodState>>,
+        TError,
+        {periodId: number;action: 'approve' | 'lock' | 'unlock' | 'reopen'},
+        TContext
+      > => {
+      return useMutation(getSetTimeClockPeriodStateMutationOptions(options), queryClient);
+    }
+    /**
+ * Days are the office-local date of clock-in. Overtime follows each user's configured rule (user config → practice default) unless `overtime_method` overrides it for the run; weekly overtime counts the part of the first week before `from`. Break / lunch entries are reported as `break_hours`, never paid. Non-managers get their own card only.
+ * @summary Hours report — per user, per day, regular / overtime / total (TC-BE-8)
+ */
+export const getTimeClockReport = (
+    params: GetTimeClockReportParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TimeClockReport>(
+      {url: `/api/v1/reports/time-clock`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTimeClockReportQueryKey = (params?: GetTimeClockReportParams,) => {
+    return [
+    `/api/v1/reports/time-clock`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTimeClockReportQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockReport>>, TError = ErrorType<ErrorResponse>>(params: GetTimeClockReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockReportQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockReport>>> = ({ signal }) => getTimeClockReport(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimeClockReportQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockReport>>>
+export type GetTimeClockReportQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTimeClockReport<TData = Awaited<ReturnType<typeof getTimeClockReport>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockReport>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockReport<TData = Awaited<ReturnType<typeof getTimeClockReport>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockReport>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockReport<TData = Awaited<ReturnType<typeof getTimeClockReport>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Hours report — per user, per day, regular / overtime / total (TC-BE-8)
+ */
+
+export function useGetTimeClockReport<TData = Awaited<ReturnType<typeof getTimeClockReport>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReport>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimeClockReportQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Hours report as CSV — layout=summary | detail
+ */
+export const getTimeClockReportCsv = (
+    params: GetTimeClockReportCsvParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/reports/time-clock/report.csv`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTimeClockReportCsvQueryKey = (params?: GetTimeClockReportCsvParams,) => {
+    return [
+    `/api/v1/reports/time-clock/report.csv`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTimeClockReportCsvQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError = ErrorType<ErrorResponse>>(params: GetTimeClockReportCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockReportCsvQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockReportCsv>>> = ({ signal }) => getTimeClockReportCsv(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimeClockReportCsvQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockReportCsv>>>
+export type GetTimeClockReportCsvQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTimeClockReportCsv<TData = Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportCsvParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockReportCsv>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockReportCsv>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockReportCsv<TData = Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockReportCsv>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockReportCsv>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockReportCsv<TData = Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Hours report as CSV — layout=summary | detail
+ */
+
+export function useGetTimeClockReportCsv<TData = Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportCsvParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportCsv>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimeClockReportCsvQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Hours report as PDF (summary + optional per-employee detail)
+ */
+export const getTimeClockReportPdf = (
+    params: GetTimeClockReportPdfParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/reports/time-clock/report.pdf`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetTimeClockReportPdfQueryKey = (params?: GetTimeClockReportPdfParams,) => {
+    return [
+    `/api/v1/reports/time-clock/report.pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTimeClockReportPdfQueryOptions = <TData = Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError = ErrorType<ErrorResponse>>(params: GetTimeClockReportPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTimeClockReportPdfQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeClockReportPdf>>> = ({ signal }) => getTimeClockReportPdf(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTimeClockReportPdfQueryResult = NonNullable<Awaited<ReturnType<typeof getTimeClockReportPdf>>>
+export type GetTimeClockReportPdfQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetTimeClockReportPdf<TData = Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportPdfParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockReportPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockReportPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockReportPdf<TData = Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeClockReportPdf>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeClockReportPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTimeClockReportPdf<TData = Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Hours report as PDF (summary + optional per-employee detail)
+ */
+
+export function useGetTimeClockReportPdf<TData = Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError = ErrorType<ErrorResponse>>(
+ params: GetTimeClockReportPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTimeClockReportPdf>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTimeClockReportPdfQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List provider insurance ids
  */
 export const listProviderInsuranceIds = (

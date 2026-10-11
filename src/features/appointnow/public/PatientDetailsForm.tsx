@@ -1,6 +1,7 @@
 import {
   BOOKING_CONSENT_TEXT,
   BOOKING_DISCLAIMER_TEXT,
+  BOOKING_PAYMENT_TEXT,
   type BookingContactDetails,
 } from "../transport/types";
 import type { ContactErrors } from "./bookingUtils";
@@ -145,17 +146,6 @@ export default function PatientDetailsForm({
             autoComplete="bday"
           />
         </Field>
-        <div className="flex items-end">
-          <label className="inline-flex cursor-pointer items-center gap-2 pb-2 text-sm font-medium text-slate-700">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-[#3A6EA5] focus:ring-[#3A6EA5]"
-              checked={value.is_new_patient}
-              onChange={(e) => onChange({ is_new_patient: e.target.checked })}
-            />
-            I'm a new patient
-          </label>
-        </div>
       </div>
 
       <Field label="Anything we should know? (optional)">
@@ -192,6 +182,15 @@ export default function PatientDetailsForm({
         value={value.consent_accepted}
         error={errors.consent_accepted}
         onChange={(v) => onChange({ consent_accepted: v })}
+      />
+
+      <YesNoAcknowledgement
+        name="payment_terms_accepted"
+        label="Payment"
+        text={BOOKING_PAYMENT_TEXT}
+        value={value.payment_terms_accepted}
+        error={errors.payment_terms_accepted}
+        onChange={(v) => onChange({ payment_terms_accepted: v })}
       />
     </div>
   );

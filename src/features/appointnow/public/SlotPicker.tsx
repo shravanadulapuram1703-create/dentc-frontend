@@ -7,6 +7,8 @@ interface SlotPickerProps {
   loading: boolean;
   selectedStart: string | null;
   onSelect: (slot: AvailableSlot) => void;
+  /** Overrides the "no open times" text (e.g. Emergency can still request). */
+  emptyMessage?: string;
 }
 
 function Group({
@@ -58,6 +60,7 @@ export default function SlotPicker({
   loading,
   selectedStart,
   onSelect,
+  emptyMessage,
 }: SlotPickerProps) {
   if (loading) {
     return (
@@ -70,7 +73,7 @@ export default function SlotPicker({
   if (slots.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-        No open times on this day. Try another date.
+        {emptyMessage ?? "No open times on this day. Try another date."}
       </div>
     );
   }

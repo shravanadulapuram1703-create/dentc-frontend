@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { ContactOutAcknowledgementHashes } from './contactOutAcknowledgementHashes';
 
 export interface ContactOut {
   first_name?: string | null;
@@ -17,4 +18,8 @@ export interface ContactOut {
   insurance_info?: string | null;
   disclaimer_accepted?: boolean;
   consent_accepted?: boolean;
+  payment_terms_accepted?: boolean | null;
+  acknowledgement_hashes?: ContactOutAcknowledgementHashes;
+  acknowledgement_version?: string | null;
+  acknowledged_at?: string | null;
 }

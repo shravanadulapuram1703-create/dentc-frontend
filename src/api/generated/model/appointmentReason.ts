@@ -14,4 +14,6 @@ export interface AppointmentReason {
   label: string;
   duration_minutes: number;
   requires_provider?: boolean;
+  requires_payment?: boolean;
+  payment_amount?: string | null;
 }

@@ -13,4 +13,8 @@ export type AppointnowPublicAvailabilityParams = {
 date: string;
 provider_id?: string | null;
 duration_minutes?: number | null;
+/**
+ * AN-28: only this chair
+ */
+operatory_id?: string | null;
 };

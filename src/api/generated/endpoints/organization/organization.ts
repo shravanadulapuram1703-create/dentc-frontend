@@ -27,9 +27,11 @@ import type {
 import type {
   ErrorResponse,
   GetProviderSignatureParams,
+  HTTPValidationError,
   ListOfficeGroupsParams,
   ListOfficesParams,
   ListOperatoriesParams,
+  ListProviderSpecialtiesParams,
   ListProvidersParams,
   ListTenantsParams,
   ListUserOfficesParams,
@@ -66,6 +68,99 @@ import type { ErrorType , BodyType } from '../../../mutator/axiosInstance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary Dental taxonomy specialties with the tenant's providers under each
+ */
+export const listProviderSpecialties = (
+    params?: ListProviderSpecialtiesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/provider-specialties`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListProviderSpecialtiesQueryKey = (params?: ListProviderSpecialtiesParams,) => {
+    return [
+    `/api/v1/provider-specialties`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListProviderSpecialtiesQueryOptions = <TData = Awaited<ReturnType<typeof listProviderSpecialties>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: ListProviderSpecialtiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderSpecialties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProviderSpecialtiesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProviderSpecialties>>> = ({ signal }) => listProviderSpecialties(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProviderSpecialties>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProviderSpecialtiesQueryResult = NonNullable<Awaited<ReturnType<typeof listProviderSpecialties>>>
+export type ListProviderSpecialtiesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListProviderSpecialties<TData = Awaited<ReturnType<typeof listProviderSpecialties>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: undefined |  ListProviderSpecialtiesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderSpecialties>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProviderSpecialties>>,
+          TError,
+          Awaited<ReturnType<typeof listProviderSpecialties>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProviderSpecialties<TData = Awaited<ReturnType<typeof listProviderSpecialties>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListProviderSpecialtiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderSpecialties>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProviderSpecialties>>,
+          TError,
+          Awaited<ReturnType<typeof listProviderSpecialties>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProviderSpecialties<TData = Awaited<ReturnType<typeof listProviderSpecialties>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListProviderSpecialtiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderSpecialties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dental taxonomy specialties with the tenant's providers under each
+ */
+
+export function useListProviderSpecialties<TData = Awaited<ReturnType<typeof listProviderSpecialties>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params?: ListProviderSpecialtiesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProviderSpecialties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProviderSpecialtiesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 

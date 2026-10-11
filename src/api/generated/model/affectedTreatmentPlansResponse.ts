@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AffectedTreatmentPlan } from './affectedTreatmentPlan';
-import type { PageMeta } from './pageMeta';
+import type { AppSchemasCommonPageMeta } from './appSchemasCommonPageMeta';
 
 export interface AffectedTreatmentPlansResponse {
   plan_id: number;
   items: AffectedTreatmentPlan[];
-  meta: PageMeta;
+  meta: AppSchemasCommonPageMeta;
 }

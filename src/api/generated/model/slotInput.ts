@@ -13,4 +13,5 @@ export interface SlotInput {
   duration_minutes?: number | null;
   provider_id?: string | null;
   provider_name?: string | null;
+  operatory_id?: string | null;
 }

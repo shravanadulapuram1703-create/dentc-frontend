@@ -50,6 +50,20 @@ export function formatTime12(hhmm: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
+/** "HH:MM" + n minutes, or null when the result would pass midnight. */
+export function addMinutesHHMM(hhmm: string, n: number): string | null {
+  const parts = hhmm.split(":").map(Number);
+  const total = (parts[0] ?? 0) * 60 + (parts[1] ?? 0) + n;
+  if (total >= 24 * 60) return null;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** The current local time as "HH:MM". */
+export function nowHHMM(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 /** True when the slot starts before noon. */
 export function isMorning(hhmm: string): boolean {
   return Number(hhmm.split(":")[0]) < 12;
@@ -79,5 +93,10 @@ export function validateContact(c: BookingContactDetails): ContactErrors {
   if (c.consent_accepted == null) errors.consent_accepted = "Please answer the consent question.";
   else if (!c.consent_accepted)
     errors.consent_accepted = "You must consent to be contacted to request an appointment.";
+  if (c.payment_terms_accepted == null)
+    errors.payment_terms_accepted = "Please answer the payment question.";
+  else if (!c.payment_terms_accepted)
+    errors.payment_terms_accepted =
+      "You must acknowledge the payment terms to request an appointment.";
   return errors;
 }

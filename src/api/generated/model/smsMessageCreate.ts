@@ -22,7 +22,7 @@ export interface SmsMessageCreate {
   from_phone?: string | null;
   direction?: string | null;
   sent_at?: string | null;
-  error_code?: number | null;
+  error_code?: string | null;
   error_message?: string | null;
   segments?: number | null;
   client_id?: string | null;

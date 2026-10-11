@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { AcknowledgementTexts } from './acknowledgementTexts';
 
 export interface ContactInput {
   /**
@@ -29,4 +30,7 @@ export interface ContactInput {
   insurance_info?: string | null;
   disclaimer_accepted?: boolean | null;
   consent_accepted?: boolean | null;
+  payment_terms_accepted?: boolean | null;
+  acknowledgement_texts?: AcknowledgementTexts | null;
+  acknowledgement_version?: string | null;
 }

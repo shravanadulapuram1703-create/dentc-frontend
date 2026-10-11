@@ -6,8 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AppSchemasProcedureSetupFeeScheduleOption {
-  id: number;
-  name: string;
-  fee_type?: string | null;
-}
+/**
+ * The caller's own resolved overtime rule.
+ */
+export type TimeClockMetadataEffectiveRules = { [key: string]: unknown };
