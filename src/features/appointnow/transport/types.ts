@@ -30,6 +30,26 @@ export interface PublicProvider {
   title?: string | null;
 }
 
+/**
+ * A chair the patient may book into on the public page (AN-28: every active
+ * operatory of the office). The page always adds its own synthetic Emergency
+ * choice on top — see `EMERGENCY_OPERATORY_ID`.
+ */
+export interface PublicOperatory {
+  id: string;
+  name: string;
+  /** The chair's default provider (scheduler column header), when set. */
+  provider_id?: string | null;
+  provider_name?: string | null;
+}
+
+/**
+ * Synthetic operatory id for the always-present "Emergency" choice. Never sent to
+ * the backend as an operatory: it turns the request into `is_emergency` (AN-29)
+ * with no chair, so the office triages it.
+ */
+export const EMERGENCY_OPERATORY_ID = "emergency";
+
 /** Public-safe office info shown on the booking screen (no PMS internals). */
 export interface PublicOfficeInfo {
   office_code: string;
@@ -41,6 +61,8 @@ export interface PublicOfficeInfo {
   address?: string | null;
   /** Providers exposed to online booking; empty ⇒ "any available provider". */
   providers: PublicProvider[];
+  /** Active operatories offered for booking (AN-28); absent on the simulation. */
+  operatories?: PublicOperatory[];
   /**
    * Per-office reason catalog served by the backend (AN-1). Empty/absent ⇒ the
    * page falls back to the built-in `APPOINTMENT_REASONS`.
@@ -67,6 +89,8 @@ export interface AvailabilityQuery {
   date: string;
   /** Optional preferred provider id; omit for "any available". */
   provider_id?: string | null;
+  /** Only slots where this chair is free (AN-28); omit for any chair. */
+  operatory_id?: string | null;
   /** Chosen reason's duration (minutes). */
   duration_minutes: number;
 }
@@ -82,6 +106,9 @@ export interface AvailableSlot {
   duration_minutes: number;
   provider_id: string | null;
   provider_name: string | null;
+  /** The chair this slot is in (AN-28); null/absent = any chair. */
+  operatory_id?: string | null;
+  operatory_name?: string | null;
 }
 
 /** Basic patient details captured on the public page. */
@@ -108,6 +135,13 @@ export interface BookingContactDetails {
    * the 24-hour notice policy for changes. `null` = not yet answered.
    */
   consent_accepted: boolean | null;
+  /**
+   * Payment acknowledgement (REQUIRED to submit): the patient understands that if
+   * the office requires payment to confirm, a payment link will be sent and the
+   * appointment is confirmed only once payment is completed. `null` = not yet
+   * answered. No backend column yet (AN-26) — persisted as a `notes` marker.
+   */
+  payment_terms_accepted: boolean | null;
 }
 
 /** Disclaimer text shown next to the required Yes/No acknowledgement. */
@@ -118,6 +152,10 @@ export const BOOKING_DISCLAIMER_TEXT =
 export const BOOKING_CONSENT_TEXT =
   "I verify that this is my phone number and consent to receive calls and text messages regarding my appointment. I understand that if my appointment is confirmed, a minimum of 24hr notice is required to make changes to a confirmed appointment.";
 
+/** Payment acknowledgement text shown next to the required Yes/No answer. */
+export const BOOKING_PAYMENT_TEXT =
+  "I understand that some appointments require a payment to be confirmed. If payment is required, the office will send me a secure payment link, and my appointment will be confirmed only after the payment has been completed.";
+
 /** What the public page submits to request a slot. */
 export interface SubmitRequestInput {
   office_code: string;
@@ -125,6 +163,11 @@ export interface SubmitRequestInput {
   reason_label: string;
   slot: AvailableSlot;
   contact: BookingContactDetails;
+  /**
+   * Emergency request (AN-29): `slot` is the patient's preferred time and is NOT
+   * required to be an open slot — the office calls back to triage.
+   */
+  is_emergency?: boolean;
 }
 
 /** A booking request as stored/returned by the transport. */
@@ -137,6 +180,8 @@ export interface BookingRequest {
   reason_label: string;
   slot: AvailableSlot;
   contact: BookingContactDetails;
+  /** Emergency request — the time is a preference, not a held slot (AN-29). */
+  is_emergency?: boolean;
   /** ISO timestamp of submission. */
   created_at: string;
   /** ISO timestamp of the last status change. */

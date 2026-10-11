@@ -31,6 +31,7 @@ import type {
   ErrorResponse,
   HTTPValidationError,
   ListPatientTreatmentPlanItemsParams,
+  ListPendingTreatmentSummariesParams,
   ListTreatmentPlanInsuranceDetailsParams,
   ListTreatmentPlanItemsParams,
   ListTreatmentPlansParams,
@@ -38,6 +39,7 @@ import type {
   PaginatedResponseTreatmentPlanItemRead,
   PaginatedResponseTreatmentPlanRead,
   PatientProcedureRead,
+  PendingTreatmentSummaryBatch,
   PostPlanItemRequest,
   ReEstimateResult,
   ReEstimateTreatmentPlanParams,
@@ -472,6 +474,100 @@ export function useListPatientTreatmentPlanItems<TData = Awaited<ReturnType<type
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListPatientTreatmentPlanItemsQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * One call for a scheduler day/week/month instead of one items list per patient. Only patients with at least one pending item appear in `items`; patients outside the tenant are silently absent. Same rule as `?pending=true` and the scheduler feed's `pending_tx_count`.
+ * @summary Pending treatment per patient, ``?patient_ids=1,2,3`` (<= 200) (SCHED-PT-3)
+ */
+export const listPendingTreatmentSummaries = (
+    params: ListPendingTreatmentSummariesParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PendingTreatmentSummaryBatch>(
+      {url: `/api/v1/treatment-plan-items/pending-summary`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPendingTreatmentSummariesQueryKey = (params?: ListPendingTreatmentSummariesParams,) => {
+    return [
+    `/api/v1/treatment-plan-items/pending-summary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPendingTreatmentSummariesQueryOptions = <TData = Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: ListPendingTreatmentSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPendingTreatmentSummariesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>> = ({ signal }) => listPendingTreatmentSummaries(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPendingTreatmentSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>>
+export type ListPendingTreatmentSummariesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListPendingTreatmentSummaries<TData = Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPendingTreatmentSummariesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPendingTreatmentSummaries>>,
+          TError,
+          Awaited<ReturnType<typeof listPendingTreatmentSummaries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPendingTreatmentSummaries<TData = Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPendingTreatmentSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPendingTreatmentSummaries>>,
+          TError,
+          Awaited<ReturnType<typeof listPendingTreatmentSummaries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPendingTreatmentSummaries<TData = Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPendingTreatmentSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Pending treatment per patient, ``?patient_ids=1,2,3`` (<= 200) (SCHED-PT-3)
+ */
+
+export function useListPendingTreatmentSummaries<TData = Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: ListPendingTreatmentSummariesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPendingTreatmentSummaries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPendingTreatmentSummariesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

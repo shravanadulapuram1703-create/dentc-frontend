@@ -21,6 +21,7 @@ import {
   Phone,
   RefreshCw,
   Search,
+  Siren,
   SlidersHorizontal,
   Trash2,
   User,
@@ -217,13 +218,27 @@ function RequestCard({
                 New
               </span>
             )}
+            {request.is_emergency && (
+              <span className="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-red-700">
+                <Siren className="h-3 w-3" /> Emergency
+              </span>
+            )}
             <StatusBadge status={request.status} />
           </div>
-          <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-[#3A6EA5]">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-[#3A6EA5]">
             <CalendarClock className="h-4 w-4" />
             {formatDateLong(request.slot.date)} at {formatTime12(request.slot.start_time)}
+            {request.is_emergency && (
+              <span className="text-xs font-medium text-red-600">(requested, not slot-checked)</span>
+            )}
             <span className="text-slate-400">·</span>
             <span className="text-slate-600">{request.reason_label}</span>
+            {request.slot.operatory_name && (
+              <>
+                <span className="text-slate-400">·</span>
+                <span className="text-slate-600">{request.slot.operatory_name}</span>
+              </>
+            )}
           </div>
           {request.original_slot && (
             <div className="mt-0.5 text-xs text-amber-700">
@@ -277,6 +292,15 @@ function RequestCard({
             {request.contact.consent_accepted ? "Yes" : "No"}
           </span>
         </span>
+        {/* null = submitted before the payment acknowledgement existed. */}
+        {request.contact.payment_terms_accepted != null && (
+          <span>
+            Payment terms:{" "}
+            <span className={request.contact.payment_terms_accepted ? "font-semibold text-emerald-700" : "font-semibold text-red-600"}>
+              {request.contact.payment_terms_accepted ? "Yes" : "No"}
+            </span>
+          </span>
+        )}
       </div>
 
       {request.contact.notes && (

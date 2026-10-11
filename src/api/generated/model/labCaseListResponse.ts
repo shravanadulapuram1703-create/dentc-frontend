@@ -5,13 +5,13 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { AppSchemasCommonPageMeta } from './appSchemasCommonPageMeta';
 import type { LabCaseRead } from './labCaseRead';
 import type { LabStatusCounts } from './labStatusCounts';
-import type { PageMeta } from './pageMeta';
 
 export interface LabCaseListResponse {
   items: LabCaseRead[];
-  meta: PageMeta;
+  meta: AppSchemasCommonPageMeta;
   counts: LabStatusCounts;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_cost?: string;

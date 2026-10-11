@@ -50,4 +50,7 @@ export interface ProviderRead {
   provider_kind?: string | null;
   effective_taxonomy_code?: string | null;
   effective_taxonomy_source?: string | null;
+  specialty_code?: string | null;
+  specialty_label?: string | null;
+  served_office_ids?: number[];
 }

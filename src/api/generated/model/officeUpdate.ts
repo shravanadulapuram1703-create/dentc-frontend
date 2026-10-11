@@ -41,4 +41,6 @@ export interface OfficeUpdate {
   treatment_city?: string | null;
   treatment_state?: string | null;
   treatment_zip?: string | null;
+  appointnow_requires_payment?: boolean | null;
+  appointnow_payment_amount?: number | string | null;
 }

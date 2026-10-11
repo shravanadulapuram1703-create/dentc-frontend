@@ -45,6 +45,8 @@ export interface OfficeRead {
   treatment_city?: string | null;
   treatment_state?: string | null;
   treatment_zip?: string | null;
+  appointnow_requires_payment: boolean;
+  appointnow_payment_amount?: string | null;
   id: number;
   created_at: string;
   updated_at?: string | null;

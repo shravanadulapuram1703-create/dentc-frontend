@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AppSchemasOfficeSetupScheduleDayInput {
+export interface AppSchemasProviderSetupScheduleDayInput {
   /**
      * 0=Mon … 6=Sun
      * @minimum 0
@@ -18,4 +18,7 @@ export interface AppSchemasOfficeSetupScheduleDayInput {
   end_time?: string | null;
   lunch_start?: string | null;
   lunch_end?: string | null;
+  effective_from?: string | null;
+  /** NULL = applies to every office */
+  office_id?: number | null;
 }

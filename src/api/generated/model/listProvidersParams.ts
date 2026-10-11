@@ -21,6 +21,10 @@ is_active?: boolean | null;
  */
 role?: string | null;
 /**
+ * Filter by office_ids
+ */
+office_ids?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

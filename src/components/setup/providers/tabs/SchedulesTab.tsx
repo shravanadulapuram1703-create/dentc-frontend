@@ -6,10 +6,10 @@ import {
   setProviderSchedule,
 } from "@/api/generated/endpoints/provider-setup/provider-setup";
 // Provider schedules use the provider-setup day shape (it carries `effective_from`
-// and a per-office scope); the office-setup screens use the generic ScheduleDayInput.
+// and a per-office scope); the office-setup screens use the generic ScheduleDayInput (Orval names the colliding provider-setup one AppSchemasProviderSetup…).
 import type {
   ProviderScheduleDayRead,
-  ScheduleDayInput,
+  AppSchemasProviderSetupScheduleDayInput as ProviderScheduleDayInput,
 } from "@/api/generated/model";
 import { useOfficeOptions } from "@/features/office-scope";
 
@@ -146,8 +146,8 @@ export default function SchedulesTab({ providerId }: SchedulesTabProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Flatten every scope into one ScheduleDayInput[] (the PUT replaces the full set).
-      const days: ScheduleDayInput[] = [];
+      // Flatten every scope into one ProviderScheduleDayInput[] (the PUT replaces the full set).
+      const days: ProviderScheduleDayInput[] = [];
       for (const [key, scope] of scopes) {
         const officeId = key === ALL ? null : Number(key);
         for (const d of scope.days) {

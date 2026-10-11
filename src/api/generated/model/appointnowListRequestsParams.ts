@@ -8,7 +8,7 @@
 
 export type AppointnowListRequestsParams = {
 /**
- * pending|approved|declined|expired
+ * pending|awaiting_payment|approved|declined|expired
  */
 status?: string | null;
 office_id?: number | null;

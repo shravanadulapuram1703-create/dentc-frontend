@@ -27,6 +27,8 @@ export interface ToothGlyph {
   sub?: string | null;
   /** Specific root label this glyph applies to (undefined = all roots / n/a). */
   root?: string | null;
+  /** Charted surface letters (e.g. "MOD") for a surface-area glyph. */
+  surface?: string | null;
   /** Watch arrow placement (% of the figure box) + compass direction. */
   watch?: { dir: string; x: number; y: number } | null;
 }
@@ -173,6 +175,7 @@ export function toToothStates(
         group_id: group_id ?? null,
         sub: sub ?? null,
         root: root ?? null,
+        surface: c.surface ?? null,
         watch: code === 'WATCH' && dir ? { dir, x: wx ?? 50, y: wy ?? 40 } : null,
       });
     }

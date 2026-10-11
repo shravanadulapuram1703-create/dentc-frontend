@@ -17,6 +17,40 @@ user_id?: number | null;
  */
 office_id?: number | null;
 /**
+ * clock_in >= (ISO date or datetime)
+ */
+clock_in_from?: string | null;
+/**
+ * clock_in <= (ISO date = whole day, or datetime)
+ */
+clock_in_to?: string | null;
+/**
+ * IANA zone for bare-date bounds
+ */
+tz?: string | null;
+/**
+ * work | break | lunch
+ */
+entry_type?: string | null;
+/**
+ * punch | manual | legacy
+ */
+source?: string | null;
+/**
+ * Running shifts only (true) / closed (false)
+ */
+is_open?: boolean | null;
+auto_closed?: boolean | null;
+is_edited?: boolean | null;
+/**
+ * false = deleted rows only (managers)
+ */
+is_active?: boolean | null;
+/**
+ * Include soft-deleted rows (managers)
+ */
+include_deleted?: boolean;
+/**
  * @minimum 1
  */
 page?: number;

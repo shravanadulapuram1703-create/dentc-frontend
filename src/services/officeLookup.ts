@@ -29,6 +29,8 @@ export interface OfficeOption {
   default_ucr_fee_schedule_id?: number | null;
   /** IANA zone of the office (`offices.timezone`, e.g. "America/Chicago"). */
   timezone?: string | null;
+  /** The office's group (`offices.office_group_id`), null when ungrouped. */
+  office_group_id?: number | null;
 }
 
 /**
@@ -77,6 +79,7 @@ function toOption(o: {
   default_fee_schedule_id?: number | null;
   default_ucr_fee_schedule_id?: number | null;
   timezone?: string | null;
+  office_group_id?: number | null;
 }): OfficeOption {
   return {
     key: officeKey(o.id),
@@ -88,6 +91,7 @@ function toOption(o: {
     default_fee_schedule_id: o.default_fee_schedule_id ?? null,
     default_ucr_fee_schedule_id: o.default_ucr_fee_schedule_id ?? null,
     timezone: o.timezone ?? null,
+    office_group_id: o.office_group_id ?? null,
   };
 }
 

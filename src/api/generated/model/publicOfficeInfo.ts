@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AppointmentReason } from './appointmentReason';
+import type { PublicOperatory } from './publicOperatory';
+import type { PublicPaymentInfo } from './publicPaymentInfo';
 import type { PublicProvider } from './publicProvider';
 
 export interface PublicOfficeInfo {
@@ -16,5 +18,7 @@ export interface PublicOfficeInfo {
   phone?: string | null;
   address?: string | null;
   providers?: PublicProvider[];
+  operatories?: PublicOperatory[];
   reasons?: AppointmentReason[];
+  payment?: PublicPaymentInfo;
 }

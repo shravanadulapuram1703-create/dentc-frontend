@@ -45,6 +45,10 @@ export interface AppointmentSchedulerRead {
   service_summary?: string | null;
   insurance_eligibility?: AppointmentSchedulerReadInsuranceEligibility;
   account_balance?: string | null;
+  pending_tx_count?: number;
+  pending_tx_scheduled_count?: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  pending_tx_fee?: string;
   created_by?: number | null;
   created_by_name?: string | null;
   updated_by?: number | null;

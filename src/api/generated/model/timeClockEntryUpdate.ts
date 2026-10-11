@@ -8,8 +8,14 @@
 
 export interface TimeClockEntryUpdate {
   office_id?: number | null;
-  user_id?: number | null;
   clock_in?: string | null;
   clock_out?: string | null;
+  /** Ignored — computed server-side (TC-BE-3). */
   total_hours?: number | string | null;
+  entry_type?: string | null;
+  notes?: string | null;
+  /** TC-BE-6 edit reason. */
+  reason?: string | null;
+  /** Optimistic concurrency (explicit null = never updated). */
+  expected_updated_at?: string | null;
 }

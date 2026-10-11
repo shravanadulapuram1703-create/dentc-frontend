@@ -13,6 +13,10 @@ include_archived?: boolean;
  */
 include_completed?: boolean;
 /**
+ * SCHED-PT-2: true = only pending items — not archived, no `end_date`, no live charge (`procedure_id` null), status not completed / referred_out / external_referral. The same rule as the scheduler's `pending_tx_count`.
+ */
+pending?: boolean;
+/**
  * Limit to one plan
  */
 plan_id?: string | null;
