@@ -8,6 +8,9 @@
 import type { ScheduleDayInput } from './scheduleDayInput';
 
 export interface ScheduleReplace {
-  /** @maxItems 70 */
-  days?: ScheduleDayInput[];
+  /**
+     * @minItems 1
+     * @maxItems 7
+     */
+  days: ScheduleDayInput[];
 }

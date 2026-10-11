@@ -6,9 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AppSchemasMessagingPageMeta {
-  page: number;
-  size: number;
-  total: number;
-  pages: number;
+export interface ClockInRequest {
+  /** Defaults to X-Office-ID. */
+  office_id?: number | null;
+  /** work (default) | break | lunch */
+  entry_type?: string | null;
+  notes?: string | null;
 }

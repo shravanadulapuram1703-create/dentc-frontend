@@ -16,6 +16,8 @@ export interface AppointNowReasonRead {
   display_order: number;
   is_active: boolean;
   updated_by?: number | null;
+  requires_payment?: boolean | null;
+  payment_amount?: string | null;
   id: number;
   created_at: string;
   updated_at?: string | null;

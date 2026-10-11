@@ -13,5 +13,6 @@ export interface SubmitRequestInput {
   reason_label?: string | null;
   slot: SlotInput;
   contact: ContactInput;
+  is_emergency?: boolean;
   turnstile_token?: string | null;
 }

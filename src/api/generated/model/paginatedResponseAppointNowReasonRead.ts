@@ -6,9 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AppointNowReasonRead } from './appointNowReasonRead';
-import type { PageMeta } from './pageMeta';
+import type { AppSchemasCommonPageMeta } from './appSchemasCommonPageMeta';
 
 export interface PaginatedResponseAppointNowReasonRead {
   items: AppointNowReasonRead[];
-  meta: PageMeta;
+  meta: AppSchemasCommonPageMeta;
 }

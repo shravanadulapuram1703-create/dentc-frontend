@@ -6,10 +6,21 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Manager entry (add a missed shift / start someone's shift).
+ */
 export interface TimeClockEntryCreate {
+  /** Defaults to the caller. */
+  user_id?: number | null;
+  /** Defaults to X-Office-ID. */
   office_id?: number | null;
-  user_id: number;
-  clock_in: string;
+  /** Required for a manager entry; ignored on a self punch (server time). */
+  clock_in?: string | null;
   clock_out?: string | null;
+  /** Ignored — computed server-side (TC-BE-3). */
   total_hours?: number | string | null;
+  entry_type?: string | null;
+  notes?: string | null;
+  /** TC-BE-6 edit reason. */
+  reason?: string | null;
 }

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ContactOut } from './contactOut';
+import type { PaymentOut } from './paymentOut';
 import type { SlotOut } from './slotOut';
 
 export interface BookingRequestRead {
@@ -17,6 +18,7 @@ export interface BookingRequestRead {
   reason_label?: string | null;
   slot: SlotOut;
   contact: ContactOut;
+  is_emergency?: boolean;
   appointment_id?: string | null;
   patient_id?: number | null;
   decline_reason?: string | null;
@@ -30,6 +32,8 @@ export interface BookingRequestRead {
   rescheduled_at?: string | null;
   contact_notified_at?: string | null;
   contact_notified_via?: string | null;
+  payment?: PaymentOut;
+  status_token?: string | null;
   created_at: string;
   updated_at?: string | null;
 }

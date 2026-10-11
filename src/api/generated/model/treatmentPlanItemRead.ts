@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ItemIcdCodeRead } from './itemIcdCodeRead';
+import type { TreatmentPlanItemReadStatus } from './treatmentPlanItemReadStatus';
 
 export interface TreatmentPlanItemRead {
   id: string;
@@ -24,7 +25,7 @@ export interface TreatmentPlanItemRead {
   insurance_estimate: string;
   discount?: string | null;
   billing_order?: string | null;
-  status: string;
+  status: TreatmentPlanItemReadStatus;
   diagnosed_by?: string | null;
   provider_id?: string | null;
   diagnosed_date?: string | null;

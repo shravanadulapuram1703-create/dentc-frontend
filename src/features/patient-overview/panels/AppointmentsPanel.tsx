@@ -3,7 +3,10 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { openSchedulerForBooking } from "@/services/schedulerHandoff";
+import {
+  openSchedulerAtAppointment,
+  openSchedulerForBooking,
+} from "@/services/schedulerHandoff";
 import { Archive, Plus, Eye, Loader2, ArchiveRestore } from "lucide-react";
 import { SectionBar, ActionButton, DataGrid, Td } from "../ui";
 import { fmt_date, fmt_time } from "../format";
@@ -126,11 +129,39 @@ export default function AppointmentsPanel({
             <tr
               key={a.id}
               onClick={() => set_selected_id(a.id === selected_id ? null : a.id)}
+              onDoubleClick={() =>
+                a.date &&
+                openSchedulerAtAppointment(navigate, {
+                  appointment_id: a.id,
+                  date: a.date,
+                  office_id: a.office_id,
+                })
+              }
               className={`cursor-pointer ${
                 a.id === selected_id ? "bg-[#E8F0FA]" : "hover:bg-[#F8FAFC]"
               } ${a.is_cancelled ? "line-through text-[#94A3B8]" : ""}`}
             >
-              <Td className="text-[#3A6EA5] font-semibold">{fmt_date(a.date)}</Td>
+              <Td className="font-semibold">
+                {a.date ? (
+                  <button
+                    type="button"
+                    className="text-[#3A6EA5] underline-offset-2 hover:underline focus:underline focus:outline-none"
+                    title="Open this appointment in the Scheduler"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openSchedulerAtAppointment(navigate, {
+                        appointment_id: a.id,
+                        date: a.date,
+                        office_id: a.office_id,
+                      });
+                    }}
+                  >
+                    {fmt_date(a.date)}
+                  </button>
+                ) : (
+                  fmt_date(a.date)
+                )}
+              </Td>
               <Td>{fmt_time(a.start_time)}</Td>
               <Td>{data.office_code(a.office_id) ?? data.office_name(a.office_id)}</Td>
               <Td>{data.operatory_name(a.operatory_id)}</Td>
@@ -144,7 +175,7 @@ export default function AppointmentsPanel({
       )}
       {patient_id > 0 && rows.length > 0 && (
         <p className="text-[11px] text-[#94A3B8] mt-1 shrink-0">
-          Click a row to select it, then use Archive / Restore Appt.
+          Click an Appt Date (or double-click a row) to open it in the Scheduler. Click a row to select it for Archive / Restore Appt.
         </p>
       )}
     </div>

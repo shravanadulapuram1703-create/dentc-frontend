@@ -12,4 +12,5 @@ export interface RescheduleSlotInput {
   end_time?: string | null;
   duration_minutes?: number | null;
   provider_id?: string | null;
+  operatory_id?: string | null;
 }

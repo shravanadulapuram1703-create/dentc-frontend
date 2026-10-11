@@ -162,6 +162,9 @@ function toApiError(err: unknown, fallback: string, slot?: AvailableSlot): Error
 const MARK_INSURANCE = "Insurance:";
 const MARK_DISCLAIMER = "Disclaimer accepted:";
 const MARK_CONSENT = "Contact consent (calls/texts):";
+// AN-26: the payment acknowledgement has no column yet, so it rides in `notes`
+// on EVERY backend version (written on submit, lifted back out on read).
+const MARK_PAYMENT = "Payment terms accepted:";
 
 /** Read-side fallback: lift the legacy markers out of a notes blob. */
 export function parseContactExtrasFromNotes(notes: string | null | undefined): {
@@ -169,12 +172,14 @@ export function parseContactExtrasFromNotes(notes: string | null | undefined): {
   insurance_info: string | null;
   disclaimer_accepted: boolean | null;
   consent_accepted: boolean | null;
+  payment_terms_accepted: boolean | null;
 } {
   const out = {
     notes: null as string | null,
     insurance_info: null as string | null,
     disclaimer_accepted: null as boolean | null,
     consent_accepted: null as boolean | null,
+    payment_terms_accepted: null as boolean | null,
   };
   if (!notes) return out;
   const keep: string[] = [];
@@ -186,6 +191,8 @@ export function parseContactExtrasFromNotes(notes: string | null | undefined): {
       out.disclaimer_accepted = /yes/i.test(line.slice(MARK_DISCLAIMER.length));
     } else if (line.startsWith(MARK_CONSENT)) {
       out.consent_accepted = /yes/i.test(line.slice(MARK_CONSENT.length));
+    } else if (line.startsWith(MARK_PAYMENT)) {
+      out.payment_terms_accepted = /yes/i.test(line.slice(MARK_PAYMENT.length));
     } else if (line) {
       keep.push(raw);
     }
@@ -204,7 +211,9 @@ function normaliseContact(c: ContactOut | undefined): BookingContactDetails {
   // A round-2 backend always returns the three columns (booleans, never null);
   // an older backend returns none of them → fall back to the legacy markers.
   const hasColumns = c != null && typeof c.disclaimer_accepted === "boolean";
-  const legacy = hasColumns ? null : parseContactExtrasFromNotes(c?.notes ?? null);
+  // Always parse: the payment marker (AN-26) lives in notes on every backend.
+  const parsed = parseContactExtrasFromNotes(c?.notes ?? null);
+  const legacy = hasColumns ? null : parsed;
   return {
     first_name: c?.first_name ?? "",
     last_name: c?.last_name ?? "",
@@ -212,10 +221,11 @@ function normaliseContact(c: ContactOut | undefined): BookingContactDetails {
     email: c?.email ?? "",
     date_of_birth: c?.date_of_birth ?? null,
     is_new_patient: c?.is_new_patient ?? true,
-    notes: legacy ? legacy.notes : (c?.notes ?? null),
+    notes: parsed.notes,
     insurance_info: legacy ? legacy.insurance_info : (c?.insurance_info ?? null),
     disclaimer_accepted: legacy ? legacy.disclaimer_accepted : (c?.disclaimer_accepted ?? false),
     consent_accepted: legacy ? legacy.consent_accepted : (c?.consent_accepted ?? false),
+    payment_terms_accepted: parsed.payment_terms_accepted,
   };
 }
 
@@ -227,6 +237,8 @@ function normaliseSlot(s: SlotOut): AvailableSlot {
     duration_minutes: s.duration_minutes,
     provider_id: s.provider_id ?? null,
     provider_name: s.provider_name ?? null,
+    operatory_id: s.operatory_id ?? null,
+    operatory_name: s.operatory_name ?? null,
   };
 }
 
@@ -244,6 +256,7 @@ export function normaliseRequest(
     reason_label: r.reason_label ?? "",
     slot: normaliseSlot(r.slot),
     contact: normaliseContact(r.contact),
+    is_emergency: r.is_emergency ?? false,
     created_at: r.created_at,
     updated_at: r.updated_at ?? r.actioned_at ?? r.created_at,
     appointment_id: r.appointment_id ?? null,
@@ -268,6 +281,14 @@ function normaliseCounts(c: Partial<StatusCounts> | undefined): StatusCounts {
     expired: c?.expired ?? 0,
     all: c?.all ?? 0,
   };
+}
+
+/** Free-text notes + the AN-26 payment marker (until the backend has a column). */
+function notesWithPaymentMarker(c: BookingContactDetails): string | null {
+  const lines = [c.notes?.trim() || null];
+  if (c.payment_terms_accepted != null)
+    lines.push(`${MARK_PAYMENT} ${c.payment_terms_accepted ? "Yes" : "No"}`);
+  return lines.filter(Boolean).join("\n") || null;
 }
 
 export class RealBookingTransport implements BookingTransport {
@@ -362,6 +383,12 @@ export class RealBookingTransport implements BookingTransport {
           name: p.name,
           title: p.title ?? null,
         })),
+        operatories: (data.operatories ?? []).map((o) => ({
+          id: o.id,
+          name: o.name,
+          provider_id: o.provider_id ?? null,
+          provider_name: o.provider_name ?? null,
+        })),
         reasons: (data.reasons ?? []).map((r) => ({
           id: r.id,
           label: r.label,
@@ -383,6 +410,7 @@ export class RealBookingTransport implements BookingTransport {
           params: {
             date: query.date,
             provider_id: query.provider_id || undefined,
+            operatory_id: query.operatory_id || undefined,
             duration_minutes: query.duration_minutes,
           },
         },
@@ -404,7 +432,9 @@ export class RealBookingTransport implements BookingTransport {
         duration_minutes: input.slot.duration_minutes,
         provider_id: input.slot.provider_id ?? null,
         provider_name: input.slot.provider_name ?? null,
+        operatory_id: input.slot.operatory_id ?? null,
       },
+      is_emergency: input.is_emergency ?? false,
       contact: {
         first_name: input.contact.first_name.trim(),
         last_name: input.contact.last_name.trim(),
@@ -412,7 +442,7 @@ export class RealBookingTransport implements BookingTransport {
         email: input.contact.email.trim() || null,
         date_of_birth: input.contact.date_of_birth || null,
         is_new_patient: input.contact.is_new_patient,
-        notes: input.contact.notes?.trim() || null,
+        notes: notesWithPaymentMarker(input.contact),
         // AN-16: real columns since backend round 2. The backend refuses intake
         // (422 acknowledgement_required) unless both acknowledgements are true —
         // `validateContact` already enforces that client-side.
@@ -517,6 +547,7 @@ export class RealBookingTransport implements BookingTransport {
           end_time: slot.end_time,
           duration_minutes: slot.duration_minutes,
           provider_id: slot.provider_id ?? null,
+          operatory_id: slot.operatory_id ?? null,
         },
       });
       return this.normaliseWithOffice(data);

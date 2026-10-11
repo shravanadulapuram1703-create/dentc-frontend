@@ -30,6 +30,7 @@ import type {
   CollectionAgencyRead,
   CollectionAgencyUpdate,
   DicomInstanceOut,
+  DicomInstanceToothUpdate,
   DownloadDicomOriginalParams,
   ErrorResponse,
   GetDicomThumbnailParams,
@@ -417,6 +418,70 @@ export function useGetDicomInstance<TData = Awaited<ReturnType<typeof getDicomIn
 
 
 /**
+ * @summary Tag (or clear) the teeth associated with one scanned image
+ */
+export const updateDicomInstanceToothNumbers = (
+    sopInstanceUid: string,
+    dicomInstanceToothUpdate: BodyType<DicomInstanceToothUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<DicomInstanceOut>(
+      {url: `/api/v1/dicom-instances/${sopInstanceUid}/tooth-numbers`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: dicomInstanceToothUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateDicomInstanceToothNumbersMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDicomInstanceToothNumbers>>, TError,{sopInstanceUid: string;data: BodyType<DicomInstanceToothUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDicomInstanceToothNumbers>>, TError,{sopInstanceUid: string;data: BodyType<DicomInstanceToothUpdate>}, TContext> => {
+
+const mutationKey = ['updateDicomInstanceToothNumbers'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDicomInstanceToothNumbers>>, {sopInstanceUid: string;data: BodyType<DicomInstanceToothUpdate>}> = (props) => {
+          const {sopInstanceUid,data} = props ?? {};
+
+          return  updateDicomInstanceToothNumbers(sopInstanceUid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateDicomInstanceToothNumbersMutationResult = NonNullable<Awaited<ReturnType<typeof updateDicomInstanceToothNumbers>>>
+    export type UpdateDicomInstanceToothNumbersMutationBody = BodyType<DicomInstanceToothUpdate>
+    export type UpdateDicomInstanceToothNumbersMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Tag (or clear) the teeth associated with one scanned image
+ */
+export const useUpdateDicomInstanceToothNumbers = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDicomInstanceToothNumbers>>, TError,{sopInstanceUid: string;data: BodyType<DicomInstanceToothUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateDicomInstanceToothNumbers>>,
+        TError,
+        {sopInstanceUid: string;data: BodyType<DicomInstanceToothUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateDicomInstanceToothNumbersMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Thumbnail JPEG (token-authorised; use directly in <img src>)
  */
 export const getDicomThumbnail = (

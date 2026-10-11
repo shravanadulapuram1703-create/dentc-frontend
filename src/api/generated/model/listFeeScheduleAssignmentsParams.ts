@@ -33,6 +33,30 @@ office_group_id?: number | null;
  */
 carrier_id?: number | null;
 /**
+ * Filter by specialty_id
+ */
+specialty_id?: string | null;
+/**
+ * Filter by has_provider
+ */
+has_provider?: boolean | null;
+/**
+ * Filter by has_specialty
+ */
+has_specialty?: boolean | null;
+/**
+ * Filter by has_payer
+ */
+has_payer?: boolean | null;
+/**
+ * Filter by provider_ids
+ */
+provider_ids?: string | null;
+/**
+ * Filter by office_ids
+ */
+office_ids?: string | null;
+/**
  * @minimum 1
  */
 page?: number;

@@ -94,6 +94,7 @@ export function buildOverlayGlyphs(
       color: SOURCE_COLOR[source],
       drawable: true,
       material_id: null,
+      surface: r.surface ?? null,
     };
     const arr = map.get(r.tooth) ?? [];
     arr.push(glyph);

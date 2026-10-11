@@ -31,7 +31,7 @@ import type {
   AdjustmentSummary,
   AllocateAdjustmentRequest,
   AllocatePaymentRequest,
-  AppSchemasBillingPaymentAllocationRead,
+  AppSchemasFactoryPaymentAllocationRead,
   BodyUploadClaimAttachment,
   ClaimAttachmentRead,
   ClaimDetailResponse,
@@ -182,7 +182,7 @@ export const allocatePayment = (
 ) => {
 
 
-      return customInstance<AppSchemasBillingPaymentAllocationRead[]>(
+      return customInstance<PaymentAllocationRead[]>(
       {url: `/api/v1/patient-payments/${paymentId}/allocate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: allocatePaymentRequest, signal
@@ -246,7 +246,7 @@ export const allocateAdjustment = (
 ) => {
 
 
-      return customInstance<AppSchemasBillingPaymentAllocationRead[]>(
+      return customInstance<PaymentAllocationRead[]>(
       {url: `/api/v1/patient-adjustments/${adjustmentId}/allocate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: allocateAdjustmentRequest, signal
@@ -309,7 +309,7 @@ export const listAdjustmentAllocations = (
 ) => {
 
 
-      return customInstance<AppSchemasBillingPaymentAllocationRead[]>(
+      return customInstance<PaymentAllocationRead[]>(
       {url: `/api/v1/patient-adjustments/${adjustmentId}/allocations`, method: 'GET', signal
     },
       options);
@@ -7098,7 +7098,7 @@ export const createPaymentAllocation = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead>(
+      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
       {url: `/api/v1/payment-allocations`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: paymentAllocationCreate, signal
@@ -7161,7 +7161,7 @@ export const getPaymentAllocation = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead>(
+      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
       {url: `/api/v1/payment-allocations/${itemId}`, method: 'GET', signal
     },
       options);
@@ -7255,7 +7255,7 @@ export const updatePaymentAllocation = (
 ) => {
 
 
-      return customInstance<PaymentAllocationRead>(
+      return customInstance<AppSchemasFactoryPaymentAllocationRead>(
       {url: `/api/v1/payment-allocations/${itemId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: paymentAllocationUpdate, signal

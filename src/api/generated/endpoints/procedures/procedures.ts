@@ -26,7 +26,8 @@ import type {
 
 import type {
   AdjustRequest,
-  AppSchemasProcedureSetupFeeScheduleOption,
+  BodyImportFeeScheduleEntries,
+  BulkAssignmentsRequest,
   BulkEntriesRequest,
   ChartMaterialCreate,
   ChartMaterialRead,
@@ -55,8 +56,10 @@ import type {
   FeeScheduleEntryCreate,
   FeeScheduleEntryRead,
   FeeScheduleEntryUpdate,
+  FeeScheduleOption,
   FeeScheduleRead,
   FeeScheduleUpdate,
+  FeeScheduleWizardRequest,
   GetClaimReadinessParams,
   GetPatientProcedureReadinessParams,
   GetPricingHealthParams,
@@ -443,7 +446,7 @@ export const listFeeScheduleOptions = (
 ) => {
 
 
-      return customInstance<AppSchemasProcedureSetupFeeScheduleOption[]>(
+      return customInstance<FeeScheduleOption[]>(
       {url: `/api/v1/fee-schedules/options`, method: 'GET', signal
     },
       options);
@@ -1092,6 +1095,240 @@ export const useReassignFeeSchedulePatients = <TError = ErrorType<ErrorResponse 
       return useMutation(getReassignFeeSchedulePatientsMutationOptions(options), queryClient);
     }
     /**
+ * All or nothing: an invalid entry, assignment or office (422) or an
+ * assignment conflict under ``on_conflict='error'`` (409) writes nothing, and
+ * ``error.details`` carries the full per-row report. ``dry_run`` returns that
+ * report with 200 (``ok`` true/false) without writing.
+ * @summary Create a fee schedule with its entries, assignments and office defaults atomically
+ */
+export const createFeeScheduleWizard = (
+    feeScheduleWizardRequest: BodyType<FeeScheduleWizardRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/wizard`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: feeScheduleWizardRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getCreateFeeScheduleWizardMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFeeScheduleWizard>>, TError,{data: BodyType<FeeScheduleWizardRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFeeScheduleWizard>>, TError,{data: BodyType<FeeScheduleWizardRequest>}, TContext> => {
+
+const mutationKey = ['createFeeScheduleWizard'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFeeScheduleWizard>>, {data: BodyType<FeeScheduleWizardRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createFeeScheduleWizard(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFeeScheduleWizardMutationResult = NonNullable<Awaited<ReturnType<typeof createFeeScheduleWizard>>>
+    export type CreateFeeScheduleWizardMutationBody = BodyType<FeeScheduleWizardRequest>
+    export type CreateFeeScheduleWizardMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Create a fee schedule with its entries, assignments and office defaults atomically
+ */
+export const useCreateFeeScheduleWizard = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFeeScheduleWizard>>, TError,{data: BodyType<FeeScheduleWizardRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createFeeScheduleWizard>>,
+        TError,
+        {data: BodyType<FeeScheduleWizardRequest>},
+        TContext
+      > => {
+      return useMutation(getCreateFeeScheduleWizardMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Offices, providers, specialties, payers and office pointers a schedule is bound to
+ */
+export const getFeeScheduleScope = (
+    scheduleId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/scope`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetFeeScheduleScopeQueryKey = (scheduleId: number,) => {
+    return [
+    `/api/v1/fee-schedules/${scheduleId}/scope`
+    ] as const;
+    }
+
+
+export const getGetFeeScheduleScopeQueryOptions = <TData = Awaited<ReturnType<typeof getFeeScheduleScope>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleScope>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeeScheduleScopeQueryKey(scheduleId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeeScheduleScope>>> = ({ signal }) => getFeeScheduleScope(scheduleId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: scheduleId !== null && scheduleId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleScope>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFeeScheduleScopeQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeScheduleScope>>>
+export type GetFeeScheduleScopeQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetFeeScheduleScope<TData = Awaited<ReturnType<typeof getFeeScheduleScope>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleScope>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleScope>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleScope>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleScope<TData = Awaited<ReturnType<typeof getFeeScheduleScope>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleScope>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeScheduleScope>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeScheduleScope>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeScheduleScope<TData = Awaited<ReturnType<typeof getFeeScheduleScope>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleScope>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Offices, providers, specialties, payers and office pointers a schedule is bound to
+ */
+
+export function useGetFeeScheduleScope<TData = Awaited<ReturnType<typeof getFeeScheduleScope>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ scheduleId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeScheduleScope>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFeeScheduleScopeQueryOptions(scheduleId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Import fees from the CSV/XLSX template with a row-level report
+ */
+export const importFeeScheduleEntries = (
+    scheduleId: number,
+    bodyImportFeeScheduleEntries: BodyType<BodyImportFeeScheduleEntries>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`file`, bodyImportFeeScheduleEntries.file);
+if(bodyImportFeeScheduleEntries.effective_date !== undefined && bodyImportFeeScheduleEntries.effective_date !== null) {
+ formData.append(`effective_date`, bodyImportFeeScheduleEntries.effective_date);
+ }
+if(bodyImportFeeScheduleEntries.dry_run !== undefined) {
+ formData.append(`dry_run`, bodyImportFeeScheduleEntries.dry_run.toString())
+ }
+if(bodyImportFeeScheduleEntries.all_or_nothing !== undefined) {
+ formData.append(`all_or_nothing`, bodyImportFeeScheduleEntries.all_or_nothing.toString())
+ }
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedules/${scheduleId}/entries/import`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      options);
+    }
+
+
+
+export const getImportFeeScheduleEntriesMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BodyImportFeeScheduleEntries>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof importFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BodyImportFeeScheduleEntries>}, TContext> => {
+
+const mutationKey = ['importFeeScheduleEntries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importFeeScheduleEntries>>, {scheduleId: number;data: BodyType<BodyImportFeeScheduleEntries>}> = (props) => {
+          const {scheduleId,data} = props ?? {};
+
+          return  importFeeScheduleEntries(scheduleId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportFeeScheduleEntriesMutationResult = NonNullable<Awaited<ReturnType<typeof importFeeScheduleEntries>>>
+    export type ImportFeeScheduleEntriesMutationBody = BodyType<BodyImportFeeScheduleEntries>
+    export type ImportFeeScheduleEntriesMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Import fees from the CSV/XLSX template with a row-level report
+ */
+export const useImportFeeScheduleEntries = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importFeeScheduleEntries>>, TError,{scheduleId: number;data: BodyType<BodyImportFeeScheduleEntries>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importFeeScheduleEntries>>,
+        TError,
+        {scheduleId: number;data: BodyType<BodyImportFeeScheduleEntries>},
+        TContext
+      > => {
+      return useMutation(getImportFeeScheduleEntriesMutationOptions(options), queryClient);
+    }
+    /**
  * With a ``patient_id`` this is the full estimate (fee + coverage split); with
  * none it is a fee-only quote for the office/provider/plan/date context, so a
  * screen can price before a patient or a date of service exists.
@@ -1251,6 +1488,73 @@ export function useGetPricingHealth<TData = Awaited<ReturnType<typeof getPricing
 
 
 /**
+ * Per-row outcome: created | rebound | unchanged | skipped | conflict | error.
+ * Any error (422) or, under ``on_conflict='error'``, any conflict (409) rolls
+ * the batch back with the report in ``error.details``. ``dry_run`` is the
+ * conflict probe: each conflict names the schedule it is currently bound to.
+ * @summary Create / re-bind many fee-schedule assignments in one transaction
+ */
+export const bulkCreateFeeScheduleAssignments = (
+    bulkAssignmentsRequest: BodyType<BulkAssignmentsRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/fee-schedule-assignments/bulk`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkAssignmentsRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBulkCreateFeeScheduleAssignmentsMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateFeeScheduleAssignments>>, TError,{data: BodyType<BulkAssignmentsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkCreateFeeScheduleAssignments>>, TError,{data: BodyType<BulkAssignmentsRequest>}, TContext> => {
+
+const mutationKey = ['bulkCreateFeeScheduleAssignments'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreateFeeScheduleAssignments>>, {data: BodyType<BulkAssignmentsRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkCreateFeeScheduleAssignments(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkCreateFeeScheduleAssignmentsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreateFeeScheduleAssignments>>>
+    export type BulkCreateFeeScheduleAssignmentsMutationBody = BodyType<BulkAssignmentsRequest>
+    export type BulkCreateFeeScheduleAssignmentsMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Create / re-bind many fee-schedule assignments in one transaction
+ */
+export const useBulkCreateFeeScheduleAssignments = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateFeeScheduleAssignments>>, TError,{data: BodyType<BulkAssignmentsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof bulkCreateFeeScheduleAssignments>>,
+        TError,
+        {data: BodyType<BulkAssignmentsRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkCreateFeeScheduleAssignmentsMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Catalog KPI counts (total / active / inactive / ortho / by-category)
  */
 export const getProcedureCodeStats = (

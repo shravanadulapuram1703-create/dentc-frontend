@@ -4,6 +4,11 @@
 // office website (iframe or direct link). Talks only to getBookingTransport().
 // The reason catalog comes from the office (backend AN-1) when configured and
 // falls back to the built-in APPOINTMENT_REASONS otherwise.
+//
+// Step 1 asks New vs Existing patient, then the office's operatories (AN-28)
+// plus an always-present Emergency choice. A regular operatory only offers the
+// open slots of THAT chair; Emergency (AN-29) shows open times as suggestions
+// but lets the patient request any time — the office triages it.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -15,15 +20,21 @@ import {
   ChevronRight,
   Loader2,
   Send,
+  Siren,
+  Armchair,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 import { getBookingTransport } from "../bookingService";
 import {
   APPOINTMENT_REASONS,
+  EMERGENCY_OPERATORY_ID,
   type AppointmentReason,
   type AvailableSlot,
   type BookingContactDetails,
   type BookingRequest,
   type PublicOfficeInfo,
+  type PublicOperatory,
 } from "../transport/types";
 import OfficeHeader from "./OfficeHeader";
 import SlotPicker from "./SlotPicker";
@@ -31,8 +42,10 @@ import PatientDetailsForm from "./PatientDetailsForm";
 import ConfirmationScreen from "./ConfirmationScreen";
 import {
   addDaysIso,
+  addMinutesHHMM,
   formatDateLong,
   formatTime12,
+  nowHHMM,
   todayIso,
   validateContact,
   type ContactErrors,
@@ -58,6 +71,7 @@ const EMPTY_CONTACT: BookingContactDetails = {
   insurance_info: null,
   disclaimer_accepted: null,
   consent_accepted: null,
+  payment_terms_accepted: null,
 };
 
 /** Pick a sensible starting date (skip Sunday). */
@@ -72,6 +86,23 @@ function initialDate(): string {
 }
 
 const DEFAULT_REASON = APPOINTMENT_REASONS[0] as AppointmentReason;
+
+/**
+ * Stand-in chair when the office serves no operatories (simulation / a backend
+ * without AN-28): keeps regular booking possible against "any chair".
+ */
+const ANY_OPERATORY_ID = "any";
+
+type PatientType = "new" | "existing";
+
+/** The office's reason that best fits an emergency visit, if any. */
+function emergencyReason(reasons: AppointmentReason[]): AppointmentReason | null {
+  return (
+    reasons.find((r) => r.id === "emergency") ??
+    reasons.find((r) => /emergenc|pain/i.test(r.label)) ??
+    null
+  );
+}
 
 /** Office-configured reasons when present, else the built-in catalog. */
 function reasonsFor(office: PublicOfficeInfo | null): AppointmentReason[] {
@@ -124,12 +155,35 @@ export default function PublicBookingPage() {
   const [officeError, setOfficeError] = useState<string | null>(null);
 
   const [step, setStep] = useState<Step>("reason");
+  const [patientType, setPatientType] = useState<PatientType | null>(null);
+  const [patientTypeError, setPatientTypeError] = useState<string | null>(null);
+  const [operatoryId, setOperatoryId] = useState<string | null>(null);
+  const [operatoryError, setOperatoryError] = useState<string | null>(null);
   const [reason, setReason] = useState<AppointmentReason>(DEFAULT_REASON);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [providerError, setProviderError] = useState<string | null>(null);
   const [date, setDate] = useState<string>(initialDate);
 
   const reasons = useMemo(() => reasonsFor(office), [office]);
+  const operatories = useMemo<PublicOperatory[]>(
+    () =>
+      office?.operatories && office.operatories.length > 0
+        ? office.operatories
+        : [{ id: ANY_OPERATORY_ID, name: "Any available operatory" }],
+    [office],
+  );
+  const isEmergency = operatoryId === EMERGENCY_OPERATORY_ID;
+  const selectedOperatory = operatories.find((o) => o.id === operatoryId) ?? null;
+  /** Operatory filter for availability: none for Emergency / "any chair". */
+  const availabilityOperatoryId =
+    operatoryId && operatoryId !== EMERGENCY_OPERATORY_ID && operatoryId !== ANY_OPERATORY_ID
+      ? operatoryId
+      : null;
+  const operatoryLabel = isEmergency ? "Emergency" : (selectedOperatory?.name ?? "");
+
+  // Emergency: a patient-chosen time (not required to be an open slot).
+  const [customTime, setCustomTime] = useState("");
+  const [customTimeError, setCustomTimeError] = useState<string | null>(null);
 
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -185,6 +239,7 @@ export default function PublicBookingPage() {
         office_code: office.office_code,
         date,
         provider_id: providerId,
+        operatory_id: availabilityOperatoryId,
         duration_minutes: reason.duration_minutes,
       })
       .then((res) => {
@@ -199,7 +254,7 @@ export default function PublicBookingPage() {
     return () => {
       cancelled = true;
     };
-  }, [transport, office, step, date, providerId, reason.duration_minutes]);
+  }, [transport, office, step, date, providerId, availabilityOperatoryId, reason.duration_minutes]);
 
   const handleSelectSlot = useCallback((slot: AvailableSlot) => {
     setSelectedSlot(slot);
@@ -213,13 +268,78 @@ export default function PublicBookingPage() {
   };
 
   const handleFindTime = () => {
+    let ok = true;
+    if (!patientType) {
+      setPatientTypeError("Please tell us whether you are a new or existing patient.");
+      ok = false;
+    }
+    if (!operatoryId) {
+      setOperatoryError("Please choose an operatory, or Emergency.");
+      ok = false;
+    }
     // Some reasons must be booked with a specific provider (backend `requires_provider`).
-    if (reason.requires_provider && !providerId && office && office.providers.length > 0) {
+    // An emergency is triaged by the office, so it never requires one.
+    if (
+      !isEmergency &&
+      reason.requires_provider &&
+      !providerId &&
+      office &&
+      office.providers.length > 0
+    ) {
       setProviderError("Please choose a provider for this type of visit.");
+      ok = false;
+    } else {
+      setProviderError(null);
+    }
+    if (!ok) return;
+    setSelectedSlot(null);
+    setCustomTime("");
+    setCustomTimeError(null);
+    setStep("slot");
+  };
+
+  const choosePatientType = (t: PatientType) => {
+    setPatientType(t);
+    setPatientTypeError(null);
+    setContact((c) => ({ ...c, is_new_patient: t === "new" }));
+  };
+
+  const chooseOperatory = (id: string) => {
+    setOperatoryId(id);
+    setOperatoryError(null);
+    if (id === EMERGENCY_OPERATORY_ID) {
+      const er = emergencyReason(reasons);
+      if (er) setReason(er);
+      setProviderError(null);
+    }
+  };
+
+  /** Emergency: request the typed time even if it is not an open slot. */
+  const handleRequestCustomTime = () => {
+    if (!customTime) {
+      setCustomTimeError("Choose a time.");
       return;
     }
-    setProviderError(null);
-    setStep("slot");
+    if (date === todayIso() && customTime <= nowHHMM()) {
+      setCustomTimeError("That time has already passed today.");
+      return;
+    }
+    const end = addMinutesHHMM(customTime, reason.duration_minutes);
+    if (!end) {
+      setCustomTimeError("Please choose an earlier time.");
+      return;
+    }
+    setCustomTimeError(null);
+    handleSelectSlot({
+      date,
+      start_time: customTime,
+      end_time: end,
+      duration_minutes: reason.duration_minutes,
+      provider_id: null,
+      provider_name: null,
+      operatory_id: null,
+      operatory_name: null,
+    });
   };
 
   const handleSubmit = async () => {
@@ -231,8 +351,10 @@ export default function PublicBookingPage() {
         office_code: office.office_code,
         reason_id: reason.id,
         reason_label: reason.label,
-        slot: selectedSlot,
+        // Emergency rides with no chair (the office assigns one on approve).
+        slot: isEmergency ? { ...selectedSlot, operatory_id: null, operatory_name: null } : selectedSlot,
         contact,
+        is_emergency: isEmergency,
       });
       setConfirmation(req);
       setStep("done");
@@ -251,6 +373,12 @@ export default function PublicBookingPage() {
 
   const resetFlow = () => {
     setStep("reason");
+    setPatientType(null);
+    setPatientTypeError(null);
+    setOperatoryId(null);
+    setOperatoryError(null);
+    setCustomTime("");
+    setCustomTimeError(null);
     setProviderError(null);
     setSelectedSlot(null);
     setContact(EMPTY_CONTACT);
@@ -297,6 +425,98 @@ export default function PublicBookingPage() {
           {step === "reason" && (
             <section>
               <h2 className="text-lg font-bold text-slate-900">
+                Are you a new or existing patient?
+              </h2>
+              <div className="mt-3 grid grid-cols-2 gap-2.5">
+                {(
+                  [
+                    { key: "new", label: "New patient", icon: UserPlus },
+                    { key: "existing", label: "Existing patient", icon: UserCheck },
+                  ] as const
+                ).map(({ key, label, icon: Icon }) => {
+                  const active = patientType === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => choosePatientType(key)}
+                      aria-pressed={active}
+                      className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                        active
+                          ? "border-[#3A6EA5] bg-[#3A6EA5]/5 text-[#3A6EA5] ring-1 ring-[#3A6EA5]"
+                          : patientTypeError
+                            ? "border-red-300 text-slate-700"
+                            : "border-slate-200 text-slate-700 hover:border-[#3A6EA5]/60"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {patientTypeError && (
+                <p className="mt-1 text-xs text-red-600">{patientTypeError}</p>
+              )}
+
+              <h2 className="mt-6 text-lg font-bold text-slate-900">Choose an operatory</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                We'll only show times that chair is free. In pain or need urgent care? Choose
+                Emergency.
+              </p>
+              <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                {operatories.map((o) => {
+                  const active = o.id === operatoryId;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => chooseOperatory(o.id)}
+                      aria-pressed={active}
+                      className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition-colors ${
+                        active
+                          ? "border-[#3A6EA5] bg-[#3A6EA5]/5 ring-1 ring-[#3A6EA5]"
+                          : operatoryError
+                            ? "border-red-300"
+                            : "border-slate-200 hover:border-[#3A6EA5]/60"
+                      }`}
+                    >
+                      <Armchair className="h-4 w-4 shrink-0 text-[#3A6EA5]" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-slate-800">
+                          {o.name}
+                        </span>
+                        {o.provider_name && (
+                          <span className="block truncate text-xs text-slate-500">
+                            {o.provider_name}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => chooseOperatory(EMERGENCY_OPERATORY_ID)}
+                  aria-pressed={isEmergency}
+                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition-colors ${
+                    isEmergency
+                      ? "border-red-500 bg-red-50 ring-1 ring-red-500"
+                      : "border-red-200 bg-red-50/40 hover:border-red-400"
+                  }`}
+                >
+                  <Siren className="h-4 w-4 shrink-0 text-red-600" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-red-700">Emergency</span>
+                    <span className="block text-xs text-red-600/80">Request any time</span>
+                  </span>
+                </button>
+              </div>
+              {operatoryError && (
+                <p className="mt-1 text-xs text-red-600">{operatoryError}</p>
+              )}
+
+              <h2 className="mt-6 text-lg font-bold text-slate-900">
                 What brings you in?
               </h2>
               <p className="mt-1 text-sm text-slate-500">
@@ -383,8 +603,18 @@ export default function PublicBookingPage() {
             <section>
               <h2 className="text-lg font-bold text-slate-900">Pick a time</h2>
               <p className="mt-1 text-sm text-slate-500">
-                {reason.label} · {reason.duration_minutes} min
+                {reason.label} · {reason.duration_minutes} min · {operatoryLabel}
               </p>
+              {isEmergency && (
+                <div className="mt-3 flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">
+                  <Siren className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    Emergency request — these are the times open right now, but you can ask
+                    for any time below. The office will call you to confirm as soon as
+                    possible.
+                  </span>
+                </div>
+              )}
 
               <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2 py-2">
                 <button
@@ -416,8 +646,48 @@ export default function PublicBookingPage() {
                   loading={loadingSlots}
                   selectedStart={selectedSlot?.start_time ?? null}
                   onSelect={handleSelectSlot}
+                  emptyMessage={
+                    isEmergency
+                      ? "No open times on this day — you can still request a time below."
+                      : undefined
+                  }
                 />
               </div>
+
+              {isEmergency && (
+                <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <label
+                    htmlFor="emergency-time"
+                    className="block text-sm font-semibold text-slate-700"
+                  >
+                    Or request a specific time
+                  </label>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <input
+                      id="emergency-time"
+                      type="time"
+                      value={customTime}
+                      onChange={(e) => {
+                        setCustomTime(e.target.value);
+                        setCustomTimeError(null);
+                      }}
+                      className={`rounded-lg border px-3 py-2 text-sm outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 ${
+                        customTimeError ? "border-red-400" : "border-slate-300"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRequestCustomTime}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+                    >
+                      Request this time <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {customTimeError && (
+                    <p className="mt-1 text-xs text-red-600">{customTimeError}</p>
+                  )}
+                </div>
+              )}
 
               <div className="mt-6 flex justify-between">
                 <button
@@ -437,7 +707,7 @@ export default function PublicBookingPage() {
               <h2 className="text-lg font-bold text-slate-900">Your details</h2>
               <p className="mt-1 text-sm text-slate-500">
                 {formatDateLong(selectedSlot.date)} at{" "}
-                {formatTime12(selectedSlot.start_time)} · {reason.label}
+                {formatTime12(selectedSlot.start_time)} · {reason.label} · {operatoryLabel}
               </p>
               <div className="mt-5">
                 <PatientDetailsForm
@@ -476,9 +746,14 @@ export default function PublicBookingPage() {
               <dl className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
                 {[
                   ["Office", office.name],
+                  ["Patient", contact.is_new_patient ? "New patient" : "Existing patient"],
+                  [
+                    "Operatory",
+                    isEmergency ? "Emergency — the office will call you" : operatoryLabel,
+                  ],
                   ["Reason", `${reason.label} (${reason.duration_minutes} min)`],
                   [
-                    "When",
+                    isEmergency ? "Requested time" : "When",
                     `${formatDateLong(selectedSlot.date)} at ${formatTime12(selectedSlot.start_time)}`,
                   ],
                   ["Name", `${contact.first_name} ${contact.last_name}`.trim()],
@@ -490,6 +765,7 @@ export default function PublicBookingPage() {
                     : null,
                   ["Disclaimer", contact.disclaimer_accepted ? "Yes" : "No"],
                   ["Consent", contact.consent_accepted ? "Yes" : "No"],
+                  ["Payment terms", contact.payment_terms_accepted ? "Yes" : "No"],
                 ]
                   .filter(Boolean)
                   .map((row) => {
