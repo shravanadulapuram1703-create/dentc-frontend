@@ -1186,3 +1186,30 @@ patient/insurance payment posting, perio-chart writes (`charting_perio_full_cont
 RBAC-6 remainder still open: prescription strike-off, TP discount/edit-fee/change-status, progress-note
 lock, medical-history edits, `imaging_capture_acquire`, adjustments. FE gated all C1 writes + FE-RBAC-3
 (restorative/perio/imaging full-vs-view); FE-RBAC-1/2 (patient + patient-insurance delete UI) still absent.
+
+---
+
+## Office Setup — new-office QA pass (2026-10-11)
+
+Created a test office end-to-end through all 8 tabs, then sent invalid values straight to the API.
+Full repro + asks in
+[`docs/setup/offices/office_setup_new_office_qa_backend_devreport.md`](docs/setup/offices/office_setup_new_office_qa_backend_devreport.md):
+
+- **OFF-QA-14 🔴** `POST /offices` → 500 (`'office_id' is an invalid keyword argument for Office`) whenever the
+  request carries `X-Office-ID` (i.e. a working office is selected): `create_item` runs `apply_write_office`
+  on the `offices` resource (`list_scope_only=True` spec) and stamps a non-existent `office_id` column.
+- **OFF-QA-1 🟠** letterhead mixes the custom statement address with the office address (per-field fallback).
+- **OFF-QA-2 🟠** `logo_option`/`address_source`/holiday `status`/`holiday_type` accept any string; mixed casing in DB.
+- **OFF-QA-3 🟠** `short_id` not unique (existing `MOON` ×2); `office_code` unique across all tenants.
+- **OFF-QA-4 🟠** schedule PUT accepts end<start / lunch outside hours; a partial `days` list deletes the other days.
+- **OFF-QA-5 🟠** integrations accept invalid email and `javascript:` URLs; no service-email verify flow.
+- **OFF-QA-6 🟠** SmartAssist has no item catalog/seed → empty for every office.
+- **OFF-QA-7 🟠** office hours/holidays not enforced or exposed for staff bookings (AppointNow only).
+- **OFF-QA-8…13 🟡** advanced-settings validation + unused fields (POS now CMS codes; migrate old words),
+  NPI/taxonomy validation, FK errors leak DB text, client-supplied operatory ids, federal holidays not
+  observed dates, side-effecting GETs.
+- **Delete office (OFF-QA-15…18):** `DELETE /offices/{id}` = `is_active=false` with **no dependency check**
+  (upcoming appointments, home patients, users whose only office it is) → ask `GET /offices/{id}/delete-impact`
+  + `409 office_in_use` (with `?force`), reject writes stamped with an inactive office; add
+  `deleted_at/deleted_by`; admin-only hard delete for offices with zero references; `/auth/me-full` should
+  drop inactive offices or include `is_active`.

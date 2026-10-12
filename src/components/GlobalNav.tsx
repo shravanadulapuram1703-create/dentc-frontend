@@ -289,7 +289,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
     [myOffices],
   );
   const otherOffices = useMemo(
-    () => scope.office_options.filter((o) => !myOfficeIds.has(o.id)),
+    // Deleted (inactive) offices can't be a working office — keep them out of the switcher.
+    () => scope.office_options.filter((o) => o.is_active && !myOfficeIds.has(o.id)),
     [scope.office_options, myOfficeIds],
   );
   const showOtherOffices =

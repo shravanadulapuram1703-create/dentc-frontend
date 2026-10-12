@@ -15,6 +15,8 @@ import {
   type OfficeAdvancedSettingsApi,
   type OfficeAdvancedSettingsUpdate,
 } from '../../../../services/officeAdvancedApi';
+import { fetchProviders, type Provider } from '../../../../services/schedulerApi';
+import { ProviderOptionGroups } from '@/features/office-scope';
 
 /**
  * Office → Advanced tab. A per-office replica of the production Advanced settings
@@ -25,104 +27,116 @@ import {
  */
 
 /**
- * Stable UI enum option set for Place of Service. Presentation-only dropdown values
- * (CMS place-of-service codes), NOT business data fetched from the backend.
+ * Place of Service — stored as the 2-digit CMS place-of-service code, the same
+ * value ADA claim Item 38 (place of treatment) prints and validates.
  */
 const PLACE_OF_SERVICE_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'office', label: 'Office' },
-  { value: 'hospital', label: 'Hospital' },
-  { value: 'nursing_home', label: 'Nursing Home' },
-  { value: 'school', label: 'School' },
-  { value: 'other', label: 'Other' },
+  { value: '11', label: '11 — Office' },
+  { value: '22', label: '22 — On-campus outpatient hospital' },
+  { value: '21', label: '21 — Inpatient hospital' },
+  { value: '31', label: '31 — Skilled nursing facility' },
+  { value: '32', label: '32 — Nursing facility' },
+  { value: '03', label: '03 — School' },
+  { value: '99', label: '99 — Other place of service' },
 ];
 
+/** Earlier builds stored word values; read them back as their CMS code. */
+const LEGACY_PLACE_OF_SERVICE: Record<string, string> = {
+  office: '11',
+  hospital: '22',
+  nursing_home: '32',
+  school: '03',
+  other: '99',
+};
+
 /**
- * camelCase UI form model (decoupled from the snake_case API shape). All values are
+ * Form model keyed by the API's snake_case field names. All values are
  * string-backed; numeric/decimal fields are serialized back to the API on save.
+ * `scheduler_end_date_not_applicable` is UI-only (persists as a null date).
  */
 type AdvancedFormState = {
   // General settings
-  financeChargePct: string;
-  minBalance: string;
-  minCharge: string;
-  daysBeforeCharge: string;
-  salesTaxPct: string;
-  sendEcard: boolean;
+  finance_charge_pct: string;
+  min_balance: string;
+  min_charge: string;
+  days_before_charge: string;
+  sales_tax_pct: string;
+  send_ecard: boolean;
 
   // Default settings
-  defaultApptDuration: string;
-  schedulerEndDate: string;
-  schedulerEndDateNotApplicable: boolean;
-  placeOfService: string;
-  areaCode: string;
-  defaultCity: string;
-  defaultState: string;
-  defaultZip: string;
-  preferredProviderId: string;
-  isOrtho: boolean;
+  default_appt_duration: string;
+  scheduler_end_date: string;
+  scheduler_end_date_not_applicable: boolean;
+  place_of_service: string;
+  area_code: string;
+  default_city: string;
+  default_state: string;
+  default_zip: string;
+  preferred_provider_id: string;
+  is_ortho: boolean;
 
   // Patient check-in
-  hipaaNotice: string;
-  consentForms: string;
+  hipaa_notice: string;
+  consent_forms: string;
 
   // Automated campaigns
-  effectiveDate: string;
+  effective_date: string;
 };
 
 const EMPTY_FORM: AdvancedFormState = {
-  financeChargePct: '',
-  minBalance: '',
-  minCharge: '',
-  daysBeforeCharge: '',
-  salesTaxPct: '',
-  sendEcard: false,
+  finance_charge_pct: '',
+  min_balance: '',
+  min_charge: '',
+  days_before_charge: '',
+  sales_tax_pct: '',
+  send_ecard: false,
 
-  defaultApptDuration: '',
-  schedulerEndDate: '',
-  schedulerEndDateNotApplicable: false,
-  placeOfService: '',
-  areaCode: '',
-  defaultCity: '',
-  defaultState: '',
-  defaultZip: '',
-  preferredProviderId: '',
-  isOrtho: false,
+  default_appt_duration: '',
+  scheduler_end_date: '',
+  scheduler_end_date_not_applicable: false,
+  place_of_service: '',
+  area_code: '',
+  default_city: '',
+  default_state: '',
+  default_zip: '',
+  preferred_provider_id: '',
+  is_ortho: false,
 
-  hipaaNotice: '',
-  consentForms: '',
+  hipaa_notice: '',
+  consent_forms: '',
 
-  effectiveDate: '',
+  effective_date: '',
 };
 
 function valToStr(v: string | number | null | undefined): string {
   return v == null ? '' : String(v);
 }
 
-/** API (snake_case) -> UI (camelCase string-backed form model). */
+/** API read model -> string-backed form model. */
 function mapApiToForm(api: OfficeAdvancedSettingsApi): AdvancedFormState {
   return {
-    financeChargePct: valToStr(api.finance_charge_pct),
-    minBalance: valToStr(api.min_balance),
-    minCharge: valToStr(api.min_charge),
-    daysBeforeCharge: valToStr(api.days_before_charge),
-    salesTaxPct: valToStr(api.sales_tax_pct),
-    sendEcard: Boolean(api.send_ecard),
+    finance_charge_pct: valToStr(api.finance_charge_pct),
+    min_balance: valToStr(api.min_balance),
+    min_charge: valToStr(api.min_charge),
+    days_before_charge: valToStr(api.days_before_charge),
+    sales_tax_pct: valToStr(api.sales_tax_pct),
+    send_ecard: Boolean(api.send_ecard),
 
-    defaultApptDuration: valToStr(api.default_appt_duration),
-    schedulerEndDate: api.scheduler_end_date ?? '',
-    schedulerEndDateNotApplicable: api.scheduler_end_date == null,
-    placeOfService: api.place_of_service ?? '',
-    areaCode: api.area_code ?? '',
-    defaultCity: api.default_city ?? '',
-    defaultState: api.default_state ?? '',
-    defaultZip: api.default_zip ?? '',
-    preferredProviderId: api.preferred_provider_id ?? '',
-    isOrtho: Boolean(api.is_ortho),
+    default_appt_duration: valToStr(api.default_appt_duration),
+    scheduler_end_date: api.scheduler_end_date ?? '',
+    scheduler_end_date_not_applicable: api.scheduler_end_date == null,
+    place_of_service: LEGACY_PLACE_OF_SERVICE[api.place_of_service ?? ''] ?? api.place_of_service ?? '',
+    area_code: api.area_code ?? '',
+    default_city: api.default_city ?? '',
+    default_state: api.default_state ?? '',
+    default_zip: api.default_zip ?? '',
+    preferred_provider_id: api.preferred_provider_id ?? '',
+    is_ortho: Boolean(api.is_ortho),
 
-    hipaaNotice: api.hipaa_notice ?? '',
-    consentForms: api.consent_forms ?? '',
+    hipaa_notice: api.hipaa_notice ?? '',
+    consent_forms: api.consent_forms ?? '',
 
-    effectiveDate: api.effective_date ?? '',
+    effective_date: api.effective_date ?? '',
   };
 }
 
@@ -138,33 +152,33 @@ function strToInt(v: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** UI (camelCase) -> API (snake_case) PATCH body. */
+/** Form model -> API PATCH body. */
 function mapFormToApi(form: AdvancedFormState): OfficeAdvancedSettingsUpdate {
   return {
-    finance_charge_pct: strOrNull(form.financeChargePct),
-    min_balance: strOrNull(form.minBalance),
-    min_charge: strOrNull(form.minCharge),
-    days_before_charge: strToInt(form.daysBeforeCharge),
-    sales_tax_pct: strOrNull(form.salesTaxPct),
-    send_ecard: form.sendEcard,
+    finance_charge_pct: strOrNull(form.finance_charge_pct),
+    min_balance: strOrNull(form.min_balance),
+    min_charge: strOrNull(form.min_charge),
+    days_before_charge: strToInt(form.days_before_charge),
+    sales_tax_pct: strOrNull(form.sales_tax_pct),
+    send_ecard: form.send_ecard,
 
-    default_appt_duration: strToInt(form.defaultApptDuration),
+    default_appt_duration: strToInt(form.default_appt_duration),
     // "Not Applicable" toggle persists as null per the backend contract.
-    scheduler_end_date: form.schedulerEndDateNotApplicable
+    scheduler_end_date: form.scheduler_end_date_not_applicable
       ? null
-      : strOrNull(form.schedulerEndDate),
-    place_of_service: strOrNull(form.placeOfService),
-    area_code: strOrNull(form.areaCode),
-    default_city: strOrNull(form.defaultCity),
-    default_state: strOrNull(form.defaultState),
-    default_zip: strOrNull(form.defaultZip),
-    preferred_provider_id: strOrNull(form.preferredProviderId),
-    is_ortho: form.isOrtho,
+      : strOrNull(form.scheduler_end_date),
+    place_of_service: strOrNull(form.place_of_service),
+    area_code: strOrNull(form.area_code),
+    default_city: strOrNull(form.default_city),
+    default_state: strOrNull(form.default_state),
+    default_zip: strOrNull(form.default_zip),
+    preferred_provider_id: strOrNull(form.preferred_provider_id),
+    is_ortho: form.is_ortho,
 
-    hipaa_notice: strOrNull(form.hipaaNotice),
-    consent_forms: strOrNull(form.consentForms),
+    hipaa_notice: strOrNull(form.hipaa_notice),
+    consent_forms: strOrNull(form.consent_forms),
 
-    effective_date: strOrNull(form.effectiveDate),
+    effective_date: strOrNull(form.effective_date),
   };
 }
 
@@ -181,6 +195,21 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [providers, setProviders] = useState<Provider[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchProviders(officeId)
+      .then((list) => {
+        if (!cancelled) setProviders(list);
+      })
+      .catch(() => {
+        // Picker falls back to keeping the stored id selectable (keep_id).
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [officeId]);
 
   const setField = useCallback(
     <K extends keyof AdvancedFormState>(field: K, value: AdvancedFormState[K]) => {
@@ -285,8 +314,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               type="number"
               step="0.1"
               disabled={disabled}
-              value={form.financeChargePct}
-              onChange={(e) => setField('financeChargePct', e.target.value)}
+              value={form.finance_charge_pct}
+              onChange={(e) => setField('finance_charge_pct', e.target.value)}
               placeholder="18.0"
               className={inputClass}
             />
@@ -300,8 +329,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               type="number"
               step="0.01"
               disabled={disabled}
-              value={form.minBalance}
-              onChange={(e) => setField('minBalance', e.target.value)}
+              value={form.min_balance}
+              onChange={(e) => setField('min_balance', e.target.value)}
               placeholder="50.00"
               className={inputClass}
             />
@@ -315,8 +344,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               type="number"
               step="0.01"
               disabled={disabled}
-              value={form.minCharge}
-              onChange={(e) => setField('minCharge', e.target.value)}
+              value={form.min_charge}
+              onChange={(e) => setField('min_charge', e.target.value)}
               placeholder="2.00"
               className={inputClass}
             />
@@ -329,8 +358,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <input
               type="number"
               disabled={disabled}
-              value={form.daysBeforeCharge}
-              onChange={(e) => setField('daysBeforeCharge', e.target.value)}
+              value={form.days_before_charge}
+              onChange={(e) => setField('days_before_charge', e.target.value)}
               placeholder="30"
               className={inputClass}
             />
@@ -344,8 +373,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               type="number"
               step="0.1"
               disabled={disabled}
-              value={form.salesTaxPct}
-              onChange={(e) => setField('salesTaxPct', e.target.value)}
+              value={form.sales_tax_pct}
+              onChange={(e) => setField('sales_tax_pct', e.target.value)}
               placeholder="8.5"
               className={inputClass}
             />
@@ -356,8 +385,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               <input
                 type="checkbox"
                 disabled={disabled}
-                checked={form.sendEcard}
-                onChange={(e) => setField('sendEcard', e.target.checked)}
+                checked={form.send_ecard}
+                onChange={(e) => setField('send_ecard', e.target.checked)}
                 className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-sm font-semibold text-slate-700">Send Ecard</span>
@@ -381,8 +410,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <input
               type="number"
               disabled={disabled}
-              value={form.defaultApptDuration}
-              onChange={(e) => setField('defaultApptDuration', e.target.value)}
+              value={form.default_appt_duration}
+              onChange={(e) => setField('default_appt_duration', e.target.value)}
               placeholder="60"
               className={inputClass}
             />
@@ -394,18 +423,18 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             </label>
             <input
               type="date"
-              disabled={disabled || form.schedulerEndDateNotApplicable}
-              value={form.schedulerEndDate}
-              onChange={(e) => setField('schedulerEndDate', e.target.value)}
+              disabled={disabled || form.scheduler_end_date_not_applicable}
+              value={form.scheduler_end_date}
+              onChange={(e) => setField('scheduler_end_date', e.target.value)}
               className={inputClass}
             />
             <label className="flex items-center gap-2 cursor-pointer mt-2">
               <input
                 type="checkbox"
                 disabled={disabled}
-                checked={form.schedulerEndDateNotApplicable}
+                checked={form.scheduler_end_date_not_applicable}
                 onChange={(e) =>
-                  setField('schedulerEndDateNotApplicable', e.target.checked)
+                  setField('scheduler_end_date_not_applicable', e.target.checked)
                 }
                 className="w-4 h-4 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
               />
@@ -421,8 +450,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             </label>
             <select
               disabled={disabled}
-              value={form.placeOfService}
-              onChange={(e) => setField('placeOfService', e.target.value)}
+              value={form.place_of_service}
+              onChange={(e) => setField('place_of_service', e.target.value)}
               className={inputClass}
             >
               <option value="">Select Place of Service</option>
@@ -441,8 +470,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <input
               type="text"
               disabled={disabled}
-              value={form.areaCode}
-              onChange={(e) => setField('areaCode', e.target.value)}
+              value={form.area_code}
+              onChange={(e) => setField('area_code', e.target.value)}
               placeholder="415"
               maxLength={3}
               className={inputClass}
@@ -458,16 +487,16 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               <input
                 type="text"
                 disabled={disabled}
-                value={form.defaultCity}
-                onChange={(e) => setField('defaultCity', e.target.value)}
+                value={form.default_city}
+                onChange={(e) => setField('default_city', e.target.value)}
                 placeholder="City"
                 className={inputClass}
               />
               <input
                 type="text"
                 disabled={disabled}
-                value={form.defaultState}
-                onChange={(e) => setField('defaultState', e.target.value)}
+                value={form.default_state}
+                onChange={(e) => setField('default_state', e.target.value)}
                 placeholder="ST"
                 maxLength={2}
                 className={`${inputClass} uppercase`}
@@ -475,8 +504,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               <input
                 type="text"
                 disabled={disabled}
-                value={form.defaultZip}
-                onChange={(e) => setField('defaultZip', e.target.value)}
+                value={form.default_zip}
+                onChange={(e) => setField('default_zip', e.target.value)}
                 placeholder="ZIP"
                 maxLength={10}
                 className={inputClass}
@@ -488,14 +517,16 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Default Preferred Provider
             </label>
-            <input
-              type="text"
+            {/* This office's roster first, everyone else below (prefer, never exclude). */}
+            <select
               disabled={disabled}
-              value={form.preferredProviderId}
-              onChange={(e) => setField('preferredProviderId', e.target.value)}
-              placeholder="Provider ID"
+              value={form.preferred_provider_id}
+              onChange={(e) => setField('preferred_provider_id', e.target.value)}
               className={inputClass}
-            />
+            >
+              <option value="">None</option>
+              <ProviderOptionGroups providers={providers} keep_id={form.preferred_provider_id || null} />
+            </select>
           </div>
 
           <div className="col-span-2">
@@ -503,8 +534,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
               <input
                 type="checkbox"
                 disabled={disabled}
-                checked={form.isOrtho}
-                onChange={(e) => setField('isOrtho', e.target.checked)}
+                checked={form.is_ortho}
+                onChange={(e) => setField('is_ortho', e.target.checked)}
                 className="w-5 h-5 text-blue-600 border-2 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-sm font-semibold text-slate-700">
@@ -530,8 +561,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <input
               type="text"
               disabled={disabled}
-              value={form.hipaaNotice}
-              onChange={(e) => setField('hipaaNotice', e.target.value)}
+              value={form.hipaa_notice}
+              onChange={(e) => setField('hipaa_notice', e.target.value)}
               placeholder="HIPAA notice"
               className={inputClass}
             />
@@ -544,8 +575,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <input
               type="text"
               disabled={disabled}
-              value={form.consentForms}
-              onChange={(e) => setField('consentForms', e.target.value)}
+              value={form.consent_forms}
+              onChange={(e) => setField('consent_forms', e.target.value)}
               placeholder="Consent forms"
               className={inputClass}
             />
@@ -568,8 +599,8 @@ export default function AdvancedTab({ officeId }: AdvancedTabProps) {
             <input
               type="date"
               disabled={disabled}
-              value={form.effectiveDate}
-              onChange={(e) => setField('effectiveDate', e.target.value)}
+              value={form.effective_date}
+              onChange={(e) => setField('effective_date', e.target.value)}
               className={inputClass}
             />
           </div>
