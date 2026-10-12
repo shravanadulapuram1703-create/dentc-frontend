@@ -15,7 +15,6 @@ import {
   createFeeSchedule,
 } from "@/api/generated/endpoints/procedures/procedures";
 import { type OfficeForm } from "../../../../data/officeData";
-import { loadOfficeClaimBilling, saveOfficeClaimBilling } from "@/features/claims/ada/adaLocalStores";
 import { PROVIDER_SPECIALTY_CODES } from "@/features/claims/ada/adaClaimFormModel";
 
 /** Static IANA time zones — `getOfficeMetadata` also returns time_zones; this is a stable fallback. */
@@ -778,8 +777,7 @@ function extractError(err: unknown): string | undefined {
 /**
  * Insurance claim billing — what prints in ADA Dental Claim Form Items 48–52
  * (billing dentist or dental entity). `corporate_name` is a real office column;
- * the entity (Type 2) NPI has no backend column yet (ADA-BE-8) and is kept per
- * office in this browser.
+ * the entity (Type 2) NPI / taxonomy are office columns too (ADA-BE-8).
  */
 function ClaimBillingPanel({
   formData,
@@ -788,21 +786,9 @@ function ClaimBillingPanel({
   formData: Partial<OfficeForm>;
   updateFormData: (updates: Partial<OfficeForm>) => void;
 }) {
-  const officeId = formData.id ?? null;
-  const [billing, setBilling] = useState(() => loadOfficeClaimBilling(officeId));
-  useEffect(() => {
-    setBilling(loadOfficeClaimBilling(officeId));
-  }, [officeId]);
-  const setNpi = (npi: string) => {
-    const next = { ...billing, npi: npi.replace(/\D/g, "").slice(0, 10) };
-    setBilling(next);
-    if (officeId != null) saveOfficeClaimBilling(officeId, next);
-  };
-  const setTaxonomy = (taxonomy_code: string) => {
-    const next = { ...billing, taxonomy_code };
-    setBilling(next);
-    if (officeId != null) saveOfficeClaimBilling(officeId, next);
-  };
+  const billing = { npi: formData.npi ?? "", taxonomy_code: formData.taxonomy_code ?? "" };
+  const setNpi = (npi: string) => updateFormData({ npi: npi.replace(/\D/g, "").slice(0, 10) });
+  const setTaxonomy = (taxonomy_code: string) => updateFormData({ taxonomy_code: taxonomy_code || null });
   const addressOk = !!(formData.address_line1 && formData.city && formData.state && formData.zip);
   const items: Array<[string, string, boolean]> = [
     ["48", "Name, address, city, state, ZIP", !!(formData.corporate_name || formData.name) && addressOk],
@@ -836,11 +822,10 @@ function ClaimBillingPanel({
             value={billing.npi}
             onChange={(e) => setNpi(e.target.value)}
             placeholder="10-digit organisation NPI"
-            disabled={officeId == null}
-            className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm disabled:bg-slate-100"
+            className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
           />
           <p className="text-xs text-[#64748B] mt-1">
-            Item 49. {officeId == null ? "Save the office first." : "No backend column yet (ADA-BE-8) — stored in this browser; the billing provider's NPI prints when blank."}
+            Item 49. The billing provider's NPI prints when blank.
           </p>
         </div>
         <div>
@@ -848,8 +833,7 @@ function ClaimBillingPanel({
           <select
             value={billing.taxonomy_code}
             onChange={(e) => setTaxonomy(e.target.value)}
-            disabled={officeId == null}
-            className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm disabled:bg-slate-100"
+            className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
           >
             <option value="">Not set</option>
             {PROVIDER_SPECIALTY_CODES.map((o) => (

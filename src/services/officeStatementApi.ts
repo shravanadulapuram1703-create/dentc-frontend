@@ -39,16 +39,10 @@ export type OfficeStatementSettings = {
 
   // Settings.
   correspondence_name: string;
-  /**
-   * Plain string in the API (no enum). The UI assumes the stored values are
-   * "OFFICE" | "CUSTOM" | "NONE" — confirm the canonical strings with backend.
-   */
+  /** Plain string in the API; the backend's canonical values are lowercase. */
   logo_option: LogoOption;
   logo_url: string | null;
-  /**
-   * Plain string in the API (no enum). The UI assumes the stored values are
-   * "OFFICE" | "CUSTOM" — confirm the canonical strings with backend.
-   */
+  /** Plain string in the API; the backend's canonical values are lowercase. */
   address_source: AddressSource;
   statement_address_1: string;
   statement_address_2: string;
@@ -61,15 +55,13 @@ export type OfficeStatementSettings = {
 };
 
 /**
- * `logo_option` is a plain string in the API. These are a UI assumption for the
- * select options — confirm the exact stored string values with backend.
+ * `logo_option` is a plain string in the API. The backend model and print
+ * service use lowercase `office | custom | none` (office_setup.py); legacy
+ * uppercase rows are lowercased on read.
  */
-export type LogoOption = "OFFICE" | "CUSTOM" | "NONE";
-/**
- * `address_source` is a plain string in the API. These are a UI assumption for
- * the select options — confirm the exact stored string values with backend.
- */
-export type AddressSource = "OFFICE" | "CUSTOM";
+export type LogoOption = "office" | "custom" | "none";
+/** `address_source` is a plain string in the API: lowercase `office | custom`. */
+export type AddressSource = "office" | "custom";
 
 /** A fresh, empty record (used as the default before the backend responds). */
 export function emptyOfficeStatementSettings(): OfficeStatementSettings {
@@ -81,9 +73,9 @@ export function emptyOfficeStatementSettings(): OfficeStatementSettings {
     message_90: "",
     message_120: "",
     correspondence_name: "",
-    logo_option: "OFFICE",
+    logo_option: "office",
     logo_url: null,
-    address_source: "OFFICE",
+    address_source: "office",
     statement_address_1: "",
     statement_address_2: "",
     statement_city: "",
@@ -106,9 +98,9 @@ function fromRead(data: OfficeStatementSettingsRead): OfficeStatementSettings {
     message_90: str(data.message_90),
     message_120: str(data.message_120),
     correspondence_name: str(data.correspondence_name),
-    logo_option: (data.logo_option || "OFFICE") as LogoOption,
+    logo_option: (data.logo_option || "office").toLowerCase() as LogoOption,
     logo_url: data.logo_url ?? null,
-    address_source: (data.address_source || "OFFICE") as AddressSource,
+    address_source: (data.address_source || "office").toLowerCase() as AddressSource,
     statement_address_1: str(data.statement_address_1),
     statement_address_2: str(data.statement_address_2),
     statement_city: str(data.statement_city),

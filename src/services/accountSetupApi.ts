@@ -185,8 +185,9 @@ const CHARTING_TABS: LookupOption[] = [
   { value: "txplans", label: "TxPlans" },
 ];
 
-// Holiday Status / Type (client-side, stable common values). Values match what
-// the Holidays tab persists and compares against (e.g. type === "Federal").
+// Holiday Status / Type (client-side, stable common values). Values are the
+// backend's canonical uppercase codes (`holiday_type` FEDERAL | CUSTOM — the
+// federal import writes "FEDERAL"); rows are upper-cased on read.
 const HOLIDAY_STATUSES: LookupOption[] = [
   { value: "CLOSED", label: "Closed" },
   { value: "OPEN", label: "Open" },
@@ -194,8 +195,8 @@ const HOLIDAY_STATUSES: LookupOption[] = [
 ];
 
 const HOLIDAY_TYPES: LookupOption[] = [
-  { value: "Federal", label: "Federal" },
-  { value: "Custom", label: "Custom" },
+  { value: "FEDERAL", label: "Federal" },
+  { value: "CUSTOM", label: "Custom" },
 ];
 
 // General country list (client-side); United States is the default selection.

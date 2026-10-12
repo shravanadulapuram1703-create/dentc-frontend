@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { formatUSPhone, phoneDigits, isPartialUSPhone } from "@/utils/phone";
 import { isValidEmail } from "@/utils/email";
-import { Building2, Search, Plus, Save, X, Construction } from "lucide-react";
+import { Building2, Search, Plus, Save, X, Construction, Trash2, RotateCcw } from "lucide-react";
 import {
   listOffices,
   getOffice,
@@ -14,7 +14,10 @@ import {
 } from "@/api/generated/endpoints/organization/organization";
 import type { OfficeForm, OperatoryUi } from "../../../data/officeData";
 import type { OfficeRead, OfficeUpdate, OfficeCreate } from "@/api/generated/model";
-import { invalidateOfficeOptions } from "@/features/office-scope";
+import { invalidateOfficeOptions, useOfficeScope } from "@/features/office-scope";
+import { RIGHT, useHasRight } from "@/features/access-control";
+import { deleteOfficeById, reactivateOffice } from "../../../services/officeDeleteApi";
+import DeleteOfficeDialog from "./DeleteOfficeDialog";
 import InfoTab from "./tabs/InfoTab";
 import OperatoriesTab from "./tabs/OperatoriesTab";
 import HolidaysTab from "./tabs/HolidaysTab";
@@ -25,6 +28,7 @@ import AdvancedTab from "./tabs/AdvancedTab";
 import SmartAssistTab from "./tabs/SmartAssistTab";
 import { accountSetupLookups } from "../../../services/accountSetupApi";
 import type { LookupOption } from "../../../services/accountSetupTransform";
+import { loadOfficeClaimBilling } from "@/features/claims/ada/adaLocalStores";
 
 /**
  * Office → Holidays is a per-office replica of the Account Info Holidays screen.
@@ -71,6 +75,26 @@ function TabNotAvailable({ title, gap }: { title: string; gap: string }) {
       <p className="text-xs text-[#94A3B8] mt-4">
         Tracked in <code>backend_devreport.md</code> · analysis in{" "}
         <code>docs/setup/offices/OFFICES_INTEGRATION.md</code>
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Office-scoped tabs save against an existing office id, so on "Add New Office"
+ * they can't be used until the Info tab has been saved and the office created.
+ */
+function SaveOfficeFirst({ title }: { title: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+      <div className="w-14 h-14 rounded-full bg-[#E8EFF7] flex items-center justify-center mb-4">
+        <Save className="w-7 h-7 text-[#3A6EA5]" />
+      </div>
+      <h3 className="text-lg font-bold text-[#1F3A5F] mb-2">Save the office first</h3>
+      <p className="text-sm text-[#64748B] max-w-md">
+        {title} settings belong to a specific office. Fill in the Info tab and click{" "}
+        <span className="font-bold">Save Office</span> — the {title} tab will be available when the
+        office is opened.
       </p>
     </div>
   );
@@ -168,6 +192,12 @@ export default function OfficeSetup() {
   // stable client-side values — same source the Account Info Holidays tab uses.
   const [holidayStatusOptions, setHolidayStatusOptions] = useState<LookupOption[]>([]);
   const [holidayTypeOptions, setHolidayTypeOptions] = useState<LookupOption[]>([]);
+
+  // Delete (soft — the office becomes Inactive) / reactivate.
+  const { office_id: working_office_id } = useOfficeScope();
+  const canManageOffices = useHasRight(RIGHT.setup.officeFull);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
 
   /* -------------------- LOAD LIST -------------------- */
@@ -271,6 +301,10 @@ export default function OfficeSetup() {
       default_fee_schedule_id: o.default_fee_schedule_id ?? null,
       default_ucr_fee_schedule_id: o.default_ucr_fee_schedule_id ?? null,
       unpriced_charge_policy: o.unpriced_charge_policy ?? null,
+      // Server columns since ADA-BE-8; fall back once to values that were kept
+      // in this browser before the columns shipped (saved on the next Save).
+      npi: o.npi || loadOfficeClaimBilling(o.id).npi || null,
+      taxonomy_code: o.taxonomy_code || loadOfficeClaimBilling(o.id).taxonomy_code || null,
 
       is_active: o.is_active ?? true,
 
@@ -294,7 +328,10 @@ export default function OfficeSetup() {
 
   /* -------------------- ADD OFFICE -------------------- */
 const handleAddOffice = () => {
-  // Office ID is assigned by the backend on create.
+  // Office ID is assigned by the backend on create. Clear the previously opened
+  // office's id — otherwise the office-scoped tabs (Statement, Schedule, …)
+  // render and SAVE against that old office while "Add New Office" is showing.
+  setSelectedOfficeId(null);
   setFormData({});
   setOriginalOperatories([]);
   setMode("add");
@@ -334,6 +371,8 @@ const buildOfficeBody = (data: Partial<OfficeForm>): OfficeUpdate => ({
   default_fee_schedule_id: data.default_fee_schedule_id ?? null,
   default_ucr_fee_schedule_id: data.default_ucr_fee_schedule_id ?? null,
   unpriced_charge_policy: data.unpriced_charge_policy ?? null,
+  npi: data.npi?.trim() || null,
+  taxonomy_code: data.taxonomy_code || null,
   is_active: data.is_active ?? true,
 });
 
@@ -406,6 +445,24 @@ const handleSave = async () => {
     return;
   }
 
+  if (formData.npi && !/^\d{10}$/.test(formData.npi)) {
+    alert("Entity NPI must be exactly 10 digits");
+    return;
+  }
+
+  // The backend only enforces a unique office_code, not short_id, so two offices
+  // could otherwise share a Short ID. Only checked when the Short ID is new or
+  // changed, so existing legacy duplicates can still be edited.
+  const shortId = formData.short_id.trim().toUpperCase();
+  const savedShortId = offices.find((o) => o.id === selectedOfficeId)?.short_id?.trim().toUpperCase();
+  const clash = shortId !== savedShortId && offices.find(
+    (o) => o.id !== selectedOfficeId && (o.short_id ?? "").trim().toUpperCase() === shortId,
+  );
+  if (clash) {
+    alert(`Short ID "${shortId}" is already used by ${clash.name ?? `office ${clash.id}`}`);
+    return;
+  }
+
   if (formData.email && !isValidEmail(formData.email)) {
     alert("Please enter a valid email address (e.g., contact@example.com)");
     return;
@@ -452,9 +509,49 @@ const handleSave = async () => {
 const updateFormData = (updates: Partial<OfficeForm>) =>
   setFormData((prev) => ({ ...prev, ...updates }));
 
+/** Reload the list + shared office options after the catalog changed. */
+const refreshOffices = async () => {
+  void invalidateOfficeOptions();
+  const officesRes = await listOffices({ size: 200 });
+  setOffices(officesRes.items);
+};
+
+const handleDeleteOffice = async () => {
+  if (selectedOfficeId == null) return;
+  setDeleting(true);
+  try {
+    await deleteOfficeById(selectedOfficeId);
+    await refreshOffices();
+    setShowDeleteDialog(false);
+    alert(`${formData.name ?? "Office"} was deleted (now Inactive). You can reactivate it from Office Setup.`);
+    handleCancel();
+  } catch (error: unknown) {
+    console.error("Error deleting office:", error);
+    const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+    alert(e.response?.data?.error?.message || e.message || "Failed to delete office");
+  } finally {
+    setDeleting(false);
+  }
+};
+
+const handleReactivateOffice = async () => {
+  if (selectedOfficeId == null) return;
+  if (!window.confirm(`Reactivate ${formData.name ?? "this office"}?`)) return;
+  try {
+    await reactivateOffice(selectedOfficeId);
+    await refreshOffices();
+    updateFormData({ is_active: true });
+    alert(`${formData.name ?? "Office"} is active again.`);
+  } catch (error: unknown) {
+    console.error("Error reactivating office:", error);
+    const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+    alert(e.response?.data?.error?.message || e.message || "Failed to reactivate office");
+  }
+};
+
 const handleCancel = () => {
   setShowOfficeList(true);
-  // setSelectedOffice(null);
+  setSelectedOfficeId(null);
   setFormData({});
   setMode("view");
 };
@@ -667,6 +764,25 @@ const tabs: { id: TabName; label: string }[] = [
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  {mode !== "add" && selectedOfficeId != null && canManageOffices && (
+                    formData.is_active === false ? (
+                      <button
+                        onClick={() => void handleReactivateOffice()}
+                        className="flex items-center gap-2 px-4 py-2 border-2 border-emerald-300 text-emerald-700 rounded-lg hover:bg-emerald-50 font-bold transition-all text-sm"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Reactivate
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="flex items-center gap-2 px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg hover:bg-red-50 font-bold transition-all text-sm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete Office
+                      </button>
+                    )
+                  )}
                   <button
                     onClick={handleCancel}
                     className="px-4 py-2 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#E8EFF7] font-bold transition-all text-sm"
@@ -714,14 +830,22 @@ const tabs: { id: TabName; label: string }[] = [
                 OFFICE_STATEMENT_BACKEND_READY && selectedOfficeId != null ? (
                   <StatementTab officeId={selectedOfficeId} />
                 ) : (
+                  mode === "add" ? (
+                  <SaveOfficeFirst title="Statement" />
+                ) : (
                   <TabNotAvailable title="Statement" gap="gap #12" />
+                )
                 )
               )}
               {activeTab === "integration" && (
                 OFFICE_INTEGRATION_BACKEND_READY && selectedOfficeId != null ? (
                   <IntegrationTab officeId={selectedOfficeId} />
                 ) : (
+                  mode === "add" ? (
+                  <SaveOfficeFirst title="Integration" />
+                ) : (
                   <TabNotAvailable title="Integration" gap="gap #13" />
+                )
                 )
               )}
               {activeTab === "operatories" && (
@@ -737,7 +861,11 @@ const tabs: { id: TabName; label: string }[] = [
                     onConfigSaved={(cfg) => updateFormData(cfg)}
                   />
                 ) : (
+                  mode === "add" ? (
+                  <SaveOfficeFirst title="Schedule" />
+                ) : (
                   <TabNotAvailable title="Schedule" gap="gap #14" />
+                )
                 )
               )}
               {activeTab === "holidays" && (
@@ -748,27 +876,49 @@ const tabs: { id: TabName; label: string }[] = [
                     holidayTypeOptions={holidayTypeOptions}
                   />
                 ) : (
+                  mode === "add" ? (
+                  <SaveOfficeFirst title="Holidays" />
+                ) : (
                   <TabNotAvailable title="Holidays" gap="gap #15" />
+                )
                 )
               )}
               {activeTab === "advanced" && (
                 OFFICE_ADVANCED_BACKEND_READY && selectedOfficeId != null ? (
                   <AdvancedTab officeId={selectedOfficeId} />
                 ) : (
+                  mode === "add" ? (
+                  <SaveOfficeFirst title="Advanced" />
+                ) : (
                   <TabNotAvailable title="Advanced" gap="gap #16" />
+                )
                 )
               )}
               {activeTab === "smartassist" && (
                 OFFICE_SMARTASSIST_BACKEND_READY && selectedOfficeId != null ? (
                   <SmartAssistTab officeId={selectedOfficeId} />
                 ) : (
+                  mode === "add" ? (
+                  <SaveOfficeFirst title="SmartAssist" />
+                ) : (
                   <TabNotAvailable title="SmartAssist" gap="gap #17" />
+                )
                 )
               )}
             </div>
           </div>
         )}
       </div>
+      {showDeleteDialog && selectedOfficeId != null && (
+        <DeleteOfficeDialog
+          office_id={selectedOfficeId}
+          office_name={formData.name ?? `Office ${selectedOfficeId}`}
+          is_working_office={working_office_id === selectedOfficeId}
+          deleting={deleting}
+          onCancel={() => setShowDeleteDialog(false)}
+          onConfirm={() => void handleDeleteOffice()}
+        />
+      )}
     </div>
   );
 }

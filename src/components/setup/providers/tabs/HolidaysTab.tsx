@@ -10,6 +10,7 @@ import {
 import type { ProviderHolidayRead } from "@/api/generated/model";
 import { accountSetupLookups } from "../../../../services/accountSetupApi";
 import type { LookupOption } from "../../../../services/accountSetupTransform";
+import { formatIsoDateOnly } from "@/utils/datetime";
 
 interface HolidaysTabProps {
   providerId: string;
@@ -190,7 +191,7 @@ export default function HolidaysTab({ providerId }: HolidaysTabProps) {
               {rows.map((r) => (
                 <tr key={r.id} className="hover:bg-[#F7F9FC] transition-colors">
                   <td className="px-4 py-3 text-sm font-bold text-[#1E293B]">
-                    {new Date(r.holiday_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {formatIsoDateOnly(r.holiday_date)}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#1E293B]">
                     {r.holiday_name}

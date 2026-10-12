@@ -506,7 +506,11 @@ export async function assembleAdaClaimForm(args: AssembleAdaClaimFormArgs): Prom
     ortho_months = ortho_months && ortho_months !== "0" ? ortho_months : od.months_of_treatment;
   }
 
-  const office_billing = loadOfficeClaimBilling(office?.id);
+  // Entity NPI is a server column now (ADA-BE-8); the browser store is only a
+  // fallback for values entered before the column shipped.
+  const office_billing = {
+    npi: s(office?.npi) || loadOfficeClaimBilling(office?.id).npi,
+  };
   const treating_taxonomy = loadProviderTaxonomy(treating?.id);
   const claim_signatures = await loadClaimSignatures({
     patient_id: claim.patient_id,

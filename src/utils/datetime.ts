@@ -91,6 +91,21 @@ function dobParts(dob: string): { year: number; month: number; day: number } {
   };
 }
 
+/**
+ * Format a date-only `YYYY-MM-DD` value (e.g. a holiday date) without a
+ * timezone shift. `new Date("2026-01-19")` is UTC midnight, which US viewers see
+ * as Jan 18 — so build the Date from its parts in local time instead.
+ */
+export function formatIsoDateOnly(
+  value: string | null | undefined,
+  options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" },
+): string {
+  if (!value) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return value;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString("en-US", options);
+}
+
 /** `YYYY-MM-DD` for today in the viewer's local timezone. */
 export function todayIsoDate(): string {
   const now = new Date();
