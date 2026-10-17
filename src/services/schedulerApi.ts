@@ -988,7 +988,11 @@ export const fetchOperatories = async (
     ...(oid != null ? { office_id: oid } : {}),
     ...PAGE,
   });
-  return (res.items ?? []).map((o) => ({
+  // Columns follow the order set in Setup → Offices → Operatories, not API order.
+  const sorted = [...(res.items ?? [])].sort(
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
+  );
+  return sorted.map((o) => ({
     id: String(o.id),
     name: o.name,
     office: o.office_id != null ? String(o.office_id) : "",

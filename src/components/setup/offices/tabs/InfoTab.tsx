@@ -76,11 +76,9 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
   const [timeZones, setTimeZones] = useState<string[]>([]);
   const [officeGroups, setOfficeGroups] = useState<OfficeGroupOption[]>([]);
 
-  const [showAddProvider, setShowAddProvider] = useState(false);
   const [showAddFeeSchedule, setShowAddFeeSchedule] = useState(false);
   const [showAddUCRFeeSchedule, setShowAddUCRFeeSchedule] = useState(false);
 
-  const [newProvider, setNewProvider] = useState({ name: "", npi: "", license: "" });
   const [newFeeSchedule, setNewFeeSchedule] = useState("");
   const [newUCRFeeSchedule, setNewUCRFeeSchedule] = useState("");
 
@@ -115,13 +113,6 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
 
     setTimeZones(TIME_ZONES);
   }, []);
-
-  /* -------------------- ADD PROVIDER -------------------- */
-  const handleAddProvider = () => {
-    alert("Add new providers in Setup → Providers, then select them here.");
-    setShowAddProvider(false);
-    setNewProvider({ name: "", npi: "", license: "" });
-  };
 
   /* -------------------- ADD FEE SCHEDULES (real /api/v1/fee-schedules) -------------------- */
   const handleAddFeeSchedule = async () => {
@@ -214,7 +205,9 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
 
           {/* Opening Date */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">Opening Date</label>
+            <label className="block text-xs font-bold text-[#1E293B] mb-2">
+              Opening Date <span className="text-[#DC2626]">*</span>
+            </label>
             <input
               type="date"
               value={formData.opening_date ?? ""}
@@ -442,85 +435,18 @@ export default function InfoTab({ formData, updateFormData, mode }: InfoTabProps
               Insurance Billing Provider <span className="text-[#DC2626]">*</span>
             </label>
 
-            {!showAddProvider ? (
-              <select
-                value={formData.billing_provider_id ?? ""}
-                onChange={(e) => {
-                  if (e.target.value === "__ADD_NEW__") {
-                    setShowAddProvider(true);
-                  } else {
-                    updateFormData({ billing_provider_id: e.target.value || null });
-                  }
-                }}
-                className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
-              >
-                <option value="">Select Provider</option>
-                {providers.map((provider) => (
-                  <option key={provider.id} value={provider.id}>{provider.name}</option>
-                ))}
-                <option value="__ADD_NEW__" className="font-bold text-[#3A6EA5]">+ Add New Provider</option>
-              </select>
-            ) : (
-              <div className="p-4 bg-[#E8F4FD] border-2 border-[#B8D4EA] rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-bold text-[#1F3A5F]">Add New Provider</h4>
-                  <button onClick={() => setShowAddProvider(false)} className="p-1 hover:bg-[#D4E3F3] rounded transition-colors">
-                    <X className="w-4 h-4 text-[#64748B]" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1">
-                      Provider Name <span className="text-[#DC2626]">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newProvider.name}
-                      onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                      placeholder="Dr. John Smith"
-                      className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1">NPI Number</label>
-                    <input
-                      type="text"
-                      value={newProvider.npi}
-                      onChange={(e) => setNewProvider({ ...newProvider, npi: e.target.value })}
-                      placeholder="1234567890"
-                      className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1">License Number</label>
-                    <input
-                      type="text"
-                      value={newProvider.license}
-                      onChange={(e) => setNewProvider({ ...newProvider, license: e.target.value })}
-                      placeholder="LIC-12345"
-                      className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm bg-white"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={handleAddProvider} className="flex items-center gap-2 px-3 py-2 bg-[#3A6EA5] text-white rounded-lg hover:bg-[#1F3A5F] transition-colors font-bold text-sm">
-                    <Plus className="w-4 h-4" />
-                    Add Provider
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowAddProvider(false);
-                      setNewProvider({ name: "", npi: "", license: "" });
-                    }}
-                    className="px-3 py-2 border-2 border-[#E2E8F0] text-[#1F3A5F] rounded-lg hover:bg-[#E8EFF7] font-bold transition-all text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
+            <select
+              value={formData.billing_provider_id ?? ""}
+              onChange={(e) => updateFormData({ billing_provider_id: e.target.value || null })}
+              className="w-full px-3 py-2 border-2 border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 text-sm"
+            >
+              <option value="">Select Provider</option>
+              {providers.map((provider) => (
+                <option key={provider.id} value={provider.id}>{provider.name}</option>
+              ))}
+            </select>
 
-            <p className="text-xs text-[#64748B] mt-1">Provider used for insurance claims</p>
+            <p className="text-xs text-[#64748B] mt-1">Provider used for insurance claims. New providers are added in Setup → Providers.</p>
           </div>
 
           {/* Use Billing License */}
