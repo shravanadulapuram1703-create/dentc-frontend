@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { formatUSPhone, phoneDigits, isPartialUSPhone } from "@/utils/phone";
 import { isValidEmail } from "@/utils/email";
-import { Building2, Search, Plus, Save, X, Construction, Trash2, RotateCcw } from "lucide-react";
+import { todayIsoDate } from "@/utils/datetime";
+import { Building2, Search, Plus, Save, X, Construction, PowerOff, RotateCcw } from "lucide-react";
 import {
   listOffices,
   getOffice,
@@ -332,7 +333,8 @@ const handleAddOffice = () => {
   // office's id — otherwise the office-scoped tabs (Statement, Schedule, …)
   // render and SAVE against that old office while "Add New Office" is showing.
   setSelectedOfficeId(null);
-  setFormData({});
+  // Opening Date is required; default it to today (still editable).
+  setFormData({ opening_date: todayIsoDate() });
   setOriginalOperatories([]);
   setMode("add");
   setActiveTab("info");
@@ -367,7 +369,7 @@ const buildOfficeBody = (data: Partial<OfficeForm>): OfficeUpdate => ({
   billing_provider_id: data.billing_provider_id ?? null,
   use_billing_license: data.use_billing_license ?? null,
   office_group_id: data.office_group_id ?? null,
-  opening_date: data.opening_date ?? null,
+  opening_date: data.opening_date || null,
   default_fee_schedule_id: data.default_fee_schedule_id ?? null,
   default_ucr_fee_schedule_id: data.default_ucr_fee_schedule_id ?? null,
   unpriced_charge_policy: data.unpriced_charge_policy ?? null,
@@ -429,6 +431,12 @@ const persistOperatories = async (officeId: number) => {
 const handleSave = async () => {
   if (!formData.name || !formData.short_id) {
     alert("Office Name and Short ID are required");
+    return;
+  }
+
+  // Required in the UI; a blank date input ("") is what came back as a 422.
+  if (!formData.opening_date) {
+    alert("Opening Date is required");
     return;
   }
 
@@ -500,8 +508,17 @@ const handleSave = async () => {
     setShowOfficeList(true);
   } catch (error: unknown) {
     console.error("Error saving office:", error);
-    const e = error as { response?: { data?: { detail?: string } }; message?: string };
-    alert(e.response?.data?.detail || e.message || "Failed to save office");
+    const e = error as {
+      response?: { data?: { detail?: unknown; error?: { message?: string } } };
+      message?: string;
+    };
+    const detail = e.response?.data?.detail;
+    const detailText = Array.isArray(detail)
+      ? detail
+          .map((d: { loc?: unknown[]; msg?: string }) => `${String(d.loc?.slice(-1)[0] ?? "field")}: ${d.msg ?? "invalid"}`)
+          .join("\n")
+      : typeof detail === "string" ? detail : undefined;
+    alert(detailText || e.response?.data?.error?.message || e.message || "Failed to save office");
   }
 };
 
@@ -523,12 +540,12 @@ const handleDeleteOffice = async () => {
     await deleteOfficeById(selectedOfficeId);
     await refreshOffices();
     setShowDeleteDialog(false);
-    alert(`${formData.name ?? "Office"} was deleted (now Inactive). You can reactivate it from Office Setup.`);
+    alert(`${formData.name ?? "Office"} is now Inactive. You can reactivate it from Office Setup.`);
     handleCancel();
   } catch (error: unknown) {
-    console.error("Error deleting office:", error);
+    console.error("Error deactivating office:", error);
     const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-    alert(e.response?.data?.error?.message || e.message || "Failed to delete office");
+    alert(e.response?.data?.error?.message || e.message || "Failed to deactivate office");
   } finally {
     setDeleting(false);
   }
@@ -778,8 +795,8 @@ const tabs: { id: TabName; label: string }[] = [
                         onClick={() => setShowDeleteDialog(true)}
                         className="flex items-center gap-2 px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg hover:bg-red-50 font-bold transition-all text-sm"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Office
+                        <PowerOff className="w-4 h-4" />
+                        Deactivate Office
                       </button>
                     )
                   )}

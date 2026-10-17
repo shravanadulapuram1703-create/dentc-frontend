@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Loader2, Trash2, X } from "lucide-react";
+import { AlertTriangle, Loader2, PowerOff, X } from "lucide-react";
 import { fetchOfficeDeleteImpact, type OfficeDeleteImpact } from "../../../services/officeDeleteApi";
 
 type DeleteOfficeDialogProps = {
@@ -57,8 +57,8 @@ export default function DeleteOfficeDialog({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#E2E8F0]">
           <h2 className="flex items-center gap-2 text-lg font-bold text-red-700">
-            <Trash2 className="w-5 h-5" />
-            Delete office
+            <PowerOff className="w-5 h-5" />
+            Deactivate office
           </h2>
           <button onClick={onCancel} className="p-1 rounded hover:bg-slate-100" aria-label="Close">
             <X className="w-5 h-5 text-[#64748B]" />
@@ -76,7 +76,7 @@ export default function DeleteOfficeDialog({
             <div className="flex gap-2 p-3 rounded-lg bg-red-50 border-2 border-red-200 text-red-800">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>
-                This is your current working office. Switch to another office in the top bar before deleting it.
+                This is your current working office. Switch to another office in the top bar before deactivating it.
               </span>
             </div>
           )}
@@ -142,8 +142,8 @@ export default function DeleteOfficeDialog({
             disabled={!canConfirm}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            Delete office
+            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PowerOff className="w-4 h-4" />}
+            Deactivate office
           </button>
         </div>
       </div>
