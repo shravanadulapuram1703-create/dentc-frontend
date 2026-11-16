@@ -13,13 +13,9 @@ import { IMAGING_CATEGORIES } from '@/features/imaging/constants';
 // Documents uploaded via the X-Ray/Imaging tab share this same
 // patient-documents table, tagged with one of IMAGING_CATEGORIES. Excluded
 // here so they only appear in the Images tab, not duplicated into this
-// general Documents list. "Other" is deliberately NOT excluded — both this
-// tab's own DOCUMENT_TYPES and IMAGING_CATEGORIES happen to use that exact
-// string for unrelated purposes, so excluding it would also hide genuine
-// Documents-tab uploads tagged "Other".
-const IMAGING_DOCUMENT_TYPES = new Set<string>(
-  IMAGING_CATEGORIES.filter((c) => c !== 'Other'),
-);
+// general Documents list. Imaging tags its catch-all as "Other Image", so this
+// tab's own "Other" uploads are never caught by the exclusion.
+const IMAGING_DOCUMENT_TYPES = new Set<string>(IMAGING_CATEGORIES);
 import { openAsset, downloadAsset } from '@/services/documentAccess';
 import { usePatientOffice } from '@/features/office-scope';
 import type { PatientDocumentRead } from '@/api/generated/model';

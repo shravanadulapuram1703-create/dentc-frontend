@@ -8,7 +8,8 @@
  * Patients, appointments, ledger rows etc. keep pointing at the office, so the
  * impact is computed here and shown to the user before they confirm.
  */
-import { deleteOffice, updateOffice } from "@/api/generated/endpoints/organization/organization";
+import { updateOffice } from "@/api/generated/endpoints/organization/organization";
+import { deleteOffice } from "@/api/generated/endpoints/office-setup/office-setup";
 import { listAppointments } from "@/api/generated/endpoints/appointments/appointments";
 import { listPatients } from "@/api/generated/endpoints/patients/patients";
 import {
