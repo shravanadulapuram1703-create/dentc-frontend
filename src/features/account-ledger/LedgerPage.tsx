@@ -735,7 +735,7 @@ export default function LedgerPage({ defaultScope = 'account' }: { defaultScope?
           {/* Capped at 90vh with the body scrolling inside, so a tall balance
               list scrolls within the popup instead of pushing past the viewport
               and inviting a scroll of the page behind it (KAN-104). */}
-          <div className="flex max-h-[90vh] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex max-h-[calc(var(--vh)*90)] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex shrink-0 items-center justify-between rounded-t-lg px-4 py-2 text-white" style={{ background: HEADER_BG }}>
               <span className="text-sm font-semibold">Balance Statistics â€” {scopeLabel}</span>
               <button onClick={() => setShowBalanceStat(false)} className="rounded p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>

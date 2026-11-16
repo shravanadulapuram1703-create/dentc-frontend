@@ -5,6 +5,8 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { OfficeStatementSettingsUpdateAddressSource } from './officeStatementSettingsUpdateAddressSource';
+import type { OfficeStatementSettingsUpdateLogoOption } from './officeStatementSettingsUpdateLogoOption';
 
 export interface OfficeStatementSettingsUpdate {
   message_general?: string | null;
@@ -14,9 +16,9 @@ export interface OfficeStatementSettingsUpdate {
   message_90?: string | null;
   message_120?: string | null;
   correspondence_name?: string | null;
-  logo_option?: string | null;
+  logo_option?: OfficeStatementSettingsUpdateLogoOption;
   logo_url?: string | null;
-  address_source?: string | null;
+  address_source?: OfficeStatementSettingsUpdateAddressSource;
   statement_address_1?: string | null;
   statement_address_2?: string | null;
   statement_city?: string | null;

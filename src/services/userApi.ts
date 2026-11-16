@@ -251,3 +251,28 @@ export const fetchUserForEdit = async (
     preferences,
   };
 };
+
+/**
+ * Turn a 409 from POST/PUT /users/complete into a field-level message. The backend
+ * returns a generic "User violates a uniqueness/reference constraint" with the raw
+ * Postgres error in `error.details`; the constraint name tells us which field.
+ */
+export const describeUserConflict = (
+  details: unknown,
+  body: { username?: string; email?: string; short_id?: string | null },
+): string | null => {
+  const text = typeof details === "string" ? details : JSON.stringify(details ?? "");
+  if (/users_email_key|\(email\)/i.test(text)) {
+    return `The email "${body.email}" is already used by another user. Each user needs a unique email address.`;
+  }
+  if (/users_username_key|\(username\)/i.test(text)) {
+    return `The username "${body.username}" is already taken. Please choose another.`;
+  }
+  if (/short_id/i.test(text)) {
+    return `The Short ID "${body.short_id}" is already in use. Please choose another.`;
+  }
+  if (/report_access_provider/i.test(text)) {
+    return "The selected Report Access Provider no longer exists. Please pick another.";
+  }
+  return null;
+};

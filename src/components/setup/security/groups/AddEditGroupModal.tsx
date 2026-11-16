@@ -113,7 +113,7 @@ export default function AddEditGroupModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex max-h-[95vh] w-full max-w-[1100px] flex-col overflow-hidden rounded-lg border-2 border-[#E2E8F0] bg-white shadow-xl">
+      <div className="flex max-h-[calc(var(--vh)*95)] w-full max-w-[1100px] flex-col overflow-hidden rounded-lg border-2 border-[#E2E8F0] bg-white shadow-xl">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b-2 border-[#162942] bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] p-4 text-white">
           <h2 className="font-bold">{mode === "edit" ? "EDIT GROUP" : "GROUP SETUP"}</h2>

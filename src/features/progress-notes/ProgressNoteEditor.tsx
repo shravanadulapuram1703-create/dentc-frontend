@@ -55,6 +55,7 @@ import {
   uploadAttachment,
   validateAttachment,
 } from './progressNotesService';
+import { toLayoutPx, viewportHeight } from '@/utils/uiZoom';
 
 interface PatientData {
   id: string;
@@ -170,14 +171,14 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     const measure = () => {
       // The workspace starts directly beneath the app chrome, so its document
       // offset IS the chrome height — and therefore the title bar's sticky top.
-      const headerTop = root.getBoundingClientRect().top + window.scrollY;
+      const headerTop = toLayoutPx(root.getBoundingClientRect().top + window.scrollY);
       const panelTop = headerTop + (headerRef.current?.offsetHeight ?? 0) + PANES_GUTTER;
       setStickyBox({
         headerTop,
         panelTop,
         panelHeight: Math.max(
           MIN_MACRO_PANEL_HEIGHT,
-          window.innerHeight - panelTop - PANES_GUTTER,
+          viewportHeight() - panelTop - PANES_GUTTER,
         ),
       });
     };
@@ -497,7 +498,7 @@ export default function ProgressNoteEditor({ mode = 'add' }: ProgressNoteEditorP
     <div
       ref={workspaceRef}
       className="flex flex-col bg-slate-100"
-      style={{ minHeight: 'calc(100vh - 300px)' }}
+      style={{ minHeight: 'calc(var(--vh) * 100 - 300px)' }}
     >
       {/* Workspace header — pinned directly below the app chrome so the patient
           name and the Hide Macro Preview toggle stay visible while scrolling. */}

@@ -25,11 +25,25 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AccountChangeEventRead,
+  AccountInsurancePlan,
   AccountNoteCreate,
   AccountNoteRead,
   AccountNoteUpdate,
+  AccountPage,
+  AccountPartyCreate,
+  AccountPartyRead,
+  AccountPartyUpdate,
+  AccountPaymentCreate,
+  AccountPaymentResponse,
   AccountPlanRead,
+  AccountRead,
+  AccountRules,
+  AccountStatementCreate,
+  AccountUpdate,
   BodyUploadPatientDocument,
+  ChangeGuarantorRequest,
+  ChangeGuarantorResponse,
   ConsentCountersignRequest,
   ConsentCountersignVoidRequest,
   ConsentSignRequest,
@@ -44,6 +58,7 @@ import type {
   GetPatientTransactionsReportParams,
   HTTPValidationError,
   ListAccountNotesParams,
+  ListAccountsParams,
   ListMedicalAlertSummariesParams,
   ListMedicalHistoryDetailsParams,
   ListMedicalHistoryRecordsParams,
@@ -84,6 +99,8 @@ import type {
   MedicalHistorySignature,
   MedicalHistoryVersion,
   MedicalHistoryVersionDetail,
+  MergeAccountsRequest,
+  MergeAccountsResponse,
   OpeningBalanceIn,
   OpeningBalanceRead,
   PaginatedResponseAccountNoteRead,
@@ -113,6 +130,7 @@ import type {
   PatientContext,
   PatientCreate,
   PatientDocumentRead,
+  PatientDocumentUpdate,
   PatientEmergencyContactCreate,
   PatientEmergencyContactRead,
   PatientEmergencyContactUpdate,
@@ -159,6 +177,7 @@ import type {
   SignatureCaptureRules,
   SignatureVectorRead,
   SignatureVoidRequest,
+  StatementRead,
   UploadLimits
 } from '../../model';
 
@@ -851,7 +870,10 @@ export function useGetPatientContext<TData = Awaited<ReturnType<typeof getPatien
 
 
 /**
- * @summary Patient documents, filtered and paged (LTR-12)
+ * IMG-DOC-6: an undeclared query param is a 422 ``unknown_query_parameter``
+ * here, so a filter the server does not support can never come back as an
+ * unfiltered 200.
+ * @summary Patient documents, filtered and paged (LTR-12, IMG-DOC-2)
  */
 export const listPatientDocuments = (
     params?: ListPatientDocumentsParams,
@@ -923,7 +945,7 @@ export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPa
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Patient documents, filtered and paged (LTR-12)
+ * @summary Patient documents, filtered and paged (LTR-12, IMG-DOC-2)
  */
 
 export function useListPatientDocuments<TData = Awaited<ReturnType<typeof listPatientDocuments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
@@ -1035,7 +1057,8 @@ export const useUploadPatientDocument = <TError = ErrorType<ErrorResponse | HTTP
     }
     /**
  * Published so the file picker states exactly the limits the API enforces,
- * and knows which ``context`` values the upload accepts.
+ * knows which ``context`` values the upload accepts, and (IMG-DOC-4) reads its
+ * type options from the same catalog the server validates against.
  *
  * Declared before ``/{document_id}`` so the literal path wins over the int
  * parameter.
@@ -1063,7 +1086,7 @@ export const getGetPatientDocumentLimitsQueryKey = () => {
     }
 
 
-export const getGetPatientDocumentLimitsQueryOptions = <TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetPatientDocumentLimitsQueryOptions = <TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1082,10 +1105,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetPatientDocumentLimitsQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientDocumentLimits>>>
-export type GetPatientDocumentLimitsQueryError = ErrorType<ErrorResponse>
+export type GetPatientDocumentLimitsQueryError = ErrorType<ErrorResponse | HTTPValidationError>
 
 
-export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPatientDocumentLimits>>,
@@ -1095,7 +1118,7 @@ export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof ge
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getPatientDocumentLimits>>,
@@ -1105,7 +1128,7 @@ export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof ge
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -1113,7 +1136,7 @@ export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof ge
  * @summary The upload size cap and content-type allow-list the API enforces (NOTE-DOC-5)
  */
 
-export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse>>(
+export function useGetPatientDocumentLimits<TData = Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientDocumentLimits>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1223,6 +1246,73 @@ export function useGetPatientDocument<TData = Awaited<ReturnType<typeof getPatie
 
 
 /**
+ * Moves the file without delete + re-upload. Only ``documents`` <->
+ * ``imaging``; any other owner is 422 ``context_not_movable``. The change is
+ * audited (before/after incl. the storage path).
+ * @summary Re-file (Documents <-> Imaging), re-type or re-describe a document (IMG-DOC-5)
+ */
+export const updatePatientDocument = (
+    documentId: number,
+    patientDocumentUpdate: BodyType<PatientDocumentUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PatientDocumentRead>(
+      {url: `/api/v1/patient-documents/${documentId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patientDocumentUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdatePatientDocumentMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientDocument>>, TError,{documentId: number;data: BodyType<PatientDocumentUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePatientDocument>>, TError,{documentId: number;data: BodyType<PatientDocumentUpdate>}, TContext> => {
+
+const mutationKey = ['updatePatientDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePatientDocument>>, {documentId: number;data: BodyType<PatientDocumentUpdate>}> = (props) => {
+          const {documentId,data} = props ?? {};
+
+          return  updatePatientDocument(documentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePatientDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof updatePatientDocument>>>
+    export type UpdatePatientDocumentMutationBody = BodyType<PatientDocumentUpdate>
+    export type UpdatePatientDocumentMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Re-file (Documents <-> Imaging), re-type or re-describe a document (IMG-DOC-5)
+ */
+export const useUpdatePatientDocument = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePatientDocument>>, TError,{documentId: number;data: BodyType<PatientDocumentUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePatientDocument>>,
+        TError,
+        {documentId: number;data: BodyType<PatientDocumentUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePatientDocumentMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Delete Document
  */
 export const deletePatientDocument = (
@@ -1829,6 +1919,1316 @@ export const useCheckPatientDuplicate = <TError = ErrorType<ErrorResponse | HTTP
       return useMutation(getCheckPatientDuplicateMutationOptions(options), queryClient);
     }
     /**
+ * @summary Accounts, searchable by account number / legacy RPID / member or guarantor name (RP-3/RP-12)
+ */
+export const listAccounts = (
+    params?: ListAccountsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPage>(
+      {url: `/api/v1/accounts`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListAccountsQueryKey = (params?: ListAccountsParams,) => {
+    return [
+    `/api/v1/accounts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAccountsQueryOptions = <TData = Awaited<ReturnType<typeof listAccounts>>, TError = ErrorType<ErrorResponse>>(params?: ListAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccounts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAccountsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAccounts>>> = ({ signal }) => listAccounts(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAccounts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAccountsQueryResult = NonNullable<Awaited<ReturnType<typeof listAccounts>>>
+export type ListAccountsQueryError = ErrorType<ErrorResponse>
+
+
+export function useListAccounts<TData = Awaited<ReturnType<typeof listAccounts>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  ListAccountsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccounts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccounts>>,
+          TError,
+          Awaited<ReturnType<typeof listAccounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccounts<TData = Awaited<ReturnType<typeof listAccounts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccounts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccounts>>,
+          TError,
+          Awaited<ReturnType<typeof listAccounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccounts<TData = Awaited<ReturnType<typeof listAccounts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccounts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Accounts, searchable by account number / legacy RPID / member or guarantor name (RP-3/RP-12)
+ */
+
+export function useListAccounts<TData = Awaited<ReturnType<typeof listAccounts>>, TError = ErrorType<ErrorResponse>>(
+ params?: ListAccountsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccounts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAccountsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Account + primary guarantor + additional parties + members with balance/visits/recall (RP-3)
+ */
+export const getAccount = (
+    accountId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountRead>(
+      {url: `/api/v1/accounts/${accountId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetAccountQueryKey = (accountId: number,) => {
+    return [
+    `/api/v1/accounts/${accountId}`
+    ] as const;
+    }
+
+
+export const getGetAccountQueryOptions = <TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<ErrorResponse>>(accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountQueryKey(accountId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccount>>> = ({ signal }) => getAccount(accountId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: accountId !== null && accountId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getAccount>>>
+export type GetAccountQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccount>>,
+          TError,
+          Awaited<ReturnType<typeof getAccount>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccount>>,
+          TError,
+          Awaited<ReturnType<typeof getAccount>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Account + primary guarantor + additional parties + members with balance/visits/recall (RP-3)
+ */
+
+export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountQueryOptions(accountId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Account-level billing flags / account number / notes (RP-3)
+ */
+export const updateAccount = (
+    accountId: number,
+    accountUpdate: BodyType<AccountUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountRead>(
+      {url: `/api/v1/accounts/${accountId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: accountUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateAccountMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAccount>>, TError,{accountId: number;data: BodyType<AccountUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAccount>>, TError,{accountId: number;data: BodyType<AccountUpdate>}, TContext> => {
+
+const mutationKey = ['updateAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAccount>>, {accountId: number;data: BodyType<AccountUpdate>}> = (props) => {
+          const {accountId,data} = props ?? {};
+
+          return  updateAccount(accountId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAccountMutationResult = NonNullable<Awaited<ReturnType<typeof updateAccount>>>
+    export type UpdateAccountMutationBody = BodyType<AccountUpdate>
+    export type UpdateAccountMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Account-level billing flags / account number / notes (RP-3)
+ */
+export const useUpdateAccount = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAccount>>, TError,{accountId: number;data: BodyType<AccountUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateAccount>>,
+        TError,
+        {accountId: number;data: BodyType<AccountUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAccountMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Merge a duplicate account into this one (members + parties move; source closed) (RP-6)
+ */
+export const mergeAccounts = (
+    accountId: number,
+    mergeAccountsRequest: BodyType<MergeAccountsRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<MergeAccountsResponse>(
+      {url: `/api/v1/accounts/${accountId}/merge`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: mergeAccountsRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getMergeAccountsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mergeAccounts>>, TError,{accountId: number;data: BodyType<MergeAccountsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof mergeAccounts>>, TError,{accountId: number;data: BodyType<MergeAccountsRequest>}, TContext> => {
+
+const mutationKey = ['mergeAccounts'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mergeAccounts>>, {accountId: number;data: BodyType<MergeAccountsRequest>}> = (props) => {
+          const {accountId,data} = props ?? {};
+
+          return  mergeAccounts(accountId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MergeAccountsMutationResult = NonNullable<Awaited<ReturnType<typeof mergeAccounts>>>
+    export type MergeAccountsMutationBody = BodyType<MergeAccountsRequest>
+    export type MergeAccountsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Merge a duplicate account into this one (members + parties move; source closed) (RP-6)
+ */
+export const useMergeAccounts = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mergeAccounts>>, TError,{accountId: number;data: BodyType<MergeAccountsRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof mergeAccounts>>,
+        TError,
+        {accountId: number;data: BodyType<MergeAccountsRequest>},
+        TContext
+      > => {
+      return useMutation(getMergeAccountsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Primary guarantor (role=primary, id null) + up to two additional parties (RP-8)
+ */
+export const listAccountParties = (
+    accountId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPartyRead[]>(
+      {url: `/api/v1/accounts/${accountId}/parties`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListAccountPartiesQueryKey = (accountId: number,) => {
+    return [
+    `/api/v1/accounts/${accountId}/parties`
+    ] as const;
+    }
+
+
+export const getListAccountPartiesQueryOptions = <TData = Awaited<ReturnType<typeof listAccountParties>>, TError = ErrorType<ErrorResponse>>(accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountParties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAccountPartiesQueryKey(accountId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAccountParties>>> = ({ signal }) => listAccountParties(accountId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: accountId !== null && accountId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAccountParties>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAccountPartiesQueryResult = NonNullable<Awaited<ReturnType<typeof listAccountParties>>>
+export type ListAccountPartiesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListAccountParties<TData = Awaited<ReturnType<typeof listAccountParties>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountParties>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccountParties>>,
+          TError,
+          Awaited<ReturnType<typeof listAccountParties>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccountParties<TData = Awaited<ReturnType<typeof listAccountParties>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountParties>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccountParties>>,
+          TError,
+          Awaited<ReturnType<typeof listAccountParties>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccountParties<TData = Awaited<ReturnType<typeof listAccountParties>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountParties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Primary guarantor (role=primary, id null) + up to two additional parties (RP-8)
+ */
+
+export function useListAccountParties<TData = Awaited<ReturnType<typeof listAccountParties>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountParties>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAccountPartiesQueryOptions(accountId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Add a secondary / billing-contact party (patient, existing RP or inline person) (RP-8)
+ */
+export const addAccountParty = (
+    accountId: number,
+    accountPartyCreate: BodyType<AccountPartyCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPartyRead>(
+      {url: `/api/v1/accounts/${accountId}/parties`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: accountPartyCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getAddAccountPartyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAccountParty>>, TError,{accountId: number;data: BodyType<AccountPartyCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof addAccountParty>>, TError,{accountId: number;data: BodyType<AccountPartyCreate>}, TContext> => {
+
+const mutationKey = ['addAccountParty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addAccountParty>>, {accountId: number;data: BodyType<AccountPartyCreate>}> = (props) => {
+          const {accountId,data} = props ?? {};
+
+          return  addAccountParty(accountId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddAccountPartyMutationResult = NonNullable<Awaited<ReturnType<typeof addAccountParty>>>
+    export type AddAccountPartyMutationBody = BodyType<AccountPartyCreate>
+    export type AddAccountPartyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Add a secondary / billing-contact party (patient, existing RP or inline person) (RP-8)
+ */
+export const useAddAccountParty = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAccountParty>>, TError,{accountId: number;data: BodyType<AccountPartyCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addAccountParty>>,
+        TError,
+        {accountId: number;data: BodyType<AccountPartyCreate>},
+        TContext
+      > => {
+      return useMutation(getAddAccountPartyMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update an additional party (RP-8)
+ */
+export const updateAccountParty = (
+    accountId: number,
+    partyId: number,
+    accountPartyUpdate: BodyType<AccountPartyUpdate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPartyRead>(
+      {url: `/api/v1/accounts/${accountId}/parties/${partyId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: accountPartyUpdate, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateAccountPartyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAccountParty>>, TError,{accountId: number;partyId: number;data: BodyType<AccountPartyUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAccountParty>>, TError,{accountId: number;partyId: number;data: BodyType<AccountPartyUpdate>}, TContext> => {
+
+const mutationKey = ['updateAccountParty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAccountParty>>, {accountId: number;partyId: number;data: BodyType<AccountPartyUpdate>}> = (props) => {
+          const {accountId,partyId,data} = props ?? {};
+
+          return  updateAccountParty(accountId,partyId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAccountPartyMutationResult = NonNullable<Awaited<ReturnType<typeof updateAccountParty>>>
+    export type UpdateAccountPartyMutationBody = BodyType<AccountPartyUpdate>
+    export type UpdateAccountPartyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update an additional party (RP-8)
+ */
+export const useUpdateAccountParty = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAccountParty>>, TError,{accountId: number;partyId: number;data: BodyType<AccountPartyUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateAccountParty>>,
+        TError,
+        {accountId: number;partyId: number;data: BodyType<AccountPartyUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAccountPartyMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Remove an additional party (RP-8)
+ */
+export const removeAccountParty = (
+    accountId: number,
+    partyId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/accounts/${accountId}/parties/${partyId}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+export const getRemoveAccountPartyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeAccountParty>>, TError,{accountId: number;partyId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeAccountParty>>, TError,{accountId: number;partyId: number}, TContext> => {
+
+const mutationKey = ['removeAccountParty'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeAccountParty>>, {accountId: number;partyId: number}> = (props) => {
+          const {accountId,partyId} = props ?? {};
+
+          return  removeAccountParty(accountId,partyId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveAccountPartyMutationResult = NonNullable<Awaited<ReturnType<typeof removeAccountParty>>>
+
+    export type RemoveAccountPartyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove an additional party (RP-8)
+ */
+export const useRemoveAccountParty = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeAccountParty>>, TError,{accountId: number;partyId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeAccountParty>>,
+        TError,
+        {accountId: number;partyId: number},
+        TContext
+      > => {
+      return useMutation(getRemoveAccountPartyMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Swap an additional party with the primary guarantor (RP-8)
+ */
+export const makeAccountPartyPrimary = (
+    accountId: number,
+    partyId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountRead>(
+      {url: `/api/v1/accounts/${accountId}/parties/${partyId}/make-primary`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getMakeAccountPartyPrimaryMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof makeAccountPartyPrimary>>, TError,{accountId: number;partyId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof makeAccountPartyPrimary>>, TError,{accountId: number;partyId: number}, TContext> => {
+
+const mutationKey = ['makeAccountPartyPrimary'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof makeAccountPartyPrimary>>, {accountId: number;partyId: number}> = (props) => {
+          const {accountId,partyId} = props ?? {};
+
+          return  makeAccountPartyPrimary(accountId,partyId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MakeAccountPartyPrimaryMutationResult = NonNullable<Awaited<ReturnType<typeof makeAccountPartyPrimary>>>
+
+    export type MakeAccountPartyPrimaryMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Swap an additional party with the primary guarantor (RP-8)
+ */
+export const useMakeAccountPartyPrimary = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof makeAccountPartyPrimary>>, TError,{accountId: number;partyId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof makeAccountPartyPrimary>>,
+        TError,
+        {accountId: number;partyId: number},
+        TContext
+      > => {
+      return useMutation(getMakeAccountPartyPrimaryMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary One guarantor payment split across members server-side (oldest_first | by_member) (RP-9)
+ */
+export const postAccountPayment = (
+    accountId: number,
+    accountPaymentCreate: BodyType<AccountPaymentCreate>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountPaymentResponse>(
+      {url: `/api/v1/accounts/${accountId}/payments`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: accountPaymentCreate, signal
+    },
+      options);
+    }
+
+
+
+export const getPostAccountPaymentMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountPayment>>, TError,{accountId: number;data: BodyType<AccountPaymentCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountPayment>>, TError,{accountId: number;data: BodyType<AccountPaymentCreate>}, TContext> => {
+
+const mutationKey = ['postAccountPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountPayment>>, {accountId: number;data: BodyType<AccountPaymentCreate>}> = (props) => {
+          const {accountId,data} = props ?? {};
+
+          return  postAccountPayment(accountId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountPayment>>>
+    export type PostAccountPaymentMutationBody = BodyType<AccountPaymentCreate>
+    export type PostAccountPaymentMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary One guarantor payment split across members server-side (oldest_first | by_member) (RP-9)
+ */
+export const usePostAccountPayment = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountPayment>>, TError,{accountId: number;data: BodyType<AccountPaymentCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountPayment>>,
+        TError,
+        {accountId: number;data: BodyType<AccountPaymentCreate>},
+        TContext
+      > => {
+      return useMutation(getPostAccountPaymentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary One statement for the whole account, addressed to the guarantor, member sections (RP-9)
+ */
+export const generateAccountStatement = (
+    accountId: number,
+    accountStatementCreateNull?: BodyType<AccountStatementCreate | null>| null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<StatementRead>(
+      {url: `/api/v1/accounts/${accountId}/statements`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: accountStatementCreateNull, signal
+    },
+      options);
+    }
+
+
+
+export const getGenerateAccountStatementMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAccountStatement>>, TError,{accountId: number;data?: BodyType<AccountStatementCreate | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateAccountStatement>>, TError,{accountId: number;data?: BodyType<AccountStatementCreate | null>}, TContext> => {
+
+const mutationKey = ['generateAccountStatement'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateAccountStatement>>, {accountId: number;data?: BodyType<AccountStatementCreate | null>}> = (props) => {
+          const {accountId,data} = props ?? {};
+
+          return  generateAccountStatement(accountId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateAccountStatementMutationResult = NonNullable<Awaited<ReturnType<typeof generateAccountStatement>>>
+    export type GenerateAccountStatementMutationBody = BodyType<AccountStatementCreate | null> | undefined
+    export type GenerateAccountStatementMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary One statement for the whole account, addressed to the guarantor, member sections (RP-9)
+ */
+export const useGenerateAccountStatement = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAccountStatement>>, TError,{accountId: number;data?: BodyType<AccountStatementCreate | null>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof generateAccountStatement>>,
+        TError,
+        {accountId: number;data?: BodyType<AccountStatementCreate | null>},
+        TContext
+      > => {
+      return useMutation(getGenerateAccountStatementMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Distinct plans/subscribers used by account members (Add New Member → attach family plan) (RP-13)
+ */
+export const listAccountInsurance = (
+    accountId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountInsurancePlan[]>(
+      {url: `/api/v1/accounts/${accountId}/insurance`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListAccountInsuranceQueryKey = (accountId: number,) => {
+    return [
+    `/api/v1/accounts/${accountId}/insurance`
+    ] as const;
+    }
+
+
+export const getListAccountInsuranceQueryOptions = <TData = Awaited<ReturnType<typeof listAccountInsurance>>, TError = ErrorType<ErrorResponse>>(accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountInsurance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAccountInsuranceQueryKey(accountId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAccountInsurance>>> = ({ signal }) => listAccountInsurance(accountId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: accountId !== null && accountId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAccountInsurance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAccountInsuranceQueryResult = NonNullable<Awaited<ReturnType<typeof listAccountInsurance>>>
+export type ListAccountInsuranceQueryError = ErrorType<ErrorResponse>
+
+
+export function useListAccountInsurance<TData = Awaited<ReturnType<typeof listAccountInsurance>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountInsurance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccountInsurance>>,
+          TError,
+          Awaited<ReturnType<typeof listAccountInsurance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccountInsurance<TData = Awaited<ReturnType<typeof listAccountInsurance>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountInsurance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccountInsurance>>,
+          TError,
+          Awaited<ReturnType<typeof listAccountInsurance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccountInsurance<TData = Awaited<ReturnType<typeof listAccountInsurance>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountInsurance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Distinct plans/subscribers used by account members (Add New Member → attach family plan) (RP-13)
+ */
+
+export function useListAccountInsurance<TData = Awaited<ReturnType<typeof listAccountInsurance>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountInsurance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAccountInsuranceQueryOptions(accountId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Guarantor/account changes touching this account (RP-16)
+ */
+export const listAccountChangeLog = (
+    accountId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountChangeEventRead[]>(
+      {url: `/api/v1/accounts/${accountId}/change-log`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListAccountChangeLogQueryKey = (accountId: number,) => {
+    return [
+    `/api/v1/accounts/${accountId}/change-log`
+    ] as const;
+    }
+
+
+export const getListAccountChangeLogQueryOptions = <TData = Awaited<ReturnType<typeof listAccountChangeLog>>, TError = ErrorType<ErrorResponse>>(accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountChangeLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAccountChangeLogQueryKey(accountId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAccountChangeLog>>> = ({ signal }) => listAccountChangeLog(accountId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: accountId !== null && accountId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAccountChangeLog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAccountChangeLogQueryResult = NonNullable<Awaited<ReturnType<typeof listAccountChangeLog>>>
+export type ListAccountChangeLogQueryError = ErrorType<ErrorResponse>
+
+
+export function useListAccountChangeLog<TData = Awaited<ReturnType<typeof listAccountChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountChangeLog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccountChangeLog>>,
+          TError,
+          Awaited<ReturnType<typeof listAccountChangeLog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccountChangeLog<TData = Awaited<ReturnType<typeof listAccountChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountChangeLog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAccountChangeLog>>,
+          TError,
+          Awaited<ReturnType<typeof listAccountChangeLog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAccountChangeLog<TData = Awaited<ReturnType<typeof listAccountChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountChangeLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Guarantor/account changes touching this account (RP-16)
+ */
+
+export function useListAccountChangeLog<TData = Awaited<ReturnType<typeof listAccountChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ accountId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAccountChangeLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAccountChangeLogQueryOptions(accountId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary The patient's account, with the patient's own guarantor (RP-3)
+ */
+export const getPatientAccount = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountRead>(
+      {url: `/api/v1/patients/${patientId}/account`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPatientAccountQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/account`
+    ] as const;
+    }
+
+
+export const getGetPatientAccountQueryOptions = <TData = Awaited<ReturnType<typeof getPatientAccount>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccount>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPatientAccountQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPatientAccount>>> = ({ signal }) => getPatientAccount(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPatientAccount>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPatientAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getPatientAccount>>>
+export type GetPatientAccountQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPatientAccount<TData = Awaited<ReturnType<typeof getPatientAccount>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccount>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientAccount>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientAccount>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientAccount<TData = Awaited<ReturnType<typeof getPatientAccount>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccount>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPatientAccount>>,
+          TError,
+          Awaited<ReturnType<typeof getPatientAccount>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPatientAccount<TData = Awaited<ReturnType<typeof getPatientAccount>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccount>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The patient's account, with the patient's own guarantor (RP-3)
+ */
+
+export function useGetPatientAccount<TData = Awaited<ReturnType<typeof getPatientAccount>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPatientAccount>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPatientAccountQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Change guarantor / move the patient between accounts, optionally with dependents and the open balance (RP-6)
+ */
+export const changePatientGuarantor = (
+    patientId: number,
+    changeGuarantorRequest: BodyType<ChangeGuarantorRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ChangeGuarantorResponse>(
+      {url: `/api/v1/patients/${patientId}/change-guarantor`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: changeGuarantorRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getChangePatientGuarantorMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePatientGuarantor>>, TError,{patientId: number;data: BodyType<ChangeGuarantorRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof changePatientGuarantor>>, TError,{patientId: number;data: BodyType<ChangeGuarantorRequest>}, TContext> => {
+
+const mutationKey = ['changePatientGuarantor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePatientGuarantor>>, {patientId: number;data: BodyType<ChangeGuarantorRequest>}> = (props) => {
+          const {patientId,data} = props ?? {};
+
+          return  changePatientGuarantor(patientId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePatientGuarantorMutationResult = NonNullable<Awaited<ReturnType<typeof changePatientGuarantor>>>
+    export type ChangePatientGuarantorMutationBody = BodyType<ChangeGuarantorRequest>
+    export type ChangePatientGuarantorMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Change guarantor / move the patient between accounts, optionally with dependents and the open balance (RP-6)
+ */
+export const useChangePatientGuarantor = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePatientGuarantor>>, TError,{patientId: number;data: BodyType<ChangeGuarantorRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePatientGuarantor>>,
+        TError,
+        {patientId: number;data: BodyType<ChangeGuarantorRequest>},
+        TContext
+      > => {
+      return useMutation(getChangePatientGuarantorMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Guarantor/account changes for this patient (RP-16)
+ */
+export const listPatientChangeLog = (
+    patientId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountChangeEventRead[]>(
+      {url: `/api/v1/patients/${patientId}/change-log`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListPatientChangeLogQueryKey = (patientId: number,) => {
+    return [
+    `/api/v1/patients/${patientId}/change-log`
+    ] as const;
+    }
+
+
+export const getListPatientChangeLogQueryOptions = <TData = Awaited<ReturnType<typeof listPatientChangeLog>>, TError = ErrorType<ErrorResponse>>(patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientChangeLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPatientChangeLogQueryKey(patientId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPatientChangeLog>>> = ({ signal }) => listPatientChangeLog(patientId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: patientId !== null && patientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPatientChangeLog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPatientChangeLogQueryResult = NonNullable<Awaited<ReturnType<typeof listPatientChangeLog>>>
+export type ListPatientChangeLogQueryError = ErrorType<ErrorResponse>
+
+
+export function useListPatientChangeLog<TData = Awaited<ReturnType<typeof listPatientChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientChangeLog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientChangeLog>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientChangeLog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientChangeLog<TData = Awaited<ReturnType<typeof listPatientChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientChangeLog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPatientChangeLog>>,
+          TError,
+          Awaited<ReturnType<typeof listPatientChangeLog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPatientChangeLog<TData = Awaited<ReturnType<typeof listPatientChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientChangeLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Guarantor/account changes for this patient (RP-16)
+ */
+
+export function useListPatientChangeLog<TData = Awaited<ReturnType<typeof listPatientChangeLog>>, TError = ErrorType<ErrorResponse>>(
+ patientId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPatientChangeLog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPatientChangeLogQueryOptions(patientId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Guarantor kinds, link precedence, relationship codes, party limits (RP-15)
+ */
+export const getAccountRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<AccountRules>(
+      {url: `/api/v1/metadata/account-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetAccountRulesQueryKey = () => {
+    return [
+    `/api/v1/metadata/account-rules`
+    ] as const;
+    }
+
+
+export const getGetAccountRulesQueryOptions = <TData = Awaited<ReturnType<typeof getAccountRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountRules>>> = ({ signal }) => getAccountRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountRules>>>
+export type GetAccountRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetAccountRules<TData = Awaited<ReturnType<typeof getAccountRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountRules>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountRules<TData = Awaited<ReturnType<typeof getAccountRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountRules>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountRules<TData = Awaited<ReturnType<typeof getAccountRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Guarantor kinds, link precedence, relationship codes, party limits (RP-15)
+ */
+
+export function useGetAccountRules<TData = Awaited<ReturnType<typeof getAccountRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary Register a patient with responsible party, alerts, questionnaire, recalls and opening balance in one transaction (GAP-AP-13/15/18)
  */
 export const registerPatient = (

@@ -10,7 +10,7 @@ import {
   IMAGING_GROUP_NAME,
   LIST_SIZE,
 } from '../constants';
-import { isImageDocument } from '../utils/imageFilters';
+import { isImagingDocument } from '../utils/imageFilters';
 
 interface UseImagingGalleryResult {
   images: GalleryImage[];
@@ -49,15 +49,15 @@ export const useImagingGallery = (patientId: number): UseImagingGalleryResult =>
   );
 
   const images = useMemo<GalleryImage[]>(() => {
-    const documents = (docsQuery.data?.items ?? [])
-      .filter((d) => !d.is_deleted)
-      .filter(isImageDocument);
-
     const details = (detailsQuery.data?.items ?? []).filter((d) => !d.is_deleted);
     const detailByTileId = new Map<string, ImageDetailRead>();
     for (const detail of details) {
       if (detail.tile_id) detailByTileId.set(detail.tile_id, detail);
     }
+
+    const documents = (docsQuery.data?.items ?? [])
+      .filter((d) => !d.is_deleted)
+      .filter((d) => isImagingDocument(d, detailByTileId.has(String(d.id))));
 
     return documents
       .map((document) => ({

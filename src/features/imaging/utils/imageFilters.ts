@@ -1,24 +1,37 @@
 import type { PatientDocumentRead } from '@/api/generated/model';
 import { env } from '@/shared/config/env';
 import {
-  ACCEPTED_EXTENSIONS,
-  IMAGE_CONTENT_PREFIX,
   IMAGING_CATEGORIES,
+  LEGACY_SHARED_IMAGING_CATEGORIES,
 } from '../constants';
 
 const IMAGING_CATEGORY_SET = new Set<string>(IMAGING_CATEGORIES);
+const LEGACY_SHARED_SET = new Set<string>(LEGACY_SHARED_IMAGING_CATEGORIES);
 
 /**
- * Whether a patient document should appear in the imaging gallery.
- * Primary signal is the content type (`image/*`); falls back to the imaging
- * category set and finally a file-extension check when content_type is missing.
+ * Whether a patient document belongs in the Imaging gallery.
+ *
+ * `patient-documents` is one shared store for every screen, so "is it an
+ * image?" (content type / extension) is NOT the test — that pulled insurance
+ * cards, photo IDs, note attachments, patient photos and restorative drawings
+ * into X-rays (IMG-DOC-1). Ownership is decided by the Imaging-only
+ * `document_type` values; legacy generic ones need an Imaging `image-details`
+ * row (`tile_id = String(document.id)`) as proof. Replace with a server-side
+ * owner filter once the backend adds one (IMG-DOC-2).
  */
-export const isImageDocument = (doc: PatientDocumentRead): boolean => {
-  const ct = doc.content_type?.toLowerCase() ?? '';
-  if (ct.startsWith(IMAGE_CONTENT_PREFIX)) return true;
-  if (doc.document_type && IMAGING_CATEGORY_SET.has(doc.document_type)) return true;
-  const ext = doc.file_name?.split('.').pop()?.toLowerCase();
-  return ext ? (ACCEPTED_EXTENSIONS as readonly string[]).includes(ext) : false;
+export const isImagingDocument = (
+  doc: PatientDocumentRead,
+  hasImagingDetail: boolean,
+): boolean => {
+  const type = doc.document_type ?? '';
+  if (IMAGING_CATEGORY_SET.has(type)) return true;
+  return hasImagingDetail && LEGACY_SHARED_SET.has(type);
+};
+
+/** The gallery chip a document files under — legacy generic types fold into "Other Image". */
+export const imagingCategoryOf = (doc: PatientDocumentRead): string => {
+  const type = doc.document_type ?? '';
+  return IMAGING_CATEGORY_SET.has(type) ? type : 'Other Image';
 };
 
 /**

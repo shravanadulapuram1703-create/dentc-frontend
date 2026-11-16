@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { StepSection, TextField, SelectField } from "../stepUi";
 import {
   RESPONSIBLE_PARTY_SOURCES,
+  EXISTING_ACCOUNT_SOURCE,
   LEGACY_RESP_PARTY_TYPES,
   MARITAL_OPTIONS,
   SEX_OPTIONS,
@@ -33,12 +34,27 @@ export interface PatientSnapshot {
   email: string;
 }
 
+/** The account the new patient joins (Overview "Add New Member"). */
+export interface JoinAccountInfo {
+  /** Who is responsible for the account, e.g. "Scott, Wykie". */
+  guarantor_name: string;
+  /** e.g. "Patient ID 132 (Self)" / "RP record 7". */
+  guarantor_detail: string;
+  members: Array<{ name: string; age: string; sex: string; balance: string }>;
+  /** Set while the account is still being looked up. */
+  loading?: boolean;
+  /** Set when the account could not be loaded. */
+  error?: string | null;
+}
+
 interface Props {
   value: ResponsiblePartyForm;
   onChange: (next: ResponsiblePartyForm) => void;
   patient: PatientSnapshot;
   /** Patients already on this account (legacy "Responsible for following Patients"). */
   accountPatients?: Array<{ name: string; age: string; sex: string; balance: string }>;
+  /** When set, "Existing Account" is offered (and preselected by the caller). */
+  joinAccount?: JoinAccountInfo | null;
 }
 
 /**
@@ -47,8 +63,18 @@ interface Props {
  * any other source exposes an editable guarantor form. Billing behaviour toggles,
  * statement message and notes mirror the legacy screen.
  */
-export default function ResponsiblePartyStep({ value, onChange, patient, accountPatients }: Props) {
+export default function ResponsiblePartyStep({
+  value,
+  onChange,
+  patient,
+  accountPatients,
+  joinAccount,
+}: Props) {
   const isSelf = value.rp_source === "Self";
+  const isAccount = value.rp_source === EXISTING_ACCOUNT_SOURCE && Boolean(joinAccount);
+  const sources: string[] = joinAccount
+    ? [EXISTING_ACCOUNT_SOURCE, ...RESPONSIBLE_PARTY_SOURCES]
+    : [...RESPONSIBLE_PARTY_SOURCES];
   const set = (patch: Partial<ResponsiblePartyForm>) => onChange({ ...value, ...patch });
 
   // LEG-11: collection agencies come from the backend lookup.
@@ -107,8 +133,8 @@ export default function ResponsiblePartyStep({ value, onChange, patient, account
       }
     : value;
 
-  const age = (() => {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(shown.dob);
+  const age_of = (dob: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
     if (!m) return "";
     const [, y, mo, d] = m;
     const today = new Date();
@@ -116,7 +142,8 @@ export default function ResponsiblePartyStep({ value, onChange, patient, account
     const md = today.getMonth() + 1 - Number(mo);
     if (md < 0 || (md === 0 && today.getDate() < Number(d))) a--;
     return a >= 0 ? String(a) : "";
-  })();
+  };
+  const age = age_of(shown.dob);
 
   return (
     <div className="space-y-3">
@@ -129,28 +156,34 @@ export default function ResponsiblePartyStep({ value, onChange, patient, account
             // sensible inverse (Parent ⇒ the patient is their Child); the user can
             // still override it below.
             onChange={(v) => set({ rp_source: v, relationship: defaultPatientRelationship(v) })}
-            options={RESPONSIBLE_PARTY_SOURCES.map((t) => ({ value: t, label: t }))}
+            options={sources.map((t) => ({ value: t, label: t }))}
           />
           {!isSelf && (
             <SelectField
               label="Patient's Relationship to Responsible Party"
               value={value.relationship}
               onChange={(v) => set({ relationship: v })}
-              options={["Spouse", "Parent", "Guardian", "Child", "Other"].map((t) => ({
+              options={["Spouse", "Parent", "Guardian", "Child", "Dependent", "Other"].map((t) => ({
                 value: t,
                 label: t,
               }))}
             />
           )}
+          {!isAccount && (
           <SelectField
             label="Resp. Party Type *"
             value={value.resp_party_type}
             onChange={(v) => set({ resp_party_type: v })}
             options={respTypes.map((t) => ({ value: t.code, label: t.label }))}
           />
+          )}
         </div>
       </StepSection>
 
+      {isAccount && joinAccount ? (
+        <JoinAccountCard info={joinAccount} patient={patient} age={age_of(patient.dob)} />
+      ) : (
+      <>
       <StepSection title="Responsible Party / Billing Information">
         {isSelf ? (
           <p className="text-xs text-[#64748B] mb-3">
@@ -334,6 +367,75 @@ export default function ResponsiblePartyStep({ value, onChange, patient, account
           />
         </StepSection>
       </div>
+      </>
+      )}
     </div>
+  );
+}
+
+/** Read-only summary of the account a new member joins. */
+function JoinAccountCard({
+  info,
+  patient,
+  age,
+}: {
+  info: JoinAccountInfo;
+  patient: PatientSnapshot;
+  age: string;
+}) {
+  return (
+    <StepSection title="Joining Existing Account">
+      {info.loading ? (
+        <p className="text-sm text-[#64748B]">Loading account…</p>
+      ) : info.error ? (
+        <p className="text-sm text-[#DC2626]">{info.error}</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-xs text-[#64748B]">Responsible Party</div>
+              <div className="font-semibold text-[#1F3A5F]">{info.guarantor_name || "—"}</div>
+              <div className="text-xs text-[#64748B]">{info.guarantor_detail}</div>
+            </div>
+            <p className="text-xs text-[#64748B] self-center">
+              The new patient is billed to this account: they share its responsible party, balance,
+              statements and ledger. Billing options are managed on the account&apos;s responsible party.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F7F9FC] border-b border-[#E2E8F0]">
+                <tr>
+                  {["Account Member", "Age", "Sex", "Balance"].map((h) => (
+                    <th key={h} className="px-2 py-1.5 text-left font-semibold text-[#1F3A5F] text-xs">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {info.members.map((m, i) => (
+                  <tr key={i} className="border-b border-[#E2E8F0]">
+                    <td className="px-2 py-1.5">{m.name}</td>
+                    <td className="px-2 py-1.5">{m.age}</td>
+                    <td className="px-2 py-1.5">{m.sex}</td>
+                    <td className="px-2 py-1.5">{m.balance}</td>
+                  </tr>
+                ))}
+                <tr className="border-b border-[#E2E8F0] bg-[#E8F0FA]">
+                  <td className="px-2 py-1.5 font-medium text-[#1F3A5F]">
+                    {[patient.last_name, patient.first_name].filter(Boolean).join(", ") || "(new patient)"}{" "}
+                    <span className="text-[10px] text-[#64748B]">(new)</span>
+                  </td>
+                  <td className="px-2 py-1.5">{age || "—"}</td>
+                  <td className="px-2 py-1.5">{patient.sex || "—"}</td>
+                  <td className="px-2 py-1.5">$0.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </StepSection>
   );
 }

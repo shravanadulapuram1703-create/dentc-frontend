@@ -173,6 +173,7 @@ export default function AddProceduresTab({
    * chart's Completed tab and the treatment plan's Post to Ledger create. If a
    * code/tooth is still planned on the treatment plan, that item is completed too.
    * `head` lets the Add Procedure Details pop-up override provider / date.
+   * A multi-tooth pick arrives as one row per tooth → one charge per tooth.
    */
   const postRows = async (rows: PostRow[], head?: Partial<ProcedureDetailsHeader>) => {
     const provider_id = head?.provider_id ?? providerId;
@@ -188,6 +189,9 @@ export default function AddProceduresTab({
     setPosting(true);
     setError(null);
     setNotice(null);
+    // No bulk endpoint (MT-1): charges post one by one, so a failure part-way
+    // leaves the earlier ones posted — say how far it got and refresh the grid.
+    let posted = 0;
     try {
       let completedPlanned = 0;
       let lastHint: string | null = null;
@@ -214,15 +218,19 @@ export default function AddProceduresTab({
           insurance_estimate: priced.insurance_estimate,
           ucr_fee: priced.ucr_fee,
         });
+        posted += 1;
         if (result.plan_item) {
           completedPlanned += 1;
           lastHint = completedPlanHint(r.code.code, result.plan_item_marked);
         }
       }
       setNotice(
-        completedPlanned === 0 ? null
-          : rows.length === 1 ? lastHint
-          : `${completedPlanned} planned procedure(s) on the treatment plan marked completed.`,
+        [
+          rows.length > 1 ? `Posted ${rows.length} procedures.` : null,
+          completedPlanned === 0 ? null
+            : rows.length === 1 ? lastHint
+            : `${completedPlanned} planned procedure(s) on the treatment plan marked completed.`,
+        ].filter(Boolean).join(' ') || null,
       );
       setSelected(null);
       setDetails(null);
@@ -230,7 +238,12 @@ export default function AddProceduresTab({
       onPosted();
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } }; message?: string });
-      setError(detail?.response?.data?.detail || detail?.message || 'Failed to add procedure. Please try again.');
+      const why = detail?.response?.data?.detail || detail?.message || 'Failed to add procedure. Please try again.';
+      const failed = rows[posted];
+      setError(rows.length > 1
+        ? `Posted ${posted} of ${rows.length}; stopped at ${failed?.code.code}${failed?.tooth ? ` tooth ${failed.tooth}` : ''}: ${why}`
+        : why);
+      if (posted > 0) onPosted();
     } finally {
       setPosting(false);
     }

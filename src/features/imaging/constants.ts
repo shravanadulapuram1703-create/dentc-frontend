@@ -1,6 +1,12 @@
 /**
  * Imaging categories stored on `patient_document.document_type`. Configurable
  * here — adding a value makes it selectable on upload and as a gallery filter.
+ *
+ * These values are ALSO how the gallery decides a document belongs to Imaging
+ * (IMG-DOC-1: `patient-documents` is shared by Documents, Notes, Letters,
+ * Patient Photo, Restorative, Treatment Plans… and has no owner/source column).
+ * So every value here must be unique to Imaging — never reuse a label another
+ * screen uploads with (e.g. "Other", "X-Ray / Radiograph", "XR").
  */
 export const IMAGING_CATEGORIES = [
   'X-Ray',
@@ -9,16 +15,19 @@ export const IMAGING_CATEGORIES = [
   'Periapical',
   'Intraoral Photo',
   'Treatment Photo',
-  'Document',
-  'Other',
+  'Other Image',
 ] as const;
 
 export type ImagingCategory = (typeof IMAGING_CATEGORIES)[number];
 
 export const DEFAULT_CATEGORY: ImagingCategory = 'X-Ray';
 
-/** A document counts as an "image" for the gallery when its content type starts with this. */
-export const IMAGE_CONTENT_PREFIX = 'image/';
+/**
+ * Generic categories older Imaging uploads used. They collide with other
+ * screens' document types, so a row with one of these only counts as an
+ * Imaging image when Imaging also holds an `image-details` row for it.
+ */
+export const LEGACY_SHARED_IMAGING_CATEGORIES = ['Other', 'Document'] as const;
 
 /** Mirror of the 10 MB cap used by Patient Documents. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;

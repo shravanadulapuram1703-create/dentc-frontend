@@ -7,6 +7,7 @@
  */
 import type { AccountBalanceMember } from './accountBalanceMember';
 import type { BalanceAging } from './balanceAging';
+import type { Guarantor } from './guarantor';
 
 /**
  * AL-11: the legacy BALANCES table — the aggregate row plus one row per member.
@@ -14,6 +15,9 @@ import type { BalanceAging } from './balanceAging';
 export interface AccountBalance {
   patient_id: number;
   responsible_party_id?: string | null;
+  account_id?: number | null;
+  account_no?: string | null;
+  guarantor?: Guarantor | null;
   member_count: number;
   total_charged: number;
   total_paid: number;

@@ -12,7 +12,7 @@ export interface BodyUploadPatientDocument {
   office_id?: number | null;
   document_type?: string | null;
   description?: string | null;
-  /** Which screen the file is attached to, e.g. 'note'. Decides the storage folder; see GET /patient-documents/limits for the list. */
+  /** IMG-DOC-1: the owning module (documents, imaging, note, patient_photo, letter, consent, progress_note, restorative, treatment_plan). Stored on the row and decides the storage folder; inferred from document_type when omitted. See GET /patient-documents/limits. */
   context?: string | null;
   /** PROC-7c: the posted procedure this document supports (must belong to patient_id; 422 document_procedure_mismatch otherwise) */
   procedure_id?: string | null;

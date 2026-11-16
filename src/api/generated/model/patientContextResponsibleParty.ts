@@ -11,6 +11,7 @@
  */
 export interface PatientContextResponsibleParty {
   id: number;
+  kind?: string | null;
   legacy_id?: string | null;
   name?: string | null;
   relationship?: string | null;

@@ -134,6 +134,9 @@ export interface Appointment {
    *  only (not Medical History "yes" answers) — gap MA-1 — so the UI ORs it
    *  with the per-patient summary from patientMedicalAlerts.ts. */
   has_alert?: boolean;
+  /** Feed `insurance_eligibility` — best active subscriber elig_status. Null
+   *  does NOT mean cash-pay (see features/patient-insurance/coverageKind.ts). */
+  insurance_eligibility?: "eligible" | "ineligible" | "unknown" | null;
   /** Server-owned status timestamps (set by PATCH /appointments/{id}/status). */
   confirmed_on?: string | null;
   checked_in_on?: string | null;
@@ -444,6 +447,7 @@ const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
   cancelled: a.is_cancelled ?? undefined,
   is_blocked: a.is_blocked ?? undefined,
   has_alert: a.has_alert === true ? true : undefined,
+  insurance_eligibility: a.insurance_eligibility ?? null,
   confirmed_on: a.confirmed_on ?? null,
   checked_in_on: a.checked_in_on ?? null,
   checked_out_on: a.checked_out_on ?? null,

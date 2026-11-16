@@ -7,11 +7,14 @@
  */
 import type { RegisteredInsuranceRead } from './registeredInsuranceRead';
 import type { RegisterResponseContradictionsItem } from './registerResponseContradictionsItem';
+import type { RegisterResponseGuarantor } from './registerResponseGuarantor';
 
 export interface RegisterResponse {
   patient_id: number;
   chart_no?: string | null;
   responsible_party_id?: string | null;
+  account_id?: number | null;
+  guarantor?: RegisterResponseGuarantor;
   medical_alert_ids?: number[];
   questionnaire_response_ids?: number[];
   recall_ids?: number[];

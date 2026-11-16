@@ -6,6 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * OFF-QA-13: an office that never saved its week reads the default grid
+ * without a row being written, so ``id``/``created_at`` are null until saved.
+ */
 export interface OfficeScheduleDayRead {
   tenant_id: number;
   office_id: number;
@@ -15,6 +19,6 @@ export interface OfficeScheduleDayRead {
   end_time?: string | null;
   lunch_start?: string | null;
   lunch_end?: string | null;
-  id: number;
-  created_at: string;
+  id?: number | null;
+  created_at?: string | null;
 }

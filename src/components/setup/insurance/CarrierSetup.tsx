@@ -419,7 +419,7 @@ export default function CarrierSetup({ variant }: { variant: CarrierVariant }) {
           </div>
 
           {/* Form */}
-          <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="p-6 max-h-[calc(calc(var(--vh)*100)-200px)] overflow-y-auto">
             <CarrierFormFields
               form={form}
               updateForm={updateForm}

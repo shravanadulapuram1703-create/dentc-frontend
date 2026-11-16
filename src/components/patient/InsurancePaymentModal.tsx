@@ -383,7 +383,7 @@ export default function InsurancePaymentModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded shadow-2xl w-full max-w-[1200px] max-h-[94vh] flex flex-col border-2 border-[#E2E8F0]">
+      <div className="bg-white rounded shadow-2xl w-full max-w-[1200px] max-h-[calc(var(--vh)*94)] flex flex-col border-2 border-[#E2E8F0]">
         {/* Title bar */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-4 py-2 flex items-center justify-between rounded-t">
           <h2 className="text-sm font-bold text-white uppercase tracking-wide">Insurance Payment</h2>

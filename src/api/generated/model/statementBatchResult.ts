@@ -10,6 +10,7 @@ import type { StatementRead } from './statementRead';
 export interface StatementBatchResult {
   office_id: number;
   batch_id: string;
+  scope?: string;
   generated: number;
   statements: StatementRead[];
 }

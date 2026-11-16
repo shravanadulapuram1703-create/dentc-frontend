@@ -3,8 +3,56 @@
 **Module:** AppointNow (public online booking `/book/:office_code` + staff inbox `/appointnow/requests`)
 **Frontend:** `src/features/appointnow/**` · transport flag `VITE_APPOINTNOW_BACKEND` (`api` = real backend, **now the default** · `local` = single-browser demo simulation)
 **Backend:** `app/api/v1/appointnow.py` · `app/services/appointnow_service.py` · tables `booking_requests`, `appointnow_reasons` (migration `b3c4d5e6f7a8`)
-**Status date:** 2026-09-12
+**Status date:** 2026-11-16 (round 4: §0b approve-without-patient)
 **Verified against:** local backend `127.0.0.1:8000` and the deployed Cloud Run backend used by `https://reckondental.com`
+
+---
+
+## 0b. Round 4 — approved requests booked WITHOUT a patient (2026-11-16)
+
+**Defect (UAT):** a new patient books through `/book/:office_code`, staff **Approve** the request, the
+appointment appears on the Scheduler — but opening it shows *"Could not load this patient's details:
+This patient has no backend id — demographics could not be loaded."* Name, DOB, phone and e-mail are
+blank; nothing was stored as a patient.
+
+**Root cause.** `POST /api/v1/appointnow/requests/{id}/approve` takes `patient_id` **or**
+`create_patient: true` (`ApproveInput`). The frontend sent neither, and the backend's default
+(`create_patient = false`, `_resolve_patient_for_booking`) books the appointment with
+`appointments.patient_id = NULL` and only copies the contact into the appointment **notes**. Every
+approved AppointNow request so far is therefore an appointment with no patient.
+
+### Frontend fix (shipped in this branch)
+
+| Change | Where |
+|--------|-------|
+| On Approve the client first registers the contact as a patient **exactly like the Scheduler's Quick Save**: `POST /patients/register` with first/last name, DOB, e-mail, phone → `cell_phone`, `home_office_id` = request office, `patient_type: General`. A 409 `duplicate_patient` asks staff "book for this existing patient (OK) / create a separate one (Cancel → `force_create`)". Then approve is sent with the explicit `patient_id`, which the server links to both the appointment and the request. | `src/features/appointnow/patientFromRequest.ts`, `AppointNowContext.approve` |
+| A patient created for a request whose approve then fails (409 `slot_conflict`) is reused on retry — never created twice (in-session cache). | `AppointNowContext` |
+| Approved cards show **Patient #id** (link to the chart). An approved card with no patient shows an amber **Create & link patient** repair button. | `RequestInbox.tsx` |
+| Opening an AppointNow appointment that has no patient (note contains `AppointNow request <id>`) shows an amber banner with **Create & link patient**: reads the request (`GET /appointnow/requests/{id}`), registers/matches the contact, `PATCH /appointments/{id} {patient_id}`, reloads demographics. Idempotent (re-uses a patient already on the appointment or request). | `AddEditAppointmentForm.tsx` |
+| Non-AppointNow appointments with no patient now say "This appointment is not linked to a patient record" instead of the misleading "no backend id". | `AddEditAppointmentForm.tsx` |
+
+Why not just send `create_patient: true`: see AN-31 — the server path auto-links on a phone **or**
+e-mail match alone and offers staff no choice on a duplicate.
+
+### Backend gaps (please action)
+
+| # | Gap | Severity | Ask |
+|---|-----|----------|-----|
+| **AN-30** | No way to link a patient to a request **after** it was approved. `booking_requests.patient_id` is only set inside approve. The frontend repair can PATCH `appointments.patient_id`, but the request row stays `patient_id: null` (the inbox card falls back to "unlinked" after a refresh). | High | `POST /appointnow/requests/{id}/link-patient {patient_id}` — sets `booking_requests.patient_id` **and** `appointments.patient_id` in one transaction; 409 if the appointment already has a different patient. |
+| **AN-31** | `create_patient: true` (`_resolve_patient_for_booking`): (a) `find_patient_matches` links the single patient matching the **phone OR e-mail alone** — a parent's phone/e-mail on a child's request silently books the parent; (b) writes the number to `phone` (home) not `cell_phone`, although the public consent text says it is the textable number; (c) a strong duplicate from `PatientCRUD.create` comes back as a bare 409 `duplicate_patient` — `ApproveInput` has no `force_create`, so staff cannot say "create anyway"; (d) `PatientCRUD.create` commits **inside** `book_request`, so a later failure in approve leaves the patient committed. | High | Reuse the registration identity rule (`_is_strong`: full name + DOB/phone/email) instead of phone-or-email; map phone → `cell_phone`; add `force_create` to `ApproveInput` and return the same `error.details.candidates[]` 409 as `/patients/register`; create the patient without an intermediate commit. Once done the frontend can drop its two-call flow and send `create_patient: true`. |
+| **AN-32** | Approve with neither `patient_id` nor `create_patient` silently books `patient_id = NULL`. A patient-less appointment breaks the Scheduler block (no name), the appointment form, the ledger/charting hand-offs and reminders. | High | Either default `create_patient` to `true`, or refuse with 422 `patient_required` (code + message) so no client can book a phantom again. |
+| **AN-33** | **Data backfill.** Every request approved before this fix is an appointment with `patient_id NULL` and its contact only in `appointments.notes` (`AppointNow request <id>` / `Contact:` / `Phone:` / `Email:`). | Medium | One-off script: for `booking_requests` with `status='approved' AND patient_id IS NULL`, list them (office, appointment, contact) for review, then register/match + link (AN-30 logic). Frontend repair button covers them one at a time meanwhile. Query: `SELECT r.id, r.office_id, r.appointment_id, r.first_name, r.last_name, r.date_of_birth FROM booking_requests r JOIN appointments a ON a.id = r.appointment_id WHERE r.status='approved' AND a.patient_id IS NULL;` |
+| **AN-34** | Two-call approve is not atomic: register (call 1) succeeds, approve (call 2) fails on `slot_conflict` → a patient exists without an appointment. The frontend reuses it on retry in the same session only. | Medium | Covered by AN-31 (server creates inside the approve transaction). Alternative: accept an inline `patient: PatientCreate` + `force_create` on `ApproveInput`. |
+| **AN-35** | Request data that never reaches the patient: `insurance_info` (free text) and the request `notes` live only on the request/appointment note; `is_new_patient=false` ("existing patient") requests still go through register, where only a *strong* match (full name + DOB/phone/e-mail) is offered — a typo in the name creates a duplicate. | Low | Product call: store `insurance_info` as a patient note on create; for `is_new_patient=false`, expose `GET /appointnow/requests/{id}/patient-matches` ranking (exists) with the same `match_on` scoring as `/patients/check-duplicate` so the inbox can offer a pick list (AN-22 UI). |
+
+### UI conflicts / gaps (frontend, not blocking)
+
+| # | Gap |
+|---|-----|
+| AN-UI-1 | Duplicate prompt is a `window.confirm` (same as Quick Save, intentional parity). A proper "Identical Patients Found" modal (the Add Patient one) would let staff compare more than the top candidate. |
+| AN-UI-2 | Approve now creates a patient with only name/DOB/e-mail/cell — responsible party, address, medical history, insurance are not captured (same as Quick Save). Staff complete them via **Patient Information** on the appointment. |
+| AN-UI-3 | Repair link on the inbox card is lost on refresh until AN-30 (request row stays unlinked); the appointment itself stays linked. |
+| AN-UI-4 | Not live-verified end-to-end against the shared UAT DB (would create real patients/appointments there); `tsc -b` + ESLint clean. |
 
 ---
 

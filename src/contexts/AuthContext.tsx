@@ -83,6 +83,12 @@ interface User {
   /** `MeFull.provider_id` — the provider record linked to this user, if any. */
   provider_id?: string | null;
   groups?: string[];
+  /**
+   * `MeFull.can_reset_user_passwords` (PWD-RBAC-2) — may reset ANOTHER user's
+   * password in Setup → Security → Users. `null` when absent from the payload
+   * (then `passwordAccess.ts` falls back to the admin role list).
+   */
+  can_reset_user_passwords?: boolean | null;
 }
 
 interface ActivePatient {
@@ -151,6 +157,7 @@ function buildAuthState(me: MeFull): {
     permissions_enforced: me.permissions_enforced ?? false,
     provider_id: me.provider_id ?? null,
     groups: me.groups ?? [],
+    can_reset_user_passwords: me.can_reset_user_passwords ?? null,
   };
 
   const organizations: Organization[] = me.tenant

@@ -1,25 +1,29 @@
-// Patient → Messages: the SMS inbox for one patient (/patient/:id/messages).
+// Patient → Messages: ONE window for texting and e-mailing a patient
+// (/patient/:id/messages). Replaces the separate "Messages" + "SMS/Email" tabs.
 //
-// Three panes: contact/filters/appointments rail · conversation thread with
-// composer · details pane for the selected text. Backed by
-// /api/v1/sms-messages through usePatientSms; appointment reminders and
-// confirmation requests are one click from the rail.
+// Three panes: contact/filters/appointments rail · message history (text +
+// e-mail, NEWEST FIRST) with the composer under it · details pane for the
+// selected text. The composer's Send asks "Text message (SMS)" or "Email".
+// Backed by /api/v1/sms-messages (usePatientSms) and /api/v1/email-messages +
+// /api/v1/email/send (usePatientEmail).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useOutletContext, useSearchParams } from "react-router-dom";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { CheckCheck, FlaskConical, MessageCircle, RefreshCw, Search, TableProperties } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { CheckCheck, FlaskConical, Mail, MessageCircle, MessageSquare, RefreshCw, Search, ServerOff, TableProperties } from "lucide-react";
 import { cn } from "@/components/ui/utils";
 import { usePatientOffice } from "@/features/office-scope";
-import { applyFilter, type SmsEntry, type SmsFilter } from "./smsModel";
+import { applyFilter, type SmsFilter } from "./smsModel";
+import { applyEmailFilter } from "./emailModel";
 import { BUILTIN_TEMPLATES } from "./smsTemplates";
 import { usePatientSms } from "./hooks/usePatientSms";
+import { usePatientEmail } from "./hooks/usePatientEmail";
 import { useFillHeight } from "./hooks/useFillHeight";
 import { useSmsMergeContext, type AppointmentOption } from "./hooks/useSmsMergeContext";
 import SmsSidebar from "./components/SmsSidebar";
-import SmsThread from "./components/SmsThread";
-import SmsComposer, { type ComposerHandle, type ComposerSubmit } from "./components/SmsComposer";
+import MessageHistory from "./components/MessageHistory";
+import { buildHistory, type HistoryItem } from "./messageHistory";
+import SmsComposer, { type ComposerHandle, type ComposerSubmit, type EmailComposerSubmit } from "./components/SmsComposer";
 import SmsDetailsPanel from "./components/SmsDetailsPanel";
 import SmsModeBanner from "./components/SmsModeBanner";
 
@@ -40,6 +44,8 @@ const VALID_FILTERS: SmsFilter[] = [
   "failed",
 ];
 
+type Channel = "all" | "sms" | "email";
+
 export default function PatientMessagesPage() {
   const { patient: shellPatient } = useOutletContext<OutletContext>();
   const navigate = useNavigate();
@@ -48,6 +54,7 @@ export default function PatientMessagesPage() {
   const [params, setParams] = useSearchParams();
 
   const sms = usePatientSms(patient_id);
+  const email = usePatientEmail(patient_id);
   const fill = useFillHeight();
   const merge = useSmsMergeContext(patient_id, office_hint);
 
@@ -55,11 +62,20 @@ export default function PatientMessagesPage() {
   const [filter, setFilter] = useState<SmsFilter>(
     initialFilter && VALID_FILTERS.includes(initialFilter) ? initialFilter : "all",
   );
+  const [channel, setChannel] = useState<Channel>("all");
   const [search, setSearch] = useState("");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const composerRef = useRef<ComposerHandle>(null);
 
-  const visible = useMemo(() => applyFilter(sms.entries, filter, search), [sms.entries, filter, search]);
+  const history = useMemo(
+    () =>
+      buildHistory(
+        channel === "email" ? [] : applyFilter(sms.entries, filter, search),
+        channel === "sms" ? [] : applyEmailFilter(email.entries, filter, search),
+      ),
+    [sms.entries, email.entries, filter, search, channel],
+  );
+  const total = sms.entries.length + email.entries.length;
   const selected = useMemo(() => sms.entries.find((e) => e.key === selectedKey) ?? null, [sms.entries, selectedKey]);
 
   // Keep the filter in the URL so the log page can deep-link ("?filter=unread").
@@ -71,6 +87,7 @@ export default function PatientMessagesPage() {
   }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const office_id = merge.office?.id ?? office_hint;
+  const email_address = merge.patient?.email?.trim() || null;
 
   const handleSend = useCallback(
     async (payload: ComposerSubmit) => {
@@ -84,6 +101,17 @@ export default function PatientMessagesPage() {
     [sms, office_id],
   );
 
+  const handleSendEmail = useCallback(
+    async (payload: EmailComposerSubmit) => {
+      const row = await email.send({ ...payload, office_id });
+      if (row) {
+        if (email.capability === "log_only") toast.warning("Saved to the email log as Queued — the email gateway (SendGrid) is not configured.");
+        else toast.success("Email sent");
+      }
+    },
+    [email, office_id],
+  );
+
   const quickTemplate = (id: string, appt: AppointmentOption) => {
     const t = BUILTIN_TEMPLATES.find((x) => x.id === id);
     if (!t) return;
@@ -91,34 +119,64 @@ export default function PatientMessagesPage() {
     toast.info(`${t.name} loaded — review and press Send.`);
   };
 
-  const handleRetry = (entry: SmsEntry) => {
-    composerRef.current?.setBody(entry.body);
+  const handleRetry = (item: HistoryItem) => {
+    composerRef.current?.setBody(item.channel === "sms" ? item.sms.body : item.email.body);
     composerRef.current?.focus();
-    sms.dismissFailed(entry.key);
+    handleDismiss(item);
+  };
+
+  const handleDismiss = (item: HistoryItem) => {
+    if (item.channel === "sms") sms.dismissFailed(item.sms.key);
+    else email.dismissFailed(item.email.key);
   };
 
   return (
     <div ref={fill.ref} style={fill.style} className="min-h-[520px] bg-[#F7F9FC]">
       <div className="flex h-full flex-col overflow-hidden border-t border-slate-200 bg-white">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 text-white shadow">
             <MessageCircle className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-sm font-bold text-slate-900">Text messages</h1>
+            <h1 className="text-sm font-bold text-slate-900">Messages</h1>
             <p className="truncate text-[11px] text-slate-500">
-              Two-way SMS with {shellPatient.name}
+              Text &amp; email with {shellPatient.name}
               {merge.office?.name ? ` · from ${merge.office.name}` : ""}
             </p>
           </div>
 
-          <div className="relative ml-4 hidden max-w-xs flex-1 md:block">
+          <div className="ml-2 flex rounded-lg bg-slate-100 p-0.5" role="tablist" aria-label="Channel">
+            {(
+              [
+                { id: "all", label: "All", icon: MessageCircle, count: total },
+                { id: "sms", label: "Text", icon: MessageSquare, count: sms.entries.length },
+                { id: "email", label: "Email", icon: Mail, count: email.entries.length },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={channel === t.id}
+                onClick={() => setChannel(t.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-all",
+                  channel === t.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800",
+                )}
+              >
+                <t.icon className="h-3.5 w-3.5" /> {t.label}
+                <span className="rounded-full bg-slate-200 px-1.5 text-[10px] tabular-nums text-slate-600">{t.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="relative hidden max-w-xs flex-1 md:block">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search this conversation"
+              placeholder="Search messages"
               className="h-8 w-full rounded-md border border-slate-300 bg-white pl-8 pr-3 text-xs focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -145,17 +203,17 @@ export default function PatientMessagesPage() {
             )}
             <button
               type="button"
-              onClick={() => void sms.refetch()}
-              className={cn("inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50")}
+              onClick={() => void Promise.all([sms.refetch(), email.refetch()])}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
               title="Refresh now (auto-refreshes every 15s)"
             >
-              <RefreshCw className={cn("h-3.5 w-3.5", sms.isFetching && "animate-spin")} /> Refresh
+              <RefreshCw className={cn("h-3.5 w-3.5", (sms.isFetching || email.isFetching) && "animate-spin")} /> Refresh
             </button>
             <button
               type="button"
               onClick={() => navigate(`/patient/${shellPatient.id}/communication`)}
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-              title="Open the SMS/Email log"
+              title="Open the SMS/Email log table (filters, CSV export)"
             >
               <TableProperties className="h-3.5 w-3.5" /> Log view
             </button>
@@ -163,6 +221,15 @@ export default function PatientMessagesPage() {
         </div>
 
         <SmsModeBanner mode={sms.mode} capability={sms.capability} />
+        {email.capability === "log_only" && (
+          <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-[11px] text-amber-800">
+            <ServerOff className="h-3.5 w-3.5" />
+            <span>
+              <b>Email gateway not configured</b> — emails are saved to the log as <i>Queued</i> and will not reach the
+              patient until SendGrid is set up on the server.
+            </span>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex min-h-0 flex-1">
@@ -178,44 +245,51 @@ export default function PatientMessagesPage() {
           />
 
           <section className="flex min-w-0 flex-1 flex-col bg-[#F7F9FC]">
-            {filter !== "all" || search ? (
-              <div className="flex items-center gap-2 border-b border-slate-200 bg-blue-50/60 px-4 py-1.5 text-[11px] text-blue-800">
-                Showing {visible.length} of {sms.entries.length}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilter("all");
-                    setSearch("");
-                  }}
-                  className="font-semibold hover:underline"
-                >
-                  Clear
-                </button>
-              </div>
-            ) : null}
-            <div className="flex min-h-0 flex-1 flex-col">
-              {sms.error ? (
-                <div className="m-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                  Could not load the SMS log. {String((sms.error as Error).message ?? "")}
-                </div>
-              ) : (
-                <SmsThread
-                  entries={visible}
-                  loading={sms.isLoading}
-                  selectedKey={selectedKey}
-                  onSelect={(e) => setSelectedKey(e.key === selectedKey ? null : e.key)}
-                  onRetry={handleRetry}
-                  onDismiss={(e) => sms.dismissFailed(e.key)}
-                  onMarkRead={(e) => {
-                    if (e.row_id > 0) void sms.markRead(e.row_id, true);
-                  }}
-                  emptyHint={
-                    filter === "all" && !search
-                      ? "Send a reminder from the appointments on the left, or type a message below. Replies from the patient show up here automatically."
-                      : "Nothing matches this filter."
-                  }
-                />
+            <div className="flex items-center gap-2 border-b border-slate-200 bg-white/70 px-4 py-1.5 text-[11px] text-slate-500">
+              <span className="font-semibold uppercase tracking-wide">Message history</span>
+              <span>· newest first</span>
+              {(filter !== "all" || search || channel !== "all") && (
+                <>
+                  <span className="text-blue-800">
+                    · showing {history.length} of {total}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter("all");
+                      setSearch("");
+                      setChannel("all");
+                    }}
+                    className="font-semibold text-blue-700 hover:underline"
+                  >
+                    Clear
+                  </button>
+                </>
               )}
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col">
+              {sms.error || email.error ? (
+                <div className="m-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                  {sms.error && <div>Could not load the SMS log. {String((sms.error as Error).message ?? "")}</div>}
+                  {email.error && <div>Could not load the email log. {String((email.error as Error).message ?? "")}</div>}
+                </div>
+              ) : null}
+              <MessageHistory
+                items={history}
+                loading={sms.isLoading || email.isLoading}
+                selectedKey={selectedKey}
+                onSelectSms={(e) => setSelectedKey(e.key === selectedKey ? null : e.key)}
+                onMarkRead={(e) => {
+                  if (e.row_id > 0) void sms.markRead(e.row_id, true);
+                }}
+                onRetry={handleRetry}
+                onDismiss={handleDismiss}
+                emptyHint={
+                  filter === "all" && !search && channel === "all"
+                    ? "Type a message below (or pick a template) and press Send to text or email the patient. Replies show up here automatically."
+                    : "Nothing matches this filter."
+                }
+              />
             </div>
             <SmsComposer
               ref={composerRef}
@@ -226,6 +300,13 @@ export default function PatientMessagesPage() {
               capability={sms.capability}
               sending={sms.sending}
               onSend={handleSend}
+              email={{
+                address: email_address,
+                opted_out: !!merge.patient?.no_auto_email,
+                capability: email.capability,
+                sending: email.sending,
+                onSend: handleSendEmail,
+              }}
             />
           </section>
 

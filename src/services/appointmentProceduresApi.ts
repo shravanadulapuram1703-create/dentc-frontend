@@ -170,3 +170,48 @@ export const syncAppointmentProcedures = async (
   );
   return saved;
 };
+
+/**
+ * Scheduler Copy → Paste: duplicate every live procedure line of `sourceId`
+ * onto the freshly created appointment `targetId`.
+ *
+ * Copies come over as planned work ("TP") — a completed line on the source
+ * must not reappear as completed on a new visit — and WITHOUT their
+ * treatment-plan link, so one plan item is never scheduled twice. Fees and
+ * estimates are the source's snapshot (no server re-price on copy — gap
+ * SCHED-CCP-3). Returns how many lines were copied and how many failed.
+ */
+export const copyAppointmentProcedures = async (
+  sourceId: string,
+  targetId: string,
+): Promise<{ copied: number; failed: number }> => {
+  const res = await listAppointmentProcedures({
+    appointment_id: sourceId,
+    ...PAGE,
+  });
+  const live = (res.items ?? []).filter((p) => !p.is_archived);
+  const results = await Promise.allSettled(
+    live.map((p) =>
+      createAppointmentProcedure({
+        appointment_id: targetId,
+        procedure_code: p.procedure_code,
+        provider_id: p.provider_id ?? null,
+        tooth: p.tooth ?? null,
+        surface: p.surface ?? null,
+        description: p.description ?? null,
+        fee: p.fee ?? null,
+        insurance_estimate: p.insurance_estimate ?? null,
+        est_patient: p.est_patient ?? null,
+        billing_order: p.billing_order ?? null,
+        status: "TP",
+        duration_minutes: p.duration_minutes ?? null,
+        provider_units: p.provider_units ?? null,
+        bill_to: p.bill_to ?? null,
+        material_id: p.material_id ?? null,
+        notes: p.notes ?? null,
+      }),
+    ),
+  );
+  const failed = results.filter((r) => r.status === "rejected").length;
+  return { copied: results.length - failed, failed };
+};

@@ -25,7 +25,11 @@ import {
   importOfficeFederalHolidays as genImportOfficeFederalHolidays,
   createOfficeHolidayRange as genCreateOfficeHolidayRange,
 } from "@/api/generated/endpoints/office-setup/office-setup";
-import type { AccountHolidayRead } from "@/api/generated/model";
+import type {
+  AccountHolidayCreateHolidayType,
+  AccountHolidayCreateStatus,
+  AccountHolidayRead,
+} from "@/api/generated/model";
 
 /** Row shape consumed by HolidaysTab (snake_case, mirrors the account family). */
 export type OfficeHolidayApiRow = {
@@ -58,7 +62,13 @@ export async function createOfficeHoliday(
   officeId: number,
   body: { holiday_date: string; holiday_name: string; status: string; holiday_type: string; is_recurring: boolean }
 ) {
-  return genCreateOfficeHoliday(officeId, body);
+  // Server enums are UPPERCASE (status CLOSED | OPEN | HALF_DAY, holiday_type FEDERAL | CUSTOM);
+  // the UI options already use those values.
+  return genCreateOfficeHoliday(officeId, {
+    ...body,
+    status: body.status.toUpperCase() as AccountHolidayCreateStatus,
+    holiday_type: body.holiday_type.toUpperCase() as AccountHolidayCreateHolidayType,
+  });
 }
 
 export async function updateOfficeHoliday(

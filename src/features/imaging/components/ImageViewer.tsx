@@ -12,6 +12,7 @@ import {
 import type { GalleryImage } from '../types';
 import { fileHref } from '../utils/imageFilters';
 import { parseTeeth } from '../utils/toothCodes';
+import { toLayoutPx } from '@/utils/uiZoom';
 
 interface ImageViewerProps {
   image: GalleryImage;
@@ -145,8 +146,8 @@ export default function ImageViewer({ image, onClose, onAssociate }: ImageViewer
   const onPointerMove = (e: React.PointerEvent) => {
     const drag = dragRef.current;
     if (!drag.active) return;
-    const dx = e.clientX - drag.startX;
-    const dy = e.clientY - drag.startY;
+    const dx = toLayoutPx(e.clientX - drag.startX);
+    const dy = toLayoutPx(e.clientY - drag.startY);
     txRef.current = drag.baseX + dx;
     tyRef.current = drag.baseY + dy;
     if (rafRef.current == null) {

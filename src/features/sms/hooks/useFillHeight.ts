@@ -3,6 +3,7 @@
 // patient header + secondary nav above it happen to be.
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { toLayoutPx, viewportHeight } from "@/utils/uiZoom";
 
 export function useFillHeight(min = 520) {
   const ref = useRef<HTMLDivElement>(null);
@@ -12,8 +13,8 @@ export function useFillHeight(min = 520) {
     const el = ref.current;
     if (!el) return;
     const measure = () => {
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      setHeight(Math.max(min, window.innerHeight - top));
+      const top = toLayoutPx(el.getBoundingClientRect().top + window.scrollY);
+      setHeight(Math.max(min, viewportHeight() - top));
     };
     measure();
     window.addEventListener("resize", measure);

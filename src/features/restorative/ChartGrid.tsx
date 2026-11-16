@@ -37,7 +37,7 @@ export default function ChartGrid({ rows, selectedRowId, onSelectRow, onRowDoubl
   // never clipped.
   const box: React.CSSProperties = fill
     ? { height: '100%', minHeight: 0 }
-    : { height: maxHeightPx, minHeight: 96, maxHeight: '70vh', resize: 'vertical' };
+    : { height: maxHeightPx, minHeight: 96, maxHeight: 'calc(var(--vh) * 70)', resize: 'vertical' };
   return (
     <div className="overflow-auto border-t border-slate-300 bg-white" style={box}>
       <table className="w-full border-collapse text-xs">

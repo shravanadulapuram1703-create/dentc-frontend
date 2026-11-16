@@ -107,7 +107,11 @@ export default function PatientOverviewPage() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           <PatientInformationPanel data={data} on_edit={() => set_show_edit_patient(true)} />
           <div className="space-y-3">
-            <ResponsiblePartyPanel data={data} on_edit={() => set_show_edit_rp(true)} />
+            <ResponsiblePartyPanel
+              data={data}
+              on_edit={() => set_show_edit_rp(true)}
+              on_edit_patient={() => set_show_edit_patient(true)}
+            />
             <InsurancePanel data={data} patient_id={patient_id} />
           </div>
         </div>
@@ -117,12 +121,10 @@ export default function PatientOverviewPage() {
           data={data}
           patient_id={patient_id}
           on_add_member={() => {
-            // Legacy opens Add Patient with the account's guarantor preselected;
-            // the id is carried in the URL for the wizard to pick up.
-            const rp = data.responsible_party_id_raw;
-            navigate(
-              rp ? `/patient/new?responsible_party_id=${encodeURIComponent(rp)}` : "/patient/new",
-            );
+            // Legacy opens Add Patient with the account preselected. The wizard
+            // resolves this patient's account (Responsible Party step →
+            // "Existing Account") and links the new patient to it on Finish.
+            navigate(`/patient/new?account_of=${patient_id}`);
           }}
         />
 

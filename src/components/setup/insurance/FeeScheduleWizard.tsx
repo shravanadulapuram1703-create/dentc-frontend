@@ -675,7 +675,7 @@ function ClearFilters({ onClick }: { onClick: () => void }) {
 function SelectTable({ head, children, footer }: { head: ReactNode; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="border-2 border-[#E2E8F0] rounded-lg overflow-hidden">
-      <div className="max-h-[48vh] overflow-auto">
+      <div className="max-h-[calc(var(--vh)*48)] overflow-auto">
         <table className="w-full text-sm">
           <thead className="bg-[#3A6EA5] text-white sticky top-0 z-10">{head}</thead>
           <tbody className="divide-y divide-[#EEF2F7]">{children}</tbody>

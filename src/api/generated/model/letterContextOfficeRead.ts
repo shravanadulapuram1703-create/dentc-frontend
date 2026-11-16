@@ -46,6 +46,9 @@ export interface LetterContextOfficeRead {
   treatment_zip?: string | null;
   appointnow_requires_payment: boolean;
   appointnow_payment_amount?: string | null;
+  deleted_at?: string | null;
+  deleted_by?: number | null;
+  deleted_operatory_ids?: unknown | null;
   id: number;
   created_at: string;
   updated_at?: string | null;
