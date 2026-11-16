@@ -12,6 +12,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import { isValidEmail } from "@/utils/email";
 import { components } from "../../../../styles/theme";
 import {
   fetchOfficeIntegrations,
@@ -194,6 +195,22 @@ export default function IntegrationTab({ officeId }: IntegrationTabProps) {
   };
 
   const handleSave = async () => {
+    // The backend stores these verbatim (no email/URL validation), and the URLs
+    // end up as links — only allow http(s).
+    if (form.service_email && !isValidEmail(form.service_email)) {
+      toast.error("Enter a valid service email address");
+      return;
+    }
+    const badUrl = (
+      [
+        ["Patient Communication URL", form.patient_comm_url],
+        ["Patient Portal URL", form.patient_portal_url],
+      ] as const
+    ).find(([, url]) => url && !/^https?:\/\/[^\s]+$/i.test(url.trim()));
+    if (badUrl) {
+      toast.error(`${badUrl[0]} must start with http:// or https://`);
+      return;
+    }
     setSaving(true);
     try {
       const body: OfficeIntegrationsUpdate = {

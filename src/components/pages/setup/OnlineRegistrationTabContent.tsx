@@ -383,7 +383,7 @@ export function OnlineRegistrationTabContent({ accountId }: OnlineRegistrationTa
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[calc(var(--vh)*90)] overflow-hidden flex flex-col">
             <div className="bg-[#3A6EA5] text-white px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">Patient View Preview</h3>
               <button

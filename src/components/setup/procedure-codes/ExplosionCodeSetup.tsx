@@ -414,7 +414,7 @@ export default function ExplosionCodeSetup() {
           </div>
 
           {/* Body */}
-          <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto space-y-8">
+          <div className="p-6 max-h-[calc(calc(var(--vh)*100)-200px)] overflow-y-auto space-y-8">
             {/* Explosion code info */}
             <section>
               <h3 className="text-sm font-bold text-[#1F3A5F] uppercase tracking-wide mb-3">

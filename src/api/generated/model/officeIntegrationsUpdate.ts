@@ -8,7 +8,6 @@
 
 export interface OfficeIntegrationsUpdate {
   service_email?: string | null;
-  service_email_verified?: boolean | null;
   ai_assist_enabled?: boolean | null;
   patient_comm_url?: string | null;
   patient_portal_url?: string | null;

@@ -6,6 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * OFF-QA-6: an office that never saved its grid reads the catalog defaults;
+ * those rows are not stored yet, so ``id``/``created_at`` are null (the first
+ * PATCH persists them). ``label`` is the catalog's display name.
+ */
 export interface OfficeSmartAssistItemRead {
   tenant_id: number;
   office_id: number;
@@ -15,6 +20,7 @@ export interface OfficeSmartAssistItemRead {
   sms_template_id?: string | null;
   include_unpaid_balance: boolean;
   is_enabled: boolean;
-  id: number;
-  created_at: string;
+  id?: number | null;
+  created_at?: string | null;
+  label?: string | null;
 }

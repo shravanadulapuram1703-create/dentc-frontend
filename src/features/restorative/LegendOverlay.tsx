@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PatternDefs } from './chartGlyphs';
 import { LEGEND_PROCEDURES, LEGEND_CONDITIONS, LEGEND_MATERIALS } from './legendCatalog';
 import type { FillKind } from './glyphFills';
+import { toLayoutPx } from '@/utils/uiZoom';
 
 interface LegendOverlayProps {
   onClose: () => void;
@@ -45,9 +46,9 @@ export default function LegendOverlay({ onClose }: LegendOverlayProps) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState<{ dx: number; dy: number } | null>(null);
 
-  const onMouseDown = (e: React.MouseEvent) => setDrag({ dx: e.clientX - pos.x, dy: e.clientY - pos.y });
+  const onMouseDown = (e: React.MouseEvent) => setDrag({ dx: toLayoutPx(e.clientX) - pos.x, dy: toLayoutPx(e.clientY) - pos.y });
   const onMouseMove = (e: React.MouseEvent) => {
-    if (drag) setPos({ x: e.clientX - drag.dx, y: e.clientY - drag.dy });
+    if (drag) setPos({ x: toLayoutPx(e.clientX) - drag.dx, y: toLayoutPx(e.clientY) - drag.dy });
   };
   const stopDrag = () => setDrag(null);
 
@@ -93,7 +94,7 @@ export default function LegendOverlay({ onClose }: LegendOverlayProps) {
           ))}
         </div>
 
-        <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-auto p-3">
+        <div className="grid max-h-[calc(var(--vh)*60)] grid-cols-2 gap-2 overflow-auto p-3">
           {(tab === 'procedures' ? LEGEND_PROCEDURES : tab === 'conditions' ? LEGEND_CONDITIONS : LEGEND_MATERIALS).map((it, i) => (
             <div key={it.label} className="flex items-center gap-2 rounded border border-slate-200 px-2 py-1.5 text-xs">
               <SampleSwatch id={`lg-${tab}-${i}`} kind={(it as { kind?: FillKind }).kind} render={it.sample} />

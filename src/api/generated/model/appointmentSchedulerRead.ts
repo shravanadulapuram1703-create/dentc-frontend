@@ -7,6 +7,7 @@
  */
 import type { AppointmentSchedulerReadInsuranceEligibility } from './appointmentSchedulerReadInsuranceEligibility';
 import type { AppointmentSchedulerReadLabStatus } from './appointmentSchedulerReadLabStatus';
+import type { GuarantorSummary } from './guarantorSummary';
 
 /**
  * Denormalized appointment row for the calendar — names resolved server-side
@@ -42,9 +43,12 @@ export interface AppointmentSchedulerRead {
   patient_age?: number | null;
   patient_gender?: string | null;
   responsible_party_id?: string | null;
+  account_id?: number | null;
+  guarantor?: GuarantorSummary | null;
   service_summary?: string | null;
   insurance_eligibility?: AppointmentSchedulerReadInsuranceEligibility;
   account_balance?: string | null;
+  patient_balance?: string | null;
   pending_tx_count?: number;
   pending_tx_scheduled_count?: number;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */

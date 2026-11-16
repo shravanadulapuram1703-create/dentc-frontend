@@ -56,6 +56,7 @@ import type {
   LabNameAvailability,
   LabRead,
   LabUpdate,
+  LinkPatientInput,
   ListAppointmentProceduresParams,
   ListAppointmentsParams,
   ListAppointnowReasonsParams,
@@ -876,7 +877,7 @@ export const useRestoreAppointment = <TError = ErrorType<ErrorResponse | HTTPVal
  * @summary Appointments across every patient on an account (legacy VIEW FUTURE FAMILY APPT, PO-4)
  */
 export const listFamilyAppointments = (
-    params: ListFamilyAppointmentsParams,
+    params?: ListFamilyAppointmentsParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -898,7 +899,7 @@ export const getListFamilyAppointmentsQueryKey = (params?: ListFamilyAppointment
     }
 
 
-export const getListFamilyAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListFamilyAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params?: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -921,7 +922,7 @@ export type ListFamilyAppointmentsQueryError = ErrorType<ErrorResponse | HTTPVal
 
 
 export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- params: ListFamilyAppointmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>> & Pick<
+ params: undefined |  ListFamilyAppointmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listFamilyAppointments>>,
           TError,
@@ -931,7 +932,7 @@ export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof list
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>> & Pick<
+ params?: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listFamilyAppointments>>,
           TError,
@@ -941,7 +942,7 @@ export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof list
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -949,7 +950,7 @@ export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof list
  */
 
 export function useListFamilyAppointments<TData = Awaited<ReturnType<typeof listFamilyAppointments>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
- params: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: ListFamilyAppointmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFamilyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1743,7 +1744,11 @@ export function useAppointnowRequestPatientMatches<TData = Awaited<ReturnType<ty
 
 /**
  * AN-5: atomically re-check the slot, book the appointment, link it, mark
- * approved. Optionally matches/creates a patient (AN-9).
+ * approved. The booking always has a patient (AN-32): ``patient_id``, or the
+ * default ``create_patient`` which registers the contact inside the same
+ * transaction (AN-31/34) — a strong duplicate is 409 ``duplicate_patient``
+ * with ``details.candidates[]`` unless ``force_create``; explicit
+ * ``create_patient=false`` without ``patient_id`` is 422 ``patient_required``.
  * @summary Approve Request
  */
 export const appointnowApproveRequest = (
@@ -1806,6 +1811,77 @@ export const useAppointnowApproveRequest = <TError = ErrorType<ErrorResponse | H
         TContext
       > => {
       return useMutation(getAppointnowApproveRequestMutationOptions(options), queryClient);
+    }
+    /**
+ * AN-30: link a patient to an *approved* request after the fact — sets
+ * ``booking_requests.patient_id`` **and** the booked appointment's
+ * ``patient_id`` in one transaction. ``patient_id`` links an existing patient;
+ * ``create_patient`` registers/matches the request contact (409
+ * ``duplicate_patient`` + ``details.candidates[]`` unless ``force_create``).
+ * 409 ``patient_already_linked`` when either row already names a different
+ * patient; 409 ``request_not_approved`` before approval.
+ * @summary Link Request Patient
+ */
+export const appointnowLinkRequestPatient = (
+    requestId: string,
+    linkPatientInput: BodyType<LinkPatientInput>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BookingRequestRead>(
+      {url: `/api/v1/appointnow/requests/${requestId}/link-patient`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: linkPatientInput, signal
+    },
+      options);
+    }
+
+
+
+export const getAppointnowLinkRequestPatientMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowLinkRequestPatient>>, TError,{requestId: string;data: BodyType<LinkPatientInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointnowLinkRequestPatient>>, TError,{requestId: string;data: BodyType<LinkPatientInput>}, TContext> => {
+
+const mutationKey = ['appointnowLinkRequestPatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointnowLinkRequestPatient>>, {requestId: string;data: BodyType<LinkPatientInput>}> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  appointnowLinkRequestPatient(requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointnowLinkRequestPatientMutationResult = NonNullable<Awaited<ReturnType<typeof appointnowLinkRequestPatient>>>
+    export type AppointnowLinkRequestPatientMutationBody = BodyType<LinkPatientInput>
+    export type AppointnowLinkRequestPatientMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Link Request Patient
+ */
+export const useAppointnowLinkRequestPatient = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointnowLinkRequestPatient>>, TError,{requestId: string;data: BodyType<LinkPatientInput>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointnowLinkRequestPatient>>,
+        TError,
+        {requestId: string;data: BodyType<LinkPatientInput>},
+        TContext
+      > => {
+      return useMutation(getAppointnowLinkRequestPatientMutationOptions(options), queryClient);
     }
     /**
  * AN-5: mark the request declined (stores the reason + actor).

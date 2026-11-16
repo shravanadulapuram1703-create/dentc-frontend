@@ -209,7 +209,7 @@ export default function ReportIssueForm({ context, prefill, onSubmitted, onClose
     errors[k] ? <p className="mt-1 text-xs font-semibold text-[#DC2626]">{errors[k]}</p> : null;
 
   return (
-    <div className="flex max-h-[calc(90vh-4rem)] flex-col">
+    <div className="flex max-h-[calc(calc(var(--vh)*90)-4rem)] flex-col">
       <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
         {/* Failure banner + retry */}
         {result && !result.ok && (

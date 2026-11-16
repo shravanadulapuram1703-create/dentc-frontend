@@ -31,17 +31,17 @@ const MESSAGE_FIELDS: { key: keyof OfficeStatementSettings; label: string }[] = 
   { key: "message_120", label: "120 Day Message" },
 ];
 
-// logo_option / address_source are plain strings in the API (no enum). The
-// values below are a UI assumption to confirm with backend.
+// logo_option / address_source are plain strings in the API (no enum); the
+// backend's canonical values are lowercase (office_setup.py / print_service.py).
 const LOGO_OPTIONS: { value: LogoOption; label: string }[] = [
-  { value: "OFFICE", label: "Use office logo" },
-  { value: "CUSTOM", label: "Use custom logo" },
-  { value: "NONE", label: "No logo" },
+  { value: "office", label: "Use office logo" },
+  { value: "custom", label: "Use custom logo" },
+  { value: "none", label: "No logo" },
 ];
 
 const ADDRESS_SOURCES: { value: AddressSource; label: string }[] = [
-  { value: "OFFICE", label: "Use office statement address and phone" },
-  { value: "CUSTOM", label: "Use custom statement address and phone" },
+  { value: "office", label: "Use office statement address and phone" },
+  { value: "custom", label: "Use custom statement address and phone" },
 ];
 
 const MAX_MESSAGE_LEN = 100;
@@ -108,7 +108,7 @@ export default function StatementTab({ officeId }: StatementTabProps) {
       setSaving(true);
       try {
         const { logo_url } = await uploadOfficeStatementLogo(officeId, dataUrl);
-        setSettings((prev) => ({ ...prev, logo_url, logo_option: "CUSTOM" }));
+        setSettings((prev) => ({ ...prev, logo_url, logo_option: "custom" }));
         setDirty(true);
         toast.success("Logo uploaded");
       } catch (e: unknown) {
@@ -159,7 +159,7 @@ export default function StatementTab({ officeId }: StatementTabProps) {
     );
   }
 
-  const isCustomAddress = settings.address_source === "CUSTOM";
+  const isCustomAddress = settings.address_source === "custom";
 
   return (
     <div className="space-y-6 relative">
@@ -241,7 +241,7 @@ export default function StatementTab({ officeId }: StatementTabProps) {
 
           {/* Logo */}
           <Row label="Logo">
-            {settings.logo_option === "CUSTOM" ? (
+            {settings.logo_option === "custom" ? (
               <div className="flex items-center gap-3">
                 {settings.logo_url ? (
                   <img src={settings.logo_url} alt="Statement logo" className="h-12 w-auto border border-[#E2E8F0] rounded bg-white object-contain" />
@@ -271,7 +271,7 @@ export default function StatementTab({ officeId }: StatementTabProps) {
               </div>
             ) : (
               <span className="text-sm text-[#64748B]">
-                {settings.logo_option === "OFFICE" ? "Office logo will be used." : "No logo will be printed."}
+                {settings.logo_option === "office" ? "Office logo will be used." : "No logo will be printed."}
               </span>
             )}
           </Row>

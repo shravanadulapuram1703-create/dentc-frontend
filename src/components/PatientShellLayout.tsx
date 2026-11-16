@@ -262,7 +262,7 @@ export default function PatientShellLayout({
   if (loading) {
     return (
       <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} bgClassName="bg-slate-50">
-        <div className="flex items-center justify-center h-[calc(100vh-var(--app-nav-height))]">
+        <div className="flex items-center justify-center h-[calc(calc(var(--vh)*100)-var(--app-nav-height))]">
           <div className="text-center">
             <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
             <p className="text-slate-600 font-medium">Loading patient...</p>
@@ -275,7 +275,7 @@ export default function PatientShellLayout({
   if (error || !patient) {
     return (
       <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} bgClassName="bg-slate-50">
-        <div className="flex items-center justify-center h-[calc(100vh-var(--app-nav-height))]">
+        <div className="flex items-center justify-center h-[calc(calc(var(--vh)*100)-var(--app-nav-height))]">
           <div className="text-center bg-white rounded-lg shadow-md border-2 border-red-200 p-6 max-w-md">
             <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-red-600 mb-2">Error Loading Patient</h3>
@@ -475,7 +475,7 @@ export default function PatientShellLayout({
             ("Home office: … — new records post to …"). No duplicate bar here. */}
 
         {/* PATIENT CONTENT AREA - This changes based on route */}
-        <div className="min-h-[calc(100vh-400px)]">
+        <div className="min-h-[calc(calc(var(--vh)*100)-400px)]">
           <Outlet context={outletContext} />
         </div>
     </AppShell>

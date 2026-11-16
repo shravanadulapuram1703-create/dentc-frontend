@@ -87,7 +87,7 @@ export default function PostToLedgerDialog({ planLabel, items, providers, defaul
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 flex items-start justify-center overflow-y-auto px-3 py-3" style={{ top: 'var(--app-nav-height, 0px)' }}>
       <div className="fixed inset-0 bg-black/25" onClick={busy ? undefined : onClose} />
-      <div className="relative flex w-[960px] max-w-full flex-col rounded-lg border border-slate-300 bg-white shadow-2xl" style={{ maxHeight: 'calc(100vh - var(--app-nav-height, 0px) - 24px)' }}>
+      <div className="relative flex w-[960px] max-w-full flex-col rounded-lg border border-slate-300 bg-white shadow-2xl" style={{ maxHeight: 'calc(var(--vh) * 100 - var(--app-nav-height, 0px) - 24px)' }}>
         <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-b from-[#2566a8] to-[#16406e] px-4 py-2 text-white">
           <span className="text-sm font-semibold">Post to Ledger — {planLabel}</span>
           <button onClick={onClose} disabled={busy} aria-label="Close" className="rounded px-1.5 hover:bg-white/15 disabled:opacity-40">✕</button>

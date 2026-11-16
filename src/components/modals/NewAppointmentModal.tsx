@@ -25,7 +25,8 @@ import {
   type Operatory,
   type ProcedureType,
 } from "../../services/schedulerApi";
-import { registerPatientResilient } from "../../services/patientApi";
+import { registerPatientResilient, isDuplicatePatientError } from "../../services/patientApi";
+import { toDuplicatePatient } from "../../services/patient.service";
 import {
   allOfficesParam,
   homeOfficeFilter,
@@ -404,7 +405,28 @@ export default function NewAppointmentModal({
           alert("Please select an office before booking.");
           return;
         }
-        const res = await registerPatientResilient({ patient: buildQuickPatient(homeOfficeId) });
+        const patient = buildQuickPatient(homeOfficeId);
+        let res;
+        try {
+          res = await registerPatientResilient({ patient });
+        } catch (err) {
+          // Server-side guard (409 duplicate_patient): the same person is already
+          // on file. The inline match panel normally catches this first; here the
+          // user either picks that record or explicitly creates a second one.
+          const top = isDuplicatePatientError(err) ? err.candidates[0] : undefined;
+          if (!top) throw err;
+          const first = toDuplicatePatient(top);
+          const useExisting = window.confirm(
+            `${first.name} (DOB ${first.dob}, Patient ID ${first.patient_id}) already exists.\n\n` +
+              "OK — book the appointment for this existing patient.\n" +
+              "Cancel — create a separate new patient anyway.",
+          );
+          if (useExisting) {
+            handleExistingPatientSelected(first.id);
+            return;
+          }
+          res = await registerPatientResilient({ patient, force_create: true });
+        }
         patientId = res.patient_id;
         setQuickPatientId(patientId);
         if (res.warnings.length > 0) {
@@ -444,7 +466,21 @@ export default function NewAppointmentModal({
 
   // Called by the embedded Add New Patient flow once the patient is created.
   // Fetch the fresh record and continue into the appointment-details form.
-  const handleNewPatientCreated = async (patientId: number) => {
+  const handleNewPatientCreated = (patientId: number) =>
+    loadPatientForBooking(patientId, "Patient was created but could not be loaded to schedule the appointment");
+
+  // The quick form / wizard found the person already on file and the user chose
+  // that record: book for the existing patient instead of creating a duplicate.
+  // Same continuation as a freshly-created patient — the slot, provider, type and
+  // notes already typed stay in `formData` and seed the appointment form.
+  const handleExistingPatientSelected = (patientId: number) => {
+    setShowQuickNewPatient(false);
+    setShowPatientSearch(false);
+    setShowPatientForm(true);
+    void loadPatientForBooking(patientId, "The existing patient could not be loaded to schedule the appointment");
+  };
+
+  const loadPatientForBooking = async (patientId: number, failMessage: string) => {
     setIsLoadingNewPatient(true);
     try {
       const patient = await getPatient(patientId);
@@ -455,12 +491,9 @@ export default function NewAppointmentModal({
       setShowPatientSearch(false);
     } catch (err: any) {
       console.error("Error loading new patient:", err);
-      alert(
-        `Patient was created but could not be loaded to schedule the appointment: ${
-          err?.message ?? "unknown error"
-        }`,
-      );
+      alert(`${failMessage}: ${err?.message ?? "unknown error"}`);
       setShowNewPatientWizard(false);
+      setShowPatientForm(false);
     } finally {
       setIsLoadingNewPatient(false);
     }
@@ -766,6 +799,7 @@ export default function NewAppointmentModal({
         isLoadingMetadata={isLoadingMetadata}
         onQuickSave={handleQuickSave}
         onContinue={handleContinueToFullFlow}
+        onSelectExisting={handleExistingPatientSelected}
         onBack={() => setShowQuickNewPatient(false)}
         onClose={onClose}
       />
@@ -798,6 +832,7 @@ export default function NewAppointmentModal({
             setShowQuickNewPatient(true);
           }}
           onSaved={handleNewPatientCreated}
+          onSelectExisting={handleExistingPatientSelected}
         />
         {isLoadingNewPatient && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
@@ -815,7 +850,7 @@ export default function NewAppointmentModal({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-[95vw] max-h-[95vh] overflow-y-auto border-2 border-[#E2E8F0] scrollbar-visible">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-[calc(var(--vw)*95)] max-h-[calc(var(--vh)*95)] overflow-y-auto border-2 border-[#E2E8F0] scrollbar-visible">
         {/* Header + slot context — hidden once a patient is chosen, because the
             appointment-details form (AddEditAppointmentForm) brings its own
             header, and stacking two dark headers looked off-theme. */}

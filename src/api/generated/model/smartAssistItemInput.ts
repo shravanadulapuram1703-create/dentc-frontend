@@ -7,6 +7,7 @@
  */
 
 export interface SmartAssistItemInput {
+  /** @maxLength 50 */
   item_code: string;
   description?: string | null;
   frequency?: string | null;

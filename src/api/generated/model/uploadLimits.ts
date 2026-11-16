@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { UploadLimitsDocumentTypes } from './uploadLimitsDocumentTypes';
 
 /**
  * NOTE-DOC-5: the server-enforced upload rules, published so the UI states
@@ -16,4 +17,7 @@ export interface UploadLimits {
   allowed_content_types: string[];
   allowed_extensions: string[];
   allowed_contexts: string[];
+  movable_contexts?: string[];
+  document_type_enforced?: boolean;
+  document_types?: UploadLimitsDocumentTypes;
 }

@@ -124,6 +124,30 @@ function toMinutes(t: string): number | null {
   return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
 }
 
+/**
+ * Validate each open day's hours; returns an error message or null. The backend
+ * accepts any times (it stored a stop before the start), so guard here.
+ */
+function dayHoursError(days: UiDay[]): string | null {
+  for (const d of days) {
+    if (d.closed) continue;
+    const start = toMinutes(d.start);
+    const stop = toMinutes(d.stop);
+    const lunchStart = toMinutes(d.lunchStart);
+    const lunchStop = toMinutes(d.lunchStop);
+    if ((start == null) !== (stop == null)) return `${d.label}: enter both Day Start and Day Stop, or mark it Closed.`;
+    if (start != null && stop != null && stop <= start) return `${d.label}: Day Stop must be after Day Start.`;
+    if ((lunchStart == null) !== (lunchStop == null)) return `${d.label}: enter both Lunch Start and Lunch Stop, or neither.`;
+    if (lunchStart != null && lunchStop != null) {
+      if (lunchStop <= lunchStart) return `${d.label}: Lunch Stop must be after Lunch Start.`;
+      if (start != null && stop != null && (lunchStart < start || lunchStop > stop)) {
+        return `${d.label}: lunch must fall within the day's hours.`;
+      }
+    }
+  }
+  return null;
+}
+
 type ScheduleTabProps = {
   officeId: number;
   /** Lets the parent keep its office form in sync after the config is saved. */
@@ -219,6 +243,11 @@ export default function ScheduleTab({ officeId, onConfigSaved }: ScheduleTabProp
     const err = configError(config);
     if (err) {
       toast.error("Check the scheduler configuration", { description: err });
+      return;
+    }
+    const hoursErr = dayHoursError(days);
+    if (hoursErr) {
+      toast.error("Check the office hours", { description: hoursErr });
       return;
     }
     const outside = hoursOutsideWindow();

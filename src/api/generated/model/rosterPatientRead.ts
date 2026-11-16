@@ -23,4 +23,10 @@ export interface RosterPatientRead {
   estimated_patient?: number;
   estimated_insurance?: number;
   aging?: RosterPatientReadAging;
+  dob?: string | null;
+  relationship?: string | null;
+  guarantor_kind?: string | null;
+  is_guarantor?: boolean;
+  next_recall?: string | null;
+  account_id?: number | null;
 }

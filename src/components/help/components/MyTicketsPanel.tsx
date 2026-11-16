@@ -228,7 +228,7 @@ export default function MyTicketsPanel() {
       )}
 
       {/* Scrollable table — bounded height so the page never grows with the list */}
-      <div className="max-h-[min(62vh,640px)] overflow-auto">
+      <div className="max-h-[min(calc(var(--vh)*62),640px)] overflow-auto">
         {visible.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm text-[#94A3B8]">
             No tickets match the current filters.

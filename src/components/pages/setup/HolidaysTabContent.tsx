@@ -13,6 +13,7 @@ import {
   addHolidayRange,
   type HolidayApiRow,
 } from '../../../services/accountSetupApi';
+import { formatIsoDateOnly } from "@/utils/datetime";
 
 export type UiHoliday = {
   id: string;
@@ -29,7 +30,7 @@ function mapRowToUi(row: HolidayApiRow): UiHoliday {
     date: row.holiday_date,
     name: row.holiday_name,
     status: row.status,
-    type: row.holiday_type,
+    type: (row.holiday_type ?? '').toUpperCase(),
     isRecurring: Boolean(row.is_recurring),
   };
 }
@@ -81,9 +82,9 @@ export function HolidaysTabContent({
   const [holidayDate, setHolidayDate] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [addStatus, setAddStatus] = useState('CLOSED');
-  const [addType, setAddType] = useState('Custom');
+  const [addType, setAddType] = useState('CUSTOM');
   const [editStatus, setEditStatus] = useState('CLOSED');
-  const [editType, setEditType] = useState('Custom');
+  const [editType, setEditType] = useState('CUSTOM');
 
   const yearChoices = useMemo(() => {
     const y = new Date().getFullYear();
@@ -144,7 +145,7 @@ export function HolidaysTabContent({
       setHolidayDate('');
       setIsRecurring(false);
       setAddStatus(holidayStatusOptions[0]?.value ?? 'CLOSED');
-      setAddType(holidayTypeOptions[0]?.value ?? 'Custom');
+      setAddType('CUSTOM');
       toast.success('Holiday added successfully');
     } catch (e: unknown) {
       const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "Request failed";
@@ -274,7 +275,7 @@ export function HolidaysTabContent({
     setHolidayDate('');
     setIsRecurring(false);
     setAddStatus(holidayStatusOptions[0]?.value ?? 'CLOSED');
-    setAddType(holidayTypeOptions[0]?.value ?? 'Custom');
+    setAddType('CUSTOM');
     setShowAddModal(true);
   };
 
@@ -372,11 +373,7 @@ export function HolidaysTabContent({
                     />
                   </td>
                   <td className="px-4 py-3 text-sm text-[#1E293B] font-bold">
-                    {new Date(holiday.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                    {formatIsoDateOnly(holiday.date)}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#1E293B]">
                     <div className="flex items-center gap-2">
@@ -581,9 +578,9 @@ export function HolidaysTabContent({
                   type="date"
                   value={holidayDate}
                   onChange={(e) => setHolidayDate(e.target.value)}
-                  disabled={currentHoliday.type === 'Federal'}
+                  disabled={currentHoliday.type === 'FEDERAL'}
                   className={`w-full px-3 py-2 border-2 rounded-lg text-sm ${
-                    currentHoliday.type === 'Federal'
+                    currentHoliday.type === 'FEDERAL'
                       ? 'border-[#E2E8F0] bg-[#F7F9FC] text-[#64748B]'
                       : 'border-[#CBD5E1] focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20'
                   }`}

@@ -4,9 +4,13 @@
 // merge fields + `appointment_id` on the log row), template picker, merge-field
 // chips, live GSM-7/UCS-2 segment counter, consent guard (`no_auto_sms`), and
 // Send (Ctrl/⌘+Enter).
+//
+// With `email` set (the combined Messages window) Send opens a choice —
+// "Text message (SMS)" or "Email" (subject + consent guard) — so one composer
+// serves both channels.
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { CalendarClock, ChevronDown, LayoutTemplate, MessageSquareReply, Send, ShieldAlert, Smartphone, Tag, type LucideIcon } from "lucide-react";
+import { CalendarClock, ChevronDown, LayoutTemplate, Mail, MessageSquare, MessageSquareReply, Send, ShieldAlert, Smartphone, Tag, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/utils";
 import { SMS_MESSAGE_TYPE_LABEL, type SmsMessageType } from "../smsModel";
@@ -23,6 +27,7 @@ import {
 } from "../smsTemplates";
 import type { AppointmentOption, PhoneOption } from "../hooks/useSmsMergeContext";
 import type { SmsSendCapability } from "../transport/types";
+import type { EmailSendCapability } from "../hooks/usePatientEmail";
 import SmsTemplatePicker from "./SmsTemplatePicker";
 
 export interface ComposerHandle {
@@ -39,6 +44,25 @@ export interface ComposerSubmit {
   appointment_id: string | null;
 }
 
+export interface EmailComposerSubmit {
+  body: string;
+  subject: string;
+  to_email: string;
+  message_type: SmsMessageType;
+  appointment_id: string | null;
+  override_consent: boolean;
+}
+
+export interface ComposerEmailChannel {
+  /** Patient's address on file (null = no email → the option is disabled). */
+  address: string | null;
+  /** `no_auto_email` — only a manual email the patient asked for may go out. */
+  opted_out: boolean;
+  capability: EmailSendCapability;
+  sending: boolean;
+  onSend: (payload: EmailComposerSubmit) => Promise<unknown>;
+}
+
 interface SmsComposerProps {
   phones: PhoneOption[];
   appointments: AppointmentOption[];
@@ -49,6 +73,8 @@ interface SmsComposerProps {
   onSend: (payload: ComposerSubmit) => Promise<unknown>;
   /** Compact = inside a dialog (no outer border). */
   compact?: boolean;
+  /** Enables "Send as Email" next to "Send as Text". */
+  email?: ComposerEmailChannel;
 }
 
 /**
@@ -93,7 +119,7 @@ function ComposerSelect({
 const APPOINTMENT_TYPES: SmsMessageType[] = ["appointment_reminder", "appointment_confirmation"];
 
 const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsComposer(
-  { phones, appointments, buildContext, optedOut, capability, sending, onSend, compact },
+  { phones, appointments, buildContext, optedOut, capability, sending, onSend, compact, email },
   ref,
 ) {
   const [body, setBody] = useState("");
@@ -103,7 +129,30 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
   const [pickerOpen, setPickerOpen] = useState(false);
   const [confirmOptOut, setConfirmOptOut] = useState(false);
   const [includeInstructions, setIncludeInstructions] = useState(true);
+  const [sendMenuOpen, setSendMenuOpen] = useState(false);
+  const [emailExpanded, setEmailExpanded] = useState(false);
+  /** null = follow the default subject for the message type / template. */
+  const [subject, setSubject] = useState<string | null>(null);
+  const [confirmEmailOptOut, setConfirmEmailOptOut] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close the send menu on an outside click / Escape.
+  useEffect(() => {
+    if (!sendMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setSendMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSendMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [sendMenuOpen]);
 
   // Default to the mobile number (first option) once phones load.
   useEffect(() => {
@@ -124,6 +173,7 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
     if (chosen && chosen.id !== apptId) setApptId(chosen.id);
     setBody(renderTemplate(t.body, buildContext(chosen)));
     setMessageType(t.message_type);
+    setSubject(t.name);
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
 
@@ -162,10 +212,66 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
       toast.error("The message still has an unfilled [field]. Pick an appointment or edit the text.");
       return;
     }
+    setSendMenuOpen(false);
     await onSend({ body: trimmed, to_phone: phone, message_type: messageType, appointment_id: appt?.id ?? null });
     setBody("");
+    setSubject(null);
     setConfirmOptOut(false);
   };
+
+  // ── Email channel ─────────────────────────────────────────────────────────
+  // E-mail never gets the YES/NO/STOP reply line — replies don't come back by text.
+  const emailBody = body.trim();
+  const defaultSubject =
+    messageType === "manual" || messageType === "other"
+      ? `Message from ${ctx.office_name || "your dental office"}`
+      : `${SMS_MESSAGE_TYPE_LABEL[messageType]}${ctx.office_name ? ` — ${ctx.office_name}` : ""}`;
+  const effectiveSubject = (subject ?? defaultSubject).trim();
+  // The backend refuses automated types for `no_auto_email` patients outright,
+  // and a manual one only with override_consent.
+  const emailAutomatedBlocked = !!email?.opted_out && messageType !== "manual";
+  const emailBlocked =
+    !email?.address ||
+    !emailBody ||
+    !effectiveSubject ||
+    email.sending ||
+    emailAutomatedBlocked ||
+    (email.opted_out && !confirmEmailOptOut);
+
+  const submitEmail = async () => {
+    if (!email?.address || emailBlocked) return;
+    if (hasUnfilledMerge(emailBody) || hasUnfilledMerge(effectiveSubject)) {
+      toast.error("The message still has an unfilled [field]. Pick an appointment or edit the text.");
+      return;
+    }
+    setSendMenuOpen(false);
+    await email.onSend({
+      body: emailBody,
+      subject: effectiveSubject,
+      to_email: email.address,
+      message_type: messageType,
+      appointment_id: appt?.id ?? null,
+      override_consent: email.opted_out && confirmEmailOptOut,
+    });
+    setBody("");
+    setSubject(null);
+    setConfirmEmailOptOut(false);
+    setEmailExpanded(false);
+  };
+
+  const smsReason = !phone
+    ? "No phone number on file"
+    : trimmed.length > SMS_MAX_CHARS
+      ? `Too long for a text (${SMS_MAX_CHARS} max)`
+      : optedOut && !confirmOptOut
+        ? "Opted out of texts — tick the confirmation above"
+        : null;
+  const emailReason = !email?.address
+    ? "No email address on file"
+    : emailAutomatedBlocked
+      ? "Opted out of automated email — set Type to Manual"
+      : null;
+  const canCompose = phones.length > 0 || !!email?.address;
 
   const sendLabel =
     capability === "twilio" ? "Send" : capability === "simulated" ? "Send (demo)" : capability === "log_only" ? "Log only" : "Send";
@@ -188,7 +294,7 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
 
       {/* Row 1: destination + appointment + type */}
       <div className="flex flex-wrap items-center gap-2">
-        <ComposerSelect icon={Smartphone} caption="To" value={phone} onChange={setPhone} ariaLabel="Send to">
+        <ComposerSelect icon={Smartphone} caption={email ? "Text to" : "To"} value={phone} onChange={setPhone} ariaLabel="Send to">
           {phones.length === 0 && <option value="">No phone on file</option>}
           {phones.map((p) => (
             <option key={p.value} value={p.value}>
@@ -253,12 +359,21 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
           onKeyDown={(e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
               e.preventDefault();
-              void submit();
+              if (email) setSendMenuOpen(!!body.trim());
+              else void submit();
             }
           }}
-          placeholder={phones.length ? "Type a text message…  (Ctrl+Enter to send)" : "Add a mobile number to the patient record to text them."}
+          placeholder={
+            !canCompose
+              ? email
+                ? "Add a mobile number or email address to the patient record to message them."
+                : "Add a mobile number to the patient record to text them."
+              : email
+                ? "Type a message…  (Ctrl+Enter to choose Text or Email)"
+                : "Type a text message…  (Ctrl+Enter to send)"
+          }
           rows={3}
-          disabled={phones.length === 0}
+          disabled={!canCompose}
           className="w-full resize-none bg-transparent px-3.5 py-2.5 text-[13.5px] leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed"
         />
         {isAppointmentText && (
@@ -300,14 +415,112 @@ const SmsComposer = forwardRef<ComposerHandle, SmsComposerProps>(function SmsCom
               {seg.length}/{seg.per_segment} · {seg.segments || 1} seg{seg.segments > 1 ? "s" : ""}
               {seg.encoding === "UCS-2" && " · emoji/unicode"}
             </span>
-            <button
-              type="button"
-              onClick={() => void submit()}
-              disabled={blocked}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#1F3A5F] px-3.5 text-xs font-semibold text-white shadow-sm hover:bg-[#2d5080] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : sendLabel}
-            </button>
+            {email ? (
+              <div ref={menuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSendMenuOpen((o) => !o)}
+                  disabled={!body.trim() || sending || email.sending}
+                  aria-haspopup="menu"
+                  aria-expanded={sendMenuOpen}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#1F3A5F] px-3.5 text-xs font-semibold text-white shadow-sm hover:bg-[#2d5080] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Send className="h-3.5 w-3.5" /> {sending || email.sending ? "Sending…" : "Send"}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                </button>
+                {sendMenuOpen && (
+                  <div role="menu" className="absolute bottom-full right-0 z-30 mb-2 w-80 rounded-lg border border-slate-200 bg-white p-1.5 text-left shadow-xl">
+                    <p className="px-2 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Send this message by</p>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void submit()}
+                      disabled={blocked}
+                      className="flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-emerald-600 text-white">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-slate-800">
+                          Text message (SMS){capability === "log_only" ? " · log only" : capability === "simulated" ? " · demo" : ""}
+                        </span>
+                        <span className="block truncate text-[11px] text-slate-500">
+                          {smsReason ?? phones.find((p) => p.value === phone)?.display ?? phone}
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => setEmailExpanded((x) => !x)}
+                      disabled={!!emailReason}
+                      className={cn(
+                        "flex w-full items-start gap-2.5 rounded-md px-2 py-2 text-left hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50",
+                        emailExpanded && "bg-blue-50/60",
+                      )}
+                    >
+                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+                        <Mail className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold text-slate-800">
+                          Email{email.capability === "log_only" ? " · log only" : ""}
+                        </span>
+                        <span className="block truncate text-[11px] text-slate-500">{emailReason ?? email.address}</span>
+                      </span>
+                    </button>
+                    {emailExpanded && !emailReason && (
+                      <div className="mt-1 space-y-2 border-t border-slate-100 px-2 pb-1 pt-2">
+                        <label className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Subject
+                          <input
+                            value={subject ?? defaultSubject}
+                            onChange={(e) => setSubject(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void submitEmail();
+                              }
+                            }}
+                            autoFocus
+                            className="mt-1 h-8 w-full rounded-md border border-slate-300 px-2 text-xs font-normal normal-case tracking-normal text-slate-800 focus:border-blue-500 focus:outline-none"
+                          />
+                        </label>
+                        {email.opted_out && (
+                          <label className="flex items-start gap-2 text-[11px] text-amber-800">
+                            <input
+                              type="checkbox"
+                              checked={confirmEmailOptOut}
+                              onChange={(e) => setConfirmEmailOptOut(e.target.checked)}
+                              className="mt-0.5"
+                            />
+                            Patient has opted out of email (No Auto Email). They asked for this one.
+                          </label>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void submitEmail()}
+                          disabled={emailBlocked}
+                          className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-blue-700 px-3 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Mail className="h-3.5 w-3.5" /> {email.sending ? "Sending…" : "Send email"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void submit()}
+                disabled={blocked}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#1F3A5F] px-3.5 text-xs font-semibold text-white shadow-sm hover:bg-[#2d5080] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Send className="h-3.5 w-3.5" /> {sending ? "Sending…" : sendLabel}
+              </button>
+            )}
           </div>
         </div>
       </div>

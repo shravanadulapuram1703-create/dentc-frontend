@@ -51,7 +51,7 @@ export default function DuplicatePlanDialog({
         </div>
 
         {/* Body */}
-        <div className="max-h-[60vh] overflow-y-auto p-5">
+        <div className="max-h-[calc(var(--vh)*60)] overflow-y-auto p-5">
           <p className="mb-3 text-sm text-[#1F3A5F]">
             {many ? `${duplicates.length} active plans already use` : "An active plan already uses"} group
             number <strong>{groupNumber}</strong>. Use the existing plan where you can — creating another

@@ -17,6 +17,7 @@ import ProcedureDetailsDialog, {
   type ProcedureDetailsRowResult,
 } from '@/features/procedures/ProcedureDetailsDialog';
 import { providerOptionLabel } from '@/services/providerDirectory';
+import { formatToothList } from '@/features/procedures/multiTooth';
 
 // AMB / "A" codes = alternative-maximum-benefit downgrade codes (end in 'A').
 const isAmbCode = (c: { code: string; legacy_code?: string | null }) =>
@@ -108,7 +109,8 @@ interface AddAdaCodeModalProps {
  * Code / User Code / Description OR by Explosion Code; "Procedures for <Category>" grid
  * (Code · User Code · Description) listing every code in the group; anterior-posterior
  * enforcement, fee + insurance estimate, provider (Completed), Add Procedure with
- * auto-advance across the selected teeth.
+ * auto-advance across the selected teeth — or "Add to all N teeth" to chart the
+ * same code on every remaining selected tooth at once (one record per tooth).
  */
 export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surface, providers, defaultProviderId, presetQuery, presetLabel, feeCtx, coverageCtx, serviceDate, onAdd, onClose }: AddAdaCodeModalProps) {
   const [codeMap, setCodeMap] = useState<Map<string, ProcedureCodeRead>>(new Map());
@@ -132,7 +134,8 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
   // Codes that still need details the chart selection did not supply (surface
   // count, quadrant, material) go through the legacy Add Procedure Details
   // pop-up — the same enforcement the Transactions / Ledger / Treatment screens use.
-  const [details, setDetails] = useState<{ rows: ProcedureDetailsRowInput[]; quotes: Map<string, PricedProcedure | null> } | null>(null);
+  // `from_selected`: the rows are the highlighted code, so the Fee / Est. Ins. typed here apply.
+  const [details, setDetails] = useState<{ rows: ProcedureDetailsRowInput[]; quotes: Map<string, PricedProcedure | null>; from_selected?: boolean } | null>(null);
 
   useEffect(() => {
     loadProcedureCodes().then(setCodeMap).catch((e) => setLoadError(e instanceof Error ? e.message : 'Failed to load procedure codes'));
@@ -242,7 +245,7 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
     if (!selected || !currentTooth || !canAdd) return;
     if (!detailsComplete(selected, currentTooth, surface)) {
       // Surfaces / quadrant / material still missing — collect them in the pop-up.
-      setDetails({ rows: [{ code: selected, tooth: currentTooth, surface }], quotes: new Map([[selected.code, quote]]) });
+      setDetails({ rows: [{ code: selected, tooth: currentTooth, surface }], quotes: new Map([[selected.code, quote]]), from_selected: true });
       return;
     }
     setBusy(true);
@@ -257,12 +260,40 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
     } finally { setBusy(false); }
   };
 
+  // Remaining selected teeth (current one onward) the highlighted code may go on.
+  const remaining = teeth.slice(idx);
+  const allTargets = selected ? remaining.filter((t) => codeAllowedOnTooth(selected, t).allowed) : [];
+  const canAddAll = remaining.length > 1 && allTargets.length > 0 && Boolean(selected) && !busy && !(mode === 'completed' && !providerId);
+
+  /** Chart the highlighted code on every remaining selected tooth — one record per tooth. */
+  const addAll = async () => {
+    if (!selected || !canAddAll) return;
+    if (allTargets.some((t) => !detailsComplete(selected, t, surface))) {
+      // Surfaces / quadrant / material still missing — one pop-up row covers all the teeth.
+      setDetails({ rows: [{ code: selected, teeth: allTargets, surface }], quotes: new Map([[selected.code, quote]]), from_selected: true });
+      return;
+    }
+    setBusy(true);
+    try {
+      for (const tooth of allTargets) {
+        await onAdd({
+          tooth, surface, procedure_code: selected.code, description: selected.description,
+          fee: money2(feeNum), insurance_estimate: money2(insNum), patient_estimate: money2(patNum),
+          coverage_pct: quote?.coverage_pct ?? 0, ucr_fee: quote?.ucr_fee ?? null, fee_schedule_id: quote?.fee_schedule_id ?? null,
+          provider_id: mode === 'completed' ? providerId : undefined,
+        });
+      }
+      onClose();
+    } finally { setBusy(false); }
+  };
+
   /** Pop-up SAVE: every required detail validated — add each row with its details. */
   const onDetailsSave = async (rows: ProcedureDetailsRowResult[], head: ProcedureDetailsHeader) => {
     setBusy(true);
     try {
       for (const r of rows) {
-        const isCurrent = r.code.code === selected?.code && rows.length === 1;
+        // One result per tooth; the typed Fee / Est. Ins. apply to the highlighted code on every tooth.
+        const isCurrent = Boolean(details?.from_selected) && r.code.code === selected?.code;
         const q = details?.quotes.get(r.code.code) ?? null;
         const feeN = isCurrent ? feeNum : (q?.fee ?? 0);
         const insN = isCurrent ? insNum : (q?.insurance_estimate ?? 0);
@@ -274,8 +305,9 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
           provider_id: mode === 'completed' ? head.provider_id || providerId : undefined,
         });
       }
+      const single = rows.length === 1 && details?.from_selected;
       setDetails(null);
-      if (rows.length === 1 && rows[0]!.code.code === selected?.code) advance();
+      if (single) advance();
       else onClose();
     } finally { setBusy(false); }
   };
@@ -326,7 +358,7 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
     // capped to the remaining viewport height with its own scrolling body.
     <div className="fixed inset-x-0 bottom-0 z-40 flex items-start justify-center overflow-y-auto px-3 py-3" style={{ top: 'var(--app-nav-height, 0px)' }}>
       <div className="fixed inset-0 bg-black/25" onClick={onClose} />
-      <div className="relative flex w-[940px] max-w-full flex-col rounded-lg border border-slate-300 bg-white shadow-2xl" style={{ maxHeight: 'calc(100vh - var(--app-nav-height, 0px) - 24px)' }}>
+      <div className="relative flex w-[940px] max-w-full flex-col rounded-lg border border-slate-300 bg-white shadow-2xl" style={{ maxHeight: 'calc(var(--vh) * 100 - var(--app-nav-height, 0px) - 24px)' }}>
         {/* Title bar */}
         <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-b from-[#2566a8] to-[#16406e] px-4 py-2 text-white">
           <span className="text-sm font-semibold">
@@ -339,6 +371,12 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
               className="rounded border border-white/40 bg-white/10 px-3 py-1 text-xs font-semibold hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40">
               Add Procedure{teeth.length > 1 ? ' →' : ''}
             </button>
+            {remaining.length > 1 && (
+              <button onClick={() => void addAll()} disabled={!canAddAll}
+                className="rounded border border-white/40 bg-emerald-500/80 px-3 py-1 text-xs font-semibold hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40">
+                Add to all {selected ? allTargets.length : remaining.length} teeth
+              </button>
+            )}
             <button onClick={onClose} aria-label="Close" className="rounded px-1.5 hover:bg-white/15">✕</button>
           </div>
         </div>
@@ -396,7 +434,7 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
               Procedures for <span className="italic underline">{gridTitle}</span>
               <span className="ml-2 text-[10px] font-normal text-slate-400">{results.length} code{results.length === 1 ? '' : 's'}</span>
             </div>
-            <div className="h-[380px] max-h-[calc(100vh-var(--app-nav-height,0px)-190px)] min-h-[200px] overflow-y-auto rounded border border-slate-300">
+            <div className="h-[380px] max-h-[calc(calc(var(--vh)*100)-var(--app-nav-height,0px)-190px)] min-h-[200px] overflow-y-auto rounded border border-slate-300">
               <table className="w-full border-collapse text-xs">
                 <thead className="sticky top-0 bg-slate-100 text-left text-[11px] text-slate-700">
                   <tr>
@@ -464,6 +502,13 @@ export default function AddAdaCodeModal({ mode, officeId, patientId, teeth, surf
               <button onClick={addCurrent} disabled={!canAdd} className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                 Add Procedure{teeth.length > 1 ? ' →' : ''}
               </button>
+              {remaining.length > 1 && (
+                <button onClick={() => void addAll()} disabled={!canAddAll}
+                  title={allTargets.length < remaining.length ? `Not valid on tooth ${formatToothList(remaining.filter((t) => !allTargets.includes(t)))} — skipped` : `One ${selected.code} record per tooth`}
+                  className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                  Add to all {allTargets.length} teeth ({formatToothList(allTargets)})
+                </button>
+              )}
             </>
           ) : (
             <p className="text-xs text-slate-400">Pick a category or search, then select a procedure code to chart on tooth #{currentTooth}.</p>

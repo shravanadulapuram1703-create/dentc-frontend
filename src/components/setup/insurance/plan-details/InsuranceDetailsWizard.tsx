@@ -303,7 +303,7 @@ export default function InsuranceDetailsWizard({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3">
       <div className="absolute inset-0 bg-black/45" onClick={busy ? undefined : onClose} />
-      <div className="relative flex max-h-[95vh] w-[1080px] max-w-full flex-col rounded border border-[#CBD5E1] bg-white shadow-2xl">
+      <div className="relative flex max-h-[calc(var(--vh)*95)] w-[1080px] max-w-full flex-col rounded border border-[#CBD5E1] bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between bg-[#1F6FB2] px-4 py-2 text-white">
           <div className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide">

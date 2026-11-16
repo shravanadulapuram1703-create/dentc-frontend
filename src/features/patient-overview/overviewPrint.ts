@@ -109,24 +109,28 @@ export function printPatientOverview(data: OverviewData, patient_id: number): vo
   // ---- Responsible Party -----------------------------------------------------
   sectionTitle(pdf, "Responsible Party");
   const rp = data.responsible_party;
-  const legacy_resp_id = rp?.legacy_id || data.responsible_party_id_raw || "";
-  const rp_name = rp
-    ? [rp.last_name, rp.first_name].filter(Boolean).join(", ") || "-"
-    : [p.last_name, p.first_name].filter(Boolean).join(", ") || "-";
+  // Same guarantor model as the panel: RP row, else the guarantor patient
+  // (self / head of account), else the patient in context.
+  const rp_person = rp ?? data.guarantor?.guarantor_patient ?? p;
+  const legacy_resp_id = rp?.legacy_id || (data.guarantor?.kind === "unresolved" ? data.responsible_party_id_raw : "") || "";
+  const rp_name = [rp_person.last_name, rp_person.first_name].filter(Boolean).join(", ") || "-";
+  const rp_id_text = rp
+    ? String(rp.id)
+    : data.guarantor?.guarantor_patient
+      ? `${data.guarantor.guarantor_patient.id} (Patient${data.guarantor.kind === "patient" ? "" : " - Self"})`
+      : "-";
   keyValueTable(pdf, [
-    ["Name", rp_name, "Cell", cell(rp?.cell_phone || p.cell_phone)],
+    ["Name", rp_name, "Cell", cell(rp_person.cell_phone)],
     [
       "Resp ID",
-      `${rp ? String(rp.id) : "-"}${legacy_resp_id ? ` (Legacy ID ${legacy_resp_id})` : ""}`,
+      `${rp_id_text}${legacy_resp_id ? ` (Legacy ID ${legacy_resp_id})` : ""}`,
       "Email",
-      cell(rp?.email || p.email),
+      cell(rp_person.email),
     ],
     [
       "Type",
       cell(
-        rp?.resp_party_type
-          ? data.resp_party_type_label(rp.resp_party_type)
-          : data.patient_type_label(p.patient_type),
+        rp?.resp_party_type ? data.resp_party_type_label(rp.resp_party_type) : "",
       ),
       "Home Office",
       data.office_name(p.home_office_id),
@@ -209,7 +213,7 @@ export function printPatientOverview(data: OverviewData, patient_id: number): vo
   const b = data.balance;
   const account_balance = b?.account_balance ?? b?.balance ?? 0;
   keyValueTable(pdf, [
-    ["Account Balance", money(account_balance), "Opening Balance", money(b?.opening_balance)],
+    ["Patient Balance", money(account_balance), "Opening Balance", money(b?.opening_balance)],
     ["Today's Charges", money(b?.today_charges), "Total Charged", money(b?.total_charged)],
     ["Total Paid", money(b?.total_paid), "Insurance Balance", money(b?.insurance_balance)],
   ]);

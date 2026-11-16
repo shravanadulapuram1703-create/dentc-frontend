@@ -224,7 +224,7 @@ export default function CopyFromExistingDialog({ onClose, onCopy }: Props) {
                   </span>
                 )}
               </p>
-              <div className="max-h-[46vh] overflow-auto rounded-md border-2 border-[#E2E8F0]">
+              <div className="max-h-[calc(var(--vh)*46)] overflow-auto rounded-md border-2 border-[#E2E8F0]">
                 <table className="w-full min-w-[820px] text-left text-xs">
                   <thead className="sticky top-0 bg-[#3A6EA5] text-white">
                     <tr>

@@ -54,6 +54,9 @@ export interface PatientUpdate {
   patient_notes?: string | null;
   hipaa_sharing_notes?: string | null;
   responsible_party_id?: string | null;
+  account_id?: number | null;
+  guarantor_patient_id?: number | null;
+  guarantor_party_id?: number | null;
   responsible_party_relationship?: string | null;
   patient_type?: string | null;
   patient_types?: unknown | null;

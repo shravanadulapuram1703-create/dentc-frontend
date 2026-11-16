@@ -6,10 +6,10 @@ import {
   setProviderSchedule,
 } from "@/api/generated/endpoints/provider-setup/provider-setup";
 // Provider schedules use the provider-setup day shape (it carries `effective_from`
-// and a per-office scope); the office-setup screens use the generic ScheduleDayInput (Orval names the colliding provider-setup one AppSchemasProviderSetup…).
+// and a per-office scope); the office-setup screens use OfficeScheduleDayInput.
 import type {
   ProviderScheduleDayRead,
-  AppSchemasProviderSetupScheduleDayInput as ProviderScheduleDayInput,
+  ScheduleDayInput as ProviderScheduleDayInput,
 } from "@/api/generated/model";
 import { useOfficeOptions } from "@/features/office-scope";
 

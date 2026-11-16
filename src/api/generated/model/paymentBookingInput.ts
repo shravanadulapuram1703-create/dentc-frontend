@@ -12,6 +12,7 @@
 export interface PaymentBookingInput {
   patient_id?: number | null;
   create_patient?: boolean;
+  force_create?: boolean;
   provider_id?: string | null;
   operatory_id?: string | null;
 }

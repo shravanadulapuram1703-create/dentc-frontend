@@ -2,8 +2,8 @@
 //
 // Same data as the Messages inbox, presented as an auditable table with
 // filters, search, CSV export and a details pane; "New text" opens the shared
-// composer in a dialog. The Email tab is a labelled placeholder — there is no
-// email log/send resource in the backend yet (gap EMAIL-1).
+// composer in a dialog. The Email tab lists /api/v1/email-messages (EMAIL-1);
+// emails are composed from Messages (one window for both channels).
 
 import { useMemo, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
@@ -20,6 +20,10 @@ import SmsLogTable from "./components/SmsLogTable";
 import SmsDetailsPanel from "./components/SmsDetailsPanel";
 import SmsComposer, { type ComposerHandle, type ComposerSubmit } from "./components/SmsComposer";
 import SmsModeBanner from "./components/SmsModeBanner";
+import MessageHistory from "./components/MessageHistory";
+import { buildHistory } from "./messageHistory";
+import { applyEmailFilter } from "./emailModel";
+import { usePatientEmail } from "./hooks/usePatientEmail";
 
 interface OutletContext {
   patient: { id: string; name: string };
@@ -47,6 +51,7 @@ export default function PatientCommunicationPage() {
   const { posting_office_id: office_hint } = usePatientOffice();
 
   const sms = usePatientSms(patient_id);
+  const email = usePatientEmail(patient_id);
   const fill = useFillHeight();
   const merge = useSmsMergeContext(patient_id, office_hint);
 
@@ -95,7 +100,7 @@ export default function PatientCommunicationPage() {
             {(
               [
                 { id: "sms", label: "SMS", icon: MessageSquare, count: sms.stats.total },
-                { id: "email", label: "Email", icon: Mail, count: 0 },
+                { id: "email", label: "Email", icon: Mail, count: email.entries.length },
               ] as const
             ).map((t) => (
               <button
@@ -237,7 +242,28 @@ export default function PatientCommunicationPage() {
             )}
           </div>
         ) : (
-          <EmailPlaceholder email={merge.patient?.email ?? null} optedOut={!!merge.patient?.no_auto_email} />
+          <div className="flex min-h-0 flex-1 flex-col bg-[#F7F9FC]">
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                {merge.patient?.email ? `Patient email: ${merge.patient.email}` : "No email on file"}
+              </span>
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-1 font-semibold",
+                  merge.patient?.no_auto_email ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700",
+                )}
+              >
+                {merge.patient?.no_auto_email ? "Auto-email: opted out" : "Auto-email: allowed"}
+              </span>
+              {email.capability === "log_only" && <span className="text-amber-700">Email gateway not configured — sends are logged as Queued.</span>}
+            </div>
+            <MessageHistory
+              items={buildHistory([], applyEmailFilter(email.entries, filter, search))}
+              loading={email.isLoading}
+              selectedKey={null}
+              emptyHint="Emails sent from Messages are recorded here."
+            />
+          </div>
         )}
       </div>
 
@@ -260,35 +286,6 @@ export default function PatientCommunicationPage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function EmailPlaceholder({ email, optedOut }: { email: string | null; optedOut: boolean }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-        <Mail className="h-7 w-7" />
-      </div>
-      <h2 className="text-base font-semibold text-slate-800">Email log is not available yet</h2>
-      <p className="max-w-md text-sm text-slate-500">
-        The backend has no email send/log resource (gap EMAIL-1 in docs/sms/SMS_BACKEND_DEVREPORT.md). Once it ships, this
-        tab will list every automated and manual email the same way the SMS tab does.
-      </p>
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">{email ? `Patient email: ${email}` : "No email on file"}</span>
-        <span className={cn("rounded-full px-2.5 py-1 font-semibold", optedOut ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-          {optedOut ? "Auto-email: opted out" : "Auto-email: allowed"}
-        </span>
-      </div>
-      {email && (
-        <a
-          href={`mailto:${email}`}
-          className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-        >
-          <Mail className="h-3.5 w-3.5" /> Open in your mail app
-        </a>
-      )}
     </div>
   );
 }

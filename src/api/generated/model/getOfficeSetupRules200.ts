@@ -6,13 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AppSchemasCommonPageMeta {
-  /** @minimum 1 */
-  page: number;
-  /** @minimum 1 */
-  size: number;
-  /** @minimum 0 */
-  total: number;
-  /** @minimum 0 */
-  pages: number;
-}
+export type GetOfficeSetupRules200 = { [key: string]: unknown };

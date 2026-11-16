@@ -273,7 +273,7 @@ export default function OfficeAssignment() {
               </div>
             </div>
 
-            <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto scrollbar-visible">
+            <div className="p-6 max-h-[calc(calc(var(--vh)*100)-240px)] overflow-y-auto scrollbar-visible">
               {selectedOfficeId != null && activeTab === "users" && (
                 <UsersAssignmentTab officeId={selectedOfficeId} offices={offices} />
               )}

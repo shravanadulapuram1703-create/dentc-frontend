@@ -15,7 +15,7 @@ import { listTreatmentPlanInsuranceDetails } from '@/api/generated/endpoints/tre
 import { resolveProcedureFeeFor as resolveProcedureFee, type FeeScheduleContext } from '@/features/pricing';
 import { providerOptionLabel } from '@/services/providerDirectory';
 import ToothNumberPicker from '@/features/progress-notes/ToothNumberPicker';
-import { SETTABLE_STATUSES, STATUS_LABEL, num, type SettableTxStatus, normalizeStatus } from './txModel';
+import { SETTABLE_STATUSES, STATUS_LABEL, estPat, num, type SettableTxStatus, normalizeStatus } from './txModel';
 import { listAllReferrals, loadAllUsers, searchIcdCodes } from './treatmentPlanService';
 
 // Legacy Denticon M08 "EDIT TREATMENT" window — the per-procedure detail editor
@@ -51,6 +51,13 @@ export interface EditTreatmentSave {
   targetTid: number | null;
   /** Pre Auth Date / Status changes (insurance-detail row); null when untouched. */
   insurance_detail: EditTreatmentInsuranceDetailSave | null;
+  /**
+   * Hand-entered Est Ins (via Est Ins or Est Pat), null when untouched. Kept out
+   * of `patch`: the server re-splits coverage whenever a PATCH carries `fee`
+   * and overwrites `insurance_estimate`, so a fee + estimate edit must land the
+   * estimate in a second PATCH (TX-EST-1).
+   */
+  insurance_estimate: string | null;
 }
 
 interface EditTreatmentModalProps {
@@ -162,6 +169,11 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
   const [surface, setSurface] = useState<string>(item.surface ?? '');
   const [fee, setFee] = useState<string>(item.fee ?? '0');
   const [estIns, setEstIns] = useState<string>(item.insurance_estimate ?? '0');
+  // Est Pat has no column (it is fee − insurance_estimate everywhere), so it is
+  // its own text state only so typing into it doesn't fight the formatter.
+  const [estPatInput, setEstPatInput] = useState<string>(() =>
+    estPat(item.fee, item.insurance_estimate).toFixed(2),
+  );
   const [discount, setDiscount] = useState<string>(item.discount ?? '');
   const [duration, setDuration] = useState<string>(item.duration_minutes != null ? String(item.duration_minutes) : '');
   const [status, setStatus] = useState<SettableTxStatus>(() => {
@@ -244,10 +256,27 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
     return [...set].sort((a, b) => a - b);
   }, [availableTids, currentTid]);
 
-  const estPat = Math.max(0, num(fee) - num(estIns));
+  const estPatValue = estPat(fee, estIns);
   const durationPlaceholder = String(procedureCode?.default_duration_minutes ?? 30);
 
+  // The three money boxes stay consistent: Est Pat = Fee − Est Ins.
+  const changeFee = (v: string) => {
+    setFee(v);
+    setEstPatInput(estPat(v, estIns).toFixed(2));
+  };
+  const changeEstIns = (v: string) => {
+    setEstIns(v);
+    setEstPatInput(estPat(fee, v).toFixed(2));
+  };
+  const changeEstPat = (v: string) => {
+    setEstPatInput(v);
+    const ins = Math.max(0, Math.round((num(fee) - num(v)) * 100) / 100);
+    setEstIns(ins.toFixed(2));
+  };
+
   const submit = () => {
+    const feeOut = fee.trim() === '' ? '0' : fee;
+    const estInsOut = estIns.trim() === '' ? '0' : estIns;
     const patch: TreatmentPlanItemUpdate = {
       description: description.trim() || null,
       // Dual-write: the new dedicated column AND the legacy stopgap the grid /
@@ -258,8 +287,6 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
       billing_order: phaseId.trim() ? String(Number(phaseId)) : item.billing_order ?? null,
       tooth: tooth.trim() || null,
       surface: surface.trim() || null,
-      fee: fee.trim() === '' ? '0' : fee,
-      insurance_estimate: estIns.trim() === '' ? '0' : estIns,
       discount: discount.trim() === '' ? null : discount,
       duration_minutes: duration.trim() === '' ? null : Number(duration),
       diagnosed_date: fromDateInput(diagnosedDate),
@@ -277,6 +304,10 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
     };
     // `completed` is server-derived (422 if set directly) — never send it.
     if (!completed) patch.status = status;
+    // Send `fee` only when it changed: its mere presence makes the server
+    // recompute (and overwrite) the coverage split.
+    if (num(feeOut) !== num(item.fee)) patch.fee = feeOut;
+    const insurance_estimate = num(estInsOut) !== num(item.insurance_estimate) ? estInsOut : null;
 
     const preauthChanged = preauthDate !== toDateInput(detail?.preauth_date);
     const preauthStatusChanged = preauthStatus !== (detail?.preauth_status ?? '').toLowerCase();
@@ -285,7 +316,7 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
         ? { id: detail?.id ?? null, preauth_date: fromDateInput(preauthDate), preauth_status: preauthStatus || null }
         : null;
 
-    props.onSave({ patch, targetTid: tid !== currentTid ? tid : null, insurance_detail });
+    props.onSave({ patch, targetTid: tid !== currentTid ? tid : null, insurance_detail, insurance_estimate });
   };
 
   const pickStatus = (s: SettableTxStatus) => {
@@ -314,7 +345,7 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
           </button>
         </div>
 
-        <div className="max-h-[78vh] overflow-y-auto p-2">
+        <div className="max-h-[calc(var(--vh)*78)] overflow-y-auto p-2">
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.25fr_1.05fr_1fr_1fr]">
             {/* ---- Column 1: identity + billing ---- */}
             <Column labelWidth="140px">
@@ -381,7 +412,8 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                   min={0}
                   className={`${input} text-right`}
                   value={fee}
-                  onChange={(e) => setFee(e.target.value)}
+                  title="Changing the fee re-splits insurance on save unless you also set Est Ins / Est Pat"
+                  onChange={(e) => changeFee(e.target.value)}
                 />
               </Row>
               <Row label="Est Ins">
@@ -389,18 +421,31 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                   type="number"
                   step="0.01"
                   min={0}
-                  className={`${input} text-right`}
+                  className={`${input} min-w-[76px] text-right`}
                   value={estIns}
-                  onChange={(e) => setEstIns(e.target.value)}
+                  aria-label="Estimated insurance"
+                  onChange={(e) => changeEstIns(e.target.value)}
                 />
                 <button
                   type="button"
-                  className={smallBtn}
+                  className={`${smallBtn} shrink-0`}
                   onClick={() => setShowAdvanced((v) => !v)}
                   title="Insurance estimate breakdown for this procedure"
                 >
                   Advanced
                 </button>
+              </Row>
+              <Row label="Est Pat">
+                <input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  className={`${input} text-right`}
+                  value={estPatInput}
+                  aria-label="Estimated patient"
+                  title="Patient portion = Fee − Est Ins. Editing it sets Est Ins to the remainder."
+                  onChange={(e) => changeEstPat(e.target.value)}
+                />
               </Row>
               {showAdvanced && (
                 <div className="col-span-2 border-b border-slate-300 bg-sky-50/60 px-2 py-1.5 text-[11px] text-slate-700">
@@ -418,7 +463,7 @@ export default function EditTreatmentModal(props: EditTreatmentModalProps) {
                       <dt className="text-slate-500">Annual Max Rem</dt>
                       <dd>{fmtDetailMoney(detail?.annual_max_rem)}</dd>
                       <dt className="text-slate-500">Est Pat</dt>
-                      <dd>{detail ? fmtDetailMoney(detail.estimated_pat) : fmtMoney(estPat)}</dd>
+                      <dd>{detail ? fmtDetailMoney(detail.estimated_pat) : fmtMoney(estPatValue)}</dd>
                       <dt className="text-slate-500">Pre-Auth #</dt>
                       <dd>{detail?.preauth_number ?? '—'}</dd>
                       <dt className="text-slate-500">Pre-Auth Amt</dt>

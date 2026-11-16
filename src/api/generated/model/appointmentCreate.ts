@@ -44,4 +44,6 @@ export interface AppointmentCreate {
   cancellation_note?: string | null;
   cancellation_reason?: string | null;
   add_to_call_list?: boolean | null;
+  /** OFF-QA-7: book into a slot the office calendar marks closed (closed day, outside hours, lunch, closing holiday). Not a column; without it such a booking is 409 ``office_closed``. */
+  allow_outside_office_hours?: boolean;
 }

@@ -49,6 +49,7 @@ import {
 } from "@/features/office-scope";
 import { getBookingTransport } from "./bookingService";
 import { assertSlotAvailable, bookRequestIntoScheduler } from "./staffBooking";
+import { linkPatientToAppointNowAppointment, resolvePatientFromContact } from "./patientFromRequest";
 import type {
   AvailableSlot,
   BookingRequest,
@@ -89,6 +90,12 @@ interface AppointNowContextValue {
    * Throws SlotConflictError (from staffBooking) when the slot is double-booked.
    */
   approve: (id: string, choice?: ApproveChoice) => Promise<void>;
+  /**
+   * Repair an APPROVED request whose appointment has no patient (approved
+   * before patients were linked): register/match the contact and PATCH the
+   * appointment's patient_id. Resolves to the linked patient id.
+   */
+  linkPatient: (id: string) => Promise<number>;
   decline: (id: string, reason?: string) => Promise<void>;
   /**
    * Move a pending request to a new slot. Throws SlotConflictError when the new
@@ -208,6 +215,8 @@ export function AppointNowProvider({ children }: { children: ReactNode }) {
   const officeRef = useRef<number | null>(scopeOfficeId);
   useEffect(() => void (officeRef.current = scopeOfficeId), [scopeOfficeId]);
   const requestsRef = useRef<BookingRequest[]>([]);
+  // request id → patient registered for it whose approve then failed (reused on retry).
+  const patientByRequestRef = useRef<Map<string, number>>(new Map());
   useEffect(() => void (requestsRef.current = requests), [requests]);
   // Ids already seen for the current scope — a poll result containing a
   // pending id NOT in here is a genuinely new request → notify.
@@ -399,11 +408,30 @@ export function AppointNowProvider({ children }: { children: ReactNode }) {
         // The server is the single source of truth: it re-checks the slot,
         // books and links atomically, and answers 409 slot_conflict with the
         // overlapping appointments (→ SlotConflictError → red dialog).
+        // Register the contact as a PMS patient first — exactly like the
+        // Scheduler's Quick Save (409 duplicate → staff pick existing / create
+        // new) — and approve with that explicit patient_id. Without it the
+        // server booked the appointment with patient_id = NULL and the
+        // appointment form had no patient to show. A patient created for a
+        // request whose approve then failed (409 slot_conflict) is reused on
+        // retry so the same person is never created twice.
+        let patient_id = req.patient_id ?? patientByRequestRef.current.get(id) ?? null;
+        if (patient_id == null) {
+          const home_office_id = req.office_id ?? officeId;
+          if (!home_office_id) throw new Error("Select an office before approving this request.");
+          const resolved = await resolvePatientFromContact(req.contact, home_office_id);
+          patient_id = resolved.patient_id;
+          patientByRequestRef.current.set(id, patient_id);
+        }
         updated = await transport.approveRequest(id, {
           provider_id: choice.provider_id ?? null,
+          patient_id,
           actioned_by: user?.name ?? null,
           slot: req.slot,
         });
+        patientByRequestRef.current.delete(id);
+        // An older backend may not echo the link — keep the card truthful.
+        if (updated.patient_id == null) updated = { ...updated, patient_id };
       } else {
         // Simulation: book into the real scheduler first; only then mark approved.
         const target = choice.provider_id
@@ -423,6 +451,29 @@ export function AppointNowProvider({ children }: { children: ReactNode }) {
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [findRequest, applyUpdate, user?.name],
+  );
+
+  const linkPatient = useCallback(
+    async (id: string): Promise<number> => {
+      const req = await findRequest(id);
+      if (req.status !== "approved" || !req.appointment_id) {
+        throw new Error("Only an approved request with an appointment can be linked to a patient.");
+      }
+      const resolved = await linkPatientToAppointNowAppointment(
+        req.appointment_id,
+        id,
+        req.office_id ?? officeRef.current,
+      );
+      // AN-30: the server cannot record the link on the request row after
+      // approval, so this only lives until the next refresh — the appointment
+      // (the thing that matters) is linked for good.
+      applyUpdate({ ...req, patient_id: resolved.patient_id });
+      toast.success(resolved.created ? "Patient created & linked" : "Patient linked", {
+        description: `Appointment ${req.appointment_id} → patient #${resolved.patient_id}`,
+      });
+      return resolved.patient_id;
+    },
+    [findRequest, applyUpdate],
   );
 
   const reschedule = useCallback(
@@ -482,12 +533,13 @@ export function AppointNowProvider({ children }: { children: ReactNode }) {
       loadError,
       refresh,
       approve,
+      linkPatient,
       decline,
       reschedule,
       remove,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, isPolling, scopeOfficeId, inbox_scope, requests, counts, pendingCount, loadError, refresh, approve, decline, reschedule, remove],
+    [ready, isPolling, scopeOfficeId, inbox_scope, requests, counts, pendingCount, loadError, refresh, approve, linkPatient, decline, reschedule, remove],
   );
 
   return (
@@ -512,6 +564,9 @@ export function useAppointNow(): AppointNowContextValue {
     loadError: null,
     refresh: async () => undefined,
     approve: async () => undefined,
+    linkPatient: async () => {
+      throw new Error("AppointNow is not available.");
+    },
     decline: async () => undefined,
     reschedule: async () => undefined,
     remove: async () => undefined,

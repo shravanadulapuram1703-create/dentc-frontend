@@ -8,6 +8,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
 import LegacyActivationPage from './features/auth/pages/LegacyActivationPage';
 import SignUpPage from './pages/SignUpPage';
+import { MY_PASSWORD_PATH } from './features/auth/utils/passwordAccess';
 import Dashboard from './components/Dashboard';
 import Scheduler from './components/pages/Scheduler';
 import Patient from './components/pages/Patient';
@@ -51,7 +52,6 @@ import { RequireRight, AccessDenied, RIGHT } from '@/features/access-control';
 import OfficeSetup from './components/setup/offices/OfficeSetup';
 import OfficeAssignment from './components/setup/offices/OfficeAssignment';
 import OfficeGroupsSetup from './components/setup/office-groups/OfficeGroupsSetup';
-import ChangeMyPassword from './components/setup/security/ChangeMyPassword';
 import SignaturePadDiagnosticsPage from './features/signature/SignaturePadDiagnosticsPage';
 import ProviderSetup from './components/setup/providers/ProviderSetup';
 import CarrierSetup from './components/setup/insurance/CarrierSetup';
@@ -394,7 +394,8 @@ function AppRoutes() {
           access-control kill-switch is flipped, so this renders normally today. */}
       <Route path="/setup/security/users" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><RequireRight code={[RIGHT.setup.securityUsersFull, RIGHT.setup.securityUsersView]} fallback={<AccessDenied />}><UserSetup onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /></RequireRight></AdminPageWrapper> : <Navigate to="/login" />} />
       <Route path="/setup/security/groups" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><RequireRight code={[RIGHT.setup.securityGroupsFull, RIGHT.setup.securityGroupsView]} fallback={<AccessDenied />}><GroupSetup /></RequireRight></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/setup/security/change-my-password" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><ChangeMyPassword /></AdminPageWrapper> : <Navigate to="/login" />} />
+      {/* Own-password changes live ONLY on My Page (RBAC) — old Setup link redirects there. */}
+      <Route path="/setup/security/change-my-password" element={isAuthenticated ? <Navigate to={MY_PASSWORD_PATH} replace /> : <Navigate to="/login" />} />
       
       {/* Setup - Devices (Topaz signature pad diagnostics) */}
       <Route path="/setup/devices/signature-pad" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><SignaturePadDiagnosticsPage /></AdminPageWrapper> : <Navigate to="/login" />} />

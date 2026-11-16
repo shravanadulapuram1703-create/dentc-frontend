@@ -64,6 +64,10 @@ export interface OfficeForm {
   default_ucr_fee_schedule_id?: number | null;
   /** "flag" (post $0 + flag) | "refuse" (block unpriced charges) — docs/pricing §3.4. */
   unpriced_charge_policy?: string | null;
+  /** Entity (Type 2) NPI — ADA claim Item 49. */
+  npi?: string | null;
+  /** Entity taxonomy (837D billing-provider PRV) — optional. */
+  taxonomy_code?: string | null;
 
   is_active?: boolean | null;
 
