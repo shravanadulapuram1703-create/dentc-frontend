@@ -134,6 +134,9 @@ export interface Appointment {
    *  only (not Medical History "yes" answers) — gap MA-1 — so the UI ORs it
    *  with the per-patient summary from patientMedicalAlerts.ts. */
   has_alert?: boolean;
+  /** Feed `insurance_eligibility` — best active subscriber elig_status. Null
+   *  does NOT mean cash-pay (see features/patient-insurance/coverageKind.ts). */
+  insurance_eligibility?: "eligible" | "ineligible" | "unknown" | null;
   /** Server-owned status timestamps (set by PATCH /appointments/{id}/status). */
   confirmed_on?: string | null;
   checked_in_on?: string | null;
@@ -444,6 +447,7 @@ const mapSchedulerAppointment = (a: AppointmentSchedulerRead): Appointment => ({
   cancelled: a.is_cancelled ?? undefined,
   is_blocked: a.is_blocked ?? undefined,
   has_alert: a.has_alert === true ? true : undefined,
+  insurance_eligibility: a.insurance_eligibility ?? null,
   confirmed_on: a.confirmed_on ?? null,
   checked_in_on: a.checked_in_on ?? null,
   checked_out_on: a.checked_out_on ?? null,
@@ -988,7 +992,11 @@ export const fetchOperatories = async (
     ...(oid != null ? { office_id: oid } : {}),
     ...PAGE,
   });
-  return (res.items ?? []).map((o) => ({
+  // Columns follow the order set in Setup → Offices → Operatories, not API order.
+  const sorted = [...(res.items ?? [])].sort(
+    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.name.localeCompare(b.name),
+  );
+  return sorted.map((o) => ({
     id: String(o.id),
     name: o.name,
     office: o.office_id != null ? String(o.office_id) : "",

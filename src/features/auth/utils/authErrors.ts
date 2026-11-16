@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { describePasswordApiError } from "./passwordPolicy";
 
 /**
  * Classifies authentication failures into a small set of kinds so the UI can
@@ -47,6 +48,11 @@ export function mapAuthError(error: unknown): AuthError {
   if (error instanceof AxiosError) {
     // No response → network / CORS / server unreachable.
     if (!error.response) return { kind: "network", message: DEFAULT_MESSAGES.network };
+
+    // Password policy / password RBAC (422 password_too_weak, 403 own_password_*):
+    // a precise rule list beats the generic "account disabled" 403 text.
+    const password_message = describePasswordApiError(error);
+    if (password_message) return { kind: "unknown", message: password_message };
 
     const status = error.response.status;
     const detail = extractDetail(error);

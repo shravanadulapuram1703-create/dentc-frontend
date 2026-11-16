@@ -22,4 +22,5 @@ export interface MeFull {
   permissions?: string[];
   permissions_enforced?: boolean;
   groups?: string[];
+  can_reset_user_passwords?: boolean;
 }

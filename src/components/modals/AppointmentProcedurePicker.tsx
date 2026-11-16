@@ -9,6 +9,10 @@
 // It deliberately does NOT post a ledger charge (that is Transactions → Add
 // Procedures, `patient-procedures`). An appointment procedure is a *planned*
 // line and is persisted to `appointment-procedures` when the appointment saves.
+//
+// Multi-tooth: a tooth-mode code may be applied to many teeth at once (click,
+// Shift+click range, or type "7-23"); Add appends ONE line per tooth, each saved
+// as its own appointment-procedures row.
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -21,6 +25,7 @@ import {
 import { resolveProcedureFeeFor as resolveProcedureFee, type FeeScheduleContext } from "@/features/pricing";
 import type { ProcedureCode, Provider } from "../../services/schedulerApi";
 import { providerDisplayLabel } from "@/services/providerDirectory";
+import { formatToothList } from "@/features/procedures/multiTooth";
 
 interface Props {
   isOpen: boolean;
@@ -77,7 +82,9 @@ export default function AppointmentProcedurePicker({
 
   const [providerId, setProviderId] = useState(defaultProviderId);
   const [duration, setDuration] = useState<number>(initialCode?.defaultDuration ?? 30);
+  // Comma-joined Universal ids ("7,8,9"); one appointment line per tooth.
   const [tooth, setTooth] = useState("");
+  const teeth = tooth.split(",").filter(Boolean);
   const [quadrant, setQuadrant] = useState("");
   const [surfaces, setSurfaces] = useState<string[]>([]);
   const [materials, setMaterials] = useState<string[]>([]);
@@ -203,24 +210,26 @@ export default function AppointmentProcedurePicker({
     const est_insurance = pricing?.est_insurance ?? 0;
     const est_patient = pricing?.est_patient ?? Math.max(fee - est_insurance, 0);
 
-    onAdd({
-      row_id: newRowId(),
-      status: defaultStatus,
-      procedure_code: selected.code,
-      tooth: tooth || quadrant || "",
-      surface: surfaces.join(""),
-      description: selected.description,
-      bill_to: "Patient",
-      duration: Number(duration) || 0,
-      provider_id: providerId,
-      provider_units: 1,
-      est_patient,
-      est_insurance,
-      fee,
-      notes: [notes.trim(), materials.length ? `Materials: ${materials.join(", ")}` : ""]
-        .filter(Boolean)
-        .join(" | ") || null,
-    });
+    for (const t of teeth.length ? teeth : [quadrant || ""]) {
+      onAdd({
+        row_id: newRowId(),
+        status: defaultStatus,
+        procedure_code: selected.code,
+        tooth: t,
+        surface: surfaces.join(""),
+        description: selected.description,
+        bill_to: "Patient",
+        duration: Number(duration) || 0,
+        provider_id: providerId,
+        provider_units: 1,
+        est_patient,
+        est_insurance,
+        fee,
+        notes: [notes.trim(), materials.length ? `Materials: ${materials.join(", ")}` : ""]
+          .filter(Boolean)
+          .join(" | ") || null,
+      });
+    }
     onClose();
   };
 
@@ -238,7 +247,7 @@ export default function AppointmentProcedurePicker({
               ? ("TOOTH" as const)
               : ("NONE" as const),
           allowedToothSet: "BOTH" as const,
-          allowMultipleTeeth: false,
+          allowMultipleTeeth: true,
         },
         surfaceRules: {
           enabled: selected.requirements.surface ?? false,
@@ -263,7 +272,7 @@ export default function AppointmentProcedurePicker({
   return createPortal(
     <>
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-        <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg border-2 border-[#E2E8F0] bg-white shadow-2xl">
+        <div className="flex max-h-[calc(var(--vh)*92)] w-full max-w-6xl flex-col overflow-hidden rounded-lg border-2 border-[#E2E8F0] bg-white shadow-2xl">
           <div className="flex items-center justify-between bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-4 py-3 text-white">
             <h3 className="text-sm font-bold uppercase tracking-wide text-white">
               Add Procedure to Appointment
@@ -417,7 +426,7 @@ export default function AppointmentProcedurePicker({
                       </button>
                     </div>
                     <div className="text-[#1E293B]">
-                      Tooth: {tooth || quadrant || "—"} &nbsp;|&nbsp; Surfaces:{" "}
+                      Tooth: {formatToothList(teeth) || quadrant || "—"} &nbsp;|&nbsp; Surfaces:{" "}
                       {surfaces.join("") || "—"}
                       {materials.length > 0 && (
                         <div className="mt-0.5 text-[#64748B]">
@@ -497,7 +506,7 @@ export default function AppointmentProcedurePicker({
                   disabled={!selected}
                   className="rounded-lg bg-[#2FB9A7] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#26a396] disabled:cursor-not-allowed disabled:bg-gray-300"
                 >
-                  Add to Appointment
+                  {teeth.length > 1 ? `Add ${teeth.length} Lines to Appointment` : "Add to Appointment"}
                 </button>
               </div>
             </div>

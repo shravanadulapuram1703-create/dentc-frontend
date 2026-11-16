@@ -233,7 +233,7 @@ export default function InsurancePlanScreen({ category, order }: Props) {
     });
 
   return (
-    <div className="bg-[#F1F5F9] min-h-[calc(100vh-260px)]">
+    <div className="bg-[#F1F5F9] min-h-[calc(calc(var(--vh)*100)-260px)]">
       {/* Title bar */}
       <div className="flex items-center justify-between bg-gradient-to-b from-[#2566a8] to-[#16406e] px-4 py-2.5 text-white">
         <span className="text-sm font-bold">Insurance Details</span>

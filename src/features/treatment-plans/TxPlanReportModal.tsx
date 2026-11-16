@@ -69,7 +69,7 @@ export default function TxPlanReportModal({ availableTids, defaultTid, busy, onC
           </button>
         </div>
 
-        <div className="max-h-[70vh] space-y-4 overflow-auto px-4 py-3 text-xs">
+        <div className="max-h-[calc(var(--vh)*70)] space-y-4 overflow-auto px-4 py-3 text-xs">
           {/* Single / Multiple */}
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-1 font-semibold text-slate-700">

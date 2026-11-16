@@ -114,6 +114,13 @@ export function buildWizardSteps(coverage: CoverageSelection): WizardStepMeta[] 
 export const RESPONSIBLE_PARTY_SOURCES = ["Self", "Spouse", "Parent", "Guardian", "Other"] as const;
 
 /**
+ * Join an EXISTING account (Overview "Add New Member"): the new patient is
+ * billed to that account's responsible party instead of a new guarantor. Only
+ * offered when the wizard was opened with an account to join.
+ */
+export const EXISTING_ACCOUNT_SOURCE = "Existing Account";
+
+/**
  * Default "patient's relationship TO the responsible party" for a given guarantor.
  * The two are inverses: if the responsible party is the patient's **Parent**, then
  * the patient is that party's **Child**. Without this the relationship stayed at
@@ -128,6 +135,7 @@ export function defaultPatientRelationship(rpSource: string): string {
       return "Spouse";
     case "Parent":
     case "Guardian":
+    case EXISTING_ACCOUNT_SOURCE:
       return "Child";
     default:
       return "Other";
@@ -173,7 +181,12 @@ export function respPartyTypeForCoverage(type: string, hasCoverage: boolean): st
  * classification code (CA/CO/DI/…).
  */
 export interface ResponsiblePartyForm {
-  rp_source: string; // Self | Spouse | Parent | Guardian | Other
+  rp_source: string; // Self | Spouse | Parent | Guardian | Other | Existing Account
+  /**
+   * The account to join when rp_source = EXISTING_ACCOUNT_SOURCE — the raw
+   * `patients.responsible_party_id` every member of that account shares.
+   */
+  account_key: string;
   relationship: string; // relationship of the PATIENT to this responsible party
   resp_party_type: string; // legacy Resp. Party Type code (CA, CO, DI, …)
 
@@ -218,6 +231,7 @@ export interface ResponsiblePartyForm {
 export function emptyResponsibleParty(): ResponsiblePartyForm {
   return {
     rp_source: "Self",
+    account_key: "",
     relationship: "Self",
     resp_party_type: "CA",
     title: "",
@@ -563,6 +577,15 @@ export function buildResponsiblePartyIn(form: ResponsiblePartyForm): Responsible
   const isSelf = form.rp_source === "Self";
   if (isSelf) {
     return { is_self: true, relationship: "self" };
+  }
+  // Join an existing account: link the account's key as-is. The backend stores
+  // it on the patient, so the new member shares the account's roster, balance
+  // and ledger (account_scope matches the raw string).
+  if (form.rp_source === EXISTING_ACCOUNT_SOURCE && form.account_key.trim()) {
+    return {
+      responsible_party_id: form.account_key.trim(),
+      relationship: nz(form.relationship) ?? undefined,
+    };
   }
   return {
     relationship: nz(form.relationship) ?? undefined,

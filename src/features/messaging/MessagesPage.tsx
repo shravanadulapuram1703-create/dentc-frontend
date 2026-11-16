@@ -24,7 +24,7 @@ export default function MessagesPage({
 
   return (
     <AppShell onLogout={onLogout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
-      <div className="h-[calc(100dvh-var(--app-nav-height,64px))] bg-[#F7F9FC]">
+      <div className="h-[calc(calc(var(--dvh)*100)-var(--app-nav-height,64px))] bg-[#F7F9FC]">
         <div className="h-full max-w-[1600px] mx-auto flex bg-white lg:border-x border-[#E2E8F0]">
           {/* left rail */}
           <div

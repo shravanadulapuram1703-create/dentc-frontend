@@ -2,7 +2,7 @@ import { Plus, Edit2, Trash2, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type OfficeForm, type OperatoryUi } from "../../../../data/officeData";
 import { fetchProviders, type Provider } from "../../../../services/schedulerApi";
-import { providerDisplayLabel } from "@/services/providerDirectory";
+import { ProviderOptionGroups } from "@/features/office-scope";
 
 interface OperatoriesTabProps {
   formData: Partial<OfficeForm>;
@@ -20,20 +20,16 @@ export default function OperatoriesTab({
   const [providersError, setProvidersError] = useState<string | null>(null);
   const [providersLoading, setProvidersLoading] = useState(false);
 
-  // Load this office's providers from the backend (/api/v1/providers, scoped by
-  // office id) so the "Default provider" dropdown is backend-driven.
+  // Default-provider picker: this office's roster first, everyone else below
+  // (prefer, never exclude). A new office has no roster yet, so it simply lists
+  // every provider.
   useEffect(() => {
-    if (formData.id == null) {
-      setProviders([]);
-      setProvidersError(null);
-      return;
-    }
     let cancelled = false;
     const loadProviders = async () => {
       setProvidersLoading(true);
       setProvidersError(null);
       try {
-        const data = await fetchProviders(String(formData.id));
+        const data = await fetchProviders(formData.id ?? null);
         if (!cancelled) setProviders(data);
       } catch (error) {
         console.error("Error loading providers for operatories:", error);
@@ -260,12 +256,10 @@ export default function OperatoriesTab({
                             }}
                           >
                             <option value="">None</option>
-                            {providers.map((p) => (
-                              <option key={p.id} value={p.id}>{providerDisplayLabel(p)}</option>
-                            ))}
+                            <ProviderOptionGroups providers={providers} keep_id={op.provider_id ?? null} />
                           </select>
                           {providers.length === 0 && (
-                            <span className="text-slate-400 italic">No providers configured for this office</span>
+                            <span className="text-slate-400 italic">No active providers found</span>
                           )}
                         </>
                       )}

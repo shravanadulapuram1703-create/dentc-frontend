@@ -14,7 +14,7 @@ the teammate prototype (`XRayImaging.tsx`) we evaluated but did not adopt.
 | Capability | Endpoint | Generated symbol | Notes |
 |---|---|---|---|
 | Store image bytes | `POST /api/v1/patient-documents` (multipart) | `uploadPatientDocument` | Only binary store that returns a served `file_url`. Category → `document_type`. |
-| List images | `GET /api/v1/patient-documents?patient_id=` | `useListPatientDocuments` | Filtered client-side to `content_type` `image/*` (+ category/extension fallback). |
+| List images | `GET /api/v1/patient-documents?patient_id=` | `useListPatientDocuments` | Filtered client-side by Imaging-only `document_type` (NOT `image/*` — that leaked Documents-tab uploads into X-rays). Owner filter asked as IMG-DOC-1/2 in `imaging_documents_separation_backend_devreport.md`. |
 | Delete image | `DELETE /api/v1/patient-documents/{id}` | `deletePatientDocument` | |
 | Tooth/notes metadata | `GET/POST/PATCH /api/v1/image-details` | `useListImageDetails` / `createImageDetail` / `updateImageDetail` / `deleteImageDetail` | Metadata only — no binary, no URL. |
 | Patient image group | `GET/POST /api/v1/image-groups?patient_id=` | `useListImageGroups` / `createImageGroup` | One lazily-created group per patient; the only patient-scoped handle imaging exposes. |

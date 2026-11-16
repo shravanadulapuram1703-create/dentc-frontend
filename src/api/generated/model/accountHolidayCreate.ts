@@ -5,12 +5,14 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { AccountHolidayCreateHolidayType } from './accountHolidayCreateHolidayType';
+import type { AccountHolidayCreateStatus } from './accountHolidayCreateStatus';
 
 export interface AccountHolidayCreate {
   holiday_date: string;
   /** @maxLength 255 */
   holiday_name: string;
-  status?: string | null;
-  holiday_type?: string | null;
+  status?: AccountHolidayCreateStatus;
+  holiday_type?: AccountHolidayCreateHolidayType;
   is_recurring?: boolean | null;
 }

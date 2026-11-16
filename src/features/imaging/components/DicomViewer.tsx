@@ -21,6 +21,7 @@ import {
   formatStudyDate,
   studyTitle,
 } from '../utils/dicomAssets';
+import { toLayoutPx } from '@/utils/uiZoom';
 
 interface DicomViewerProps {
   images: DicomImage[];
@@ -234,8 +235,8 @@ export default function DicomViewer({
   const onPointerMove = (e: React.PointerEvent) => {
     const drag = dragRef.current;
     if (!drag.active) return;
-    txRef.current = drag.baseX + (e.clientX - drag.startX);
-    tyRef.current = drag.baseY + (e.clientY - drag.startY);
+    txRef.current = drag.baseX + toLayoutPx(e.clientX - drag.startX);
+    tyRef.current = drag.baseY + toLayoutPx(e.clientY - drag.startY);
     if (rafRef.current == null) {
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;

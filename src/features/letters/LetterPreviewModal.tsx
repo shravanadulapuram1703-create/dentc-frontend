@@ -356,7 +356,7 @@ export default function LetterPreviewModal({
               <iframe
                 title="Letter PDF"
                 src={(blob_url ?? stored_pdf_href) as string}
-                className="h-full min-h-[60vh] w-full rounded bg-white"
+                className="h-full min-h-[calc(var(--vh)*60)] w-full rounded bg-white"
               />
             ) : null
           ) : (

@@ -34,16 +34,27 @@ export function BalancesTabContent({
   patient_id: number;
 }) {
   const b = data.balance;
-  const account_balance = b?.account_balance ?? b?.balance ?? 0;
+  // PatientBalance.account_balance is an alias of THIS patient's balance; the
+  // family total comes from /patients/{id}/account-balance (AL-11).
+  const patient_balance = b?.balance ?? b?.account_balance ?? 0;
+  const account_total = data.account_balance?.balance;
+  const member_count = data.account_balance?.member_count ?? 1;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
         <Kpi
-          label="Account Balance"
-          value={money(account_balance)}
-          tone={account_balance > 0 ? "debit" : account_balance < 0 ? "credit" : undefined}
+          label="Patient Balance"
+          value={money(patient_balance)}
+          tone={patient_balance > 0 ? "debit" : patient_balance < 0 ? "credit" : undefined}
         />
+        {member_count > 1 && account_total != null && (
+          <Kpi
+            label={`Account Balance (${member_count} members)`}
+            value={money(account_total)}
+            tone={account_total > 0 ? "debit" : account_total < 0 ? "credit" : undefined}
+          />
+        )}
         <Kpi label="Opening Balance" value={money(b?.opening_balance)} />
         <Kpi label="Today's Charges" value={money(b?.today_charges)} />
         <Kpi label="Total Charged" value={money(b?.total_charged)} />

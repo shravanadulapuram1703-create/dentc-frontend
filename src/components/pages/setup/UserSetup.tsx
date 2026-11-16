@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { Search, Plus, Edit, Trash2, UserCheck, UserX } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import AddEditUserModal from "../../modals/AddEditUserModal";
+import { describePasswordApiError } from "@/features/auth/utils/passwordPolicy";
 import ViewUserDetailsModal from "../../modals/ViewUserDetailsModal";
 import { useUsersGrid } from "@/features/users/useUsersGrid";
 import { officeKeyToId } from "@/services/officeLookup";
@@ -14,7 +15,7 @@ import { useListRoles } from "../../../api/generated/endpoints/security/security
 import type { TenantRead } from "../../../api/generated/model/tenantRead";
 import type { OfficeRead } from "../../../api/generated/model/officeRead";
 import type { Option } from "../../../api/generated/model/option";
-import { fetchUserForEdit } from "../../../services/userApi";
+import { describeUserConflict, fetchUserForEdit } from "../../../services/userApi";
 import {
   createUserComplete,
   updateUserComplete,
@@ -522,11 +523,28 @@ export default function UserSetup({
       setEditingUser(null);
       setSelectedUser(null);
       // Confirm success — the save flow previously gave no feedback (KAN-18).
-      alert(isEdit ? "User updated successfully" : "User added successfully");
+      alert(
+        isEdit
+          ? payload.password
+            ? `User updated. The password was reset${payload.must_change_password ? " — the user must change it at next login" : ""}.`
+            : "User updated successfully"
+          : `User added successfully. Sign-in username: ${payload.username}`,
+      );
     } catch (e: any) {
       // Keep the modal open so the user can correct and retry.
+      // Password policy / password RBAC errors (PWD-RBAC-1/3) get a precise message.
+      const password_message = describePasswordApiError(e);
+      if (password_message) {
+        alert(password_message);
+        return;
+      }
       const status = e?.response?.status;
-      const raw = e?.response?.data?.error?.message ?? e?.response?.data?.detail;
+      // Prefer the per-field list (422 `error.details`) over the generic
+      // "Request validation failed" message so the admin sees which field is wrong.
+      const err = e?.response?.data?.error;
+      const raw = Array.isArray(err?.details)
+        ? err.details
+        : err?.message ?? e?.response?.data?.detail;
       // FastAPI 422 returns `detail` as an array of {loc, msg, type}; format it
       // into "field: message" lines instead of rendering [object Object].
       const detail = Array.isArray(raw)
@@ -539,7 +557,11 @@ export default function UserSetup({
             .join("\n")
         : raw;
       if (status === 409) {
-        alert(detail || "That Short ID is already in use — please choose another.");
+        alert(
+          describeUserConflict(e?.response?.data?.error?.details, payload) ||
+            detail ||
+            "That username, email or Short ID is already in use — please choose another.",
+        );
       } else if (status === 422) {
         alert(`Please correct the following:\n${detail || "Some fields are invalid."}`);
       } else {

@@ -71,7 +71,7 @@ function Shell({
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto p-5">{children}</div>
+        <div className="max-h-[calc(var(--vh)*70)] overflow-y-auto p-5">{children}</div>
 
         <div className="flex items-center justify-end gap-2 rounded-b-lg border-t-2 border-[#E2E8F0] bg-[#F7F9FC] px-4 py-3">
           <button

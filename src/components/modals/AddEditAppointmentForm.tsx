@@ -64,6 +64,10 @@ import {
 } from "@/features/office-scope";
 import { listLabs } from "@/api/generated/endpoints/appointments/appointments";
 import type { LabRead } from "@/api/generated/model";
+import {
+  appointNowRequestIdFromNotes,
+  linkPatientToAppointNowAppointment,
+} from "@/features/appointnow/patientFromRequest";
 
 interface PatientSearchResult {
   patientId: string;
@@ -267,6 +271,14 @@ export default function AddEditAppointmentForm({
           return timeStr;
         };
         
+        // An appointment approved from an AppointNow request before patients
+        // were linked carries patient_id = NULL — offer to create/link one.
+        setUnlinkedRequestId(
+          fullAppointment.patient_id == null
+            ? appointNowRequestIdFromNotes(fullAppointment.notes)
+            : null,
+        );
+
         // Update form data with appointment details
         // Handle both camelCase and snake_case from API response
         const appointment: any = fullAppointment;
@@ -343,6 +355,13 @@ export default function AddEditAppointmentForm({
   const [showPatientDetails, setShowPatientDetails] = useState(false);
   // Bumped after that dialog saves, to re-read the demographics it may have changed.
   const [patientReloadKey, setPatientReloadKey] = useState(0);
+  // AppointNow request this appointment was booked from, when the appointment
+  // has NO patient (approved before approve registered one). Drives the
+  // "Create patient from request" repair banner.
+  const [unlinkedRequestId, setUnlinkedRequestId] = useState<string | null>(null);
+  // Patient linked by that repair — overrides the (empty) caller-supplied id.
+  const [linkedPatientId, setLinkedPatientId] = useState<number | null>(null);
+  const [isLinkingPatient, setIsLinkingPatient] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -352,7 +371,7 @@ export default function AddEditAppointmentForm({
 
       // patient.patientId is the chart_no (display only). Only patient.numericId
       // is the backend key; fall back to a chart_no lookup when it is absent.
-      let id = patient.numericId ?? null;
+      let id = linkedPatientId ?? patient.numericId ?? null;
       setIsLoadingPatient(true);
       setPatientError(null);
       try {
@@ -361,7 +380,11 @@ export default function AddEditAppointmentForm({
           id = hit.items?.[0]?.id ?? null;
         }
         if (id == null) {
-          setPatientError("This patient has no backend id — demographics could not be loaded.");
+          setPatientError(
+            editingAppointment?.id
+              ? "This appointment is not linked to a patient record, so there are no demographics to show."
+              : "This patient has no backend id — demographics could not be loaded.",
+          );
           return;
         }
         const record = await getPatient(id);
@@ -382,7 +405,32 @@ export default function AddEditAppointmentForm({
     return () => {
       cancelled = true;
     };
-  }, [patient.numericId, patient.patientId, patient.chartNumber, patientReloadKey]);
+  }, [patient.numericId, patient.patientId, patient.chartNumber, patientReloadKey, linkedPatientId, editingAppointment?.id]);
+
+  const handleLinkAppointNowPatient = async () => {
+    if (!editingAppointment?.id || !unlinkedRequestId) return;
+    setIsLinkingPatient(true);
+    try {
+      const resolved = await linkPatientToAppointNowAppointment(
+        editingAppointment.id,
+        unlinkedRequestId,
+        working_office_id,
+      );
+      setUnlinkedRequestId(null);
+      setPatientError(null);
+      setLinkedPatientId(resolved.patient_id);
+    } catch (err: any) {
+      console.error("Could not link AppointNow patient:", err);
+      setPatientError(
+        err?.response?.data?.error?.message ||
+          err?.response?.data?.detail ||
+          err?.message ||
+          "The patient could not be created from the AppointNow request.",
+      );
+    } finally {
+      setIsLinkingPatient(false);
+    }
+  };
 
   // Seed Personal + Contact information from the loaded record. Home phone maps
   // to PatientRead.phone (the backend has no separate home_phone column).
@@ -1312,7 +1360,27 @@ export default function AddEditAppointmentForm({
             </p>
           </div>
         )}
-        {patientError && (
+        {unlinkedRequestId ? (
+          <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded mb-4 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-amber-800 flex-1">
+              &#9888; This appointment was booked from online request{" "}
+              <span className="font-mono">{unlinkedRequestId}</span> without a patient record.
+              Create the patient from the request&apos;s name, DOB, phone and e-mail (same as Quick
+              Save) and link it to this appointment.
+              {patientError && !patientError.startsWith("This appointment is not linked") && (
+                <span className="block text-red-700 mt-1">{patientError}</span>
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleLinkAppointNowPatient()}
+              disabled={isLinkingPatient}
+              className="px-3 py-1.5 rounded-md bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 disabled:opacity-50"
+            >
+              {isLinkingPatient ? "Creating…" : "Create & link patient"}
+            </button>
+          </div>
+        ) : patientError && (
           <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded mb-4">
             <p className="text-sm text-red-700">
               &#9888; Could not load this patient&apos;s details: {patientError}

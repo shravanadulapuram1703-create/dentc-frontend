@@ -285,7 +285,6 @@ export default function LegacyActivationPage() {
             autoComplete="new-password"
             invalid={!!error}
           />
-          <PasswordStrengthMeter password={password} />
           <PasswordField
             id="legacy-confirm"
             label="Confirm Password"
@@ -295,6 +294,7 @@ export default function LegacyActivationPage() {
             autoComplete="new-password"
             invalid={!!error}
           />
+          <PasswordStrengthMeter password={password} confirm={confirm} />
 
           <button
             type="submit"

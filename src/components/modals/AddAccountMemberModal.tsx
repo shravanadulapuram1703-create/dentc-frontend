@@ -52,7 +52,7 @@ export default function AddAccountMemberModal({
       aria-modal="true"
       aria-labelledby="add-member-modal-title"
     >
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto border-4 border-[#3A6EA5]">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[calc(var(--vh)*95)] overflow-y-auto border-4 border-[#3A6EA5]">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">

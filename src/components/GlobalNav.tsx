@@ -87,6 +87,7 @@ import { useHelp } from "./help";
 import { useAppointNow } from "@/features/appointnow/AppointNowContext";
 import { useRights, type RightCode } from "@/features/access-control";
 import api from "../services/api.js";
+import { layoutRect } from "@/utils/uiZoom";
 
 // RBAC: view-or-full right(s) that grant each Setup screen, keyed by nav path.
 // A leaf not listed here is always shown; a submenu group with no visible child is
@@ -213,7 +214,9 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
     if (!el) return;
 
     const publishHeight = () => {
-      const h = Math.round(el.getBoundingClientRect().height);
+      // offsetHeight is in layout px — what pt-[var(--app-nav-height)] needs
+      // under the root CSS zoom (getBoundingClientRect would be pre-zoomed).
+      const h = el.offsetHeight;
       if (h > 0) {
         document.documentElement.style.setProperty("--app-nav-height", `${h}px`);
       }
@@ -289,7 +292,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
     [myOffices],
   );
   const otherOffices = useMemo(
-    () => scope.office_options.filter((o) => !myOfficeIds.has(o.id)),
+    // Deleted (inactive) offices can't be a working office — keep them out of the switcher.
+    () => scope.office_options.filter((o) => o.is_active && !myOfficeIds.has(o.id)),
     [scope.office_options, myOfficeIds],
   );
   const showOtherOffices =
@@ -944,10 +948,7 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
       submenu: [
         { label: "Users", path: "/setup/security/users" },
         { label: "Groups", path: "/setup/security/groups" },
-        {
-          label: "Change My Password",
-          path: "/setup/security/change-my-password",
-        },
+        // "Change My Password" removed: own password is changed on My Page only (RBAC).
       ],
     },
     {
@@ -1337,7 +1338,7 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
   ) => {
     e.stopPropagation();
     
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = layoutRect(e.currentTarget)!;
     
     // If submenu is already open, close it
     if (openSubmenus[submenuKey]) {
@@ -1671,8 +1672,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "patient" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["patient"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["patient"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["patient"])?.bottom, left: layoutRect(dropdownRefs.current["patient"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(patientMenuItems)}
               </div>
             </div>
@@ -1698,8 +1699,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "transactions" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["transactions"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["transactions"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["transactions"])?.bottom, left: layoutRect(dropdownRefs.current["transactions"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(transactionsMenuItems)}
               </div>
             </div>
@@ -1725,8 +1726,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "charting" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["charting"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["charting"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["charting"])?.bottom, left: layoutRect(dropdownRefs.current["charting"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(chartingMenuItems)}
               </div>
             </div>
@@ -1752,8 +1753,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "reports" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["reports"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["reports"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["reports"])?.bottom, left: layoutRect(dropdownRefs.current["reports"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(reportsMenuItems)}
               </div>
             </div>
@@ -1779,8 +1780,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "utilities" && (
-            <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["utilities"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["utilities"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["utilities"])?.bottom, left: layoutRect(dropdownRefs.current["utilities"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(utilitiesMenuItems)}
               </div>
             </div>
@@ -1807,8 +1808,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "setup" && (
-            <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["setup"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["setup"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[320px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["setup"])?.bottom, left: layoutRect(dropdownRefs.current["setup"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(visibleSetupItems, 0, "", true)}
               </div>
             </div>
@@ -1835,8 +1836,8 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
             />
           </button>
           {activeDropdown === "help" && (
-            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: dropdownRefs.current["help"]?.getBoundingClientRect().bottom, left: dropdownRefs.current["help"]?.getBoundingClientRect().left }}>
-              <div className="max-h-[80vh] overflow-y-auto">
+            <div className="fixed mt-1 min-w-[280px] bg-white border-2 border-[#E2E8F0] rounded-lg shadow-xl overflow-hidden" style={{ zIndex: 9999, top: layoutRect(dropdownRefs.current["help"])?.bottom, left: layoutRect(dropdownRefs.current["help"])?.left }}>
+              <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto">
                 {renderSubmenu(helpMenuItems)}
               </div>
             </div>
@@ -1880,7 +1881,7 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
                 `[data-submenu-key="${newKey}"]`
               ) as HTMLElement;
               if (buttonElement) {
-                const rect = buttonElement.getBoundingClientRect();
+                const rect = layoutRect(buttonElement)!;
                 setOpenSubmenus({
                   [newKey]: {
                     items: item.submenu,

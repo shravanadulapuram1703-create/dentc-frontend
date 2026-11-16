@@ -61,7 +61,7 @@ export default function ToothAssociationPanel({
 
   return (
     <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg border-2 border-[#E2E8F0] max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg border-2 border-[#E2E8F0] max-h-[calc(var(--vh)*90)] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-5 py-3 flex items-center justify-between">
           <h2 className="text-base font-bold inline-flex items-center gap-2">
             <Tag className="w-4 h-4" /> Tooth Association

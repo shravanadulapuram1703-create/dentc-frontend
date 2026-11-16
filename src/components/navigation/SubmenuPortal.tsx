@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect, forwardRef } from "react";
+import { layoutRect, viewportHeight as viewportHeightPx } from "@/utils/uiZoom";
 
 interface MenuItem {
   label: string;
@@ -33,8 +34,8 @@ export const SubmenuPortal = forwardRef<HTMLDivElement, SubmenuPortalProps>(
     // Adjust position if submenu goes off-screen
     useEffect(() => {
       if (submenuRef.current) {
-        const rect = submenuRef.current.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
+        const rect = layoutRect(submenuRef.current)!;
+        const viewportHeight = viewportHeightPx();
 
         // If submenu goes below viewport, adjust position
         if (rect.bottom > viewportHeight) {
@@ -56,7 +57,7 @@ export const SubmenuPortal = forwardRef<HTMLDivElement, SubmenuPortalProps>(
         className="min-w-[280px] bg-white border-2 border-slate-200 rounded-lg shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()} // Prevent clicks from bubbling
       >
-        <div className="max-h-[80vh] overflow-y-auto py-1">
+        <div className="max-h-[calc(var(--vh)*80)] overflow-y-auto py-1">
           {items.map((item, index) => {
             if (item.type === "divider") {
               return <div key={index} className="h-px bg-slate-200 my-1" />;

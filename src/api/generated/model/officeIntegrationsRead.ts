@@ -11,6 +11,9 @@ export interface OfficeIntegrationsRead {
   office_id: number;
   service_email?: string | null;
   service_email_verified: boolean;
+  service_email_verified_at?: string | null;
+  service_email_verification_sent_at?: string | null;
+  service_email_verification_expires_at?: string | null;
   ai_assist_enabled: boolean;
   patient_comm_url?: string | null;
   patient_portal_url?: string | null;

@@ -13,9 +13,17 @@ export type ListPatientDocumentsParams = {
  */
 patient_id?: number | null;
 /**
- * e.g. consent-form
+ * One type, or a comma list (e.g. 'consent-form' or 'IC,ID'). Case-insensitive; a code also matches its catalog label and known spellings ('XR' ~ 'X-Ray / Image').
  */
 document_type?: string | null;
+/**
+ * IMG-DOC-2: owning module(s) - repeat the param or comma-separate (context=documents&context=note). See /patient-documents/limits.
+ */
+context?: string[] | null;
+/**
+ * IMG-DOC-2: owning module(s) to leave out
+ */
+exclude_context?: string[] | null;
 office_id?: number | null;
 /**
  * PROC-7c: documents linked to one posted procedure

@@ -26,6 +26,7 @@ import type {
 
 import type {
   AdjustRequest,
+  AppSchemasProcedureSetupFeeScheduleOption,
   BodyImportFeeScheduleEntries,
   BulkAssignmentsRequest,
   BulkEntriesRequest,
@@ -56,7 +57,6 @@ import type {
   FeeScheduleEntryCreate,
   FeeScheduleEntryRead,
   FeeScheduleEntryUpdate,
-  FeeScheduleOption,
   FeeScheduleRead,
   FeeScheduleUpdate,
   FeeScheduleWizardRequest,
@@ -446,7 +446,7 @@ export const listFeeScheduleOptions = (
 ) => {
 
 
-      return customInstance<FeeScheduleOption[]>(
+      return customInstance<AppSchemasProcedureSetupFeeScheduleOption[]>(
       {url: `/api/v1/fee-schedules/options`, method: 'GET', signal
     },
       options);

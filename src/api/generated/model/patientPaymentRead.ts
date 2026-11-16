@@ -9,6 +9,8 @@
 export interface PatientPaymentRead {
   id: string;
   patient_id: number;
+  account_id?: number | null;
+  account_payment_id?: string | null;
   office_id?: number | null;
   created_office_id?: number | null;
   legacy_id?: string | null;

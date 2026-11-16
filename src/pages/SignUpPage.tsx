@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, UserPlus, Activity, Building2, Phone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import PasswordStrengthMeter from '../features/auth/components/PasswordStrengthMeter';
+import { describePasswordApiError, describePasswordProblem } from '../features/auth/utils/passwordPolicy';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -31,8 +33,9 @@ export default function SignUpPage() {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match!');
+    const passwordProblem = describePasswordProblem(formData.password, formData.confirmPassword);
+    if (passwordProblem) {
+      setError(passwordProblem);
       return;
     }
 
@@ -59,6 +62,11 @@ export default function SignUpPage() {
         setError('Signup successful, but login failed. Please try logging in.');
       }
     } catch (err: any) {
+      const password_message = describePasswordApiError(err);
+      if (password_message) {
+        setError(password_message);
+        return;
+      }
       const msg =
         err?.response?.data?.detail ||
         err?.response?.data?.message ||
@@ -280,6 +288,7 @@ export default function SignUpPage() {
                 </div>
               </div>
             </div>
+            <PasswordStrengthMeter password={formData.password} confirm={formData.confirmPassword} />
 
             {/* Terms */}
             <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border-2 border-slate-200">

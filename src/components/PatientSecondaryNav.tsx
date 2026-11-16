@@ -15,7 +15,6 @@ import {
   FolderOpen,
   Mail,
   MessageCircle,
-  MessageSquare,
   Globe,
   Share2,
   Image as ImageIcon,
@@ -52,8 +51,14 @@ const TAB_RIGHTS: Record<string, RightCode[]> = {
   Documents: ["patient_documents_view_only", "patient_documents_full_control"],
   Emergency: ["patient_emergency_contacts_view_only", "patient_emergency_contacts_full_control"],
   Letters: ["patient_letters_view_only", "patient_letters_full_control"],
-  Messages: ["patient_messaging_hub_view_only", "patient_messaging_hub_user_full_control"],
-  "SMS/Email": ["patient_email_or_text_message_view_only", "patient_email_or_text_message_full_control"],
+  // One icon for text + email (the old separate "SMS/Email" tab was folded in),
+  // so either legacy right grants it.
+  Messages: [
+    "patient_messaging_hub_view_only",
+    "patient_messaging_hub_user_full_control",
+    "patient_email_or_text_message_view_only",
+    "patient_email_or_text_message_full_control",
+  ],
   "New Patient": ["patient_add_new_patient_full_control", "patient_add_new_patient_quick_save"],
   "New Member": ["patient_add_new_member_full_control", "patient_add_new_member_quick_save"],
 };
@@ -92,9 +97,10 @@ export default function PatientSecondaryNav({
     navigate(`/patient/${patientId}${path}`);
   };
 
-  // Order mirrors the legacy chart tab strip for the clinical group —
-  // Restorative → Perio → X-Ray(Imaging) → Progress → Treatment — which now lives
-  // only here (the duplicate in-chart tab row was removed).
+  // Workflow order requested by the clinic: Overview → Ledger → X-Ray → Treatment →
+  // Progress → Restorative → Perio → Medical Hx → Rx → Insurance → Transaction →
+  // Lab Tracking → Notes → Documents → Referrals → Emergency → New Member →
+  // New Patient, then the communication / utility actions.
   const patientActions: PatientAction[] = [
     {
       icon: User,
@@ -102,13 +108,6 @@ export default function PatientSecondaryNav({
       gradient: "from-blue-600 to-cyan-600",
       path: "/overview",
       description: "Patient Overview",
-    },
-    {
-      icon: CreditCard,
-      label: "Transaction",
-      gradient: "from-green-600 to-teal-600",
-      path: "/transaction",
-      description: "Transaction Entry",
     },
     {
       icon: BookOpen,
@@ -119,12 +118,25 @@ export default function PatientSecondaryNav({
       description: "Ledger (Patient / Account)",
     },
     {
-      icon: ShieldCheck,
-      label: "Insurance",
-      gradient: "from-emerald-600 to-green-600",
-      path: "/insurance/dental/primary",
-      activeMatch: "/insurance",
-      description: "Insurance Plans (Dental / Medical)",
+      icon: ImageIcon,
+      label: "X-Ray",
+      gradient: "from-cyan-600 to-blue-600",
+      path: "/imaging",
+      description: "X-Ray / Imaging",
+    },
+    {
+      icon: ClipboardList,
+      label: "Treatment",
+      gradient: "from-violet-600 to-purple-600",
+      path: "/treatment",
+      description: "Treatment Plan Entry",
+    },
+    {
+      icon: FileText,
+      label: "Progress",
+      gradient: "from-indigo-600 to-purple-600",
+      path: "/progress-notes",
+      description: "Clinical Progress Notes",
     },
     {
       icon: Activity,
@@ -141,25 +153,11 @@ export default function PatientSecondaryNav({
       description: "Periodontal Charting",
     },
     {
-      icon: ImageIcon,
-      label: "X-Ray",
-      gradient: "from-cyan-600 to-blue-600",
-      path: "/imaging",
-      description: "X-Ray / Imaging",
-    },
-    {
-      icon: FileText,
-      label: "Progress",
-      gradient: "from-indigo-600 to-purple-600",
-      path: "/progress-notes",
-      description: "Clinical Progress Notes",
-    },
-    {
-      icon: ClipboardList,
-      label: "Treatment",
-      gradient: "from-violet-600 to-purple-600",
-      path: "/treatment",
-      description: "Treatment Plan Entry",
+      icon: HeartPulse,
+      label: "Medical Hx",
+      gradient: "from-rose-600 to-red-600",
+      path: "/medical-history",
+      description: "Medical Alerts, Questionnaires & Signature",
     },
     {
       icon: Pill,
@@ -169,36 +167,26 @@ export default function PatientSecondaryNav({
       description: "Prescription Module",
     },
     {
+      icon: ShieldCheck,
+      label: "Insurance",
+      gradient: "from-emerald-600 to-green-600",
+      path: "/insurance/dental/primary",
+      activeMatch: "/insurance",
+      description: "Insurance Plans (Dental / Medical)",
+    },
+    {
+      icon: CreditCard,
+      label: "Transaction",
+      gradient: "from-green-600 to-teal-600",
+      path: "/transaction",
+      description: "Transaction Entry",
+    },
+    {
       icon: FlaskConical,
       label: "Lab Tracking",
       gradient: "from-sky-600 to-blue-600",
       path: "/lab-tracking",
       description: "Lab Case Tracking",
-    },
-    {
-      icon: HeartPulse,
-      label: "Medical Hx",
-      gradient: "from-rose-600 to-red-600",
-      path: "/medical-history",
-      description: "Medical Alerts, Questionnaires & Signature",
-    },
-    {
-      icon: UserPlus,
-      label: "New Patient",
-      gradient: "from-green-600 to-emerald-600",
-      onClick: () => {
-        navigate("/patient/new");
-      },
-      description: "Add New Patient",
-    },
-    {
-      icon: Users,
-      label: "New Member",
-      gradient: "from-teal-600 to-cyan-600",
-      onClick: () => {
-        navigate("/patient?action=add-member&familyOf=" + patientId);
-      },
-      description: "Add Family Member",
     },
     {
       icon: StickyNote,
@@ -215,11 +203,36 @@ export default function PatientSecondaryNav({
       description: "Document Management",
     },
     {
+      icon: Share2,
+      label: "Referrals",
+      gradient: "from-violet-600 to-purple-600",
+      path: "/referrals",
+      description: "Manage Referrals",
+    },
+    {
       icon: Phone,
       label: "Emergency",
       gradient: "from-rose-600 to-red-600",
       path: "/emergency-contacts",
       description: "Emergency Contacts",
+    },
+    {
+      icon: Users,
+      label: "New Member",
+      gradient: "from-teal-600 to-cyan-600",
+      onClick: () => {
+        navigate("/patient?action=add-member&familyOf=" + patientId);
+      },
+      description: "Add Family Member",
+    },
+    {
+      icon: UserPlus,
+      label: "New Patient",
+      gradient: "from-green-600 to-emerald-600",
+      onClick: () => {
+        navigate("/patient/new");
+      },
+      description: "Add New Patient",
     },
     {
       icon: Mail,
@@ -233,21 +246,8 @@ export default function PatientSecondaryNav({
       label: "Messages",
       gradient: "from-green-600 to-emerald-600",
       path: "/messages",
-      description: "Text Messages — two-way SMS inbox",
-    },
-    {
-      icon: MessageSquare,
-      label: "SMS/Email",
-      gradient: "from-teal-600 to-cyan-600",
-      path: "/communication",
-      description: "SMS & Email Log",
-    },
-    {
-      icon: Share2,
-      label: "Referrals",
-      gradient: "from-violet-600 to-purple-600",
-      path: "/referrals",
-      description: "Manage Referrals",
+      // The SMS/Email log (/communication) opens from inside Messages ("Log view").
+      description: "Messages — text (SMS) & email with the patient",
     },
     {
       icon: Globe,

@@ -5,10 +5,14 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { StatementReadSnapshot } from './statementReadSnapshot';
 
 export interface StatementRead {
   id: number;
   patient_id: number;
+  account_id?: number | null;
+  statement_scope?: string;
+  snapshot?: StatementReadSnapshot;
   office_id?: number | null;
   statement_date: string;
   period_start?: string | null;

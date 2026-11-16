@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * IMG-DOC-1/4: the row (``context`` is a column) plus two derived fields.
+ */
 export interface PatientDocumentRead {
   tenant_id: number;
   patient_id: number;
@@ -21,8 +24,13 @@ export interface PatientDocumentRead {
   storage_path?: string | null;
   procedure_id?: string | null;
   claim_id?: string | null;
+  context: string;
+  updated_at?: string | null;
+  updated_by?: number | null;
   is_deleted: boolean;
   created_by?: number | null;
   id: number;
   created_at: string;
+  document_type_label?: string | null;
+  relocated?: boolean | null;
 }

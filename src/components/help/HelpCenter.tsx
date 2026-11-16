@@ -203,7 +203,7 @@ export default function HelpCenter() {
             </div>
 
             {/* Articles — bounded height so the sidebar never outgrows the page */}
-            <div className="max-h-[60vh] min-h-0 space-y-5 overflow-y-auto p-4 lg:max-h-none lg:flex-1">
+            <div className="max-h-[calc(var(--vh)*60)] min-h-0 space-y-5 overflow-y-auto p-4 lg:max-h-none lg:flex-1">
               {searching ? (
                 <section>
                   <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#1F3A5F]">

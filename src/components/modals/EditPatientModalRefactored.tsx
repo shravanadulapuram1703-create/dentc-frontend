@@ -185,7 +185,7 @@ export default function EditPatientModal({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-y-auto border-4 border-[#3A6EA5]"
+        className="bg-white rounded-lg shadow-2xl w-full max-w-7xl max-h-[calc(var(--vh)*95)] overflow-y-auto border-4 border-[#3A6EA5]"
       >
         <PatientHeader
           isOrthoPatient={isOrthoPatient}

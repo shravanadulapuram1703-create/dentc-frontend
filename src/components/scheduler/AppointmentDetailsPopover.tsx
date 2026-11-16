@@ -17,6 +17,7 @@ import {
   type AppointmentDetails,
   type AppointmentStatusName,
 } from "../../services/schedulerApi";
+import { viewportHeight, viewportWidth } from "@/utils/uiZoom";
 
 interface Props {
   appointment: Appointment;
@@ -125,8 +126,8 @@ export default function AppointmentDetailsPopover({
 
   // Keep the panel inside the viewport.
   const pos = useMemo(() => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vw = viewportWidth();
+    const vh = viewportHeight();
     let left = anchor.x + 12;
     if (left + POPOVER_WIDTH + 12 > vw) left = Math.max(12, anchor.x - POPOVER_WIDTH - 12);
     let top = anchor.y;

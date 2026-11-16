@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { UserCog } from "lucide-react";
 import AppShell from "../layout/AppShell";
 import { useAuth } from "../../contexts/AuthContext.js";
@@ -65,6 +66,21 @@ export default function MyPage({ onLogout, currentOffice, setCurrentOffice }: My
     setCollapsed(loadCollapsed(userId));
   }, [userId]);
 
+  // `?section=account` (e.g. Edit User → "Go to My Page", or a forced password
+  // change after login) opens Account & Settings and scrolls it into view.
+  const [searchParams] = useSearchParams();
+  const focus_account = searchParams.get("section") === "account";
+  const accountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focus_account) return;
+    setCollapsed((prev) => ({ ...prev, account: true }));
+    const t = window.setTimeout(
+      () => accountRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      50,
+    );
+    return () => window.clearTimeout(t);
+  }, [focus_account, userId]);
+
   const updateTasks = useCallback(
     (next: MyTask[]) => {
       setTasks(next);
@@ -124,6 +140,7 @@ export default function MyPage({ onLogout, currentOffice, setCurrentOffice }: My
           </div>
         </div>
 
+        <div ref={accountRef} className="scroll-mt-4">
         <CollapsibleSection
           title="Account & Settings"
           icon={<UserCog className="w-4 h-4" />}
@@ -137,6 +154,7 @@ export default function MyPage({ onLogout, currentOffice, setCurrentOffice }: My
             onPrefsChange={updatePrefs}
           />
         </CollapsibleSection>
+        </div>
       </div>
     </AppShell>
   );

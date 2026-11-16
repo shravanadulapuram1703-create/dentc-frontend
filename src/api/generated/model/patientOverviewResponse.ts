@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { Guarantor } from './guarantor';
 import type { PatientBalance } from './patientBalance';
 import type { PatientOverviewResponseAppointmentsItem } from './patientOverviewResponseAppointmentsItem';
 import type { PatientOverviewResponseContracts } from './patientOverviewResponseContracts';
@@ -26,6 +27,8 @@ export interface PatientOverviewResponse {
   balance: PatientBalance;
   visit?: PatientOverviewResponseVisit;
   responsible_party?: PatientOverviewResponseResponsibleParty;
+  guarantor?: Guarantor | null;
+  account_id?: number | null;
   account_members?: RosterPatientRead[];
   appointments?: PatientOverviewResponseAppointmentsItem[];
   recalls?: PatientOverviewResponseRecallsItem[];
