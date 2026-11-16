@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import { fetchProvidersForOffice, type ProviderOption } from "@/services/providerDirectory";
 import {
   OfficeBadge,
@@ -41,6 +42,7 @@ import { POLL_INTERVAL_MS } from "../AppointNowContext";
 import type { AvailableSlot, BookingRequest, BookingRequestStatus } from "../transport/types";
 import { formatDateLong, formatTime12, todayIso } from "../public/bookingUtils";
 import { RequireRight, RIGHT } from "@/features/access-control";
+import RescheduleSlotPicker from "./RescheduleSlotPicker";
 
 type Filter = BookingRequestStatus | "all";
 
@@ -163,6 +165,7 @@ function RequestCard({
   onDecline,
   onReschedule,
   onDelete,
+  onLinkPatient,
   canReschedule,
   busy,
   rescheduling,
@@ -175,6 +178,12 @@ function RequestCard({
   onDecline: (reason: string) => void;
   onReschedule: (slot: AvailableSlot) => Promise<boolean>;
   onDelete: () => void;
+  /**
+   * Create/match the patient for an approved request whose appointment was
+   * booked without one (approved before patients were linked). Undefined in
+   * the local simulation.
+   */
+  onLinkPatient?: () => void;
   /** Hide the Reschedule action when the backend has no endpoint for it (AN-14). */
   canReschedule: boolean;
   busy: boolean;
@@ -186,6 +195,9 @@ function RequestCard({
   const [reason, setReason] = useState("");
   const [newDate, setNewDate] = useState(request.slot.date);
   const [newStart, setNewStart] = useState(request.slot.start_time);
+  // Open slot picked from the availability list (carries its chair + provider);
+  // null = the manual date/time below, which keeps the request's chair.
+  const [pickedSlot, setPickedSlot] = useState<AvailableSlot | null>(null);
   // Provider to book against on approve. Defaults to the provider the public
   // availability engine assigned; "" = let the backend pick (first active).
   const [providerChoice, setProviderChoice] = useState<string>(request.slot.provider_id ?? "");
@@ -193,16 +205,26 @@ function RequestCard({
   const activeProviders = providers.filter((p) => p.is_active);
   const choiceKnown = !providerChoice || activeProviders.some((p) => p.id === providerChoice);
   const newEnd = addMinutes(newStart, request.slot.duration_minutes);
-  const unchanged = newDate === request.slot.date && newStart === request.slot.start_time;
+  const unchanged =
+    newDate === request.slot.date &&
+    newStart === request.slot.start_time &&
+    (!pickedSlot || (pickedSlot.operatory_id ?? null) === (request.slot.operatory_id ?? null));
 
   const submitReschedule = async () => {
-    const ok = await onReschedule({
-      ...request.slot,
-      date: newDate,
-      start_time: newStart,
-      end_time: newEnd,
-    });
+    const ok = await onReschedule(
+      pickedSlot ?? {
+        ...request.slot,
+        date: newDate,
+        start_time: newStart,
+        end_time: newEnd,
+      },
+    );
     if (ok) setRescheduling(false);
+  };
+  const pickSlot = (slot: AvailableSlot) => {
+    setPickedSlot(slot);
+    setNewDate(slot.date);
+    setNewStart(slot.start_time);
   };
 
   return (
@@ -314,7 +336,36 @@ function RequestCard({
           Booked as appointment{" "}
           <span className="font-mono font-semibold">{request.appointment_id}</span>
           {request.actioned_by ? ` by ${request.actioned_by}` : ""}.
+          {request.patient_id != null && (
+            <>
+              {" "}Patient{" "}
+              <Link
+                to={`/patient/${request.patient_id}/overview`}
+                className="font-mono font-semibold underline hover:text-emerald-900"
+              >
+                #{request.patient_id}
+              </Link>
+              .
+            </>
+          )}
         </p>
+      )}
+      {request.status === "approved" && request.appointment_id && request.patient_id == null && onLinkPatient && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span className="flex-1">
+            This appointment was booked without a patient record, so the scheduler shows no
+            demographics.
+          </span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onLinkPatient}
+            className="rounded-md bg-amber-600 px-2.5 py-1 font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            Create &amp; link patient
+          </button>
+        </div>
       )}
       {request.status === "declined" && (
         <p className="mt-2 text-xs text-slate-500">
@@ -353,6 +404,26 @@ function RequestCard({
                   {request.slot.duration_minutes} min · contact details are kept as entered by the patient
                 </span>
               </div>
+              <RescheduleSlotPicker
+                office_code={request.office_code}
+                date={newDate || todayIso()}
+                duration_minutes={request.slot.duration_minutes}
+                selected={pickedSlot}
+                onDateChange={(d) => {
+                  setNewDate(d);
+                  setPickedSlot(null);
+                }}
+                onSelect={pickSlot}
+              />
+              {pickedSlot && (
+                <p className="text-xs text-slate-600">
+                  Selected: <span className="font-semibold">{formatDateLong(pickedSlot.date)}</span> at{" "}
+                  <span className="font-semibold">{formatTime12(pickedSlot.start_time)}</span>
+                  {pickedSlot.operatory_name ? ` · ${pickedSlot.operatory_name}` : ""}
+                  {pickedSlot.provider_name ? ` · ${pickedSlot.provider_name}` : ""}
+                </p>
+              )}
+              <div className="text-xs font-semibold text-slate-500">Or enter a time</div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <label className="block text-xs font-semibold text-slate-600">
                   New date
@@ -360,7 +431,10 @@ function RequestCard({
                     type="date"
                     min={todayIso()}
                     value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
+                    onChange={(e) => {
+                      setNewDate(e.target.value);
+                      setPickedSlot(null);
+                    }}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-normal text-slate-900 outline-none focus:border-[#3A6EA5]"
                   />
                 </label>
@@ -370,7 +444,10 @@ function RequestCard({
                     type="time"
                     step={300}
                     value={newStart}
-                    onChange={(e) => setNewStart(e.target.value)}
+                    onChange={(e) => {
+                      setNewStart(e.target.value);
+                      setPickedSlot(null);
+                    }}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-normal text-slate-900 outline-none focus:border-[#3A6EA5]"
                   />
                 </label>
@@ -528,6 +605,7 @@ export default function RequestInbox() {
     loadError,
     refresh,
     approve,
+    linkPatient,
     decline,
     reschedule,
     remove,
@@ -713,6 +791,19 @@ export default function RequestInbox() {
           description: e instanceof Error ? e.message : "Please try again.",
         });
       }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleLinkPatient = async (id: string) => {
+    setBusyId(id);
+    try {
+      await linkPatient(id);
+    } catch (e) {
+      toast.error("Could not create the patient", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setBusyId(null);
     }
@@ -1078,6 +1169,7 @@ export default function RequestInbox() {
               onDecline={(reason) => handleDecline(r.id, reason)}
               onReschedule={(slot) => handleReschedule(r.id, slot)}
               onDelete={() => handleDelete(r)}
+              onLinkPatient={isSimulated ? undefined : () => handleLinkPatient(r.id)}
               canReschedule={supportsReschedule}
               rescheduling={reschedulingId === r.id}
               setRescheduling={(open) => setReschedulingId(open ? r.id : null)}

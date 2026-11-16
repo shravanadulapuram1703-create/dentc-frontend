@@ -47,7 +47,7 @@ export default function MessagingDialog({
           className={cn(
             "fixed left-1/2 top-1/2 z-[10061]",
             "flex flex-col overflow-hidden",
-            "w-[calc(100vw-2rem)] sm:w-full sm:max-w-md max-h-[85vh]",
+            "w-[calc(calc(var(--vw)*100)-2rem)] sm:w-full sm:max-w-md max-h-[calc(var(--vh)*85)]",
             "rounded-xl border border-[#E2E8F0] bg-white shadow-2xl",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",

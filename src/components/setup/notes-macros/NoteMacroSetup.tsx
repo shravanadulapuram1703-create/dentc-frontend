@@ -230,7 +230,7 @@ export default function NoteMacroSetup() {
               </div>
 
               {/* List */}
-              <div className="flex-1 overflow-y-auto max-h-[calc(100vh-320px)]">
+              <div className="flex-1 overflow-y-auto max-h-[calc(calc(var(--vh)*100)-320px)]">
                 {loading ? (
                   <div className="flex items-center justify-center gap-2 py-10 text-[#64748B] text-sm font-bold">
                     <Loader2 className="w-4 h-4 animate-spin text-[#3A6EA5]" /> Loading…

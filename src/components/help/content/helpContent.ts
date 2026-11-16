@@ -92,9 +92,9 @@ export const ARTICLES: HelpArticle[] = [
     id: "faq-reset-password",
     category: "faqs",
     title: "How do I change my password?",
-    summary: "Update it under Setup → Security → Change My Password.",
+    summary: "Change your own password on My Page → Account & Settings.",
     body: [
-      "Go to Setup → Security → Change My Password, enter your current password, then your new one twice. If you're locked out, use Forgot Password on the login screen.",
+      "Open My Page (your name in the top bar) → Account & Settings, enter your current password, then your new one twice — the checklist turns green as each rule is met. Your own password can only be changed there, not from Setup → Security → Users. To reset another user's password, an administrator uses Setup → Security → Users → Edit → Reset Password. If you're locked out, use Forgot Password on the login screen.",
     ],
     keywords: ["password", "change", "reset", "security", "login"],
   },

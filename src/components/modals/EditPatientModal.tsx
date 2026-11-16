@@ -763,7 +763,7 @@ export default function EditPatientModal({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-y-auto border-4 border-[#3A6EA5]">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-7xl max-h-[calc(var(--vh)*95)] overflow-y-auto border-4 border-[#3A6EA5]">
         {/* Header - Medical Slate Theme */}
         <div className="sticky top-0 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white px-4 py-2.5 flex items-center justify-between z-10 border-b-4 border-[#1F3A5F]">
           <div>

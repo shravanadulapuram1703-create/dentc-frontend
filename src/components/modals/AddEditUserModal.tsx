@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   formatUSPhone,
   phoneDigits,
@@ -16,6 +18,8 @@ import {
   ChevronRight,
   RefreshCw,
   AlertCircle,
+  KeyRound,
+  Lock,
 } from "lucide-react";
 
 import { fetchUserForEdit } from "../../services/userApi";
@@ -29,6 +33,10 @@ import { apiAssetUrl } from "../../utils/apiAsset";
 import { providerDisplayLabel } from "@/services/providerDirectory";
 import { officeKeyToId } from "@/services/officeLookup";
 import SignatureCapture from "@/features/signature/SignatureCapture";
+import { describePasswordProblem, validatePassword } from "@/features/auth/utils/passwordPolicy";
+import PasswordInput from "@/features/auth/components/PasswordInput";
+import PasswordStrengthMeter from "@/features/auth/components/PasswordStrengthMeter";
+import { canResetUserPassword, MY_PASSWORD_PATH } from "@/features/auth/utils/passwordAccess";
 import type { SignatureResult } from "@/features/signature/signatureModel";
 
 // Re-export BackendUser for backward compatibility
@@ -68,6 +76,10 @@ export default function AddEditUserModal({
   
   // Determine mode - check if editingUser has user_id
   const mode: "add" | "edit" = editingUser?.user_id ? "edit" : "add";
+  const navigate = useNavigate();
+  const { user: auth_user } = useAuth();
+  // RBAC: own password → My Page only; others' passwords → admins only.
+  const reset_access = canResetUserPassword(auth_user, editingUser?.user_id);
 
   // useEffect(() => {
   //   if (!isOpen) return;
@@ -94,6 +106,15 @@ export default function AddEditUserModal({
 
   // User image + signature (image goes via the multipart endpoint after save).
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Admin password reset (edit mode). Sent through the same PUT /users/{id}/complete
+  // as `password` + `must_change_password`, so the user is forced to pick their own
+  // password at next sign-in (LoginPage routes to My Page → Account & Settings).
+  const [password_reset, setPasswordReset] = useState({
+    is_open: false,
+    new_password: "",
+    confirm_password: "",
+    must_change_password: true,
+  });
   // "Sign on pad" dialog for the user signature (Topaz or on-screen).
   const [sigPadOpen, setSigPadOpen] = useState(false);
   const [sigDraft, setSigDraft] = useState<SignatureResult | null>(null);
@@ -220,6 +241,7 @@ export default function AddEditUserModal({
     // Identity
     username: "",
     password: "",
+    must_change_password: false,
     firstName: "",
     lastName: "",
     email: "",
@@ -383,6 +405,7 @@ export default function AddEditUserModal({
       setFormData({
         username: "",
         password: "",
+        must_change_password: false,
         firstName: "",
         lastName: "",
         email: "",
@@ -632,9 +655,27 @@ export default function AddEditUserModal({
       return;
     }
 
-    if (mode === "add" && formData.password.length < 8) {
-      alert("Password (at least 8 characters) is required for a new user");
-      return;
+    if (mode === "add") {
+      const { valid, failed } = validatePassword(formData.password);
+      if (!valid) {
+        alert(
+          `Password is required for a new user and must include: ${failed
+            .map((r) => r.label.toLowerCase())
+            .join(", ")}.`,
+        );
+        return;
+      }
+    }
+
+    if (mode === "edit" && password_reset.is_open && reset_access.allowed) {
+      const problem = describePasswordProblem(
+        password_reset.new_password,
+        password_reset.confirm_password,
+      );
+      if (problem) {
+        alert(`Reset Password: ${problem}`);
+        return;
+      }
     }
 
     if (!formData.assignedOffices.includes(formData.homeOffice)) {
@@ -665,10 +706,19 @@ export default function AddEditUserModal({
     // Build the compound payload (UserCompleteCreate / UserCompleteUpdate). The
     // parent (UserSetup) routes it to POST /users/complete or PUT
     // /users/{id}/complete in one transaction. Preferences are key/value strings.
+    // Trim identity fields: a stray space in the username makes the account
+    // impossible to sign in to (login matches the stored value exactly).
     const payload = {
-      email: formData.email,
-      username: formData.username,
-      ...(formData.password ? { password: formData.password } : {}),
+      email: formData.email.trim().toLowerCase(),
+      username: formData.username.trim(),
+      ...(mode === "add" && formData.password ? { password: formData.password } : {}),
+      ...(mode === "add" ? { must_change_password: formData.must_change_password } : {}),
+      ...(mode === "edit" && password_reset.is_open && reset_access.allowed
+        ? {
+            password: password_reset.new_password,
+            must_change_password: password_reset.must_change_password,
+          }
+        : {}),
 
       first_name: formData.firstName,
       last_name: formData.lastName,
@@ -679,7 +729,7 @@ export default function AddEditUserModal({
       is_active: formData.active,
       patient_access_level: formData.patientAccessLevel || null,
 
-      short_id: formData.shortId || null,
+      short_id: formData.shortId.trim() || null,
       report_access_provider_id: formData.reportAccessProviderId || null,
       custom_1: formData.custom1 || null,
       custom_2: formData.custom2 || null,
@@ -873,7 +923,7 @@ export default function AddEditUserModal({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-[1400px] max-h-[95vh] overflow-hidden border-2 border-[#E2E8F0]">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-[1400px] max-h-[calc(var(--vh)*95)] overflow-hidden border-2 border-[#E2E8F0]">
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between z-10 border-b-2 border-[#162942]">
           <h2 className="font-bold text-white">
@@ -909,7 +959,7 @@ export default function AddEditUserModal({
         </div>
 
         {/* Tab Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(95vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(calc(var(--vh)*95)-200px)]">
           {/* Loading State - User Data (Edit Mode) */}
           {mode === "edit" && userDataLoading && (
             <div className="flex items-center justify-center py-12">
@@ -1013,29 +1063,45 @@ export default function AddEditUserModal({
                         focus:outline-none focus:border-[#3A6EA5]`}
                     />
 
-                    {requiredMessage("username") && (
+                    {requiredMessage("username") ? (
                       <p className="text-xs text-[#EF4444] mt-1">
                         {requiredMessage("username")}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[#64748B] mt-1">
+                        Sign-in is case-sensitive — share the username exactly as typed.
                       </p>
                     )}
 
 
                   </div>
-                  {/* Password — only on create; not changed from this screen in edit mode. */}
+                  {/* Password — on create; edit mode uses the Reset Password panel below. */}
                   {mode === "add" && (
                     <div>
                       <label className="block text-[#1E293B] font-bold mb-1 text-sm">
                         Password <span className="text-[#EF4444]">*</span>
                       </label>
-                      <input
-                        type="password"
+                      <PasswordInput
                         value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
-                        placeholder="Default: same as username"
-                        className="w-full px-3 py-2 border-2 border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20"
+                        onChange={(v) => setFormData({ ...formData, password: v })}
+                        placeholder="Create a password"
+                        autoComplete="new-password"
+                        aria-label="Password"
                       />
+                      <div className="mt-2">
+                        <PasswordStrengthMeter password={formData.password} compact />
+                      </div>
+                      <label className="flex items-center gap-2 mt-2 text-xs text-[#1E293B]">
+                        <input
+                          type="checkbox"
+                          checked={formData.must_change_password}
+                          onChange={(e) =>
+                            setFormData({ ...formData, must_change_password: e.target.checked })
+                          }
+                          className="w-4 h-4"
+                        />
+                        Require password change at first login
+                      </label>
                     </div>
                   )}
                   <div>
@@ -1172,6 +1238,118 @@ export default function AddEditUserModal({
                   </div>
                 </div>
               </div>
+
+              {/* Admin password reset (edit mode only) */}
+              {mode === "edit" && (
+                <div>
+                  <h3 className="font-bold text-[#1F3A5F] mb-4 uppercase tracking-wide border-b-2 border-[#E2E8F0] pb-2">
+                    Password
+                  </h3>
+                  {!reset_access.allowed ? (
+                    <div className="flex items-start gap-3 border-2 border-[#E2E8F0] bg-[#F8FAFC] rounded-lg p-4">
+                      <Lock className="w-4 h-4 mt-0.5 text-[#64748B] shrink-0" />
+                      {reset_access.reason === "self" ? (
+                        <div className="text-sm text-[#1E293B]">
+                          <p className="font-bold">This is your own account.</p>
+                          <p className="text-[#64748B] mt-0.5">
+                            Change your own password from My Page → Account &amp; Settings. It can&apos;t be
+                            reset from Setup.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              navigate(MY_PASSWORD_PATH);
+                            }}
+                            className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 border-2 border-[#3A6EA5] text-[#3A6EA5] rounded-lg font-bold text-xs hover:bg-[#3A6EA5]/10"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            Go to My Page
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-[#1E293B]">
+                          <p className="font-bold">Password reset requires administrator access.</p>
+                          <p className="text-[#64748B] mt-0.5">
+                            Only administrators can reset another user&apos;s password. Ask an admin to reset it.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : !password_reset.is_open ? (
+                    <button
+                      type="button"
+                      onClick={() => setPasswordReset({ ...password_reset, is_open: true })}
+                      className="flex items-center gap-2 px-4 py-2 border-2 border-[#3A6EA5] text-[#3A6EA5] rounded-lg font-bold text-sm hover:bg-[#3A6EA5]/10"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                      Reset Password
+                    </button>
+                  ) : (
+                    <div className="border-2 border-[#3A6EA5]/30 bg-[#F8FAFC] rounded-lg p-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                            New Password <span className="text-[#EF4444]">*</span>
+                          </label>
+                          <PasswordInput
+                            autoComplete="new-password"
+                            aria-label="New password"
+                            value={password_reset.new_password}
+                            onChange={(v) => setPasswordReset({ ...password_reset, new_password: v })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[#1E293B] font-bold mb-1 text-sm">
+                            Confirm Password <span className="text-[#EF4444]">*</span>
+                          </label>
+                          <PasswordInput
+                            autoComplete="new-password"
+                            aria-label="Confirm password"
+                            value={password_reset.confirm_password}
+                            onChange={(v) => setPasswordReset({ ...password_reset, confirm_password: v })}
+                          />
+                        </div>
+                      </div>
+                      <PasswordStrengthMeter
+                        password={password_reset.new_password}
+                        confirm={password_reset.confirm_password}
+                        compact
+                      />
+                      <label className="flex items-center gap-2 text-sm text-[#1E293B]">
+                        <input
+                          type="checkbox"
+                          checked={password_reset.must_change_password}
+                          onChange={(e) =>
+                            setPasswordReset({ ...password_reset, must_change_password: e.target.checked })
+                          }
+                          className="w-4 h-4"
+                        />
+                        Require the user to change this password at next login
+                      </label>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-[#64748B]">
+                          The new password is applied when you click SAVE USER.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPasswordReset({
+                              is_open: false,
+                              new_password: "",
+                              confirm_password: "",
+                              must_change_password: true,
+                            })
+                          }
+                          className="text-sm font-bold text-[#64748B] hover:text-[#1E293B]"
+                        >
+                          Cancel reset
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Active Status */}
               <div>

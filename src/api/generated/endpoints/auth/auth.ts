@@ -35,6 +35,7 @@ import type {
   LoginRequest,
   MeFull,
   MessageResponse,
+  PasswordPolicy,
   RefreshRequest,
   ResetPasswordRequest,
   ResetTokenValidateRequest,
@@ -477,6 +478,100 @@ export function useGetMeFull<TData = Awaited<ReturnType<typeof getMeFull>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMeFullQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Unauthenticated on purpose: the forgot-password reset and legacy
+ * activation pages render the checklist before anyone is signed in.
+ * @summary The password complexity policy enforced on every password write (PWD-RBAC-3)
+ */
+export const getPasswordPolicy = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PasswordPolicy>(
+      {url: `/api/v1/auth/password-policy`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPasswordPolicyQueryKey = () => {
+    return [
+    `/api/v1/auth/password-policy`
+    ] as const;
+    }
+
+
+export const getGetPasswordPolicyQueryOptions = <TData = Awaited<ReturnType<typeof getPasswordPolicy>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPasswordPolicy>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPasswordPolicyQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPasswordPolicy>>> = ({ signal }) => getPasswordPolicy(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPasswordPolicy>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPasswordPolicyQueryResult = NonNullable<Awaited<ReturnType<typeof getPasswordPolicy>>>
+export type GetPasswordPolicyQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetPasswordPolicy<TData = Awaited<ReturnType<typeof getPasswordPolicy>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPasswordPolicy>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPasswordPolicy>>,
+          TError,
+          Awaited<ReturnType<typeof getPasswordPolicy>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPasswordPolicy<TData = Awaited<ReturnType<typeof getPasswordPolicy>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPasswordPolicy>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPasswordPolicy>>,
+          TError,
+          Awaited<ReturnType<typeof getPasswordPolicy>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPasswordPolicy<TData = Awaited<ReturnType<typeof getPasswordPolicy>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPasswordPolicy>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The password complexity policy enforced on every password write (PWD-RBAC-3)
+ */
+
+export function useGetPasswordPolicy<TData = Awaited<ReturnType<typeof getPasswordPolicy>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPasswordPolicy>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPasswordPolicyQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

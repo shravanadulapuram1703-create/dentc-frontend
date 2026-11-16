@@ -10,6 +10,10 @@
 //     and then the complete appointment-details form.
 //   • CLOSE      — abandon.
 //
+// Once name + birthdate are entered it looks the person up and, when they are
+// already a patient, offers "Use This Patient" so the booking goes to the
+// existing record instead of a duplicate.
+//
 // The component is presentational + validation only; the host modal owns the
 // form state (so CONTINUE can seed the next screens) and performs the saves.
 
@@ -20,6 +24,8 @@ import { resolveOffice } from "../../services/officeLookup";
 import { ProviderOptionGroups } from "@/features/office-scope";
 import { MIN_DOB_ISO, todayIsoDate, validateDob } from "../../utils/datetime";
 import NoteMacroPickerModal from "../patient/NoteMacroPickerModal";
+import { useExistingPatientMatches } from "@/features/patients/useExistingPatientMatches";
+import ExistingPatientMatches from "@/features/patients/ExistingPatientMatches";
 
 /** Form state shared with NewAppointmentModal (it seeds the later screens). */
 export interface QuickAppointmentFormData {
@@ -56,6 +62,8 @@ interface QuickNewPatientAppointmentProps {
   isLoadingMetadata: boolean;
   onQuickSave: () => void;
   onContinue: () => void;
+  /** The user picked an existing patient that matches the name + birthdate. */
+  onSelectExisting: (patient_id: number) => void;
   onBack: () => void;
   onClose: () => void;
 }
@@ -151,9 +159,15 @@ export default function QuickNewPatientAppointment({
   isLoadingMetadata,
   onQuickSave,
   onContinue,
+  onSelectExisting,
   onBack,
   onClose,
 }: QuickNewPatientAppointmentProps) {
+  const existingMatches = useExistingPatientMatches({
+    first_name: formData.firstName,
+    last_name: formData.lastName,
+    dob: formData.birthdate,
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   // BYPASS (legacy): skip the phone requirement for this booking.
   const [bypass_phone, setBypassPhone] = useState(false);
@@ -233,7 +247,7 @@ export default function QuickNewPatientAppointment({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
-        className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto border-2 border-[#E2E8F0] flex flex-col"
+        className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[calc(var(--vh)*95)] overflow-y-auto border-2 border-[#E2E8F0] flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-labelledby="quick-new-patient-appt-title"
@@ -371,6 +385,12 @@ export default function QuickNewPatientAppointment({
               </div>
             </section>
           </div>
+
+          <ExistingPatientMatches
+            result={existingMatches}
+            onSelect={onSelectExisting}
+            disabled={isSaving}
+          />
 
           {/* Contact + appointment basics */}
           <section className="border border-[#E2E8F0] rounded overflow-hidden">

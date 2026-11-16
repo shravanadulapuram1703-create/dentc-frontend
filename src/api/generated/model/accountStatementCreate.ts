@@ -6,7 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AppSchemasOfficeSetupFeeScheduleOption {
-  id: number;
-  name: string;
+export interface AccountStatementCreate {
+  office_id?: number | null;
+  statement_date?: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
+  message?: string | null;
 }

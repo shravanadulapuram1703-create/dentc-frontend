@@ -149,7 +149,7 @@ export default function ViewUserDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[calc(var(--vh)*90)] overflow-hidden flex flex-col">
         {/* Header — shrink-0 so a tall tab body cannot squash it (see below). */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] text-white p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -228,7 +228,7 @@ export default function ViewUserDetailsModal({
         </div>
 
         {/* Content — min-h-0 is required next to flex-1: without it this pane
-            keeps its content height, pushes the dialog past max-h-[90vh] and
+            keeps its content height, pushes the dialog past max-h-[calc(var(--vh)*90)] and
             squashes the header/tabs instead of scrolling. */}
         <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {/* Loading State */}

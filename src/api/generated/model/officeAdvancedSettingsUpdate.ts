@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * OFF-QA-8: ranges and formats the database cannot express.
+ */
 export interface OfficeAdvancedSettingsUpdate {
   finance_charge_pct?: number | string | null;
   min_balance?: number | string | null;

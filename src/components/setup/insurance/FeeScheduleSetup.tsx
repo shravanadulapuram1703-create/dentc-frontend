@@ -252,7 +252,7 @@ function ViewBySchedule({ codesReady }: { codesReady: boolean }) {
             </select>
           </div>
         </div>
-        <div className="max-h-[calc(100vh-320px)] overflow-y-auto">
+        <div className="max-h-[calc(calc(var(--vh)*100)-320px)] overflow-y-auto">
           {loading ? (
             <div className="flex items-center gap-2 p-4 text-sm text-[#64748B]">
               <Loader2 className="w-4 h-4 animate-spin" /> Loading…

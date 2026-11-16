@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { Guarantor } from './guarantor';
 import type { MedicalAlertSummary } from './medicalAlertSummary';
 import type { PatientContextBalance } from './patientContextBalance';
 import type { PatientContextInsurance } from './patientContextInsurance';
@@ -21,6 +22,8 @@ export interface PatientContext {
   primary_insurance?: PatientContextInsurance | null;
   responsible_party?: PatientContextResponsibleParty | null;
   responsible_party_id?: string | null;
+  account_id?: number | null;
+  guarantor?: Guarantor | null;
   visit: PatientContextVisit;
   opening_balance?: PatientContextOpeningBalance;
 }

@@ -10,6 +10,7 @@ import ImageViewer from './ImageViewer';
 import ToothAssociationPanel from './ToothAssociationPanel';
 import DicomStudySection from './DicomStudySection';
 import { RequireRight, RIGHT } from '@/features/access-control';
+import { imagingCategoryOf } from '../utils/imageFilters';
 
 interface ImagesTabProps {
   patientId: number;
@@ -28,7 +29,7 @@ export default function ImagesTab({ patientId, officeId }: ImagesTabProps) {
   const counts = useMemo(() => {
     const acc: Record<string, number> = {};
     for (const img of images) {
-      const key = img.document.document_type ?? 'Other';
+      const key = imagingCategoryOf(img.document);
       acc[key] = (acc[key] ?? 0) + 1;
     }
     return acc;
@@ -38,7 +39,7 @@ export default function ImagesTab({ patientId, officeId }: ImagesTabProps) {
     () =>
       category === null
         ? images
-        : images.filter((img) => img.document.document_type === category),
+        : images.filter((img) => imagingCategoryOf(img.document) === category),
     [images, category],
   );
 

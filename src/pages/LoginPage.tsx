@@ -4,6 +4,7 @@ import { Mail, LogIn, KeyRound } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import AuthShell from "../features/auth/components/AuthShell";
 import PasswordField from "../features/auth/components/PasswordField";
+import { MY_PASSWORD_PATH } from "../features/auth/utils/passwordAccess";
 import AuthErrorAlert from "../features/auth/components/AuthErrorAlert";
 import { REMEMBERED_IDENTIFIER_KEY } from "../features/auth/rememberMe";
 
@@ -43,7 +44,7 @@ export default function LoginPage() {
         // Force a password change on first login / admin-required reset.
         navigate(
           result.must_change_password
-            ? "/setup/security/change-my-password"
+            ? MY_PASSWORD_PATH
             : "/dashboard",
         );
       } else {

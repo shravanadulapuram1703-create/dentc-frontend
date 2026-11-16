@@ -523,7 +523,7 @@ export default function ProviderSetup() {
           </div>
 
           {/* Tab content */}
-          <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto">
+          <div className="p-6 max-h-[calc(calc(var(--vh)*100)-240px)] overflow-y-auto">
             {activeTab === "info" && (
               <InfoTab formData={form} updateFormData={updateForm} offices={offices} providerId={selectedProviderId} />
             )}

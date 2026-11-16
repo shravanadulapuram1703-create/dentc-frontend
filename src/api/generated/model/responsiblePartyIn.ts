@@ -8,15 +8,27 @@
 import type { ResponsiblePartyPersonIn } from './responsiblePartyPersonIn';
 
 /**
- * Relationship of the patient to their responsible party (GAP-AP-7/15).
- * ``is_self`` self-links the patient as their own guarantor; ``responsible_party_id``
- * links an already-existing party; ``person`` creates a new guarantor inline
- * (LEG-10) and links it — the three are mutually exclusive, resolved in that order
- * of precedence (is_self > person > responsible_party_id).
+ * Relationship of the patient to their responsible party (GAP-AP-7/15, RP-5).
+ *
+ * Exactly one way of naming the guarantor is used, by precedence
+ * ``is_self > guarantor_patient_id > account_id > person > responsible_party_id``:
+ *
+ * * ``is_self`` — the patient is their own guarantor (a new account, or
+ *   ``account_id`` to be a self-responsible member of an existing one);
+ * * ``guarantor_patient_id`` — an existing **patient** is the guarantor (head of
+ *   household); the new patient joins that patient's account;
+ * * ``account_id`` — join an existing account under its primary guarantor;
+ * * ``person`` — create a new **non-patient** guarantor inline (LEG-10);
+ * * ``responsible_party_id`` — an existing ``responsible_parties`` row id or a
+ *   legacy RPID (validated, RP-7).
+ *
+ * Omitting the block entirely registers the patient as Self (RP-4).
  */
 export interface ResponsiblePartyIn {
   relationship?: string | null;
   is_self?: boolean;
+  guarantor_patient_id?: number | null;
+  account_id?: number | null;
   responsible_party_id?: string | null;
   person?: ResponsiblePartyPersonIn | null;
 }

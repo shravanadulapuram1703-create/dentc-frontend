@@ -8,6 +8,8 @@
 
 export interface PatientPaymentUpdate {
   patient_id?: number | null;
+  account_id?: number | null;
+  account_payment_id?: string | null;
   office_id?: number | null;
   created_office_id?: number | null;
   is_archived?: boolean | null;

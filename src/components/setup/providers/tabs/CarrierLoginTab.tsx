@@ -240,7 +240,7 @@ export default function CarrierLoginTab({ providerId }: CarrierLoginTabProps) {
       {/* Add/Edit modal */}
       {draft && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[calc(var(--vh)*90)] overflow-y-auto">
             <div className="flex items-center justify-between bg-[#3A6EA5] text-white px-6 py-4 rounded-t-lg sticky top-0">
               <h3 className="text-lg font-bold">{draft.id == null ? "Add Carrier Login" : "Edit Carrier Login"}</h3>
               <button onClick={() => setDraft(null)} className="p-1 hover:bg-white/20 rounded">

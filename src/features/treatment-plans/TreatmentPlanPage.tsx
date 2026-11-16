@@ -36,6 +36,7 @@ import {
 } from '@/features/procedures/procedureEntryService';
 import { announceProcedureChange, invalidateProcedureQueries, useProcedureSync } from '@/features/procedures/procedureSync';
 import { needsProcedureDetails } from '@/features/procedures/procedureRequirements';
+import { formatToothList } from '@/features/procedures/multiTooth';
 import ProcedureDetailsDialog, { type ProcedureDetailsHeader, type ProcedureDetailsRowResult } from '@/features/procedures/ProcedureDetailsDialog';
 import { useGetPatient, uploadPatientDocument } from '@/api/generated/endpoints/patients/patients';
 import type { ProcedureCodeRead, TreatmentPlanItemRead } from '@/api/generated/model';
@@ -308,10 +309,13 @@ export default function TreatmentPlanPage() {
     return id;
   };
 
-  /** Plan a procedure through the shared entry service (details already collected/validated). */
-  const addPlannedProcedure = (
-    code: ProcedureCodeRead,
-    extras: { tooth?: string; surface?: string } = {},
+  /**
+   * Plan procedures through the shared entry service (details already collected/
+   * validated). A multi-tooth pick arrives as one line per tooth and is saved as
+   * one separate treatment-plan item per tooth.
+   */
+  const addPlannedProcedures = (
+    lines: { code: ProcedureCodeRead; tooth?: string; surface?: string }[],
     head: EntryState = entry,
   ) =>
     run('Add procedure', async () => {
@@ -319,27 +323,40 @@ export default function TreatmentPlanPage() {
       // Price from the fee schedule + plan coverage that apply to this patient/
       // office/provider, so a planned procedure carries the same patient/
       // insurance split the charge will — and the same one the chart quotes.
-      const priced = await priceProcedure(feeCtx, coverageCtx, code.code, {
-        default_fee: code.default_fee,
-        on_date: head.diag_date || null,
-      });
-      await planProcedure({
-        patient_id: numericId,
-        office_id: officeId,
-        plan_id,
-        procedure_code: code.code,
-        description: code.description,
-        tooth: extras.tooth || null,
-        surface: extras.surface || null,
-        fee: priced.fee,
-        insurance_estimate: priced.insurance_estimate,
-        priority: head.order,
-        phase_id: head.phase,
-        provider_id: head.provider_id || null,
-        diagnosed_date: head.diag_date || null,
-      });
+      // The fee does not depend on the tooth, so each code is priced once.
+      const prices = new Map<string, Awaited<ReturnType<typeof priceProcedure>>>();
+      let added = 0;
+      for (const { code, tooth, surface } of lines) {
+        let priced = prices.get(code.code);
+        if (!priced) {
+          priced = await priceProcedure(feeCtx, coverageCtx, code.code, {
+            default_fee: code.default_fee,
+            on_date: head.diag_date || null,
+          });
+          prices.set(code.code, priced);
+        }
+        await planProcedure({
+          patient_id: numericId,
+          office_id: officeId,
+          plan_id,
+          procedure_code: code.code,
+          description: code.description,
+          tooth: tooth || null,
+          surface: surface || null,
+          fee: priced.fee,
+          insurance_estimate: priced.insurance_estimate,
+          priority: head.order,
+          phase_id: head.phase,
+          provider_id: head.provider_id || null,
+          diagnosed_date: head.diag_date || null,
+        });
+        added += 1;
+      }
       setEnforcing(null);
-      toast.success(`Added ${code.code} — ${code.description}`);
+      const first = lines[0]!.code;
+      toast.success(added === 1
+        ? `Added ${first.code} — ${first.description}`
+        : `Added ${added} procedures (${formatToothList(lines.map((l) => l.tooth ?? '').filter(Boolean)) || 'no tooth'})`);
     });
 
   // Add procedure (exact-match auto-add or pick-list selection). Codes whose
@@ -347,7 +364,7 @@ export default function TreatmentPlanPage() {
   // the legacy Add Procedure Details pop-up first, like every other screen.
   const onAdd = (code: ProcedureCodeRead) => {
     if (needsProcedureDetails(code)) setEnforcing(code);
-    else void addPlannedProcedure(code);
+    else void addPlannedProcedures([{ code }]);
   };
 
   /** Pop-up SAVE: adopt the header (provider / date / TID / phase) into the entry panel, then plan. */
@@ -360,8 +377,8 @@ export default function TreatmentPlanPage() {
       phase: head.phase ?? entry.phase,
     };
     setEntry(next);
-    const r = rows[0];
-    if (r) void addPlannedProcedure(r.code, { tooth: r.tooth, surface: r.surface }, next);
+    // One result per tooth — each becomes its own plan item.
+    if (rows.length) void addPlannedProcedures(rows.map((r) => ({ code: r.code, tooth: r.tooth, surface: r.surface })), next);
     // NOTE: quadrant / material_id are validated here but treatment_plan_items
     // has no column for them (PROC-INT-5) — they are carried by the charge when
     // the item is posted through the same pop-up on the ledger side.
@@ -494,7 +511,15 @@ export default function TreatmentPlanPage() {
         const targetPlan = await ensurePlanForTid(save.targetTid);
         if (targetPlan !== editingItem.plan_id) data.plan_id = targetPlan;
       }
+      // A hand-entered Est Ins rides along unless `fee` is in the same PATCH —
+      // the server re-splits coverage on any PATCH carrying `fee` and would
+      // overwrite it, so it lands in a second, estimate-only PATCH (TX-EST-1).
+      const manualIns = save.insurance_estimate;
+      if (manualIns != null && !('fee' in data)) data.insurance_estimate = manualIns;
       await updateItem.mutateAsync({ itemId: editingItem.id, data });
+      if (manualIns != null && 'fee' in data) {
+        await updateItem.mutateAsync({ itemId: editingItem.id, data: { insurance_estimate: manualIns } });
+      }
       // Pre Auth Date / Status live on the item's insurance-detail row (one per item).
       const det = save.insurance_detail;
       if (det) {

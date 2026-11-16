@@ -19,14 +19,18 @@ import { DuplicatePatient, CheckDuplicatePayload } from '../types/patient';
 export function toDuplicatePatient(c: DuplicateCandidate): DuplicatePatient {
   const matched = (c.match_on ?? []).join(', ');
   return {
+    id: c.id,
     dob: c.dob ?? '',
     name: [c.last_name, c.first_name].filter(Boolean).join(', '),
     home_office_short_id: c.home_office_short_id ?? '',
     patient_id: c.chart_no || String(c.id),
     email: c.email ?? '',
+    phone: c.phone ?? '',
     provider: c.preferred_provider_name ?? '',
     status: c.is_active ? 'Active' : 'Inactive',
     source: `Match ${c.match_score}%${matched ? ` (${matched})` : ''}`,
+    match_on: c.match_on ?? [],
+    is_strong: c.is_strong ?? false,
   };
 }
 

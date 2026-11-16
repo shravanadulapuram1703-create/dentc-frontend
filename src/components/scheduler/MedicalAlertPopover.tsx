@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import { isAllergySection } from "@/features/medical-alerts/patientMedicalAlerts";
 import type { PatientMedicalAlert } from "../../services/schedulerApi";
+import { viewportHeight, viewportWidth } from "@/utils/uiZoom";
 
 interface Props {
   patient_id: number | null;
@@ -48,8 +49,8 @@ export default function MedicalAlertPopover({
     };
   }, [onClose]);
 
-  const left = Math.min(anchor.x, window.innerWidth - WIDTH - 12);
-  const top = Math.min(anchor.y, window.innerHeight - 220);
+  const left = Math.min(anchor.x, viewportWidth() - WIDTH - 12);
+  const top = Math.min(anchor.y, viewportHeight() - 220);
 
   // Group by section in the order the alerts already arrive (allergies first).
   const groups: Array<{ section: string; items: PatientMedicalAlert[] }> = [];

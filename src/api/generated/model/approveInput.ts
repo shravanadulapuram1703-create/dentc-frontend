@@ -10,6 +10,8 @@ export interface ApproveInput {
   appointment_id?: string | null;
   patient_id?: number | null;
   create_patient?: boolean;
+  force_create?: boolean;
+  link_existing_match?: boolean;
   provider_id?: string | null;
   operatory_id?: string | null;
   waive_payment?: boolean;

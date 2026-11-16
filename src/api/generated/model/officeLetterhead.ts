@@ -5,14 +5,18 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { OfficeLetterheadLogoSource } from './officeLetterheadLogoSource';
 
 /**
  * PRINT-2: what prints at the top of every report for this office — the
  * same resolution ``print_service.resolve_letterhead`` uses for the PDFs.
  *
- * ``logo_source`` says where the logo came from: ``office`` (the office's own
- * Statement-tab upload), ``tenant`` (the practice logo from Account Info) or
- * ``none`` (the office opted out, or nothing is uploaded).
+ * ``logo_source`` says where the logo came from: ``custom`` (the office's own
+ * Statement-tab upload), ``account`` (the practice logo from Account Info) or
+ * ``none`` (the office opted out, or nothing is uploaded). OFF-QA-1: renamed
+ * from ``office``/``tenant``, which read backwards (the "office" logo was the
+ * custom one). A custom address prints as a whole block — a blank custom line
+ * never borrows the office's.
  */
 export interface OfficeLetterhead {
   name?: string | null;
@@ -23,5 +27,5 @@ export interface OfficeLetterhead {
   zip?: string | null;
   phone?: string | null;
   logo_url?: string | null;
-  logo_source?: string;
+  logo_source?: OfficeLetterheadLogoSource;
 }
