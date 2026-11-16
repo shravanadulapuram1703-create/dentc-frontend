@@ -73,6 +73,18 @@ legacy_id?: string | null;
  */
 id?: number | null;
 /**
+ * Filter by account_id
+ */
+account_id?: number | null;
+/**
+ * Filter by guarantor_patient_id
+ */
+guarantor_patient_id?: number | null;
+/**
+ * Filter by guarantor_party_id
+ */
+guarantor_party_id?: number | null;
+/**
  * Filter by seen_at_office_id
  */
 seen_at_office_id?: number | null;
@@ -80,6 +92,14 @@ seen_at_office_id?: number | null;
  * Filter by search_scope
  */
 search_scope?: string | null;
+/**
+ * Filter by account_no
+ */
+account_no?: string | null;
+/**
+ * Filter by guarantor_name
+ */
+guarantor_name?: string | null;
 /**
  * Comma-separated list of ids to return (batch lookup)
  */

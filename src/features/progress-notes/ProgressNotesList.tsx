@@ -116,7 +116,7 @@ export default function ProgressNotesList() {
   }
 
   return (
-    <div className="flex flex-col bg-slate-100" style={{ minHeight: 'calc(100vh - 300px)' }}>
+    <div className="flex flex-col bg-slate-100" style={{ minHeight: 'calc(var(--vh) * 100 - 300px)' }}>
       {/* Workspace header */}
       <div
         className="flex items-center justify-between px-5 py-2 text-sm font-semibold text-white"

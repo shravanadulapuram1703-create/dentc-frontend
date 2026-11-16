@@ -110,7 +110,7 @@ export default function BillingDetailsModal({
               <Loader2 className="w-5 h-5 animate-spin text-[#3A6EA5]" /> Loading schedule…
             </div>
           ) : (
-            <div className="overflow-x-auto border-2 border-[#E2E8F0] rounded max-h-[55vh]">
+            <div className="overflow-x-auto border-2 border-[#E2E8F0] rounded max-h-[calc(var(--vh)*55)]">
               <table className="w-full text-[12px]">
                 <thead className="bg-[#3A6EA5] text-white sticky top-0">
                   <tr>

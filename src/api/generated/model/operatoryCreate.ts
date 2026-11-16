@@ -7,8 +7,8 @@
  */
 
 export interface OperatoryCreate {
-  /** @maxLength 50 */
-  id: string;
+  /** OFF-QA-11: omit to let the server mint op-{office_id}-{n}; an explicit id (e.g. an imported legacy id) is kept. */
+  id?: string | null;
   office_id: number;
   /** @maxLength 100 */
   name: string;

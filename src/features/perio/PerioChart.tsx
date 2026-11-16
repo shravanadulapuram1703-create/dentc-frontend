@@ -538,7 +538,7 @@ export default function PerioChart() {
 
   // ---- Render -------------------------------------------------------------
   return (
-    <div className="flex flex-col bg-slate-50" style={{ minHeight: 'calc(100vh - 260px)' }} tabIndex={0} onKeyDown={onKeyDown}>
+    <div className="flex flex-col bg-slate-50" style={{ minHeight: 'calc(var(--vh) * 100 - 260px)' }} tabIndex={0} onKeyDown={onKeyDown}>
       <div className="flex items-center px-5 py-2 text-sm font-semibold text-white" style={{ background: 'linear-gradient(180deg,#2566a8,#16406e)' }}>
         Perio Chart
         <span className="ml-3 rounded bg-white/15 px-2 py-0.5 text-xs font-normal">{patient?.name}</span>

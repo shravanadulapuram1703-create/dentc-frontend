@@ -13,6 +13,11 @@
 // on SAVE (see procedureRequirements.ts) with the legacy red toast wording; the
 // rest stay disabled.
 //
+// Multi-tooth: the Tooth# cell and the SELECT TOOTH NUMBER panel take MANY teeth
+// for one code (click toggles, Shift+click selects a range, or type "7-23" /
+// "2, 4-6"). SAVE expands the row into one result per tooth, so every caller
+// still writes one separate record per tooth (see multiTooth.ts).
+//
 // Supporting records (PROC-7c): for a code that requires an X-ray / perio chart /
 // photo / missing-tooth info / attachment, a line under the row shows what the
 // server already has on file for this patient, tooth and date. It never blocks
@@ -44,6 +49,7 @@ import {
   type ProcedureRequirements,
   type SurfaceChoice,
 } from './procedureRequirements';
+import { formatToothList, parseToothList, sortTeeth, toothRange } from './multiTooth';
 import { fetchProcedureReadiness, readinessLabels, type ProcedureReadiness } from './supportingRecords';
 
 export interface ProcedureDetailsHeader {
@@ -59,11 +65,14 @@ export interface ProcedureDetailsRowInput {
   code: ProcedureCodeRead;
   /** Pre-filled values (chart selection, explosion-code defaults, …). */
   tooth?: string | null;
+  /** Several teeth for the same code (chart multi-selection); wins over `tooth`. */
+  teeth?: string[];
   quadrant?: string | null;
   surface?: string | null;
   material_id?: number | null;
 }
 
+/** One per TOOTH: a row with N teeth comes back as N results (same code, details). */
 export interface ProcedureDetailsRowResult extends ProcedureDetails {
   code: ProcedureCodeRead;
 }
@@ -84,7 +93,10 @@ interface Props {
 }
 
 interface RowState {
-  tooth: string;
+  /** Running order; empty = no tooth. One record is saved per tooth. */
+  teeth: string[];
+  /** What the Tooth# box shows while the user is typing a list/range. */
+  tooth_text: string | null;
   quadrant: string;
   surfaces: SurfaceChoice[];
   material_id: number | null;
@@ -152,7 +164,8 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
   const reqs = useMemo(() => rows.map((r) => procedureRequirements(r.code)), [rows]);
   const [state, setState] = useState<RowState[]>(() =>
     rows.map((r, i) => ({
-      tooth: (r.tooth ?? '').toUpperCase(),
+      teeth: sortTeeth((r.teeth?.length ? r.teeth : r.tooth ? [r.tooth] : []).map((t) => t.toUpperCase())),
+      tooth_text: null,
       quadrant: r.quadrant ?? '',
       surfaces: decodeSurfaces(r.surface),
       material_id: r.material_id ?? reqs[i]!.default_material_id,
@@ -160,8 +173,11 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
   );
   // Which row's panels are open. The legacy window shows both panels at once,
   // tooth on the left and surfaces on the right, under the grid.
-  const [toothRow, setToothRow] = useState<number | null>(() => (reqs[0]?.tooth && !rows[0]?.tooth ? 0 : null));
-  const [surfaceRow, setSurfaceRow] = useState<number | null>(() => (reqs[0]?.surface && !!rows[0]?.tooth ? 0 : null));
+  const prefilled = (r?: ProcedureDetailsRowInput) => !!(r?.tooth || r?.teeth?.length);
+  const [toothRow, setToothRow] = useState<number | null>(() => (reqs[0]?.tooth && !prefilled(rows[0]) ? 0 : null));
+  const [surfaceRow, setSurfaceRow] = useState<number | null>(() => (reqs[0]?.surface && prefilled(rows[0]) ? 0 : null));
+  // Shift+click range anchor: the last tooth clicked in the open panel.
+  const anchor = useRef<string | null>(null);
   const [showSuper, setShowSuper] = useState(false);
 
   const { providers, allProviders } = useProviderDirectory(office_id);
@@ -181,7 +197,8 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
   // the date changes, debounced so tooth-grid clicks do not fan out requests.
   const [readiness, setReadiness] = useState<Record<number, ProcedureReadiness | 'loading' | 'error'>>({});
   const readinessSeq = useRef(0);
-  const toothKey = state.map((r) => r.tooth).join('|');
+  // Readiness is judged per tooth; with several teeth it is checked code-wide.
+  const toothKey = state.map((r) => (r.teeth.length === 1 ? r.teeth[0] : '')).join('|');
   useEffect(() => {
     if (!patient_id) return;
     const wanted = rows.map((r, i) => ({ r, i })).filter(({ i }) => needsRecords(reqs[i]!));
@@ -195,7 +212,7 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
     const teeth = toothKey.split('|');
     const timer = window.setTimeout(() => {
       for (const { r, i } of wanted) {
-        fetchProcedureReadiness({ patient_id, procedure_code: r.code.code, tooth: teeth[i] ?? null, date_of_service: hdr.date || null })
+        fetchProcedureReadiness({ patient_id, procedure_code: r.code.code, tooth: teeth[i] || null, date_of_service: hdr.date || null })
           .then((res) => { if (seq === readinessSeq.current) setReadiness((prev) => ({ ...prev, [i]: res })); })
           .catch(() => { if (seq === readinessSeq.current) setReadiness((prev) => ({ ...prev, [i]: 'error' })); });
       }
@@ -230,33 +247,61 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
     );
   };
 
-  const pickTooth = (i: number, tooth: string) => {
-    const next = state[i]!.tooth === tooth ? '' : tooth;
-    patch(i, { tooth: next });
+  const setTeeth = (i: number, teeth: string[]) => {
+    patch(i, { teeth: sortTeeth(teeth), tooth_text: null });
     // Legacy flow: once the tooth is known, the surfaces panel opens beside it.
-    if (next && reqs[i]!.surface) setSurfaceRow(i);
+    if (teeth.length && reqs[i]!.surface) setSurfaceRow(i);
+  };
+
+  /** Click toggles one tooth; Shift+click adds every allowed tooth from the last click. */
+  const pickTooth = (i: number, tooth: string, range: boolean) => {
+    const cur = state[i]!.teeth;
+    if (range && anchor.current && anchor.current !== tooth) {
+      const span = toothRange(anchor.current, tooth).filter((t) => toothAllowed(reqs[i]!, t).allowed);
+      setTeeth(i, [...cur, ...span]);
+    } else {
+      setTeeth(i, cur.includes(tooth) ? cur.filter((t) => t !== tooth) : [...cur, tooth]);
+    }
+    anchor.current = tooth;
+  };
+
+  /** Typed Tooth# ("7-23", "2, 4-6"): commit on blur / Enter. */
+  const commitToothText = (i: number) => {
+    const text = state[i]!.tooth_text;
+    if (text == null) return;
+    const { teeth, invalid } = parseToothList(text);
+    if (invalid.length) toast.error(`Not a tooth number: ${invalid.join(', ')}`);
+    const blocked = teeth.filter((t) => !toothAllowed(reqs[i]!, t).allowed);
+    if (blocked.length) toast.error(`${rows[i]!.code.code} is not valid for tooth ${formatToothList(blocked)} — skipped.`);
+    setTeeth(i, teeth.filter((t) => !blocked.includes(t)));
   };
 
   const toggleSurface = (i: number, key: SurfaceChoice) =>
     patch(i, { surfaces: state[i]!.surfaces.includes(key) ? state[i]!.surfaces.filter((k) => k !== key) : [...state[i]!.surfaces, key] });
 
+  /** One result per tooth (a row with no tooth stays one result). */
   const results = (): ProcedureDetailsRowResult[] =>
-    rows.map((r, i) => ({
-      code: r.code,
-      tooth: state[i]!.tooth,
-      quadrant: state[i]!.quadrant,
-      surface: encodeSurfaces(state[i]!.surfaces, state[i]!.tooth),
-      material_id: state[i]!.material_id,
-    }));
+    rows.flatMap((r, i) => {
+      const s = state[i]!;
+      return (s.teeth.length ? s.teeth : ['']).map((tooth) => ({
+        code: r.code,
+        tooth,
+        quadrant: s.quadrant,
+        surface: encodeSurfaces(s.surfaces, tooth),
+        material_id: s.material_id,
+      }));
+    });
+  const recordCount = state.reduce((n, s) => n + Math.max(1, s.teeth.length), 0);
 
   const save = async () => {
     const errs: string[] = [];
     if (mode === 'charge' && !hdr.provider_id) errs.push('Please select a treating provider.');
     if (!hdr.date) errs.push(`Please specify the ${mode === 'plan' ? 'diagnosis' : 'transaction'} date.`);
     const out = results();
-    out.forEach((r, i) => errs.push(...requirementMessages(r.code, reqs[i]!, r)));
+    const reqOf = new Map(rows.map((r, i) => [r.code, reqs[i]!]));
+    out.forEach((r) => errs.push(...requirementMessages(r.code, reqOf.get(r.code)!, r)));
     if (errs.length) {
-      errs.forEach((e) => toast.error(e));
+      [...new Set(errs)].forEach((e) => toast.error(e));
       return;
     }
     await onSave(out, hdr);
@@ -270,12 +315,22 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
     const on = kind === 'tooth' ? req.tooth : req.surface;
     const open = kind === 'tooth' ? toothRow === i : surfaceRow === i;
     const toggle = () => (kind === 'tooth' ? setToothRow(open ? null : i) : setSurfaceRow(open ? null : i));
-    const value = kind === 'tooth' ? s.tooth : encodeSurfaces(s.surfaces, s.tooth);
-    const placeholder = !on ? '' : kind === 'tooth' ? 'Tooth #' : `${req.min_surfaces === req.max_surfaces ? req.min_surfaces : `${req.min_surfaces}–${req.max_surfaces}`} surf.`;
+    const placeholder = !on ? '' : kind === 'tooth' ? 'e.g. 3 or 7-23' : `${req.min_surfaces === req.max_surfaces ? req.min_surfaces : `${req.min_surfaces}–${req.max_surfaces}`} surf.`;
     return (
       <div className="flex items-center gap-1">
-        <input readOnly disabled={!on} value={value} placeholder={placeholder} aria-label={`${kind === 'tooth' ? 'Tooth' : 'Surfaces'} for ${rows[i]!.code.code}`}
-          className={`${field} w-32 cursor-pointer ${on ? 'bg-slate-50' : ''}`} onClick={() => on && toggle()} />
+        {kind === 'tooth' ? (
+          // Editable: type one tooth, a list or a range; the panel stays in sync.
+          <input disabled={!on} value={s.tooth_text ?? formatToothList(s.teeth)} placeholder={placeholder} aria-label={`Tooth for ${rows[i]!.code.code}`}
+            title={s.teeth.length > 1 ? `${s.teeth.length} teeth — one record each` : undefined}
+            onFocus={() => on && setToothRow(i)}
+            onChange={(e) => patch(i, { tooth_text: e.target.value })}
+            onBlur={() => commitToothText(i)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitToothText(i); } }}
+            className={`${field} w-32 ${on ? 'bg-slate-50' : ''}`} />
+        ) : (
+          <input readOnly disabled={!on} value={encodeSurfaces(s.surfaces, s.teeth[0] ?? '')} placeholder={placeholder} aria-label={`Surfaces for ${rows[i]!.code.code}`}
+            className={`${field} w-32 cursor-pointer ${on ? 'bg-slate-50' : ''}`} onClick={() => on && toggle()} />
+        )}
         <button type="button" disabled={!on} onClick={toggle} aria-label={kind === 'tooth' ? 'Pick tooth' : 'Pick surfaces'}
           className="flex h-9 w-7 items-center justify-center rounded border border-slate-300 bg-white text-[10px] text-slate-600 hover:bg-slate-50 disabled:opacity-40">▼</button>
       </div>
@@ -287,9 +342,9 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
   const toothButton = (i: number, t: string) => {
     const req = reqs[i]!;
     const check = toothAllowed(req, t);
-    const sel = state[i]!.tooth === t;
+    const sel = state[i]!.teeth.includes(t);
     return (
-      <button key={t} type="button" disabled={!check.allowed} onClick={() => pickTooth(i, t)} title={check.allowed ? `Tooth ${t}` : check.reason}
+      <button key={t} type="button" disabled={!check.allowed} onClick={(e) => pickTooth(i, t, e.shiftKey)} aria-pressed={sel} title={check.allowed ? `Tooth ${t}` : check.reason}
         className={`h-8 w-8 border-b border-r border-slate-200 text-[13px] font-bold ${SEPARATOR_BEFORE.has(t) ? 'border-l-2 border-l-emerald-500' : ''} ${
           sel ? 'bg-[#8fa9c7] text-white' : check.allowed ? 'bg-white text-[#2f6db5] hover:bg-sky-50' : 'bg-slate-100 text-slate-300'}`}>
         {t}
@@ -324,12 +379,23 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
               </>
             )}
           </div>
-          <label className="mt-2 flex items-center justify-end gap-2 text-[11px] font-bold uppercase tracking-wide text-[#1f3a5f]">
-            <input type="checkbox" checked={showSuper} onChange={(e) => setShowSuper(e.target.checked)} /> Show Supernumerary Teeth
-          </label>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] text-slate-500">Click to add/remove · <strong>Shift+click</strong> selects a range · or type <strong>7-23</strong> in Tooth#</span>
+            <label className="flex shrink-0 items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#1f3a5f]">
+              <input type="checkbox" checked={showSuper} onChange={(e) => setShowSuper(e.target.checked)} /> Show Supernumerary Teeth
+            </label>
+          </div>
         </div>
-        <div className="flex justify-end bg-slate-100 px-3 py-2">
-          <button type="button" onClick={() => setToothRow(null)} className={panelBtn}>⊗ Close</button>
+        <div className="flex items-center justify-between bg-slate-100 px-3 py-2">
+          <span className="text-[11px] text-slate-600" role="status">
+            {state[i]!.teeth.length === 0 ? 'No tooth selected' : state[i]!.teeth.length === 1 ? `Tooth ${state[i]!.teeth[0]}` : `${state[i]!.teeth.length} teeth selected — one record each`}
+          </span>
+          <span className="flex gap-2">
+            {state[i]!.teeth.length > 0 && (
+              <button type="button" onClick={() => { setTeeth(i, []); anchor.current = null; }} className={panelBtn}>Clear</button>
+            )}
+            <button type="button" onClick={() => setToothRow(null)} className={panelBtn}>⊗ Close</button>
+          </span>
         </div>
       </div>
     );
@@ -358,7 +424,7 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
         <div className="flex items-center justify-between bg-slate-100 px-3 py-2">
           <span className="flex items-center gap-1 text-[11px] text-slate-600" title={`This code needs ${needs} surface(s)`}>
             <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#2f6db5] text-[10px] font-bold text-white">i</span>
-            {s.surfaces.length} of {needs} selected
+            {s.surfaces.length} of {needs} selected{s.teeth.length > 1 ? ` · applied to all ${s.teeth.length} teeth` : ''}
           </span>
           <button type="button" onClick={() => setSurfaceRow(null)} className={panelBtn}>⊗ Close</button>
         </div>
@@ -368,7 +434,7 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
 
   const node = (
     <div className="fixed inset-x-0 bottom-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/40 p-4" style={{ top: 'var(--app-nav-height, 0px)' }} onClick={busy ? undefined : onClose}>
-      <div className="flex w-[1480px] max-w-full flex-col rounded border border-slate-300 bg-white shadow-2xl" style={{ maxHeight: 'calc(100vh - var(--app-nav-height, 0px) - 32px)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="flex w-[1480px] max-w-full flex-col rounded border border-slate-300 bg-white shadow-2xl" style={{ maxHeight: 'calc(var(--vh) * 100 - var(--app-nav-height, 0px) - 32px)' }} onClick={(e) => e.stopPropagation()}>
         {/* Title bar */}
         <div className="flex items-center justify-between px-4 py-2.5 text-white" style={{ background: TITLE_BLUE }}>
           <span className="text-[13px] font-bold uppercase tracking-wide">Add Procedure Details</span>
@@ -476,8 +542,13 @@ export default function ProcedureDetailsDialog({ mode, office_id, patient_id, ro
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 rounded-b bg-slate-200 px-4 py-3">
+          {recordCount > rows.length && (
+            <span className="mr-auto text-[12px] text-slate-700" role="status">
+              Saves <strong>{recordCount}</strong> separate procedure records (one per tooth).
+            </span>
+          )}
           <button type="button" onClick={() => void save()} disabled={busy} className="rounded bg-[#2f6db5] px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-[#245a97] disabled:opacity-50">
-            {busy ? 'Saving…' : '💾 Save'}
+            {busy ? 'Saving…' : recordCount > rows.length ? `💾 Save ${recordCount}` : '💾 Save'}
           </button>
           <button type="button" onClick={onClose} disabled={busy} className="rounded px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white hover:opacity-90 disabled:opacity-50" style={{ background: NAVY }}>✖ Cancel</button>
         </div>

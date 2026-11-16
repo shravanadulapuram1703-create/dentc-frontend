@@ -1078,68 +1078,6 @@ export const useUpdateOffice = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateOfficeMutationOptions(options), queryClient);
     }
     /**
- * Delete one office. Honours `If-Match` (the ETag from GET) and `If-Unmodified-Since`; a stale precondition is **412 precondition_failed** with the current version.
- * @summary Delete office
- */
-export const deleteOffice = (
-    itemId: number,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<void>(
-      {url: `/api/v1/offices/${itemId}`, method: 'DELETE', signal
-    },
-      options);
-    }
-
-
-
-export const getDeleteOfficeMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOffice>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteOffice>>, TError,{itemId: number}, TContext> => {
-
-const mutationKey = ['deleteOffice'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOffice>>, {itemId: number}> = (props) => {
-          const {itemId} = props ?? {};
-
-          return  deleteOffice(itemId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteOfficeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOffice>>>
-
-    export type DeleteOfficeMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Delete office
- */
-export const useDeleteOffice = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOffice>>, TError,{itemId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteOffice>>,
-        TError,
-        {itemId: number},
-        TContext
-      > => {
-      return useMutation(getDeleteOfficeMutationOptions(options), queryClient);
-    }
-    /**
  * @summary List providers
  */
 export const listProviders = (

@@ -3,6 +3,9 @@ import { toast } from "sonner";
 import { Mail, Phone, User, IdCard, Lock, Bell, Loader2, ShieldCheck } from "lucide-react";
 import { useChangeMyPassword } from "@/api/generated/endpoints/users/users";
 import type { UserRead } from "@/api/generated/model";
+import PasswordInput from "@/features/auth/components/PasswordInput";
+import PasswordStrengthMeter from "@/features/auth/components/PasswordStrengthMeter";
+import { describePasswordApiError, describePasswordProblem } from "@/features/auth/utils/passwordPolicy";
 import type { UserRole } from "../../../contexts/AuthContext.js";
 import { roleLabel } from "../../dashboard/lib/dashboardUtils";
 import { utils } from "../../../styles/theme.js";
@@ -96,20 +99,25 @@ export default function AccountSettingsSection({
         setNext("");
         setConfirm("");
       },
-      onError: () => toast.error("Couldn't update password. Check your current password."),
+      onError: (err) => {
+        // 401 = wrong current password; 422 password_too_weak = policy (PWD-RBAC-3).
+        const status = (err as { response?: { status?: number } } | null)?.response?.status;
+        toast.error(
+          describePasswordApiError(err) ??
+            (status === 401
+              ? "Your current password is incorrect."
+              : "Couldn't update password. Please try again."),
+        );
+      },
     },
   });
 
-  const canSubmit =
-    current.length > 0 && next.length >= 8 && next === confirm && !changePassword.isPending;
+  const passwordProblem = describePasswordProblem(next, confirm);
+  const canSubmit = current.length > 0 && passwordProblem === null && !changePassword.isPending;
 
   const submitPassword = () => {
-    if (next !== confirm) {
-      toast.error("New passwords don't match.");
-      return;
-    }
-    if (next.length < 8) {
-      toast.error("New password must be at least 8 characters.");
+    if (passwordProblem) {
+      toast.error(passwordProblem);
       return;
     }
     changePassword.mutate({ data: { current_password: current, new_password: next } });
@@ -161,28 +169,28 @@ export default function AccountSettingsSection({
             </h4>
           </div>
           <div className="space-y-3">
-            <input
-              type="password"
+            <PasswordInput
               value={current}
-              onChange={(e) => setCurrent(e.target.value)}
+              onChange={setCurrent}
               placeholder="Current password"
               autoComplete="current-password"
+              aria-label="Current password"
               className="w-full px-4 py-2.5 border-2 border-[#E2E8F0] rounded-lg text-sm text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all"
             />
-            <input
-              type="password"
+            <PasswordInput
               value={next}
-              onChange={(e) => setNext(e.target.value)}
-              placeholder="New password (min 8 characters)"
+              onChange={setNext}
+              placeholder="New password"
               autoComplete="new-password"
+              aria-label="New password"
               className="w-full px-4 py-2.5 border-2 border-[#E2E8F0] rounded-lg text-sm text-[#1E293B] bg-white focus:border-[#3A6EA5] focus:ring-2 focus:ring-[#3A6EA5]/20 outline-none transition-all"
             />
-            <input
-              type="password"
+            <PasswordInput
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={setConfirm}
               placeholder="Confirm new password"
               autoComplete="new-password"
+              aria-label="Confirm new password"
               className={utils.cn(
                 "w-full px-4 py-2.5 border-2 rounded-lg text-sm text-[#1E293B] bg-white focus:ring-2 outline-none transition-all",
                 confirm && confirm !== next
@@ -190,6 +198,7 @@ export default function AccountSettingsSection({
                   : "border-[#E2E8F0] focus:border-[#3A6EA5] focus:ring-[#3A6EA5]/20",
               )}
             />
+            <PasswordStrengthMeter password={next} confirm={confirm} compact />
             <button
               type="button"
               onClick={submitPassword}

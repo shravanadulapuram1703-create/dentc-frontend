@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, AlertCircle } from "lucide-react";
+import { formatToothList, parseToothList, sortTeeth, toothRange } from "@/features/procedures/multiTooth";
 
 // ProcedureCode interface that matches backend structure
 interface ProcedureCode {
@@ -98,7 +99,7 @@ export default function ToothSurfaceEnforcement({
   initialMaterials = NO_MATERIALS,
 }: Props) {
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>(
-    initialTooth ? [initialTooth] : [],
+    initialTooth ? initialTooth.split(",").filter(Boolean) : [],
   );
   const [selectedQuadrant, setSelectedQuadrant] =
     useState(initialQuadrant);
@@ -109,11 +110,14 @@ export default function ToothSurfaceEnforcement({
   const [validationErrors, setValidationErrors] = useState<
     string[]
   >([]);
+  // Multi-tooth: Shift+click range anchor and the typed "7-23" box.
+  const anchor = useRef<string | null>(null);
+  const [toothText, setToothText] = useState<string | null>(null);
 
   // Reset state when modal opens or initial values change
   useEffect(() => {
     if (isOpen) {
-      setSelectedTeeth(initialTooth ? [initialTooth] : []);
+      setSelectedTeeth(initialTooth ? initialTooth.split(",").filter(Boolean) : []);
       setSelectedQuadrant(initialQuadrant);
       setSelectedSurfaces(initialSurfaces);
       setSelectedMaterials(initialMaterials);
@@ -213,7 +217,7 @@ export default function ToothSurfaceEnforcement({
   };
 
   // ✅ MUTUAL EXCLUSIVITY ENFORCEMENT
-  const handleToothSelect = (tooth: string) => {
+  const handleToothSelect = (tooth: string, range = false) => {
     if (activeMode !== "TOOTH") {
       setValidationErrors([
         "This procedure requires quadrant/arch selection, not individual teeth",
@@ -225,15 +229,38 @@ export default function ToothSurfaceEnforcement({
     setSelectedQuadrant("");
 
     if (procedure.anatomyRules.allowMultipleTeeth) {
-      setSelectedTeeth((prev) =>
-        prev.includes(tooth)
-          ? prev.filter((t) => t !== tooth)
-          : [...prev, tooth],
-      );
+      const from = anchor.current;
+      if (range && from && from !== tooth) {
+        const allowed = new Set(getAllowedTeeth());
+        const span = toothRange(from, tooth).filter((t) => allowed.has(t));
+        setSelectedTeeth((prev) => sortTeeth([...prev, ...span]));
+      } else {
+        setSelectedTeeth((prev) =>
+          sortTeeth(
+            prev.includes(tooth)
+              ? prev.filter((t) => t !== tooth)
+              : [...prev, tooth],
+          ),
+        );
+      }
+      anchor.current = tooth;
+      setToothText(null);
     } else {
       setSelectedTeeth([tooth]);
     }
     setValidationErrors([]);
+  };
+
+  /** Typed teeth ("7-23", "2, 4-6"), committed on blur / Enter. */
+  const commitToothText = () => {
+    if (toothText == null) return;
+    const { teeth, invalid } = parseToothList(toothText);
+    const allowed = new Set(getAllowedTeeth());
+    const bad = [...invalid, ...teeth.filter((t) => !allowed.has(t))];
+    setSelectedTeeth(teeth.filter((t) => allowed.has(t)));
+    setSelectedQuadrant("");
+    setToothText(null);
+    setValidationErrors(bad.length ? [`Not a selectable tooth: ${bad.join(", ")}`] : []);
   };
 
   const handleQuadrantSelect = (quadrant: string) => {
@@ -392,7 +419,7 @@ export default function ToothSurfaceEnforcement({
         onClose();
       }
     }}>
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-auto border-4 border-[#3A6EA5]">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl max-h-[calc(var(--vh)*90)] overflow-auto border-4 border-[#3A6EA5]">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-3 flex items-center justify-between sticky top-0 z-10 rounded-t-lg border-b-4 border-[#1F3A5F]">
           <div>
@@ -455,6 +482,33 @@ export default function ToothSurfaceEnforcement({
                     : "Single Only"}
                   )
                 </h3>
+                {procedure.anatomyRules.allowMultipleTeeth && (
+                  <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-[#475569]">
+                    <label className="flex items-center gap-2 font-semibold text-[#1F3A5F]">
+                      Teeth
+                      <input
+                        value={toothText ?? formatToothList(selectedTeeth)}
+                        onChange={(e) => setToothText(e.target.value)}
+                        onBlur={commitToothText}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            commitToothText();
+                          }
+                        }}
+                        placeholder="e.g. 7-23 or 2, 4-6"
+                        aria-label="Teeth"
+                        className="w-48 rounded border-2 border-[#CBD5E1] px-2 py-1 text-sm font-normal focus:border-[#3A6EA5] focus:outline-none"
+                      />
+                    </label>
+                    <span>Click to add/remove · <strong>Shift+click</strong> selects a range</span>
+                    {selectedTeeth.length > 1 && (
+                      <span className="rounded bg-[#E0F2FE] px-2 py-0.5 font-semibold text-[#1F3A5F]">
+                        {selectedTeeth.length} teeth — one procedure line each
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* Permanent Teeth Grid */}
                 {procedure.anatomyRules.allowedToothSet !==
@@ -467,8 +521,8 @@ export default function ToothSurfaceEnforcement({
                       {PERMANENT_TEETH.map((tooth) => (
                         <button
                           key={tooth}
-                          onClick={() =>
-                            handleToothSelect(tooth)
+                          onClick={(e) =>
+                            handleToothSelect(tooth, e.shiftKey)
                           }
                           disabled={
                             procedure.anatomyRules
@@ -506,8 +560,8 @@ export default function ToothSurfaceEnforcement({
                       {PRIMARY_TEETH.map((tooth) => (
                         <button
                           key={tooth}
-                          onClick={() =>
-                            handleToothSelect(tooth)
+                          onClick={(e) =>
+                            handleToothSelect(tooth, e.shiftKey)
                           }
                           disabled={
                             procedure.anatomyRules

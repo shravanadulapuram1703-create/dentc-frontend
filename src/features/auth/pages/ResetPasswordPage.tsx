@@ -161,8 +161,6 @@ export default function ResetPasswordPage() {
           invalid={!!error}
         />
 
-        <PasswordStrengthMeter password={password} />
-
         <PasswordField
           id="confirm-password"
           label="Confirm Password"
@@ -172,6 +170,8 @@ export default function ResetPasswordPage() {
           autoComplete="new-password"
           invalid={!!error}
         />
+
+        <PasswordStrengthMeter password={password} confirm={confirm} />
 
         <button
           type="submit"

@@ -612,7 +612,7 @@ export default function ProcedureCodeSetup() {
           </div>
 
           {/* Tab content */}
-          <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto">
+          <div className="p-6 max-h-[calc(calc(var(--vh)*100)-240px)] overflow-y-auto">
             {activeTab === "main" && (
               <MainTab
                 formData={form}

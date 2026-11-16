@@ -301,7 +301,7 @@ export default function ClaimFillOutModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col">
+      <div className="bg-white rounded shadow-2xl w-full max-w-6xl max-h-[calc(var(--vh)*92)] flex flex-col">
         {/* Title bar */}
         <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-4 py-2 flex items-center justify-between rounded-t">
           <h2 className="text-sm font-bold text-white uppercase tracking-wide">

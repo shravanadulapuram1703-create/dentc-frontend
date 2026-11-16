@@ -87,6 +87,7 @@ import type { ActiveSelection, ChartTab, GridRow, PaletteItem, ToothArea } from 
 import { providerOptionLabel } from '@/services/providerDirectory';
 import { openSchedulerForBooking } from '@/services/schedulerHandoff';
 import { noteDisplayText } from '@/features/progress-notes/noteContent';
+import { sortTeeth, toothRange } from '@/features/procedures/multiTooth';
 
 interface OutletCtx {
   patient: { id: string; name: string; age?: number };
@@ -460,7 +461,8 @@ export default function RestorativeChart() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getListChartConditionsQueryKey(conditionsParams) });
 
   // ---- Selection ----------------------------------------------------------
-  const selectZone = (id: string, area: ToothArea, root?: string) => {
+  /** `range` (Shift+click on a whole tooth): add every tooth from the last one picked. */
+  const selectZone = (id: string, area: ToothArea, root?: string, range?: boolean) => {
     setShowConditions(false);
     if (area === 'root') {
       // Toggle a specific root into the selection (multi-root on a single tooth).
@@ -477,6 +479,12 @@ export default function RestorativeChart() {
     }
     setSelection((prev) => {
       if (prev && prev.area === area && area !== 'surface') {
+        const last = prev.teeth[prev.teeth.length - 1];
+        if (range && area === 'whole' && last && last !== id) {
+          // Keep the click order's tail as the next anchor so ranges can chain.
+          const span = toothRange(last, id);
+          return { area, teeth: [...sortTeeth([...prev.teeth, ...span]).filter((t) => t !== id), id], surfaces: new Set() };
+        }
         const has = prev.teeth.includes(id);
         const teeth = has ? prev.teeth.filter((t) => t !== id) : [...prev.teeth, id];
         return teeth.length ? { area, teeth, surfaces: new Set() } : null;
@@ -833,7 +841,7 @@ export default function RestorativeChart() {
 
   // ---- Render -------------------------------------------------------------
   return (
-    <div className="flex flex-col bg-slate-50" style={{ minHeight: 'calc(100vh - 260px)' }}>
+    <div className="flex flex-col bg-slate-50" style={{ minHeight: 'calc(var(--vh) * 100 - 260px)' }}>
       <div className="flex items-center px-5 py-2 text-sm font-semibold text-white" style={{ background: 'linear-gradient(180deg,#2566a8,#16406e)' }}>
         Restorative Chart
         <span className="ml-3 rounded bg-white/15 px-2 py-0.5 text-xs font-normal">{patient?.name}</span>
@@ -1129,7 +1137,7 @@ interface ArchProps {
   onHoverTooth: (id: string | null) => void;
   /** Latest perio-exam findings for the tooth (tooltip + red flag on the number cell). */
   perioHint: (id: string) => { text: string; alert: boolean } | null;
-  onSelectZone: (id: string, area: ToothArea, root?: string) => void;
+  onSelectZone: (id: string, area: ToothArea, root?: string, range?: boolean) => void;
   onToggleSurface: (id: string, s: SurfaceKey) => void;
   onSelectArch: () => void;
   numberingSystem: NumberingSystem;
@@ -1186,8 +1194,8 @@ function Arch(props: ArchProps) {
             {idx === midIndex && <Mid />}
             <div className="relative mx-0.5 flex-1" style={{ minWidth: COL, ...cellStyle(id, 'top') }} {...hov(id)}>
               <button
-                onClick={() => onSelectZone(id, 'whole')}
-                title={perio?.text}
+                onClick={(e) => onSelectZone(id, 'whole', undefined, e.shiftKey)}
+                title={perio?.text ?? 'Click to add/remove · Shift+click selects a range'}
                 className="w-full rounded-sm border py-0.5 text-center text-[11px] font-semibold"
                 style={{ borderColor: wholeSelected(id) ? selColor : '#cbd5e1', background: wholeSelected(id) ? rgba(selColor, 0.16) : 'linear-gradient(180deg,#f8fafc,#e2e8f0)', color: '#475569' }}
               >
@@ -1220,8 +1228,8 @@ function Arch(props: ArchProps) {
             <div
               className="mx-0.5 flex flex-1 cursor-pointer justify-center"
               style={{ minWidth: COL, ...cellStyle(id, toothPos) }}
-              title={`Tooth ${id} — click the surround to select the whole tooth`}
-              onClick={() => onSelectZone(id, 'whole')}
+              title={`Tooth ${id} — click the surround to select the whole tooth (Shift+click: range)`}
+              onClick={(e) => onSelectZone(id, 'whole', undefined, e.shiftKey)}
               {...hov(id)}
             >
               <ToothFigure

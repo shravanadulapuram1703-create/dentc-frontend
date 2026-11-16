@@ -835,7 +835,7 @@ const tabs: { id: TabName; label: string }[] = [
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 max-h-[calc(100vh-240px)] overflow-y-auto scrollbar-visible">
+            <div className="p-6 max-h-[calc(calc(var(--vh)*100)-240px)] overflow-y-auto scrollbar-visible">
               {activeTab === "info" && (
                 <InfoTab
                   formData={formData}

@@ -8,8 +8,16 @@
 
 export type ListFamilyAppointmentsParams = {
 /**
- * Account guarantor id (raw string)
+ * Deprecated: the legacy guarantor key (raw string)
  */
-responsible_party_id: string;
+responsible_party_id?: string | null;
 upcoming_only?: boolean;
+/**
+ * RP-3: the account
+ */
+account_id?: number | null;
+/**
+ * RP-3: any member — resolves to their account
+ */
+patient_id?: number | null;
 };

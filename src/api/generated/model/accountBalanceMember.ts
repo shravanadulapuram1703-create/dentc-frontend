@@ -16,8 +16,12 @@ export interface AccountBalanceMember {
   total_charged: number;
   total_paid: number;
   balance: number;
-  /** Alias of balance for the FE */
+  /** RP-10: true account total (all members) */
   account_balance: number;
+  /** RP-10: this patient's own balance (== balance) */
+  patient_balance_total?: number | null;
+  account_id?: number | null;
+  account_member_count?: number | null;
   estimated_insurance?: number;
   estimated_patient?: number;
   /** Charges − payments − estimated insurance */

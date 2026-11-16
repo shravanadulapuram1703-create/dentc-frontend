@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { StatementBatchRequestScope } from './statementBatchRequestScope';
 
 export interface StatementBatchRequest {
   statement_date?: string | null;
@@ -14,4 +15,5 @@ export interface StatementBatchRequest {
   min_balance?: number | string;
   /** Only patients with a 30+ day aged balance */
   only_aged?: boolean;
+  scope?: StatementBatchRequestScope;
 }

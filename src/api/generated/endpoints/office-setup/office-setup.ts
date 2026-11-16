@@ -30,9 +30,14 @@ import type {
   AccountHolidayUpdate,
   BodyUploadOfficeStatementLogo,
   BulkDeleteOfficeHolidays200,
+  DeleteOfficeParams,
   ErrorResponse,
   FederalHolidaysImport,
   FeeDefaultsUpdate,
+  GetOfficeCalendar200,
+  GetOfficeCalendarParams,
+  GetOfficeDeleteImpact200,
+  GetOfficeSetupRules200,
   HTTPValidationError,
   HolidayBulkDelete,
   HolidayRangeCreate,
@@ -45,14 +50,18 @@ import type {
   OfficeIntegrationsUpdate,
   OfficeMetadata,
   OfficeScheduleDayRead,
+  OfficeScheduleReplace,
   OfficeStatementSettingsRead,
   OfficeStatementSettingsUpdate,
   PaginatedResponseProductionTypeRead,
   ProductionTypeCreate,
   ProductionTypeRead,
   ProductionTypeUpdate,
-  ScheduleReplace,
+  ServiceEmailConfirm,
+  ServiceEmailVerifyResult,
+  SmartAssistCatalogItem,
   SmartAssistRead,
+  SmartAssistSmsTemplate,
   SmartAssistUpdate
 } from '../../model';
 
@@ -221,6 +230,353 @@ export function useGetOfficeMetadata<TData = Awaited<ReturnType<typeof getOffice
 
 
 /**
+ * OFF-QA-2/4/5/8/9: the same table the write paths validate against.
+ * @summary Office Setup vocabularies + format rules the server enforces
+ */
+export const getOfficeSetupRules = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetOfficeSetupRules200>(
+      {url: `/api/v1/offices/setup-rules`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOfficeSetupRulesQueryKey = () => {
+    return [
+    `/api/v1/offices/setup-rules`
+    ] as const;
+    }
+
+
+export const getGetOfficeSetupRulesQueryOptions = <TData = Awaited<ReturnType<typeof getOfficeSetupRules>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeSetupRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOfficeSetupRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOfficeSetupRules>>> = ({ signal }) => getOfficeSetupRules(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOfficeSetupRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOfficeSetupRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getOfficeSetupRules>>>
+export type GetOfficeSetupRulesQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetOfficeSetupRules<TData = Awaited<ReturnType<typeof getOfficeSetupRules>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeSetupRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOfficeSetupRules>>,
+          TError,
+          Awaited<ReturnType<typeof getOfficeSetupRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOfficeSetupRules<TData = Awaited<ReturnType<typeof getOfficeSetupRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeSetupRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOfficeSetupRules>>,
+          TError,
+          Awaited<ReturnType<typeof getOfficeSetupRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOfficeSetupRules<TData = Awaited<ReturnType<typeof getOfficeSetupRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeSetupRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Office Setup vocabularies + format rules the server enforces
+ */
+
+export function useGetOfficeSetupRules<TData = Awaited<ReturnType<typeof getOfficeSetupRules>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeSetupRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOfficeSetupRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * OFF-QA-6: the default SmartAssist item set (an unconfigured office reads it
+ * as its grid until the first save).
+ * @summary Get Smart Assist Catalog
+ */
+export const getSmartAssistCatalog = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmartAssistCatalogItem[]>(
+      {url: `/api/v1/offices/smart-assist/catalog`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetSmartAssistCatalogQueryKey = () => {
+    return [
+    `/api/v1/offices/smart-assist/catalog`
+    ] as const;
+    }
+
+
+export const getGetSmartAssistCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmartAssistCatalogQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmartAssistCatalog>>> = ({ signal }) => getSmartAssistCatalog(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmartAssistCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getSmartAssistCatalog>>>
+export type GetSmartAssistCatalogQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetSmartAssistCatalog<TData = Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmartAssistCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getSmartAssistCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmartAssistCatalog<TData = Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmartAssistCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getSmartAssistCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmartAssistCatalog<TData = Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Smart Assist Catalog
+ */
+
+export function useGetSmartAssistCatalog<TData = Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartAssistCatalog>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmartAssistCatalogQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * ``blocking`` names the counts that make a plain DELETE a 409
+ * (``future_appointments``, ``users_with_no_other_office``).
+ * @summary What still depends on this office (the Delete dialog's counts)
+ */
+export const getOfficeDeleteImpact = (
+    officeId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetOfficeDeleteImpact200>(
+      {url: `/api/v1/offices/${officeId}/delete-impact`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOfficeDeleteImpactQueryKey = (officeId: number,) => {
+    return [
+    `/api/v1/offices/${officeId}/delete-impact`
+    ] as const;
+    }
+
+
+export const getGetOfficeDeleteImpactQueryOptions = <TData = Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOfficeDeleteImpactQueryKey(officeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOfficeDeleteImpact>>> = ({ signal }) => getOfficeDeleteImpact(officeId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOfficeDeleteImpactQueryResult = NonNullable<Awaited<ReturnType<typeof getOfficeDeleteImpact>>>
+export type GetOfficeDeleteImpactQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetOfficeDeleteImpact<TData = Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOfficeDeleteImpact>>,
+          TError,
+          Awaited<ReturnType<typeof getOfficeDeleteImpact>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOfficeDeleteImpact<TData = Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOfficeDeleteImpact>>,
+          TError,
+          Awaited<ReturnType<typeof getOfficeDeleteImpact>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOfficeDeleteImpact<TData = Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary What still depends on this office (the Delete dialog's counts)
+ */
+
+export function useGetOfficeDeleteImpact<TData = Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeDeleteImpact>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOfficeDeleteImpactQueryOptions(officeId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * Soft delete (default): 409 ``office_in_use`` while upcoming appointments or
+ * stranded users remain, unless ``force``; deactivates the office's operatories
+ * and stamps ``deleted_at``/``deleted_by``. Honours ``If-Match``.
+ * @summary Delete office
+ */
+export const deleteOffice = (
+    officeId: number,
+    params?: DeleteOfficeParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/offices/${officeId}`, method: 'DELETE',
+        params, signal
+    },
+      options);
+    }
+
+
+
+export const getDeleteOfficeMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOffice>>, TError,{officeId: number;params?: DeleteOfficeParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteOffice>>, TError,{officeId: number;params?: DeleteOfficeParams}, TContext> => {
+
+const mutationKey = ['deleteOffice'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOffice>>, {officeId: number;params?: DeleteOfficeParams}> = (props) => {
+          const {officeId,params} = props ?? {};
+
+          return  deleteOffice(officeId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteOfficeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOffice>>>
+
+    export type DeleteOfficeMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Delete office
+ */
+export const useDeleteOffice = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOffice>>, TError,{officeId: number;params?: DeleteOfficeParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteOffice>>,
+        TError,
+        {officeId: number;params?: DeleteOfficeParams},
+        TContext
+      > => {
+      return useMutation(getDeleteOfficeMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get Statement Settings
  */
 export const getOfficeStatementSettings = (
@@ -660,6 +1016,133 @@ export const useUpdateOfficeIntegrations = <TError = ErrorType<ErrorResponse | H
       return useMutation(getUpdateOfficeIntegrationsMutationOptions(options), queryClient);
     }
     /**
+ * OFF-QA-5: mail a 6-digit code to the saved ``service_email`` (24 h).
+ * @summary Send Service Email Verification
+ */
+export const sendOfficeServiceEmailVerification = (
+    officeId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ServiceEmailVerifyResult>(
+      {url: `/api/v1/offices/${officeId}/integrations/verify-email`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+export const getSendOfficeServiceEmailVerificationMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendOfficeServiceEmailVerification>>, TError,{officeId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendOfficeServiceEmailVerification>>, TError,{officeId: number}, TContext> => {
+
+const mutationKey = ['sendOfficeServiceEmailVerification'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendOfficeServiceEmailVerification>>, {officeId: number}> = (props) => {
+          const {officeId} = props ?? {};
+
+          return  sendOfficeServiceEmailVerification(officeId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendOfficeServiceEmailVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof sendOfficeServiceEmailVerification>>>
+
+    export type SendOfficeServiceEmailVerificationMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Send Service Email Verification
+ */
+export const useSendOfficeServiceEmailVerification = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendOfficeServiceEmailVerification>>, TError,{officeId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendOfficeServiceEmailVerification>>,
+        TError,
+        {officeId: number},
+        TContext
+      > => {
+      return useMutation(getSendOfficeServiceEmailVerificationMutationOptions(options), queryClient);
+    }
+    /**
+ * OFF-QA-5: sets ``service_email_verified`` when the code matches.
+ * @summary Confirm Service Email Verification
+ */
+export const confirmOfficeServiceEmailVerification = (
+    officeId: number,
+    serviceEmailConfirm: BodyType<ServiceEmailConfirm>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OfficeIntegrationsRead>(
+      {url: `/api/v1/offices/${officeId}/integrations/verify-email/confirm`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: serviceEmailConfirm, signal
+    },
+      options);
+    }
+
+
+
+export const getConfirmOfficeServiceEmailVerificationMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmOfficeServiceEmailVerification>>, TError,{officeId: number;data: BodyType<ServiceEmailConfirm>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmOfficeServiceEmailVerification>>, TError,{officeId: number;data: BodyType<ServiceEmailConfirm>}, TContext> => {
+
+const mutationKey = ['confirmOfficeServiceEmailVerification'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmOfficeServiceEmailVerification>>, {officeId: number;data: BodyType<ServiceEmailConfirm>}> = (props) => {
+          const {officeId,data} = props ?? {};
+
+          return  confirmOfficeServiceEmailVerification(officeId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmOfficeServiceEmailVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof confirmOfficeServiceEmailVerification>>>
+    export type ConfirmOfficeServiceEmailVerificationMutationBody = BodyType<ServiceEmailConfirm>
+    export type ConfirmOfficeServiceEmailVerificationMutationError = ErrorType<ErrorResponse | HTTPValidationError>
+
+    /**
+ * @summary Confirm Service Email Verification
+ */
+export const useConfirmOfficeServiceEmailVerification = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmOfficeServiceEmailVerification>>, TError,{officeId: number;data: BodyType<ServiceEmailConfirm>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmOfficeServiceEmailVerification>>,
+        TError,
+        {officeId: number;data: BodyType<ServiceEmailConfirm>},
+        TContext
+      > => {
+      return useMutation(getConfirmOfficeServiceEmailVerificationMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get Schedule
  */
 export const getOfficeSchedule = (
@@ -756,7 +1239,7 @@ export function useGetOfficeSchedule<TData = Awaited<ReturnType<typeof getOffice
  */
 export const setOfficeSchedule = (
     officeId: number,
-    scheduleReplace: BodyType<ScheduleReplace>,
+    officeScheduleReplace: BodyType<OfficeScheduleReplace>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
@@ -764,7 +1247,7 @@ export const setOfficeSchedule = (
       return customInstance<OfficeScheduleDayRead[]>(
       {url: `/api/v1/offices/${officeId}/schedule`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: scheduleReplace, signal
+      data: officeScheduleReplace, signal
     },
       options);
     }
@@ -772,8 +1255,8 @@ export const setOfficeSchedule = (
 
 
 export const getSetOfficeScheduleMutationOptions = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<OfficeScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<OfficeScheduleReplace>}, TContext> => {
 
 const mutationKey = ['setOfficeSchedule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -785,7 +1268,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOfficeSchedule>>, {officeId: number;data: BodyType<ScheduleReplace>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOfficeSchedule>>, {officeId: number;data: BodyType<OfficeScheduleReplace>}> = (props) => {
           const {officeId,data} = props ?? {};
 
           return  setOfficeSchedule(officeId,data,requestOptions)
@@ -799,23 +1282,125 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SetOfficeScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof setOfficeSchedule>>>
-    export type SetOfficeScheduleMutationBody = BodyType<ScheduleReplace>
+    export type SetOfficeScheduleMutationBody = BodyType<OfficeScheduleReplace>
     export type SetOfficeScheduleMutationError = ErrorType<ErrorResponse | HTTPValidationError>
 
     /**
  * @summary Set Schedule
  */
 export const useSetOfficeSchedule = <TError = ErrorType<ErrorResponse | HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<ScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOfficeSchedule>>, TError,{officeId: number;data: BodyType<OfficeScheduleReplace>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setOfficeSchedule>>,
         TError,
-        {officeId: number;data: BodyType<ScheduleReplace>},
+        {officeId: number;data: BodyType<OfficeScheduleReplace>},
         TContext
       > => {
       return useMutation(getSetOfficeScheduleMutationOptions(options), queryClient);
     }
     /**
+ * OFF-QA-7: the calendar the appointment write path enforces (``409
+ * office_closed``), so the scheduler can grey out the same slots.
+ * @summary Open windows, lunch and holidays per date
+ */
+export const getOfficeCalendar = (
+    officeId: number,
+    params: GetOfficeCalendarParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GetOfficeCalendar200>(
+      {url: `/api/v1/offices/${officeId}/calendar`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOfficeCalendarQueryKey = (officeId: number,
+    params?: GetOfficeCalendarParams,) => {
+    return [
+    `/api/v1/offices/${officeId}/calendar`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetOfficeCalendarQueryOptions = <TData = Awaited<ReturnType<typeof getOfficeCalendar>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number,
+    params: GetOfficeCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeCalendar>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOfficeCalendarQueryKey(officeId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOfficeCalendar>>> = ({ signal }) => getOfficeCalendar(officeId,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOfficeCalendar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOfficeCalendarQueryResult = NonNullable<Awaited<ReturnType<typeof getOfficeCalendar>>>
+export type GetOfficeCalendarQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useGetOfficeCalendar<TData = Awaited<ReturnType<typeof getOfficeCalendar>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: GetOfficeCalendarParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeCalendar>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOfficeCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof getOfficeCalendar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOfficeCalendar<TData = Awaited<ReturnType<typeof getOfficeCalendar>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: GetOfficeCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeCalendar>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOfficeCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof getOfficeCalendar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOfficeCalendar<TData = Awaited<ReturnType<typeof getOfficeCalendar>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: GetOfficeCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeCalendar>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Open windows, lunch and holidays per date
+ */
+
+export function useGetOfficeCalendar<TData = Awaited<ReturnType<typeof getOfficeCalendar>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number,
+    params: GetOfficeCalendarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOfficeCalendar>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOfficeCalendarQueryOptions(officeId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List Office Holidays
  */
 export const listOfficeHolidays = (
@@ -1611,6 +2196,100 @@ export const useUpdateOfficeSmartAssist = <TError = ErrorType<ErrorResponse | HT
       return useMutation(getUpdateOfficeSmartAssistMutationOptions(options), queryClient);
     }
     /**
+ * OFF-QA-6: the SMS templates a SmartAssist row may point at (this office's
+ * + the tenant-shared ones); ``sms_template_id`` is validated against it.
+ * @summary List Smart Assist Sms Templates
+ */
+export const listOfficeSmartAssistSmsTemplates = (
+    officeId: number,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SmartAssistSmsTemplate[]>(
+      {url: `/api/v1/offices/${officeId}/smart-assist/sms-templates`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOfficeSmartAssistSmsTemplatesQueryKey = (officeId: number,) => {
+    return [
+    `/api/v1/offices/${officeId}/smart-assist/sms-templates`
+    ] as const;
+    }
+
+
+export const getListOfficeSmartAssistSmsTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficeSmartAssistSmsTemplatesQueryKey(officeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>> = ({ signal }) => listOfficeSmartAssistSmsTemplates(officeId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: officeId !== null && officeId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOfficeSmartAssistSmsTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>>
+export type ListOfficeSmartAssistSmsTemplatesQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useListOfficeSmartAssistSmsTemplates<TData = Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeSmartAssistSmsTemplates<TData = Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOfficeSmartAssistSmsTemplates<TData = Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Smart Assist Sms Templates
+ */
+
+export function useListOfficeSmartAssistSmsTemplates<TData = Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ officeId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOfficeSmartAssistSmsTemplates>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOfficeSmartAssistSmsTemplatesQueryOptions(officeId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
  * @summary List production types
  */
 export const listProductionTypes = (

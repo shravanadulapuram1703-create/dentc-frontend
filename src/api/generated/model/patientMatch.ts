@@ -14,4 +14,8 @@ export interface PatientMatch {
   email?: string | null;
   dob?: string | null;
   match_on?: string[];
+  first_name?: string | null;
+  last_name?: string | null;
+  match_score?: number;
+  is_strong?: boolean;
 }

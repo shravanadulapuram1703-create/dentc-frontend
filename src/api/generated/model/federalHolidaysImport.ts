@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { FederalHolidaysImportStatus } from './federalHolidaysImportStatus';
 
 export interface FederalHolidaysImport {
   /**
@@ -12,5 +13,6 @@ export interface FederalHolidaysImport {
      * @maximum 2200
      */
   year: number;
-  status?: string;
+  status?: FederalHolidaysImportStatus;
+  observed?: boolean;
 }

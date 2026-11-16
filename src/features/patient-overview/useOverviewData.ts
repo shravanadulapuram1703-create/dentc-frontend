@@ -12,7 +12,6 @@ import {
   useListPatientRecalls,
   useListPatientInsurance,
   useListPatients,
-  getResponsibleParty,
   useListPatientMedicalAlerts,
   useListPatientAlerts,
   useListReferrals,
@@ -20,6 +19,7 @@ import {
 } from "@/api/generated/endpoints/patients/patients";
 import {
   useGetPatientBalance,
+  useGetPatientAccountBalance,
   useListPatientPaymentPlans,
   useListPatientRegPlans,
   useListOrthoPlans,
@@ -45,11 +45,11 @@ import type {
   InsurancePlanRead,
   InsuranceCarrierRead,
   InsuranceSubscriberRead,
-  ResponsiblePartyRead,
   PatientBalance,
   AppointmentRead,
 } from "@/api/generated/model";
 import { today_iso } from "./format";
+import { account_key_of, resolve_guarantor, type Guarantor } from "./guarantor";
 import { providerDisplayLabel } from "@/services/providerDirectory";
 
 /** How many account members we enrich with per-member balance/visit lookups. */
@@ -96,6 +96,9 @@ export function useOverviewData(patient_id: number) {
   // ---- Core patient + account ------------------------------------------------
   const patient_query = useGetPatient(patient_id, enabled);
   const balance_query = useGetPatientBalance(patient_id, enabled);
+  // AL-11: the account (family) BALANCES table in one call — aggregate row plus
+  // one entry per member, scoped server-side to the guarantor's account.
+  const account_balance_query = useGetPatientAccountBalance(patient_id, enabled);
   const patient = patient_query.data;
 
   // ---- Reference tables (shared React Query cache with the rest of the app) ---
@@ -140,45 +143,36 @@ export function useOverviewData(patient_id: number) {
   // reads its ortho column from there rather than from a plan_type convention.
   const ortho_plans_query = useListOrthoPlans({ patient_id, is_active: true, size: 50 }, enabled);
 
-  // ---- Responsible party -----------------------------------------------------
-  // `patients.responsible_party_id` is a string column. Migrated patients hold a
-  // legacy id ("13002496") that does NOT resolve against /responsible-parties/{id}
-  // (404 — gap PO-2), while patients created in the new system hold the numeric
-  // FK ("2"). Detail is fetched only when the id is a resolvable numeric FK.
-  // The 404 is an expected outcome for migrated patients, so this is fetched
-  // outside React Query — the shared QueryCache surfaces every query error as a
-  // toast, and a legacy guarantor id must not raise one on every page load.
-  const rp_id_raw = patient?.responsible_party_id ?? null;
-  const [responsible_party, set_responsible_party] = useState<ResponsiblePartyRead | null>(null);
-  const [rp_resolved, set_rp_resolved] = useState(false);
+  // ---- Responsible party (guarantor) ----------------------------------------
+  // `patients.responsible_party_id` is an overloaded string (self id, RP row id,
+  // another patient's id, or a legacy id — see guarantor.ts / gap RP-1). It is
+  // resolved outside React Query: the self and legacy cases 404 on
+  // /responsible-parties/{id} by design, and the shared QueryCache toasts every
+  // query error.
+  const rp_id_raw = account_key_of(patient);
+  const [guarantor, set_guarantor] = useState<Guarantor | null>(null);
+  const [guarantor_nonce, set_guarantor_nonce] = useState(0);
 
   useEffect(() => {
-    set_responsible_party(null);
-    set_rp_resolved(false);
-    if (!rp_id_raw || !/^\d+$/.test(rp_id_raw)) {
-      set_rp_resolved(true);
-      return;
-    }
+    set_guarantor(null);
+    if (!patient) return;
     let cancelled = false;
-    getResponsibleParty(Number(rp_id_raw))
-      .then((rp) => {
-        if (!cancelled) set_responsible_party(rp);
-      })
-      .catch(() => {
-        /* legacy id with no responsible-parties row — gap PO-2 */
-      })
-      .finally(() => {
-        if (!cancelled) set_rp_resolved(true);
-      });
+    resolve_guarantor(patient).then((g) => {
+      if (!cancelled) set_guarantor(g);
+    });
     return () => {
       cancelled = true;
     };
-  }, [rp_id_raw]);
+    // Re-resolve only when the patient or its account key changes (or on refresh).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patient?.id, rp_id_raw, guarantor_nonce]);
 
-  // Account members = every patient sharing this responsible_party_id. The
-  // roster endpoint (/responsible-parties/{id}/patients) only accepts the
-  // numeric FK, so the list filter is used instead — it matches the raw string
-  // and therefore works for legacy and new patients alike.
+  // Account members = every patient sharing this responsible_party_id. The list
+  // filter matches the raw string, so legacy and new accounts both work.
+  // A patient with NO key is an account of one: the query is disabled, and its
+  // (cached) data must never be read — with the filter undefined the key
+  // collapses to `{ size: 200 }`, the same cache entry as the tenant-wide
+  // patient list, which rendered the first 200 patients as "members".
   const members_query = useListPatients(
     { responsible_party_id: rp_id_raw ?? undefined, size: 200 },
     { query: { enabled: valid && Boolean(rp_id_raw) } },
@@ -259,8 +253,12 @@ export function useOverviewData(patient_id: number) {
   // aging or next scheduled visit, so each member is enriched individually
   // (gap PO-3). Bounded to MEMBER_ENRICH_CAP members.
   const member_ids = useMemo(
-    () => (members_query.data?.items ?? []).slice(0, MEMBER_ENRICH_CAP).map((m) => m.id),
-    [members_query.data],
+    () =>
+      (rp_id_raw ? (members_query.data?.items ?? []) : [])
+        .filter((m) => account_key_of(m) === rp_id_raw)
+        .slice(0, MEMBER_ENRICH_CAP)
+        .map((m) => m.id),
+    [members_query.data, rp_id_raw],
   );
   const member_ids_key = member_ids.join(",");
   const [member_extra, set_member_extra] = useState<Record<number, MemberEnrichment>>({});
@@ -412,16 +410,23 @@ export function useOverviewData(patient_id: number) {
 
   // ---- Account members -------------------------------------------------------
   const members = useMemo(() => {
-    const items = (members_query.data?.items ?? []).slice();
+    // Only patients actually on this account (defends against a cached or
+    // unfiltered list ever leaking in — see members_query above).
+    const items = rp_id_raw
+      ? (members_query.data?.items ?? []).filter((m) => account_key_of(m) === rp_id_raw)
+      : [];
     // The patient in context is always a member, even before the roster loads.
     if (patient && !items.some((m) => m.id === patient.id)) items.unshift(patient);
-    // Legacy sorts the responsible party's own record first, then by name.
-    return items.sort((a: PatientRead, b: PatientRead) =>
-      `${a.last_name ?? ""}${a.first_name ?? ""}`.localeCompare(
-        `${b.last_name ?? ""}${b.first_name ?? ""}`,
-      ),
+    // Legacy sorts the guarantor's own record first, then by name.
+    const is_head = (m: PatientRead) => (account_key_of(m) === String(m.id) ? 0 : 1);
+    return items.sort(
+      (a: PatientRead, b: PatientRead) =>
+        is_head(a) - is_head(b) ||
+        `${a.last_name ?? ""}${a.first_name ?? ""}`.localeCompare(
+          `${b.last_name ?? ""}${b.first_name ?? ""}`,
+        ),
     );
-  }, [members_query.data, patient]);
+  }, [members_query.data, patient, rp_id_raw]);
 
   const is_loading = patient_query.isLoading;
   const error = patient_query.isError
@@ -431,13 +436,15 @@ export function useOverviewData(patient_id: number) {
   const refetch_all = () => {
     patient_query.refetch();
     balance_query.refetch();
+    account_balance_query.refetch();
+    set_guarantor_nonce((n) => n + 1);
     appointments_query.refetch();
     recalls_query.refetch();
     insurance_query.refetch();
     referrals_query.refetch();
     medical_alerts_query.refetch();
     account_alerts_query.refetch();
-    members_query.refetch();
+    if (rp_id_raw) members_query.refetch();
     reg_plans_query.refetch();
     payment_plans_query.refetch();
     ortho_plans_query.refetch();
@@ -450,13 +457,15 @@ export function useOverviewData(patient_id: number) {
 
     patient,
     balance: balance_query.data,
-    responsible_party,
+    account_balance: account_balance_query.data,
+    guarantor,
+    responsible_party: guarantor?.responsible_party ?? null,
     responsible_party_id_raw: rp_id_raw,
-    responsible_party_unresolved: Boolean(rp_id_raw) && rp_resolved && !responsible_party,
+    responsible_party_unresolved: guarantor?.kind === "unresolved",
 
     members,
     member_extra,
-    members_loading: members_query.isLoading,
+    members_loading: Boolean(rp_id_raw) && members_query.isLoading,
 
     appointments,
     appointments_loading: appointments_query.isLoading,

@@ -23,6 +23,11 @@ import {
   X,
   Palette,
   UserPlus,
+  Scissors,
+  Copy,
+  ShieldCheck,
+  ShieldAlert,
+  Banknote,
 } from "lucide-react";
 import AppShell from "../layout/AppShell";
 import WeekView from "../scheduler/WeekView";
@@ -34,6 +39,11 @@ import CancelAppointmentDialog, {
 import MedicalAlertPopover from "../scheduler/MedicalAlertPopover";
 import { RequireRight, RIGHT } from "@/features/access-control";
 import { fetchPatientMedicalAlertSummary } from "@/features/medical-alerts/patientMedicalAlerts";
+import {
+  coverageTitle,
+  fetchPatientCoverage,
+  type PatientCoverage,
+} from "@/features/patient-insurance/coverageKind";
 import {
   fetchPendingTreatment,
   pendingTreatmentTitle,
@@ -55,6 +65,7 @@ import {
 import { OFFICE_CHANGED_EVENT, OfficeRequiredBanner, useOfficeScope } from "@/features/office-scope";
 import {
   fetchAppointments,
+  fetchAppointment,
   fetchOperatories,
   fetchProviders,
   fetchSchedulerConfig,
@@ -77,9 +88,11 @@ import {
   type AppointmentCreateRequest,
   type AppointmentUpdateRequest,
 } from "../../services/schedulerApi";
+import { copyAppointmentProcedures } from "../../services/appointmentProceduresApi";
 import { getPatient, getPatientContext } from "@/api/generated/endpoints/patients/patients";
 import type { SchedulerPatientRead } from "@/api/generated/model";
 import { providerDisplayLabel } from "@/services/providerDirectory";
+import { layoutRect, toLayoutPx, viewportHeight, viewportWidth } from "@/utils/uiZoom";
 
 /** Fallback status options used only if the backend `definitions` fetch fails
  *  or returns nothing — the live list comes from fetchAppointmentStatuses. */
@@ -192,6 +205,35 @@ interface SchedulerProps {
   setCurrentOffice: (office: string) => void;
 }
 
+/** Scheduler clipboard (Denticon Cut / Copy / Paste). Cut moves the original
+ *  appointment on Paste; Copy books a new one for the same patient and can be
+ *  pasted repeatedly. Kept per browser tab so it survives a trip to the
+ *  patient chart and back. */
+interface AppointmentClipboard {
+  mode: "cut" | "copy";
+  appointment: Appointment;
+}
+
+const CLIPBOARD_KEY = "dentc:scheduler:clipboard";
+
+const readClipboard = (): AppointmentClipboard | null => {
+  try {
+    const raw = sessionStorage.getItem(CLIPBOARD_KEY);
+    return raw ? (JSON.parse(raw) as AppointmentClipboard) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeClipboard = (clip: AppointmentClipboard | null) => {
+  try {
+    if (clip) sessionStorage.setItem(CLIPBOARD_KEY, JSON.stringify(clip));
+    else sessionStorage.removeItem(CLIPBOARD_KEY);
+  } catch {
+    /* storage unavailable - the clipboard just won't survive navigation */
+  }
+};
+
 interface ContextMenuState {
   visible: boolean;
   x: number;
@@ -221,6 +263,13 @@ export default function Scheduler({
       y: 0,
       type: "empty",
     });
+  const [clipboard, setClipboardState] =
+    useState<AppointmentClipboard | null>(readClipboard);
+  const setClipboard = (clip: AppointmentClipboard | null) => {
+    setClipboardState(clip);
+    writeClipboard(clip);
+  };
+  const [pasting, setPasting] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<{
     type: "goto" | "status" | null;
     anchorRect: DOMRect | null;
@@ -253,7 +302,7 @@ export default function Scheduler({
 
       return {
         type,
-        anchorRect: target.getBoundingClientRect(),
+        anchorRect: layoutRect(target)!,
       };
     });
 
@@ -351,6 +400,10 @@ export default function Scheduler({
       (alertsByPatient.get(appointment.patient_id)?.alerts.length ?? 0) > 0);
   // Per-patient computed balance (drives the $ badge on the block).
   const [balanceByPatient, setBalanceByPatient] = useState<Map<number, PatientBalanceInfo>>(
+    new Map(),
+  );
+  // Per-patient Insured vs Cash-Pay (drives the shield / cash badge).
+  const [coverageByPatient, setCoverageByPatient] = useState<Map<number, PatientCoverage>>(
     new Map(),
   );
 
@@ -703,11 +756,11 @@ export default function Scheduler({
       );
       // Instant scroll so the rect below is the block's final position.
       el?.scrollIntoView({ block: "center", inline: "center" });
-      const rect = el?.getBoundingClientRect();
+      const rect = layoutRect(el);
       setDetailsAnchor(
         rect
           ? { x: rect.left + Math.min(rect.width, 160), y: rect.top + 12 }
-          : { x: window.innerWidth / 2, y: window.innerHeight / 3 },
+          : { x: viewportWidth() / 2, y: viewportHeight() / 3 },
       );
       setDetailsAppt(target);
     });
@@ -747,14 +800,20 @@ export default function Scheduler({
           async (
             id,
           ): Promise<
-            [number, { alerts: PatientMedicalAlert[]; comments: string }, PatientBalanceInfo | null]
+            [
+              number,
+              { alerts: PatientMedicalAlert[]; comments: string },
+              PatientBalanceInfo | null,
+              PatientCoverage | null,
+            ]
           > => {
-            const [alerts, summary, balance] = await Promise.all([
+            const [alerts, summary, balance, coverage] = await Promise.all([
               fetchPatientAlerts(id).catch(() => []),
               fetchPatientMedicalAlertSummary(id).catch(() => null),
               fetchPatientBalance(id).catch(() => null),
+              fetchPatientCoverage(id).catch(() => null),
             ]);
-            return [id, { alerts, comments: summary?.comments ?? "" }, balance];
+            return [id, { alerts, comments: summary?.comments ?? "" }, balance, coverage];
           },
         ),
       );
@@ -767,6 +826,11 @@ export default function Scheduler({
       setBalanceByPatient((prev) => {
         const next = new Map(prev);
         entries.forEach(([id, , bal]) => bal && next.set(id, bal));
+        return next;
+      });
+      setCoverageByPatient((prev) => {
+        const next = new Map(prev);
+        entries.forEach(([id, , , cov]) => cov && next.set(id, cov));
         return next;
       });
     })();
@@ -1111,8 +1175,8 @@ export default function Scheduler({
     e.preventDefault();
     setContextMenu({
       visible: true,
-      x: e.clientX,
-      y: e.clientY,
+      x: toLayoutPx(e.clientX),
+      y: toLayoutPx(e.clientY),
       type: "empty",
       timeSlot: time,
       operatory,
@@ -1128,25 +1192,25 @@ export default function Scheduler({
     e.stopPropagation();
 
     // Get viewport dimensions
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
+    const vpHeight = viewportHeight();
+    const vpWidth = viewportWidth();
 
     // Estimate menu height (will be adjusted if needed)
     const menuHeight = 400;
     const menuWidth = 220;
 
     // Calculate position to keep menu in viewport
-    let x = e.clientX;
-    let y = e.clientY;
+    let x = toLayoutPx(e.clientX);
+    let y = toLayoutPx(e.clientY);
 
     // Adjust if menu would go off right edge
-    if (x + menuWidth > viewportWidth) {
-      x = viewportWidth - menuWidth - 10;
+    if (x + menuWidth > vpWidth) {
+      x = vpWidth - menuWidth - 10;
     }
 
     // Adjust if menu would go off bottom edge
-    if (y + menuHeight > viewportHeight) {
-      y = viewportHeight - menuHeight - 10;
+    if (y + menuHeight > vpHeight) {
+      y = vpHeight - menuHeight - 10;
     }
 
     setContextMenu({
@@ -1236,6 +1300,8 @@ export default function Scheduler({
             y: 0,
             type: "empty",
           });
+        } else if (clipboard) {
+          setClipboard(null);
         }
       }
     };
@@ -1243,7 +1309,7 @@ export default function Scheduler({
     document.addEventListener("keydown", handleKeyDown);
     return () =>
       document.removeEventListener("keydown", handleKeyDown);
-  }, [activeSubmenu.type, contextMenu.visible]);
+  }, [activeSubmenu.type, contextMenu.visible, clipboard]);
 
   // Close calendar picker when clicking outside
   useEffect(() => {
@@ -1655,6 +1721,129 @@ export default function Scheduler({
   };
   // ===== END DRAG-AND-DROP =====
 
+  // ===== CUT / COPY / PASTE (Denticon parity, day view) =====
+  // Right-click an appointment -> Cut or Copy; go to any date, right-click an
+  // open slot -> Paste. Cut PATCHes the original appointment to the new
+  // date/time/operatory (it stays put, outlined, until pasted - nothing is
+  // removed on Cut). Copy creates a new appointment for the same patient and
+  // provider, duplicates its procedure lines, and stays on the clipboard so it
+  // can be pasted into several slots.
+  const closeContextMenu = () =>
+    setContextMenu({ visible: false, x: 0, y: 0, type: "empty" });
+
+  const handleClipAppointment = (mode: "cut" | "copy", appointment: Appointment) => {
+    closeContextMenu();
+    if (mode === "cut" && appointment.cancelled) {
+      alert(
+        "A cancelled appointment can't be moved. Use Copy to rebook it in a new slot.",
+      );
+      return;
+    }
+    setClipboard({ mode, appointment });
+  };
+
+  const handlePasteAppointment = async (time?: string, operatoryId?: string) => {
+    closeContextMenu();
+    const clip = clipboard;
+    if (!clip || !time || !operatoryId || pasting) return;
+    if (officeClosedToday || isOutsideOfficeHours(time) || isLunchSlot(time)) return;
+
+    const appt = clip.appointment;
+    const date = formatDateYYYYMMDD(selectedDate);
+    const duration = appt.duration || slotInterval;
+    const endTime = calculateEndTime(time, duration);
+    const isCut = clip.mode === "cut";
+
+    if (
+      isCut &&
+      appt.date === date &&
+      appt.operatory_id === operatoryId &&
+      parseTimeMinutes(appt.start_time) === parseTimeMinutes(time)
+    ) {
+      setClipboard(null);
+      return;
+    }
+    if (hasSlotConflict(operatoryId, date, time, endTime, isCut ? appt.id : undefined)) {
+      alert(
+        "That time conflicts with another appointment in this operatory. Paste it into a free slot.",
+      );
+      return;
+    }
+    const issue = scheduleIssueFor(date, time, endTime);
+    if (issue && !window.confirm(`${issue}\n\nPaste it anyway?`)) return;
+
+    const targetOperatory = operatories.find((o) => o.id === operatoryId);
+    setPasting(true);
+    try {
+      if (isCut) {
+        const operatoryChanged = appt.operatory_id !== operatoryId;
+        setMovingAppointmentId(appt.id);
+        const updated = await updateAppointment({
+          id: appt.id,
+          date,
+          start_time: time,
+          duration,
+          ...(operatoryChanged ? { operatory: operatoryId } : {}),
+          // Pasted into this office's chairs -> it is now this office's visit.
+          ...(operatoryChanged && officeScope.office_id != null
+            ? { office_id: officeScope.office_id }
+            : {}),
+        });
+        // The source may sit on another date (not in the loaded range).
+        setAppointments((current) => [
+          ...current.filter((a) => a.id !== appt.id),
+          updated,
+        ]);
+        setClipboard(null);
+        setHighlightApptId(updated.id);
+      } else {
+        // The scheduler feed carries no notes, so read the full source row.
+        const source = await fetchAppointment(appt.id).catch(() => appt);
+        const provider = source.provider_id ?? targetOperatory?.provider_id ?? "";
+        if (!provider) {
+          alert(
+            "The copied appointment has no provider and this operatory has no default provider.",
+          );
+          return;
+        }
+        const created = await createAppointment({
+          patient_id: source.patient_id,
+          ...(officeScope.office_id != null && { office_id: officeScope.office_id }),
+          date,
+          start_time: time,
+          duration,
+          procedure_type: source.procedure_label,
+          status: "Scheduled",
+          operatory: operatoryId,
+          provider,
+          notes: source.notes ?? "",
+          is_new_patient: false,
+        });
+        setAppointments((current) => [...current, created]);
+        setHighlightApptId(created.id);
+        const { failed } = await copyAppointmentProcedures(appt.id, created.id).catch(
+          () => ({ copied: 0, failed: -1 }),
+        );
+        if (failed !== 0) {
+          alert(
+            "The appointment was pasted, but some of its procedures could not be copied. Open the new appointment to add them.",
+          );
+        }
+      }
+    } catch (err: any) {
+      console.error("Error pasting appointment:", err);
+      alert(
+        `Could not paste the appointment: ${
+          err?.response?.data?.detail || err?.message || "unknown error"
+        }`,
+      );
+    } finally {
+      setMovingAppointmentId(null);
+      setPasting(false);
+    }
+  };
+  // ===== END CUT / COPY / PASTE =====
+
   // Navigate to patient module
   // Email / Text Message from the Go To menu. Both need the patient's contact
   // details, which only arrive with the patient-context fetch below.
@@ -1828,7 +2017,7 @@ export default function Scheduler({
   ) => {
     e.stopPropagation();
     setContextMenu({ visible: false, x: 0, y: 0, type: "empty" });
-    setDetailsAnchor({ x: e.clientX, y: e.clientY });
+    setDetailsAnchor({ x: toLayoutPx(e.clientX), y: toLayoutPx(e.clientY) });
     setDetailsAppt(appointment);
   };
 
@@ -1841,8 +2030,8 @@ export default function Scheduler({
     setAlertPopover({
       patient_id: appointment.patient_id,
       patientName: appointment.patient_name,
-      x: e.clientX,
-      y: e.clientY,
+      x: toLayoutPx(e.clientX),
+      y: toLayoutPx(e.clientY),
     });
     // Feed-flagged block whose summary is not fetched yet (week/month -> day
     // switch, or beyond the 40-patient cap): load it on demand.
@@ -1907,7 +2096,7 @@ export default function Scheduler({
       {/* Fill exactly the viewport below the fixed nav and let ONLY the grid
           scroll. Without this the page also scrolls, which drags the grid's
           sticky operatory headers up over the date/filter bar. */}
-      <div className="flex flex-col h-[calc(100vh-var(--app-nav-height))] overflow-hidden">
+      <div className="flex flex-col h-[calc(calc(var(--vh)*100)-var(--app-nav-height))] overflow-hidden">
         {/* Scheduler Header — fixed at the top of the non-scrolling column */}
         <div className="bg-white shadow-md border-b border-[#E2E8F0] flex-shrink-0 relative z-10">
           {/* Single-row slate header: title, date nav, view toggle, inline
@@ -2147,6 +2336,46 @@ export default function Scheduler({
               className="ml-auto rounded border border-[#1F3A5F]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1F3A5F] hover:bg-[#1F3A5F]/5"
             >
               Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Cut / Copy clipboard */}
+        {clipboard && (
+          <div
+            className="mx-6 mt-4 flex flex-wrap items-center gap-3 rounded border-l-4 border-dashed border-[#3A6EA5] bg-[#EEF3F9] px-4 py-3 text-sm text-[#1E293B]"
+            role="status"
+            data-testid="scheduler-clipboard"
+          >
+            {clipboard.mode === "cut" ? (
+              <Scissors className="h-4 w-4 shrink-0 text-[#1F3A5F]" />
+            ) : (
+              <Copy className="h-4 w-4 shrink-0 text-[#1F3A5F]" />
+            )}
+            <span>
+              <span className="font-semibold">
+                {clipboard.mode === "cut" ? "Cut" : "Copied"}:{" "}
+                {clipboard.appointment.patient_name || "appointment"}
+              </span>
+              {" · "}
+              {clipboard.appointment.procedure_label || "Appointment"} ·{" "}
+              {clipboard.appointment.duration} min (from{" "}
+              {clipboard.appointment.date} {friendlyTime(clipboard.appointment.start_time)}
+              {clipboard.appointment.operatory_name
+                ? `, ${clipboard.appointment.operatory_name}`
+                : ""}
+              ){" — "}
+              {viewMode === "daily"
+                ? "right-click an open slot and choose Paste."
+                : "switch to Day view, then right-click an open slot and choose Paste."}
+              {clipboard.mode === "copy" && " You can paste it more than once."}
+            </span>
+            <button
+              type="button"
+              onClick={() => setClipboard(null)}
+              className="ml-auto rounded border border-[#1F3A5F]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1F3A5F] hover:bg-[#1F3A5F]/5"
+            >
+              {clipboard.mode === "cut" ? "Cancel cut" : "Clear"}
             </button>
           </div>
         )}
@@ -2432,12 +2661,18 @@ export default function Scheduler({
                         ? balanceByPatient.get(appointment.patient_id)
                         : undefined;
                     const owesMoney = (patientBalance?.balance ?? 0) > 0;
+                    const coverage =
+                      appointment.patient_id != null
+                        ? coverageByPatient.get(appointment.patient_id)
+                        : undefined;
                     // Missed appointments stay on the grid with a strikethrough
                     // (PDF page 15); cancelled ones are dimmed.
                     const isStruck = appointment.missed || appointment.cancelled;
                     const canDrag = !appointment.cancelled && !movingAppointmentId;
                     const isDragging = dragAppointmentId === appointment.id;
                     const isMoving = movingAppointmentId === appointment.id;
+                    const clipMode =
+                      clipboard?.appointment.id === appointment.id ? clipboard.mode : null;
                     return (
                       <div
                         key={appointment.id}
@@ -2448,6 +2683,8 @@ export default function Scheduler({
                           // reach the slot cells underneath every block.
                           dragAppointmentId ? "pointer-events-none" : ""
                         } ${isDragging ? "opacity-40" : ""} ${
+                          clipMode === "cut" ? "opacity-50" : ""
+                        } ${
                           isMoving ? "opacity-70 animate-pulse" : ""
                         } ${
                           highlightApptId === appointment.id
@@ -2461,7 +2698,9 @@ export default function Scheduler({
                           backgroundColor: pc.bg,
                           borderColor: pc.border,
                           color: pc.text,
+                          ...(clipMode ? { borderStyle: "dashed" } : {}),
                         }}
+                        data-clipboard={clipMode ?? undefined}
                         draggable={canDrag}
                         onDragStart={(e) => handleAppointmentDragStart(e, appointment)}
                         onDragEnd={handleAppointmentDragEnd}
@@ -2546,6 +2785,39 @@ export default function Scheduler({
                               >
                                 $
                               </span>
+                            )}
+                            {coverage && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(
+                                    `/patient/${appointment.patient_id}/insurance/dental/primary`,
+                                  );
+                                }}
+                                onDoubleClick={(e) => e.stopPropagation()}
+                                className={`flex-shrink-0 ${
+                                  coverage.kind === "cash"
+                                    ? "text-amber-600 hover:text-amber-800"
+                                    : appointment.insurance_eligibility === "ineligible"
+                                      ? "text-orange-600 hover:text-orange-800"
+                                      : "text-blue-600 hover:text-blue-800"
+                                }`}
+                                title={coverageTitle(coverage, appointment.insurance_eligibility)}
+                                aria-label={
+                                  coverage.kind === "cash"
+                                    ? "Cash-Pay patient"
+                                    : "Patient has insurance"
+                                }
+                              >
+                                {coverage.kind === "cash" ? (
+                                  <Banknote className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+                                ) : appointment.insurance_eligibility === "ineligible" ? (
+                                  <ShieldAlert className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+                                ) : (
+                                  <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+                                )}
+                              </button>
                             )}
                             {hasAlerts && (
                               <button
@@ -2663,6 +2935,27 @@ export default function Scheduler({
                 >
                   Add New Appointment
                 </button>
+                {clipboard && (
+                  <button
+                    onClick={() =>
+                      handlePasteAppointment(
+                        contextMenu.timeSlot,
+                        contextMenu.operatory,
+                      )
+                    }
+                    disabled={pasting}
+                    className={`${menuItemClass} border-t border-[#E2E8F0] disabled:opacity-50`}
+                    role="menuitem"
+                    title={`${clipboard.mode === "cut" ? "Move" : "Copy"} ${clipboard.appointment.patient_name} to ${contextMenu.timeSlot ? friendlyTime(contextMenu.timeSlot) : "this slot"}`}
+                  >
+                    <span className="block font-medium">
+                      Paste {clipboard.mode === "cut" ? "(Move)" : "(Copy)"}
+                    </span>
+                    <span className="block truncate text-xs text-slate-500">
+                      {clipboard.appointment.patient_name}
+                    </span>
+                  </button>
+                )}
               </>
             ) : contextMenu.appointment ? (
               <>
@@ -2686,6 +2979,24 @@ export default function Scheduler({
                   title="Open the appointment to change its date/time"
                 >
                   Reschedule
+                </button>
+                <button
+                  onClick={() => handleClipAppointment("cut", contextMenu.appointment!)}
+                  className={`${menuItemClass} flex items-center gap-2`}
+                  role="menuitem"
+                  title="Move this appointment: right-click an open slot on any date and choose Paste"
+                >
+                  <Scissors className="h-3.5 w-3.5 text-slate-500" />
+                  Cut
+                </button>
+                <button
+                  onClick={() => handleClipAppointment("copy", contextMenu.appointment!)}
+                  className={`${menuItemClass} flex items-center gap-2`}
+                  role="menuitem"
+                  title="Book another appointment like this one: right-click an open slot and choose Paste"
+                >
+                  <Copy className="h-3.5 w-3.5 text-slate-500" />
+                  Copy
                 </button>
                 {/* RBAC: deleting an appointment is backend-enforced. */}
                 <RequireRight code={RIGHT.appointments.delete}>
@@ -2797,13 +3108,12 @@ export default function Scheduler({
               onClose={() => setShowCalendarPicker(false)}
               position={{
                 top:
-                  calendarBtnRef.current.getBoundingClientRect()
-                    .bottom +
-                  window.scrollY +
+                  layoutRect(calendarBtnRef.current)!.bottom +
+                  toLayoutPx(window.scrollY) +
                   6,
                 left:
-                  calendarBtnRef.current.getBoundingClientRect()
-                    .left + window.scrollX,
+                  layoutRect(calendarBtnRef.current)!.left +
+                  toLayoutPx(window.scrollX),
               }}
             />,
             document.body,
@@ -2815,11 +3125,11 @@ export default function Scheduler({
           createPortal(
             (() => {
               // ✅ STEP 2: viewport-safe vertical calculation
-              const viewportHeight = window.innerHeight;
+              const vpHeight = viewportHeight();
 
               const idealTop = activeSubmenu.anchorRect.top;
               const spaceBelow =
-                viewportHeight - idealTop - SUBMENU_MARGIN;
+                vpHeight - idealTop - SUBMENU_MARGIN;
 
               const submenuHeight = SUBMENU_MAX_HEIGHT;
 
@@ -2828,17 +3138,17 @@ export default function Scheduler({
                   ? idealTop
                   : Math.max(
                       SUBMENU_MARGIN,
-                      viewportHeight - submenuHeight - SUBMENU_MARGIN,
+                      vpHeight - submenuHeight - SUBMENU_MARGIN,
                     );
 
               // ✅ STEP 3: Horizontal safety
-              const viewportWidth = window.innerWidth;
+              const vpWidth = viewportWidth();
 
               const idealLeft =
                 activeSubmenu.anchorRect.right + SUBMENU_MARGIN;
 
               const spaceRight =
-                viewportWidth - idealLeft - SUBMENU_MARGIN;
+                vpWidth - idealLeft - SUBMENU_MARGIN;
 
               const safeLeft =
                 spaceRight >= SUBMENU_WIDTH

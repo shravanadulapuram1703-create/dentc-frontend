@@ -66,7 +66,7 @@ export function AccessDenied({
   message?: string;
 }) {
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 p-8 text-center">
+    <div className="flex min-h-[calc(var(--vh)*40)] flex-col items-center justify-center gap-3 p-8 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE2E2]">
         <ShieldAlert className="h-7 w-7 text-[#DC2626]" strokeWidth={2} />
       </div>

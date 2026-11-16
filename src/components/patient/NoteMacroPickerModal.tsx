@@ -94,7 +94,7 @@ export default function NoteMacroPickerModal({ onInsert, onClose }: NoteMacroPic
           questionnaire ? 'hidden' : ''
         }`}
       >
-        <div className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
+        <div className="flex max-h-[calc(var(--vh)*85)] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between bg-[#3A6EA5] px-5 py-3 text-white">
             <h3 className="text-sm font-bold uppercase tracking-wide">Add Notes Macro</h3>

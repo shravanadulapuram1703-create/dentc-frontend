@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import AppShell from "../layout/AppShell";
 import { Calendar, Search, Info, X, AlertTriangle } from "lucide-react";
 import { checkDuplicatePatient, toDuplicatePatient } from "../../services/patient.service";
 import type { DuplicatePatient } from "../../types/patient";
+import { useExistingPatientMatches } from "../../features/patients/useExistingPatientMatches";
+import ExistingPatientMatches from "../../features/patients/ExistingPatientMatches";
 import { 
   getFeeSchedules, 
   type FeeSchedule,
@@ -23,7 +25,15 @@ import {
 import type { RegisterRequest } from "@/api/generated/model";
 import { fetchProviders, isHygienist, type Provider } from "../../services/schedulerApi";
 import { OfficeRequiredBanner, ProviderOptionGroups, useOfficeScope } from "@/features/office-scope";
-import { listReferrals } from "@/api/generated/endpoints/patients/patients";
+import {
+  listReferrals,
+  getPatient,
+  listPatients,
+  updatePatient,
+} from "@/api/generated/endpoints/patients/patients";
+import { getPatientAccountBalance } from "@/api/generated/endpoints/billing/billing";
+import type { JoinAccountInfo } from "@/features/add-patient/steps/ResponsiblePartyStep";
+import { resolve_guarantor, account_key_of } from "@/features/patient-overview/guarantor";
 import type { ReferralRead } from "@/api/generated/model";
 import { resolveOffice, officeKeyToId, type OfficeOption } from "../../services/officeLookup";
 import { MIN_DOB_ISO, todayIsoDate, validateDob, ageFromDob } from "../../utils/datetime";
@@ -56,6 +66,7 @@ import {
   COVERAGE_SLOTS,
   DEFAULT_RECALLS,
   emptyResponsibleParty,
+  EXISTING_ACCOUNT_SOURCE,
   emptyInsuranceSlot,
   emptyMedicalAlerts,
   emptyQuestionnaires,
@@ -139,6 +150,13 @@ interface AddNewPatientProps {
    * with the patient it just created.
    */
   onSaved?: (patientId: number) => void;
+  /**
+   * Create mode only — the user picked an EXISTING patient that matches the
+   * name + birth date instead of registering a duplicate. An embedding flow
+   * (Scheduler) books for that patient; when omitted, the page opens the
+   * patient's Overview.
+   */
+  onSelectExisting?: (patientId: number) => void;
   /**
    * Create mode only — seed Step 1 with values captured earlier (the Scheduler's
    * quick New Patient Appointment form hands its name / birthdate / contact
@@ -266,6 +284,7 @@ export default function AddNewPatient({
   patientId: propPatientId,
   onClose,
   onSaved,
+  onSelectExisting,
   initialValues,
 }: AddNewPatientProps) {
   const navigate = useNavigate();
@@ -448,6 +467,25 @@ export default function AddNewPatient({
     dobError === null &&
     formData.lastName.trim() !== "" &&
     formData.firstName.trim() !== "";
+
+  // Live existing-patient lookup on name + DOB (create only — an edited record
+  // would always match itself).
+  const existingMatches = useExistingPatientMatches(
+    { first_name: formData.firstName, last_name: formData.lastName, dob: formData.birthdate },
+    !isEditMode,
+  );
+  /** Use an existing record instead of creating this one. */
+  const handleSelectExisting = (patientId: number) => {
+    setShowDuplicateModal(false);
+    setPendingRegistration(null);
+    if (onSelectExisting) {
+      onSelectExisting(patientId);
+      return;
+    }
+    if (isModal) onClose?.();
+    navigate(`/patient/${patientId}/overview`);
+  };
+  const selectExistingLabel = onSelectExisting ? "Use This Patient" : "Open Patient";
 
   // ✅ Load every dropdown source on mount.
   //
@@ -682,6 +720,85 @@ export default function AddNewPatient({
   const [stepIndex, setStepIndex] = useState(0);
   const [maxReached, setMaxReached] = useState(0);
   const [respParty, setRespParty] = useState<ResponsiblePartyForm>(emptyResponsibleParty());
+
+  // ── Join an existing account (Overview "Add New Member": ?account_of=<patient id>) ──
+  // The new patient is linked to the anchor patient's account key, so they
+  // share its responsible party, balance and ledger. An anchor with NO key is
+  // an account of one; it is first made its own (self) guarantor on Finish so
+  // both patients end up on the same key.
+  const [searchParams] = useSearchParams();
+  const accountOfParam = !isEditMode ? searchParams.get("account_of") : null;
+  const accountOfId = accountOfParam && /^\d+$/.test(accountOfParam) ? Number(accountOfParam) : null;
+  const [joinAccount, setJoinAccount] = useState<JoinAccountInfo | null>(null);
+  const [joinAnchor, setJoinAnchor] = useState<{ id: number; needs_self_link: boolean } | null>(null);
+
+  useEffect(() => {
+    if (accountOfId == null) return;
+    let cancelled = false;
+    setJoinAccount({ guarantor_name: "", guarantor_detail: "", members: [], loading: true });
+    (async () => {
+      try {
+        const anchor = await getPatient(accountOfId);
+        const key = account_key_of(anchor) ?? String(anchor.id);
+        const [guarantor, balance, roster] = await Promise.all([
+          resolve_guarantor(anchor),
+          getPatientAccountBalance(anchor.id).catch(() => null),
+          account_key_of(anchor)
+            ? listPatients({ responsible_party_id: key, size: 200 }).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        const people = (roster?.items ?? []).filter((m) => account_key_of(m) === key);
+        if (!people.some((m) => m.id === anchor.id)) people.unshift(anchor);
+        const bal_by_id = new Map((balance?.members ?? []).map((m) => [m.patient_id, m.balance]));
+        const years = (dob?: string | null) => {
+          const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dob ?? "");
+          if (!m) return "—";
+          const t = new Date();
+          let a = t.getFullYear() - Number(m[1]);
+          const md = t.getMonth() + 1 - Number(m[2]);
+          if (md < 0 || (md === 0 && t.getDate() < Number(m[3]))) a--;
+          return String(a);
+        };
+        const person = guarantor.responsible_party ?? guarantor.guarantor_patient ?? anchor;
+        const detail =
+          guarantor.kind === "responsible_party" && guarantor.responsible_party
+            ? `RP record ${guarantor.responsible_party.id}`
+            : guarantor.guarantor_patient
+              ? `Patient ID ${guarantor.guarantor_patient.id}${guarantor.kind === "patient" ? "" : " (Self)"}`
+              : `Account ${key}`;
+        if (cancelled) return;
+        setJoinAnchor({ id: anchor.id, needs_self_link: !account_key_of(anchor) });
+        setJoinAccount({
+          guarantor_name: [person.last_name, person.first_name].filter(Boolean).join(", "),
+          guarantor_detail: detail,
+          members: people.map((m) => ({
+            name: [m.last_name, m.first_name].filter(Boolean).join(", "),
+            age: years(m.dob),
+            sex: m.gender || "—",
+            balance: `$${(bal_by_id.get(m.id) ?? 0).toFixed(2)}`,
+          })),
+        });
+        setRespParty((rp) => ({
+          ...rp,
+          rp_source: EXISTING_ACCOUNT_SOURCE,
+          account_key: key,
+          relationship: "Child",
+        }));
+      } catch {
+        if (!cancelled) {
+          setJoinAccount({
+            guarantor_name: "",
+            guarantor_detail: "",
+            members: [],
+            error: `Account of patient ${accountOfId} could not be loaded — choose a responsible party instead.`,
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountOfId]);
   const [insuranceSlots, setInsuranceSlots] = useState<Record<string, InsuranceSlotForm>>({});
   const [medicalAlerts, setMedicalAlerts] = useState<MedicalAlertsForm>(emptyMedicalAlerts());
   const [questionnaires, setQuestionnaires] = useState<QuestionnairesForm>(emptyQuestionnaires());
@@ -1209,6 +1326,19 @@ export default function AddNewPatient({
       }
       const request = buildRegisterRequest(officeIdNum, full);
       if (forceCreate) request.force_create = true;
+      // Joining an account whose anchor has no key yet: make the anchor its own
+      // (self) guarantor first, so both patients share key = anchor id.
+      if (
+        respParty.rp_source === EXISTING_ACCOUNT_SOURCE &&
+        joinAnchor?.needs_self_link &&
+        request.responsible_party?.responsible_party_id === String(joinAnchor.id)
+      ) {
+        await updatePatient(joinAnchor.id, {
+          responsible_party_id: String(joinAnchor.id),
+          responsible_party_relationship: "S",
+        });
+        setJoinAnchor({ ...joinAnchor, needs_self_link: false });
+      }
       const res = await registerPatientResilient(request);
       const warnings = [...res.warnings];
       // Everything that cannot ride inside the composite (insurance, recalls,
@@ -1263,7 +1393,11 @@ export default function AddNewPatient({
     }
     // A non-self guarantor is created as a real record, so it needs a name
     // (legacy marks Last/First required on the Responsible Party screen).
-    if (respParty.rp_source !== "Self" && !respParty.last_name.trim()) {
+    if (
+      respParty.rp_source !== "Self" &&
+      respParty.rp_source !== EXISTING_ACCOUNT_SOURCE &&
+      !respParty.last_name.trim()
+    ) {
       alert(" The responsible party needs at least a last name.");
       const rpIndex = steps.findIndex((s) => s.id === "responsible-party");
       if (rpIndex >= 0) goToStep(rpIndex);
@@ -1298,7 +1432,11 @@ export default function AddNewPatient({
     }
     // Same rule the create flow enforces: a non-self guarantor becomes a real
     // record, so it needs at least a last name.
-    if (respParty.rp_source !== "Self" && !respParty.last_name.trim()) {
+    if (
+      respParty.rp_source !== "Self" &&
+      respParty.rp_source !== EXISTING_ACCOUNT_SOURCE &&
+      !respParty.last_name.trim()
+    ) {
       alert("The responsible party needs at least a last name.");
       const rpIndex = steps.findIndex((s) => s.id === "responsible-party");
       if (rpIndex >= 0) goToStep(rpIndex);
@@ -1620,6 +1758,16 @@ export default function AddNewPatient({
                     {checkingDuplicate ? "Checking..." : "Check Patient"}
                   </button>
                 </div>
+                {!isEditMode && (
+                  <div className="mt-3">
+                    <ExistingPatientMatches
+                      result={existingMatches}
+                      select_label={selectExistingLabel}
+                      onSelect={handleSelectExisting}
+                      disabled={isSaving}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Remaining form sections - disabled until identity complete */}
@@ -2848,6 +2996,7 @@ export default function AddNewPatient({
             <ResponsiblePartyStep
               value={respParty}
               onChange={handleRespPartyChange}
+              joinAccount={joinAccount}
               patient={{
                 first_name: formData.firstName,
                 last_name: formData.lastName,
@@ -3028,7 +3177,7 @@ export default function AddNewPatient({
       {/* Duplicate Patient Modal */}
       {showDuplicateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[calc(var(--vh)*80)] overflow-y-auto">
             <div className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
                 ⚠️ Identical Patients Found
@@ -3044,8 +3193,8 @@ export default function AddNewPatient({
             <div className="p-6">
               <p className="text-sm text-[#64748B] mb-4">
                 {pendingRegistration
-                  ? "The save was blocked because these existing patients strongly match the details entered (same SSN, chart number, or name + date of birth). Review them — continuing creates a separate new patient."
-                  : "The following patients match the identity information entered. Review before creating a new patient."}
+                  ? "The save was blocked because these existing patients strongly match the details entered (same SSN, chart number, or name + date of birth). Select the existing patient, or create anyway to add a separate new patient."
+                  : "The following patients match the identity information entered. Select the existing patient instead of creating a duplicate."}
               </p>
 
               <div className="overflow-x-auto">
@@ -3076,12 +3225,13 @@ export default function AddNewPatient({
                       <th className="px-4 py-2 text-left font-semibold text-[#1F3A5F]">
                         Patient Source
                       </th>
+                      <th className="px-4 py-2" />
                     </tr>
                   </thead>
                   <tbody>
-                    {duplicatePatients.map((patient, index) => (
+                    {duplicatePatients.map((patient) => (
                       <tr
-                        key={index}
+                        key={patient.id}
                         className="border-b border-[#E2E8F0] hover:bg-[#F7F9FC]"
                       >
                         <td className="px-4 py-2">{patient.dob}</td>
@@ -3104,6 +3254,14 @@ export default function AddNewPatient({
                           </span>
                         </td>
                         <td className="px-4 py-2">{patient.source}</td>
+                        <td className="px-4 py-2 text-right">
+                          <button
+                            onClick={() => handleSelectExisting(patient.id)}
+                            className="px-3 py-1 text-xs font-bold rounded bg-[#3A6EA5] text-white hover:bg-[#1F3A5F] whitespace-nowrap"
+                          >
+                            {selectExistingLabel}
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

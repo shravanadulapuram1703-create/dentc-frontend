@@ -6,8 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { OfficeSmartAssistItemRead } from './officeSmartAssistItemRead';
+import type { SmartAssistReadItemsSource } from './smartAssistReadItemsSource';
 
 export interface SmartAssistRead {
   enabled: boolean;
+  items_source?: SmartAssistReadItemsSource;
   items: OfficeSmartAssistItemRead[];
 }

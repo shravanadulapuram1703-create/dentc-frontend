@@ -849,7 +849,12 @@ export const registerPatientResilient = async (
           });
           rpId = String(createdRp.id);
         }
-        if (rpId) await updatePatientApi(patientId, { responsible_party_id: rpId });
+        if (rpId) {
+          await updatePatientApi(patientId, {
+            responsible_party_id: rpId,
+            ...(rp.relationship ? { responsible_party_relationship: rp.relationship } : {}),
+          });
+        }
       } catch {
         warnings.push(
           "Responsible party could not be created/linked — set it from the Patient Overview.",

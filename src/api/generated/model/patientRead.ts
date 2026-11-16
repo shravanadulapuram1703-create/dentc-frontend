@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { Guarantor } from './guarantor';
 
 export interface PatientRead {
   tenant_id: number;
@@ -56,6 +57,9 @@ export interface PatientRead {
   patient_notes?: string | null;
   hipaa_sharing_notes?: string | null;
   responsible_party_id?: string | null;
+  account_id?: number | null;
+  guarantor_patient_id?: number | null;
+  guarantor_party_id?: number | null;
   responsible_party_relationship?: string | null;
   patient_type?: string | null;
   patient_types?: unknown | null;
@@ -80,4 +84,6 @@ export interface PatientRead {
   created_by_name?: string | null;
   updated_by_name?: string | null;
   has_claim_consent?: boolean;
+  guarantor?: Guarantor | null;
+  account_no?: string | null;
 }
