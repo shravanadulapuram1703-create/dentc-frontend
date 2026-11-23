@@ -1,0 +1,257 @@
+{
+  "category": "refferal_reports",
+  "source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+  "reports": [
+    {
+      "report_id": "refferal_reports.r01",
+      "legacy_name": "Referral Production List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Referral Production List); it applies to every report of this category that has the Office / Office Group radios.",
+          "controls": [
+            "refferal_reports.r01.s02.c01",
+            "refferal_reports.r01.s02.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup."
+        },
+        {
+          "when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+          "effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Referral Production List); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+          "controls": [],
+          "confidence": "likely",
+          "evidence_quote": "One saved version per report (`ADD TO MY FAVORITES` → `UPDATE MY FAVORITES`)."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r01.s03.c01",
+          "text": "PROCEDURE DATE RANGE is the period of the posted procedures that are counted.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PROCEDURE DATE RANGE` | Period of the posted procedures counted."
+        },
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r01.s04.c01",
+          "text": "FIRST VISIT DATE RANGE restricts the report to patients whose first visit falls in the range (a new-patient cohort); left blank, all patients are included, as the section title says.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Restricts to patients whose first visit falls in the range (new-patient cohort)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r01.s05.c01",
+          "text": "ZIP CODE RANGE From / Through filter on the patient's zip code.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`ZIP CODE RANGE` `From` / `Through` | Patient zip filter."
+        },
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r01.s06.c01",
+          "text": "REFERRAL TYPE is a single choice: one referral type or ALL.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`REFERRAL TYPE` | One referral type or `ALL`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r01.s07.c01",
+          "text": "Group By Zip Code switches the report to its by-zip-code variant - the former report Referral Production Listing by Zipcode.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Referral Production Listing by Zipcode` | `Referral Production List` → `Group By Zip Code`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r01.s02.c02",
+          "text": "Vendor text describes the report as single-office and current-state: the data is limited to the office the report is run in, for patients currently in that office, with no cross-office data (history is lost when the patient's office or referral changes). How that limit works together with the Office / Office Group picker of the criteria screen is not stated (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Data is limited to the office the report is run in, for patients currently in that office; no cross-office"
+        }
+      ]
+    },
+    {
+      "report_id": "refferal_reports.r02",
+      "legacy_name": "Referred Out List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r02.s05.c01",
+          "text": "The report reads the single Referred To field of the patient record, so one patient is one referral; REFERRAL OUT TO is read by the document as a filter on that referred-to referral source. (The document presumes - unverified - that referral cases created with the Refer To workflow are reported by the Referral Management reports instead.)",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Reads the single `Referred To` field of the patient record `[P64]`, so one patient = one referral"
+        }
+      ]
+    },
+    {
+      "report_id": "refferal_reports.r03",
+      "legacy_name": "Referral Source List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "refferal_reports.r03.s02.c01",
+          "text": "The greyed OFFICE/GROUP section (both radios and the SELECT button) is by design: it is disabled in the vendor's own screenshot of this screen too, because referral sources are organisation-wide.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The disabled `OFFICE/GROUP` section is by design."
+        },
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r03.s03.c01",
+          "text": "REFERRED TO/BY filters the sources on their Referred by/To setting (in referral-source setup: Referred By / Referred To / Both); the report footer echoes the choice as a code, 99 standing for all. The option labels of the dropdown itself are not documented (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Referral By/To : <code>` (99 printed for all)"
+        }
+      ]
+    },
+    {
+      "report_id": "refferal_reports.r04",
+      "legacy_name": "External Outgoing Referral Management",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "options",
+          "control_id": "",
+          "text": "The eight specific status checkboxes of the grid (Accepted, Rejected, Pending, Cancelled, Completed, In Progress, Not Needed, Expired) carry exactly the labels of the vendor's fixed status vocabulary of a referral case - Pending is the default status of a new case and Expired is set automatically after 30 days. The vocabulary has no further value, so another status checkbox below the third row is unlikely; whether anything else follows the grid is still unknown (see unresolved). The vocabulary is documented for the Referral Management utility: that the checkboxes filter the Referral Status of the case is the expected reading, and no vendor screenshot shows the criteria of this report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Referral cases have a fixed status vocabulary:** `Pending` (default), `Accepted`, `Rejected`, `In Progress`,"
+        }
+      ]
+    },
+    {
+      "report_id": "refferal_reports.r05",
+      "legacy_name": "Referral Summary Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r05.s03.c01",
+          "text": "PROCEDURE DATE RANGE is applied to the posted procedures.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PROCEDURE DATE RANGE` (posted procedures)"
+        }
+      ]
+    },
+    {
+      "report_id": "refferal_reports.r06",
+      "legacy_name": "Referral Count Summary",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "refferal_reports.r06.s03.c01",
+          "text": "PROCEDURE DATE RANGE is the period in which the referred patients were seen: the report counts, per referral source, the referred patients seen in the period. What exactly counts as seen is unverified (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "count of referred patients seen in the period"
+        }
+      ]
+    },
+    {
+      "report_id": "refferal_reports.r08",
+      "legacy_name": "External Incoming Referral Management",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Build history: this is the newest report of the category - the external-incoming referral feature it reports on dates from 2023. The vendor's June 2023 screenshot of the Referral Reports list shows seven reports, without External Incoming Referral Management; our 2026 capture has eight.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`External Incoming Referral Management` was added after June 2023."
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "refferal_reports.r01",
+      "question": "Vendor text says the results are limited to the office the report is run in (patients currently in that office, no cross-office data). How does that square with the OFFICE/GROUP picker, which allows several offices or an office group?"
+    },
+    {
+      "report_id": "refferal_reports.r01",
+      "question": "Values of the REFERRAL TYPE dropdown other than ALL are the organisation's referral types (tenant data); no list is documented (same dropdown on Referral Source List, Referral Summary Report and Referral Count Summary)."
+    },
+    {
+      "report_id": "refferal_reports.r02",
+      "question": "Values of the SPECIALTY dropdown are not documented (same dropdown on External Outgoing Referral Management and Internal Referral Management)."
+    },
+    {
+      "report_id": "refferal_reports.r02",
+      "question": "Is REFERRED OUT DATE RANGE matched on the patient's Ref. To Date (presumed, unverified)? Does the REFERRAL OUT TO picker list the referral sources (the document's reading; its dialog is not described)?"
+    },
+    {
+      "report_id": "refferal_reports.r03",
+      "question": "Option labels of the REFERRED TO/BY dropdown are not documented. The referral-source field Referred by/To takes Referred By / Referred To / Both and the footer echoes a code (99 = all), so the list is probably ALL, Referred By, Referred To, Both - verify the labels and their order."
+    },
+    {
+      "report_id": "refferal_reports.r04",
+      "question": "Truncation NOT resolved: what follows the third STATUSES row? An Exclude Deleted Referrals checkbox and a GROUP BY section may follow, as on the sibling reports; no vendor screenshot shows these criteria."
+    },
+    {
+      "report_id": "refferal_reports.r04",
+      "question": "No vendor description of this report exists. What USERS filters (the user who created the referral?), what the REFERRED TO picker lists (external referral sources?) and what SPECIALTY refers to (specialty of the referred-to source?) are inferred only."
+    },
+    {
+      "report_id": "refferal_reports.r06",
+      "question": "Does \"seen\" in this report mean a posted procedure inside PROCEDURE DATE RANGE (presumed, unverified)?"
+    },
+    {
+      "report_id": "refferal_reports.r07",
+      "question": "Truncation NOT resolved: the GROUP BY section header is visible in our capture, but its options are hidden (the screenshot inventory therefore holds no GROUP BY control for this report) and anything below GROUP BY is unknown. The document guesses from / to office or provider - unverified; no vendor screenshot shows these criteria, so no control is added."
+    },
+    {
+      "report_id": "refferal_reports.r07",
+      "question": "Criteria meanings are inferred only: do the STATUSES radios Completed / Incomplete filter the Tx Status of the internal referral (the vendor's Referral Management grid shows Tx Status with exactly the values Incomplete / Completed), is Exclude Deleted Referrals the utility's Hide Deleted Referrals, and do USERS / SPECIALTY mean the creating user / the specialty of the referred-to provider?"
+    },
+    {
+      "report_id": "refferal_reports.r08",
+      "question": "Meaning of CONTACT STATUSES is unverified (presumably the latest contact-tracking entry made with the phone icon of the Referral Management grid). Likewise expected but not shown: the STATUSES checkboxes filter the Referral Status of the case (their eight labels match the vendor's status vocabulary) and Exclude Deleted Referrals leaves out deleted cases. No vendor description of this report exists."
+    },
+    {
+      "report_id": "",
+      "question": "Newer build: since 2026-11 referral sources can carry office-group associations (before that they were organisation-wide). Are the referral-source pickers of the report screens (REFERRAL OUT TO, REFERRED TO, REFERRED FROM) filtered by office then, and does Referral Source List still disable OFFICE/GROUP? Not stated."
+    },
+    {
+      "report_id": "",
+      "question": "Picker dialogs this document does not describe (it refers to legacy_report_outputs_daily_my.md for the picker dialogs): Referred From Provider, Referred To Provider / Reffered To Provider, Referred To, Referred From, Referral Out To, Users, Procedure Codes."
+    },
+    {
+      "report_id": "",
+      "question": "The Office / Office Group semantics and the UPDATE MY FAVORITES relabel are stated by the document as cross-cutting facts for the Appointment, Recall and Referral criteria screens and are recorded once, on Referral Production List. Confirm that they hold on every report screen of the category (on the management reports the section is titled REFERRED FROM / REFERRED TO OFFICE/GROUP)."
+    },
+    {
+      "report_id": "",
+      "question": "Rights: the vendor lists the security right Reports - Referral Reports Screen in two variants, Full Control and View Only (view only = see the report list and the parameters, cannot generate). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described, so no rule is recorded. Referral cases themselves need the right Utilities - Referral Management Full Control; whether the three Referral Management reports also depend on it is not stated."
+    },
+    {
+      "report_id": "",
+      "question": "Vendor sources the research could not read and that may show the criteria of the three Referral Management reports (GROUP BY options, rows below STATUSES): the release-note articles (sign-in required) and the video-only webinars 23 Referrals, Labs, and Miscellaneous Helpful Features and 58 How to Send Internal & External Referrals."
+    }
+  ]
+}

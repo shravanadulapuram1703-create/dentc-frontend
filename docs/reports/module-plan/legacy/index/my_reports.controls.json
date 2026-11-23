@@ -1,0 +1,838 @@
+{
+ "category": "my_reports",
+ "window_title": "My Reports",
+ "report_list": [
+  "Daily Journal",
+  "Time Clock Report",
+  "Missing Progress Notes",
+  "Appointment Detail by User",
+  "Production Report"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Five screenshots (1.PNG - 5.PNG, 1366 px wide, 586-593 px high), each showing a different report selected: 1 = Daily Journal, 2 = Time Clock Report, 3 = Missing Progress Notes, 4 = Appointment Detail by User, 5 = Production Report. Every listed report therefore has exactly one screenshot; there are no popups, expanded dropdowns, scrolled second views or non-report screens in this category. 4.PNG is cropped about 7 px at the top (title bar partly cut, still legible), 3.PNG and 5.PNG by 1-2 px; no content is lost.\n\nSCREEN: dark title bar with 'My Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right. Below it a blue header bar reading 'SELECT REPORT' over the left panel and 'REPORT CRITERIA' over the right panel, with the grey CLEAR CRITERIA button (refresh icon) at its right end. A small splitter / collapse handle (three vertical dots) sits between the two panels at mid height. A light action bar at the bottom of the criteria panel holds two blue right-aligned buttons: PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon). No footer text and no scrollbars anywhere. 'My Reports' is an entry of the top-level Reports menu (drop_down_options.PNG in the parent folder), which also lists 'My Favorites' and 'Search Report'.\n\nREPORT LIST: exactly 5 radio items in a two-column bordered grid - left column Daily Journal, Time Clock Report, Missing Progress Notes; right column Appointment Detail by User, Production Report (the third cell of the right column is empty). The rest of the left panel is uniform empty dark blue (pixel-verified), so the list is not scrollable or clipped.\n\nRECURRING PATTERNS: every report has PRINT FORMAT (PDF default / Excel) and OFFICE/GROUP (Office default / Office Group, plus an unlabelled read-only box preset to 108 = the OID in the title bar, with a SELECT button). PRINT FORMAT is the right half of the first row for Daily Journal and Time Clock Report (beside REPORT BY / REPORT FORMAT) and a full-width first section for the other three. All Start Date / End Date fields show 11/21/2026 and carry a calendar icon; the screenshot files are dated 2026-11-21, so both ends evidently default to the current date. SELECT buttons carry a building icon for Office and Codes and a person icon for Provider and Operatory; the Provider, Operatory and Codes boxes default to ALL. No report in this category shows a User picker, GROUP BY, SORT BY or Page Break control.\n\nSTATE CHECKS (pixel-verified): enabled editable inputs (the REPORT BY dropdown, the date fields) have fill RGB 241,241,241 and border 206,209,219; the read-only picker boxes, the empty CORRESPONDING PROVIDER box and the Fee Schedule dropdown share fill 220,223,226 and border 209,209,209. The only control with paled text is the 'Group By Office' checkbox of Time Clock Report (label 161,161,161, grey box). The Fee Schedule dropdown of Production Report is recorded as disabled on the strength of its read-only box styling although its text is not paled. Every selected radio and ticked checkbox was confirmed by its blue fill, every unselected one by its empty dark ring / box. A scan of each criteria panel for box borders and for dark or grey ink, and of all blank areas, found no further control or text (no Page Break checkboxes, no right-edge items, nothing below the last section).\n\nFONT CAVEAT: in the bold section-header font the capital G is drawn almost exactly like C at this size, so the pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'APPOINTMENT DATE RANCE' and 'CORRESPONDINC PROVIDER'; they are transcribed as OFFICE/GROUP, DATE RANGE, APPOINTMENT DATE RANGE and CORRESPONDING PROVIDER (the mixed-case labels 'Office Group' and 'General' show a clear G, and the other category inventories read the same headers this way).\n\nCROSS-REFERENCE (from the sibling category inventories, not from these screenshots): 'Daily Journal' and 'Production Report' also exist in Daily Reports with fuller criteria (Provider / User pickers, REPORT FORMAT, GROUP BY, Page Break ...), and 'Time Clock Report' also exists in Management Reports (there with a USER picker and without a PRINT FORMAT section). The My Reports versions are separate screens with no User picker: Daily Journal has a REPORT BY dropdown showing 'User', Production Report has a display-only CORRESPONDING PROVIDER box, and Time Clock Report has PRINT FORMAT but no user filter. 'Missing Progress Notes' and 'Appointment Detail by User' do not appear under these names in the other category inventories written so far.\n\nUNKNOWNS: the values of the two collapsed dropdowns (REPORT BY other than 'User'; Fee Schedule other than 'CIGNA PPO HAMILTON ( 128 )'), the contents of the SELECT picker dialogs (Office, Office Group, Provider, Operatory, Codes), the tooltip of the Fee Schedule info icon, and what enables 'Group By Office' and the Fee Schedule dropdown are not shown in any screenshot.",
+ "report_count": 5,
+ "control_count": 48,
+ "reports": [
+  {
+   "report_id": "my_reports.r01",
+   "name": "Daily Journal",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "1.PNG only (filled radio = Daily Journal), default state: no dropdown expanded, no popup. Layout: the first row is split into two half-width sections (REPORT BY left, PRINT FORMAT right); every other section is full width with its controls at the left. The whole criteria panel is visible: a band of uniform blank space lies between OTHER OPTIONS and the action bar and there is no scrollbar, so nothing is clipped. The REPORT BY list is collapsed, so its values other than 'User' are not visible. There is no Provider or User picker, no REPORT FORMAT and no GROUP BY on this screen. All radio / checkbox states and the absence of any further control (no Page Break, no right-edge items) were confirmed by pixel scan.",
+   "controls": [
+    {
+     "control_id": "my_reports.r01.s01.c01",
+     "section": "REPORT BY",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "User",
+     "enabled": true,
+     "notes": "list collapsed - other values not visible. No row label: the section header REPORT BY is its only caption. Enabled (light fill, single down-chevron at its right end). The section is the LEFT half of the first row, side by side with PRINT FORMAT."
+    },
+    {
+     "control_id": "my_reports.r01.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "RIGHT half of the first row, beside REPORT BY. Both radios on one row."
+    },
+    {
+     "control_id": "my_reports.r01.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section. Both radios on one row, no row label."
+    },
+    {
+     "control_id": "my_reports.r01.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the same value as the OID shown in the title bar (the current office). Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r01.s04.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Transaction Date",
+      "Created Date"
+     ],
+     "default_value": "Transaction Date",
+     "enabled": true,
+     "notes": "Date-basis selector on the first row of the section, above the Start Date / End Date rows (chooses which date the range applies to)."
+    },
+    {
+     "control_id": "my_reports.r01.s04.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Label in a left cell, date box in the next cell with a blue calendar icon inside the box at its right end. Format MM/DD/YYYY; equals End Date and the capture date (the default appears to be the current date)."
+    },
+    {
+     "control_id": "my_reports.r01.s04.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date; same box with a blue calendar icon inside at its right end."
+    },
+    {
+     "control_id": "my_reports.r01.s05.c01",
+     "section": "PATIENT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Full-width section. All three radios on one row, no row label."
+    },
+    {
+     "control_id": "my_reports.r01.s06.c01",
+     "section": "TRANSACTION TYPES",
+     "label": "Services",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "First of three checkboxes on one row; all three are ticked."
+    },
+    {
+     "control_id": "my_reports.r01.s06.c02",
+     "section": "TRANSACTION TYPES",
+     "label": "Payments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Second of three checkboxes on one row."
+    },
+    {
+     "control_id": "my_reports.r01.s06.c03",
+     "section": "TRANSACTION TYPES",
+     "label": "Adjustments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Third of three checkboxes on one row."
+    },
+    {
+     "control_id": "my_reports.r01.s07.c01",
+     "section": "PRINT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Patient ID",
+      "Patient Chart#"
+     ],
+     "default_value": "Patient ID",
+     "enabled": true,
+     "notes": "Both radios on one row, no row label. The second option is written exactly 'Patient Chart#' (no space before #)."
+    },
+    {
+     "control_id": "my_reports.r01.s08.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Show Datewise Distribution",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Only control of the section; black label and normal box border (enabled)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "my_reports.r01.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "My Reports limits a user to their own activity and to one linked provider (vendor article on the Report Access Provider field). Consistent with that, this screen has no Provider or User picker. What each REPORT BY value selects is not vendor-verified (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`My Reports` limits a user to their own activity and to one linked provider"
+    },
+    {
+     "correction_id": "my_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "my_reports.r01.s04.c01",
+     "text": "The Created Date basis folds in the old \"(created date)\" variant of the user journal (Daily Journal by User(created date) – Detail in the pre-2021 My Reports list). The vendor text lists the old variant; that this radio replaces it is implied, not shown.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Date basis `Transaction Date` / `Created Date` | Folds in the old \"(created date)\" variant"
+    },
+    {
+     "correction_id": "my_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "my_reports.r01.s05.c01",
+     "text": "PATIENT TYPE Both / General / Ortho is the ortho-patient flag, not the user-defined patient types (stated for the Daily Journal; this screen carries the same section).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`PATIENT TYPE` `Both / General / Ortho` (Daily Journal) is the ortho-patient flag"
+    }
+   ]
+  },
+  {
+   "report_id": "my_reports.r02",
+   "name": "Time Clock Report",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "2.PNG only (filled radio = Time Clock Report), default state: no dropdown expanded, no popup. Layout: the first row is split into REPORT FORMAT (left) and PRINT FORMAT (right); OFFICE/GROUP, DATE RANGE and OTHER OPTIONS are full width. No user / employee / provider picker is shown on this screen. The only greyed control is the Group By Office checkbox. About 200 px of uniform blank panel separate OTHER OPTIONS from the action bar and there is no scrollbar - nothing clipped.",
+   "controls": [
+    {
+     "control_id": "my_reports.r02.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary",
+      "Employee Total Only"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "LEFT half of the first row, side by side with PRINT FORMAT. All three radios on one row, no row label."
+    },
+    {
+     "control_id": "my_reports.r02.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "RIGHT half of the first row, beside REPORT FORMAT. Both radios on one row."
+    },
+    {
+     "control_id": "my_reports.r02.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section. Both radios on one row, no row label."
+    },
+    {
+     "control_id": "my_reports.r02.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row below the radios; blue SELECT button with a building icon to its right. 108 is the same value as the OID in the title bar. Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r02.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Label in a left cell, date box in the next cell with a blue calendar icon inside the box at its right end. No date-basis radio row in this report (unlike Daily Journal)."
+    },
+    {
+     "control_id": "my_reports.r02.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date; same box with a blue calendar icon inside at its right end."
+    },
+    {
+     "control_id": "my_reports.r02.s05.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Group By Office",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "GREYED OUT / disabled: pale grey label (RGB 161,161,161 instead of black) and a grey box border and fill, unlike every other checkbox of this category; the box is empty (unchecked). Only control of the section. Captured while OFFICE/GROUP = Office with the single office 108; what enables it is not shown (possibly Office Group or a multi-office selection - inference only)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "my_reports.r02.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "The My Reports version has no USER picker - it covers the logged-in user's own hours only; the Management Reports version of the same report has the USER picker. The absence of a user picker in our capture is therefore correct.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "the Management Reports version has a `USER` picker; the My Reports version has none"
+    },
+    {
+     "correction_id": "my_reports.r02.k02",
+     "about": "meaning",
+     "control_id": "my_reports.r02.s01.c01",
+     "text": "Detail = every punch (used to audit gross hours and wages).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Detail` | Every punch; used to audit gross hours and wages"
+    },
+    {
+     "correction_id": "my_reports.r02.k03",
+     "about": "meaning",
+     "control_id": "my_reports.r02.s01.c01",
+     "text": "Weekly overtime is not considered in the Detail format: the Detail output carries a note saying so.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "and a note that weekly overtime is not considered in this format"
+    },
+    {
+     "correction_id": "my_reports.r02.k04",
+     "about": "meaning",
+     "control_id": "my_reports.r02.s01.c01",
+     "text": "Summary = one line per user per day, with overtime computed from the user's time-clock setting (described in the vendor article on the Time Clock report whose criteria screenshot is the Management Reports copy).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Summary` | One line per user per day; overtime computed from the user's setting"
+    },
+    {
+     "correction_id": "my_reports.r02.k05",
+     "about": "meaning",
+     "control_id": "my_reports.r02.s01.c01",
+     "text": "Employee Total Only = one line per employee for the whole range; older vendor text calls this format \"Total\".",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Employee Total Only` (older text: \"Total\") | One line per employee for the range"
+    }
+   ]
+  },
+  {
+   "report_id": "my_reports.r03",
+   "name": "Missing Progress Notes",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "3.PNG only (filled radio = Missing Progress Notes), default state: no dropdown expanded, no popup. Layout: PRINT FORMAT full width; then OFFICE/GROUP (left half) and PROVIDER (right half) side by side, with the office box + SELECT on a row beneath them; APPOINTMENT DATE RANGE and APPOINTMENTS TO INCLUDE full width. There is no OTHER OPTIONS section, no date-basis radio row and no greyed control. A large uniform blank area lies below the last section and there is no scrollbar - nothing clipped.",
+   "controls": [
+    {
+     "control_id": "my_reports.r03.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the criteria panel. Both radios on one row."
+    },
+    {
+     "control_id": "my_reports.r03.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Section header and radio row occupy the LEFT half, side by side with PROVIDER."
+    },
+    {
+     "control_id": "my_reports.r03.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row beneath the OFFICE/GROUP and PROVIDER columns (box at the left, under the Office / Office Group radios); blue SELECT button with a building icon to its right. 108 is the same value as the OID in the title bar. Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r03.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half, beside OFFICE/GROUP. Row label 'Provider' in a label cell, then a read-only grey box showing ALL, then a blue SELECT button with a person icon. Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r03.s04.c01",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Label in a left cell, date box in the next cell with a blue calendar icon inside the box at its right end. No date-basis radio row in this report."
+    },
+    {
+     "control_id": "my_reports.r03.s04.c02",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date; same box with a blue calendar icon inside at its right end."
+    },
+    {
+     "control_id": "my_reports.r03.s05.c01",
+     "section": "APPOINTMENTS TO INCLUDE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Only with Missing Progress Notes",
+      "ALL"
+     ],
+     "default_value": "Only with Missing Progress Notes",
+     "enabled": true,
+     "notes": "Full-width section. Both radios on one row, no row label. The second option is written in capitals: ALL."
+    }
+   ]
+  },
+  {
+   "report_id": "my_reports.r04",
+   "name": "Appointment Detail by User",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "4.PNG only (filled radio = Appointment Detail by User), default state: no dropdown expanded, no popup. Layout: PRINT FORMAT full width; OFFICE/GROUP (left half) and PROVIDER (right half) side by side with the office box + SELECT on the row beneath; APPOINTMENT DATE RANGE, OPERATORY and OTHER OPTIONS full width. Despite the report name there is no User picker on the screen - the only people / resource filters are Provider and Operatory. No greyed control. A uniform blank area lies between OTHER OPTIONS and the action bar and there is no scrollbar - nothing clipped. The screenshot is cropped by about 7 px at the very top (title bar partly cut, text still legible); the criteria panel itself is complete.",
+   "controls": [
+    {
+     "control_id": "my_reports.r04.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the criteria panel. Both radios on one row."
+    },
+    {
+     "control_id": "my_reports.r04.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Section header and radio row occupy the LEFT half, side by side with PROVIDER."
+    },
+    {
+     "control_id": "my_reports.r04.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row beneath the OFFICE/GROUP and PROVIDER columns (box at the left, under the radios); blue SELECT button with a building icon to its right. 108 is the same value as the OID in the title bar. Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r04.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half, beside OFFICE/GROUP. Row label 'Provider' in a label cell, then a read-only grey box showing ALL, then a blue SELECT button with a person icon. Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r04.s04.c01",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Appointment Date",
+      "Created On Date"
+     ],
+     "default_value": "Appointment Date",
+     "enabled": true,
+     "notes": "Date-basis selector on the first row of the section, above the Start Date / End Date rows (chooses which date the range applies to)."
+    },
+    {
+     "control_id": "my_reports.r04.s04.c02",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Label in a left cell, date box in the next cell with a blue calendar icon inside the box at its right end."
+    },
+    {
+     "control_id": "my_reports.r04.s04.c03",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date; same box with a blue calendar icon inside at its right end."
+    },
+    {
+     "control_id": "my_reports.r04.s05.c01",
+     "section": "OPERATORY",
+     "label": "Operatory",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section. Row label 'Operatory' in a label cell, then a read-only grey box showing ALL, then a blue SELECT button with a person icon (the same icon as the Provider SELECT button). Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r04.s06.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Cancelled Appointments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "On its own row (first of two). Spelled 'Cancelled' with a double l."
+    },
+    {
+     "control_id": "my_reports.r04.s06.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Patient Phone Number",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "On its own row (second of two)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "my_reports.r04.k01",
+     "about": "meaning",
+     "control_id": "my_reports.r04.s04.c01",
+     "text": "Appointment Date = appointments that take place on those dates; Created On Date = appointments that were created on those dates.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Date basis `Appointment Date` / `Created On Date` | Appointments on those dates vs appointments created on those dates"
+    },
+    {
+     "correction_id": "my_reports.r04.k02",
+     "about": "meaning",
+     "control_id": "my_reports.r04.s06.c01",
+     "text": "Include Cancelled Appointments adds the cancelled appointments; missed ones are always included. It is ticked by default on this screen but unticked by default on the parent Appointment Detail report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Cancelled Appointments` (ticked by default here; unticked in the parent) | Adds cancelled appointments; missed ones are always included"
+    },
+    {
+     "correction_id": "my_reports.r04.k03",
+     "about": "meaning",
+     "control_id": "my_reports.r04.s06.c02",
+     "text": "Include Patient Phone Number adds the patient phone numbers (for call-backs); it is ticked by default on this screen.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Patient Phone Number` (ticked by default here) | Adds phone numbers for call-backs"
+    }
+   ]
+  },
+  {
+   "report_id": "my_reports.r05",
+   "name": "Production Report",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "5.PNG only (filled radio = Production Report), default state: no dropdown expanded, no popup. Layout: PRINT FORMAT full width; then OFFICE/GROUP (left) | CORRESPONDING PROVIDER (right) with the office box + SELECT on the row beneath; DATE RANGE full width; PRODUCTION BY (left) | CODES (right); OTHER OPTIONS (left) | FEE SCHEDULE TO COMPARE (right). Two non-editable items in this default state: the empty CORRESPONDING PROVIDER box and the Fee Schedule dropdown (both with the read-only grey box styling) - see their notes. There is no REPORT FORMAT, GROUP BY or Page Break on this screen. A uniform blank area lies below the last row and there is no scrollbar - nothing clipped.",
+   "controls": [
+    {
+     "control_id": "my_reports.r05.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the criteria panel. Both radios on one row."
+    },
+    {
+     "control_id": "my_reports.r05.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Section header and radio row occupy the LEFT half, side by side with CORRESPONDING PROVIDER."
+    },
+    {
+     "control_id": "my_reports.r05.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row beneath the OFFICE/GROUP and CORRESPONDING PROVIDER columns (box at the left, under the radios); blue SELECT button with a building icon to its right. 108 is the same value as the OID in the title bar. Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r05.s03.c01",
+     "section": "CORRESPONDING PROVIDER",
+     "label": "",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": false,
+     "notes": "RIGHT half, beside OFFICE/GROUP. A single EMPTY box with exactly the read-only grey fill and border of the picker boxes, with NO row label and NO SELECT button or icon beside it (pixel check: nothing inside the box, nothing to its right) - a display-only field. Presumably filled by the system with the provider linked to the logged-in user; that is an inference from the header text, nothing is shown."
+    },
+    {
+     "control_id": "my_reports.r05.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. Label in a left cell, date box in the next cell with a blue calendar icon inside the box at its right end. No date-basis radio row in this report."
+    },
+    {
+     "control_id": "my_reports.r05.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date; same box with a blue calendar icon inside at its right end."
+    },
+    {
+     "control_id": "my_reports.r05.s05.c01",
+     "section": "PRODUCTION BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Code",
+      "Provider",
+      "Category"
+     ],
+     "default_value": "Code",
+     "enabled": true,
+     "notes": "LEFT half, side by side with CODES. All three radios on one row, no row label."
+    },
+    {
+     "control_id": "my_reports.r05.s06.c01",
+     "section": "CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half, beside PRODUCTION BY. No row label. Read-only grey box showing ALL, followed by a blue SELECT button with a building icon (the same icon as the office SELECT button). Picker dialog not shown."
+    },
+    {
+     "control_id": "my_reports.r05.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include UCR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "LEFT half, side by side with FEE SCHEDULE TO COMPARE. Only control of the section; black label and normal box border (enabled)."
+    },
+    {
+     "control_id": "my_reports.r05.s08.c01",
+     "section": "FEE SCHEDULE TO COMPARE",
+     "label": "Fee Schedule",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "CIGNA PPO HAMILTON ( 128 )",
+     "enabled": false,
+     "notes": "list collapsed - other values not visible. RIGHT half, beside OTHER OPTIONS. Row label 'Fee Schedule' in a label cell (followed by a small info icon, recorded as the next control), then the dropdown with a single down-chevron at its right end. Value exactly 'CIGNA PPO HAMILTON ( 128 )' with spaces inside the parentheses. Appears DISABLED in this default state: its fill and border are pixel-identical to the read-only picker boxes (fill RGB 220,223,226 / border 209,209,209) and differ from the enabled REPORT BY dropdown and date fields (fill 241,241,241 / border 206,209,219); the value text and chevron are not paled, so the disabled reading rests on the box styling. It probably unlocks when Include UCR is ticked - inference, the dependency is not shown (the Production Report of the Daily Reports category shows the same dropdown greyed while Include UCR is unticked)."
+    },
+    {
+     "control_id": "my_reports.r05.s08.c02",
+     "section": "FEE SCHEDULE TO COMPARE",
+     "label": "",
+     "type": "other",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Info icon: small blue circle with a white 'i' immediately to the right of the row label 'Fee Schedule' (presumably a tooltip); its tooltip text is not visible in the screenshot."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "my_reports.r05.d01",
+     "when": "CORRESPONDING PROVIDER is empty (the logged-in user has no Report Access Provider)",
+     "effect": "running the report (PRINT / PREVIEW) fails with the Corresponding Provider error",
+     "controls": [
+      "my_reports.r05.s03.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "Empty = the user has no link and the run fails with the Corresponding Provider error"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "my_reports.r05.k01",
+     "about": "meaning",
+     "control_id": "my_reports.r05.s03.c01",
+     "text": "CORRESPONDING PROVIDER is a display-only field showing the provider linked to the user through the user field Report Access Provider; the output is limited to that provider.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Shows the linked `Report Access Provider`; output is limited to that provider."
+    },
+    {
+     "correction_id": "my_reports.r05.k02",
+     "about": "options",
+     "control_id": "my_reports.r05.s05.c01",
+     "text": "PRODUCTION BY offers Code / Provider / Category only on this screen - there is no Carrier option; the report runs for the linked provider.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Production by Codes`, `Production by Provider`, or by category, for the linked provider (no `Carrier`)"
+    },
+    {
+     "correction_id": "my_reports.r05.k03",
+     "about": "meaning",
+     "control_id": "my_reports.r05.s07.c01",
+     "text": "Include UCR together with the Fee Schedule dropdown adds the compare-fee column, as on the Daily Reports Production Report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include UCR` + `Fee Schedule` (info icon) | Compare-fee column as in A3"
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "my_reports.r01",
+   "question": "Values of the REPORT BY dropdown other than User are not documented, and what User selects is unverified (presumably the lines entered by the logged-in user). The other value is presumably Provider (lines of the linked provider) - unverified; the pre-2021 My Reports list had separate user-specific and provider-specific Daily Journal reports."
+  },
+  {
+   "report_id": "my_reports.r01",
+   "question": "Is Show Datewise Distribution the same per-day recap as Show Datewise Summary on the Daily Reports Daily Journal? The document equates the two without a My Reports source."
+  },
+  {
+   "report_id": "my_reports.r01",
+   "question": "PRINT (Patient ID / Patient Chart#): presumably chooses which identifier fills the first column of the journal (Pat ID/ Chart #). The document infers this from the column header of a Daily Reports Daily Journal sample and marks the assumption that this report prints that same Detail layout as unverified; there is no vendor statement about the option."
+  },
+  {
+   "report_id": "my_reports.r01",
+   "question": "Exact PATIENT TYPE rule (General = non-ortho patients only? Ortho = ortho-flagged patients only?) is unverified."
+  },
+  {
+   "report_id": "my_reports.r02",
+   "question": "When is Group By Office enabled? Presumably with Office Group (unverified). The vendor also states that the office of a punch is not tracked or reported, which conflicts with an office filter and Group By Office."
+  },
+  {
+   "report_id": "my_reports.r03",
+   "question": "No vendor description of this report was found. How does the My Reports own-data restriction apply when the screen shows a Provider picker defaulting to ALL? Does ALL list every appointment with its note status (unverified)?"
+  },
+  {
+   "report_id": "my_reports.r04",
+   "question": "How is \"by User\" applied when the screen has no User picker - presumably the User grouping of the parent Appointment Detail report limited to the logged-in user as creator of the appointment (unverified)? How does the restriction interact with the Provider picker?"
+  },
+  {
+   "report_id": "my_reports.r04",
+   "question": "A vendor screenshot of the parent report (Appointment Reports > Appointment Detail) shows GROUP BY Provider / User, PAGE BREAK BY None / Date / Provider / User, APPOINTMENT TYPE Regular / Archived, Only AppointNow Appointments, Include Patient Home Office and CANCELLATION REASON. The document calls them parent-only, on the strength of our capture alone - are they absent from the My Reports copy in every state?"
+  },
+  {
+   "report_id": "my_reports.r04",
+   "question": "Which provider does the Provider picker filter by? The output of the parent Appointment Detail report groups by the appointment provider and prints the preferred provider in a separate column; the document gives no vendor statement for the picker (nor for Operatory)."
+  },
+  {
+   "report_id": "my_reports.r05",
+   "question": "Does ticking Include UCR unlock the Fee Schedule dropdown here as it does on the Daily Reports Production Report (not stated for this copy)? The tooltip of the info icon beside Fee Schedule and the value list of the dropdown are not documented. The greyed default shown in our capture is presumably tenant data: the document records that the greyed default differs per tenant only for the Fee Schedule To Compare dropdown of the Daily Reports Production Report, not for this copy."
+  },
+  {
+   "report_id": "my_reports.r05",
+   "question": "Do the criteria change with PRODUCTION BY = Provider / Category (for example CODES being replaced) as on the Daily Reports copy? Not seen for the My Reports screen."
+  },
+  {
+   "report_id": "",
+   "question": "The picker dialogs behind the Provider and Operatory SELECT buttons are not described; only SEARCH OFFICES and SEARCH CODE are."
+  },
+  {
+   "report_id": "",
+   "question": "The Office / Office Group semantics (Office = offices the user can access, default the logged-in OID; Office Group = groups from Setup > Office Groups, default ALL) and the UPDATE MY FAVORITES relabel are documented from Daily Reports screens and recorded there. Do they apply unchanged to the five My Reports screens (presumably yes)?"
+  },
+  {
+   "report_id": "",
+   "question": "Older build: the pre-2021 My Reports list had eight reports - user-specific Daily Journal by User – Detail, Daily Journal by User(created date) – Detail, Appointment Detail by User, Time Clock Report; provider-specific Daily Journal By Provider Detail, Production By Codes, Production By Provider, Production By Category. The current list has five; the old variants are not added as separate reports."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_daily_my.md",
+ "screenshot_control_count": 48,
+ "vendor_doc_control_count": 0
+}

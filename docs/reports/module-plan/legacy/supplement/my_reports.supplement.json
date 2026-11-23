@@ -1,0 +1,222 @@
+{
+  "category": "my_reports",
+  "source_document": "research/legacy_report_outputs_daily_my.md",
+  "reports": [
+    {
+      "report_id": "my_reports.r01",
+      "legacy_name": "Daily Journal",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "My Reports limits a user to their own activity and to one linked provider (vendor article on the Report Access Provider field). Consistent with that, this screen has no Provider or User picker. What each REPORT BY value selects is not vendor-verified (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`My Reports` limits a user to their own activity and to one linked provider"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r01.s04.c01",
+          "text": "The Created Date basis folds in the old \"(created date)\" variant of the user journal (Daily Journal by User(created date) – Detail in the pre-2021 My Reports list). The vendor text lists the old variant; that this radio replaces it is implied, not shown.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Date basis `Transaction Date` / `Created Date` | Folds in the old \"(created date)\" variant"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r01.s05.c01",
+          "text": "PATIENT TYPE Both / General / Ortho is the ortho-patient flag, not the user-defined patient types (stated for the Daily Journal; this screen carries the same section).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PATIENT TYPE` `Both / General / Ortho` (Daily Journal) is the ortho-patient flag"
+        }
+      ]
+    },
+    {
+      "report_id": "my_reports.r02",
+      "legacy_name": "Time Clock Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The My Reports version has no USER picker - it covers the logged-in user's own hours only; the Management Reports version of the same report has the USER picker. The absence of a user picker in our capture is therefore correct.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "the Management Reports version has a `USER` picker; the My Reports version has none"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r02.s01.c01",
+          "text": "Detail = every punch (used to audit gross hours and wages).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Detail` | Every punch; used to audit gross hours and wages"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r02.s01.c01",
+          "text": "Weekly overtime is not considered in the Detail format: the Detail output carries a note saying so.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "and a note that weekly overtime is not considered in this format"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r02.s01.c01",
+          "text": "Summary = one line per user per day, with overtime computed from the user's time-clock setting (described in the vendor article on the Time Clock report whose criteria screenshot is the Management Reports copy).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Summary` | One line per user per day; overtime computed from the user's setting"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r02.s01.c01",
+          "text": "Employee Total Only = one line per employee for the whole range; older vendor text calls this format \"Total\".",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Employee Total Only` (older text: \"Total\") | One line per employee for the range"
+        }
+      ]
+    },
+    {
+      "report_id": "my_reports.r04",
+      "legacy_name": "Appointment Detail by User",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r04.s04.c01",
+          "text": "Appointment Date = appointments that take place on those dates; Created On Date = appointments that were created on those dates.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Date basis `Appointment Date` / `Created On Date` | Appointments on those dates vs appointments created on those dates"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r04.s06.c01",
+          "text": "Include Cancelled Appointments adds the cancelled appointments; missed ones are always included. It is ticked by default on this screen but unticked by default on the parent Appointment Detail report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Cancelled Appointments` (ticked by default here; unticked in the parent) | Adds cancelled appointments; missed ones are always included"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r04.s06.c02",
+          "text": "Include Patient Phone Number adds the patient phone numbers (for call-backs); it is ticked by default on this screen.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Patient Phone Number` (ticked by default here) | Adds phone numbers for call-backs"
+        }
+      ]
+    },
+    {
+      "report_id": "my_reports.r05",
+      "legacy_name": "Production Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "CORRESPONDING PROVIDER is empty (the logged-in user has no Report Access Provider)",
+          "effect": "running the report (PRINT / PREVIEW) fails with the Corresponding Provider error",
+          "controls": [
+            "my_reports.r05.s03.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "Empty = the user has no link and the run fails with the Corresponding Provider error"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r05.s03.c01",
+          "text": "CORRESPONDING PROVIDER is a display-only field showing the provider linked to the user through the user field Report Access Provider; the output is limited to that provider.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Shows the linked `Report Access Provider`; output is limited to that provider."
+        },
+        {
+          "about": "options",
+          "control_id": "my_reports.r05.s05.c01",
+          "text": "PRODUCTION BY offers Code / Provider / Category only on this screen - there is no Carrier option; the report runs for the linked provider.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Production by Codes`, `Production by Provider`, or by category, for the linked provider (no `Carrier`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "my_reports.r05.s07.c01",
+          "text": "Include UCR together with the Fee Schedule dropdown adds the compare-fee column, as on the Daily Reports Production Report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include UCR` + `Fee Schedule` (info icon) | Compare-fee column as in A3"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "my_reports.r01",
+      "question": "Values of the REPORT BY dropdown other than User are not documented, and what User selects is unverified (presumably the lines entered by the logged-in user). The other value is presumably Provider (lines of the linked provider) - unverified; the pre-2021 My Reports list had separate user-specific and provider-specific Daily Journal reports."
+    },
+    {
+      "report_id": "my_reports.r01",
+      "question": "Is Show Datewise Distribution the same per-day recap as Show Datewise Summary on the Daily Reports Daily Journal? The document equates the two without a My Reports source."
+    },
+    {
+      "report_id": "my_reports.r01",
+      "question": "PRINT (Patient ID / Patient Chart#): presumably chooses which identifier fills the first column of the journal (Pat ID/ Chart #). The document infers this from the column header of a Daily Reports Daily Journal sample and marks the assumption that this report prints that same Detail layout as unverified; there is no vendor statement about the option."
+    },
+    {
+      "report_id": "my_reports.r01",
+      "question": "Exact PATIENT TYPE rule (General = non-ortho patients only? Ortho = ortho-flagged patients only?) is unverified."
+    },
+    {
+      "report_id": "my_reports.r02",
+      "question": "When is Group By Office enabled? Presumably with Office Group (unverified). The vendor also states that the office of a punch is not tracked or reported, which conflicts with an office filter and Group By Office."
+    },
+    {
+      "report_id": "my_reports.r03",
+      "question": "No vendor description of this report was found. How does the My Reports own-data restriction apply when the screen shows a Provider picker defaulting to ALL? Does ALL list every appointment with its note status (unverified)?"
+    },
+    {
+      "report_id": "my_reports.r04",
+      "question": "How is \"by User\" applied when the screen has no User picker - presumably the User grouping of the parent Appointment Detail report limited to the logged-in user as creator of the appointment (unverified)? How does the restriction interact with the Provider picker?"
+    },
+    {
+      "report_id": "my_reports.r04",
+      "question": "A vendor screenshot of the parent report (Appointment Reports > Appointment Detail) shows GROUP BY Provider / User, PAGE BREAK BY None / Date / Provider / User, APPOINTMENT TYPE Regular / Archived, Only AppointNow Appointments, Include Patient Home Office and CANCELLATION REASON. The document calls them parent-only, on the strength of our capture alone - are they absent from the My Reports copy in every state?"
+    },
+    {
+      "report_id": "my_reports.r04",
+      "question": "Which provider does the Provider picker filter by? The output of the parent Appointment Detail report groups by the appointment provider and prints the preferred provider in a separate column; the document gives no vendor statement for the picker (nor for Operatory)."
+    },
+    {
+      "report_id": "my_reports.r05",
+      "question": "Does ticking Include UCR unlock the Fee Schedule dropdown here as it does on the Daily Reports Production Report (not stated for this copy)? The tooltip of the info icon beside Fee Schedule and the value list of the dropdown are not documented. The greyed default shown in our capture is presumably tenant data: the document records that the greyed default differs per tenant only for the Fee Schedule To Compare dropdown of the Daily Reports Production Report, not for this copy."
+    },
+    {
+      "report_id": "my_reports.r05",
+      "question": "Do the criteria change with PRODUCTION BY = Provider / Category (for example CODES being replaced) as on the Daily Reports copy? Not seen for the My Reports screen."
+    },
+    {
+      "report_id": "",
+      "question": "The picker dialogs behind the Provider and Operatory SELECT buttons are not described; only SEARCH OFFICES and SEARCH CODE are."
+    },
+    {
+      "report_id": "",
+      "question": "The Office / Office Group semantics (Office = offices the user can access, default the logged-in OID; Office Group = groups from Setup > Office Groups, default ALL) and the UPDATE MY FAVORITES relabel are documented from Daily Reports screens and recorded there. Do they apply unchanged to the five My Reports screens (presumably yes)?"
+    },
+    {
+      "report_id": "",
+      "question": "Older build: the pre-2021 My Reports list had eight reports - user-specific Daily Journal by User – Detail, Daily Journal by User(created date) – Detail, Appointment Detail by User, Time Clock Report; provider-specific Daily Journal By Provider Detail, Production By Codes, Production By Provider, Production By Category. The current list has five; the old variants are not added as separate reports."
+    }
+  ]
+}

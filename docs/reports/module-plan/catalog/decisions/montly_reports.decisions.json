@@ -1,0 +1,314 @@
+{
+  "category": "montly_reports",
+  "reports": {
+    "montly_reports.r01": {
+      "report_key": "monthly.executive_summary",
+      "phase": "P2"
+    },
+    "montly_reports.r02": {
+      "report_key": "monthly.executive_day_sheet",
+      "phase": "P2"
+    },
+    "montly_reports.r03": {
+      "report_key": "monthly.aging_report_by_home_office",
+      "phase": "P2",
+      "dynamic_rules": {
+        "montly_reports.r03.d01": "aging_buckets option over_120 has visible_when output_format != xlsx and option over_120_plus has visible_when output_format == xlsx (shared rule of 04). output_format is declared role: query on this report, so switching PDF <-> Excel re-validates and re-runs. When output_format changes the form carries the ticked state of the shown 120 box to the other one (over_120 <-> over_120_plus), so the default run stays all-buckets-ticked in both formats; a hidden member is never sent. With over_120_plus in the list the run adds the extended bucket columns of set legacy_extended (bucket_over_120 = 120-149, bucket_over_150, bucket_over_180, bucket_over_270, bucket_over_365) (with Est. Ins / Est. Pat triples) to the xlsx and screen output and the account filter tests a balance aged 120+ days.",
+        "montly_reports.r03.d02": "account_balance_over keeps one value key; its label is 'Patient Balance Over' when aging_by == patient_ar and 'Account Balance Over' otherwise (label_when, shared rule of 04). The predicate follows aging_by: patient_ar compares the account's open_patient total, account_ar the account's total open_amount (insurance + patient). The criteria echo prints the label that was shown."
+      }
+    },
+    "montly_reports.r04": {
+      "report_key": "monthly.aging_report",
+      "phase": "P2",
+      "dynamic_rules": {
+        "montly_reports.r04.d01": "Same as Aging Report by Home Office (inferred for this report from the pixel-identical panel): aging_buckets option over_120 visible_when output_format != xlsx, option over_120_plus visible_when output_format == xlsx; output_format is role: query here; the form carries the ticked state between the two members on a format change; over_120_plus switches to bucket set legacy_extended (bucket_over_120 = 120-149, bucket_over_150 / _180 / _270 / _365) and filters on a balance aged 120+ days. Confirm on the live tool that Over 120+ appears on this report.",
+        "montly_reports.r04.d02": "account_balance_over is labelled 'Patient Balance Over' when aging_by == patient_ar, else 'Account Balance Over' (label_when, shared rule of 04); the predicate compares open_patient (patient_ar) or the open_amount total (account_ar) of the account within each transaction office (unit account_office)."
+      }
+    },
+    "montly_reports.r05": {
+      "report_key": "monthly.income_allocation",
+      "phase": "P2"
+    },
+    "montly_reports.r06": {
+      "report_key": "monthly.allocation_detail",
+      "phase": "P2"
+    },
+    "montly_reports.r07": {
+      "report_key": "monthly.unallocated_payment_adjustments",
+      "phase": "P2"
+    },
+    "montly_reports.r08": {
+      "report_key": "monthly.daily_journal_summary_by_allocation",
+      "phase": "P2"
+    },
+    "montly_reports.r09": {
+      "report_key": "monthly.waterfall_report",
+      "phase": "P2"
+    }
+  },
+  "controls": {
+    "montly_reports.r01.s01.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Executive Summary: one KPI block per resolved office (fixed outer group level office, always applied, also for a single office); figures are the activity within that office - production, visits and procedures by office of service (rpt_charges.office_id / rpt_visits.office_id), payments and adjustments by transaction office (rpt_ledger_entries.office_id), appointments by appointment office, A/R block per office with allocation unit account_office. Exception (vendor documentation): the new-patient counts use the patient's home office (rpt_patient_dim.home_office_id). The vendor-recommended run selects all offices; whether a consolidated all-offices block is appended is unverified - check on the live tool."
+    },
+    "montly_reports.r01.s02.c01": {
+      "notes": "Limits every figure to the selected providers; ALL echoed as 'Providers : ALL'. Provider column per figure (no single attribution): production, procedures and non-visit transactions = treating provider rpt_charges.provider_id; patients seen / patient visits = rpt_provider_visits.provider_id; missed / cancelled appointments and chair hours = rpt_appointment_facts.provider_id; collections and collection adjustments = provider on the ledger leg rpt_ledger_entries.provider_id (credited provider, not the allocation provider). The per-figure binding is inferred: the vendor documents only that the picker limits the figures - confirm on the live tool with a two-provider office. Declared parity exceptions to PD-7: collections by the ledger-leg provider (enhancement collections_provider_attribution = allocation_provider offers the PD-7 basis) and hygienist credit = treating provider. Show AR block: filtered on rpt_ar_open_items.provider_id (inferred). New-patient lines and the Referrals block are not provider-limited (inferred)."
+    },
+    "montly_reports.r01.s03.c01": {
+      "notes": "Primary date range, fixed date_basis transaction_date (04 7.2 row 26, documented: production uses the posting date). Charges carry transaction_date = service date until DATA-13. The MTD and YTD blocks derive from date_to only (MTD = first of that month through date_to, YTD = January 1 through date_to). New Patients uses the patient created date (unreliable for migrated patients: load timestamp), New Patients by First Visit Date uses the first visit date. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r01.s03.c02": {
+      "notes": "Inclusive end of the transaction-date range; also the as-of date of the Show AR block and the end of the MTD / YTD windows. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r01.s04.c01": {
+      "notes": "Executive Summary: adds the block 'A/R as of : <date_to>' (Current / Over30 / Over60 / Over90 / Over120 / Total A/R, then Estimated Insurance and Estimated Patient) per office, computed from rpt_ar_open_items(:tenant_id, :date_to, NULL, 'account_office') and the footer flag '* Show AR.'. role: query (the block is computed only when ticked; escalates to background with more than one office or a tenant-wide scope). Legacy bucket set; buckets carry open debits, credits are netted into Total A/R only (legacy placement of credits unverified). The block is as of date_to for any range; the vendor says it matches the Aging Report only for a single-day run - whether the legacy as-of differs on multi-day runs is to be confirmed on the live tool. Enabled on this report."
+    },
+    "montly_reports.r01.s05.c01": {
+      "notes": "None = office totals; Provider = the KPI block repeated under a provider header inside each office (layout inferred, third-party source). Provider-grouped visit counts read rpt_provider_visits and are not additive across providers (a patient-day seen by a dentist and a hygienist counts under both); the office total still comes from rpt_visits."
+    },
+    "montly_reports.r01.s05.c02": {
+      "notes": "Page Break checkbox beside GROUP BY: ticked sets page_break_by = group (each provider block starts a new PDF page; layout role, the snapshot is reused). Greyed while GROUP BY = None; Provider is the only other value, so enabled_when group_by == provider (inferred from the criteria screen). Member checkbox: default false = unticked, so page_break_by = none (the parity default and the Shared-rules value 'none' are the same state)."
+    },
+    "montly_reports.r02.s02.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Executive Day Sheet: one section per office by transaction office (rpt_ledger_entries.office_id, PD-6 day sheet); every configured transaction code of the office is printed, also at 0.00."
+    },
+    "montly_reports.r02.s03.c01": {
+      "notes": "Primary date range, fixed date_basis transaction_date (04 7.2 row 27, inferred from the day-sheet family, PD-8): rpt_ledger_entries.transaction_date. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r02.s03.c02": {
+      "notes": "Inclusive end of the transaction-date range. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r03.s02.c01": {
+      "notes": "PRINT / PREVIEW always previews on screen first; enhanced with csv. On this report output_format has role: query (04 section 8) because the AGING bucket member over_120_plus depends on it (rule d01) and changes the bucket columns. Excel is a flat typed sheet: first column Office, then per bucket the triple <bucket>, <bucket> Est. Ins, <bucket> Est. Pat."
+    },
+    "montly_reports.r03.s03.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Aging Report by Home Office: the selected offices are HOME offices - the report lists the accounts whose rpt_account_dim.home_office_id is selected and ages ALL their transactions wherever recorded (rpt_ar_open_items unit account, scope.office_attribution = home office). Not the transaction office of the shared default; an account appears once, under its home office."
+    },
+    "montly_reports.r03.s04.c03": {
+      "notes": "Provider picker, enabled with GROUP BY PROVIDER. Filters the provider column chosen by provider_basis: preferred_provider = rpt_patient_dim.preferred_provider_id of the patient on the open item (fallback rpt_patient_activity.last_visit_provider_id; not migrated, so migrated patients fall under the fallback), transaction_provider = rpt_ar_open_items.provider_id of the open item. ALL = no restriction. Whether a provider filter drops whole accounts or only the items of other providers is not documented - confirm on the live tool."
+    },
+    "montly_reports.r03.s05.c01": {
+      "notes": "Report date with role as_of: balances at the end of that office-local day; ageing starts when the procedure is completed. A past date is recomputed from today's rows until day close and A/R snapshots exist (DATA-29, DATA-30). Default today in the office time zone (relative token)."
+    },
+    "montly_reports.r03.s07.c01": {
+      "notes": "Start of the alphabetical range on the responsible-party sort name 'Last, First' of rpt_account_dim (guarantor_last_name, guarantor_first_name), with the prefix rule of 04: a bound without a comma compares the last name only, which is the vendor-documented legacy meaning (range on the responsible party LAST name). AAAAA / ZZZZZ are open bounds. Needs data class phi_identified."
+    },
+    "montly_reports.r03.s08.c01": {
+      "notes": "Exclude filter on rpt_account_dim.resp_party_type: None = exclude nothing; accounts of a selected type are dropped, accounts without a type are kept; echoed in the footer as 'Ex Resp Party Type'. Needs DATA-53 (the type exists only on responsible_parties today, self-guarantor accounts have none). Dialog content was never captured - confirm on the live tool."
+    },
+    "montly_reports.r03.s10.c07": {
+      "notes": "false = accounts whose total balance is negative are left out (legacy default: the grand total is then higher than the real A/R); true = they are listed and counted. Ignored while only_credit_balances is true."
+    },
+    "montly_reports.r03.s11.c03": {
+      "notes": "role: query (the builder adds the column and its dataset read; the row population is unchanged, it does not filter): prints the account balance status (code + description) on the account block. Needs DATA-35 (accounts.balance_status_code, definitions group balance_status); until then the column is empty and the report prints an availability warning."
+    },
+    "montly_reports.r03.s11.c04": {
+      "notes": "role: query (the builder adds the columns and the read of rpt_payment_plan_contracts; the row population is unchanged, it does not filter): Reg Cont. Bal. / Ort Cont. Bal. = sum of pat_amount_remaining of the account members' active (is_active) regular / ortho contracts of rpt_payment_plan_contracts (DATA-37); the ortho insurance remainder ins_amount_remaining is not added (inferred). Column names inferred from the Walkout Report - confirm both on the live tool."
+    },
+    "montly_reports.r03.s12.c01": {
+      "notes": "Vendor screenshots confirm both labels (Resp. Party Last name / Resp. Party ID; the [?] of the inventory is kept only because option keys must match the index) and that SORT BY is the last section. responsible_party_last_name = guarantor last name, first name, account_id; responsible_party_id = the legacy responsible-party id (rpt_account_dim.legacy_key, else account_no). Rows are sorted inside each office (and provider when grouped)."
+    },
+    "montly_reports.r03.x01": {
+      "status": "replicated",
+      "param": "aging_buckets.over_120_plus",
+      "param_type": "enum_multi",
+      "option_map": {},
+      "default": true,
+      "default_differs_reason": "",
+      "enabled_when": "",
+      "notes": "Legacy default undocumented; default true inferred (it replaces the Over 120 box, which is ticked by default, and the form carries the over_120 state across the format switch, so a direct xlsx run from a saved view or URL also starts ticked). Shared vendor-doc parameter of 04: member over_120_plus of aging_buckets, shown only when output_format == xlsx, in place of over_120 (rule d01). With it the run uses bucket set legacy_extended: bucket_over_120 = 120-149, then bucket_over_150 / bucket_over_180 / bucket_over_270 / bucket_over_365 with ins_* / pat_* twins, summing to the 120+ amount; as an account filter it tests a balance aged 120+ days. Info-icon tooltip text not documented - read default and tooltip on the live tool with PRINT FORMAT = Excel."
+    },
+    "montly_reports.r04.s02.c01": {
+      "notes": "PRINT / PREVIEW always previews on screen first; enhanced with csv. On this report output_format has role: query (04 section 8) because over_120_plus depends on it (rule d01, inferred for this report). Excel is a flat typed sheet: Office, then per bucket the triple <bucket>, <bucket> Est. Ins, <bucket> Est. Pat."
+    },
+    "montly_reports.r04.s03.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Aging Report: the selected offices are TRANSACTION offices - only the legs recorded in each selected office are allocated and aged against each other (rpt_ar_open_items unit account_office, scope.office_attribution = transaction office). An account is listed under every selected office where its office balance is non-zero, so an account with a 0.00 ledger balance can show a debit at one office and a credit at another (vendor example)."
+    },
+    "montly_reports.r04.s04.c03": {
+      "notes": "Provider picker, enabled with GROUP BY PROVIDER. Filters the provider column chosen by provider_basis: preferred_provider = rpt_patient_dim.preferred_provider_id (fallback rpt_patient_activity.last_visit_provider_id), transaction_provider = rpt_ar_open_items.provider_id. ALL = no restriction. Account-versus-item effect of the filter not documented - confirm on the live tool."
+    },
+    "montly_reports.r04.s05.c01": {
+      "notes": "Report date with role as_of: balances per account and office at the end of that office-local day; ageing starts when the procedure is completed. A past date is recomputed from today's rows until DATA-29 / DATA-30. Default today in the office time zone (relative token)."
+    },
+    "montly_reports.r04.s07.c01": {
+      "notes": "Start of the alphabetical range on the responsible-party sort name 'Last, First' (rpt_account_dim), prefix rule of 04: a bound without a comma compares the last name only (vendor-documented meaning). AAAAA / ZZZZZ are open bounds. Needs data class phi_identified."
+    },
+    "montly_reports.r04.s08.c01": {
+      "notes": "Exclude filter on rpt_account_dim.resp_party_type: None = exclude nothing; accounts without a type are kept; echoed as 'Ex Resp Party Type'. Needs DATA-53. Dialog content was never captured - confirm on the live tool."
+    },
+    "montly_reports.r04.s10.c07": {
+      "notes": "false = per office, accounts whose office balance is negative are left out (legacy default); true = they are listed. Only with true does the sum over all offices equal organisation A/R (vendor documentation). Ignored while only_credit_balances is true."
+    },
+    "montly_reports.r04.s11.c03": {
+      "notes": "role: query (the builder adds the column and its dataset read; the row population is unchanged, it does not filter): prints the account balance status (code + description) on the account block. Needs DATA-35 (accounts.balance_status_code, definitions group balance_status); until then the column is empty and the report prints an availability warning."
+    },
+    "montly_reports.r04.s11.c04": {
+      "notes": "role: query (the builder adds the columns and the read of rpt_payment_plan_contracts; the row population is unchanged, it does not filter): Reg Cont. Bal. / Ort Cont. Bal. = sum of pat_amount_remaining of the account members' active (is_active) regular / ortho contracts of rpt_payment_plan_contracts (DATA-37); the ortho insurance remainder ins_amount_remaining is not added (inferred). Column names inferred from the Walkout Report - confirm both on the live tool. Contract balances are account-level, not per office: printed on the account's line of each office where it appears."
+    },
+    "montly_reports.r04.s12.c01": {
+      "notes": "Labels confirmed by vendor screenshots of the identical panel ([?] kept only because option keys must match the index). responsible_party_last_name = guarantor last name, first name, account_id; responsible_party_id = legacy responsible-party id (rpt_account_dim.legacy_key, else account_no). Sorted inside each office (and provider when grouped)."
+    },
+    "montly_reports.r04.x01": {
+      "status": "replicated",
+      "param": "aging_buckets.over_120_plus",
+      "param_type": "enum_multi",
+      "option_map": {},
+      "default": true,
+      "default_differs_reason": "",
+      "enabled_when": "",
+      "notes": "Legacy default undocumented; default true inferred (it replaces the Over 120 box, which is ticked by default, and the form carries the over_120 state across the format switch, so a direct xlsx run from a saved view or URL also starts ticked). Shared vendor-doc parameter of 04: member over_120_plus of aging_buckets, shown only when output_format == xlsx, in place of over_120 (rule d01) - inferred for this report from the pixel-identical panel of Aging Report by Home Office. With it the run uses bucket set legacy_extended: bucket_over_120 = 120-149, then bucket_over_150 / bucket_over_180 / bucket_over_270 / bucket_over_365 with ins_* / pat_* twins, summing to the 120+ amount; as an account filter it tests a balance aged 120+ days. Info-icon tooltip text not documented - read default and tooltip on the live tool with PRINT FORMAT = Excel."
+    },
+    "montly_reports.r05.s01.c01": {
+      "notes": "Detail = one line per allocation (payment or collection adjustment against a procedure) with Pay Date, Allo Date and Proc Date, grouped by provider (layout inferred, PARTIALLY DOCUMENTED); Summary = one row per provider (zero rows included) plus an Unallocated row and a Total row, with the roll-forward columns Beginning Balance ... Ending Balance, Non Income, Income (documented). Legacy default Detail kept."
+    },
+    "montly_reports.r05.s02.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office); several offices or an office group allowed. Income Allocation: the selected offices are ALLOCATION offices - money is credited to the office where the paid procedure was charged (rpt_payment_allocations.allocation_office_id), not the office where the payment was entered. The Unallocated row (method = unallocated, no debit) is attributed to the credit's own office (credit_office_id) - inferred, confirm on the live tool."
+    },
+    "montly_reports.r05.s03.c01": {
+      "notes": "Allocation provider: the provider of the completed work the money was allocated to (rpt_payment_allocations.allocation_provider_id). NULL prints as a separate 'Unassigned provider' row, which is not the Unallocated row. Not the provider on the payment line. ALL = no restriction; the Unallocated row is printed only under ALL - a builder rule, not an enabled_when, and inferred (it belongs to no provider): confirm on the live tool."
+    },
+    "montly_reports.r05.s04.c01": {
+      "notes": "Primary date range, fixed date_basis created_date (04 7.2 row 28, documented; supersedes the coverage matrix's 'allocation date'). Dating per roll-forward column: payments, prev_allocation, prev_allocation_prod_adj, income_adjust_neg, prev_allocation_income_adj by the credit's created date (credit_created_date; prev columns: created before date_from, allocated in range); income_adjust_pos, non_income and transfer legs by their created_date; charges, production adjustments and unclassified_adjust by transaction_date (inferred). A payment entered Feb 1 and back-dated to Jan 15 falls in February. Beginning Balance is as of date_from - 1, Ending Balance as of date_to. Migrated money rows carry the load timestamp as created_at until the created-date restore (REPAIR(10)); the run prints an availability warning for ranges before the migrated-through date. Enhanced with presets and relative tokens."
+    },
+    "montly_reports.r05.s04.c02": {
+      "notes": "Inclusive end of the created-date range (see Start Date); also the as-of date of Ending Balance. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r06.s01.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Allocation Detail: ALLOCATION office (rpt_payment_allocations.allocation_office_id, office of the paid procedure) - stated by the vendor for the allocation family, implied for this report's selector; confirm on the live tool."
+    },
+    "montly_reports.r06.s02.c01": {
+      "notes": "Allocation provider (rpt_payment_allocations.allocation_provider_id): the provider whose completed work the payment paid, not the provider on the payment line (implied for this report by the family rule). ALL = no restriction."
+    },
+    "montly_reports.r06.s03.c01": {
+      "notes": "Primary date range, fixed date_basis created_date (04 7.2 row 29, documented): money collected and ENTERED in the range (credit_created_date) that applies to completed procedures; an unapplied prepayment does not appear until it pays a procedure. Migrated created dates unreliable until REPAIR(10). Enhanced with presets and relative tokens."
+    },
+    "montly_reports.r06.s03.c02": {
+      "notes": "Inclusive end of the created-date range. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r06.s05.c01": {
+      "notes": "Layout (role: layout, filter card): shows a closing per-day recap (allocated amount per payment type and total, one line per created date) aggregated from the lines of the same snapshot; content inferred from the label. Legacy default ticked, kept."
+    },
+    "montly_reports.r07.s01.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Unallocated Payment/Adjustments: office that entered and holds the unapplied money = the credit leg's own office (rpt_payment_allocations.credit_office_id); an unallocated row has no debit, so there is no allocation office (vendor: unallocated money resides with the office that entered it). Inferred binding - confirm on the live tool."
+    },
+    "montly_reports.r07.s02.c01": {
+      "notes": "true = the date range is ignored and every credit that is unallocated as of the office-local today is listed (as-of snapshot); the two date boxes are disabled (enabled_when on date_from / date_to, 04 rule). false (legacy default) = credits entered in the range that are still unallocated today."
+    },
+    "montly_reports.r07.s02.c02": {
+      "notes": "Primary date range, fixed date_basis created_date (04 7.2 row 30, inferred: items entered in the range), on credit_created_date of the unallocated row; the unallocated state itself is today's. Disabled while print_all_unallocated_as_of_today is ticked. Enhanced with presets and relative tokens."
+    },
+    "montly_reports.r07.s02.c03": {
+      "notes": "Inclusive end of the created-date range; disabled while print_all_unallocated_as_of_today is ticked. Enhanced with presets and relative tokens."
+    },
+    "montly_reports.r07.s03.c01": {
+      "notes": "true = drop the unallocated items of accounts whose total balance (rpt_ledger_entries sum per account) is a credit, leaving the credits that sit unapplied while the account still owes - the posting errors to fix (meaning inferred from vendor text 'credit balances can be excluded'). On derived allocations every unallocated row is a credit balance by construction, so a ticked run is empty until DATA-26 persists allocations with reasons. The account balance is taken as of the office-local today (the unallocated state is today's)."
+    },
+    "montly_reports.r08.s01.c01": {
+      "notes": "Summary = per office and allocation provider one row per transaction code / description with Charges, Payments, Adjustments totals where payments and collection adjustments are counted by allocation, plus an Unallocated line; Detail = the same per transaction line. Both layouts INFERRED (no vendor description exists) - confirm on the live tool. Legacy default Detail kept."
+    },
+    "montly_reports.r08.s03.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). Office attribution inferred: charges and production adjustments by transaction office (as the Daily Journal), payments and collection adjustments by allocation office (rpt_payment_allocations.allocation_office_id), unallocated amounts by the credit's own office. Confirm on the live tool."
+    },
+    "montly_reports.r08.s04.c01": {
+      "notes": "Primary date range, fixed date_basis transaction_date (04 7.2 row 31, inferred: the default basis of the Daily Journal it summarises); whether allocated payments are dated by their transaction date or by the allocation date is unknown - confirm on the live tool. Enhanced with presets and relative tokens. The enhancement parameter allocation_dating (default credit_transaction_date, INFERRED) lets the live verification switch to allocation_date without a schema change; the research's inferred identity (payments = Daily Journal payments minus newly unallocated plus previously unallocated now applied) points to allocation-date dating."
+    },
+    "montly_reports.r08.s04.c02": {
+      "notes": "Inclusive end of the transaction-date range. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r09.s02.c02": {
+      "notes": "108 = id of the office the user was working in (token working_office). WaterFall: allocation office (office where the paid production was charged, rpt_payment_allocations.allocation_office_id) - inferred from its dependence on allocation; the vendor names only 'pick the office(s)'."
+    },
+    "montly_reports.r09.s03.c01": {
+      "notes": "Primary date range, fixed date_basis service_date (04 7.2 row 32, documented): selects the service months of the production (service_date of the debit leg) that form the rows; the month columns are the months in which credits were applied to that production (allocation_date), up to the run date - column window inferred. A partial first or last month is clipped to the range for both billed_amount and the cells. 'Use a range of at least one quarter' is vendor guidance, shown as a UI hint (enhancement). Enhanced with presets and relative tokens."
+    },
+    "montly_reports.r09.s03.c02": {
+      "notes": "Inclusive end of the service-date range. Default today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "montly_reports.r09.s04.c01": {
+      "notes": "Which credits fill the cells: payments_only = credit_entry_type patient_payment / insurance_payment with credit_ledger_bucket = 'collection'; adjustments_only = credit_entry_type adjustment (write-offs included); payments_and_adjustments = the union of the two, so the two subsets add up to it. Opening-balance and transfer credits (APBAC / APBIC, transfer legs) and non-collection payments are in no option. Whether contractual write-offs count as adjustments here is not documented - confirm on the live tool."
+    },
+    "montly_reports.r02.s01.c01": {
+      "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Our Excel is a flat typed sheet (one record per row) [I]: the legacy Excel layout of this report is not documented (the vendor's flat-layout statement is cross-cutting, its evidence is a Daily report) - confirm on the live tool."
+    },
+    "montly_reports.r08.s02.c01": {
+      "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Our Excel is a flat typed sheet (one record per row) [I]: the legacy Excel layout of this report is not documented (the vendor's flat-layout statement is cross-cutting, its evidence is a Daily report) - confirm on the live tool."
+    },
+    "montly_reports.r09.s01.c01": {
+      "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Our Excel is a flat typed sheet (one record per row) [I]: the legacy Excel layout of this report is not documented (the vendor's flat-layout statement is cross-cutting, its evidence is a Daily report) - confirm on the live tool."
+    },
+    "montly_reports.r03.s04.c01": {
+      "notes": "Ticked sets group_by = provider and enables the provider basis radio and the Provider picker. Member checkbox: default false = unticked, so group_by = none (the Shared-rules value 'none' is the same state)."
+    },
+    "montly_reports.r03.s06.c01": {
+      "notes": "Ortho-patient flag, not the user-defined patient types of INCLUDE / EXCLUDE PATIENT TYPE. Applied as an item filter on rpt_patient_dim.is_ortho_patient of the open item's patient before account aggregation (inferred) - confirm on the live tool whether whole accounts or items are filtered."
+    },
+    "montly_reports.r03.s09.c02": {
+      "notes": "Balance > value, on the measure chosen by aging_by. The threshold applies to accounts (account-office pairs on Aging Report) with total > 0 only; accounts with total < 0 are governed by include_credit_balances / only_credit_balances alone; total = 0 is never listed (inferred credit rule, otherwise ticking Include Credit Balance could list no credit account under '> 0.00') - confirm on the live tool."
+    },
+    "montly_reports.r03.s10.c02": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r03.s10.c03": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r03.s10.c04": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r03.s10.c05": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r03.s10.c06": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r04.s04.c01": {
+      "notes": "Ticked sets group_by = provider and enables the provider basis radio and the Provider picker. Member checkbox: default false = unticked, so group_by = none (the Shared-rules value 'none' is the same state)."
+    },
+    "montly_reports.r04.s06.c01": {
+      "notes": "Ortho-patient flag, not the user-defined patient types of INCLUDE / EXCLUDE PATIENT TYPE. Applied as an item filter on rpt_patient_dim.is_ortho_patient of the open item's patient before account aggregation (inferred) - confirm on the live tool whether whole accounts or items are filtered."
+    },
+    "montly_reports.r04.s09.c02": {
+      "notes": "Balance > value, on the measure chosen by aging_by. The threshold applies to accounts (account-office pairs on Aging Report) with total > 0 only; accounts with total < 0 are governed by include_credit_balances / only_credit_balances alone; total = 0 is never listed (inferred credit rule, otherwise ticking Include Credit Balance could list no credit account under '> 0.00') - confirm on the live tool."
+    },
+    "montly_reports.r04.s10.c02": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r04.s10.c03": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r04.s10.c04": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r04.s10.c05": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r04.s10.c06": {
+      "notes": "Aging bucket checkbox (account filter, predicate even when all ticked). Vendor documentation: Excel output shows Over 120+ in place of Over 120. The bucket predicate applies to debit accounts only: credits never sit inside a bucket (data card 2.14), so credit accounts are governed by the two credit options alone (inferred; shared rule to be stated in 04 2.5 for aging_buckets)."
+    },
+    "montly_reports.r03.s09.c01": {
+      "notes": "Patient AR also renames the threshold to Patient Balance Over (rule d02). account_ar = insurance + patient open amounts of the account, including items of patients whose home office is another office. patient_ar = open_patient only, and on this home-office report only the items of patients whose own rpt_patient_dim.home_office_id is selected (inferred reading of the vendor's 'only the patient balances for this office') - confirm on the live tool."
+    },
+    "montly_reports.r04.s09.c01": {
+      "notes": "Patient AR also renames the threshold to Patient Balance Over (rule d02). account_ar = insurance + patient open amounts of the account within each transaction office; patient_ar = open_patient of the account's items in that office (the home-office reading of the sibling report does not apply to the transaction-office unit; inferred)."
+    },
+    "montly_reports.r06.s04.c01": {
+      "notes": "Member of the payment type (tender category) checkbox group, bound to the effective deposit_group of the payment line: the code catalog's deposit_group, else (migrated rows without a code) the tender_class fallback cash -> cash, check -> check, card -> credit_card, ach -> check, flagged tender_assumed. Population is payment credits only (credit adjustments are not listed, inferred). Insurance payments follow the box of their code's deposit_group; lines with no group at all print in Other / uncategorised and appear only under the full selection (no_predicate)."
+    },
+    "montly_reports.r06.s04.c02": {
+      "notes": "Member of the payment type (tender category) checkbox group, bound to the effective deposit_group of the payment line: the code catalog's deposit_group, else (migrated rows without a code) the tender_class fallback cash -> cash, check -> check, card -> credit_card, ach -> check, flagged tender_assumed. Population is payment credits only (credit adjustments are not listed, inferred). Insurance payments follow the box of their code's deposit_group; lines with no group at all print in Other / uncategorised and appear only under the full selection (no_predicate)."
+    },
+    "montly_reports.r06.s04.c03": {
+      "notes": "Member of the payment type (tender category) checkbox group, bound to the effective deposit_group of the payment line: the code catalog's deposit_group, else (migrated rows without a code) the tender_class fallback cash -> cash, check -> check, card -> credit_card, ach -> check, flagged tender_assumed. Population is payment credits only (credit adjustments are not listed, inferred). Insurance payments follow the box of their code's deposit_group; lines with no group at all print in Other / uncategorised and appear only under the full selection (no_predicate)."
+    },
+    "montly_reports.r06.s04.c04": {
+      "notes": "Member of the payment type (tender category) checkbox group, bound to the effective deposit_group of the payment line: the code catalog's deposit_group, else (migrated rows without a code) the tender_class fallback cash -> cash, check -> check, card -> credit_card, ach -> check, flagged tender_assumed. Population is payment credits only (credit adjustments are not listed, inferred). Insurance payments follow the box of their code's deposit_group; lines with no group at all print in Other / uncategorised and appear only under the full selection (no_predicate)."
+    },
+    "montly_reports.r06.s04.c05": {
+      "notes": "Member of the payment type (tender category) checkbox group, bound to the effective deposit_group of the payment line: the code catalog's deposit_group, else (migrated rows without a code) the tender_class fallback cash -> cash, check -> check, card -> credit_card, ach -> check, flagged tender_assumed. Population is payment credits only (credit adjustments are not listed, inferred). Insurance payments follow the box of their code's deposit_group; lines with no group at all print in Other / uncategorised and appear only under the full selection (no_predicate)."
+    },
+    "montly_reports.r06.s04.c06": {
+      "notes": "Member of the payment type (tender category) checkbox group, bound to the effective deposit_group of the payment line: the code catalog's deposit_group, else (migrated rows without a code) the tender_class fallback cash -> cash, check -> check, card -> credit_card, ach -> check, flagged tender_assumed. Population is payment credits only (credit adjustments are not listed, inferred). Insurance payments follow the box of their code's deposit_group; lines with no group at all print in Other / uncategorised and appear only under the full selection (no_predicate). No seeded payment code carries internal_financing (financing codes PF001 / PF005 are care_credit), so this box selects nothing until the tenant maps a code (DATA-03 note)."
+    },
+    "montly_reports.r07.s03.c02": {
+      "notes": "false = drops lines whose credit patient has rpt_patient_dim.is_active = false (inferred; inactive and deleted share the flag until DATA-44); true = no patient-status predicate. Confirm on the live tool whether the paying patient or the account is tested."
+    }
+  }
+}

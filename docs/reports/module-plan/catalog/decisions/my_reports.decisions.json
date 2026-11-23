@@ -1,0 +1,48 @@
+{
+  "category": "my_reports",
+  "reports": {
+    "my_reports.r01": {
+      "report_key": "my_reports.daily_journal",
+      "phase": "P1"
+    },
+    "my_reports.r02": {
+      "report_key": "my_reports.time_clock_report",
+      "phase": "P1"
+    },
+    "my_reports.r03": {
+      "report_key": "my_reports.missing_progress_notes",
+      "phase": "P1"
+    },
+    "my_reports.r04": {
+      "report_key": "my_reports.appointment_detail_by_user",
+      "phase": "P1"
+    },
+    "my_reports.r05": {
+      "report_key": "my_reports.production_report",
+      "phase": "P1",
+      "dynamic_rules": {
+        "my_reports.r05.d01": "Provider restriction self_unless_privileged: for a provider-restricted caller provider_ids is forced to the token current_user_report_provider and corresponding_provider_id (display, enabled_when false) shows the linked provider. When the caller has no users.report_access_provider_id the validate call returns the display empty and both validate and PRINT / PREVIEW answer 403 report_provider_not_linked with the legacy message that no Corresponding Provider is set; no run row is created. A caller exempt by PR-3 is not refused: provider_ids becomes visible as a picker in place of the display box (visible_when not ctx.provider_restricted), default the own link, else all (08 open decision 13)."
+      }
+    }
+  },
+  "controls": {
+    "my_reports.r02.s05.c01": {
+      "notes": "Ticked sets group_by = office (one section per office of the punch, with per-office totals). Greyed in the capture with one office in Office mode; enabled_when ctx.multi_office is inferred (vendor text does not state the rule). Vendor documentation says the office of a punch is not tracked, yet the Detail output has In Office / Out Office columns: punches with office_id NULL (legacy rows) group under 'Unassigned office'."
+    },
+    "my_reports.r03.s03.c01": {
+      "notes": "Provider role on this report = appointment provider (rpt_appointment_facts.provider_id, the p_provider_ids argument of rpt_appointment_note_audit) - inferred: the Progress Notes > Missing copy filters the patient's preferred provider (preferred_provider_ids), and no vendor text states which provider this picker filters (confirm on the live tool, RPT-MY-04). Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. For a provider-restricted caller the value is forced to current_user_report_provider and the picker is shown read-only (shared rule, 08 section 4.2); a restricted caller without users.report_access_provider_id is refused with 403 report_provider_not_linked (PR-5) - a deliberate deviation from the legacy default ALL, pending the live-tool check of how the legacy tool restricts this report. An exempt caller (PR-3) keeps the picker with default all. Dialog content was never captured."
+    },
+    "my_reports.r03.s05.c01": {
+      "notes": "Enabled on this report (it is the Missing variant of Daily Progress Notes, where the same section is greyed under Detail). only_missing_progress_notes = appointments with no non-struck-off note of the patient in the appointment office on the appointment date (has_progress_note = false); all = every live appointment in the range with its note status column. Meaning of ALL is inferred from the label: confirm on the live tool."
+    },
+    "my_reports.r04.s03.c01": {
+      "notes": "Provider role on this report = appointment provider (rpt_appointment_facts.provider_id): the parent Appointment Detail groups by the appointment provider and prints the preferred provider in its own column (inferred; no vendor statement for the picker). Filter inside the forced user restriction (appointments created by the logged-in user). Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    "my_reports.r04.s06.c01": {
+      "notes": "true = cancelled appointments (status_class cancelled) are listed as well; missed appointments (no_show) are always listed whatever the value (vendor documentation of the parent report). Default ticked here, unticked on the parent Appointment Detail."
+    },
+    "my_reports.r01.s01.c01": {
+      "notes": "On My Daily Journal REPORT BY selects WHOSE lines are listed, not a grouping: User = lines entered by the logged-in user (forces user_ids to current_user). Candidate value Provider -> provider (unverified: lines of the provider linked to the user, forcing provider_ids to current_user_report_provider for a restricted caller); the definition declares it for the UR-4 lint, but the form does not offer it until RPT-MY-04 reads the list on the live tool (captured collapsed). Any further value read there is added with its own restriction. Differs from the shared mapping: same collapsed REPORT BY dropdown as four patient-list reports (sig0196), different list and a restriction meaning."
+    }
+  }
+}

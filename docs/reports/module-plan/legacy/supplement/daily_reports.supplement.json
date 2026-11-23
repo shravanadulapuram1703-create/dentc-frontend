@@ -1,0 +1,1025 @@
+{
+  "category": "daily_reports",
+  "source_document": "research/legacy_report_outputs_daily_my.md",
+  "reports": [
+    {
+      "report_id": "daily_reports.r02",
+      "legacy_name": "Daily Journal",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "GROUP BY = Provider or User (any grouping other than None)",
+          "effect": "the Page Break checkbox becomes available - a page break is offered only when the journal is grouped; it stays greyed while GROUP BY = None",
+          "controls": [
+            "daily_reports.r02.s09.c01",
+            "daily_reports.r02.s09.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "Sections per provider or per user (old `Daily Journal by Provider`, `Daily Journal by User – Detail`); page break only when grouped"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "truncation",
+          "control_id": "",
+          "text": "Nothing lies below GROUP BY: a 2023 vendor screenshot of this criteria screen shows empty space under that row, so GROUP BY (with Page Break) is the last row and the panel is complete as transcribed.",
+          "resolves_truncation": true,
+          "confidence": "confirmed",
+          "evidence_quote": "Nothing lies below `GROUP BY`; a 2023 screenshot shows empty space there, so the truncation flag can be cleared"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s04.c01",
+          "text": "The Provider picker restricts the journal lines by the provider on the ledger line (Prdr); the User picker restricts them by the user who entered the line.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Provider`, `User` pickers | Restrict lines by `Prdr` / by entering `User`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s05.c01",
+          "text": "Created Date = the system entry timestamp of the line; it cannot be edited.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Created Date` | System entry timestamp; not editable"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s06.c01",
+          "text": "PATIENT TYPE Both / General / Ortho is the ortho-patient flag - not the user-defined patient types (those are a separate concept, used by EXCLUDE PATIENT TYPE on the Special Transaction Report).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PATIENT TYPE` `Both / General / Ortho` (Daily Journal) is the ortho-patient flag"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s08.c03",
+          "text": "Show Datewise Summary adds a per-day recap when the date range spans several days.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Show Datewise Summary` | Adds a per-day recap when the range spans several days"
+        },
+        {
+          "about": "other",
+          "control_id": "daily_reports.r02.s08.c01",
+          "text": "Show AR is also greyed in every vendor screenshot seen (Detail, Office, any transaction mix); what enables it is not documented (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Greyed in every screenshot seen (Detail, Office, any transaction mix)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s01.c01",
+          "text": "REPORT FORMAT: Detail = a line listing with patient names; Summary = code-level totals only.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`REPORT FORMAT` Detail / Summary | Line listing with names vs code-level totals"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s05.c01",
+          "text": "The date-basis radio decides which date selects and groups the lines. Created Date reproduces the older report Daily Journal by User – Detail (by created date) and catches back-dated entries.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Which date selects and groups the lines; `Created Date` reproduces the old `Daily Journal by User – Detail (by created date)` and catches back-dated entries"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s07.c01",
+          "text": "TRANSACTION TYPES (Services / Payments / Adjustments): unticking a class removes it from the lines and from the summary.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`TRANSACTION TYPES` Services / Payments / Adjustments | Removes the unticked classes from lines and summary"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r02.s09.c01",
+          "text": "GROUP BY Provider / User gives one section per provider or per user; the two choices reproduce the older reports Daily Journal by Provider and Daily Journal by User – Detail.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`GROUP BY` None / Provider / User (+ `Page Break`) | Sections per provider or per user (old `Daily Journal by Provider`, `Daily Journal by User – Detail`)"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r03",
+      "legacy_name": "Production Report",
+      "added_controls": [
+        {
+          "section": "PROVIDERS",
+          "label": "",
+          "type": "picker",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Conditional controls: `PROVIDERS` picker, `SORT BY` (`Transaction Date` / `Patient Lastname`), label `Page Break by Provider`",
+          "notes": "Conditional control, absent from our default-state capture (PRODUCTION BY = Code, GROUP BY = None). Appears only when GROUP BY = Provider (beside CODES) or when PRODUCTION BY = Provider (in place of CODES). Its default value and its picker dialog are not documented."
+        },
+        {
+          "section": "SORT BY",
+          "label": "",
+          "type": "radio_group",
+          "options": [
+            "Transaction Date",
+            "Patient Lastname"
+          ],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`CODES` replaced by `PROVIDERS`; new `SORT BY` (`Transaction Date` / `Patient Lastname`)",
+          "notes": "Conditional section, absent from our default-state capture. Appears only when PRODUCTION BY = Provider (the vendor screenshot shows that state with REPORT FORMAT = Detail selected). The legacy default is not documented."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PRODUCTION BY = Code (the default)",
+          "effect": "REPORT FORMAT is locked to Summary (Detail greyed); the CODES picker is shown; GROUP BY None / Provider / Carrier is available; Include UCR is available",
+          "controls": [
+            "daily_reports.r03.s05.c01",
+            "daily_reports.r03.s01.c01",
+            "daily_reports.r03.s07.c01",
+            "daily_reports.r03.s06.c01",
+            "daily_reports.r03.s08.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`REPORT FORMAT` locked to Summary; `CODES` picker; `GROUP BY` None / Provider / Carrier available; `Include UCR` available"
+        },
+        {
+          "when": "Include UCR is ticked (PRODUCTION BY = Code)",
+          "effect": "Include Z-Codes and the Fee Schedule To Compare dropdown unlock; both are greyed while Include UCR is unticked",
+          "controls": [
+            "daily_reports.r03.s08.c01",
+            "daily_reports.r03.s08.c02",
+            "daily_reports.r03.s09.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Z-Codes` and `Fee Schedule To Compare` unlock when `Include UCR` is ticked"
+        },
+        {
+          "when": "GROUP BY = Provider (with PRODUCTION BY = Code)",
+          "effect": "the Page Break checkbox reads `Page Break by Provider` (shown ticked in the sample)",
+          "controls": [
+            "daily_reports.r03.s06.c01",
+            "daily_reports.r03.s06.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "Checkbox reads `Page Break by Provider` (ticked in the sample)"
+        },
+        {
+          "when": "GROUP BY = Provider (with PRODUCTION BY = Code)",
+          "effect": "a PROVIDERS picker appears beside the CODES picker",
+          "controls": [
+            "daily_reports.r03.s06.c01",
+            "daily_reports.r03.s07.c01"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "a `PROVIDERS` picker appears beside `CODES`"
+        },
+        {
+          "when": "PRODUCTION BY = Provider",
+          "effect": "REPORT FORMAT Detail becomes selectable. The document states that Detail is selectable only for PRODUCTION BY = Provider; the Category and Carrier states were not seen in any screenshot.",
+          "controls": [
+            "daily_reports.r03.s05.c01",
+            "daily_reports.r03.s01.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Detail` selectable only for `Production By` = Provider"
+        },
+        {
+          "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+          "effect": "the GROUP BY options Provider and Carrier are greyed",
+          "controls": [
+            "daily_reports.r03.s05.c01",
+            "daily_reports.r03.s06.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`GROUP BY` Provider / Carrier greyed"
+        },
+        {
+          "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+          "effect": "the CODES picker is replaced by the PROVIDERS picker",
+          "controls": [
+            "daily_reports.r03.s05.c01",
+            "daily_reports.r03.s07.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`CODES` replaced by `PROVIDERS`"
+        },
+        {
+          "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+          "effect": "a SORT BY section (Transaction Date / Patient Lastname) appears",
+          "controls": [
+            "daily_reports.r03.s05.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "new `SORT BY` (`Transaction Date` / `Patient Lastname`)"
+        },
+        {
+          "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+          "effect": "Include UCR and Include Z-Codes are greyed",
+          "controls": [
+            "daily_reports.r03.s05.c01",
+            "daily_reports.r03.s08.c01",
+            "daily_reports.r03.s08.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Include UCR`, `Include Z-Codes` greyed"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "default",
+          "control_id": "daily_reports.r03.s09.c01",
+          "text": "The greyed default of Fee Schedule To Compare is tenant data, not a fixed legacy default: vendor screenshots of other tenants show ANTHEM ( 115 ) and 2022 UCR Master ( 272 ) in the same greyed box.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The greyed default differs per tenant (`ANTHEM ( 115 )`, `2022 UCR Master ( 272 )`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s08.c01",
+          "text": "Include UCR together with Fee Schedule To Compare adds a compare-fee column to the report; the vendor uses it to price production at another (\"provider pay\") fee schedule.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include UCR` + `Fee Schedule To Compare` | Adds the compare-fee column. Used to price production at a \"provider pay\" fee schedule"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s08.c02",
+          "text": "Include Z-Codes includes the office-defined Z codes as rows of the report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Z-Codes` | Includes office-defined `Z…` codes as rows"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s05.c01",
+          "text": "On this report Provider (PRODUCTION BY / GROUP BY Provider, the PROVIDERS picker) means the provider of record on the procedure - the Prdr column of the Ledger.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Production Report | Provider of record on the procedure (the `Prdr` column of the Ledger)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s04.c01",
+          "text": "The date range is applied to the posting date: a completed procedure counts in the period in which it was posted to the ledger (this report has no date-basis choice).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The posting date decides the period `[P47]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s05.c01",
+          "text": "PRODUCTION BY chooses the row dimension of the report: Code, Provider, Category or Carrier.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PRODUCTION BY` Code / Provider / Category / Carrier | Row dimension and title"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s01.c01",
+          "text": "REPORT FORMAT Detail itemises each completed procedure per provider (the older report Production by Provider Detail).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`REPORT FORMAT` Detail | Itemises each completed procedure per provider (old `Production by Provider Detail`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s05.c01",
+          "text": "PRODUCTION BY = Provider together with REPORT FORMAT (Detail / Summary) reproduces the older reports Production by Provider Detail and Production by Provider Summary.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Production by Provider Detail`, `Production by Provider Summary` | `Production Report` | `PRODUCTION BY` Provider + `REPORT FORMAT`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s06.c01",
+          "text": "PRODUCTION BY Code / Category, with GROUP BY Provider and Office Group where wanted, reproduces the older reports Production by Codes, Production by Codes - Provider and Production by Category (formerly under Group Reports > Management Reports).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Production by Codes`, `Production by Codes - Provider`, `Production by Category` (Group Reports > Management Reports) | `Production Report` | `PRODUCTION BY` Code / Category, `GROUP BY` Provider, Office Group"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s03.c01",
+          "text": "Office reports each selected office on its own; Office Group gives the enterprise (group-wide) view.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`OFFICE/GROUP` | One `Office :` section per office; Office Group gives the enterprise view"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r03.s09.c01",
+          "text": "Fee Schedule To Compare supplies the fee of the compare-fee column: the column is the procedure count times the fee of the chosen schedule.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Compare-fee column | Count × fee from `Fee Schedule To Compare`"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r04",
+      "legacy_name": "Collection Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r04.s05.c01",
+          "text": "The Payment Types picker restricts the report to the chosen payment codes.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Payment Types` picker | Restricts to chosen payment codes"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r04.s07.c01",
+          "text": "Include Adjustments(Collection), on by default, adds the collection adjustments to the report (read from a third-party screenshot of the legacy output, whose footer carries the matching note).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Adjustments(Collection)` (default on) | Adds collection adjustments and the footer note"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r04.s06.c01",
+          "text": "COLLECTION BY sets the grouping dimension of the report (None, Provider, Carrier or Code); Code also changes the column set.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Grouping dimension and title; By Code changes the column set"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r04.s06.c01",
+          "text": "COLLECTION BY = Provider with REPORT FORMAT = Detail reproduces the older report Daily Collection.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Daily Collection` | `Collection Report` | `COLLECTION BY` Provider, Detail"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r05",
+      "legacy_name": "Deposit Slip",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PAYMENT TYPES Check is ticked",
+          "effect": "CHECK TYPE (Both / Patient Checks / Insurance Checks) unlocks; it is enabled only while Check is ticked",
+          "controls": [
+            "daily_reports.r05.s05.c02",
+            "daily_reports.r05.s06.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`CHECK TYPE` unlocks when `Check` is ticked"
+        },
+        {
+          "when": "the GROUP BATCH CHECKS header checkbox is ticked",
+          "effect": "its radios Batch ID(Batch Insurance Payment) / Check# unlock",
+          "controls": [
+            "daily_reports.r05.s07.c01",
+            "daily_reports.r05.s07.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`GROUP BATCH CHECKS` radios unlock with its checkbox"
+        },
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "the picker box selects office groups defined in Setup > Office Groups instead of offices, and its default is ALL (in Office mode the default is the logged-in OID)",
+          "controls": [
+            "daily_reports.r05.s02.c01",
+            "daily_reports.r05.s02.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "logged-in OID); `Office Group` = groups from `Setup > Office Groups` (default ALL)"
+        },
+        {
+          "when": "the criteria screen was opened from a saved favorite (My Favorites)",
+          "effect": "the ADD TO MY FAVORITES action button reads UPDATE MY FAVORITES",
+          "controls": [],
+          "confidence": "confirmed",
+          "evidence_quote": "The button reads `UPDATE MY FAVORITES` when the screen was opened from a saved favorite"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s03.c01",
+          "text": "The Provider filter and the User filter both always apply.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Provider`, `User` | Both filters always apply"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s04.c01",
+          "text": "Transaction Date = the ledger date of the payment; Payment Date = the date the payment applies to (used for back-dated payments). The vendor texts disagree on what Transaction Date is - see unresolved.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Date basis `Transaction Date` / `Payment Date` | Ledger date vs the date the payment applies to (back-dated payments)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s05.c07",
+          "text": "The None checkbox selects the payment types whose type field is blank. Which payment code falls under which PAYMENT TYPES checkbox comes from Setup > Payment/Adjustment Types.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`None` = payment types whose type field is blank. Mapping comes from `Setup > Payment/Adjustment Types`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s05.c04",
+          "text": "A payment code only appears under a PAYMENT TYPES checkbox if its Sub Type / Class are set in setup; the vendor example is a legacy Care Credit payment code that never reaches the CareCredit section.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "a payment code only appears under a type if its `Sub Type` / `Class` are set — a legacy `PMT PAT-Care Credit`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s06.c01",
+          "text": "Patient Checks = checks posted in Transaction Entry; Insurance Checks = checks posted in the Insurance Payment screen.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "patient checks are those posted in Transaction Entry, insurance checks those posted in the Insurance Payment screen"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s08.c01",
+          "text": "The radio chooses the name shown per payment: Show Responsible Party = the family, Show Patient = the patient account, None = no names (totals only).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Name shown per payment: family, patient account, or no names (totals only)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r05.s02.c01",
+          "text": "Office = one or more offices picked from all the offices the user can access; the box defaults to the logged-in office (its OID), so the value in our capture is session data, not a fixed default.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office` = one or more offices picked from all offices the user can access (default the"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "The PAYMENT TYPES checkboxes reproduce the older separate reports Deposit Slip - Credit Card, Deposit Slip - Care Credit and Deposit Slip - Direct Deposit.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Deposit Slip - Credit Card`, `Deposit Slip - Care Credit`, `Deposit Slip - Direct Deposit` | `Deposit Slip` | `PAYMENT TYPES`"
+        },
+        {
+          "about": "other",
+          "control_id": "daily_reports.r05.s05.c01",
+          "text": "Older vendor guidance calls this option \"Show Cash\"; it is the Cash checkbox of the current screen (no separate control).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "\"Show Cash\" in older guidance is today's"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r06",
+      "legacy_name": "Scheduled Production",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r06.s04.c01",
+          "text": "The date range is meant to reach into the future: the vendor describes the report as the total production dollars on the schedule for future dates (it projects revenue for coming days and exposes slow days). The date basis itself is not stated - see unresolved.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "future days and exposes slow days — \"total production dollars on schedule for future dates\""
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r07",
+      "legacy_name": "Routing Slip",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "daily_reports.r07.s01.c01",
+          "text": "Office only: the Office Group radio is disabled on this report in the vendor screenshot of the criteria screen as well.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`OFFICE/GROUP` | Office only; `Office Group` is disabled"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s03.c01",
+          "text": "DATE RANGE, Provider and Operatory select which appointments get a slip.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`DATE RANGE`, `Provider`, `Operatory` | Which appointments get a slip"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s06.c01",
+          "text": "Patient + SEARCH limits the run to one patient; left blank, a slip prints for every patient with an appointment in the range.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Patient` + `SEARCH` | One patient; blank = every patient with an appointment in the range"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s04.c01",
+          "text": "REPORT BY chooses which of the two - the next scheduled appointment or the next scheduled recall - prints in the next-appointment block of the slip.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`REPORT BY` `Next Scheduled Appointment` / `Next Scheduled Recall` | Which of the two prints in the next-appointment block"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s07.c02",
+          "text": "Tooltip of the info icon beside Recommended (not visible in our capture): procedure codes = the appointment codes if present, otherwise the appointment provider's default codes, otherwise blank; then treatment-plan codes from Accepted plans, otherwise from Diagnosed plans, otherwise blank.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Procedure codes: appointment codes if present, otherwise the appointment provider's default codes, otherwise blank; then treatment-plan codes from Accepted plans, otherwise from Diagnosed plans, otherwise blank"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s07.c01",
+          "text": "Active Treatment Plan prints the active treatment plan; Codes prints procedure codes only.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Active Treatment Plan` / `Codes` | Print the active treatment plan, or procedure codes only"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s07.c01",
+          "text": "The provider default codes that Recommended falls back to are set per provider (Setup > Providers > Provider Setup > Edit, routing-slip section) and print only when the appointment has no services attached.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "they print only when the appointment has no services attached"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r07.s08.c02",
+          "text": "Print Blank Routing Slip prints an empty form for photocopying (outage preparation).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Print Blank Routing Slip` | Empty form for photocopying (outage preparation)"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r08",
+      "legacy_name": "Progress Notes",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PROGRESS NOTES TO PRINT = Detail (the default)",
+          "effect": "the Appointment Date date-basis radio and the APPOINTMENTS TO INCLUDE radios are greyed",
+          "controls": [
+            "daily_reports.r08.s04.c01",
+            "daily_reports.r08.s05.c01",
+            "daily_reports.r08.s06.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Appointment Date` and `APPOINTMENTS TO INCLUDE` are greyed under Detail"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "label",
+          "control_id": "daily_reports.r08.s03.c01",
+          "text": "The provider row label really is `Preferred Provider` (the vendor screenshot of the criteria screen reads the same).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The provider row label really is `Preferred Provider`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r08.s03.c01",
+          "text": "The Preferred Provider picker filters by the patient's preferred provider.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Preferred Provider` picker | Filters by the patient's preferred provider"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r08.s04.c01",
+          "text": "PROGRESS NOTES TO PRINT folds three older reports into one: Detail = Patient Progress Notes, Unsigned = Unsigned Progress Notes Report, Missing = Missing Progress Notes.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Patient Progress Notes`, `Unsigned Progress Notes Report`, `Missing Progress Notes` | `Progress Notes` | `PROGRESS NOTES TO PRINT` Detail / Unsigned / Missing"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r08.s04.c01",
+          "text": "Detail prints every note in the date range.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PROGRESS NOTES TO PRINT` Detail | Every note in the range"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r08.s04.c01",
+          "text": "Unsigned lists the notes that were entered but not signed, for the chosen range and criteria.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Unsigned | Notes entered but not signed, for the chosen range and criteria."
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r08.s07.c01",
+          "text": "Page Break by Patient prints one patient per page.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Page Break by Patient` | One patient per page"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r09",
+      "legacy_name": "Production Analysis Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r09.s06.c01",
+          "text": "Category on this report (ANALYSIS BY = Category, the CATEGORY picker) means the ADA category of the procedure code, as set in Setup > Procedure Codes. The value list of the picker itself is not documented.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Category` = ADA category of the code (from `Setup > Procedure Codes`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r09.s01.c01",
+          "text": "ANALYSIS BY chooses between the two analyses of the report: the production mix by ADA category or by carrier.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Production mix by ADA category or by carrier"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r10",
+      "legacy_name": "Daily Audit",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "GROUP BY = Provider",
+          "effect": "Page Break is ticked automatically, so each provider gets only their own list",
+          "controls": [
+            "daily_reports.r10.s08.c01",
+            "daily_reports.r10.s08.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Page Break` is auto-ticked when `GROUP BY` = Provider"
+        },
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "the picker box selects office groups defined in Setup > Office Groups instead of offices, and its default is ALL (in Office mode the default is the logged-in OID)",
+          "controls": [
+            "daily_reports.r10.s02.c01",
+            "daily_reports.r10.s02.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "logged-in OID); `Office Group` = groups from `Setup > Office Groups` (default ALL)"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r10.s05.c01",
+          "text": "PATIENT HAS (choose one) sets the population: patients with that record at the selected office(s) in the date range; ALL = any of the three records.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Population: patients with that record at the selected office(s) in the range; ALL = any of the three"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "BUT MISSING (any combination of its four checkboxes) sets the tests applied: a row prints when a ticked item is missing.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Tests applied; a row prints when a ticked item is missing"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r10.s07.c01",
+          "text": "SORT BY Date uses the date type of the PATIENT HAS choice (with ALL: the appointment date); Patient Lastname sorts within each office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Date = the date type of the `PATIENT HAS` choice (ALL → appointment date); Lastname sorts within each office"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r10.s06.c02",
+          "text": "Transaction in Ledger only counts procedure codes flagged Visit Code: a posted procedure whose code is not flagged Visit Code is still reported as a missing ledger transaction.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "a posted procedure still shows X under `Ledger Transaction` when its code is not flagged `Visit Code`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "The audit matches appointment, ledger transaction and progress note within the same office and on the same day.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "matching is same-office and same-day"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r10.s02.c01",
+          "text": "Office = one or more offices picked from all the offices the user can access; the box defaults to the logged-in office (its OID), so the value in our capture is session data, not a fixed default.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office` = one or more offices picked from all offices the user can access (default the"
+        }
+      ]
+    },
+    {
+      "report_id": "daily_reports.r12",
+      "legacy_name": "Special Transaction Report",
+      "added_controls": [
+        {
+          "section": "OTHER OPTIONS",
+          "label": "Sort By",
+          "type": "radio_group",
+          "options": [
+            "Patient LastName",
+            "Patient ID",
+            "Date"
+          ],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "A `Sort By` row (`Patient LastName` / `Patient ID` / `Date`) exists below `Group By`",
+          "notes": "Row hidden below the captured area: our capture ends at Group By, flush against the action bar, and this row sits directly below it. It orders the lines inside each group. The legacy default is not documented."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "CODE/CATEGORY = Code / Category",
+          "effect": "the picker box under the radios selects procedure codes (Code) or ADA categories (Category)",
+          "controls": [
+            "daily_reports.r12.s09.c01",
+            "daily_reports.r12.s09.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "Procedure codes, or ADA categories; None leaves procedures out"
+        },
+        {
+          "when": "the criteria screen was opened from a saved favorite (My Favorites)",
+          "effect": "the ADD TO MY FAVORITES action button reads UPDATE MY FAVORITES",
+          "controls": [],
+          "confidence": "confirmed",
+          "evidence_quote": "The button reads `UPDATE MY FAVORITES` when the screen was opened from a saved favorite"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "truncation",
+          "control_id": "",
+          "text": "The capture is cut off below Group By: the transcription is short exactly one row - Sort By (Patient LastName / Patient ID / Date) - which sits below Group By. With that row (see added_controls) the criteria panel is complete.",
+          "resolves_truncation": true,
+          "confidence": "confirmed",
+          "evidence_quote": "Our `Special Transaction Report` transcription is short one row:** a `Sort By` (`Patient LastName` / `Patient ID` /"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s03.c01",
+          "text": "The Provider and User pickers select the transactions recorded under those providers and / or users.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Provider`, `User` | Transactions recorded under those providers and / or users"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s03.c01",
+          "text": "Provider on this report is the transaction provider (printed as Tran Prdr / Transaction Provider).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Special Transaction Report | `Tran Prdr` / `Transaction Provider`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s04.c01",
+          "text": "Transaction Date = the date the transaction was entered; Service Date = the date the service was completed. The vendor texts disagree on what Transaction Date is - see unresolved.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Date basis `Transaction Date` / `Service Date` | Entered date vs completed date"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s05.c01",
+          "text": "PATIENT NAME RANGE is an alphabetical range; entering the same patient as start and end limits the report to that one patient.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Alphabetical range; enter the same patient twice for one patient"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s06.c01",
+          "text": "EXCLUDE PATIENT TYPE works on the user-defined patient types (not on the ortho-patient flag behind PATIENT TYPE on the Daily Journal).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`EXCLUDE PATIENT TYPE` (Special Transaction Report) and the `Pat Type` column are the user-defined patient types"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s07.c01",
+          "text": "Selecting codes adds those payment / adjustment codes to the report; None (the default - there is a NONE button) leaves payments and adjustments out.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PAYMENT/ADJ CODES` (default None; `NONE` button) | Adds chosen payment / adjustment codes; None leaves them out"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s08.c01",
+          "text": "INSURANCE PLANS/SUB TYPES filters by specific insurance plans or by sub types (medical / dental).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`INSURANCE PLANS/SUB TYPES` | Specific plans or subtypes (medical / dental)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s09.c02",
+          "text": "The box selects procedure codes or ADA categories (default ALL); None (there is a NONE button) leaves procedures out of the report.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`CODE/CATEGORY` Code / Category (default ALL; `NONE` button) | Procedure codes, or ADA categories; None leaves procedures out"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s10.c01",
+          "text": "Age Range (From / To) is a filter on the age of the patient.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Age Range` From / To | Patient age filter"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s10.c06",
+          "text": "Group By (Code / Username / Insurance Plan / Transaction Provider) sets the group header and the order of the groups.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Group By` Code / Username / Insurance Plan / Transaction Provider | Group header and order"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s01.c01",
+          "text": "PRINT FORMAT = Excel downloads a file; the vendor article calls it a CSV in Excel format.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PRINT FORMAT` = `Excel` | Downloads a file (`Denticon_DlySpecialTransactionRptXls`; the article calls it a CSV in Excel format)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "daily_reports.r12.s02.c01",
+          "text": "Office Group reproduces the older group-level report (Group Reports > Daily Reports > Special Transaction Report).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Special Transaction Report` (Group Reports > Daily Reports) | `Special Transaction Report` | Office Group"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "daily_reports.r01",
+      "question": "No vendor description of this report was found (only a glossary entry). What the Provider picker filters and what the single Report Date selects are unverified; the document reconstructs the report from comparable systems only."
+    },
+    {
+      "report_id": "daily_reports.r02",
+      "question": "What unlocks Show AR? It is greyed in our capture and in every vendor screenshot seen (Detail, Office, any transaction mix); the enabling rule is unknown. On the Executive Summary (Monthly Reports) the same option appends Total A/R; whether it does the same here is not stated."
+    },
+    {
+      "report_id": "daily_reports.r02",
+      "question": "What does Include Resp. Party Type add? \"The responsible-party type on each line\" is unverified."
+    },
+    {
+      "report_id": "daily_reports.r02",
+      "question": "Exact PATIENT TYPE rule: does General mean non-ortho patients only and Ortho ortho-flagged patients only? Unverified."
+    },
+    {
+      "report_id": "daily_reports.r02",
+      "question": "Transaction Date definition conflict inside the vendor texts: the editable ledger / posting date versus the date entered. Affects the date basis of Daily Journal, Deposit Slip and Special Transaction Report."
+    },
+    {
+      "report_id": "daily_reports.r03",
+      "question": "The criteria shown for PRODUCTION BY = Category and PRODUCTION BY = Carrier were not seen; category / carrier pickers are expected but unverified. The document says REPORT FORMAT Detail is selectable only for PRODUCTION BY = Provider, but that cannot be checked for Category and Carrier, whose states were not seen."
+    },
+    {
+      "report_id": "daily_reports.r03",
+      "question": "Is the SORT BY section (Transaction Date / Patient Lastname) tied to PRODUCTION BY = Provider or to REPORT FORMAT = Detail? The state was seen only with Detail selected. The default of SORT BY and of the PROVIDERS picker, and the state of Page Break and Fee Schedule To Compare under PRODUCTION BY = Provider, are not documented. An older (2016) sample of Production by Provider in the Summary format prints a compare-fee column, so the greying of Include UCR / Include Z-Codes may belong to REPORT FORMAT = Detail rather than to PRODUCTION BY = Provider."
+    },
+    {
+      "report_id": "daily_reports.r03",
+      "question": "With GROUP BY = Carrier: does the Page Break checkbox get a carrier label and does a carrier picker appear? Was Page Break by Provider ticked automatically or by the user in the sample?"
+    },
+    {
+      "report_id": "daily_reports.r03",
+      "question": "Fee Schedule To Compare: the value list is not documented; the greyed default is presumably just the first fee schedule in the tenant list (unverified)."
+    },
+    {
+      "report_id": "daily_reports.r04",
+      "question": "What enables Page Break (greyed while COLLECTION BY = None)? Do provider / carrier / code pickers appear for the other COLLECTION BY choices? The By Provider output echoes a Provider criterion in its footer, but the base screen has no provider picker."
+    },
+    {
+      "report_id": "daily_reports.r04",
+      "question": "REPORT FORMAT Summary is unverified, and whether COLLECTION BY Provider uses the transaction provider or the allocation provider is not stated."
+    },
+    {
+      "report_id": "daily_reports.r05",
+      "question": "What enables the GROUP BATCH CHECKS header checkbox (greyed in our capture with only Cash ticked)? Presumably the Check payment type - not stated. Its effect on the output is unverified."
+    },
+    {
+      "report_id": "daily_reports.r06",
+      "question": "Which dates does DATE RANGE select - appointment dates for scheduled production and posting dates for actual production? The document defines the three figures (scheduled, actual, estimated production) but not the date basis, and no vendor screenshot of this criteria screen or of the output is cited."
+    },
+    {
+      "report_id": "daily_reports.r07",
+      "question": "Scope question: the Routing Slip can also be printed from the Patient Overview (Print Reports > Routing Slip) and from the Scheduler (right-click Print > Routing Slip), the latter with its own options - Current appointment only / all appointments in the day for the current location / for all locations, an Appointment Date and Include Completed Procedures. They are not part of the Daily Reports criteria screen; decide whether the new module covers them."
+    },
+    {
+      "report_id": "daily_reports.r07",
+      "question": "Block appointments for events reportedly produce no slip - seen only as a search-result summary of a vendor article, not read in full. Does the appointment selection (DATE RANGE / Provider / Operatory) skip them?"
+    },
+    {
+      "report_id": "daily_reports.r07",
+      "question": "SORT BY option spelling: our transcription could not tell whether the separator in the options Provider (Last Name) – Appointment Date and Operatory – Appointment Date is an en dash (as transcribed) or a plain hyphen; the document only repeats our transcription, so the exact legacy spelling stays open."
+    },
+    {
+      "report_id": "daily_reports.r08",
+      "question": "Does Missing unlock the Appointment Date basis and APPOINTMENTS TO INCLUDE (unverified - both are greyed under Detail)? What is their state under Unsigned? Does ALL list every appointment with its note status (unverified)? The document glosses the DOS Date / Created On Date basis as the note date of service / the note entry date, from our own transcription only - no vendor source is given."
+    },
+    {
+      "report_id": "daily_reports.r09",
+      "question": "Does ANALYSIS BY = Carrier enable the CARRIER picker and grey the CATEGORY picker? Only our default-state capture suggests it; there is no vendor source. Is the CATEGORY list the 14 categories of the SEARCH CODE dialog (unverified)?"
+    },
+    {
+      "report_id": "daily_reports.r10",
+      "question": "Which provider does the Provider picker / column mean? The vendor article says the Preferred Provider and also defines it as the provider on the transaction date (conflict)."
+    },
+    {
+      "report_id": "daily_reports.r10",
+      "question": "Page Break is greyed while GROUP BY = None and is ticked automatically for GROUP BY = Provider: can the user untick it then, or does it stay locked? Not stated."
+    },
+    {
+      "report_id": "daily_reports.r10",
+      "question": "Transaction in Ledger: one vendor text says a posted procedure counts only when its code is flagged Visit Code, another that the report shows transactions that are Ledger Codes - must a code carry both flags to count?"
+    },
+    {
+      "report_id": "daily_reports.r11",
+      "question": "No vendor description of Claims Printed exists: the date basis of DATE RANGE (printed, created or sent date), whether e-claims are included, and what Detail / Summary and the Provider filter do are all inferred."
+    },
+    {
+      "report_id": "daily_reports.r12",
+      "question": "Amount dropdown: values other than All Amount are not documented, nor when the amount value box beside it unlocks."
+    },
+    {
+      "report_id": "daily_reports.r12",
+      "question": "EXCLUDE PATIENT TYPE: the vendor article describes it as including only the selected patient types, which conflicts with the label - is it an include or an exclude filter? The criteria block printed at the top of the PDF output labels it Excluded Pat Types."
+    },
+    {
+      "report_id": "daily_reports.r12",
+      "question": "Do the Age Range From / To boxes unlock when Age Range is ticked (not stated)? The default of the hidden Sort By row is not documented. Is the Category list of CODE/CATEGORY the 14 SEARCH CODE categories (unverified)?"
+    },
+    {
+      "report_id": "",
+      "question": "Picker dialogs the document does not describe: Provider, User, Operatory, Payment Types, Carrier / Carriers, Category, Exclude Patient Type, Payment/Adj Codes, Insurance Plans/Sub Types, the patient SEARCH, and the Office Group variant of the office picker. For SEARCH CODE only INCLUDE ALL, CATEGORY, SORT BY and the dual list are listed - whether it also has SEARCH TEXT / CLEAR SEARCH, >> / << and APPLY / CANCEL like SEARCH OFFICES is not stated."
+    },
+    {
+      "report_id": "",
+      "question": "Older build: before October 2021 Daily Reports also listed Executive Summary and Executive Summary by Provider (now Monthly Reports > Executive Summary) and Appointment Pull Chart List (not in the current list). Not added here; confirm they are out of scope for this category."
+    },
+    {
+      "report_id": "",
+      "question": "The UPDATE MY FAVORITES relabel is recorded on Deposit Slip and Special Transaction Report, and the Office / Office Group semantics on Deposit Slip and Daily Audit - the reports whose vendor screenshots / articles are cited. Do both hold for every report screen of the category (the document presents them as general)?"
+    },
+    {
+      "report_id": "",
+      "question": "Rights: the vendor lists Reports - Daily Reports Screen Full Control (run) and View Only (see the report list and the parameters only). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described."
+    },
+    {
+      "report_id": "",
+      "question": "Provider means different things per report (provider on the ledger line, provider of record on the procedure, transaction provider, preferred provider). For Collection Report, Scheduled Production, Routing Slip, Production Analysis Report, Claims Printed and Peg Board Day Sheet the document gives no vendor statement of which provider the picker or grouping uses. The vendor glossary also says that Provider in reports means the patient's preferred dentist, not the treating clinician, which does not match the per-report meanings recorded here."
+    },
+    {
+      "report_id": "",
+      "question": "The vendor end-of-day training deck (a 17 MB PDF) and three report webinars could not be read; they may show further criteria states of the Daily Reports screens."
+    }
+  ]
+}

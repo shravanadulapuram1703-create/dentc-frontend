@@ -1,0 +1,152 @@
+{
+  "source_document": "research/legacy_report_outputs_daily_my.md",
+  "dialogs": [
+    {
+      "dialog_name": "SEARCH OFFICES",
+      "kind": "picker_dialog",
+      "opened_from": "OFFICE/GROUP > SELECT",
+      "used_by": [
+        "daily_reports",
+        "my_reports"
+      ],
+      "elements": [
+        {
+          "label": "INCLUDE ALL",
+          "type": "checkbox",
+          "options": [],
+          "notes": "The document describes the effect of INCLUDE ALL (lists disabled, criteria box shows ALL) in the sentence that follows the SEARCH CODE description; it does not say separately that this dialog behaves the same."
+        },
+        {
+          "label": "SORT BY",
+          "type": "radio_group",
+          "options": [
+            "Office Name",
+            "Office ID"
+          ],
+          "notes": ""
+        },
+        {
+          "label": "SEARCH TEXT",
+          "type": "text_input",
+          "options": [],
+          "notes": ""
+        },
+        {
+          "label": "CLEAR SEARCH",
+          "type": "button",
+          "options": [],
+          "notes": ""
+        },
+        {
+          "label": "OFFICE",
+          "type": "list",
+          "options": [],
+          "notes": "Source list of the dual list OFFICE -> SELECTED OFFICE (the offices to pick from). Ctrl+click selects several entries."
+        },
+        {
+          "label": ">>",
+          "type": "button",
+          "options": [],
+          "notes": "Move button of the dual list."
+        },
+        {
+          "label": "<<",
+          "type": "button",
+          "options": [],
+          "notes": "Move button of the dual list."
+        },
+        {
+          "label": "SELECTED OFFICE",
+          "type": "list",
+          "options": [],
+          "notes": "Target list of the dual list (the chosen offices)."
+        },
+        {
+          "label": "access note",
+          "type": "static_text",
+          "options": [],
+          "notes": "A note that the report prints only for offices the user can access; its exact wording is not quoted in the document."
+        },
+        {
+          "label": "APPLY",
+          "type": "button",
+          "options": [],
+          "notes": ""
+        },
+        {
+          "label": "CANCEL",
+          "type": "button",
+          "options": [],
+          "notes": ""
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "`SEARCH OFFICES` — `INCLUDE ALL` checkbox, `SORT BY` (`Office Name` / `Office ID`),",
+      "notes": "Read from the vendor article on the new reports menu (dialog screenshot). In Office mode the picker offers the offices the user can access and the criteria box defaults to the logged-in OID; in Office Group mode the SELECT button picks groups from Setup > Office Groups (default ALL) - that variant of the dialog is not described."
+    },
+    {
+      "dialog_name": "SEARCH CODE",
+      "kind": "picker_dialog",
+      "opened_from": "CODES > SELECT",
+      "used_by": [
+        "daily_reports",
+        "my_reports"
+      ],
+      "elements": [
+        {
+          "label": "INCLUDE ALL",
+          "type": "checkbox",
+          "options": [],
+          "notes": "With INCLUDE ALL ticked the lists are disabled and the criteria box shows ALL."
+        },
+        {
+          "label": "CATEGORY",
+          "type": "radio_group",
+          "options": [
+            "Diagnostic",
+            "Restorative",
+            "Periodontics",
+            "Maxilo Prosth",
+            "Prosth. fixed",
+            "Orthodontics",
+            "Other",
+            "Preventive",
+            "Endodontics",
+            "Prosth. remov",
+            "Implant Serv",
+            "Oral Surgery",
+            "Adjunct Serv",
+            "All Medical"
+          ],
+          "notes": "14 radios, in the order the document lists them."
+        },
+        {
+          "label": "SORT BY",
+          "type": "radio_group",
+          "options": [
+            "Code",
+            "Desc"
+          ],
+          "notes": ""
+        },
+        {
+          "label": "CODE",
+          "type": "list",
+          "options": [],
+          "notes": "Source list of the dual list CODE -> SELECTED CODE (the codes to pick from)."
+        },
+        {
+          "label": "SELECTED CODE",
+          "type": "list",
+          "options": [],
+          "notes": "Target list of the dual list (the chosen codes)."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "`SEARCH CODE` — `INCLUDE ALL`, `CATEGORY` radios",
+      "notes": "Read from the vendor article on the new reports menu (dialog screenshots). The document lists it under the SELECT picker dialogs without naming the control that opens it; CODES > SELECT of the Production Report is the code picker of these screens, and the same article shows the Production Report criteria states. SEARCH TEXT / CLEAR SEARCH, >> / <<, the access note and APPLY / CANCEL are listed only for SEARCH OFFICES; whether this dialog has them too is not stated. That the 14 categories are the domain of the Category criteria on other screens is marked unverified in the document, and whether CODE/CATEGORY on the Special Transaction Report opens this same dialog is not stated. The dialog was read from the Daily Reports screens; that the CODES picker of the My Reports Production Report opens the same dialog is presumed, not shown."
+    }
+  ]
+}

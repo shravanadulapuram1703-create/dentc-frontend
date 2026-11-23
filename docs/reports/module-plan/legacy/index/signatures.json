@@ -1,0 +1,6328 @@
+{
+ "report_count": 118,
+ "control_count": 1025,
+ "signature_count": 358,
+ "signatures": [
+  {
+   "signature_id": "sig0001",
+   "section": "[?]",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Confirmation Call List",
+    "Call List",
+    "Pull Chart List",
+    "Cancelled List",
+    "Cancelled From Automated Campaigns",
+    "Missed List"
+   ],
+   "count": 1,
+   "defaults": {
+    "Confirmation Call List": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r01.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0002",
+   "section": "OFFICE/GROUP",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Office",
+    "Office Group"
+   ],
+   "count": 92,
+   "defaults": {
+    "Office": 92
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s02.c01",
+    "appointment_reports.r02.s02.c01",
+    "appointment_reports.r03.s02.c01",
+    "appointment_reports.r04.s03.c01",
+    "appointment_reports.r05.s03.c01",
+    "appointment_reports.r06.s02.c01",
+    "appointment_reports.r07.s02.c01",
+    "appointment_reports.r08.s04.c01",
+    "appointment_reports.r09.s03.c01",
+    "daily_reports.r01.s02.c01",
+    "daily_reports.r02.s03.c01",
+    "daily_reports.r03.s03.c01",
+    "daily_reports.r04.s03.c01",
+    "daily_reports.r05.s02.c01",
+    "daily_reports.r06.s02.c01",
+    "daily_reports.r07.s01.c01",
+    "daily_reports.r08.s02.c01",
+    "daily_reports.r09.s03.c01",
+    "daily_reports.r10.s02.c01",
+    "daily_reports.r11.s03.c01",
+    "daily_reports.r12.s02.c01",
+    "insurance_reports.r01.s03.c01",
+    "insurance_reports.r02.s03.c01",
+    "insurance_reports.r03.s03.c01",
+    "insurance_reports.r04.s02.c01",
+    "insurance_reports.r05.s03.c01",
+    "insurance_reports.r06.s02.c01",
+    "insurance_reports.r07.s03.c01",
+    "insurance_reports.r08.s03.c01",
+    "insurance_reports.r09.s02.c01",
+    "insurance_reports.r10.s02.c01",
+    "insurance_reports.r11.s04.c01",
+    "insurance_reports.r12.s03.c01",
+    "insurance_reports.r13.s02.c01",
+    "ledger_reports.r01.s02.c01",
+    "ledger_reports.r02.s01.c01",
+    "ledger_reports.r03.s01.c01",
+    "ledger_reports.r04.s01.c01",
+    "management_reports.r01.s02.c01",
+    "management_reports.r02.s03.c01",
+    "management_reports.r03.s01.c01",
+    "management_reports.r04.s02.c01",
+    "montly_reports.r01.s01.c01",
+    "montly_reports.r02.s02.c01",
+    "montly_reports.r03.s03.c01",
+    "montly_reports.r04.s03.c01",
+    "montly_reports.r05.s02.c01",
+    "montly_reports.r06.s01.c01",
+    "montly_reports.r07.s01.c01",
+    "montly_reports.r08.s03.c01",
+    "montly_reports.r09.s02.c01",
+    "my_reports.r01.s03.c01",
+    "my_reports.r02.s03.c01",
+    "my_reports.r03.s02.c01",
+    "my_reports.r04.s02.c01",
+    "my_reports.r05.s02.c01",
+    "ortho_reports.r01.s02.c01",
+    "ortho_reports.r02.s02.c01",
+    "ortho_reports.r03.s02.c01",
+    "ortho_reports.r04.s02.c01",
+    "ortho_reports.r05.s03.c01",
+    "patients_list_reports.r01.s03.c01",
+    "patients_list_reports.r02.s04.c01",
+    "patients_list_reports.r03.s03.c01",
+    "patients_list_reports.r04.s04.c01",
+    "patients_list_reports.r06.s04.c01",
+    "patients_list_reports.r07.s03.c01",
+    "patients_list_reports.r08.s03.c01",
+    "patients_list_reports.r09.s03.c01",
+    "patients_list_reports.r10.s02.c01",
+    "patients_list_reports.r11.s03.c01",
+    "patients_list_reports.r12.s02.c01",
+    "providers_list_reports.r01.s02.c01",
+    "providers_list_reports.r02.s02.c01",
+    "providers_list_reports.r03.s02.c01",
+    "providers_list_reports.r04.s02.c01",
+    "recall_reports.r01.s02.c01",
+    "recall_reports.r02.s02.c01",
+    "recall_reports.r03.s02.c01",
+    "recall_reports.r04.s02.c01",
+    "refferal_reports.r01.s02.c01",
+    "refferal_reports.r02.s02.c01",
+    "refferal_reports.r03.s02.c01",
+    "refferal_reports.r05.s02.c01",
+    "refferal_reports.r06.s02.c01",
+    "setup_list_reports.r12.s02.c01",
+    "setup_list_reports.r13.s02.c01",
+    "setup_list_reports.r14.s02.c01",
+    "treatmentplan_reports.r01.s02.c01",
+    "treatmentplan_reports.r02.s03.c01",
+    "treatmentplan_reports.r03.s02.c01",
+    "treatmentplan_reports.r04.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0003",
+   "section": "OFFICE/GROUP",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 92,
+   "defaults": {
+    "108": 91,
+    "ALL": 1
+   },
+   "disabled_count": 5,
+   "control_ids": [
+    "appointment_reports.r01.s02.c02",
+    "appointment_reports.r02.s02.c02",
+    "appointment_reports.r03.s02.c02",
+    "appointment_reports.r04.s03.c02",
+    "appointment_reports.r05.s03.c02",
+    "appointment_reports.r06.s02.c02",
+    "appointment_reports.r07.s02.c02",
+    "appointment_reports.r08.s04.c02",
+    "appointment_reports.r09.s03.c02",
+    "daily_reports.r01.s02.c02",
+    "daily_reports.r02.s03.c02",
+    "daily_reports.r03.s03.c02",
+    "daily_reports.r04.s03.c02",
+    "daily_reports.r05.s02.c02",
+    "daily_reports.r06.s02.c02",
+    "daily_reports.r07.s01.c02",
+    "daily_reports.r08.s02.c02",
+    "daily_reports.r09.s03.c02",
+    "daily_reports.r10.s02.c02",
+    "daily_reports.r11.s03.c02",
+    "daily_reports.r12.s02.c02",
+    "insurance_reports.r01.s03.c02",
+    "insurance_reports.r02.s03.c02",
+    "insurance_reports.r03.s03.c02",
+    "insurance_reports.r04.s02.c02",
+    "insurance_reports.r05.s03.c02",
+    "insurance_reports.r06.s02.c02",
+    "insurance_reports.r07.s03.c02",
+    "insurance_reports.r08.s03.c02",
+    "insurance_reports.r09.s02.c02",
+    "insurance_reports.r10.s02.c02",
+    "insurance_reports.r11.s04.c02",
+    "insurance_reports.r12.s03.c02",
+    "insurance_reports.r13.s02.c02",
+    "ledger_reports.r01.s02.c02",
+    "ledger_reports.r02.s01.c02",
+    "ledger_reports.r03.s01.c02",
+    "ledger_reports.r04.s01.c02",
+    "management_reports.r01.s02.c02",
+    "management_reports.r02.s03.c02",
+    "management_reports.r03.s01.c02",
+    "management_reports.r04.s02.c02",
+    "montly_reports.r01.s01.c02",
+    "montly_reports.r02.s02.c02",
+    "montly_reports.r03.s03.c02",
+    "montly_reports.r04.s03.c02",
+    "montly_reports.r05.s02.c02",
+    "montly_reports.r06.s01.c02",
+    "montly_reports.r07.s01.c02",
+    "montly_reports.r08.s03.c02",
+    "montly_reports.r09.s02.c02",
+    "my_reports.r01.s03.c02",
+    "my_reports.r02.s03.c02",
+    "my_reports.r03.s02.c02",
+    "my_reports.r04.s02.c02",
+    "my_reports.r05.s02.c02",
+    "ortho_reports.r01.s02.c02",
+    "ortho_reports.r02.s02.c02",
+    "ortho_reports.r03.s02.c02",
+    "ortho_reports.r04.s02.c02",
+    "ortho_reports.r05.s03.c02",
+    "patients_list_reports.r01.s03.c02",
+    "patients_list_reports.r02.s04.c02",
+    "patients_list_reports.r03.s03.c02",
+    "patients_list_reports.r04.s04.c02",
+    "patients_list_reports.r06.s04.c02",
+    "patients_list_reports.r07.s03.c02",
+    "patients_list_reports.r08.s03.c02",
+    "patients_list_reports.r09.s03.c02",
+    "patients_list_reports.r10.s02.c02",
+    "patients_list_reports.r11.s03.c02",
+    "patients_list_reports.r12.s02.c02",
+    "providers_list_reports.r01.s02.c02",
+    "providers_list_reports.r02.s02.c02",
+    "providers_list_reports.r03.s02.c02",
+    "providers_list_reports.r04.s02.c02",
+    "recall_reports.r01.s02.c02",
+    "recall_reports.r02.s02.c02",
+    "recall_reports.r03.s02.c02",
+    "recall_reports.r04.s02.c02",
+    "refferal_reports.r01.s02.c02",
+    "refferal_reports.r02.s02.c02",
+    "refferal_reports.r03.s02.c02",
+    "refferal_reports.r05.s02.c02",
+    "refferal_reports.r06.s02.c02",
+    "setup_list_reports.r12.s02.c02",
+    "setup_list_reports.r13.s02.c02",
+    "setup_list_reports.r14.s02.c02",
+    "treatmentplan_reports.r01.s02.c02",
+    "treatmentplan_reports.r02.s03.c02",
+    "treatmentplan_reports.r03.s02.c02",
+    "treatmentplan_reports.r04.s02.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0004",
+   "section": "PROVIDER",
+   "type": "picker",
+   "label": "Provider",
+   "options": [],
+   "count": 36,
+   "defaults": {
+    "ALL": 36
+   },
+   "disabled_count": 2,
+   "control_ids": [
+    "appointment_reports.r01.s03.c01",
+    "appointment_reports.r02.s03.c01",
+    "appointment_reports.r04.s04.c01",
+    "appointment_reports.r05.s04.c01",
+    "appointment_reports.r07.s03.c01",
+    "appointment_reports.r09.s04.c01",
+    "daily_reports.r01.s03.c01",
+    "daily_reports.r06.s03.c01",
+    "daily_reports.r07.s02.c01",
+    "daily_reports.r09.s04.c01",
+    "daily_reports.r10.s03.c01",
+    "daily_reports.r11.s04.c01",
+    "insurance_reports.r02.s04.c01",
+    "insurance_reports.r03.s04.c01",
+    "insurance_reports.r05.s04.c01",
+    "insurance_reports.r07.s04.c01",
+    "insurance_reports.r08.s04.c01",
+    "montly_reports.r01.s02.c01",
+    "montly_reports.r03.s04.c03",
+    "montly_reports.r04.s04.c03",
+    "montly_reports.r05.s03.c01",
+    "montly_reports.r06.s02.c01",
+    "my_reports.r03.s03.c01",
+    "my_reports.r04.s03.c01",
+    "ortho_reports.r01.s03.c01",
+    "ortho_reports.r02.s03.c01",
+    "patients_list_reports.r02.s05.c01",
+    "patients_list_reports.r04.s05.c01",
+    "patients_list_reports.r06.s05.c01",
+    "providers_list_reports.r01.s03.c01",
+    "providers_list_reports.r02.s03.c01",
+    "providers_list_reports.r03.s03.c01",
+    "treatmentplan_reports.r01.s03.c01",
+    "treatmentplan_reports.r02.s04.c01",
+    "treatmentplan_reports.r03.s03.c01",
+    "treatmentplan_reports.r04.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0005",
+   "section": "DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 45,
+   "defaults": {
+    "11/21/2026": 45
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s04.c01",
+    "appointment_reports.r02.s04.c01",
+    "appointment_reports.r03.s03.c01",
+    "appointment_reports.r06.s03.c01",
+    "appointment_reports.r07.s04.c01",
+    "appointment_reports.r08.s06.c02",
+    "daily_reports.r02.s05.c02",
+    "daily_reports.r03.s04.c01",
+    "daily_reports.r04.s04.c01",
+    "daily_reports.r05.s04.c02",
+    "daily_reports.r06.s04.c01",
+    "daily_reports.r07.s03.c01",
+    "daily_reports.r08.s05.c02",
+    "daily_reports.r09.s05.c01",
+    "daily_reports.r10.s04.c01",
+    "daily_reports.r11.s05.c01",
+    "daily_reports.r12.s04.c02",
+    "insurance_reports.r01.s04.c01",
+    "insurance_reports.r02.s05.c01",
+    "insurance_reports.r04.s03.c01",
+    "insurance_reports.r06.s03.c01",
+    "insurance_reports.r10.s03.c01",
+    "insurance_reports.r11.s05.c02",
+    "insurance_reports.r12.s04.c01",
+    "ledger_reports.r01.s03.c01",
+    "ledger_reports.r02.s02.c01",
+    "ledger_reports.r03.s02.c01",
+    "ledger_reports.r04.s02.c01",
+    "management_reports.r02.s04.c01",
+    "management_reports.r03.s03.c01",
+    "management_reports.r04.s04.c01",
+    "montly_reports.r01.s03.c01",
+    "montly_reports.r02.s03.c01",
+    "montly_reports.r05.s04.c01",
+    "montly_reports.r06.s03.c01",
+    "montly_reports.r07.s02.c02",
+    "montly_reports.r08.s04.c01",
+    "montly_reports.r09.s03.c01",
+    "my_reports.r01.s04.c02",
+    "my_reports.r02.s04.c01",
+    "my_reports.r05.s04.c01",
+    "patients_list_reports.r04.s06.c02",
+    "patients_list_reports.r05.s04.c01",
+    "setup_list_reports.r02.s03.c03",
+    "setup_list_reports.r13.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0006",
+   "section": "DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 45,
+   "defaults": {
+    "11/21/2026": 45
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s04.c02",
+    "appointment_reports.r02.s04.c02",
+    "appointment_reports.r03.s03.c02",
+    "appointment_reports.r06.s03.c02",
+    "appointment_reports.r07.s04.c02",
+    "appointment_reports.r08.s06.c03",
+    "daily_reports.r02.s05.c03",
+    "daily_reports.r03.s04.c02",
+    "daily_reports.r04.s04.c02",
+    "daily_reports.r05.s04.c03",
+    "daily_reports.r06.s04.c02",
+    "daily_reports.r07.s03.c02",
+    "daily_reports.r08.s05.c03",
+    "daily_reports.r09.s05.c02",
+    "daily_reports.r10.s04.c02",
+    "daily_reports.r11.s05.c02",
+    "daily_reports.r12.s04.c03",
+    "insurance_reports.r01.s04.c02",
+    "insurance_reports.r02.s05.c02",
+    "insurance_reports.r04.s03.c02",
+    "insurance_reports.r06.s03.c02",
+    "insurance_reports.r10.s03.c02",
+    "insurance_reports.r11.s05.c03",
+    "insurance_reports.r12.s04.c02",
+    "ledger_reports.r01.s03.c02",
+    "ledger_reports.r02.s02.c02",
+    "ledger_reports.r03.s02.c02",
+    "ledger_reports.r04.s02.c02",
+    "management_reports.r02.s04.c02",
+    "management_reports.r03.s03.c02",
+    "management_reports.r04.s04.c02",
+    "montly_reports.r01.s03.c02",
+    "montly_reports.r02.s03.c02",
+    "montly_reports.r05.s04.c02",
+    "montly_reports.r06.s03.c02",
+    "montly_reports.r07.s02.c03",
+    "montly_reports.r08.s04.c02",
+    "montly_reports.r09.s03.c02",
+    "my_reports.r01.s04.c03",
+    "my_reports.r02.s04.c02",
+    "my_reports.r05.s04.c02",
+    "patients_list_reports.r04.s06.c03",
+    "patients_list_reports.r05.s04.c02",
+    "setup_list_reports.r02.s03.c04",
+    "setup_list_reports.r13.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0007",
+   "section": "EXCLUDE PATIENT TYPE",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 17,
+   "defaults": {
+    "None": 17
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s05.c01",
+    "appointment_reports.r02.s05.c01",
+    "appointment_reports.r04.s08.c01",
+    "appointment_reports.r09.s07.c01",
+    "daily_reports.r12.s06.c01",
+    "patients_list_reports.r02.s07.c01",
+    "patients_list_reports.r06.s07.c01",
+    "patients_list_reports.r07.s06.c01",
+    "recall_reports.r01.s04.c01",
+    "recall_reports.r02.s04.c01",
+    "recall_reports.r03.s04.c01",
+    "recall_reports.r04.s04.c01",
+    "refferal_reports.r02.s04.c01",
+    "treatmentplan_reports.r01.s10.c01",
+    "treatmentplan_reports.r02.s10.c01",
+    "treatmentplan_reports.r03.s05.c01",
+    "treatmentplan_reports.r04.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0008",
+   "section": "EXCLUDE RESP. PARTY TYPE",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 6,
+   "defaults": {
+    "None": 6
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s06.c01",
+    "appointment_reports.r02.s06.c01",
+    "appointment_reports.r04.s09.c01",
+    "appointment_reports.r09.s08.c01",
+    "montly_reports.r03.s08.c01",
+    "montly_reports.r04.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0009",
+   "section": "CANCELLATION REASON",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 2,
+   "control_ids": [
+    "appointment_reports.r01.s07.c01",
+    "appointment_reports.r08.s11.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0010",
+   "section": "OPERATORY",
+   "type": "picker",
+   "label": "Operatory",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "ALL": 4
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s08.c01",
+    "appointment_reports.r08.s07.c01",
+    "daily_reports.r07.s05.c01",
+    "my_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0011",
+   "section": "APPOINTMENT TYPE",
+   "type": "dropdown",
+   "label": "Length",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "Any": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0012",
+   "section": "APPOINTMENT TYPE",
+   "type": "checkbox",
+   "label": "Missed",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s09.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0013",
+   "section": "APPOINTMENT TYPE",
+   "type": "checkbox",
+   "label": "Cancelled",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s09.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0014",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Off Call List",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s10.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0015",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Patient Balance",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r01.s10.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0016",
+   "section": "SORT BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Appointment Date",
+    "Provider (Last Name) – Appointment Date",
+    "Patient Chart#",
+    "Patient Last Name"
+   ],
+   "count": 1,
+   "defaults": {
+    "Appointment Date": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r01.s11.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0017",
+   "section": "PRINT FORMAT",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "PDF",
+    "Excel"
+   ],
+   "count": 105,
+   "defaults": {
+    "PDF": 104,
+    "Excel": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r02.s01.c01",
+    "appointment_reports.r03.s01.c01",
+    "appointment_reports.r04.s02.c01",
+    "appointment_reports.r05.s02.c01",
+    "appointment_reports.r06.s01.c01",
+    "appointment_reports.r07.s01.c01",
+    "appointment_reports.r08.s02.c01",
+    "appointment_reports.r09.s02.c01",
+    "daily_reports.r01.s01.c01",
+    "daily_reports.r02.s02.c01",
+    "daily_reports.r03.s02.c01",
+    "daily_reports.r04.s02.c01",
+    "daily_reports.r05.s01.c01",
+    "daily_reports.r06.s01.c01",
+    "daily_reports.r08.s01.c01",
+    "daily_reports.r09.s02.c01",
+    "daily_reports.r10.s01.c01",
+    "daily_reports.r11.s02.c01",
+    "daily_reports.r12.s01.c01",
+    "insurance_reports.r01.s10.c01",
+    "insurance_reports.r02.s02.c01",
+    "insurance_reports.r03.s02.c01",
+    "insurance_reports.r04.s01.c01",
+    "insurance_reports.r05.s02.c01",
+    "insurance_reports.r06.s01.c01",
+    "insurance_reports.r07.s02.c01",
+    "insurance_reports.r08.s10.c01",
+    "insurance_reports.r09.s01.c01",
+    "insurance_reports.r10.s01.c01",
+    "insurance_reports.r11.s01.c01",
+    "insurance_reports.r12.s02.c01",
+    "insurance_reports.r13.s01.c01",
+    "management_reports.r01.s01.c01",
+    "management_reports.r02.s02.c01",
+    "montly_reports.r02.s01.c01",
+    "montly_reports.r03.s02.c01",
+    "montly_reports.r04.s02.c01",
+    "montly_reports.r08.s02.c01",
+    "montly_reports.r09.s01.c01",
+    "my_reports.r01.s02.c01",
+    "my_reports.r02.s02.c01",
+    "my_reports.r03.s01.c01",
+    "my_reports.r04.s01.c01",
+    "my_reports.r05.s01.c01",
+    "ortho_reports.r01.s01.c01",
+    "ortho_reports.r02.s01.c01",
+    "ortho_reports.r03.s01.c01",
+    "ortho_reports.r04.s01.c01",
+    "ortho_reports.r05.s02.c01",
+    "patients_list_reports.r01.s01.c01",
+    "patients_list_reports.r02.s01.c01",
+    "patients_list_reports.r03.s02.c01",
+    "patients_list_reports.r04.s02.c01",
+    "patients_list_reports.r05.s01.c01",
+    "patients_list_reports.r06.s02.c01",
+    "patients_list_reports.r07.s02.c01",
+    "patients_list_reports.r08.s01.c01",
+    "patients_list_reports.r09.s01.c01",
+    "patients_list_reports.r10.s01.c01",
+    "patients_list_reports.r11.s02.c01",
+    "patients_list_reports.r12.s01.c01",
+    "providers_list_reports.r01.s01.c01",
+    "providers_list_reports.r02.s01.c01",
+    "providers_list_reports.r03.s01.c01",
+    "providers_list_reports.r04.s01.c01",
+    "recall_reports.r01.s01.c01",
+    "recall_reports.r02.s01.c01",
+    "recall_reports.r03.s01.c01",
+    "recall_reports.r04.s01.c01",
+    "refferal_reports.r01.s01.c01",
+    "refferal_reports.r02.s01.c01",
+    "refferal_reports.r03.s01.c01",
+    "refferal_reports.r04.s01.c01",
+    "refferal_reports.r05.s01.c01",
+    "refferal_reports.r06.s01.c01",
+    "refferal_reports.r07.s01.c01",
+    "refferal_reports.r08.s01.c01",
+    "security_list_reports.r01.s01.c01",
+    "security_list_reports.r02.s01.c01",
+    "security_list_reports.r03.s01.c01",
+    "security_list_reports.r04.s01.c01",
+    "setup_list_reports.r01.s01.c01",
+    "setup_list_reports.r02.s01.c01",
+    "setup_list_reports.r03.s01.c01",
+    "setup_list_reports.r04.s01.c01",
+    "setup_list_reports.r05.s01.c01",
+    "setup_list_reports.r06.s01.c01",
+    "setup_list_reports.r07.s01.c01",
+    "setup_list_reports.r08.s01.c01",
+    "setup_list_reports.r09.s01.c01",
+    "setup_list_reports.r10.s01.c01",
+    "setup_list_reports.r11.s01.c01",
+    "setup_list_reports.r12.s01.c01",
+    "setup_list_reports.r13.s01.c01",
+    "setup_list_reports.r14.s01.c01",
+    "setup_list_reports.r15.s01.c01",
+    "setup_list_reports.r16.s01.c01",
+    "setup_list_reports.r17.s01.c01",
+    "setup_list_reports.r18.s01.c01",
+    "setup_list_reports.r19.s01.c01",
+    "setup_list_reports.r20.s01.c01",
+    "treatmentplan_reports.r01.s01.c01",
+    "treatmentplan_reports.r02.s02.c01",
+    "treatmentplan_reports.r03.s01.c01",
+    "treatmentplan_reports.r04.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0018",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show Patient Balance",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r02.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0019",
+   "section": "REPORT TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Appointment List",
+    "Not Sent",
+    "Not Received",
+    "Due Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Appointment List": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r04.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0020",
+   "section": "DUE DATE",
+   "type": "date_input",
+   "label": "Due Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0021",
+   "section": "LAB",
+   "type": "picker",
+   "label": "Lab",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r04.s06.c01",
+    "appointment_reports.r09.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0022",
+   "section": "APPOINTMENT DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 9,
+   "defaults": {
+    "11/21/2026": 9
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r04.s07.c01",
+    "appointment_reports.r05.s05.c01",
+    "appointment_reports.r09.s06.c01",
+    "insurance_reports.r05.s06.c01",
+    "my_reports.r03.s04.c01",
+    "my_reports.r04.s04.c02",
+    "ortho_reports.r05.s05.c01",
+    "patients_list_reports.r01.s04.c01",
+    "patients_list_reports.r03.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0023",
+   "section": "APPOINTMENT DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 9,
+   "defaults": {
+    "11/21/2026": 9
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r04.s07.c02",
+    "appointment_reports.r05.s05.c02",
+    "appointment_reports.r09.s06.c02",
+    "insurance_reports.r05.s06.c02",
+    "my_reports.r03.s04.c02",
+    "my_reports.r04.s04.c03",
+    "ortho_reports.r05.s05.c02",
+    "patients_list_reports.r01.s04.c02",
+    "patients_list_reports.r03.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0024",
+   "section": "REPORT FORMAT",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Detail",
+    "Summary"
+   ],
+   "count": 14,
+   "defaults": {
+    "Detail": 13,
+    "Summary": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r05.s01.c01",
+    "daily_reports.r02.s01.c01",
+    "daily_reports.r03.s01.c01",
+    "daily_reports.r04.s01.c01",
+    "daily_reports.r11.s01.c01",
+    "insurance_reports.r02.s01.c01",
+    "insurance_reports.r12.s01.c01",
+    "management_reports.r02.s01.c01",
+    "montly_reports.r03.s01.c01",
+    "montly_reports.r04.s01.c01",
+    "montly_reports.r05.s01.c01",
+    "montly_reports.r08.s01.c01",
+    "security_list_reports.r04.s02.c01",
+    "treatmentplan_reports.r02.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0025",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Missed Appointments",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r05.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0026",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Cancelled Appointments",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "unchecked": 2,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r05.s06.c02",
+    "appointment_reports.r08.s10.c01",
+    "my_reports.r04.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0027",
+   "section": "VENDORS",
+   "type": "picker",
+   "label": "Vendors",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r06.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0028",
+   "section": "APPOINTMENT TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Regular",
+    "Archived"
+   ],
+   "count": 1,
+   "defaults": {
+    "Regular": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0029",
+   "section": "APPOINT NOW",
+   "type": "checkbox",
+   "label": "Only AppointNow Appointments",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0030",
+   "section": "APPOINT NOW",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Both",
+    "Appoint Now",
+    "Appoint Now API"
+   ],
+   "count": 1,
+   "defaults": {
+    "Both": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "appointment_reports.r08.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0031",
+   "section": "PROVIDER/USER",
+   "type": "picker",
+   "label": "Provider",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "ALL": 4
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s05.c01",
+    "daily_reports.r02.s04.c01",
+    "daily_reports.r05.s03.c01",
+    "daily_reports.r12.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0032",
+   "section": "PROVIDER/USER",
+   "type": "picker",
+   "label": "User",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "ALL": 4
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s05.c02",
+    "daily_reports.r02.s04.c02",
+    "daily_reports.r05.s03.c02",
+    "daily_reports.r12.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0033",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Appointment Date",
+    "Created On Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Appointment Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0034",
+   "section": "GROUP BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Provider",
+    "User"
+   ],
+   "count": 1,
+   "defaults": {
+    "Provider": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0035",
+   "section": "PAGE BREAK BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "None",
+    "Date",
+    "Provider",
+    "User"
+   ],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0036",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Patient Phone Number",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s10.c02",
+    "my_reports.r04.s06.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0037",
+   "section": "OTHER OPTIONS",
+   "type": "other",
+   "label": "[?]",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r08.s10.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0038",
+   "section": "REPORT TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "All",
+    "Sent Date",
+    "Due Date",
+    "Received Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "All": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r09.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0039",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Exclude Lab Received",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "appointment_reports.r09.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0040",
+   "section": "REPORT DATE",
+   "type": "date_input",
+   "label": "Report Date",
+   "options": [],
+   "count": 5,
+   "defaults": {
+    "11/21/2026": 5
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r01.s04.c01",
+    "insurance_reports.r08.s05.c01",
+    "insurance_reports.r09.s03.c02",
+    "montly_reports.r03.s05.c01",
+    "montly_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0041",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Transaction Date",
+    "Created Date"
+   ],
+   "count": 2,
+   "defaults": {
+    "Transaction Date": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s05.c01",
+    "my_reports.r01.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0042",
+   "section": "PATIENT TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Both",
+    "General",
+    "Ortho"
+   ],
+   "count": 5,
+   "defaults": {
+    "Both": 5
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s06.c01",
+    "montly_reports.r03.s06.c01",
+    "montly_reports.r04.s06.c01",
+    "my_reports.r01.s05.c01",
+    "patients_list_reports.r02.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0043",
+   "section": "TRANSACTION TYPES",
+   "type": "checkbox",
+   "label": "Services",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "checked": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s07.c01",
+    "ledger_reports.r03.s04.c01",
+    "my_reports.r01.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0044",
+   "section": "TRANSACTION TYPES",
+   "type": "checkbox",
+   "label": "Payments",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "checked": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s07.c02",
+    "ledger_reports.r03.s04.c02",
+    "my_reports.r01.s06.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0045",
+   "section": "TRANSACTION TYPES",
+   "type": "checkbox",
+   "label": "Adjustments",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s07.c03",
+    "my_reports.r01.s06.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0046",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show AR",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r02.s08.c01",
+    "montly_reports.r01.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0047",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Resp. Party Type",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s08.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0048",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show Datewise Summary",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s08.c03",
+    "montly_reports.r06.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0049",
+   "section": "GROUP BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "None",
+    "Provider",
+    "User"
+   ],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r02.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0050",
+   "section": "GROUP BY",
+   "type": "checkbox",
+   "label": "Page Break",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "unchecked": 4
+   },
+   "disabled_count": 4,
+   "control_ids": [
+    "daily_reports.r02.s09.c02",
+    "daily_reports.r03.s06.c02",
+    "daily_reports.r10.s08.c02",
+    "montly_reports.r01.s05.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0051",
+   "section": "PRODUCTION BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Code",
+    "Provider",
+    "Category",
+    "Carrier"
+   ],
+   "count": 1,
+   "defaults": {
+    "Code": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r03.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0052",
+   "section": "GROUP BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "None",
+    "Provider",
+    "Carrier"
+   ],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r03.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0053",
+   "section": "CODES",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "ALL": 3,
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r03.s07.c01",
+    "my_reports.r05.s06.c01",
+    "treatmentplan_reports.r02.s08.c01",
+    "treatmentplan_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0054",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include UCR",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "unchecked": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r03.s08.c01",
+    "ledger_reports.r02.s04.c02",
+    "my_reports.r05.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0055",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Z-Codes",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r03.s08.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0056",
+   "section": "FEE SCHEDULE TO COMPARE",
+   "type": "dropdown",
+   "label": "Fee Schedule To Compare",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "CIGNA PPO HAMILTON ( 128 )": 1,
+    "CP-40 ( 135 )": 1
+   },
+   "disabled_count": 2,
+   "control_ids": [
+    "daily_reports.r03.s09.c01",
+    "insurance_reports.r02.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0057",
+   "section": "PAYMENT TYPES",
+   "type": "picker",
+   "label": "Payment Types",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0058",
+   "section": "COLLECTION BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "None",
+    "Provider",
+    "Carrier",
+    "Code"
+   ],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r04.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0059",
+   "section": "COLLECTION BY",
+   "type": "checkbox",
+   "label": "Page Break",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r04.s06.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0060",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Adjustments(Collection)",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r04.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0061",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Transaction Date",
+    "Payment Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Transaction Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0062",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "Cash",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c01",
+    "montly_reports.r06.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0063",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "Check",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c02",
+    "montly_reports.r06.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0064",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "Credit Card",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c03",
+    "montly_reports.r06.s04.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0065",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "CareCredit",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c04",
+    "montly_reports.r06.s04.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0066",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "Direct Deposit",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c05",
+    "montly_reports.r06.s04.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0067",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "Internal Financing",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c06",
+    "montly_reports.r06.s04.c06"
+   ]
+  },
+  {
+   "signature_id": "sig0068",
+   "section": "PAYMENT TYPES",
+   "type": "checkbox",
+   "label": "None",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s05.c07"
+   ]
+  },
+  {
+   "signature_id": "sig0069",
+   "section": "CHECK TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Both",
+    "Patient Checks",
+    "Insurance Checks"
+   ],
+   "count": 1,
+   "defaults": {
+    "Both": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r05.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0070",
+   "section": "GROUP BATCH CHECKS",
+   "type": "checkbox",
+   "label": "GROUP BATCH CHECKS",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r05.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0071",
+   "section": "GROUP BATCH CHECKS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Batch ID(Batch Insurance Payment)",
+    "Check#"
+   ],
+   "count": 1,
+   "defaults": {
+    "Batch ID(Batch Insurance Payment)": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r05.s07.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0072",
+   "section": "OTHER OPTIONS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Show Responsible Party",
+    "Show Patient",
+    "None"
+   ],
+   "count": 1,
+   "defaults": {
+    "Show Responsible Party": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r05.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0073",
+   "section": "REPORT BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Next Scheduled Appointment",
+    "Next Scheduled Recall"
+   ],
+   "count": 1,
+   "defaults": {
+    "Next Scheduled Appointment": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0074",
+   "section": "PATIENTS",
+   "type": "text_input",
+   "label": "Patient",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0075",
+   "section": "PATIENTS",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s06.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0076",
+   "section": "OTHER OPTIONS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Recommended",
+    "Active Treatment Plan",
+    "Codes"
+   ],
+   "count": 1,
+   "defaults": {
+    "Recommended": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0077",
+   "section": "OTHER OPTIONS",
+   "type": "other",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s07.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0078",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Completed Procedures",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s07.c03",
+    "treatmentplan_reports.r01.s11.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0079",
+   "section": "SORT BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Appointment Date",
+    "Provider (Last Name) – Appointment Date",
+    "Operatory – Appointment Date",
+    "Patient Last Name"
+   ],
+   "count": 1,
+   "defaults": {
+    "Appointment Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0080",
+   "section": "SORT BY",
+   "type": "checkbox",
+   "label": "Print Blank Routing Slip",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r07.s08.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0081",
+   "section": "PROVIDER",
+   "type": "picker",
+   "label": "Preferred Provider",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r08.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0082",
+   "section": "PROGRESS NOTES TO PRINT",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Detail",
+    "Unsigned",
+    "Missing"
+   ],
+   "count": 1,
+   "defaults": {
+    "Detail": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r08.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0083",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "DOS Date",
+    "Created On Date",
+    "Appointment Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "DOS Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r08.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0084",
+   "section": "APPOINTMENTS TO INCLUDE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Only with Missing Progress Notes",
+    "ALL"
+   ],
+   "count": 2,
+   "defaults": {
+    "Only with Missing Progress Notes": 2
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r08.s06.c01",
+    "my_reports.r03.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0085",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Page Break by Patient",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r08.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0086",
+   "section": "ANALYSIS BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Category",
+    "Carrier"
+   ],
+   "count": 1,
+   "defaults": {
+    "Category": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r09.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0087",
+   "section": "CATEGORY",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r09.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0088",
+   "section": "CARRIER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "ALL": 4
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r09.s07.c01",
+    "setup_list_reports.r02.s06.c01",
+    "setup_list_reports.r03.s02.c01",
+    "setup_list_reports.r04.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0089",
+   "section": "PATIENT HAS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "ALL",
+    "Appointment",
+    "Transaction in Ledger",
+    "Progress Notes"
+   ],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0090",
+   "section": "BUT MISSING",
+   "type": "checkbox",
+   "label": "Appointment",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0091",
+   "section": "BUT MISSING",
+   "type": "checkbox",
+   "label": "Transaction in Ledger",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s06.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0092",
+   "section": "BUT MISSING",
+   "type": "checkbox",
+   "label": "Progress Notes",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s06.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0093",
+   "section": "BUT MISSING",
+   "type": "checkbox",
+   "label": "Progress Notes with Signature",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s06.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0094",
+   "section": "SORT BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Date",
+    "Patient Lastname",
+    "Provider"
+   ],
+   "count": 1,
+   "defaults": {
+    "Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0095",
+   "section": "GROUP BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "None",
+    "Provider"
+   ],
+   "count": 5,
+   "defaults": {
+    "None": 5
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r10.s08.c01",
+    "insurance_reports.r02.s11.c01",
+    "insurance_reports.r03.s09.c01",
+    "insurance_reports.r08.s11.c01",
+    "montly_reports.r01.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0096",
+   "section": "CARRIER",
+   "type": "picker",
+   "label": "Carriers",
+   "options": [],
+   "count": 8,
+   "defaults": {
+    "ALL": 8
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r11.s06.c01",
+    "insurance_reports.r01.s07.c01",
+    "insurance_reports.r02.s07.c01",
+    "insurance_reports.r03.s08.c01",
+    "insurance_reports.r06.s04.c01",
+    "insurance_reports.r08.s07.c01",
+    "insurance_reports.r11.s07.c01",
+    "insurance_reports.r12.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0097",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Transaction Date",
+    "Service Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Transaction Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0098",
+   "section": "PATIENT NAME RANGE",
+   "type": "text_input",
+   "label": "Start Name",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "AAAAA": 1,
+    "[name of the patient open at capture]": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s05.c01",
+    "ledger_reports.r03.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0099",
+   "section": "PATIENT NAME RANGE",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "": 4
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s05.c02",
+    "daily_reports.r12.s05.c04",
+    "ledger_reports.r03.s03.c02",
+    "ledger_reports.r03.s03.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0100",
+   "section": "PATIENT NAME RANGE",
+   "type": "text_input",
+   "label": "End Name",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ZZZZZ": 1,
+    "[name of the patient open at capture]": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s05.c03",
+    "ledger_reports.r03.s03.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0101",
+   "section": "PAYMENT/ADJ CODES",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0102",
+   "section": "PAYMENT/ADJ CODES",
+   "type": "button",
+   "label": "NONE",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s07.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0103",
+   "section": "INSURANCE PLANS/SUB TYPES",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0104",
+   "section": "CODE/CATEGORY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Code",
+    "Category"
+   ],
+   "count": 1,
+   "defaults": {
+    "Code": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0105",
+   "section": "CODE/CATEGORY",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s09.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0106",
+   "section": "CODE/CATEGORY",
+   "type": "button",
+   "label": "NONE",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s09.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0107",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Age Range",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "unchecked": 1,
+    "checked": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s10.c01",
+    "recall_reports.r01.s07.c01",
+    "recall_reports.r02.s08.c01",
+    "recall_reports.r03.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0108",
+   "section": "OTHER OPTIONS",
+   "type": "number_input",
+   "label": "From",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "0": 4
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r12.s10.c02",
+    "recall_reports.r01.s07.c02",
+    "recall_reports.r02.s08.c02",
+    "recall_reports.r03.s09.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0109",
+   "section": "OTHER OPTIONS",
+   "type": "number_input",
+   "label": "To",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "999": 4
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r12.s10.c03",
+    "recall_reports.r01.s07.c03",
+    "recall_reports.r02.s08.c03",
+    "recall_reports.r03.s09.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0110",
+   "section": "OTHER OPTIONS",
+   "type": "dropdown",
+   "label": "Amount",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "All Amount": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s10.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0111",
+   "section": "OTHER OPTIONS",
+   "type": "number_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "0": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "daily_reports.r12.s10.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0112",
+   "section": "OTHER OPTIONS",
+   "type": "radio_group",
+   "label": "Group By",
+   "options": [
+    "Code",
+    "Username",
+    "Insurance Plan",
+    "Transaction Provider"
+   ],
+   "count": 1,
+   "defaults": {
+    "Code": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "daily_reports.r12.s10.c06"
+   ]
+  },
+  {
+   "signature_id": "sig0113",
+   "section": "CLAIM/PRE-AUTH",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Claims",
+    "Pre-Authorization"
+   ],
+   "count": 2,
+   "defaults": {
+    "Claims": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s01.c01",
+    "insurance_reports.r08.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0114",
+   "section": "CLAIM TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Both",
+    "Dental",
+    "Medical"
+   ],
+   "count": 3,
+   "defaults": {
+    "Both": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s02.c01",
+    "insurance_reports.r03.s01.c01",
+    "insurance_reports.r08.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0115",
+   "section": "NAME RANGE",
+   "type": "text_input",
+   "label": "Start Name",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "AAAAA": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s05.c01",
+    "insurance_reports.r03.s06.c01",
+    "treatmentplan_reports.r01.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0116",
+   "section": "NAME RANGE",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 6,
+   "defaults": {
+    "": 6
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s05.c02",
+    "insurance_reports.r01.s05.c04",
+    "insurance_reports.r03.s06.c02",
+    "insurance_reports.r03.s06.c04",
+    "treatmentplan_reports.r01.s05.c02",
+    "treatmentplan_reports.r01.s05.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0117",
+   "section": "NAME RANGE",
+   "type": "text_input",
+   "label": "End Name",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "ZZZZZ": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s05.c03",
+    "insurance_reports.r03.s06.c03",
+    "treatmentplan_reports.r01.s05.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0118",
+   "section": "CLAIM AMOUNT OVER OR EQUAL TO",
+   "type": "number_input",
+   "label": "",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "0.00": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s06.c01",
+    "insurance_reports.r03.s07.c01",
+    "insurance_reports.r08.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0119",
+   "section": "CLAIM SENT TYPE",
+   "type": "checkbox",
+   "label": "EClaim",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s08.c01",
+    "insurance_reports.r08.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0120",
+   "section": "CLAIM SENT TYPE",
+   "type": "checkbox",
+   "label": "Paper",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s08.c02",
+    "insurance_reports.r08.s08.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0121",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Resolved Claims",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r01.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0122",
+   "section": "FACILITY ID",
+   "type": "text_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r02.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0123",
+   "section": "INCLUDE UCR",
+   "type": "checkbox",
+   "label": "Include UCR",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r02.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0124",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Print All Codes",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r02.s10.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0125",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Fees Charged",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r02.s10.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0126",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Print Office Address",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r02.s10.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0127",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show Billing Provider For Hygienist",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r02.s10.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0128",
+   "section": "CREATED ON DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "11/21/2026": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r03.s05.c01",
+    "insurance_reports.r13.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0129",
+   "section": "CREATED ON DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "11/21/2026": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r03.s05.c02",
+    "insurance_reports.r13.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0130",
+   "section": "DPS ELIGIBILITY",
+   "type": "checkbox",
+   "label": "On Hold",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r05.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0131",
+   "section": "DATE RANGE TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Appointment Date",
+    "Appointment Created Date",
+    "Both"
+   ],
+   "count": 1,
+   "defaults": {
+    "Appointment Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r05.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0132",
+   "section": "APPOINTMENT CREATED DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "insurance_reports.r05.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0133",
+   "section": "APPOINTMENT CREATED DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "insurance_reports.r05.s07.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0134",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include patients with no insurance",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r05.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0135",
+   "section": "TREATMENT PLAN/RECALL",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Treatment Plan",
+    "Recall"
+   ],
+   "count": 1,
+   "defaults": {
+    "Treatment Plan": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r07.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0136",
+   "section": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "12/01/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r07.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0137",
+   "section": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/30/2027": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r07.s05.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0138",
+   "section": "EXCLUDE RESPONSIBLE PARTY TYPE",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "None": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r07.s06.c01",
+    "patients_list_reports.r09.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0139",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Current",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r08.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0140",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Over 30",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r08.s09.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0141",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Over 60",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r08.s09.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0142",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Over 90",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r08.s09.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0143",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Over 120",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r08.s09.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0144",
+   "section": "REPORT DATE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "ALL",
+    "DOS Date",
+    "Transaction Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r09.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0145",
+   "section": "CLAIM TYPE",
+   "type": "checkbox",
+   "label": "Primary",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r09.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0146",
+   "section": "CLAIM TYPE",
+   "type": "checkbox",
+   "label": "Secondary",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r09.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0147",
+   "section": "CLAIM TYPE",
+   "type": "checkbox",
+   "label": "Tertiary",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r09.s04.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0148",
+   "section": "CLAIM TYPE",
+   "type": "checkbox",
+   "label": "Quaternary",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r09.s04.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0149",
+   "section": "835 CLAIM MATCHING STATUS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Both",
+    "Matched",
+    "UnMatched"
+   ],
+   "count": 1,
+   "defaults": {
+    "Both": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r11.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0150",
+   "section": "CLAIM STATUS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "ALL",
+    "Partial Closed",
+    "Closed"
+   ],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r11.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0151",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "By Payment Date",
+    "By File Received on Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "By Payment Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r11.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0152",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show Details UCR",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r11.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0153",
+   "section": "EXCLUDE REASON CODE",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "insurance_reports.r12.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0154",
+   "section": "REPORT FORMAT",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Account Ledger",
+    "Patient Ledger"
+   ],
+   "count": 1,
+   "defaults": {
+    "Account Ledger": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r01.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0155",
+   "section": "RESPONSIBLE PARTY",
+   "type": "text_input",
+   "label": "Responsible Party",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "[responsible party open at capture]": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r01.s04.c01",
+    "ledger_reports.r04.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0156",
+   "section": "RESPONSIBLE PARTY",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r01.s04.c02",
+    "ledger_reports.r04.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0157",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Print all transactions (includes statements, ledger notes)",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r01.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0158",
+   "section": "RESPONSIBLE PARTY NAME RANGE",
+   "type": "text_input",
+   "label": "Start Name",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "[name of the patient open at capture]": 1,
+    "AAAAA": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r02.s03.c01",
+    "montly_reports.r03.s07.c01",
+    "montly_reports.r04.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0159",
+   "section": "RESPONSIBLE PARTY NAME RANGE",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 6,
+   "defaults": {
+    "": 6
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r02.s03.c02",
+    "ledger_reports.r02.s03.c04",
+    "montly_reports.r03.s07.c02",
+    "montly_reports.r03.s07.c04",
+    "montly_reports.r04.s07.c02",
+    "montly_reports.r04.s07.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0160",
+   "section": "RESPONSIBLE PARTY NAME RANGE",
+   "type": "text_input",
+   "label": "End Name",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "[name of the patient open at capture]": 1,
+    "ZZZZZ": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r02.s03.c03",
+    "montly_reports.r03.s07.c03",
+    "montly_reports.r04.s07.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0161",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show charges break down",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r02.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0162",
+   "section": "TRANSACTION TYPES",
+   "type": "checkbox",
+   "label": "Adjustment",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ledger_reports.r03.s04.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0163",
+   "section": "REPORT DATE",
+   "type": "date_input",
+   "label": "Billing Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r01.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0164",
+   "section": "PLAN TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Regular",
+    "Ortho"
+   ],
+   "count": 2,
+   "defaults": {
+    "Regular": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r01.s04.c01",
+    "patients_list_reports.r07.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0165",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Ortho Patient",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "management_reports.r01.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0166",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Ortho Primary",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "management_reports.r01.s05.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0167",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Ortho Secondary",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "management_reports.r01.s05.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0168",
+   "section": "OTHER OPTIONS",
+   "type": "number_input",
+   "label": "Patient Balance Greater Than",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "0.00": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r02.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0169",
+   "section": "USER",
+   "type": "picker",
+   "label": "User",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "ALL": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r03.s02.c01",
+    "management_reports.r04.s03.c01",
+    "security_list_reports.r01.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0170",
+   "section": "PATIENT",
+   "type": "text_input",
+   "label": "Patient",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r03.s04.c01",
+    "patients_list_reports.r05.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0171",
+   "section": "PATIENT",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r03.s04.c02",
+    "patients_list_reports.r05.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0172",
+   "section": "OTHER OPTIONS",
+   "type": "dropdown",
+   "label": "Audit Type",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r03.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0173",
+   "section": "OTHER OPTIONS",
+   "type": "dropdown",
+   "label": "Module Type",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r03.s05.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0174",
+   "section": "REPORT FORMAT",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Detail",
+    "Summary",
+    "Employee Total Only"
+   ],
+   "count": 2,
+   "defaults": {
+    "Detail": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "management_reports.r04.s01.c01",
+    "my_reports.r02.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0175",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Group By Office",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 2,
+   "control_ids": [
+    "management_reports.r04.s05.c01",
+    "my_reports.r02.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0176",
+   "section": "PROVIDER",
+   "type": "checkbox",
+   "label": "GROUP BY PROVIDER",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s04.c01",
+    "montly_reports.r04.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0177",
+   "section": "PROVIDER",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Preferred Provider",
+    "Transaction Provider"
+   ],
+   "count": 2,
+   "defaults": {
+    "Preferred Provider": 2
+   },
+   "disabled_count": 2,
+   "control_ids": [
+    "montly_reports.r03.s04.c02",
+    "montly_reports.r04.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0178",
+   "section": "AGING BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Account AR",
+    "Patient AR"
+   ],
+   "count": 2,
+   "defaults": {
+    "Account AR": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s09.c01",
+    "montly_reports.r04.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0179",
+   "section": "AGING BY",
+   "type": "number_input",
+   "label": "Account Balance Over",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "0.00": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s09.c02",
+    "montly_reports.r04.s09.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0180",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "SHOW ONLY CREDIT BALANCES",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c01",
+    "montly_reports.r04.s10.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0181",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "Current",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c02",
+    "montly_reports.r04.s10.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0182",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "Over 30",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c03",
+    "montly_reports.r04.s10.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0183",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "Over 60",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c04",
+    "montly_reports.r04.s10.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0184",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "Over 90",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c05",
+    "montly_reports.r04.s10.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0185",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "Over 120",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c06",
+    "montly_reports.r04.s10.c06"
+   ]
+  },
+  {
+   "signature_id": "sig0186",
+   "section": "AGING",
+   "type": "checkbox",
+   "label": "Include Credit Balance",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s10.c07",
+    "montly_reports.r04.s10.c07"
+   ]
+  },
+  {
+   "signature_id": "sig0187",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Exclude patients sent to collection.",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s11.c01",
+    "montly_reports.r04.s11.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0188",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s11.c02",
+    "montly_reports.r04.s11.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0189",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Balance Status",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s11.c03",
+    "montly_reports.r04.s11.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0190",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Contract Balances",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s11.c04",
+    "montly_reports.r04.s11.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0191",
+   "section": "SORT BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Resp. Party Last name [?]",
+    "Resp. Party ID [?]"
+   ],
+   "count": 2,
+   "defaults": {
+    "Resp. Party Last name [?]": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r03.s12.c01",
+    "montly_reports.r04.s12.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0192",
+   "section": "DATE RANGE",
+   "type": "checkbox",
+   "label": "Print all unallocated payment/adjustments as of today",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r07.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0193",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Exclude Credit Balances",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r07.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0194",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Inactive Patients",
+   "options": [],
+   "count": 8,
+   "defaults": {
+    "unchecked": 8
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r07.s03.c02",
+    "recall_reports.r01.s07.c04",
+    "recall_reports.r02.s08.c04",
+    "recall_reports.r03.s09.c04",
+    "recall_reports.r04.s06.c01",
+    "treatmentplan_reports.r02.s11.c01",
+    "treatmentplan_reports.r03.s06.c01",
+    "treatmentplan_reports.r04.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0195",
+   "section": "OTHER OPTIONS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Payments and Adjustments",
+    "Payments only",
+    "Adjustments only"
+   ],
+   "count": 1,
+   "defaults": {
+    "Payments and Adjustments": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "montly_reports.r09.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0196",
+   "section": "REPORT BY",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 5,
+   "defaults": {
+    "User": 1,
+    "Appointment": 1,
+    "Day": 1,
+    "Attached to Provider": 1,
+    "Created Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "my_reports.r01.s01.c01",
+    "patients_list_reports.r03.s01.c01",
+    "patients_list_reports.r04.s01.c01",
+    "patients_list_reports.r06.s01.c01",
+    "patients_list_reports.r09.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0197",
+   "section": "PRINT",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Patient ID",
+    "Patient Chart#"
+   ],
+   "count": 1,
+   "defaults": {
+    "Patient ID": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "my_reports.r01.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0198",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Show Datewise Distribution",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "my_reports.r01.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0199",
+   "section": "APPOINTMENT DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Appointment Date",
+    "Created On Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Appointment Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "my_reports.r04.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0200",
+   "section": "CORRESPONDING PROVIDER",
+   "type": "text_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "my_reports.r05.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0201",
+   "section": "PRODUCTION BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Code",
+    "Provider",
+    "Category"
+   ],
+   "count": 1,
+   "defaults": {
+    "Code": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "my_reports.r05.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0202",
+   "section": "FEE SCHEDULE TO COMPARE",
+   "type": "dropdown",
+   "label": "Fee Schedule",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "CIGNA PPO HAMILTON ( 128 )": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "my_reports.r05.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0203",
+   "section": "FEE SCHEDULE TO COMPARE",
+   "type": "other",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "my_reports.r05.s08.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0204",
+   "section": "NUMBER OF WEEKS SINCE LAST VISIT",
+   "type": "number_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "6": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r01.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0205",
+   "section": "VISIT DATE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r02.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0206",
+   "section": "VISIT DATE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r02.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0207",
+   "section": "ORTHO START DATE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "": 1,
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r03.s03.c01",
+    "ortho_reports.r04.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0208",
+   "section": "ORTHO START DATE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "": 1,
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r03.s03.c02",
+    "ortho_reports.r04.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0209",
+   "section": "PATIENT LAST VISIT",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r03.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0210",
+   "section": "PATIENT LAST VISIT",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r03.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0211",
+   "section": "ORTHO STATUS",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r03.s05.c01",
+    "ortho_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0212",
+   "section": "PATIENT FIRST VISIT",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r04.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0213",
+   "section": "PATIENT FIRST VISIT",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r04.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0214",
+   "section": "MISSING",
+   "type": "checkbox",
+   "label": "Ledger Transaction",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r05.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0215",
+   "section": "MISSING",
+   "type": "checkbox",
+   "label": "Ortho Visit",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r05.s01.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0216",
+   "section": "APPOINTMENT PROVIDER",
+   "type": "picker",
+   "label": "Appointment Provider",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r05.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0217",
+   "section": "VISIT DOCTOR",
+   "type": "picker",
+   "label": "Visit Doctor",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "ortho_reports.r05.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0218",
+   "section": "REPORT TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Summary",
+    "Detail"
+   ],
+   "count": 3,
+   "defaults": {
+    "Summary": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r01.s02.c01",
+    "patients_list_reports.r04.s03.c01",
+    "patients_list_reports.r08.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0219",
+   "section": "PATIENT STATUS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Active",
+    "Inactive",
+    "Both"
+   ],
+   "count": 2,
+   "defaults": {
+    "Active": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r02.s02.c01",
+    "patients_list_reports.r06.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0220",
+   "section": "INCLUDE PATIENT TYPE",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r02.s06.c01",
+    "patients_list_reports.r06.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0221",
+   "section": "SEX",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "------": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r02.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0222",
+   "section": "AGE RANGE",
+   "type": "number_input",
+   "label": "From",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r02.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0223",
+   "section": "AGE RANGE",
+   "type": "number_input",
+   "label": "To",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r02.s09.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0224",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Patients With No Email",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r02.s10.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0225",
+   "section": "DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Transaction Date",
+    "DOS Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Transaction Date": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r04.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0226",
+   "section": "PRINT NOTES",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r05.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0227",
+   "section": "SPECIALTY",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 5,
+   "defaults": {
+    "ALL": 5
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r06.s08.c01",
+    "providers_list_reports.r01.s04.c01",
+    "refferal_reports.r02.s06.c01",
+    "refferal_reports.r04.s08.c01",
+    "refferal_reports.r07.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0228",
+   "section": "PREFERRED PROVIDER",
+   "type": "picker",
+   "label": "Preferred Provider",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r07.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0229",
+   "section": "PLAN SETUP DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r07.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0230",
+   "section": "PLAN SETUP DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r07.s05.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0231",
+   "section": "CREDIT CARD ON FILE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "Both": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r07.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0232",
+   "section": "CREATED DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "11/21/2026": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r08.s04.c01",
+    "patients_list_reports.r09.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0233",
+   "section": "CREATED DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "11/21/2026": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r08.s04.c02",
+    "patients_list_reports.r09.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0234",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Inactive Accounts (All patients inactive in account)",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r09.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0235",
+   "section": "ACCOUNT BALANCE RANGE",
+   "type": "number_input",
+   "label": "Start",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "0.00": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r10.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0236",
+   "section": "ACCOUNT BALANCE RANGE",
+   "type": "number_input",
+   "label": "End",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "999999.99": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r10.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0237",
+   "section": "STATEMENT TYPE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Paper",
+    "Email",
+    "Both"
+   ],
+   "count": 1,
+   "defaults": {
+    "Paper": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r11.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0238",
+   "section": "STATEMENT DATE",
+   "type": "date_input",
+   "label": "Statement Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r11.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0239",
+   "section": "STATEMENT SENT DATE",
+   "type": "date_input",
+   "label": "Statement Sent Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "patients_list_reports.r12.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0240",
+   "section": "STATE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "ALL": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "providers_list_reports.r01.s05.c01",
+    "setup_list_reports.r01.s03.c01",
+    "setup_list_reports.r03.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0241",
+   "section": "LAST VISIT DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "providers_list_reports.r02.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0242",
+   "section": "LAST VISIT DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "providers_list_reports.r02.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0243",
+   "section": "PROCEDURE DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 5,
+   "defaults": {
+    "11/21/2026": 5
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r01.s03.c01",
+    "recall_reports.r04.s03.c01",
+    "refferal_reports.r01.s03.c01",
+    "refferal_reports.r05.s03.c01",
+    "refferal_reports.r06.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0244",
+   "section": "PROCEDURE DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 5,
+   "defaults": {
+    "11/21/2026": 5
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r01.s03.c02",
+    "recall_reports.r04.s03.c02",
+    "refferal_reports.r01.s03.c02",
+    "refferal_reports.r05.s03.c02",
+    "refferal_reports.r06.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0245",
+   "section": "TRANSACTION PROVIDER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r01.s05.c01",
+    "recall_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0246",
+   "section": "RECALL PROCEDURE CODES",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "ALL": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r01.s06.c01",
+    "recall_reports.r02.s07.c01",
+    "recall_reports.r03.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0247",
+   "section": "SCHEDULED DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r02.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0248",
+   "section": "SCHEDULED DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r02.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0249",
+   "section": "PREFERRED PROVIDER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r02.s05.c01",
+    "recall_reports.r03.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0250",
+   "section": "PREFERRED HYGIENIST",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r02.s06.c01",
+    "recall_reports.r03.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0251",
+   "section": "RECALL DATE RANGE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Recall Date Range",
+    "No Recall Date"
+   ],
+   "count": 1,
+   "defaults": {
+    "Recall Date Range": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r03.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0252",
+   "section": "RECALL DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r03.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0253",
+   "section": "RECALL DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r03.s03.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0254",
+   "section": "SCHEDULED/NOT SCHEDULED",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "ALL",
+    "Scheduled",
+    "Not Scheduled"
+   ],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "recall_reports.r03.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0255",
+   "section": "FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r01.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0256",
+   "section": "FIRST VISIT DATE RANGE ( LEAVE BLANK FOR ALL PATIENTS )",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r01.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0257",
+   "section": "ZIP CODE RANGE",
+   "type": "text_input",
+   "label": "From",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r01.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0258",
+   "section": "ZIP CODE RANGE",
+   "type": "text_input",
+   "label": "Through",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r01.s05.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0259",
+   "section": "REFERRAL TYPE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "ALL": 4
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r01.s06.c01",
+    "refferal_reports.r03.s04.c01",
+    "refferal_reports.r05.s04.c01",
+    "refferal_reports.r06.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0260",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Group By Zip Code",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r01.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0261",
+   "section": "REFERRED OUT DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r02.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0262",
+   "section": "REFERRED OUT DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/21/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r02.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0263",
+   "section": "REFERRAL OUT TO",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r02.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0264",
+   "section": "REFERRED TO/BY",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r03.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0265",
+   "section": "REFERRED FROM OFFICE/GROUP",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Office",
+    "Office Group"
+   ],
+   "count": 2,
+   "defaults": {
+    "Office": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s02.c01",
+    "refferal_reports.r07.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0266",
+   "section": "REFERRED FROM OFFICE/GROUP",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "108": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s02.c02",
+    "refferal_reports.r07.s02.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0267",
+   "section": "REFERRAL DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "11/21/2026": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s03.c01",
+    "refferal_reports.r07.s04.c01",
+    "refferal_reports.r08.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0268",
+   "section": "REFERRAL DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 3,
+   "defaults": {
+    "11/21/2026": 3
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s03.c02",
+    "refferal_reports.r07.s04.c02",
+    "refferal_reports.r08.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0269",
+   "section": "REFERRED FROM PROVIDER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s04.c01",
+    "refferal_reports.r07.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0270",
+   "section": "REFERRED TO",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0271",
+   "section": "PROCEDURE CODES",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s06.c01",
+    "refferal_reports.r07.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0272",
+   "section": "USERS",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s07.c01",
+    "refferal_reports.r07.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0273",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "All",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c01",
+    "refferal_reports.r08.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0274",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Accepted",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c02",
+    "refferal_reports.r08.s06.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0275",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Rejected",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c03",
+    "refferal_reports.r08.s06.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0276",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Pending",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c04",
+    "refferal_reports.r08.s06.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0277",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Cancelled",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c05",
+    "refferal_reports.r08.s06.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0278",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Completed",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c06",
+    "refferal_reports.r08.s06.c06"
+   ]
+  },
+  {
+   "signature_id": "sig0279",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "In Progress",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c07",
+    "refferal_reports.r08.s06.c07"
+   ]
+  },
+  {
+   "signature_id": "sig0280",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Not Needed",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c08",
+    "refferal_reports.r08.s06.c08"
+   ]
+  },
+  {
+   "signature_id": "sig0281",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Expired",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r04.s09.c09",
+    "refferal_reports.r08.s06.c09"
+   ]
+  },
+  {
+   "signature_id": "sig0282",
+   "section": "REFERRED TO OFFICE/GROUP",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Office",
+    "Office Group"
+   ],
+   "count": 2,
+   "defaults": {
+    "Office": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r07.s03.c01",
+    "refferal_reports.r08.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0283",
+   "section": "REFERRED TO OFFICE/GROUP",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 1,
+    "108": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r07.s03.c02",
+    "refferal_reports.r08.s02.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0284",
+   "section": "REFFERED TO PROVIDER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r07.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0285",
+   "section": "STATUSES",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "All",
+    "Completed",
+    "Incomplete"
+   ],
+   "count": 1,
+   "defaults": {
+    "All": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r07.s10.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0286",
+   "section": "STATUSES",
+   "type": "checkbox",
+   "label": "Exclude Deleted Referrals",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "checked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r07.s10.c02",
+    "refferal_reports.r08.s06.c10"
+   ]
+  },
+  {
+   "signature_id": "sig0287",
+   "section": "REFERRED TO PROVIDER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0288",
+   "section": "REFERRED FROM",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0289",
+   "section": "CONTACT STATUSES",
+   "type": "checkbox",
+   "label": "All",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0290",
+   "section": "CONTACT STATUSES",
+   "type": "checkbox",
+   "label": "No Response",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s07.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0291",
+   "section": "CONTACT STATUSES",
+   "type": "checkbox",
+   "label": "Patient To Call",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s07.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0292",
+   "section": "CONTACT STATUSES",
+   "type": "checkbox",
+   "label": "Appointment Scheduled",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s07.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0293",
+   "section": "CONTACT STATUSES",
+   "type": "checkbox",
+   "label": "Referral Refused",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "refferal_reports.r08.s07.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0294",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Inactive Users",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "security_list_reports.r01.s03.c01",
+    "security_list_reports.r04.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0295",
+   "section": "SECURITY GROUP",
+   "type": "picker",
+   "label": "Group",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "security_list_reports.r04.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0296",
+   "section": "LOCATION",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Office",
+    "Office Group"
+   ],
+   "count": 1,
+   "defaults": {
+    "Office": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "security_list_reports.r04.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0297",
+   "section": "LOCATION",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "108": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "security_list_reports.r04.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0298",
+   "section": "EMPLOYER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r01.s02.c01",
+    "setup_list_reports.r02.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0299",
+   "section": "SORT BY",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Carrier",
+    "Employer"
+   ],
+   "count": 1,
+   "defaults": {
+    "Carrier": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r02.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0300",
+   "section": "DATE RANGE",
+   "type": "checkbox",
+   "label": "Created On",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r02.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0301",
+   "section": "DATE RANGE",
+   "type": "checkbox",
+   "label": "Modified On",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r02.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0302",
+   "section": "USER",
+   "type": "checkbox",
+   "label": "Include User in Filters",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r02.s05.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0303",
+   "section": "USER",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r02.s05.c02",
+    "setup_list_reports.r05.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0304",
+   "section": "GROUP #",
+   "type": "text_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r02.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0305",
+   "section": "CATEGORY",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r06.s02.c01",
+    "setup_list_reports.r08.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0306",
+   "section": "PRODUCTION TYPE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "ALL": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r06.s03.c01",
+    "setup_list_reports.r08.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0307",
+   "section": "STATUS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Active",
+    "Inactive",
+    "Both"
+   ],
+   "count": 2,
+   "defaults": {
+    "Active": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r06.s04.c01",
+    "setup_list_reports.r08.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0308",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Only Tooth Required",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r06.s05.c01",
+    "setup_list_reports.r08.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0309",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Only Surface Required",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r06.s05.c02",
+    "setup_list_reports.r08.s08.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0310",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Only Bill to Insurance",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "unchecked": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r06.s05.c03",
+    "setup_list_reports.r08.s08.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0311",
+   "section": "SUMMARY/DETAIL",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Summary",
+    "Detail"
+   ],
+   "count": 1,
+   "defaults": {
+    "Summary": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r07.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0312",
+   "section": "PROCEDURE CODE TYPE",
+   "type": "checkbox",
+   "label": "Dental",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r08.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0313",
+   "section": "PROCEDURE CODE TYPE",
+   "type": "checkbox",
+   "label": "Medical",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r08.s02.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0314",
+   "section": "PROCEDURE CODE TYPE",
+   "type": "checkbox",
+   "label": "Other",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r08.s02.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0315",
+   "section": "FEE SCHEDULE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "CIGNA PPO HAMILTON": 1,
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r08.s05.c01",
+    "setup_list_reports.r10.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0316",
+   "section": "EFFECTIVE DATE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "01/01/2020": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r08.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0317",
+   "section": "TYPE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r09.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0318",
+   "section": "CLASS",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r09.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0319",
+   "section": "CAPITATION FEE SCHEDULE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r11.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0320",
+   "section": "MACRO CATEGORY",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "setup_list_reports.r19.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0321",
+   "section": "[no header] LEFT TABLE",
+   "type": "date_input",
+   "label": "Statement Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "11/20/2026": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0322",
+   "section": "[no header] LEFT TABLE",
+   "type": "other",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0323",
+   "section": "[no header] LEFT TABLE",
+   "type": "button",
+   "label": "FINANCE CHARGES",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0324",
+   "section": "[no header] LEFT TABLE",
+   "type": "static_text",
+   "label": "Responsible Party Range",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0325",
+   "section": "[no header] LEFT TABLE",
+   "type": "text_input",
+   "label": "Start Name",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "AAAAA": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0326",
+   "section": "[no header] LEFT TABLE",
+   "type": "button",
+   "label": "SEARCH",
+   "options": [],
+   "count": 2,
+   "defaults": {
+    "": 2
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c06",
+    "statements_reports.r01.s01.c08"
+   ]
+  },
+  {
+   "signature_id": "sig0327",
+   "section": "[no header] LEFT TABLE",
+   "type": "text_input",
+   "label": "End Name",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ZZZZZ": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c07"
+   ]
+  },
+  {
+   "signature_id": "sig0328",
+   "section": "[no header] LEFT TABLE",
+   "type": "number_input",
+   "label": "Account Balance Over",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "5.00": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c09"
+   ]
+  },
+  {
+   "signature_id": "sig0329",
+   "section": "[no header] LEFT TABLE",
+   "type": "checkbox",
+   "label": "Include Credit Balances",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c10"
+   ]
+  },
+  {
+   "signature_id": "sig0330",
+   "section": "[no header] LEFT TABLE",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "Sort by Resp.Party Lastname",
+    "Sort by Resp.Party ID"
+   ],
+   "count": 1,
+   "defaults": {
+    "Sort by Resp.Party Lastname": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c11"
+   ]
+  },
+  {
+   "signature_id": "sig0331",
+   "section": "[no header] LEFT TABLE",
+   "type": "checkbox",
+   "label": "Suppress Aging",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c12"
+   ]
+  },
+  {
+   "signature_id": "sig0332",
+   "section": "[no header] LEFT TABLE",
+   "type": "checkbox",
+   "label": "Hide Insurance Shares",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c13"
+   ]
+  },
+  {
+   "signature_id": "sig0333",
+   "section": "[no header] LEFT TABLE",
+   "type": "checkbox",
+   "label": "Hide Credit Card Section",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s01.c14"
+   ]
+  },
+  {
+   "signature_id": "sig0334",
+   "section": "[no header] RIGHT TABLE",
+   "type": "static_text",
+   "label": "Last Statement Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0335",
+   "section": "[no header] RIGHT TABLE",
+   "type": "static_text",
+   "label": "Last Close Out Date",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "12/31/2019": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0336",
+   "section": "[no header] RIGHT TABLE",
+   "type": "static_text",
+   "label": "Print Reports",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c03"
+   ]
+  },
+  {
+   "signature_id": "sig0337",
+   "section": "[no header] RIGHT TABLE",
+   "type": "button",
+   "label": "PAPER STATEMENT SENT",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 1,
+   "control_ids": [
+    "statements_reports.r01.s02.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0338",
+   "section": "[no header] RIGHT TABLE",
+   "type": "checkbox",
+   "label": "Exclude accounts where statement was sent within last",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c05"
+   ]
+  },
+  {
+   "signature_id": "sig0339",
+   "section": "[no header] RIGHT TABLE",
+   "type": "dropdown",
+   "label": "days.",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "0": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c06"
+   ]
+  },
+  {
+   "signature_id": "sig0340",
+   "section": "[no header] RIGHT TABLE",
+   "type": "checkbox",
+   "label": "Exclude accounts where patient portion is paid and insurance portion is expected",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c07"
+   ]
+  },
+  {
+   "signature_id": "sig0341",
+   "section": "[no header] RIGHT TABLE",
+   "type": "checkbox",
+   "label": "Exclude patients Sent to Collection.",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c08"
+   ]
+  },
+  {
+   "signature_id": "sig0342",
+   "section": "[no header] RIGHT TABLE",
+   "type": "checkbox",
+   "label": "Exclude Responsible Parties where the Patient has an open claim",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c09"
+   ]
+  },
+  {
+   "signature_id": "sig0343",
+   "section": "[no header] RIGHT TABLE",
+   "type": "picker",
+   "label": "Exclude Responsible Party Type",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s02.c10"
+   ]
+  },
+  {
+   "signature_id": "sig0344",
+   "section": "[no header] BELOW THE TABLES",
+   "type": "static_text",
+   "label": "Maximum 100 characters per message",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s03.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0345",
+   "section": "[no header] BELOW THE TABLES",
+   "type": "static_text",
+   "label": "Note: Please update Statement Dates after Printing respective Office Statements.",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "statements_reports.r01.s03.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0346",
+   "section": "DIAGNOSED DATE RANGE",
+   "type": "date_input",
+   "label": "Start Date",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "11/21/2026": 4
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s04.c01",
+    "treatmentplan_reports.r02.s05.c01",
+    "treatmentplan_reports.r03.s04.c01",
+    "treatmentplan_reports.r04.s04.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0347",
+   "section": "DIAGNOSED DATE RANGE",
+   "type": "date_input",
+   "label": "End Date",
+   "options": [],
+   "count": 4,
+   "defaults": {
+    "11/21/2026": 4
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s04.c02",
+    "treatmentplan_reports.r02.s05.c02",
+    "treatmentplan_reports.r03.s04.c02",
+    "treatmentplan_reports.r04.s04.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0348",
+   "section": "TREATMENT PLAN ID",
+   "type": "text_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0349",
+   "section": "PHASE ID",
+   "type": "text_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0350",
+   "section": "ORDER ID",
+   "type": "text_input",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s08.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0351",
+   "section": "FINANCIAL DISCLOSURE",
+   "type": "dropdown",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    ".Treatment Plan Disclosure": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0352",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include Office UCR",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s11.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0353",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Itemize Prices",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "checked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s11.c02"
+   ]
+  },
+  {
+   "signature_id": "sig0354",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Print Responsible Party Address",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r01.s11.c04"
+   ]
+  },
+  {
+   "signature_id": "sig0355",
+   "section": "TREATMENT PLANS",
+   "type": "radio_group",
+   "label": "",
+   "options": [
+    "ALL",
+    "Diagnosed",
+    "Accepted",
+    "Alternative",
+    "Hold",
+    "Unaccepted",
+    "Pre-Authorized Sent",
+    "Scheduled",
+    "Completed",
+    "Referred Out",
+    "Pre-Authorized Closed"
+   ],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r02.s06.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0356",
+   "section": "EXCLUDE TREATMENT PLANS",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "None": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r02.s07.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0357",
+   "section": "TX COUNSELOR",
+   "type": "picker",
+   "label": "",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "ALL": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r02.s09.c01"
+   ]
+  },
+  {
+   "signature_id": "sig0358",
+   "section": "OTHER OPTIONS",
+   "type": "checkbox",
+   "label": "Include internal plan id",
+   "options": [],
+   "count": 1,
+   "defaults": {
+    "unchecked": 1
+   },
+   "disabled_count": 0,
+   "control_ids": [
+    "treatmentplan_reports.r02.s11.c02"
+   ]
+  }
+ ]
+}

@@ -4,16 +4,19 @@
 // editable per-patient remaining amounts (patient_insurance + subscriber).
 
 import type { ReactNode } from "react";
+import type { PatientInsuranceRead } from "@/api/generated/model";
 import type { InsuranceForm, PlanDisplay } from "./insuranceModel";
 import { SectionTitle, MoneyInput, MoneyRO } from "./ui";
 
 interface Props {
   form: InsuranceForm;
   planDisplay: PlanDisplay;
+  /** The saved slot row — carries the server-derived usage (TX-MAX-3). */
+  usage?: PatientInsuranceRead | null;
   onChange: (patch: Partial<InsuranceForm>) => void;
 }
 
-export default function BenefitInformation({ form, planDisplay, onChange }: Props) {
+export default function BenefitInformation({ form, planDisplay, usage, onChange }: Props) {
   return (
     <div>
       <SectionTitle>Benefit Information</SectionTitle>
@@ -46,6 +49,7 @@ export default function BenefitInformation({ form, planDisplay, onChange }: Prop
           <div />
         </Row>
       </div>
+      <BenefitUsageNote usage={usage} />
     </div>
   );
 }
@@ -55,6 +59,45 @@ function Row({ label, children, last }: { label: string; children: ReactNode; la
     <div className={`grid grid-cols-[110px_repeat(4,1fr)] items-center gap-2 px-2 py-1.5 ${last ? "" : "border-b border-[#E2E8F0]"}`}>
       <div className="text-xs font-bold text-[#475569]">{label}</div>
       {children}
+    </div>
+  );
+}
+
+const fmt = (v: string | null | undefined) => {
+  const n = parseFloat(String(v ?? ""));
+  return Number.isFinite(n) ? `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  claims: "from this benefit year's claims",
+  claims_capped_by_slot: "from claims, capped by the Ind. Rem. entered above",
+  slot: "the Ind. Rem. entered above",
+  plan: "the plan maximum (no usage recorded)",
+};
+
+/**
+ * What every estimate actually uses (TX-MAX-3): the server derives the remaining
+ * annual max from the benefit year's claims; the editable Ind. Rem. above is a
+ * staff override / upper bound, ignored once it predates the benefit year.
+ */
+function BenefitUsageNote({ usage }: { usage?: PatientInsuranceRead | null }) {
+  if (!usage || usage.max_remaining_effective == null) return null;
+  const year = usage.benefit_year_start
+    ? `${usage.benefit_year_start}${usage.benefit_year_end ? ` – ${usage.benefit_year_end}` : ""}`
+    : "";
+  const source = SOURCE_LABEL[usage.max_remaining_source ?? ""] ?? "";
+  return (
+    <div className="mt-1.5 rounded border border-[#BFDBFE] bg-[#EFF6FF] px-2 py-1.5 text-[11px] text-[#1E3A8A]">
+      <span className="font-bold">Used in estimates:</span> Annual max remaining {fmt(usage.max_remaining_effective)}
+      {usage.benefits_used_ytd != null && <> · Used this benefit year {fmt(usage.benefits_used_ytd)}</>}
+      {usage.deductible_remaining_effective != null && <> · Deductible remaining {fmt(usage.deductible_remaining_effective)}</>}
+      {year && <> · Benefit year {year}</>}
+      {source && <span className="text-[#475569]"> ({source})</span>}
+      {usage.slot_values_stale && (
+        <div className="mt-0.5 text-[#B45309]">
+          The Ind. Rem. values were entered before this benefit year began and are ignored — the plan&apos;s full limits apply.
+        </div>
+      )}
     </div>
   );
 }

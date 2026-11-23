@@ -1,0 +1,411 @@
+{
+  "category": "ledger_reports",
+  "window_title": "Ledger Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/ledger_reports",
+  "report_list": [
+    "Ledger Report",
+    "Super Bill",
+    "Walkout Report",
+    "Account Allocation"
+  ],
+  "reports": [
+    {
+      "name": "Ledger Report",
+      "screenshots": ["1.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Account Ledger", "Patient Ledger"],
+              "default_value": "Account Ledger",
+              "enabled": true,
+              "notes": "First section of the panel, full width. Two radios side by side on one row, no row label. Both options are enabled (black labels, white radio for Patient Ledger); Account Ledger carries the blue dot. Only this state was captured: whether choosing Patient Ledger changes the sections below (for example the RESPONSIBLE PARTY section) is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section. Two radios side by side on one row, no row label. 'Office' is selected and active (blue ring and dot, black label). The 'Office Group' option is GREYED OUT / disabled (grey-filled radio, grey label), so the selection cannot be changed on this screen."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": false,
+              "notes": "Unlabelled read-only box on the row directly below the Office / Office Group radios; shows the office id 108 (same number as 'OID :108' in the title bar). Standard grey read-only picker fill. Button to its right: 'SELECT' with a small building icon, GREYED OUT / disabled (grey fill instead of the usual blue) - the office cannot be changed here."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals End Date and equals the capture day (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Pixel-identical to the Start Date box."
+            }
+          ]
+        },
+        {
+          "title": "RESPONSIBLE PARTY",
+          "controls": [
+            {
+              "label": "Responsible Party",
+              "type": "text_input",
+              "options": [],
+              "default_value": "[responsible party open at capture]",
+              "enabled": true,
+              "notes": "Label in the left cell; wide box in the right cell holding ONE responsible party in 'Last, First' form (a single account, not a range). The box has the light editable-field fill (same as the date boxes, not the grey read-only fill of the office box); whether it accepts typing or is filled only through the SEARCH button cannot be told from the screenshot. The value looks pre-filled from the patient / account that was open when the screen was launched (inference) - context data, not a generic default."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue enabled button with a magnifier icon immediately right of the Responsible Party box (responsible-party lookup). The dialog it opens is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Print all transactions (includes statements, ledger notes)",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Only control of the section; single full-width row. Empty box = unchecked."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "1.PNG only. The whole criteria panel is visible: 5 full-width sections (REPORT FORMAT, OFFICE/GROUP, DATE RANGE, RESPONSIBLE PARTY, OTHER OPTIONS), then about 150 px of uniform blank space down to the action bar - nothing clipped at the top or bottom, no scrollbar. Only report of the category with a REPORT FORMAT section; captured state = Account Ledger. Filters on ONE responsible party (single box + SEARCH). No PRINT FORMAT, PROVIDER, GROUP BY or SORT BY section, no dropdowns, no side-by-side columns, no Page Break or other right-edge control (a pixel scan of the panel found nothing besides the controls listed). CLEAR CRITERIA = grey-styled button with a refresh icon at the right end of the blue REPORT CRITERIA bar; PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) = blue buttons at the bottom right."
+    },
+    {
+      "name": "Walkout Report",
+      "screenshots": ["2.PNG"],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "First section of the panel, full width. Two radios side by side on one row, no row label. 'Office' is selected and active. The 'Office Group' option is GREYED OUT / disabled (grey-filled radio, grey label)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": false,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios showing the office id 108 (matches 'OID :108' in the title bar); standard grey read-only picker fill. 'SELECT' button (building icon) to its right is GREYED OUT / disabled."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Equals the capture day (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "RESPONSIBLE PARTY NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "[name of the patient open at capture]",
+              "enabled": true,
+              "notes": "Start of a RESPONSIBLE PARTY name range. Label in the left cell; wide box in the right cell with the light editable-field fill (same as the date boxes, not the grey read-only picker fill), followed by its own SEARCH button. The value looks pre-filled from the patient / account in context (inference), not a generic default. Whether the box accepts typing cannot be confirmed from this screenshot, but the same kind of name-range box in daily_reports/12.PNG (Special Transaction Report) holds the free-text bounds AAAAA / ZZZZZ, which suggests typed alphabetical bounds."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue enabled button with a magnifier icon immediately right of the Start Name box (lookup for the start of the range). Dialog not shown."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "[name of the patient open at capture]",
+              "enabled": true,
+              "notes": "End of the RESPONSIBLE PARTY name range. Same light editable-field box as Start Name with the same value, followed by its own SEARCH button (row is pixel-identical to the Start Name row apart from the label)."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue enabled button with a magnifier icon immediately right of the End Name box (lookup for the end of the range). Dialog not shown."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Show charges break down",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "First row of the section (own full-width row). 'break down' is written as two words. Empty box = unchecked."
+            },
+            {
+              "label": "Include UCR",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Second row of the section (own full-width row). Empty box = unchecked. UCR in capitals as displayed."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "2.PNG only. The whole criteria panel is visible: 4 full-width sections (OFFICE/GROUP, DATE RANGE, RESPONSIBLE PARTY NAME RANGE, OTHER OPTIONS), then about 150 px of uniform blank space down to the action bar - nothing clipped, no scrollbar. No REPORT FORMAT section. Filters on a responsible-party NAME RANGE (Start Name / End Name, each with its own SEARCH button) instead of the single Responsible Party box used by Ledger Report and Account Allocation. No dropdowns, no side-by-side columns, no right-edge controls (pixel scan)."
+    },
+    {
+      "name": "Super Bill",
+      "screenshots": ["3.PNG"],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "First section of the panel, full width. Two radios side by side on one row, no row label. 'Office' is selected and active. The 'Office Group' option is GREYED OUT / disabled (grey-filled radio, grey label)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": false,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios showing the office id 108 (matches 'OID :108' in the title bar); standard grey read-only picker fill. 'SELECT' button (building icon) to its right is GREYED OUT / disabled."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Equals the capture day (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "[name of the patient open at capture]",
+              "enabled": true,
+              "notes": "Start of a PATIENT name range (patient, not responsible party). Label in the left cell; wide box in the right cell with the light editable-field fill (same as the date boxes, not the grey read-only picker fill), followed by its own SEARCH button. The value looks pre-filled from the patient in context (inference), not a generic default. Whether the box accepts typing cannot be confirmed from this screenshot, but the identically titled PATIENT NAME RANGE section in daily_reports/12.PNG (Special Transaction Report) holds the free-text bounds AAAAA / ZZZZZ in the same kind of boxes, which suggests typed alphabetical bounds."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue enabled button with a magnifier icon immediately right of the Start Name box (patient lookup for the start of the range). Dialog not shown."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "[name of the patient open at capture]",
+              "enabled": true,
+              "notes": "End of the PATIENT name range. Same light editable-field box as Start Name with the same value, followed by its own SEARCH button."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue enabled button with a magnifier icon immediately right of the End Name box (patient lookup for the end of the range). Dialog not shown."
+            }
+          ]
+        },
+        {
+          "title": "TRANSACTION TYPES",
+          "controls": [
+            {
+              "label": "Services",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "First of three checkboxes laid out side by side on a single row; blue tick visible."
+            },
+            {
+              "label": "Payments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Second of the three checkboxes on the same row; blue tick visible."
+            },
+            {
+              "label": "Adjustment",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Third of the three checkboxes on the same row; blue tick visible. Label is singular 'Adjustment' as displayed."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "3.PNG only. The whole criteria panel is visible: 4 full-width sections (OFFICE/GROUP, DATE RANGE, PATIENT NAME RANGE, TRANSACTION TYPES), then about 170 px of uniform blank space down to the action bar - nothing clipped, no scrollbar. No REPORT FORMAT and no OTHER OPTIONS section. The range is by PATIENT name here (the other three reports filter by responsible party). All three transaction-type checkboxes are ticked by default. No dropdowns, no side-by-side columns, no right-edge controls (pixel scan)."
+    },
+    {
+      "name": "Account Allocation",
+      "screenshots": ["4.PNG"],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "First section of the panel, full width. Two radios side by side on one row, no row label. 'Office' is selected and active. The 'Office Group' option is GREYED OUT / disabled (grey-filled radio, grey label)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": false,
+              "notes": "Unlabelled read-only box below the Office / Office Group radios showing the office id 108 (matches 'OID :108' in the title bar); standard grey read-only picker fill. 'SELECT' button (building icon) to its right is GREYED OUT / disabled."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Equals the capture day (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Label in the left cell, date box in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "RESPONSIBLE PARTY",
+          "controls": [
+            {
+              "label": "Responsible Party",
+              "type": "text_input",
+              "options": [],
+              "default_value": "[responsible party open at capture]",
+              "enabled": true,
+              "notes": "Label in the left cell; wide box in the right cell holding ONE responsible party in 'Last, First' form (a single account, not a range). Light editable-field fill (same as the date boxes, not the grey read-only fill of the office box); whether it accepts typing or is filled only through SEARCH cannot be told from the screenshot. Value looks pre-filled from the patient / account in context (inference). Row is pixel-identical to the Responsible Party row of Ledger Report."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue enabled button with a magnifier icon immediately right of the Responsible Party box (responsible-party lookup). Dialog not shown."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "4.PNG only. The whole criteria panel is visible: only 3 full-width sections (OFFICE/GROUP, DATE RANGE, RESPONSIBLE PARTY), then about 250 px of uniform blank space down to the action bar - nothing clipped, no scrollbar. Smallest criteria set of the category: same as Ledger Report minus REPORT FORMAT and OTHER OPTIONS. No checkboxes at all, no TRANSACTION TYPES, no dropdowns, no side-by-side columns, no right-edge controls (pixel scan)."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory. All 4 original screenshots, all pre-rendered zooms and additional tight crops were read. Readers A and B agreed on every report, section, control, option, default value and enabled state (their differences were wording only); each point was nevertheless re-checked on the pixels. A pixel scan of every screenshot (every pixel that differs from its row background in the criteria panel, the left panel, the title bar and the panel edges) found nothing beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no second column, no extra greyed-out control, no instruction or legend text, no scrollbar on either panel, no footer text. COVERAGE: 4 screenshots = 4 reports, each selected exactly once (blue radio dot located by pixel count): 1.PNG = Ledger Report, 2.PNG = Walkout Report, 3.PNG = Super Bill, 4.PNG = Account Allocation. All four are the normal two-panel screen - no popup, no expanded dropdown, no scrolled second view, no foreign screen - so the dialogs behind the SEARCH (responsible party / patient lookup) and SELECT (office) buttons are NOT documented by this category. TITLE BAR (identical in all 4): 'Ledger Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (icon only, no text) at the far right. LEFT PANEL 'SELECT REPORT': a 2 x 2 grid of radio cells - left column Ledger Report, Super Bill; right column Walkout Report, Account Allocation; the rest of the panel is uniform empty navy down to the window edge, so the list is NOT scrollable or clipped. A splitter / collapse grip (three dots in a notch) sits between the two panels at mid height. RIGHT PANEL 'REPORT CRITERIA': the grey-styled CLEAR CRITERIA button (refresh icon) sits at the right end of the blue header bar (same grey styling as in other categories, i.e. not a disabled state); the action bar at the bottom of the panel holds the blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) buttons, right-aligned. NO TRUNCATION: in every screenshot the first section header is fully visible under the panel border and the last criteria row is followed by 149 to 250 px of uniform blank space down to the action bar. LAYOUT: every section is full width (this category has no side-by-side section columns); rows are a label cell on the left and a value cell on the right, except the unlabelled radio and checkbox rows. RECURRING PATTERN (pixel-identical in all 4 screenshots): (1) OFFICE/GROUP = radios Office (selected) / Office Group (GREYED OUT), then an unlabelled read-only box '108' with a GREYED-OUT SELECT button: the office is locked to the current office (OID 108) and cannot be changed or widened to an office group. For comparison, daily_reports/1.PNG shows the same Office Group radio enabled and the same SELECT button blue, so the lock is specific to this category (or to the context it was opened from - not determinable from the screenshots). (2) DATE RANGE = Start Date / End Date, both '11/21/2026' = the capture day, i.e. both appear to default to today. PERSON FILTER differs per report: Ledger Report and Account Allocation take ONE 'Responsible Party' (box + SEARCH, value '[responsible party open at capture]'); Walkout Report takes a RESPONSIBLE PARTY NAME RANGE (Start Name / End Name, each with its own SEARCH, both '[name of the patient open at capture]'); Super Bill takes a PATIENT NAME RANGE (Start Name / End Name, each with its own SEARCH, both '[name of the patient open at capture]'). These values look pre-populated from the patient / account that was open when the screen was launched (inference) - context data, not generic defaults. TYPING CONVENTION: the name boxes have the light editable-field fill (#f1f1f1, same as the date boxes) and not the grey read-only fill of the office box (#dcdfe2), so they are recorded as text_input with each SEARCH button as a separate button control (same convention as the name-range fields in daily_reports.json); A and B had typed them as picker. Supporting evidence: daily_reports/12.PNG (Special Transaction Report, PATIENT NAME RANGE) shows the same kind of boxes holding the free-text bounds AAAAA / ZZZZZ, which indicates that name-range boxes take typed alphabetical bounds and that '[name of the patient open at capture]' here is a context pre-fill rather than the generic default. The office box + SELECT is recorded as picker with the button described in notes. REPORT-SPECIFIC OPTIONS: Ledger Report = REPORT FORMAT (Account Ledger / Patient Ledger) + OTHER OPTIONS 'Print all transactions (includes statements, ledger notes)'; Walkout Report = OTHER OPTIONS 'Show charges break down' + 'Include UCR'; Super Bill = TRANSACTION TYPES Services / Payments / Adjustment (all checked); Account Allocation = no extra options. ABSENT in this category: PRINT FORMAT (PDF / Excel), PROVIDER / USER pickers, PATIENT TYPE, GROUP BY, SORT BY, dropdowns, listboxes, Page Break checkboxes. RENDERING CAVEAT: in the bold section-header font the capital G shows almost no crossbar at this resolution, so the headers look like 'OFFICE/CROUP', 'DATE RANCE', '... NAME RANCE'; the pixel dump shows the G spur and they are transcribed as OFFICE/GROUP, DATE RANGE, RESPONSIBLE PARTY NAME RANGE, PATIENT NAME RANGE. Screenshot sizes: 1366x590, 1366x591, 1365x589, 1366x589 px (2.PNG has a 1 px blue sliver of the host page above the title bar; 3.PNG is shifted 1 px left). No reading needed a '[?]' marker."
+}
