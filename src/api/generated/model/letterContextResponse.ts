@@ -5,6 +5,7 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
+import type { Guarantor } from './guarantor';
 import type { LetterContextAppointmentRead } from './letterContextAppointmentRead';
 import type { LetterContextOfficeRead } from './letterContextOfficeRead';
 import type { LetterContextProviderRead } from './letterContextProviderRead';
@@ -24,6 +25,7 @@ export interface LetterContextResponse {
   office?: LetterContextOfficeRead | null;
   provider?: LetterContextProviderRead | null;
   responsible_party?: LetterContextResponsiblePartyRead | null;
+  guarantor?: Guarantor | null;
   referred_by?: LetterContextReferralRead | null;
   next_appointment?: LetterContextAppointmentRead | null;
   next_appointment_provider?: LetterContextProviderRead | null;

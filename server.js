@@ -107,6 +107,14 @@ app.get('/health', (req, res) => {
 //   changeOrigin: true,
 // }));
 
+// A missing hashed asset (a chunk of a previous deploy) must be a real 404, never the
+// index.html fallback: served as HTML under a .js URL it fails with a MIME error that looks
+// like a crash. The 404 lets the app's error boundary show "A new version is available".
+app.use('/assets', (req, res) => {
+  res.status(404).setHeader('Cache-Control', 'no-store');
+  res.type('text/plain').send('Not found');
+});
+
 // SPA fallback - serve index.html for all routes
 app.get('*', (req, res) => {
   try {

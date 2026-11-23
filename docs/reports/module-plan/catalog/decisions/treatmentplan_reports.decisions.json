@@ -1,0 +1,140 @@
+{
+  "category": "treatmentplan_reports",
+  "reports": {
+    "treatmentplan_reports.r01": {
+      "report_key": "treatment_plan.treatment_plan_proposal",
+      "phase": "P3"
+    },
+    "treatmentplan_reports.r02": {
+      "report_key": "treatment_plan.treatment_plan_status",
+      "phase": "P3"
+    },
+    "treatmentplan_reports.r03": {
+      "report_key": "treatment_plan.treatment_plan_analysis",
+      "phase": "P3"
+    },
+    "treatmentplan_reports.r04": {
+      "report_key": "treatment_plan.treatment_plan_detail",
+      "phase": "P3"
+    }
+  },
+  "controls": {
+    "treatmentplan_reports.r01.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this family: office of the planned procedure = rpt_treatment_item_facts.office_id (today coalesce(treatment_plans.office_id, patients.home_office_id); the item's own Treating Office after DATA-39, P3). Not the patient's home office and not the office of a later appointment. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read. Documents are not banded by office; the letterhead office is the document office (see Data)."
+    },
+    "treatmentplan_reports.r02.s03.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this family: office of the planned procedure = rpt_treatment_item_facts.office_id (today coalesce(treatment_plans.office_id, patients.home_office_id); the item's own Treating Office after DATA-39, P3). Not the patient's home office and not the office of a later appointment. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read. The PDF prints one 'Office : <name>' band per office."
+    },
+    "treatmentplan_reports.r03.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this family: office of the planned procedure = rpt_treatment_item_facts.office_id (today coalesce(treatment_plans.office_id, patients.home_office_id); the item's own Treating Office after DATA-39, P3). Not the patient's home office and not the office of a later appointment. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read. The PDF prints one 'Office : <name>' band per office."
+    },
+    "treatmentplan_reports.r04.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this family: office of the planned procedure = rpt_treatment_item_facts.office_id (today coalesce(treatment_plans.office_id, patients.home_office_id); the item's own Treating Office after DATA-39, P3). Not the patient's home office and not the office of a later appointment. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read. The PDF prints one 'Office : <name>' band per office."
+    },
+    "treatmentplan_reports.r01.s03.c01": {
+      "notes": "Provider role on this family: the treating provider of the planned procedure (rpt_treatment_item_facts.provider_id, legacy Prdr), not the diagnosing provider (diagnosed_by_raw, a legacy provider id on migrated rows) and not the patient's preferred provider. Items without a provider (every migrated item) match only ALL. Searchable multi-select of every provider, active and inactive, roster of the working office first (prefer, never exclude). Footer echo 'Providers : ALL'."
+    },
+    "treatmentplan_reports.r02.s04.c01": {
+      "notes": "Provider role on this family: the treating provider of the planned procedure (rpt_treatment_item_facts.provider_id, legacy Prdr), not the diagnosing provider (diagnosed_by_raw, a legacy provider id on migrated rows) and not the patient's preferred provider. Items without a provider (every migrated item) match only ALL. Searchable multi-select of every provider, active and inactive, roster of the working office first (prefer, never exclude). Footer echo 'Providers : ALL'."
+    },
+    "treatmentplan_reports.r03.s03.c01": {
+      "notes": "Provider role on this family: the treating provider of the planned procedure (rpt_treatment_item_facts.provider_id, legacy Prdr), not the diagnosing provider (diagnosed_by_raw, a legacy provider id on migrated rows) and not the patient's preferred provider. Items without a provider (every migrated item) match only ALL. Searchable multi-select of every provider, active and inactive, roster of the working office first (prefer, never exclude). Footer echo 'Providers : ALL'."
+    },
+    "treatmentplan_reports.r04.s03.c01": {
+      "notes": "Provider role on this family: the treating provider of the planned procedure (rpt_treatment_item_facts.provider_id, legacy Prdr), not the diagnosing provider (diagnosed_by_raw, a legacy provider id on migrated rows) and not the patient's preferred provider. Items without a provider (every migrated item) match only ALL. Searchable multi-select of every provider, active and inactive, roster of the working office first (prefer, never exclude). Footer echo 'Providers : ALL'."
+    },
+    "treatmentplan_reports.r01.s04.c01": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Echoed as From / Thru on the staff cover page only; the patient documents carry no criteria echo."
+    },
+    "treatmentplan_reports.r01.s04.c02": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Echoed as From / Thru on the staff cover page only; the patient documents carry no criteria echo."
+    },
+    "treatmentplan_reports.r02.s05.c01": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Footer echo From / Thru."
+    },
+    "treatmentplan_reports.r02.s05.c02": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Footer echo From / Thru."
+    },
+    "treatmentplan_reports.r03.s04.c01": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Footer echo From / Thru."
+    },
+    "treatmentplan_reports.r03.s04.c02": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Footer echo From / Thru."
+    },
+    "treatmentplan_reports.r04.s04.c01": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Footer echo From / Thru."
+    },
+    "treatmentplan_reports.r04.s04.c02": {
+      "notes": "Primary range, fixed date_basis = diagnosed_date, bound to rpt_treatment_item_facts.presented_date = coalesce(diagnosed_date, office-local created date) of the planned procedure (vendor: the date range in which the procedures were entered into the plan; the diagnosed date defaults to the entry date and can be back-dated). Inclusive, office-local, default today. Migrated items carry no date: they are never selected by a range (presented_date must be NULL for them, not the load timestamp - request to 03). Footer echo From / Thru."
+    },
+    "treatmentplan_reports.r01.s05.c01": {
+      "notes": "Start of the patient name range (sort name 'Last, First', prefix rule; AAAAA = open bound). Selects whose documents print. Echoed on the staff cover page only (NEW label 'Pat From'; no legacy echo of this report is documented)."
+    },
+    "treatmentplan_reports.r01.s05.c03": {
+      "notes": "End of the patient name range, inclusive, prefix rule; ZZZZZ = open bound. Echoed on the staff cover page only (NEW label 'Pat Thru')."
+    },
+    "treatmentplan_reports.r01.s06.c01": {
+      "notes": "Legacy Tx Plan ID: the number of one of a patient's (alternative) plans. Blank = every plan of the selected patients, each printed as its own 'Treatment Plan : <n>' section. DentC plan ids are global strings (treatment_plans.id); the per-patient number the treatment-plan screen shows is computed client-side by assignTids() in src/features/treatment-plans/txModel.ts (1, 2, 3 by created_at, id). The report needs the same number on the server: NEW column rpt_treatment_item_facts.plan_no = row_number() OVER (PARTITION BY patient_id ORDER BY created_at, id) of treatment_plans (owner 03_data_foundation.md), so screen and report agree; a hard-deleted plan renumbers the later plans in both. The box accepts a plan_no (integer, applied to every selected patient). Inferred that the legacy number is per patient - confirm on the live tool with a two-patient batch."
+    },
+    "treatmentplan_reports.r01.s07.c01": {
+      "notes": "Legacy Phase ID = rpt_treatment_item_facts.phase_id (integer). Blank = all phases of the plan print (vendor training PDF, partly legible). Validation: digits only. Echoed on the staff cover page only (NEW label 'Phase')."
+    },
+    "treatmentplan_reports.r01.s08.c01": {
+      "notes": "Legacy Order ID = priority within a phase = rpt_treatment_item_facts.priority (integer). Blank = every order id. Batch screen only (not on the single-patient dialog); meaning inferred from the vendor field definition - confirm on the live tool."
+    },
+    "treatmentplan_reports.r01.s09.c01": {
+      "notes": "Which Financial Disclosure letter prints at the end of each document (merge fields such as tooth numbers resolved per patient). Option source financial_disclosure_letters: letter templates of the disclosure type assigned to the working office (office_letter_templates), alphabetical; default first_option = the first name in that order (vendor tip: prefix the name with a period). Which letter_type holds disclosures in DentC is open (04 option-source note). An office with no disclosure letter: the document prints without a disclosure block."
+    },
+    "treatmentplan_reports.r01.s10.c01": {
+      "notes": "Exclude filter on the document's patient: patients having any selected user-defined type (rpt_patient_dim.patient_type_codes) get no document; None = exclude nothing; patients without a type are kept unless the source row no_type_defined is picked, which drops them (shared dictionary 3.4). Echoed on the staff cover page only (label Exclude Pat Type)."
+    },
+    "treatmentplan_reports.r01.s11.c01": {
+      "notes": "Ticked (legacy default) adds the UCR column to the procedure grid and to the phase and plan totals. Legacy UCR = the higher of the office UCR fee and the insurance fee-schedule fee (vendor text); DentC prints NEW computed ucr_display = greatest(coalesce(ucr_fee, fee), fee): ucr_fee is the stamped office UCR schedule price (NULL on migrated items and on items priced before the stamp), fee the fee-schedule fee posted on the item; the higher of the two, as the vendor text says - confirm on the live tool with an item whose insurance fee exceeds the office UCR. Layout switch, role query (adds a column)."
+    },
+    "treatmentplan_reports.r01.s11.c02": {
+      "notes": "Ticked (legacy default) prints per-procedure amounts (Est Pat., Est Ins., Fee, UCR on every line); unticked prints the procedure lines without amounts and only the phase and plan totals. Effect INFERRED (vendor sources do not describe it) - confirm on the live tool."
+    },
+    "treatmentplan_reports.r01.s11.c03": {
+      "notes": "Unticked (legacy default) leaves out procedures already completed (rpt_treatment_item_facts.is_completed = a live charge is linked to the item); ticked prints them too, marked completed. No other status is filtered by the batch screen; the single-patient dialog defaults to Diagnosed + Accepted - whether the batch screen also leaves out Unaccepted / Hold / Alternative / Referred Out items is open (confirm on the live tool)."
+    },
+    "treatmentplan_reports.r01.s11.c04": {
+      "notes": "Ticked prints the responsible party's mailing address under 'Resp. Party :' in the header box (rpt_account_dim guarantor address of the patient's current account); unticked prints the name only (inferred)."
+    },
+    "treatmentplan_reports.r02.s01.c01": {
+      "notes": "Detail = one line per planned procedure under a patient band with plan and phase subtotals (DOCUMENTED, 2013 sample, printed title 'Treatment Plan Status - Detail'). Summary = one line per patient with the same three amount columns (INFERRED: not documented by the vendor; confirm on the live tool). Same population in both formats."
+    },
+    "treatmentplan_reports.r02.s06.c01": {
+      "notes": "Two-layer legacy status (03 section 3.2 table). Exclusive statuses bind to rpt_treatment_item_facts.exclusive_status independent of the Scheduled / Completed flags: diagnosed, accepted, unaccepted, hold, alternative; referred_out = exclusive_status IN (referred_out, external_referral, internal_referral). Data-imposed change: legacy Internal / External Referral are additive flags on top of an exclusive status (research), DentC stores them as the single item status, so a DentC IR / ER item matches Referred Out and not its former exclusive status - confirm on the live tool with an item flagged External Referral. scheduled = is_scheduled, completed = is_completed, pre_authorized_sent / pre_authorized_closed = preauth_status sent / closed (primary pre-auth row). ALL = no status predicate. Accepted also matches items with exclusive_status_inferred = true (printed A*); the run returns an availability[] warning treatment_item_status_inferred with their count. Never bound to status_norm. Footer echo 'Tx Plan'."
+    },
+    "treatmentplan_reports.r02.s07.c01": {
+      "notes": "Exclude filter: an item is dropped when it matches ANY picked status under the same predicates as TREATMENT PLANS (exclusive status, S / C flags, PS / PC pre-auth). None = exclude nothing. Option source treatment_plan_statuses: the ten legacy values (Accepted (A) and Alternative (L) INFERRED: above the visible part of the captured dialog) plus internal_referral, external_referral (enhancement: they pick the DentC item statuses that hold the legacy IR / ER flags; NEW echo letters IR, ER). An Accepted exclusion also drops inferred A* items. Footer echo prints the legacy letters ('Exclude Tx Plan : S,C'). Vendor recipe 'exclude Scheduled and Completed' = the unscheduled-treatment call list."
+    },
+    "treatmentplan_reports.r02.s08.c01": {
+      "notes": "Include filter on the planned procedure code (rpt_treatment_item_facts.procedure_code IN list); ALL = no restriction. Legacy SEARCH CODE dialog (category radios, sort by code / description, transfer list) becomes the code picker with category tree (FLT-25)."
+    },
+    "treatmentplan_reports.r02.s09.c01": {
+      "notes": "Treatment counselor of the planned procedure = rpt_treatment_item_facts.counselor_user_id (a user, option source users, id and label only). ALL = no restriction; items without a counselor (every migrated item, and app items where none was chosen) match only ALL. Meaning from our transcription; the vendor documents the field, not the criterion."
+    },
+    "treatmentplan_reports.r02.s10.c01": {
+      "notes": "Exclude filter on the patient's user-defined types (rpt_patient_dim.patient_type_codes); None = exclude nothing; patients without a type kept unless the source row no_type_defined is picked, which drops them (shared dictionary 3.4). Footer echo Exclude Pat Type (vendor sample)."
+    },
+    "treatmentplan_reports.r02.s11.c01": {
+      "notes": "Unticked (default) = only items of active patients (rpt_patient_dim.is_active); ticked adds inactive patients. Inactive and deleted patients share the flag until DATA-44."
+    },
+    "treatmentplan_reports.r02.s11.c02": {
+      "notes": "Ticked adds a column with the system's internal plan identifier (treatment_plans.id) beside T ID; unticked prints only the per-patient plan number. Effect INFERRED (not documented) - confirm on the live tool."
+    },
+    "treatmentplan_reports.r03.s05.c01": {
+      "notes": "Exclude filter on the patient's user-defined types (rpt_patient_dim.patient_type_codes); None = exclude nothing; patients without a type kept unless the source row no_type_defined is picked, which drops them (shared dictionary 3.4)."
+    },
+    "treatmentplan_reports.r03.s06.c01": {
+      "notes": "Unticked (default) = items of active patients only; ticked adds inactive patients. Inactive and deleted share one flag until DATA-44."
+    },
+    "treatmentplan_reports.r04.s06.c01": {
+      "notes": "Exclude filter on the patient's user-defined types (rpt_patient_dim.patient_type_codes); None = exclude nothing; patients without a type kept unless the source row no_type_defined is picked, which drops them (shared dictionary 3.4)."
+    },
+    "treatmentplan_reports.r04.s07.c01": {
+      "notes": "Unticked (default) = items of active patients only; ticked adds inactive patients. Inactive and deleted share one flag until DATA-44."
+    }
+  }
+}

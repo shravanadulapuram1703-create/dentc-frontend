@@ -26,8 +26,7 @@ import LettersPage from './features/letters/LettersPage';
 import { InsurancePlanScreen } from './features/patient-insurance';
 import OrthoPaymentPlanPage from './features/payment-plans/OrthoPaymentPlanPage';
 import RegularPaymentPlanPage from './features/payment-plans/RegularPaymentPlanPage';
-import Reports from './components/pages/Reports';
-import ReportRunnerPage from './components/reports/pages/ReportRunnerPage';
+import ReportsEntry from './features/reports/ReportsEntry';
 import Utilities from './components/pages/Utilities';
 import UtilityRunnerPage from './components/utilities/pages/UtilityRunnerPage';
 import { TimeClockPage, TimeClockReportPage } from './features/time-clock';
@@ -117,6 +116,7 @@ function AdminPageWrapper({
 
 function AppRoutes() {
   const { isAuthenticated, user, logout, currentOffice, setCurrentOffice } = useAuth();
+  const location = useLocation();
 
   return (
     <Routes>
@@ -250,52 +250,17 @@ function AppRoutes() {
         }
       />
 
-      {/* REPORTS (Global Admin Context) */}
+      {/* REPORTS: one lazy module route (07 §2.3). Every /reports/* page, redirect and the
+          engine-off fallback to today's pages live in src/features/reports/routes.tsx.
+          Never add another report route here. */}
       <Route
-        path="/reports"
-        element={
-          isAuthenticated ? 
-          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
-            <Reports onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-          </AdminPageWrapper> :
-          <Navigate to="/login" />
-        }
-      />
-
-      {/* Reports - Generic runner (filter → preview → export). See src/components/reports/reportCatalog.ts */}
-      <Route
-        path="/reports/run/:reportId"
+        path="/reports/*"
         element={
           isAuthenticated ?
-          <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}>
-            <ReportRunnerPage onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} />
-          </AdminPageWrapper> :
-          <Navigate to="/login" />
+          <ReportsEntry onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice} /> :
+          <Navigate to="/login" replace state={{ from: location }} />
         }
       />
-
-      {/* Nav category entries → matching runner report (others remain placeholders below) */}
-      <Route path="/reports/ledger" element={<Navigate to="/reports/run/production" replace />} />
-      <Route path="/reports/appointment" element={<Navigate to="/reports/run/appointments" replace />} />
-      <Route path="/reports/treatment-plan" element={<Navigate to="/reports/run/treatment-plans" replace />} />
-      <Route path="/reports/insurance" element={<Navigate to="/reports/run/insurance-claims" replace />} />
-
-      {/* Reports - Lists */}
-      <Route path="/reports/lists/patient-list" element={<Navigate to="/reports/run/patient-list" replace />} />
-      <Route path="/reports/lists/responsible-party-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Responsible Party List" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/lists/provider-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Provider List" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/lists/security-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Security List" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/lists/setup-list" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Setup List" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Reports - Interactive */}
-      <Route path="/reports/interactive/unsigned-progress-notes" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Unsigned Progress Notes" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/interactive/eligibility-verification" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Eligibility Verification" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      
-      {/* Reports - Office */}
-      <Route path="/reports/office/abbey-dental" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Abbey Dental Reports" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/office/brightnow" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="BrightNow Reports" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/office/dha" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="DHA Reports" /></AdminPageWrapper> : <Navigate to="/login" />} />
-      <Route path="/reports/office/access-dental" element={isAuthenticated ? <AdminPageWrapper onLogout={logout} currentOffice={currentOffice} setCurrentOffice={setCurrentOffice}><PlaceholderPage title="Access Dental Reports" /></AdminPageWrapper> : <Navigate to="/login" />} />
       
       {/* UTILITIES (Global Admin Context) */}
       <Route 

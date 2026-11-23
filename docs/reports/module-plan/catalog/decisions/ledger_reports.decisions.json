@@ -1,0 +1,206 @@
+{
+  "category": "ledger_reports",
+  "reports": {
+    "ledger_reports.r01": {
+      "report_key": "ledger.ledger_report",
+      "phase": "P1",
+      "actions": {
+        "PRINT / PREVIEW": "Run (cost_class instant, one account or one patient), show the ledger on screen, then render the PDF (layout banded_table, landscape) or XLSX / CSV from the same snapshot. When add_patient_note is true the render step hands the printed document to the patient-notes handler (one note per patient of the run)."
+      },
+      "dynamic_rules": {
+        "ledger_reports.r01.d01": "Same definition ledger.ledger_report, second entry point. The patient Print launcher (07 section 1.7, UX-29) offers two items, Patient Ledger and Account Ledger; each opens the compact print dialog of the runner with report_type preset (patient_ledger / account_ledger, not editable there), patient_id = current_patient or account_id = current_account resolved from context.patient_id (hidden in the dialog), date_range (date_from, date_to; both required, default today / today) and add_patient_note (boolean, default false). Buttons PRINT / PREVIEW and CANCEL. On the hub form add_patient_note is visible as well (additive, default false); account_id is visible_when report_type == account_ledger, patient_id visible_when report_type == patient_ledger (shared rules of 04)."
+      }
+    },
+    "ledger_reports.r02": {
+      "report_key": "ledger.walkout_report",
+      "phase": "P1",
+      "actions": {
+        "PRINT / PREVIEW": "Run (instant for one responsible party, interactive for a name range), show the walkouts on screen, then render the PDF in layout slip with record_per_page = one walkout per responsible party; XLSX / CSV give the flat line table. When add_patient_note is true the render step writes the 'walkout printed' note through the patient-notes handler: to the patient in context for a patient-context run, else to every account member with an activity line; idempotent per (run_id, artifact_id, patient_id)."
+      },
+      "dynamic_rules": {
+        "ledger_reports.r02.d01": "Same definition ledger.walkout_report, second entry point. The patient Print launcher item Walkout Report opens the compact print dialog with account_id = current_account (hidden; it fixes the population to the account in context, so another account whose guarantor sort name matches or starts with the same string is not printed), responsible_party_name_from / responsible_party_name_to = current_responsible_party_name (read-only display there), date_range (default today / today), the six message texts general_message, current_message, over_30_message, over_60_message, over_90_message, over_120_message (text, max_length 100, role layout, pre-filled with server_value = the office statement messages) and add_patient_note (boolean, default false). The Scheduler appointment menu Print > Walkout Report opens the same dialog with account_id = the account of the appointment's patient and date_range = the appointment date (both ends); appointment_id is not set by the entry, so the whole account's activity of that day prints as in a name-range run of one account (legacy population of the appointment entry not documented: W-5). On the hub form the six messages and add_patient_note are visible too, in a section MESSAGES below OTHER OPTIONS (additive; untouched values reproduce the legacy run); account_id is hidden there and the name range drives the population."
+      }
+    },
+    "ledger_reports.r03": {
+      "report_key": "ledger.super_bill",
+      "phase": "P1",
+      "actions": {
+        "PRINT / PREVIEW": "Run (instant for one patient, interactive for a name range), show the super bills on screen, then render the PDF in layout slip with record_per_page = one super bill per patient, no office logo (legacy quirk kept); XLSX / CSV give the flat line table."
+      },
+      "dynamic_rules": {
+        "ledger_reports.r03.d01": "Same definition ledger.super_bill, second entry point. The patient Print launcher item Superbill opens the compact print dialog titled Super Bill Report with patient_id = current_patient (hidden; it fixes the population to the patient in context, so another patient whose sort name matches or starts with the same string is not printed), patient_name_from / patient_name_to = current_patient_name (read-only display there), date_range labelled DOS Date Range (date_from, date_to, basis service_date in both entries) and include_previous_balance (boolean, default false). On the hub form include_previous_balance is visible too, after TRANSACTION TYPES (additive, default false); patient_id is hidden there and the name range drives the population; transaction_types is visible in both entries."
+      }
+    },
+    "ledger_reports.r04": {
+      "report_key": "ledger.account_allocation",
+      "phase": "P1"
+    }
+  },
+  "controls": {
+    "ledger_reports.r01.s01.c01": {
+      "notes": "Legacy title is REPORT FORMAT, but the choice selects the report variant, so it maps to report_type (04 section 8). account_ledger = every member of the guarantor account selected by account_id; patient_ledger = one patient selected by patient_id (vendor-documented parameter of 04 9.7, default current_patient; the panel in that state was never captured). Not a row grain: both variants print the same line layout."
+    },
+    "ledger_reports.r01.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Locked: forced_when true -> office_ids = working_office (04 9.3 row 33, vendor screenshots show the same lock). On this report the office is the PRINTING office (letterhead, header 'Office :' band, criteria echo), not a line filter: the ledger is organisation-wide (office context is never a fence, CLAUDE.md) and the legacy ledger line carries its own Office column, so lines of every office of the account are printed with that column. Whether the legacy print drops lines of other offices is not documented: confirm on the live tool (open question L-2)."
+    },
+    "ledger_reports.r01.s03.c01": {
+      "notes": "Primary date range, inclusive, office-local; date_basis fixed transaction_date (04 7.2 row 19, documented): the ledger date of the line = rpt_ledger_entries.transaction_date (date of service for a charge until DATA-13, entry date of a payment or adjustment); claim lines use the claim created date (rpt_claim_facts.created_at_utc, app era only). Default today (relative token). Enhanced with presets (year_to_date, previous_year for the 'how much did I pay this year' request)."
+    },
+    "ledger_reports.r01.s03.c02": {
+      "notes": "Inclusive end of the transaction-date range (basis as Start Date). Default today. Enhanced with presets and relative tokens."
+    },
+    "ledger_reports.r01.s04.c01": {
+      "notes": "One responsible party = one guarantor account (accounts.id = rpt_ledger_entries.account_id, the patient's current account, data card 5.3), shown as Last, First. Pre-filled with the account of the patient in context (token current_account). Visible and required when report_type == account_ledger (shared rules of 04); with patient_ledger the report takes patient_id instead. Setting it needs class phi_identified (08 5.2 rule 8)."
+    },
+    "ledger_reports.r01.s05.c01": {
+      "notes": "false = money lines only (rpt_ledger_entries, live). true = also the non-financial ledger rows: 'Statement Sent - $X.XX' lines from patient_statements (statement_date in the range; app era only, no migrated statement rows), ledger notes from account_notes (note date in the range, NEW date column of the DATA-52 passthrough; 4,518 migrated rows), and claim lines CLM-P / CLM-S from rpt_claim_facts (claim date in the range; inferred - the legacy label names statements and notes only). Population and sort of these rows: report section Data. Non-financial rows carry no amount and do not change the running balance. Exact legacy effect is an inference: confirm on the live tool (open question L-3)."
+    },
+    "ledger_reports.r01.x01": {
+      "status": "replicated",
+      "param": "add_patient_note",
+      "param_type": "boolean",
+      "option_map": {},
+      "default": false,
+      "notes": "Legacy prompt of the print-menu flow (asks whether to add a patient note) becomes the shared vendor-doc parameter add_patient_note of 04 9.7: boolean, definition default false, role output (never changes the rows). true = after the PDF artifact is rendered, the patient-notes handler writes one note 'Ledger printed <date range> by <user>' (wording NEW, owned by the patient-notes feature) per patient of the run; idempotent per (run_id, artifact_id, patient_id). Legacy wording, form (confirmation box or checkbox) and default are not documented: confirm on the live tool (open question L-4). Offered on the hub form too (additive).",
+      "default_differs_reason": "legacy default not documented (L-4); false = no note, the definition default of 04 9.7"
+    },
+    "ledger_reports.r02.s01.c02": {
+      "notes": "108 = id of the office the user was working in. Locked: forced_when true -> office_ids = working_office (vendor screenshots show the same lock). On this report the office is (a) the printing office (logo, address, 'Office # :' box, Next Appt Office comparison) and (b) the line filter of the activity table: lines whose transaction office rpt_ledger_entries.office_id = the working office (the visit's checkout). Previous Balance, Total Balance for the Account and the ageing grid are account-wide (all offices), because they state what the responsible party owes. (b) is inferred: confirm on the live tool with an account that has activity at two offices on the same day (open question W-2)."
+    },
+    "ledger_reports.r02.s02.c01": {
+      "notes": "Primary date range, inclusive, office-local; date_basis fixed transaction_date (04 7.2 row 20, inferred): the activity lines of the walkout are the ledger lines whose transaction_date falls in the range. Default today (vendor text: default today). Previous Balance = account balance at the end of date_from - 1 day (printed above the lines, outside every column total). Enhanced with presets and relative tokens."
+    },
+    "ledger_reports.r02.s02.c02": {
+      "notes": "Inclusive end of the transaction-date range. Default today. The ageing grid and 'Account Balance as of' are computed as of date_to (rpt_ar_open_items p_as_of = date_to)."
+    },
+    "ledger_reports.r02.s03.c01": {
+      "notes": "Start of the alphabetical range on the responsible-party sort name upper(guarantor_last_name || ', ' || guarantor_first_name) of rpt_account_dim, prefix rule of 04 3.4; AAAAA / ZZZZZ are open bounds. Both boxes pre-filled from the patient in context (token current_responsible_party_name = the guarantor of that patient's account). One walkout per account in the range that has at least one activity line in the date range at the working office. Whether the legacy pre-fill is the patient or the guarantor is not documented (test with a dependent, open question W-3)."
+    },
+    "ledger_reports.r02.s03.c03": {
+      "notes": "End of the responsible-party name range (inclusive, prefix rule). Pre-filled like Start Name, so the default run prints the walkout of the account in context only."
+    },
+    "ledger_reports.r02.s04.c01": {
+      "notes": "true adds Est. Pat and Est. Ins on every line (vendor sample): charges print rpt_ledger_entries.est_patient / est_insurance (they always sum to the fee, R-20); payment and adjustment lines print blank in both columns. In the vendor sample with both options on, Chart # is dropped from the line table; the new layout keeps the same column set per option combination (Output, variant table)."
+    },
+    "ledger_reports.r02.s04.c02": {
+      "notes": "On this report Include UCR adds a UCR column immediately left of Charges with the office (UCR) fee stamped on the charge (rpt_ledger_entries.office_fee, PD-1 gross production basis); blank on payment and adjustment lines. Unlike the Production Report there is no Fee Schedule To Compare: compare_fee_schedule_id is not a parameter of this definition and include_ucr enables nothing."
+    },
+    "ledger_reports.r02.x01": {
+      "status": "replicated",
+      "param": "general_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": {
+        "token": "server_value"
+      },
+      "notes": "Shared vendor-doc parameter of 04 9.7: text, validation.max_length 100, role layout, definition default server_value = office_statement_settings.message_general of the working office. Printed in the Messages area of every walkout of the run. Legacy dialog default text not documented (inferred: the office statement message): confirm on the live tool (W-4).",
+      "default_differs_reason": "legacy default text not documented (W-4); the office statement message of the working office is assumed (04 9.7: server_value)"
+    },
+    "ledger_reports.r02.x02": {
+      "status": "replicated",
+      "param": "current_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": {
+        "token": "server_value"
+      },
+      "notes": "Shared vendor-doc parameter of 04 9.7: text, max_length 100, role layout, default server_value = office_statement_settings.message_current. Printed after the general message on a walkout whose oldest open balance is in the Current bucket. Legacy default text not documented (W-4).",
+      "default_differs_reason": "legacy default text not documented (W-4); the office statement message of the working office is assumed (04 9.7: server_value)"
+    },
+    "ledger_reports.r02.x03": {
+      "status": "replicated",
+      "param": "over_30_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": {
+        "token": "server_value"
+      },
+      "notes": "Shared vendor-doc parameter of 04 9.7: text, max_length 100, role layout, default server_value = office_statement_settings.message_30. Printed when the oldest open bucket of the account is Over 30. Legacy default text not documented (W-4).",
+      "default_differs_reason": "legacy default text not documented (W-4); the office statement message of the working office is assumed (04 9.7: server_value)"
+    },
+    "ledger_reports.r02.x04": {
+      "status": "replicated",
+      "param": "over_60_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": {
+        "token": "server_value"
+      },
+      "notes": "Shared vendor-doc parameter of 04 9.7: text, max_length 100, role layout, default server_value = office_statement_settings.message_60. Printed when the oldest open bucket is Over 60. Legacy default text not documented (W-4).",
+      "default_differs_reason": "legacy default text not documented (W-4); the office statement message of the working office is assumed (04 9.7: server_value)"
+    },
+    "ledger_reports.r02.x05": {
+      "status": "replicated",
+      "param": "over_90_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": {
+        "token": "server_value"
+      },
+      "notes": "Shared vendor-doc parameter of 04 9.7: text, max_length 100, role layout, default server_value = office_statement_settings.message_90. Printed when the oldest open bucket is Over 90. Legacy default text not documented (W-4).",
+      "default_differs_reason": "legacy default text not documented (W-4); the office statement message of the working office is assumed (04 9.7: server_value)"
+    },
+    "ledger_reports.r02.x06": {
+      "status": "replicated",
+      "param": "over_120_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": {
+        "token": "server_value"
+      },
+      "notes": "Shared vendor-doc parameter of 04 9.7: text, max_length 100, role layout, default server_value = office_statement_settings.message_120. Printed when the oldest open bucket is Over 120. Legacy default text not documented (W-4).",
+      "default_differs_reason": "legacy default text not documented (W-4); the office statement message of the working office is assumed (04 9.7: server_value)"
+    },
+    "ledger_reports.r02.x07": {
+      "status": "replicated",
+      "param": "add_patient_note",
+      "param_type": "boolean",
+      "option_map": {},
+      "default": false,
+      "notes": "Shared vendor-doc parameter add_patient_note of 04 9.7: boolean, definition default false, role output. true = after the PDF is rendered the patient-notes handler records 'Walkout printed <date range> by <user>' (wording NEW) in the Notes of the patient in context (patient-context entry), or, for a name-range run, of every account member who has an activity line on the walkout (a guarantor of kind responsible_party is not a patient and gets no note); idempotent per (run_id, artifact_id, patient_id). Legacy label, control type and default are not documented (W-5).",
+      "default_differs_reason": "legacy default not documented (W-5); false = no note, the definition default of 04 9.7"
+    },
+    "ledger_reports.r03.s01.c02": {
+      "notes": "108 = id of the office the user was working in. Locked: forced_when true -> office_ids = working_office (vendor screenshots show the same lock). On this report the office is (a) the billing identity printed on the form (rpt_office_dim address and billing_provider_id, vendor text: the insurance billing provider entered under Setup / Offices) and (b) the line filter: services by office of service rpt_charges.office_id, payments and adjustments by transaction office rpt_ledger_entries.office_id = the working office, because a claim is filed per billing office. (b) is inferred: confirm on the live tool (S-2)."
+    },
+    "ledger_reports.r03.s02.c01": {
+      "notes": "Primary date range, inclusive, office-local; date_basis fixed service_date (04 7.2 row 21, documented: the print-menu dialog labels it DOS Date Range). Bound to rpt_ledger_entries.service_date_effective, so payments and adjustments linked to a charge of the range print with it and unlinked ones by their transaction date. Vendor advice: treatment date through the insurance payment posting date. Default today. Enhanced with presets."
+    },
+    "ledger_reports.r03.s02.c02": {
+      "notes": "Inclusive end of the date-of-service range (basis as Start Date). Default today."
+    },
+    "ledger_reports.r03.s03.c01": {
+      "notes": "Start of the alphabetical range on the patient sort name upper(last_name || ', ' || first_name) of rpt_patient_dim, prefix rule of 04 3.4; AAAAA / ZZZZZ open bounds. Both boxes pre-filled with the patient in context (token current_patient_name), so the default run prints that patient's super bill. One super bill per PATIENT (the other three ledger reports are by responsible party) that has at least one printed line in the range."
+    },
+    "ledger_reports.r03.s04.c01": {
+      "notes": "Member services of transaction_types (enum_multi, min_items 1, full_selection no_predicate, 04 2.5): production charges (rpt_ledger_entries.entry_type = charge and ledger_bucket <> non_production_charge). Contract-billing charges (ACBIL / ACBILO, ledger_bucket non_production_charge) belong to the Adjustment member, as the legacy journal prints them in Adjust (data card 2.12) [I, S-7]. Unticked = no service lines."
+    },
+    "ledger_reports.r03.s04.c02": {
+      "notes": "Member payments: entry_type in (patient_payment, insurance_payment). Payments only (Services and Adjustment unticked) = the vendor's tax receipt (title template 'Payment Receipt' is NEW, see the report section)."
+    },
+    "ledger_reports.r03.s04.c03": {
+      "notes": "Member adjustments (legacy label singular 'Adjustment'): entry_type in (adjustment, refund, transfer, opening_balance), plus contract-billing charges (ledger_bucket non_production_charge) [I, S-7]. With all three members ticked the canonical value is all (no predicate), so no live line of the patient in the range is dropped."
+    },
+    "ledger_reports.r03.x01": {
+      "status": "replicated",
+      "param": "include_previous_balance",
+      "param_type": "boolean",
+      "option_map": {},
+      "default": false,
+      "notes": "Shared vendor-doc parameter of 04 9.7: boolean, definition default false, role query. true = a first line 'Previous Balance' = sum(rpt_ledger_entries.amount) of the patient's live legs with service_date_effective < date_from, under the same office rule as the lines (charges by rpt_charges.office_id, credits by rpt_ledger_entries.office_id = the working office) and over every entry type (transaction_types does not narrow it), so that Balance = Previous Balance + the listed lines is the balance of the printed scope. Basis and office scope of the legacy figure are not documented (S-6). Dialog only in the legacy tool; default not documented: confirm on the live tool (S-3). Offered on the hub form too (additive).",
+      "default_differs_reason": "legacy default not documented (S-3); false = no previous-balance line, the definition default of 04 9.7"
+    },
+    "ledger_reports.r04.s01.c02": {
+      "notes": "108 = id of the office the user was working in. Locked: forced_when true -> office_ids = working_office (stated for the category; no vendor screenshot of this report). On this report the office is the printing office only: allocations are computed per account (rpt_fifo_allocations p_unit = account, data card 2.13) and every allocation line prints its own credit office and allocation office, because a payment entered at one office can pay a charge of another. Whether the legacy report restricts credits to the working office is unknown (report INFERRED): confirm on the live tool (A-2)."
+    },
+    "ledger_reports.r04.s02.c01": {
+      "notes": "Primary date range, inclusive, office-local; date_basis fixed created_date (04 7.2 row 22, inferred: entry date of the credit, as on the other allocation reports) applied to rpt_payment_allocations.credit_created_date. A migrated credit whose created_at is not reliable (created_at_reliable = false until the created-date backfill, DATA-10) is matched on credit_transaction_date instead and the run prints that availability warning. Default today. Enhanced with presets (previous_month, year_to_date)."
+    },
+    "ledger_reports.r04.s02.c02": {
+      "notes": "Inclusive end of the credit created-date range. Default today. Allocations are computed as of date_to (p_as_of = date_to)."
+    },
+    "ledger_reports.r04.s03.c01": {
+      "notes": "One responsible party = one guarantor account (accounts.id), shown as Last, First; the p_account_ids argument of rpt_fifo_allocations. Pre-filled with the account of the patient in context (token current_account). Always required (shared rule). Setting it needs class phi_identified."
+    }
+  }
+}

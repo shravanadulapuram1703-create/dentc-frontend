@@ -36,7 +36,7 @@ import type {
   PatientSignatureRead,
   PatientRead,
   PatientMedicalAlertCreateResponse,
-  MedicalAlertIn,
+  AppSchemasMedicalHistoryMedicalAlertIn as MedicalAlertIn,
   MedicalHistoryDocument,
   MedicalHistorySaveRequest,
   QuestionnaireAnswerIn,

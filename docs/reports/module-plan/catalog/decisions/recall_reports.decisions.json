@@ -1,0 +1,64 @@
+{
+  "category": "recall_reports",
+  "reports": {
+    "recall_reports.r01": {
+      "report_key": "recall.procedural_recall_report",
+      "phase": "P3",
+      "dynamic_rules": {
+        "recall_reports.r01.d01": "office_scope: the mode radio decides which value key is set. Mode office -> office_ids (picker lists the offices the caller may read; default token working_office; my_offices and all added). Mode office_group -> office_group_id (picker lists Setup office groups; legacy default ALL = all office groups the caller may read). Exactly one key is sent; switching the mode clears the other selection. Same rule on all four recall reports (recall_reports.r02-r04 have the same radio).",
+        "recall_reports.r01.d02": "Legacy one-favorite-per-report is replaced by server-side saved views: ADD TO MY FAVORITES saves a view (params with tokens, definition_version) and marks it favorite; when the caller already has a favorite view of this report_key the button reads UPDATE MY FAVORITES and overwrites that view after a confirm. Further views are allowed (enhancement). Applies to all four recall reports."
+      }
+    },
+    "recall_reports.r02": {
+      "report_key": "recall.scheduled_recall_report",
+      "phase": "P3"
+    },
+    "recall_reports.r03": {
+      "report_key": "recall.recall_due_report",
+      "phase": "P3"
+    },
+    "recall_reports.r04": {
+      "report_key": "recall.post_op_report",
+      "phase": "P3"
+    }
+  },
+  "controls": {
+    "recall_reports.r01.s06.c01": {
+      "status": "replicated_enhanced",
+      "param": "procedure_codes",
+      "param_type": "entity_multi",
+      "default": "all",
+      "notes": "Override of the shared mapping (recall_procedure_codes). On this report the legacy picker is NOT limited to recallable codes: any procedure code can be chosen (vendor documentation, confirmed), and ALL = every completed procedure code. That is the shared parameter procedure_codes (option source procedure_codes, include, all = no predicate) with the legacy label RECALL PROCEDURE CODES kept as the field label. Filter: rpt_charges.procedure_code IN (:procedure_codes). Legacy SELECT dual-list dialog becomes a searchable multi-select with category tree and code ranges (filter_card 12). Confirm on the live tool whether inactive codes are listed."
+    },
+    "recall_reports.r02.s07.c01": {
+      "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = every recall code (no predicate). Applied to rpt_recall_due().procedure_code. Option source procedure_codes restricted to codes with a recall interval (rpt_procedure_code_dim.recall_interval_span IS NOT NULL) or a maintained patient_recalls row. Whether the legacy list on this report is limited to recallable codes is not documented (only Recall Due states it) - confirm on the live tool, together with inactive codes."
+    },
+    "recall_reports.r03.s07.c01": {
+      "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = every recallable code (vendor documentation, confirmed). Applied to rpt_recall_due().procedure_code. Option source procedure_codes restricted to recall codes (recall_interval_span IS NOT NULL or a maintained patient_recalls row). Vendor advice: choose anchor codes only (adult / child prophylaxis); the saved code set recall_default of rpt_code_groups is offered as a preset. Confirm inactive codes on the live tool."
+    },
+    "recall_reports.r03.s03.c01": {
+      "notes": "Recall Date Range = range on rpt_recall_due().due_date (future range = upcoming, past range = overdue; vendor documentation). No Recall Date = due_date IS NULL: app recall rows with a blank due date plus one row per patient who has no recall at all (rpt_recall_due p_include_no_recall = true, procedure_code NULL); date_from / date_to are disabled and reset to their default. The No Recall Date meaning is the vendor reading [unverified] and its state was not captured - confirm on the live tool what it lists (patients with no recall row at all, or only recall rows without a due date) and whether the dates grey out."
+    },
+    "recall_reports.r02.s05.c01": {
+      "notes": "Include on the patient's preferred provider (Patient Information; printed Pref Prdr). One patient-level value, the same on every code line of the patient: coalesce(rpt_patient_dim.preferred_provider_id, rpt_patient_activity.last_visit_provider_id) (data card 5.2 attribution rule), flagged preferred_provider_source = patient / derived; the derived value prints with the marker '*'. This deviates from the shared dictionary row of preferred_provider_ids (filter card 3.2: no fallback, migrated patients match only under all) because preferred providers were not migrated; requests: 03 (RPT-RECALL-02) to change the 2.24 per-code fallback to this per-patient column, 04 to record the derived fallback in the dictionary row. all = no predicate. Legacy SELECT dialog becomes a searchable multi-select (roster-first, never scoped by providers.office_id); dialog content never captured - confirm list source and inactive rows on the live tool."
+    },
+    "recall_reports.r03.s05.c01": {
+      "notes": "Include on the patient's preferred provider (Patient Information; printed Pref Prdr). One patient-level value, the same on every code line of the patient: coalesce(rpt_patient_dim.preferred_provider_id, rpt_patient_activity.last_visit_provider_id) (data card 5.2 attribution rule), flagged preferred_provider_source = patient / derived; the derived value prints with the marker '*'. This deviates from the shared dictionary row of preferred_provider_ids (filter card 3.2: no fallback, migrated patients match only under all) because preferred providers were not migrated; requests: 03 (RPT-RECALL-02) to change the 2.24 per-code fallback to this per-patient column, 04 to record the derived fallback in the dictionary row. all = no predicate. Legacy SELECT dialog becomes a searchable multi-select (roster-first, never scoped by providers.office_id); dialog content never captured - confirm list source and inactive rows on the live tool."
+    },
+    "recall_reports.r02.s06.c01": {
+      "notes": "Include on the patient's preferred hygienist (column Pref Hyg): rpt_patient_dim.preferred_hygienist_id (exposed as rpt_recall_due().preferred_hygienist_id). Not migrated and no fallback (shared dictionary rule): a narrowed selection matches only patients edited in the app and the run prints the availability entry preferred_hygienist_not_migrated; all = no predicate, patients without a hygienist kept. Picker lists hygienists first. Dialog content never captured - confirm list source and inactive rows on the live tool."
+    },
+    "recall_reports.r03.s06.c01": {
+      "notes": "Include on the patient's preferred hygienist (column Pref Hyg): rpt_patient_dim.preferred_hygienist_id (exposed as rpt_recall_due().preferred_hygienist_id). Not migrated and no fallback (shared dictionary rule): a narrowed selection matches only patients edited in the app and the run prints the availability entry preferred_hygienist_not_migrated; all = no predicate, patients without a hygienist kept. Picker lists hygienists first. Dialog content never captured - confirm list source and inactive rows on the live tool."
+    },
+    "recall_reports.r04.s06.c01": {
+      "notes": "false = active patients only, and the footer prints '* Excludes Inactive Patients' (vendor sample); true removes the predicate and the starred note. Independent of this box the report drops accounts flagged Send to Collection (rpt_account_dim.send_collections), a rule the research states for all recall reports - to confirm for Post-Op on the live tool."
+    },
+    "recall_reports.r02.s03.c01": {
+      "notes": "Primary date range on the date of the booked appointment that carries the recall code, not the due date (vendor documentation). Evaluated range-aware: rpt_recall_due() is called with p_scheduled_from = date_from, p_scheduled_to = date_to (RPT-RECALL-02), so scheduled_basis = 'exact' and is_scheduled are computed against the requested range, past dates included; the printed scheduled_date is masked to CASE WHEN scheduled_basis = 'exact' THEN scheduled_date END. Fixed date_basis scheduled_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    "recall_reports.r02.s03.c02": {
+      "notes": "Primary date range on the date of the booked appointment that carries the recall code, not the due date (vendor documentation). Evaluated range-aware: rpt_recall_due() is called with p_scheduled_from = date_from, p_scheduled_to = date_to (RPT-RECALL-02), so scheduled_basis = 'exact' and is_scheduled are computed against the requested range, past dates included; the printed scheduled_date is masked to CASE WHEN scheduled_basis = 'exact' THEN scheduled_date END. Fixed date_basis scheduled_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    }
+  }
+}

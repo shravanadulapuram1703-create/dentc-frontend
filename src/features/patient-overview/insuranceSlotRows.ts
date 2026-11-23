@@ -26,11 +26,11 @@ export const INSURANCE_SLOT_ROWS: Array<{ label: string; value: (s: InsuranceSlo
   },
   {
     label: "Indi. Max (Rem.)",
-    value: (s) => money_or_dash(s?.record.max_remaining ?? s?.plan?.individual_max, ""),
+    value: (s) => money_or_dash(s?.record.max_remaining_effective ?? s?.record.max_remaining ?? s?.plan?.individual_max, ""),
   },
   {
     label: "Ind. Ded. (Rem.)",
     value: (s) =>
-      money_or_dash(s?.record.deductible_remaining ?? s?.plan?.individual_deductible, ""),
+      money_or_dash(s?.record.deductible_remaining_effective ?? s?.record.deductible_remaining ?? s?.plan?.individual_deductible, ""),
   },
 ];

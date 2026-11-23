@@ -1,0 +1,93 @@
+{
+  "category": "ortho_reports",
+  "reports": {
+    "ortho_reports.r01": {
+      "report_key": "ortho.ortho_compliance_report",
+      "phase": "P3"
+    },
+    "ortho_reports.r02": {
+      "report_key": "ortho.ortho_daily_journal",
+      "phase": "P3"
+    },
+    "ortho_reports.r03": {
+      "report_key": "ortho.patients_by_ortho_status_with_time_in_treatment",
+      "phase": "P3"
+    },
+    "ortho_reports.r04": {
+      "report_key": "ortho.ortho_report",
+      "phase": "P3"
+    },
+    "ortho_reports.r05": {
+      "report_key": "ortho.missing_ortho_visits",
+      "phase": "P3"
+    }
+  },
+  "controls": {
+    "ortho_reports.r01.s02.c02": {
+      "notes": "108 = id of the office the user was working in; default token working_office. On this report the office attribution is the contract office (rpt_ortho_contracts.office_id = ortho_plans.office_id), not the patient's home office and not the office of the last visit [I]. A contract with a NULL office_id is the member 'Unassigned office' (03 section 5.1 rule 3). Selection becomes exactly one of office_ids / office_group_id / office_group_ids; all = every office the caller may read."
+    },
+    "ortho_reports.r01.s03.c01": {
+      "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL) becomes a searchable multi-select; ALL = no restriction. Provider role on this report: the contract provider rpt_ortho_contracts.provider_id (ortho_plans.pref_provider_id, provider_role 'ortho_contract', NEW role for 04) [I]: the vendor names no provider column for this report. Alternative to confirm on the live tool: provider of the last ortho visit. Never scoped by providers.office_id; roster-first list."
+    },
+    "ortho_reports.r01.s04.c01": {
+      "notes": "Threshold in whole weeks, validation min 0, max 520. Inferred semantics (not documented): a row qualifies when the contract is not soft-deleted (ortho_plans.is_active = true, applied on every grain) and is in treatment (contract_status = 'active', NEW column from DATA-42; until then approximated as coalesce(debond_date, treat_end_date) IS NULL OR >= the office's local today, with warning ortho_contract_status_unavailable), the patient has no live appointment on or after the office's today (rpt_patient_activity.next_appointment_date IS NULL; cancelled / no-show excluded), and weeks_since_last_visit >= threshold, where last visit = rpt_ortho_contracts.last_visit_date (last ortho_visits row of the contract after DATA-42; before: last charge with is_ortho_code AND NOT is_contract_billing, change requested in RPT-ORTHO-02). A contract with no visit at all is listed (weeks shown blank, flagged 'no visit'). Confirm on the live tool: which last visit, >= or >, whether a same-day appointment counts as future, and whether patients with a future appointment are excluded regardless of weeks."
+    },
+    "ortho_reports.r02.s02.c02": {
+      "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the office of the ortho visit (ortho_visits.office_id, DATA-42); interim before DATA-42: office of service of the ortho-code charge (rpt_charges.office_id)."
+    },
+    "ortho_reports.r02.s03.c01": {
+      "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Provider role on this report: the visit doctor (ortho_visits.visit_provider_id, provider_role 'ortho_visit', same column as visit_doctor_ids) [I]: the vendor prints this provider as 'Doctor'; that PROVIDER filters it is not stated (supplement, unresolved). Interim before DATA-42: rpt_charges.provider_id of the ortho-code charge. Never scoped by providers.office_id."
+    },
+    "ortho_reports.r03.s02.c02": {
+      "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the contract office rpt_ortho_contracts.office_id [I]. No PROVIDER control exists on this screen, so a provider-restricted caller is not restricted here (scope.provider_restriction = none)."
+    },
+    "ortho_reports.r03.s03.c01": {
+      "notes": "Optional attribute range ortho_start_date, blank = no restriction (captured blank: the screenshot cannot prove whether blank is the default or the criteria had been cleared - confirm on the live tool). Binds to rpt_ortho_contracts ortho start = coalesce(banding_date, treat_start_date) as 03 section 2.25 defines it; 04 section 3 names treat_start_date alone - 03 owns the column (open question). Contracts without any start date are dropped whenever a bound is set."
+    },
+    "ortho_reports.r03.s03.c02": {
+      "notes": "End of the ortho_start_date attribute range, inclusive; blank = open end. Same binding and caveat as the Start Date box."
+    },
+    "ortho_reports.r03.s04.c01": {
+      "notes": "Optional attribute range ortho_last_visit_date, blank = no restriction. Vendor: Last Visit on this report = date of service of the last Ortho Treatment Card entry (rpt_ortho_contracts.last_visit_date, last ortho_visits row after DATA-42), not the general last visit (rpt_patient_activity.last_visit_date). A patient without an ortho visit is dropped whenever a bound is set."
+    },
+    "ortho_reports.r03.s04.c02": {
+      "notes": "End of the ortho_last_visit_date attribute range, inclusive; blank = open end."
+    },
+    "ortho_reports.r03.s05.c01": {
+      "notes": "Searchable multi-select on lookup:ortho_statuses (NEW, FLT-09); ALL = no restriction, so contracts without a status are kept; a narrower list drops contracts whose ortho_status_code is NULL (null_policy drop). The legacy value list is not shown in any source; the vocabulary is NEW (DATA-42). Status = the status of the newest ortho treatment plan in the legacy tool; here rpt_ortho_contracts.ortho_status_code."
+    },
+    "ortho_reports.r04.s02.c02": {
+      "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the contract office rpt_ortho_contracts.office_id [I]. No PROVIDER control exists on this screen."
+    },
+    "ortho_reports.r04.s03.c01": {
+      "notes": "Attribute range ortho_start_date, legacy default today (date token today in the office time zone). Binds to coalesce(banding_date, treat_start_date) of rpt_ortho_contracts (03 section 2.25; NEW computed column ortho_start_date via RPT-ORTHO-02). Combined with PATIENT FIRST VISIT by AND [I] (04 section 11 open item 'Two ortho ranges'). Every ortho visit belongs to a contract (DATA-42 ortho_visits.ortho_plan_id NOT NULL), so the vendor's second use 'visit but not started' = a contract with first_ortho_visit_date set and ortho_start_date IS NULL, reached with this range blank; confirm the legacy meaning on the live tool."
+    },
+    "ortho_reports.r04.s03.c02": {
+      "notes": "End of the ortho_start_date attribute range, inclusive; default today."
+    },
+    "ortho_reports.r04.s04.c01": {
+      "notes": "Attribute range ortho_first_visit_date, legacy default today. Vendor: First Visit = first Ortho Treatment Card entry (min ortho_visits.visit_date of the patient, NEW column first_ortho_visit_date for rpt_ortho_contracts, owner 03), not the first visit to the practice (rpt_patient_activity.first_visit_date). Combined with ORTHO START DATE by AND [I]."
+    },
+    "ortho_reports.r04.s04.c02": {
+      "notes": "End of the ortho_first_visit_date attribute range, inclusive; default today."
+    },
+    "ortho_reports.r04.s05.c01": {
+      "notes": "Searchable multi-select on lookup:ortho_statuses (NEW, FLT-09); ALL = no restriction (contracts without a status kept); a narrower list drops NULL statuses. Legacy value list unknown (DATA-42 defines the vocabulary)."
+    },
+    "ortho_reports.r05.s01.c01": {
+      "notes": "Member ledger_transaction of missing_items (enum_multi, options on this report: ledger_transaction, ortho_visit; min_items 1; semantics.full_selection = predicate). Ticked: an appointment qualifies when no live charge exists for the patient in the appointment's office on the appointment date (any is_ledger_code charge; rpt_charges). Inferred rule (supplement, unresolved): a row is listed when at least one ticked item is missing (OR across ticked items)."
+    },
+    "ortho_reports.r05.s01.c02": {
+      "notes": "Member ortho_visit of missing_items. Ticked: an appointment qualifies when no ortho_visits row (DATA-42) exists for the patient on the appointment date in the appointment's office. Inferred rule: OR across ticked items; both ticked (default) = appointments missing a ledger transaction, an ortho visit, or both."
+    },
+    "ortho_reports.r05.s03.c02": {
+      "notes": "108 = id of the office the user was working in; default token working_office. Office attribution on this report: the appointment office rpt_appointment_facts.office_id; ledger and visit tests are matched in the same office on the same day (as the Daily Audit, 03 section 2.17)."
+    },
+    "ortho_reports.r05.s04.c01": {
+      "notes": "Searchable multi-select; ALL = no restriction. provider_role appointment: rpt_appointment_facts.provider_id (prints as 'Provider'). Never scoped by providers.office_id. Not forced for provider-restricted callers: the family declares scope.provider_restriction = none (PD-11 restricts My Reports and provider dashboards only)."
+    },
+    "ortho_reports.r05.s06.c01": {
+      "notes": "Searchable multi-select; ALL = no restriction. provider_role ortho_visit: ortho_visits.visit_provider_id (prints as 'Visit Provider'). A narrower list keeps only appointments that HAVE an ortho visit by one of the chosen doctors, so rows missing the visit drop out (null_policy drop) [I]; the form shows a hint when visit_doctor_ids is not all and ortho_visit is ticked. Confirm on the live tool."
+    }
+  }
+}

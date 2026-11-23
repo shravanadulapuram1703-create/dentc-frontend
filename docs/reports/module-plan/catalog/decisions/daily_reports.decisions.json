@@ -1,0 +1,329 @@
+{
+  "category": "daily_reports",
+  "reports": {
+    "daily_reports.r02": {
+      "report_key": "daily.daily_journal",
+      "phase": "P1",
+      "dynamic_rules": {
+        "daily_reports.r02.d01": "page_break_by member group (Page Break checkbox) is enabled_when group_by != none; while group_by = none it is disabled and page_break_by is forced to its disabled_value none, so a stale tick never reaches the PDF renderer."
+      }
+    },
+    "daily_reports.r03": {
+      "report_key": "daily.production_report",
+      "phase": "P1",
+      "dynamic_rules": {
+        "daily_reports.r03.d01": "With report_by = code (default): report_format is forced to summary (forced_when report_by != provider; option detail enabled_when report_by == provider); procedure_codes is visible (visible_when report_by != provider); group_by offers none / provider / carrier; include_ucr is enabled (enabled_when not (report_by == provider and report_format == detail)).",
+        "daily_reports.r03.d02": "include_z_codes and compare_fee_schedule_id are enabled_when include_ucr == true (disabled_value false / null); compare_fee_schedule_id is required_when include_ucr == true (inferred, shared rule of 04).",
+        "daily_reports.r03.d03": "The page_break_by member group checkbox carries the label 'Page Break by Provider' when group_by == provider (label_when, shared rule of 04); the value is page_break_by = group. Its default stays unticked: the sample shows it ticked, but nothing documents an automatic tick on this report.",
+        "daily_reports.r03.d04": "provider_ids is visible_when report_by == provider or group_by == provider (shared rule of 04); otherwise it is hidden and forced to all.",
+        "daily_reports.r03.d05": "report_format option detail is enabled_when report_by == provider; for code, category and carrier report_format is forced to summary. Category and Carrier states were never captured: the rule follows the vendor text (Detail only for Provider) and is to be confirmed on the live tool.",
+        "daily_reports.r03.d06": "group_by is enabled_when report_by != provider; under report_by = provider it is disabled and forced to none (the legacy greys only the Provider and Carrier options, which leaves None as the only choice - same effect).",
+        "daily_reports.r03.d07": "procedure_codes is visible_when report_by != provider (hidden and forced to all for provider); provider_ids becomes visible through its visible_when report_by == provider.",
+        "daily_reports.r03.d08": "sort_by (transaction_date / patient_last_name) is visible_when report_by == provider and report_format == detail (inferred, shared rule of 04: the state was seen only with both set); hidden otherwise, value forced to its disabled_value.",
+        "daily_reports.r03.d09": "include_ucr is enabled_when not (report_by == provider and report_format == detail): greyed (disabled_value false) only in the observed Provider + Detail state; Provider + Summary keeps it, as the 2016 Production by Provider Summary sample prints the compare-fee column. include_z_codes and compare_fee_schedule_id follow through include_ucr == true. Which of the two drives the greying is to be confirmed on the live tool."
+      }
+    },
+    "daily_reports.r05": {
+      "report_key": "daily.deposit_slip",
+      "phase": "P1",
+      "dynamic_rules": {
+        "daily_reports.r05.d01": "check_type is enabled_when ['in', 'payment_types', ['check']] holds (the list contains check); otherwise disabled with disabled_value both.",
+        "daily_reports.r05.d02": "batch_check_grouping is enabled_when group_batch_checks == true (disabled_value batch_id); group_batch_checks itself is enabled_when the payment_types list contains check (inferred).",
+        "daily_reports.r05.d03": "office_scope: mode office_group switches the picker to lookup:office_groups and writes office_group_id with default all; mode office uses lookup:offices and office_ids with default working_office. Exactly one value key is sent.",
+        "daily_reports.r05.d04": "Hub feature (07): a report opened from a saved view or favorite shows 'Update favorite' instead of 'Add to favorites'; the action updates that report_saved_views row (new definition_version stamped)."
+      }
+    },
+    "daily_reports.r08": {
+      "report_key": "daily.progress_notes",
+      "phase": "P1",
+      "dynamic_rules": {
+        "daily_reports.r08.d01": "date_basis option appointment_date is enabled_when report_type != detail and appointments_to_include is enabled_when report_type != detail (disabled_value only_missing_progress_notes); under report_type = detail a stored appointment_date basis falls back to service_date. Whether Unsigned also unlocks them (or only Missing) is to be confirmed on the live tool."
+      }
+    },
+    "daily_reports.r10": {
+      "report_key": "daily.daily_audit",
+      "phase": "P1",
+      "dynamic_rules": {
+        "daily_reports.r10.d01": "page_break_by member group is enabled_when group_by == provider and default_when group_by == provider sets it to group (shared rule of 04: ticked automatically). The user may untick it; whether the legacy locks it is to be confirmed.",
+        "daily_reports.r10.d02": "office_scope: mode office_group switches the picker to lookup:office_groups and writes office_group_id with default all; mode office uses lookup:offices and office_ids with default working_office."
+      }
+    },
+    "daily_reports.r12": {
+      "report_key": "daily.special_transaction_report",
+      "phase": "P1",
+      "dynamic_rules": {
+        "daily_reports.r12.d01": "code_scope (scoped_selection): code_scope_mode = code reads lookup:procedure_codes, code_scope_mode = category reads lookup:procedure_categories for code_scope_selection. Changing the mode resets code_scope_selection to all (design decision; legacy reset behaviour not documented - confirm in RPT-DAILY-80); none stays allowed in both modes.",
+        "daily_reports.r12.d02": "Hub feature (07): a report opened from a saved view or favorite shows 'Update favorite' instead of 'Add to favorites'; the action updates that report_saved_views row."
+      }
+    },
+    "daily_reports.r07": {
+      "report_key": "daily.routing_slip",
+      "phase": "P1",
+      "actions": {
+        "PRINT / PREVIEW": "Run: preview on screen, then print (PDF only; this report has no PRINT FORMAT)."
+      }
+    }
+  },
+  "controls": {
+    "daily_reports.r03.x01": {
+      "status": "replicated_enhanced",
+      "param": "provider_ids",
+      "param_type": "entity_multi",
+      "default": "all",
+      "notes": "VENDOR-DOC PROVIDERS picker: shown beside CODES when group_by = provider and in place of CODES when report_by = provider (visible_when report_by == provider or group_by == provider, shared rule of 04). Provider = treating provider of the charge (rpt_charges.provider_id, the Prdr of the Ledger). Searchable multi-select; default all (04 shared default; legacy default and picker dialog undocumented - open question 10)."
+    },
+    "daily_reports.r03.x02": {
+      "status": "replicated",
+      "param": "sort_by",
+      "param_type": "enum",
+      "option_map": {
+        "Transaction Date": "transaction_date",
+        "Patient Lastname": "patient_last_name"
+      },
+      "option_map_replace": true,
+      "default": "",
+      "notes": "VENDOR-DOC SORT BY, seen only with PRODUCTION BY = Provider and REPORT FORMAT = Detail (visible_when report_by == provider and report_format == detail, inferred, shared rule of 04). Legacy default not documented: the parity default is empty; the definition uses the 04 rule 'first legacy option' (transaction_date) until the live tool confirms. Row order inside each provider section of the detail block."
+    },
+    "daily_reports.r12.x01": {
+      "status": "replicated",
+      "param": "sort_by",
+      "param_type": "enum",
+      "option_map": {
+        "Patient LastName": "patient_last_name",
+        "Patient ID": "patient_id",
+        "Date": "date"
+      },
+      "option_map_replace": true,
+      "default": "",
+      "notes": "VENDOR-DOC row Sort By below Group By (cut off in our capture). Order inside each group_by group. Date = the column chosen by date_basis (transaction_date or service_date). Legacy default not documented: parity default empty; the definition uses the 04 rule 'first legacy option' (patient_last_name) until confirmed on the live tool."
+    },
+    "daily_reports.r01.s03.c01": {
+      "notes": "Searchable multi-select (legacy SELECT dialog); all = no restriction. Provider role on this report: provider of the ledger line (rpt_ledger_entries.provider_id: treating provider on charges, credited provider on payments, adjustment provider). INFERRED - no vendor statement for this report; confirm on the live tool."
+    },
+    "daily_reports.r01.s04.c01": {
+      "notes": "Single date, role single_day: the sheet lists every ledger leg whose transaction_date = report_date (PD-8); previous balance = ledger sum before the day, new balance = through the day (as-of the end of that office-local day). Default = today in the office time zone (relative token), enhanced with presets. Output INFERRED (research A1)."
+    },
+    "daily_reports.r02.s04.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Provider role: provider on the ledger line (rpt_ledger_entries.provider_id, journal column Prdr); one patient's payments can split across providers."
+    },
+    "daily_reports.r02.s04.c02": {
+      "notes": "Searchable multi-select; all = no restriction. User role: poster of the ledger leg (user_key, data_card 5.4). Migrated rows carry only a legacy login string and match only under all until DATA-10."
+    },
+    "daily_reports.r02.s08.c01": {
+      "enabled_when": "unknown",
+      "notes": "Greyed on Daily Journal in every known capture; driver not known, so enabled_when unknown (04 9.3: the control stays enabled and the definition lint flags it until RPT-DAILY-09 answers it). Ticked adds block ar_summary (Total A/R as of date_to per office and at report end), INFERRED from the Executive Summary option of the same name."
+    },
+    "daily_reports.r03.s04.c01": {
+      "notes": "Primary range, fixed basis transaction_date (the posting date decides the period, research A3); no date_basis radio on this report. On charges transaction_date equals service_date until DATA-13 adds the ledger date. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r03.s04.c02": {
+      "notes": "Inclusive end of the fixed transaction_date (posting date) range. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r04.s04.c01": {
+      "notes": "Primary range, fixed basis transaction_date of the payment and collection-adjustment legs (coverage matrix row 4); no date_basis radio. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r04.s04.c02": {
+      "notes": "Inclusive end of the fixed transaction_date range. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r05.s03.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Provider role: credited provider on the payment line (rpt_payments.provider_id, nullable: payments without a provider match only under all). Provider and User always both apply (vendor documentation)."
+    },
+    "daily_reports.r05.s03.c02": {
+      "notes": "Searchable multi-select; all = no restriction. User role: the user who posted the payment (user_key). Migrated rows match only under all."
+    },
+    "daily_reports.r06.s03.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Provider role: scheduled side = line provider rpt_appointment_procedures.provider_id (as metric scheduled_production, M15 / P8, and the doctor / hygiene split); actual side = treating provider rpt_charges.provider_id. INFERRED - the appointment provider (rpt_appointment_procedures.appointment_provider_id) is the alternative reading; confirm on the live tool."
+    },
+    "daily_reports.r06.s04.c01": {
+      "notes": "Primary range; future dates allowed. Basis appointment_date for scheduled production and transaction_date (posting) for actual production - INFERRED, the vendor states no basis. Default = today in the office time zone; enhanced with presets (NEW presets tomorrow, next_7_days, rest_of_month of 04 7.4) and relative tokens."
+    },
+    "daily_reports.r06.s04.c02": {
+      "notes": "Inclusive end; future dates allowed. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r07.s02.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Provider role: appointment provider (rpt_appointment_facts.provider_id): Provider, Operatory and DATE RANGE select which appointments get a slip (vendor documentation)."
+    },
+    "daily_reports.r07.s03.c01": {
+      "notes": "Primary range, fixed basis appointment_date (rpt_appointment_facts.appointment_date, office-local): one slip per appointment in the range. Default = today in the office time zone; enhanced with presets (NEW preset tomorrow of 04 7.4)."
+    },
+    "daily_reports.r07.s03.c02": {
+      "notes": "Inclusive end of the appointment_date range. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r08.s06.c01": {
+      "notes": "Greyed while report_type = detail. Research A8: Missing unlocks it (unverified); the Unsigned state was never captured, so enabled_when report_type != detail follows the shared option rule of date_basis and is to be confirmed (it may be report_type == missing only)."
+    },
+    "daily_reports.r09.s04.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Category: treating provider of the charge (rpt_charges.provider_id); Provider $ = the provider's gross production in the category (research A9). Carrier (proposal, pending live check): # Patient from rpt_provider_visits, # of Claims from rpt_claim_facts.treating_provider_id, collections from rpt_payments.provider_id."
+    },
+    "daily_reports.r09.s05.c01": {
+      "notes": "Primary range, definition date_basis service_date (coverage matrix row 9). Carrier format per-measure bases, stated in the column descriptions: production and # Patient on service_date, # of Claims on the claim created date, collections on transaction_date (open question 8). Default = today in the office time zone; enhanced with presets."
+    },
+    "daily_reports.r09.s05.c02": {
+      "notes": "Inclusive end of the service_date range. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r09.s06.c01": {
+      "enabled_when": "report_by == category (inferred: captured enabled with ANALYSIS BY = Category while CARRIER is greyed)",
+      "notes": "ADA category of the procedure code (Setup > Procedure Codes); searchable multi-select over lookup:procedure_categories; all = no restriction. Whether ANALYSIS BY = Carrier greys it is not documented - confirm."
+    },
+    "daily_reports.r10.s03.c01": {
+      "notes": "Searchable multi-select; all = no restriction. One provider set for filter and GROUP BY: coalesce(nullif(appointment_provider_ids || charge_provider_ids, '{}'), note_provider_ids) of rpt_visit_audit() (change owned by 03 section 2.17). Vendor conflict: the article names the preferred provider and also the provider on the transaction date - confirm on the live tool."
+    },
+    "daily_reports.r10.s04.c01": {
+      "notes": "Primary range on the date of the PATIENT HAS record: appointment_date, transaction_date of the ledger line or note_date (DOS) of the progress note; with ALL any of the three. Matching is same office, same day. Default = today in the office time zone; enhanced with presets (yesterday)."
+    },
+    "daily_reports.r10.s04.c02": {
+      "notes": "Inclusive end of the PATIENT HAS date range. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r11.s04.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Provider role: billing provider of the claim (rpt_claim_facts.billing_provider_id) - INFERRED, no vendor description of this report; confirm (treating provider is the alternative)."
+    },
+    "daily_reports.r11.s05.c01": {
+      "notes": "Primary range, fixed basis claim_printed_date (NEW, DATA-21: claim_print_events / insurance_claims.last_printed_at): claims printed on paper in the range. INFERRED basis (printed vs created vs sent date); prints are not recorded today, so the report covers prints from DATA-21 on (APP). Default = today in the office time zone."
+    },
+    "daily_reports.r11.s05.c02": {
+      "notes": "Inclusive end of the claim_printed_date range. Default = today in the office time zone; enhanced with presets and relative tokens."
+    },
+    "daily_reports.r12.s03.c01": {
+      "notes": "Searchable multi-select; all = no restriction. Provider role: transaction provider (rpt_ledger_entries.provider_id, printed Tran Prdr / Transaction Provider)."
+    },
+    "daily_reports.r12.s03.c02": {
+      "notes": "Searchable multi-select; all = no restriction. User role: poster of the ledger leg (user_key); also the group key of group_by = user (Username)."
+    },
+    "daily_reports.r01.s02.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r01.s02.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r02.s03.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r02.s03.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r03.s03.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r03.s03.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r04.s03.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r04.s03.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r05.s02.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r05.s02.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r06.s02.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r06.s02.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r07.s01.c01": {
+      "notes": "Office versus Office Group. On Routing Slip the Office Group option is greyed (option office_group enabled_when false): one or several offices only."
+    },
+    "daily_reports.r07.s01.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office only on this report: one or more offices the caller can read; tokens working_office, my_offices."
+    },
+    "daily_reports.r08.s02.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r08.s02.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r09.s03.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r09.s03.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r10.s02.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r10.s02.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r11.s03.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r11.s03.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r12.s02.c01": {
+      "notes": "Office versus Office Group (picker source switches with the mode). Both options enabled on this report."
+    },
+    "daily_reports.r12.s02.c02": {
+      "notes": "Default = id of the office the user was working in (capture shows 108). Mode office: one or more offices the caller can read (default working_office); mode office_group: groups of Setup > Office Groups (default all). The selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    "daily_reports.r02.s01.c01": {
+      "notes": "Detail = line listing with patient names and date subtotals; Summary = the Est. Pat. / Est. Ins. / Total summary block only. Both options enabled in every state."
+    },
+    "daily_reports.r03.s01.c01": {
+      "notes": "Option detail enabled_when report_by == provider; report_format forced to summary for code, category and carrier (vendor text: Detail only for PRODUCTION BY = Provider)."
+    },
+    "daily_reports.r04.s01.c01": {
+      "notes": "Detail = payment lines inside the COLLECTION BY sections plus the summary block (By Code: the code table); Summary = totals per member. Both options enabled in every state (no dependency captured)."
+    },
+    "daily_reports.r11.s01.c01": {
+      "notes": "Detail / Summary both enabled in every state (no dependency captured). Detail = one row per printed claim by carrier; Summary = one row per carrier. Whole report output INFERRED."
+    },
+    "daily_reports.r10.s08.c01": {
+      "notes": "No greyed state on this report. Provider = one section per provider of the patient-office-day (one provider set shared with the PROVIDER filter, Data)."
+    },
+    "daily_reports.r03.s08.c01": {
+      "enabled_when": "not (report_by == provider and report_format == detail)",
+      "notes": "Greyed only in the observed state PRODUCTION BY = Provider + REPORT FORMAT = Detail; the 2016 Production by Provider Summary sample prints the compare-fee column, so Provider + Summary keeps it enabled. Deviation from filter_card 9.6 (rule report_by != provider) recorded as a challenge to 04; confirm on the live tool (open question 2)."
+    },
+    "daily_reports.r03.s08.c02": {
+      "notes": "Greyed until Include UCR is ticked (enabled_when include_ucr == true, disabled_value false). Builder rule (02 section 3.11): Z codes are dropped only when include_ucr = true and include_z_codes = false; while Include UCR is off the disabled value false does NOT remove Z-code rows."
+    },
+    "daily_reports.r03.s09.c01": {
+      "notes": "Lookup dropdown of fee schedules shown as name ( id ), greyed until Include UCR is ticked (disabled_value null, required_when include_ucr == true). The greyed default is tenant data (other tenants show other schedules): candidate default first_option until the live tool confirms list order and default. The 02 section 3.11 worked example (token office_default_ucr_fee_schedule) is to be aligned with this candidate by the 02 owner."
+    },
+    "daily_reports.r04.s05.c01": {
+      "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Restricts payment legs to the chosen payment codes (Setup > Payment/Adjustment Types), not the tender categories of the checkbox variant. Proposal (not documented): collection adjustments are not filtered by it - open question 8. Dialog content never captured."
+    },
+    "daily_reports.r04.s06.c02": {
+      "notes": "Page Break checkbox beside COLLECTION BY; greyed while None is selected; enabled for Provider, Carrier and Code (inferred - open question 10). Under COLLECTION BY Code the break is per office (proposal, open question 9)."
+    },
+    "daily_reports.r05.s08.c01": {
+      "notes": "payer_display is a NEW report-specific parameter key (owner: this definition; candidate for 04 section 15). None = names suppressed, group totals only (taken; open question 1)."
+    },
+    "daily_reports.r07.s07.c01": {
+      "notes": "procedure_code_source is a NEW report-specific parameter key (owner: this definition). Selects what fills the procedure area of each slip."
+    },
+    "daily_reports.r07.s08.c02": {
+      "notes": "print_blank_routing_slip is a NEW report-specific parameter key (owner: this definition). Ticked = one empty form, no data query; every other criterion is ignored."
+    },
+    "daily_reports.r08.s03.c01": {
+      "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. Row label Preferred Provider (section header PROVIDER): literal mapping to rpt_patient_dim.preferred_provider_id in all three variants; migrated patients (no preferred provider) match only under all. The appointment provider of Missing is offered as enhancement appointment_provider_ids. Confirm the Missing meaning on the live tool."
+    },
+    "daily_reports.r08.s07.c01": {
+      "notes": "Ticked sets page_break_by = patient. The patient group level exists only when chosen, so this definition declares page_break_by with role query (exception to filter_card section 8)."
+    },
+    "daily_reports.r10.s05.c01": {
+      "notes": "patient_has is a NEW enum key (owner 04 section 3.6). Appointment = live appointments with status_class not in (cancelled, no_show) (rpt_visit_audit() argument owned by 03; include_resolved_appointments lifts it)."
+    },
+    "daily_reports.r12.s04.c01": {
+      "notes": "Transaction Date bound provisionally to the ledger transaction_date; the supplement records the vendor reading 'date the transaction was entered', which would bind to created_date (reliable on app rows only, data_card 4.2) - open question 10."
+    },
+    "daily_reports.r12.s06.c01": {
+      "notes": "Exclude filter: None = exclude nothing; patients holding a selected type are dropped. Source row no_type_defined (if the dialog lists No Type Defined) drops patients without a type; otherwise patients without a type are kept. Dialog never captured; vendor text calls it an include filter - confirm."
+    },
+    "daily_reports.r12.s07.c01": {
+      "notes": "payment_adjustment_codes is a NEW key (owner 04 section 3.8): entity_multi, values kind:code plus pseudo-value payment:(none) for legs without a code, default none; ALL = every payment, adjustment, refund, transfer and opening-balance leg with no code predicate. Dialog never captured."
+    },
+    "daily_reports.r12.s08.c01": {
+      "notes": "insurance_plan_selection is a NEW key (owner 04 section 3.5): one entity_multi parameter whose option source insurance_plans_and_subtypes returns typed values plan:<id>, subtype:dental, subtype:medical; ALL = no restriction. Dialog never captured: confirm rows, grouping and selection rules on the live tool."
+    },
+    "daily_reports.r12.s10.c04": {
+      "notes": "Static dropdown captured collapsed: only All Amount is known. Provisional option set until the live check: all, greater_than, greater_or_equal, less_than, less_or_equal, equal, compared on abs(amount); whether the legacy compares the signed or the absolute amount is unknown (open question 1)."
+    }
+  }
+}

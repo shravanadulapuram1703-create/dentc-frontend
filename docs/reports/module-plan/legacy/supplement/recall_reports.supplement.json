@@ -1,0 +1,262 @@
+{
+  "category": "recall_reports",
+  "source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+  "reports": [
+    {
+      "report_id": "recall_reports.r01",
+      "legacy_name": "Procedural Recall Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Procedural Recall Report); it applies to every report of this category that has the Office / Office Group radios.",
+          "controls": [
+            "recall_reports.r01.s02.c01",
+            "recall_reports.r01.s02.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup."
+        },
+        {
+          "when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+          "effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Procedural Recall Report); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+          "controls": [],
+          "confidence": "likely",
+          "evidence_quote": "One saved version per report (`ADD TO MY FAVORITES` → `UPDATE MY FAVORITES`)."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r01.s06.c01",
+          "text": "Despite its title, RECALL PROCEDURE CODES is not limited to recallable codes on this report: any procedure code can be chosen.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Any code can be chosen, not only recallable ones"
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r01.s06.c01",
+          "text": "ALL = every completed procedure code, which makes a very long report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`RECALL PROCEDURE CODES` | Codes to include; `ALL` = every completed code (very long report)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r01.s03.c01",
+          "text": "PROCEDURE DATE RANGE is matched on the date the procedure was completed.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PROCEDURE DATE RANGE` | Date the procedure was completed (`Proc. Date`)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r01.s05.c01",
+          "text": "TRANSACTION PROVIDER is the provider on the ledger line of the completed procedure.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Transaction Provider` | Provider on the ledger line of the completed procedure."
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The vendor article concerns the procedural recall report; the document states the rule for all four recall reports.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+        }
+      ]
+    },
+    {
+      "report_id": "recall_reports.r02",
+      "legacy_name": "Scheduled Recall Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r02.s03.c01",
+          "text": "SCHEDULED DATE RANGE filters on the date of the scheduled appointment, not on the recall due date.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`SCHEDULED DATE RANGE` filters on the date of the scheduled appointment"
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r02.s05.c01",
+          "text": "PREFERRED PROVIDER and PREFERRED HYGIENIST filter on the patient's preferred provider / hygienist from Patient Information.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "The patient's preferred provider / hygienist from Patient Information."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r02.s03.c01",
+          "text": "A recall counts as scheduled only when the recallable procedure code is embedded in the future appointment: the scheduled recall date is filled from that appointment, and an appointment that does not carry the code does not make the recall scheduled.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Scheduled Recall Date` is filled only when the code is embedded in a"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Scheduled Recall Report it is implied rather than shown (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+        }
+      ]
+    },
+    {
+      "report_id": "recall_reports.r03",
+      "legacy_name": "Recall Due Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "truncation",
+          "control_id": "",
+          "text": "Include Inactive Patients is the last control of the panel: nothing lies below the row that the action bar cuts, so the criteria are complete as transcribed.",
+          "resolves_truncation": true,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Inactive Patients` is the last control."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r03.s03.c01",
+          "text": "The range is applied to the recall due date: a future range lists upcoming recalls, a past range overdue ones.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Range on the recall due date: future range = upcoming, past range = overdue."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r03.s08.c01",
+          "text": "Scheduled / Not Scheduled test whether a future appointment contains the recall code - a patient who is booked but whose appointment does not carry the code still lists as not scheduled. Not Scheduled is the working list.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Whether a future appointment contains the code. `Not Scheduled` is the working list."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r03.s08.c01",
+          "text": "Scheduled / Not Scheduled is evaluated per recall code: a patient with two of three codes scheduled still lists for the third.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Evaluation is per code: with two of three codes scheduled, the patient still lists for the third"
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r03.s07.c01",
+          "text": "ALL = every recallable code; the vendor advises choosing anchor codes only (for example the adult / child prophylaxis codes).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`ALL` = every recallable code; vendor advises anchor codes only"
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r03.s05.c01",
+          "text": "PREFERRED PROVIDER and PREFERRED HYGIENIST filter on the patient's preferred provider / hygienist.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Filter on the patient's preferred provider / hygienist (columns `Pref Prdr`, `Pref Hyg`)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r03.s08.c01",
+          "text": "Not Scheduled reproduces the former menu report Recall Due/Overdue but Not Scheduled Report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Recall Due/Overdue but Not Scheduled Report` | `Recall Due Report` → `Not Scheduled`"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Recall Due Report it is implied rather than shown (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+        }
+      ]
+    },
+    {
+      "report_id": "recall_reports.r04",
+      "legacy_name": "Post-Op Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The population is fixed by the Post-Op flag of the procedure code (Procedure Code Setup): nothing prints unless codes were flagged Post-Op first. That is why this screen has no procedure-code picker - its absence in our capture is by design.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Nothing prints unless codes were flagged `Post-Op` first"
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r04.s03.c01",
+          "text": "PROCEDURE DATE RANGE is matched on the date the Post-Op flagged procedure was completed.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "List patients who had procedures flagged `Post-Op` in Procedure Code Setup completed in the range"
+        },
+        {
+          "about": "meaning",
+          "control_id": "recall_reports.r04.s05.c01",
+          "text": "TRANSACTION PROVIDER is the provider on the ledger line of the completed procedure.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Transaction Provider` | Provider on the ledger line of the completed procedure."
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Post-Op Report it is implied rather than shown (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "recall_reports.r01",
+      "question": "What happens to the From / To boxes when Age Range is unticked? Not documented (the same row exists on Scheduled Recall Report and Recall Due Report)."
+    },
+    {
+      "report_id": "recall_reports.r02",
+      "question": "Is the RECALL PROCEDURE CODES list limited to recallable codes on Scheduled Recall Report and Recall Due Report? The document states only that any code can be chosen on Procedural Recall Report and that ALL means every recallable code on Recall Due Report."
+    },
+    {
+      "report_id": "recall_reports.r03",
+      "question": "What does No Recall Date select - presumably patients without any recall due date (unverified) - and what happens to Start Date / End Date when it is chosen?"
+    },
+    {
+      "report_id": "",
+      "question": "The document says accounts flagged Send to Collection are excluded from ALL recall reports, but the vendor article it cites is about the procedural recall report. Confirm the exclusion on Scheduled Recall Report, Recall Due Report and Post-Op Report."
+    },
+    {
+      "report_id": "",
+      "question": "Picker dialogs this document does not describe (it refers to legacy_report_outputs_daily_my.md for the picker dialogs): Transaction Provider, Preferred Provider, Preferred Hygienist, and the layout of the Recall Procedure Codes and Exclude Patient Type dialogs - for the last two only the value domain is given."
+    },
+    {
+      "report_id": "",
+      "question": "The Office / Office Group semantics and the UPDATE MY FAVORITES relabel are stated by the document as cross-cutting facts for the Appointment, Recall and Referral criteria screens and are recorded once, on Procedural Recall Report. Confirm that they hold on every report screen of the category."
+    },
+    {
+      "report_id": "",
+      "question": "Rights: the vendor lists the security right Reports - Recall Reports Screen in two variants, Full Control and View Only (view only = see the report list and the parameters, cannot generate). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described, so no rule is recorded."
+    },
+    {
+      "report_id": "",
+      "question": "Vendor sources the research could not read and that may document the criteria left open here (No Recall Date, the Age Range row): the release-note articles (sign-in required) and the video-only webinar 17 Recalls Keep'Em Coming Back For More."
+    }
+  ]
+}

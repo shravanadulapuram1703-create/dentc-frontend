@@ -1,0 +1,3425 @@
+{
+ "category": "insurance_reports",
+ "reports": [
+  {
+   "report_id": "insurance_reports.r01",
+   "legacy_name": "Claims List",
+   "report_key": "insurance.claims_list",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r01.s01.c01",
+     "signature_id": "sig0113",
+     "legacy_section": "CLAIM/PRE-AUTH",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Claims",
+      "Pre-Authorization"
+     ],
+     "legacy_default": "Claims",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_kind",
+     "param_type": "enum",
+     "option_map": {
+      "Claims": "claims",
+      "Pre-Authorization": "pre_authorization"
+     },
+     "default": "claims",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r01.s02.c01",
+     "signature_id": "sig0114",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "Dental",
+      "Medical"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_type",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "Dental": "dental",
+      "Medical": "medical"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Dental versus medical category of the claim (rpt_claim_facts.category; insurance_claims.claim_type holds the coverage tier on migrated rows, normalisation owned by 03). That the radio filters dental versus medical claims is inferred (supplement unresolved item); both = no predicate.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = created_date: the date the claim was generated, not the date of service (documented, 04 section 7.2 row 13). Reads rpt_claim_facts.created_at_utc as office-local date; no created date was loaded for migrated claims (created_at_reliable = false), so the report is APP for history. Default today in the office time zone; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the claim-generated (created_date) range, inclusive. Same basis and migrated-data limit as Start Date. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c01",
+     "signature_id": "sig0115",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "Start Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "AAAAA",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_name_from",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "AAAAA",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Start of an alphabetical range on the patient sort name. The legacy title does not say whose name; the vendor sample footer prints Pat From / Thru, so it is the patient name range (same parameter as PATIENT NAME RANGE)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c02",
+     "signature_id": "sig0116",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c03",
+     "signature_id": "sig0117",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "End Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "ZZZZZ",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_name_to",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "ZZZZZ",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the alphabetical range on the patient sort name (inclusive, prefix rule)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c04",
+     "signature_id": "sig0116",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "insurance_reports.r01.s06.c01",
+     "signature_id": "sig0118",
+     "legacy_section": "CLAIM AMOUNT OVER OR EQUAL TO",
+     "legacy_label": "",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_amount_min",
+     "param_type": "decimal",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Claim amount >= value, compared with billed_amount (the legacy Claim Amt column; footer `Claim amt over`). Billed amount is per claim family: a secondary claim is compared with the family's billed lines.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s07.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "insurance_reports.r01.s08.c01",
+     "signature_id": "sig0119",
+     "legacy_section": "CLAIM SENT TYPE",
+     "legacy_label": "EClaim",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_sent_types.eclaim",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r01.s08.c02",
+     "signature_id": "sig0120",
+     "legacy_section": "CLAIM SENT TYPE",
+     "legacy_label": "Paper",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_sent_types.paper",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r01.s09.c01",
+     "signature_id": "sig0121",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Resolved Claims",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_resolved_claims",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Effect not documented (supplement unresolved item, research [I]). Mapped as: false = only unresolved sent claims (status_class sent, partially_paid, denied); true = also resolved claims (paid, closed). Pre-authorisation run: false = sent, true = also closed. Unsent claims are outside the population of this report (claims transmitted, research [R5]) unless the enhancement include_unsent is ticked; void and deleted claims are never listed. Confirm on the live tool which statuses count as resolved and whether denied claims are listed by default.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r01.s10.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r01.s01.c01",
+     "text": "Pre-Authorization lists the pre-authorization claims instead of the claims."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r01.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) is the date on which the claim was generated, not the date of service."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r01.s05.c01",
+     "text": "NAME RANGE (Start Name / End Name) is a range of patient names: the vendor's sample report echoes it in its footer as `Pat From` / `Thru`. From that footer the research document reads it as a patient last-name range."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r02",
+   "legacy_name": "Capitation Utilization",
+   "report_key": "insurance.capitation_utilization",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r02.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Detail = one row per procedure (printed title Capitation Utilization - Detail, documented by the 2008 sample). Summary layout is not documented: proposed carrier and plan / group totals without patient lines (research [I]); confirm on the live tool. On 835 Denial Report the same radio is locked by PRINT FORMAT; here no such rule is documented.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r02.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. provider_role = treating: rpt_charges.provider_id (the Prdr column). Whether the filter follows the billing provider when Show Billing Provider For Hygienist is ticked is not documented (proposed: the filter always applies to the treating provider). Dialog content never captured - confirm list source and inactive rows on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s05.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = transaction_date of the procedure (inferred from the Tran. Date column of the vendor sample, 04 section 7.2 row 14; FLT-23 confirms). Equals service_date on charges until DATA-13. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s05.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the transaction_date range, inclusive (basis inferred as Start Date). Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s06.c01",
+     "signature_id": "sig0122",
+     "legacy_section": "FACILITY ID",
+     "legacy_label": "",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "facility_id",
+     "param_type": "text",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Free text printed in the report header as `Facility ID : <value>` (the carrier's id for the office); not a filter (inferred from the vendor sample header). role layout: changing it re-renders the snapshot. Blank by default (legacy box empty).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s07.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. Filters the carrier of the patient's prepaid (capitation) coverage slot (rpt_insurance_coverage.carrier_id with is_prepaid), inferred; the payer stamped on the charge (primary_carrier_id) replaces it from DATA-33. Dialog content never captured - confirm whether only capitation carriers are listed.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s08.c01",
+     "signature_id": "sig0123",
+     "legacy_section": "INCLUDE UCR",
+     "legacy_label": "Include UCR",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_ucr",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Section header and checkbox carry the same words."
+    },
+    {
+     "control_id": "insurance_reports.r02.s09.c01",
+     "signature_id": "sig0056",
+     "legacy_section": "FEE SCHEDULE TO COMPARE",
+     "legacy_label": "Fee Schedule To Compare",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "CP-40 ( 135 )",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "unknown_legacy",
+     "param": "compare_fee_schedule_id",
+     "param_type": "entity_single",
+     "option_map": {},
+     "default": "first_option",
+     "default_differs_reason": "",
+     "enabled_when": "include_ucr == true",
+     "notes": "Capitation Utilization shows CP-40 ( 135 ) while the Production Reports of the same tenant show CIGNA PPO HAMILTON ( 128 ): the two values cannot both be the first entry of one list, so this dropdown has another list or another default rule. Candidates: the list is restricted to capitation fee schedules (source fee_schedules filtered by pricing_model = copay) and the default is its first entry; or the default comes from the plan or the office. Confirm list content, order and default on the live tool. Differs from the shared mapping: Same signature as Fee Schedule To Compare of the Daily Production Report (sig0056), different captured default in the same tenant.",
+     "shared_override": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c01",
+     "signature_id": "sig0124",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Print All Codes",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "print_all_codes",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Documented: ticked = every code including z-codes (internal extra-service codes); unticked = only the codes to be reported to the carrier. The flag that says which codes are reported to the carrier does not exist: NEW, proposed rpt_procedure_code_dim.bill_to_insurance (DATA-04) or the z-code prefix rule, owned by 03_data_foundation.md. role query.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c02",
+     "signature_id": "sig0125",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Fees Charged",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_fees_charged",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Documented: shows the fees associated with the reported procedures (on by default, as captured). Mapped (inferred) as: ticked = the Co - Pay and Sup. Fee. cells print the managed-care schedule fees; unticked = those cells print blank; rows and the 12 legacy columns unchanged (the 2008 default sample has no separate fee column). Alternative reading recorded for FLT-23: the box adds a charged-fee column or switches Office Default; if the live tool shows that, rebind the box to that column. role query.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c03",
+     "signature_id": "sig0126",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Print Office Address",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "print_office_address",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Documented: prints the office location block (address, Ph #, Tax ID) in the report header. role layout (renderer only).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c04",
+     "signature_id": "sig0127",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Show Billing Provider For Hygienist",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "show_billing_provider_for_hygienist",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Not documented (supplement unresolved item). Mapped (inferred) as: on a line whose treating provider is a hygienist (provider_kind = hygienist, DATA-05), the Prdr column prints the billing provider instead, because carriers accept only dentists as treating providers. Does not change the rows. Confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r02.s11.c01",
+     "signature_id": "sig0095",
+     "legacy_section": "GROUP BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "None",
+      "Provider"
+     ],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by",
+     "param_type": "enum",
+     "option_map": {
+      "None": "none",
+      "Provider": "provider"
+     },
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Provider adds one group level on the same provider as PROVIDER: the treating provider rpt_charges.provider_id, also when Show Billing Provider For Hygienist prints the billing provider (proposal; the vendor's popular variant `Capitation utilization by provider`). Whether PRINT FORMAT = Excel greys GROUP BY here, as on Outstanding Claims, is not documented: the control stays enabled until confirmed on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "insurance_reports.r02.d01",
+     "legacy_when": "INCLUDE UCR: Include UCR is ticked",
+     "legacy_effect": "The Fee Schedule To Compare dropdown becomes available (it is greyed while Include UCR is unticked); it offers a list of fee schedules and the chosen one is shown on the report for comparison.",
+     "confidence": "confirmed",
+     "new_behavior": "compare_fee_schedule_id (entity_single, lookup:fee_schedules) has enabled_when include_ucr == true and required_when include_ucr == true (shared rule of 04, inferred); while include_ucr is false the control is greyed and its value is replaced by disabled_value null. Office Default prints the fee of the line's code on the chosen schedule in force on the service date when include_ucr is ticked, and 0.00 while it is unticked (the 2008 default sample prints 0.00 on every row; reading inferred, FLT-23). No extra column is added; the chosen schedule is named in the criteria echo."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "options",
+     "control_id": "insurance_reports.r02.s09.c01",
+     "text": "The Fee Schedule To Compare dropdown holds a list of fee schedules (data of the practice, not a fixed value list); the schedule chosen is shown for comparison."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r02.s10.c01",
+     "text": "Print All Codes ticked: all codes are reported, including z-codes (internal extra-service codes). Unticked: only the codes that are to be reported to the carrier."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r02.s10.c02",
+     "text": "Include Fees Charged shows the fees associated with the reported procedures. It is on by default, as captured."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r02.s10.c03",
+     "text": "Print Office Address prints the office location block in the report header."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "compare_fee_schedule_id",
+     "field": "required_when",
+     "when": "include_ucr == true",
+     "evidence": "inferred",
+     "note": "The compare column needs a schedule."
+    }
+   ],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r03",
+   "legacy_name": "Claims Created Not Sent",
+   "report_key": "insurance.claims_created_not_sent",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r03.s01.c01",
+     "signature_id": "sig0114",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "Dental",
+      "Medical"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_type",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "Dental": "dental",
+      "Medical": "medical"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Dental versus medical category of the claim (rpt_claim_facts.category). That it filters dental versus medical claims is inferred, as on Claims List; both = no predicate.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r03.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. provider_role = claim provider: rpt_claim_facts.treating_provider_id, falling back to billing_provider_id when it is empty (same rule as worklists.outstanding_claims, 06 section 6.7). Which provider the legacy filter uses is not documented - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s05.c01",
+     "signature_id": "sig0128",
+     "legacy_section": "CREATED ON DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = created_date: the date the claim was created (our reading of the section title, 04 section 7.2). Population status_class = unsent (legacy status Q, Created Not Sent). Migrated claims carry no created date, so the report is APP. Whether a claim saved with E-Claim (ledger text Recreated) is included is unverified. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s05.c02",
+     "signature_id": "sig0129",
+     "legacy_section": "CREATED ON DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the claim created_date range, inclusive; same basis and limits as Start Date. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c01",
+     "signature_id": "sig0115",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "Start Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "AAAAA",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_name_from",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "AAAAA",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Start of an alphabetical range on the patient sort name. The legacy title does not say whose name; the vendor sample footer prints Pat From / Thru, so it is the patient name range (same parameter as PATIENT NAME RANGE)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c02",
+     "signature_id": "sig0116",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c03",
+     "signature_id": "sig0117",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "End Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "ZZZZZ",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_name_to",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "ZZZZZ",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the alphabetical range on the patient sort name (inclusive, prefix rule)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c04",
+     "signature_id": "sig0116",
+     "legacy_section": "NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "insurance_reports.r03.s07.c01",
+     "signature_id": "sig0118",
+     "legacy_section": "CLAIM AMOUNT OVER OR EQUAL TO",
+     "legacy_label": "",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_amount_min",
+     "param_type": "decimal",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Claim amount >= value, compared with billed_amount (as on Claims List, inferred).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r03.s08.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "insurance_reports.r03.s09.c01",
+     "signature_id": "sig0095",
+     "legacy_section": "GROUP BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "None",
+      "Provider"
+     ],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by",
+     "param_type": "enum",
+     "option_map": {
+      "None": "none",
+      "Provider": "provider"
+     },
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Provider adds one group level on the claim provider of PROVIDER (inferred). Whether PRINT FORMAT = Excel greys GROUP BY here, as on Outstanding Claims, is not documented: the control stays enabled until confirmed on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r04",
+   "legacy_name": "Procedures on Hold",
+   "report_key": "insurance.procedures_on_hold",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r04.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r04.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r04.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r04.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = service_date of the held procedure (inferred, 04 section 7.2 row 15; vendor sources do not say date of service or transaction date - FLT-23). Population: rpt_charges with hold_claim = true and no claim. Default today (vendor cadence: daily, today's date); enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r04.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the service_date range, inclusive (basis inferred). Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Population rule with no criteria control: the report shows the procedures whose billing the office put on hold, so that the hold can be released and a claim generated. (The hold is the `Hold Claim` tick on a procedure.)"
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r05",
+   "legacy_name": "DPS Eligibility Report",
+   "report_key": "insurance.dps_eligibility_report",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r05.s01.c01",
+     "signature_id": "sig0130",
+     "legacy_section": "DPS ELIGIBILITY",
+     "legacy_label": "On Hold",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "eligibility_on_hold",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "DPS = Denticon Practice Services. Mapped (inferred) as: ticked = only appointments whose latest verification request carries the On Hold flag of the Subscriber / Insurance Verification form; unticked = no restriction on the flag. The flag is eligibility_verifications.is_on_hold (DATA-34, SCHEMA(34)), written in P2 by the request form of RPT-INS-41; until a row exists a ticked box returns no rows and prints the notice needs_eligibility_history.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r05.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r05.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r05.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r05.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. provider_role = appointment: rpt_appointment_facts.provider_id. Dialog content never captured - confirm list source and inactive rows on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r05.s05.c01",
+     "signature_id": "sig0131",
+     "legacy_section": "DATE RANGE TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Appointment Date",
+      "Appointment Created Date",
+      "Both"
+     ],
+     "legacy_default": "Appointment Date",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "date_range_type",
+     "param_type": "enum",
+     "option_map": {
+      "Appointment Date": "appointment_date",
+      "Appointment Created Date": "appointment_created_date",
+      "Both": "both"
+     },
+     "default": "appointment_date",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Chooses which of the two date ranges applies. Both = the two ranges combined with AND (inferred; OR is the alternative, FLT-23).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r05.s06.c01",
+     "signature_id": "sig0022",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "date_range_type != appointment_created_date (inferred)",
+     "notes": "Primary date range. Basis appointment_date unless the section carries a basis radio (Appointment Detail by User). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "insurance_reports.r05.s06.c02",
+     "signature_id": "sig0023",
+     "legacy_section": "APPOINTMENT DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "date_range_type != appointment_created_date (inferred)",
+     "notes": "Primary date range, inclusive end. Basis appointment_date unless the section carries a basis radio. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "insurance_reports.r05.s07.c01",
+     "signature_id": "sig0132",
+     "legacy_section": "APPOINTMENT CREATED DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "appointment_created_date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "date_range_type != appointment_date (inferred)",
+     "notes": "Secondary date range on the appointment creation date. Greyed while DATE RANGE TYPE = Appointment Date. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "insurance_reports.r05.s07.c02",
+     "signature_id": "sig0133",
+     "legacy_section": "APPOINTMENT CREATED DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "appointment_created_date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "date_range_type != appointment_date (inferred)",
+     "notes": "Secondary date range, inclusive end. Greyed while DATE RANGE TYPE = Appointment Date. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "insurance_reports.r05.s08.c01",
+     "signature_id": "sig0134",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include patients with no insurance",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_patients_with_no_insurance",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Mapped (inferred): false = only appointments of patients with an active dental coverage slot today (rpt_insurance_coverage, category = 'dental'); true = also appointments of patients without one. A medical-only patient counts as uninsured (proposal, FLT-23). Coverage is today's, not on the appointment date.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r05.s01.c01",
+     "text": "DPS = Denticon Practice Services, the vendor's insurance-verification service. A `DPS Ins. Verification` request is made per appointment on a form that carries an `On Hold` flag."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r05.s01.c01",
+     "text": "The On Hold checkbox corresponds to the `On Hold` tick on the `Subscriber / Insurance Verification` form (the DPS verification request of an appointment). The vendor shows the tick on that form; that the report criterion refers to it rests on the identical name, and its effect on the report is not documented (see the open question)."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "appointment_created_date",
+     "field": "required_when",
+     "when": "date_range_type != appointment_date",
+     "evidence": "inferred",
+     "note": "The secondary range applies only then."
+    }
+   ],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r06",
+   "legacy_name": "Capitation Payment",
+   "report_key": "insurance.capitation_payment",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r06.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r06.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r06.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r06.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = payment_date of the capitation payment (inferred, 04 section 7.2 row 16). Reads capitation_payments (DATA-38, SCHEMA(38)): no capitation payment exists before it, so the report is APP. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r06.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the payment_date range, inclusive (basis inferred). Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r06.s04.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. Filters the carrier of the capitation payment (capitation_payments carrier, DATA-38). Dialog content never captured - confirm whether only carriers with a capitation fee schedule are listed.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r07",
+   "legacy_name": "Benefits Used/Unused",
+   "report_key": "insurance.benefits_used_unused",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r07.s01.c01",
+     "signature_id": "sig0135",
+     "legacy_section": "TREATMENT PLAN/RECALL",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Treatment Plan",
+      "Recall"
+     ],
+     "legacy_default": "Treatment Plan",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_type",
+     "param_type": "enum",
+     "option_map": {
+      "Treatment Plan": "treatment_plan",
+      "Recall": "recall"
+     },
+     "default": "treatment_plan",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Selects population and layout (documented): treatment_plan = patients with a treatment plan and benefits remaining (printed title Benefits Used/Unused Report - Treatment Plan); recall = patients due for recall (title ... - Recall). Only the Treatment Plan state was captured; the Recall-state criteria of a 2011 sample (Recall Date From / Thru, Max Over, Recall Codes) are the shared vendor-doc parameters recall_date, max_over, recall_procedure_codes of 04, visible_when report_type == recall (inferred). The recall option reads rpt_recall_due(), P3 under DATA-41; RPT-INS-47 requests the derived function (no recall engine) from 03 in P2. Until it ships the option is listed with notice recall_mode_p3 and runs empty: a known P2 parity gap. Capture the Recall state on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r07.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r07.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r07.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r07.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction; echoed in the footer as Providers. Which provider the legacy filter applies to is not documented. Proposed: treatment_plan mode = treating provider of the planned item (rpt_treatment_item_facts); recall mode = the patient's preferred provider (rpt_patient_dim.preferred_provider_id, not migrated). Confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r07.s05.c01",
+     "signature_id": "sig0136",
+     "legacy_section": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "12/01/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "start_of_next_month",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range with fixed date_basis = anniversary_date. Default is the first day of next month, not today. Header note (* UPCOMING BENEFIT ROLLOVER PERIOD.) is kept as help text."
+    },
+    {
+     "control_id": "insurance_reports.r07.s05.c02",
+     "signature_id": "sig0137",
+     "legacy_section": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/30/2027",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "start_of_next_month+1y-1d",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end, fixed date_basis = anniversary_date. Default = start date plus one year minus one day."
+    },
+    {
+     "control_id": "insurance_reports.r07.s06.c01",
+     "signature_id": "sig0138",
+     "legacy_section": "EXCLUDE RESPONSIBLE PARTY TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_resp_party_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter on the account's responsible-party type (shared parameter exclude_resp_party_type_codes, lookup definitions:resp_party_type): None = exclude nothing; accounts of a picked type are dropped, accounts without a type are kept. Echoed as Ex Resp. Type. Needs accounts.resp_party_type: SCHEMA(53) (DATA-53, P1). The legacy value list was never captured - confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r07.s01.c01",
+     "text": "TREATMENT PLAN/RECALL chooses both the population and the layout of the report: patients with benefits remaining who have a treatment plan (Treatment Plan) or who are due for recall (Recall)."
+    },
+    {
+     "about": "other",
+     "control_id": "insurance_reports.r07.s01.c01",
+     "text": "The captured criteria show the Treatment Plan state only. The footer of the vendor's 2011 Recall sample echoes three criteria that this state does not have: `Recall Date From / Thru`, `Max Over` and `Recall Codes`. They come from an older build and the current Recall screen is unverified, so they are NOT added as controls (see the open question); the Recall state of the screen still has to be captured."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r07.s05.c01",
+     "text": "ANNIVERSARY DATE RANGE is on the plan's anniversary - the next date on which the benefits roll over."
+    },
+    {
+     "about": "default",
+     "control_id": "insurance_reports.r07.s05.c01",
+     "text": "Default range: Start Date = the first day of next month, End Date = one year later minus a day (our capture of 11/21/2026 shows 12/01/2026 to 11/30/2027). The research document states this rule without separating what the vendor article says from what our capture shows."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r07.s06.c01",
+     "text": "EXCLUDE RESPONSIBLE PARTY TYPE removes the accounts (responsible parties) of the picked types from the report; the vendor's sample echoes the choice in its footer as `Ex Resp. Type`."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "recall_date",
+     "field": "visible_when",
+     "when": "report_type == recall",
+     "evidence": "inferred",
+     "note": "Recall state of Benefits Used/Unused (not captured)."
+    },
+    {
+     "param": "max_over",
+     "field": "visible_when",
+     "when": "report_type == recall",
+     "evidence": "inferred"
+    },
+    {
+     "param": "recall_procedure_codes",
+     "field": "visible_when",
+     "when": "report_type == recall",
+     "evidence": "inferred"
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "recall_date",
+     "param_type": "date_range",
+     "legacy_control": "TREATMENT PLAN/RECALL > Recall Date From / Thru",
+     "evidence": "inferred",
+     "kind": "vendor_doc",
+     "note": "Read from the criteria echo of a 2011 Recall sample; the current Recall state of the screen was not captured."
+    },
+    {
+     "param": "max_over",
+     "param_type": "decimal",
+     "legacy_control": "TREATMENT PLAN/RECALL > Max Over",
+     "evidence": "inferred",
+     "kind": "vendor_doc",
+     "note": "Control type and default unknown (criteria echo of a 2011 sample)."
+    },
+    {
+     "param": "recall_procedure_codes",
+     "param_type": "entity_multi",
+     "legacy_control": "TREATMENT PLAN/RECALL > Recall Codes",
+     "default": "all",
+     "evidence": "inferred",
+     "kind": "vendor_doc",
+     "note": "Same parameter as RECALL PROCEDURE CODES of the recall reports."
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r08",
+   "legacy_name": "Outstanding Claims",
+   "report_key": "insurance.outstanding_claims",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "CREATE TASK",
+     "new_feature": "Bulk action create_tasks (kind create_task, scope bulk, entity claim, id_column claim_id): after a confirmation that states the number of claims of the run, writes one follow-up per claim of the snapshot, typed outstanding_claim (claim_kind = claims) or outstanding_pre_auth (claim_kind = pre_authorization); the follow-up closes itself when the claim's status_class becomes paid, closed, denied, void or deleted. Idempotent per (run_id, action_key, claim_id). Store: worklist_followups of 06 section 6.7 (DASH-28), dispatch ENG-49, authorisation SEC-36, all P3 in their owning documents: RPT-INS-07 raises a cross-document re-phase request to 02 / 06 / 08 for the snapshot bulk dispatch, the minimal follow-up store and the action authorisation in P2 (blocking dependency). If the request is refused, CREATE TASK ships in P3 and is listed as a known P2 parity gap. Feature right of the task store, not the report right."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r08.s01.c01",
+     "signature_id": "sig0113",
+     "legacy_section": "CLAIM/PRE-AUTH",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Claims",
+      "Pre-Authorization"
+     ],
+     "legacy_default": "Claims",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_kind",
+     "param_type": "enum",
+     "option_map": {
+      "Claims": "claims",
+      "Pre-Authorization": "pre_authorization"
+     },
+     "default": "claims",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r08.s02.c01",
+     "signature_id": "sig0114",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "Dental",
+      "Medical"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_type",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "Dental": "dental",
+      "Medical": "medical"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r08.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s04.c01",
+     "signature_id": "sig0004",
+     "legacy_section": "PROVIDER",
+     "legacy_label": "Provider",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction; footer Providers. provider_role = claim provider: rpt_claim_facts.treating_provider_id, falling back to billing_provider_id (06 section 6.7). The Excel output prints a Provider column; which provider it is, is not documented - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s05.c01",
+     "signature_id": "sig0040",
+     "legacy_section": "REPORT DATE",
+     "legacy_label": "Report Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "report_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Single date, role as_of (documented: vendor advises the default date for a right-now figure). Default today in the office time zone. A future date shifts the ageing only (population and amounts of today). A past date needs rpt_claim_facts_as_of() (DATA-31, with status history from DATA-25): until then it is refused with 422 as_of_unavailable (NEW validation code, owner 02) and the notice outstanding_as_of_today_only. Whether the legacy Report Date reconstructs history or only shifts the aging is unverified.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s06.c01",
+     "signature_id": "sig0118",
+     "legacy_section": "CLAIM AMOUNT OVER OR EQUAL TO",
+     "legacy_label": "",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_amount_min",
+     "param_type": "decimal",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Claim amount >= value, compared with billed_amount (the Claim $ column; footer Claim Amt Over/Equal).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s07.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "insurance_reports.r08.s08.c01",
+     "signature_id": "sig0119",
+     "legacy_section": "CLAIM SENT TYPE",
+     "legacy_label": "EClaim",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_sent_types.eclaim",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r08.s08.c02",
+     "signature_id": "sig0120",
+     "legacy_section": "CLAIM SENT TYPE",
+     "legacy_label": "Paper",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_sent_types.paper",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c01",
+     "signature_id": "sig0139",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Current",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.current",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket of the claim, always a predicate (filter_card 2.5): the claim is listed when its age bucket (report_date - age_date_sent) is ticked, whatever its amount (a 0.00-estimate claim is listed with zero buckets, documented). Current = 0-30 days. Bucket columns carry expected_amount (legacy Est. Ins) by default, outstanding_amount with the enhancement aged_amount_basis = remaining. The age basis (sent date or date of service) and that the boxes select claims rather than columns are inferred - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c02",
+     "signature_id": "sig0140",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Over 30",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_30",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket Over 30 (31-60 days from age_date_sent to report_date); predicate as for Current. Age basis unverified.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c03",
+     "signature_id": "sig0141",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Over 60",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_60",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket Over 60 (61-90 days); predicate as for Current. Age basis unverified.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c04",
+     "signature_id": "sig0142",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Over 90",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_90",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket Over 90 (91-120 days); predicate as for Current. Age basis unverified.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c05",
+     "signature_id": "sig0143",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Over 120",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "aging_buckets.over_120",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Aging bucket Over 120 (more than 120 days); predicate as for Current. The Excel output keeps Over120 as its last bucket (the over_120_plus split belongs to the two Aging reports only). Age basis unverified.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s10.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. role query on this report: group_by depends on it (rule d01). Excel = flat one row per claim with the columns of the legacy Excel layout (Office ... Claim Note); not the legacy merged layout.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r08.s11.c01",
+     "signature_id": "sig0095",
+     "legacy_section": "GROUP BY",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "None",
+      "Provider"
+     ],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by",
+     "param_type": "enum",
+     "option_map": {
+      "None": "none",
+      "Provider": "provider"
+     },
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "output_format != xlsx",
+     "notes": "Vendor screenshot: both radios are greyed on Outstanding Claims when PRINT FORMAT = Excel."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "insurance_reports.r08.d01",
+     "legacy_when": "PRINT FORMAT = Excel",
+     "legacy_effect": "Both GROUP BY radios (None / Provider) are greyed out; the Excel output is a flat workbook.",
+     "confidence": "confirmed",
+     "new_behavior": "group_by has enabled_when [\"not_in\", \"output_format\", [\"xlsx\", \"csv\"]] (documented for Excel; csv, added as an enhancement, behaves like xlsx): with output_format = xlsx or csv both options are greyed and the value is replaced by disabled_value none, so the workbook is the flat one-row-per-claim sheet. output_format is declared with role query on this report (04 section 8), so switching PDF / Excel re-runs the report instead of re-rendering the snapshot."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r08.s01.c01",
+     "text": "Claims lists all claims sent but not yet recorded as paid; Pre-Authorization lists the outstanding pre-authorizations instead."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r08.s05.c01",
+     "text": "REPORT DATE is a single as-of date (not a range); the vendor advises running the report on the default date for a 'right now' figure."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r08.s10.c01",
+     "text": "PDF opens the report in the report viewer; Excel produces a flat download instead and can disable layout options (here GROUP BY, see the rule)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "",
+     "text": "CREATE TASK (the extra action button of this report) creates Task Manager tasks of type `Outstanding Claim` (or `Outstanding Pre-Auth`) for the claims on the report, after a confirmation that states the count."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r09",
+   "legacy_name": "Claims Not Created",
+   "report_key": "insurance.claims_not_created",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r09.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r09.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r09.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r09.s03.c01",
+     "signature_id": "sig0144",
+     "legacy_section": "REPORT DATE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "ALL",
+      "DOS Date",
+      "Transaction Date"
+     ],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "date_basis",
+     "param_type": "enum",
+     "option_map": {
+      "ALL": "all",
+      "DOS Date": "service_date",
+      "Transaction Date": "transaction_date"
+     },
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Chooses the column of the single Report Date: ALL = no date restriction (every unclaimed procedure) and disables report_date; DOS Date = service_date; Transaction Date = transaction_date. Single-day use is documented; that the radio decides the compared column is our transcription. service_date and transaction_date select the same rows until DATA-13 stores a separate ledger date on charges; the report prints that.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r09.s03.c02",
+     "signature_id": "sig0040",
+     "legacy_section": "REPORT DATE",
+     "legacy_label": "Report Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "report_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "date_basis != all (inferred)",
+     "notes": "Single date, role single_day: rows whose date_basis column equals report_date. Greyed while date_basis = all (enabled_when inferred from the screenshot). Default today in the office time zone; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c01",
+     "signature_id": "sig0145",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "Primary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "coverage_orders.primary",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "On Claims Not Created the CLAIM TYPE title means coverage order, not dental / medical."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c02",
+     "signature_id": "sig0146",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "Secondary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "coverage_orders.secondary",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "On Claims Not Created the CLAIM TYPE title means coverage order, not dental / medical."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c03",
+     "signature_id": "sig0147",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "Tertiary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "coverage_orders.tertiary",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "On Claims Not Created the CLAIM TYPE title means coverage order, not dental / medical."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c04",
+     "signature_id": "sig0148",
+     "legacy_section": "CLAIM TYPE",
+     "legacy_label": "Quaternary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "coverage_orders.quaternary",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "On Claims Not Created the CLAIM TYPE title means coverage order. No quaternary coverage slot exists in DentC, so this tick adds no rows; it stays for parity.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: procedures that are on hold (`Hold Claim` ticked on the procedure) also appear on this report."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r09.s03.c02",
+     "text": "Report Date is a single day, not a range: the vendor describes single-day use of this report (run it daily, or once per day of service at the end of the week). That DOS Date / Transaction Date decide which date that day is compared with comes from our transcription."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r10",
+   "legacy_name": "Unbilled Report Due to No Insurance",
+   "report_key": "insurance.unbilled_report_due_to_no_insurance",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r10.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r10.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r10.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r10.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = service_date of the procedure (inferred, 04 section 7.2 row 17; basis not documented - FLT-23). Population: rpt_charges with bill_tier = none, no claim, patient holds an active dental slot today. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r10.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the service_date range, inclusive (basis inferred). Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: the report lists patient records whose procedures were posted before insurance was attached (billing order `None`, no `D` in the Bill column); such procedures have to be edited before a claim can be generated."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r11",
+   "legacy_name": "EOB 835 Claims Reconcile Report",
+   "report_key": "insurance.eob_835_claims_reconcile_report",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r11.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r11.s02.c01",
+     "signature_id": "sig0149",
+     "legacy_section": "835 CLAIM MATCHING STATUS",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Both",
+      "Matched",
+      "UnMatched"
+     ],
+     "legacy_default": "Both",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_matching_status",
+     "param_type": "enum",
+     "option_map": {
+      "Both": "both",
+      "Matched": "matched",
+      "UnMatched": "unmatched"
+     },
+     "default": "both",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Whether the 835 claim payment was matched to a DentC claim (inferred meaning): both = no predicate. Reads era_claim_payments (DATA-38); filled only by a clearinghouse ERA integration outside this module.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r11.s03.c01",
+     "signature_id": "sig0150",
+     "legacy_section": "CLAIM STATUS",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "ALL",
+      "Partial Closed",
+      "Closed"
+     ],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "claim_status",
+     "param_type": "enum",
+     "option_map": {
+      "ALL": "all",
+      "Partial Closed": "partial_closed",
+      "Closed": "closed"
+     },
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "partial_closed / closed = era_claim_payments.claim_status_after, the claim state left by this 835 posting (legacy P / A, inferred); all = no predicate. Unmatched payments carry no claim_status_after and drop out of both non-ALL values. The claim's current status_class is not used (open question 3).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r11.s04.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r11.s04.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Unmatched 835 payments without a payee office are the Unassigned office member (header rule): the default working-office run omits them and prints their count in a notice; the NEW payee -> office mapping (RPT-INS-72) gives them an office.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r11.s05.c01",
+     "signature_id": "sig0151",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "By Payment Date",
+      "By File Received on Date"
+     ],
+     "legacy_default": "By Payment Date",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "date_basis",
+     "param_type": "enum",
+     "option_map": {
+      "By Payment Date": "payment_date",
+      "By File Received on Date": "file_received_date"
+     },
+     "default": "payment_date",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Basis of the range: payment_date = payment date of the 835 claim payment, file_received_date = date the 835 file was received (era_files, DATA-38). Documented: the report lists all processed payments of the range, auto-posted or not.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r11.s05.c02",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "insurance_reports.r11.s05.c03",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "insurance_reports.r11.s06.c01",
+     "signature_id": "sig0152",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Show Details UCR",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "show_details_ucr",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Not documented (ticked by default, as captured). Mapped (unverified) as: adds the service-line block of each 835 claim payment with both the 835 charge submitted and the DentC UCR of the matched claim line (rpt_claim_lines.office_fee); does not change the claim payments listed. role query (adds a block). Confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r11.s07.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Searchable multi-select; ALL = no restriction. Filters the payer of the 835 claim payment (era_claim_payments carrier). Dialog content never captured - confirm list source on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r11.s05.c02",
+     "text": "The date range selects the ERA (835) payments that were processed: per the vendor the report lists all processed payments for the selected date range, whether or not they were auto-posted. (The vendor article calls the report `EOB Claim Reconcile Report`.)"
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r12",
+   "legacy_name": "835 Denial Report",
+   "report_key": "insurance.835_denial_report",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r12.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "output_format != xlsx",
+     "notes": "Greyed on 835 Denial Report while PRINT FORMAT = Excel (vendor documentation: Excel exists only as Detail). On the Daily Production Report the Detail option alone is greyed until PRODUCTION BY = Provider (option_enabled_when)."
+    },
+    {
+     "control_id": "insurance_reports.r12.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "Excel",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "xlsx",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Default Excel is this report's own documented opening state (vendor screenshot identical to our capture). role query on this report: report_format depends on it (rule d01). PDF = Summary or Detail layout in the viewer; Excel = flat Detail, one row per service line. Enhanced with csv (flat Detail, like Excel).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r12.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r12.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Default all is documented for this report (the office box opens on ALL; the vendor's screenshot shows the same); the other reports of the category open on the working office. all = every office the caller may read (filter_card 3.1), never wider than the caller's scope.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r12.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = payment_date of the 835 claim payment (inferred, 04 section 7.2 row 18). Documented limit: at most one month per run -> validation.max_span_days 31. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r12.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the payment_date range, inclusive; the span from Start Date may not exceed 31 days (documented one-month limit). Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r12.s05.c01",
+     "signature_id": "sig0096",
+     "legacy_section": "CARRIER",
+     "legacy_label": "Carriers",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "carrier_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "insurance_reports.r12.s06.c01",
+     "signature_id": "sig0153",
+     "legacy_section": "EXCLUDE REASON CODE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_reason_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; a service line that has any adjustment row with a picked reason code is removed together with its line money and all its adjustments (research reading, inferred). The NEW enhancement exclude_reason_scope = adjustment (owner 04) removes only the matching adjustment rows instead. Option source lookup:denial_reason_codes (FLT-08, P2), the 835 claim adjustment reason codes of era_adjustments (DATA-38); the legacy value list was never captured - confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "insurance_reports.r12.d01",
+     "legacy_when": "PRINT FORMAT = Excel (the state the report opens in)",
+     "legacy_effect": "REPORT FORMAT is greyed with Detail marked - the Excel output exists only as Detail. With PRINT FORMAT = PDF, REPORT FORMAT can be set to Summary or Detail.",
+     "confidence": "confirmed",
+     "new_behavior": "report_format has enabled_when [\"not_in\", \"output_format\", [\"xlsx\", \"csv\"]] and forced_when [{when: [\"in\", \"output_format\", [\"xlsx\", \"csv\"]], value: detail}] (documented for Excel; csv, added as an enhancement, behaves like xlsx): the report opens with output_format = xlsx (legacy default kept), so both REPORT FORMAT options are greyed with Detail marked; choosing pdf enables both options (detail / summary). A summary sent together with xlsx or csv is replaced by detail and reported in warnings[]. output_format has role query on this report."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "default",
+     "control_id": "insurance_reports.r12.s02.c01",
+     "text": "Excel is the print format this report opens with. The vendor's own screenshot shows the same opening state as our capture (Excel selected, REPORT FORMAT greyed with Detail marked, office box ALL), so the captured state is the report's normal default and not a leftover selection."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r12.s02.c01",
+     "text": "PDF opens the report in the report viewer (Summary or Detail layout); Excel produces a flat download instead and locks REPORT FORMAT (see the rule)."
+    },
+    {
+     "about": "default",
+     "control_id": "insurance_reports.r12.s03.c02",
+     "text": "The office box opens on ALL on this report (the other reports of the category open on the logged-in office); the vendor's own screenshot shows the same."
+    },
+    {
+     "about": "meaning",
+     "control_id": "insurance_reports.r12.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) may cover at most one month per run."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Population rule with no criteria control: the report covers ERA 835 auto-payments that were denied or partially paid."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Tenant-dependent report: it is listed only for tenants that asked the vendor to enable it. Without it the Insurance Reports list has 12 entries, in another order than the 13-entry list we captured."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "report_format",
+     "field": "forced_when",
+     "when": "output_format == xlsx",
+     "value": "detail",
+     "evidence": "documented",
+     "note": "Excel exists only as Detail."
+    }
+   ],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "insurance_reports.r13",
+   "legacy_name": "RTE Sweep Details",
+   "report_key": "insurance.rte_sweep_details",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "insurance_reports.r13.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "insurance_reports.r13.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office or Office Group, both enabled on this screen (nothing greyed). Office: one or more offices the caller may read, default the working office; Office Group: groups from Setup > Office Groups, default ALL.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r13.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group); both enabled on this screen. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r13.s03.c01",
+     "signature_id": "sig0128",
+     "legacy_section": "CREATED ON DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Fixed date_basis = created_date of the automatic eligibility check (its check date-time as office-local date; inferred - the report is not described by the vendor). Reads eligibility_verifications (DATA-34, SCHEMA(34)) rows whose actor is the automatic sweep; needs a real-time eligibility integration that writes them. Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "insurance_reports.r13.s03.c02",
+     "signature_id": "sig0129",
+     "legacy_section": "CREATED ON DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the check created_date range, inclusive (basis inferred). Default today; enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "",
+     "text": "RTE = real-time eligibility. `RTE Sweep` is the daily automatic real-time-eligibility sweep of the schedule through DentalXChange (actor `Auto_RTE`)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

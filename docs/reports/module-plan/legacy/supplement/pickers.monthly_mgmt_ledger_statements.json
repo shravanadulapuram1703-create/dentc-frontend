@@ -1,0 +1,94 @@
+{
+  "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+  "dialogs": [
+    {
+      "dialog_name": "OFFICE/GROUP SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "OFFICE/GROUP > SELECT",
+      "used_by": [
+        "montly_reports"
+      ],
+      "elements": [
+        {
+          "label": "Select All",
+          "type": "other",
+          "options": [],
+          "notes": "Selects every office of the list - the vendor-recommended way to run Executive Summary for all offices. `Select All` is the wording of the vendor's reporting guide (recommended parameters); the dialog itself is not shown in the document, so the on-screen label of this element may differ, and whether it is a checkbox, a link or a button is not documented."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "Date range; `SELECT` > `Select All` offices",
+      "notes": "Only this element is documented. The dialog is multi-select (for Income Allocation the document notes that multiple offices or a group are allowed). List columns, sort options, search fields and the Office Group variant are not documented. Documented for a Monthly report; the same SELECT button sits on the Management reports and - disabled by design - on the Ledger reports."
+    },
+    {
+      "dialog_name": "FINANCE CHARGES (finance-charge run; legacy dialog title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "Statements > FINANCE CHARGES button",
+      "used_by": [
+        "statements_reports"
+      ],
+      "elements": [
+        {
+          "label": "Finance Charge Date",
+          "type": "date_input",
+          "options": [],
+          "notes": "Typed as a date from its label; default not documented."
+        },
+        {
+          "label": "Responsible Party Range",
+          "type": "other",
+          "options": [],
+          "notes": "Range of responsible parties; the inner controls are not documented (on the Statements screen the same caption covers Start Name / End Name, each with SEARCH)."
+        },
+        {
+          "label": "Exclude Responsible Party Type",
+          "type": "other",
+          "options": [],
+          "notes": "Control form not documented (on the Statements screen: read-only box + SELECT)."
+        },
+        {
+          "label": "Provider",
+          "type": "other",
+          "options": [],
+          "notes": "Control form not documented."
+        },
+        {
+          "label": "Apply Finance Charge to",
+          "type": "other",
+          "options": [
+            "Patient Portion",
+            "Entire Balance"
+          ],
+          "notes": "Two documented choices; whether they are radios or a dropdown, and the default, are not documented."
+        },
+        {
+          "label": "Apply",
+          "type": "button",
+          "options": [],
+          "notes": "Applies the finance charges."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "`FINANCE CHARGES` | Opens the finance-charge run: `Finance Charge Date`, `Responsible Party Range`, `Exclude Responsible Party Type`, `Provider`, `Apply Finance Charge to` (`Patient Portion` / `Entire Balance`), `Apply`.",
+      "notes": "Not a SELECT / SEARCH picker: it is the separate finance-charge run behind the FINANCE CHARGES button, which the vendor sequence places before PRINT STATEMENT REPORT. Rates and thresholds are office settings (Setup > Offices > Office Setup > Advanced: Annual Fin. Charge %, Minimum Balance, Minimum Fin. Charge, # of Days Before Applying Fin. Charge), not fields of this dialog."
+    },
+    {
+      "dialog_name": "Module Type dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "Audit Trail > OTHER OPTIONS > Module Type",
+      "used_by": [
+        "management_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL",
+        "Appointments"
+      ],
+      "confidence": "confirmed",
+      "evidence_quote": "`Module Type` (default `ALL`) | Module; `Appointments` is documented (used to list deleted appointments: look for `Delete Appointment-Created` in `Description`)",
+      "notes": "PARTIAL list: only the default ALL and the value Appointments are documented by the vendor. The remaining values and the legacy order are unknown (the document only presumes them)."
+    }
+  ]
+}

@@ -33,7 +33,7 @@ export default function ChatPanel() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 z-[10000] flex bg-white shadow-2xl border-l border-[#E2E8F0]",
+          "app-messaging-panel fixed inset-y-0 z-[10000] flex bg-white shadow-2xl border-l border-[#E2E8F0]",
           "w-full sm:w-[420px]",
           isExpanded ? "lg:w-[960px]" : "lg:w-[720px]",
           !isOpen && "pointer-events-none",

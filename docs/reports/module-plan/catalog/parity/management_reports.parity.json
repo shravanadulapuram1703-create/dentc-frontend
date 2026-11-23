@@ -1,0 +1,911 @@
+{
+ "category": "management_reports",
+ "reports": [
+  {
+   "report_id": "management_reports.r01",
+   "legacy_name": "Payment Plan Charges",
+   "report_key": "management.payment_plan_charges",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "management_reports.r01.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "management_reports.r01.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "management_reports.r01.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Office attribution on this report = contract office: rpt_contract_installments.office_id (office of the ortho contract or of the regular payment plan header), not the office of the posted charge. Offices (mode office) or office groups (mode office_group); tokens working_office, my_offices; all = every office the caller may read. Dialog content of SELECT was never captured.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r01.s03.c01",
+     "signature_id": "sig0163",
+     "legacy_section": "REPORT DATE",
+     "legacy_label": "Billing Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "report_date",
+     "param_type": "date",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Shared dictionary key report_date (04 section 3), role as_of, label override 'Billing Date'. Single date, default today in the office time zone (relative token). Meaning INFERRED (research: report twin of 'Show Periodic Charges as of' of Utilities > Generate Contract Charges): instalments whose due date is on or before the Billing Date and that are not yet posted (rpt_contract_installments.due_date <= :report_date AND NOT is_billed). Confirm on the live tool whether the legacy list is 'due on' or 'due as of' and whether posted instalments of the date are listed. Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r01.s04.c01",
+     "signature_id": "sig0164",
+     "legacy_section": "PLAN TYPE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Regular",
+      "Ortho"
+     ],
+     "legacy_default": "Regular",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "plan_type",
+     "param_type": "enum",
+     "option_map": {
+      "Regular": "regular",
+      "Ortho": "ortho"
+     },
+     "default": "regular",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Regular -> rpt_contract_installments.contract_kind = 'regular' (patient_payment_plans instalments); Ortho -> contract_kind = 'ortho' (ortho_plans instalments of the three plan sides). Old menu name 'Regular Payment Plan Charges Report' = PLAN TYPE Regular.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r01.s05.c01",
+     "signature_id": "sig0165",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Ortho Patient",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "ortho_plan_parts.patient",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "plan_type == ortho (inferred)",
+     "notes": "Member patient of ortho_plan_parts -> plan_side = 'patient' (patient-portion periodic charges, list 'Post Patient Ortho Periodic Charges'). Greyed while PLAN TYPE = Regular; enabled for Ortho is inferred from our capture only. ortho_plan_parts is an enum_multi with min_items 0 and full_selection no_predicate: none ticked (legacy default) = every plan side, treated as no restriction until the live tool shows otherwise. While disabled the value is the disabled_value [] and has no effect.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r01.s05.c02",
+     "signature_id": "sig0166",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Ortho Primary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "ortho_plan_parts.primary",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "plan_type == ortho (inferred)",
+     "notes": "Member primary of ortho_plan_parts -> plan_side = 'ins' (primary-insurance periodic charges, patient_ins_payment_plans, list 'Generate Ortho Primary Insurance Payment Plan Charges'). Greyed while PLAN TYPE = Regular; enabled for Ortho is inferred. None ticked = every plan side (no predicate).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r01.s05.c03",
+     "signature_id": "sig0167",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Ortho Secondary",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "ortho_plan_parts.secondary",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "plan_type == ortho (inferred)",
+     "notes": "Member secondary of ortho_plan_parts -> plan_side = 'sec_ins' (secondary-insurance periodic charges, patient_sec_ins_payment_plans, list 'Generate Ortho Secondary Insurance Payment Plan Charges'). Greyed while PLAN TYPE = Regular; enabled for Ortho is inferred. None ticked = every plan side (no predicate).",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "management_reports.r02",
+   "legacy_name": "Uncollected Copay",
+   "report_key": "management.uncollected_copay",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "management_reports.r02.s01.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Detail = one row per scheduled patient with a patient balance above the threshold; Summary = one row per office and appointment day with the patient count and the uncollected totals. Both grains are INFERRED (vendor text documents only the per-patient content); confirm the Summary layout on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r02.s02.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "management_reports.r02.s03.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "management_reports.r02.s03.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Office attribution on this report = appointment office (rpt_appointment_facts.office_id): the offices whose schedule is checked. The balance printed is the account balance across all offices (the patient owes it wherever it was charged). Tokens working_office, my_offices; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r02.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Date basis fixed: appointment_date (rpt_appointment_facts.appointment_date, office-local). Vendor text: every patient on the day's schedule with a patient balance due - which implies, but does not state, that the range selects by appointment date (supplement correction, likely). Default today, the vendor-recommended end-of-day run. Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r02.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end of the appointment_date range (office-local). Default today. Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r02.s05.c01",
+     "signature_id": "sig0168",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Patient Balance Greater Than",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0.00",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_balance_over",
+     "param_type": "decimal",
+     "option_map": {},
+     "default": "0.00",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Shared dictionary key account_balance_over (04 section 3), label override 'Patient Balance Greater Than', default 0.00. Strictly greater than. Applied to the patient-responsible balance (Patient AR measure: open debits less credits, patient portion only) of the patient's current guarantor account as of the end of the appointment day of the row (balance_basis = appointment_day; run_time with the enhancement), from the canonical ledger (PD-2, PD-4); vendor text: 'a patient balance due - pre-existing or created that day'. Default 0.00 = every scheduled patient whose patient balance is above zero. Account level versus patient level is INFERRED (the report prints the account's last payment and financial notes): confirm on the live tool.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r02.s02.c01",
+     "text": "PRINT FORMAT = Excel downloads a spreadsheet instead of opening the PDF report viewer; Excel layouts are flat (one record per row). Cross-cutting statement of the document for reports with a PRINT FORMAT section, recorded once here for this category; the vendor evidence it cites is for other reports. (For Payment Plan Charges, the other report of the category with this section, the document lists the effect only as an inference.)"
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r02.s04.c01",
+     "text": "The report lists the patients on the schedule in the date range who have a patient balance (vendor text: every patient on today's schedule with a patient balance due), which implies that Start Date / End Date select by appointment date."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r02.s05.c01",
+     "text": "Patient Balance Greater Than is a threshold on the patient balance due - whether pre-existing or created that day."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "management_reports.r03",
+   "legacy_name": "Audit Trail",
+   "report_key": "management.audit_trail",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "management_reports.r03.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "management_reports.r03.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Office attribution on this report = office of the audited change (rpt_audit_events.office_id: the working office of the request that made the change). PRINT rows and setup changes without an office have office_id NULL: they are listed for callers who may read all offices (member 'Unassigned office', data card 5.1 rule 3) and left out for office-restricted callers. Tokens working_office, my_offices; all = every office the caller may read.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.s02.c01",
+     "signature_id": "sig0169",
+     "legacy_section": "USER",
+     "legacy_label": "User",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "user_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "User role on this report = the user who made the change (rpt_audit_events.user_id), echoed in the footer as 'User : ALL' by default. Legacy SELECT dialog becomes a searchable multi-select over every user, active and inactive; ALL = no restriction. Nothing predates the migration, so no legacy login strings occur in this dataset. Dialog content was never captured - confirm list source and inactive rows on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Updated-date range (vendor sample footer From / Thru): rpt_audit_events.occurred_date, the office-local date of occurred_at_utc, not the original date of the changed record. Default today. Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end of the updated-date range (office-local date of occurred_at_utc). Default today. Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.s04.c01",
+     "signature_id": "sig0170",
+     "legacy_section": "PATIENT",
+     "legacy_label": "Patient",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "patient_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Optional include filter on rpt_audit_events.patient_id; empty box (legacy default) = all patients, also the events that concern no patient (setup changes). 'Empty = all patients' comes from our capture only. Setting a value needs data class phi_identified (08 5.2 rule 8). Enhanced: a list of patients. From the patient Print launcher the value is forced by audit_subject (rule d01).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.s04.c02",
+     "signature_id": "sig0171",
+     "legacy_section": "PATIENT",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_ids.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "management_reports.r03.s05.c01",
+     "signature_id": "sig0172",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Audit Type",
+     "legacy_type": "dropdown",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "unknown_legacy",
+     "param": "audit_type",
+     "param_type": "enum",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Static dropdown captured collapsed: only the default ALL is known, and no vendor source gives the dropdown values. Vendor text lists the tracked actions: Edit, Delete, Close out, Reschedule Appointment, Cut/Copy - Paste Appointment. NEW report-specific enum key audit_type (owner 04 section 3, values from data card 2.27). Candidate option values: all (default), edit, delete, close_out, reschedule, cut_copy_paste, status_change, restore; all = audit_type IN (edit, delete, close_out, reschedule, cut_copy_paste, status_change, restore) (the legacy samples print status changes and re-activations), with appointment edit rows excluded (legacy records only delete, reschedule and cut / copy-paste of appointments). Additive values create and print are opt-in only: selected explicitly or added to all by the NEW boolean include_additive_audit_types (default false). On the live tool: expand the Audit Type list and record every label, its order and whether the list depends on Module Type.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.s05.c02",
+     "signature_id": "sig0173",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Module Type",
+     "legacy_type": "dropdown",
+     "legacy_options": [
+      "Appointments"
+     ],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "vendor_doc_options": [
+      "Appointments"
+     ],
+     "status": "replicated_enhanced",
+     "param": "module_type",
+     "param_type": "enum",
+     "option_map": {
+      "Appointments": "appointments"
+     },
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "NEW report-specific enum key module_type (owner 04 section 3, values from data card 2.27). Filter on rpt_audit_events.module_type (resource_type mapped through rpt_value_map domain audit_module). ALL (default) = no module restriction. Appointments is vendor-documented (used to list deleted appointments: Description 'Delete Appointment-Created'); with Appointments and audit_type = all the population is audit_type IN (delete, reschedule, cut_copy_paste, status_change) - appointment edit and create rows appear only when that audit_type is selected explicitly. OPTION LIST INCOMPLETE: only ALL and Appointments of the legacy list are known; parity is not reached until the live list is read (RPT-MGMT-16). The values patient, setup, transactions, treatment_plan are the modules the vendor text names and the sample Type column shows: offered as enhancement until then. On the live tool: expand the Module Type list and record every label and its order.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r03.x01",
+     "signature_id": null,
+     "legacy_section": "Audit Trail Report (patient Print Reports dialog)",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Account",
+      "Patient"
+     ],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "with radios `Account` / `Patient` and `Start Date` / `End Date` — the vendor's preferred way to audit one",
+     "legacy_notes": "Appears only when the report is opened from the patient toolbar Print Reports icon > Audit Trail: a small dialog titled `Audit Trail Report` with these two radios plus Start Date / End Date (the dates are already in the inventory as DATE RANGE). It scopes the audit to the family account or to the single patient. Not present on the Reports > Management Reports criteria panel. Default not documented.",
+     "status": "replicated",
+     "param": "audit_subject",
+     "param_type": "enum",
+     "option_map": {
+      "Account": "account",
+      "Patient": "patient"
+     },
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Shared vendor-doc parameter of 04. Exists only in the compact dialog of the patient Print launcher (rule d01); hidden on the hub panel (disabled_value null). account = every member of the guarantor account of the patient in context (account_id = current_account); patient = the patient in context only (patient_ids = current_patient). The legacy default is not documented: the dialog pre-selects nothing and requires a choice until the live tool shows the default.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "management_reports.r03.d01",
+     "legacy_when": "The report is opened from the patient toolbar Print Reports icon > Audit Trail instead of Reports > Management Reports",
+     "legacy_effect": "A small dialog `Audit Trail Report` is shown: radios `Account` / `Patient` plus `Start Date` / `End Date` (the vendor-preferred way to audit one patient or one family account).",
+     "confidence": "confirmed",
+     "new_behavior": "Opened from the patient shell (patient Print launcher > Audit Trail, UX-29; the run request carries context.patient_id) the runner shows the compact dialog 'Audit Trail Report': audit_subject (visible_when and required_when ['ctx', 'patient_context'] - NEW run-context fact requested from 02 section 3.2; radios Account / Patient, no pre-selection) plus date_range (date_from / date_to). audit_subject = patient forces patient_ids to the token current_patient; audit_subject = account forces the hidden parameter account_id to the token current_account and lists the events of every member of that guarantor account. The other criteria are not shown in the dialog and keep their defaults, except office_scope, which the dialog sets to all (every office the caller may read; proposal - the legacy dialog has no office control). Opened from the hub (Reports > Management Reports) audit_subject is hidden (disabled_value null) and the full criteria panel is shown; patient_ids is then the optional PATIENT box."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r03.s03.c01",
+     "text": "Start Date / End Date are the UPDATED-date range: they filter on when the change was made, not on the original date of the changed record."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r03.s05.c01",
+     "text": "Audit Type filters on the kind of audited action (vendor text on what the Audit Trail tracks). The value list of the dropdown is NOT verified, so no option is added - see unresolved."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r03.s02.c01",
+     "text": "User restricts the list to the changes made by the selected users; the default ALL is echoed in the report footer as `User : ALL`."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r03.s05.c02",
+     "text": "For appointments the Audit Trail records only delete, reschedule and cut / copy-paste - ordinary appointment edits are not recorded (2026 revision of the vendor article). This bounds what Module Type = Appointments can return; deleted appointments are found by `Delete Appointment-Created` in the Description column."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "The absence of a PRINT FORMAT section is real (as captured): the report opens in the report viewer, whose header strip offers Export to Excel and Word, so the Excel output exists without a criteria choice."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "audit_subject",
+     "param_type": "enum",
+     "legacy_control": "print-menu dialog Audit Trail Report > Account / Patient",
+     "options": "Account -> account, Patient -> patient",
+     "default": "not documented",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Patient-level entry point of the Audit Trail."
+    }
+   ]
+  },
+  {
+   "report_id": "management_reports.r04",
+   "legacy_name": "Time Clock Report",
+   "report_key": "management.time_clock_report",
+   "phase": "P2",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "management_reports.r04.s01.c01",
+     "signature_id": "sig0174",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary",
+      "Employee Total Only"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary",
+      "Employee Total Only": "employee_total_only"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "management_reports.r04.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "management_reports.r04.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Office attribution on this report = office of the punch (time_clock_entries.office_id), passed to time_clock_service.build_report as the resolved office list. Office predicate (NEW, owner 03 section 5.1): office_id IN (:offices) OR (office_id IS NULL AND user_id IN (users assigned to a selected office through user_offices)), so legacy punches (office_id NULL, 31,756 rows) are listed under every office selection that covers their user, banded 'Unassigned office', with the warning office_unknown_legacy. Vendor text: the office of a clock in / out is not tracked in the legacy tool, so the legacy filter may act on the user's office assignment - confirm on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r04.s03.c01",
+     "signature_id": "sig0169",
+     "legacy_section": "USER",
+     "legacy_label": "User",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "user_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "User role on this report = the employee of the punch (time_clock_entries.user_id). Legacy SELECT dialog becomes a searchable multi-select; ALL = no restriction. User restriction self_unless_privileged (08 UR-1, UR-2): a caller without data class payroll_time gets user_ids forced to current_user and the picker read-only; the run stores scope_user_ids = [caller]. Dialog content was never captured - confirm list source and inactive rows on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r04.s04.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Date basis fixed: work_date (office-local date of clock_in; wall_clock legacy rows read as local). Inclusive; at most 366 days (MAX_REPORT_DAYS). Default today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r04.s04.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Inclusive end of the work_date range (office-local date of clock_in; wall_clock legacy rows read as local); at most 366 days from date_from (MAX_REPORT_DAYS). Default today in the office time zone (relative token). Enhanced with presets and relative tokens.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "management_reports.r04.s05.c01",
+     "signature_id": "sig0175",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Group By Office",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "group_by.office",
+     "param_type": "enum",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "ctx.multi_office (inferred)",
+     "notes": "Ticked sets group_by = office: an outer band per punch office with per-office totals. Greyed in the capture with one office in Office mode; enabled_when ctx.multi_office is inferred (vendor text does not state the rule). Vendor text says the office of a punch is not tracked, yet the Detail prints In Office / Out Office: punches with office_id NULL (legacy rows) band under 'Unassigned office'. Same mapping as My Reports > Time Clock Report (my_reports.r02.s05.c01).",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r04.s01.c01",
+     "text": "REPORT FORMAT = Detail: every punch for all users over the date range (meant for auditing gross hours and gross wages)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r04.s01.c01",
+     "text": "REPORT FORMAT = Summary: one summary per user PER DAY; overtime follows the overtime setting of each user."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r04.s01.c01",
+     "text": "REPORT FORMAT = Employee Total Only (the vendor text calls it \"Total\"): one line per employee for the date range."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "The Management Reports version has no PRINT FORMAT section (as captured); the same report under My Reports - a user's own hours - additionally offers PRINT FORMAT PDF / Excel (vendor screenshot)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "management_reports.r04.s05.c01",
+     "text": "Vendor text: the time clock is user-specific, not location-specific, and the office of a clock in / out is not tracked or reported. What Group By Office (and the OFFICE/GROUP selection) act on is therefore unverified - see unresolved."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "user_ids",
+     "field": "forced_when",
+     "when": "ctx.user_restricted",
+     "value": {
+      "token": "current_user"
+     },
+     "evidence": "policy",
+     "note": "A caller without the data class payroll_time sees the own card only; the control shows the forced value read-only. The existing time-clock builder already narrows such a caller."
+    }
+   ],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

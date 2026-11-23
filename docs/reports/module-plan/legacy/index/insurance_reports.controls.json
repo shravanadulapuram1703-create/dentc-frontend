@@ -1,0 +1,2099 @@
+{
+ "category": "insurance_reports",
+ "window_title": "Insurance Reports",
+ "report_list": [
+  "Claims List",
+  "Capitation Utilization",
+  "Claims Created Not Sent",
+  "Procedures on Hold",
+  "DPS Eligibility Report",
+  "Capitation Payment",
+  "Benefits Used/Unused",
+  "Outstanding Claims",
+  "Claims Not Created",
+  "Unbilled Report Due to No Insurance",
+  "EOB 835 Claims Reconcile Report",
+  "835 Denial Report",
+  "RTE Sweep Details"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Verification: third-reader pass over all 13 original screenshots, all 13 pre-rendered list / criteria zooms and about 70 extra crops at 3x-9x. Readers A and B agreed on every report, section, control, option, default and enabled state (13 reports, 85 sections, 130 controls); their only differences were descriptive wording. Everything was re-checked on the pixels: blue-mark detection for every selected radio and ticked checkbox, a census of every input box by fill and border colour, a census of every section header bar (full-width or split in two), an ink-blob map and a light-colour histogram of each criteria area, and contrast-stretched renders. No control, icon, note or greyed element exists outside those listed here.\n\nCoverage: 13 screenshots = 13 different reports, one screenshot each, in list order (1.PNG Claims List, 2 Capitation Utilization, 3 Claims Created Not Sent, 4 Procedures on Hold, 5 DPS Eligibility Report, 6 Capitation Payment, 7 Benefits Used/Unused = left column; 8 Outstanding Claims, 9 Claims Not Created, 10 Unbilled Report Due to No Insurance, 11 EOB 835 Claims Reconcile Report, 12 835 Denial Report, 13 RTE Sweep Details = right column). The selected radio of every screenshot was located from the pixels. Every listed report has a screenshot. No screenshot shows a popup, an expanded dropdown, a scrolled second view or a foreign screen, so the contents of every SELECT / SEARCH dialog (office, office group, provider, carriers, responsible party type, reason code, name search) and the other values of the Fee Schedule To Compare dropdown are NOT documented by these screenshots. Only one state per report was captured, so the non-default states (Pre-Authorization, Office Group, Summary, Recall, Include UCR ticked, Appointment Created Date / Both, DOS Date / Transaction Date, By File Received on Date, PDF on 835 Denial Report) are not shown.\n\nScreen chrome (pixel-identical in all 13): dark title bar with 'Insurance Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right. Blue sub-header 'SELECT REPORT' over the left panel and 'REPORT CRITERIA' over the right panel; the right end of the REPORT CRITERIA bar holds the grey-styled CLEAR CRITERIA button (refresh icon) - grey is its normal look in every screenshot, not a disabled state. A splitter / collapse handle (three vertical dots on an arrow-shaped tab) sits on the border between the two panels. The action bar at the bottom of the criteria panel holds the blue buttons PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon); Outstanding Claims alone adds CREATE TASK (plus icon) to their left. No footer text: below the panels there are only uniform window-edge strips.\n\nReport list: 13 radio entries in a two-column grid (7 in the left column, 6 in the right; the cell under RTE Sweep Details is empty). The dark panel below the grid is empty and there is no scrollbar, so the list is not scrollable or clipped. The list text is pixel-identical in all 13 screenshots. Casing as displayed: 'Procedures on Hold' and 'Unbilled Report Due to No Insurance' use lower-case 'on' / 'to'.\n\nText-rendering caveat: the bold section-header font draws a capital G almost exactly like a C at this resolution, so the header pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'NAME RANCE', 'CROUP BY', 'DPS ELICIBILITY', '835 CLAIM MATCHINC STATUS', 'UPCOMINC'. The mixed-case label 'Office Group' on every report shows a clear G and the same rendering was resolved the same way in the other categories, so these headers are transcribed with G (OFFICE/GROUP, DATE RANGE, NAME RANGE, GROUP BY, DPS ELIGIBILITY, 835 CLAIM MATCHING STATUS, UPCOMING). The date digits '11' also render like 'TI' (the value is 11/21/2026).\n\nRecurring patterns: PRINT FORMAT (PDF | Excel) is on all 13 reports - PDF selected on 12, Excel on 835 Denial Report; its position varies (full-width first section on 6 reports, right column of row 1 on 5, last section on Claims List, bottom-left on Outstanding Claims). REPORT FORMAT (Detail | Summary) appears only on Capitation Utilization (enabled, Detail) and 835 Denial Report (both radios greyed, Detail marked). OFFICE/GROUP (Office | Office Group radios, default Office, plus an unlabelled read-only box with a SELECT button, building icon) is on all 13; the box shows 108 (= the OID in the title bar) on 12 reports and ALL on 835 Denial Report. A PROVIDER picker (row label Provider, ALL, SELECT with single-person icon) is on 5 reports: Capitation Utilization, Claims Created Not Sent, DPS Eligibility Report, Benefits Used/Unused, Outstanding Claims. A CARRIER picker (row label Carriers, ALL, SELECT with single-person icon) is on 7 reports: Claims List, Capitation Utilization, Claims Created Not Sent, Capitation Payment, Outstanding Claims, EOB 835 Claims Reconcile Report, 835 Denial Report. GROUP BY (None | Provider, default None) is on 3 reports: Capitation Utilization, Claims Created Not Sent, Outstanding Claims - none of them has a Page Break checkbox or any other right-edge control. NAME RANGE (Start Name AAAAA / End Name ZZZZZ, each an editable-style box with its own SEARCH button, magnifier icon) is on Claims List and Claims Created Not Sent. CLAIM AMOUNT OVER OR EQUAL TO (0.00) is on Claims List, Claims Created Not Sent and Outstanding Claims; CLAIM/PRE-AUTH and CLAIM SENT TYPE are on Claims List and Outstanding Claims. The title CLAIM TYPE is used with two meanings: Both | Dental | Medical radios (Claims List, Claims Created Not Sent, Outstanding Claims) and Primary / Secondary / Tertiary / Quaternary checkboxes (Claims Not Created). OTHER OPTIONS has different content on each of the 5 reports that have it. The two 'exclude' pickers default to None: EXCLUDE RESPONSIBLE PARTY TYPE (person-plus icon) on Benefits Used/Unused and EXCLUDE REASON CODE (building icon) on 835 Denial Report.\n\nDate sections: a Start Date / End Date range titled DATE RANGE on Claims List, Capitation Utilization, Procedures on Hold, Capitation Payment, Unbilled Report Due to No Insurance, EOB 835 Claims Reconcile Report (preceded there by a By Payment Date | By File Received on Date radio) and 835 Denial Report; titled CREATED ON DATE RANGE on Claims Created Not Sent and RTE Sweep Details; APPOINTMENT DATE RANGE plus APPOINTMENT CREATED DATE RANGE switched by DATE RANGE TYPE on DPS Eligibility Report; ANNIVERSARY DATE RANGE on Benefits Used/Unused. A single Report Date titled REPORT DATE is used on Outstanding Claims and on Claims Not Created (preceded there by an ALL | DOS Date | Transaction Date radio). All date fields are MM/DD/YYYY boxes with a calendar icon and show 11/21/2026 (the capture day, i.e. the default is today), except Benefits Used/Unused (12/01/2026 to 11/30/2027 = first day of the next month to one year later minus a day).\n\nEnabled / disabled states were confirmed by pixel colour: editable fields have fill 241,241,241; read-only picker boxes and disabled fields have fill 220,223,226; disabled labels are mid-grey (161) against black for enabled ones. Controls greyed in the captured default states (what enables them is inferred, never shown): the Fee Schedule To Compare dropdown on Capitation Utilization (Include UCR unticked); both APPOINTMENT CREATED DATE RANGE dates on DPS Eligibility Report (DATE RANGE TYPE = Appointment Date); Report Date on Claims Not Created (radio = ALL); both REPORT FORMAT radios on 835 Denial Report (Excel selected). All SELECT and SEARCH buttons are blue (enabled) in every screenshot.\n\nTruncation: the criteria area has a fixed height (about 481 px in every screenshot) with the action bar pinned below it, and no scrollbar is drawn anywhere. In all 13 screenshots the first section header is fully visible at the top and blank panel background separates the last section from the action bar (smallest gap about 27 px, under GROUP BY on Capitation Utilization), so no report is flagged possibly_truncated.",
+ "report_count": 13,
+ "control_count": 130,
+ "reports": [
+  {
+   "report_id": "insurance_reports.r01",
+   "name": "Claims List",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "1.PNG only (default state, no popup). Row layout: [CLAIM/PRE-AUTH | CLAIM TYPE], [OFFICE/GROUP full width], [DATE RANGE | NAME RANGE], [CLAIM AMOUNT OVER OR EQUAL TO | CARRIER], [CLAIM SENT TYPE | OTHER OPTIONS], [PRINT FORMAT full width]. No PROVIDER section and no GROUP BY section on this report. Blank panel remains between PRINT FORMAT and the action bar, so nothing is clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r01.s01.c01",
+     "section": "CLAIM/PRE-AUTH",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Claims",
+      "Pre-Authorization"
+     ],
+     "default_value": "Claims",
+     "enabled": true,
+     "notes": "Left column of row 1 (CLAIM TYPE is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r01.s02.c01",
+     "section": "CLAIM TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "Dental",
+      "Medical"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Right column of row 1. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r01.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Section spans the full panel width on this report (there is no PROVIDER section beside it). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r01.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left column (NAME RANGE is to its right). MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c01",
+     "section": "NAME RANGE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Right column, beside DATE RANGE. Editable-style box (same light fill as the date fields, not the grey read-only picker fill) pre-filled with AAAAA; blue SEARCH button to its right."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c02",
+     "section": "NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start of the name range; its dialog is not shown)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c03",
+     "section": "NAME RANGE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Editable-style box pre-filled with ZZZZZ; blue SEARCH button to its right."
+    },
+    {
+     "control_id": "insurance_reports.r01.s05.c04",
+     "section": "NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end of the name range; its dialog is not shown)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s06.c01",
+     "section": "CLAIM AMOUNT OVER OR EQUAL TO",
+     "label": "",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0.00",
+     "enabled": true,
+     "notes": "Left column (CARRIER is to its right). Unlabelled editable box - the section header acts as its label; the value is right-aligned."
+    },
+    {
+     "control_id": "insurance_reports.r01.s07.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, beside CLAIM AMOUNT OVER OR EQUAL TO. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s08.c01",
+     "section": "CLAIM SENT TYPE",
+     "label": "EClaim",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Left column (OTHER OPTIONS is to its right). Written 'EClaim' (capital E and capital C, one word)."
+    },
+    {
+     "control_id": "insurance_reports.r01.s08.c02",
+     "section": "CLAIM SENT TYPE",
+     "label": "Paper",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as EClaim."
+    },
+    {
+     "control_id": "insurance_reports.r01.s09.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Resolved Claims",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Right column, beside CLAIM SENT TYPE. The only option in this section."
+    },
+    {
+     "control_id": "insurance_reports.r01.s10.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width last section (on this report PRINT FORMAT sits at the bottom of the criteria, not at the top)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r01.k01",
+     "about": "meaning",
+     "control_id": "insurance_reports.r01.s01.c01",
+     "text": "Pre-Authorization lists the pre-authorization claims instead of the claims.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`CLAIM/PRE-AUTH` | `Pre-Authorization` lists pre-auth claims instead of claims"
+    },
+    {
+     "correction_id": "insurance_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "insurance_reports.r01.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) is the date on which the claim was generated, not the date of service.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`DATE RANGE` | Date the claim was **generated**, not the date of service"
+    },
+    {
+     "correction_id": "insurance_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "insurance_reports.r01.s05.c01",
+     "text": "NAME RANGE (Start Name / End Name) is a range of patient names: the vendor's sample report echoes it in its footer as `Pat From` / `Thru`. From that footer the research document reads it as a patient last-name range.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`NAME RANGE` | Patient last-name range; footer `Pat From` / `Thru`"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r02",
+   "name": "Capitation Utilization",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "2.PNG only (default state). Row layout: [REPORT FORMAT | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [DATE RANGE full], [FACILITY ID | CARRIER], [INCLUDE UCR | FEE SCHEDULE TO COMPARE], [OTHER OPTIONS full], [GROUP BY full]. Tallest criteria set of the category: the GROUP BY row is complete and ends about 27 px above the action bar with blank panel in between and no scrollbar, so nothing is clipped. Only greyed control: the Fee Schedule To Compare dropdown.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r02.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left column of row 1 (PRINT FORMAT is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r02.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of row 1."
+    },
+    {
+     "control_id": "insurance_reports.r02.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r02.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r02.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r02.s05.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r02.s05.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r02.s06.c01",
+     "section": "FACILITY ID",
+     "label": "",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Left column (CARRIER is to its right). Unlabelled, empty editable box - the section header acts as its label. No placeholder text."
+    },
+    {
+     "control_id": "insurance_reports.r02.s07.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, beside FACILITY ID. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r02.s08.c01",
+     "section": "INCLUDE UCR",
+     "label": "Include UCR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left column (FEE SCHEDULE TO COMPARE is to its right). Section header and checkbox label carry the same words."
+    },
+    {
+     "control_id": "insurance_reports.r02.s09.c01",
+     "section": "FEE SCHEDULE TO COMPARE",
+     "label": "Fee Schedule To Compare",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "CP-40 ( 135 )",
+     "enabled": false,
+     "notes": "list collapsed - other values not visible. Right column, beside INCLUDE UCR. The dropdown is greyed out (grey fill, light-grey text, up/down chevrons at its right end) while its row label is black. Value exactly as shown, with spaces inside the parentheses. Probably enabled only when Include UCR is ticked - inference, the dependency is not shown."
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Print All Codes",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width section; the four checkboxes sit on one row, in this order."
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Fees Charged",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Second checkbox of the row; the only one ticked by default."
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Print Office Address",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Third checkbox of the row."
+    },
+    {
+     "control_id": "insurance_reports.r02.s10.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Show Billing Provider For Hygienist",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Fourth checkbox of the row."
+    },
+    {
+     "control_id": "insurance_reports.r02.s11.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Full-width last section. No row label; nothing else in the row (no Page Break checkbox)."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "insurance_reports.r02.d01",
+     "when": "INCLUDE UCR: Include UCR is ticked",
+     "effect": "The Fee Schedule To Compare dropdown becomes available (it is greyed while Include UCR is unticked); it offers a list of fee schedules and the chosen one is shown on the report for comparison.",
+     "controls": [
+      "insurance_reports.r02.s08.c01",
+      "insurance_reports.r02.s09.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Fee Schedule To Compare` becomes available once `Include UCR` is ticked (confirmed by vendor text)"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r02.k01",
+     "about": "options",
+     "control_id": "insurance_reports.r02.s09.c01",
+     "text": "The Fee Schedule To Compare dropdown holds a list of fee schedules (data of the practice, not a fixed value list); the schedule chosen is shown for comparison.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Ticking `Include UCR` reveals a list of fee schedules; the chosen one is shown for comparison"
+    },
+    {
+     "correction_id": "insurance_reports.r02.k02",
+     "about": "meaning",
+     "control_id": "insurance_reports.r02.s10.c01",
+     "text": "Print All Codes ticked: all codes are reported, including z-codes (internal extra-service codes). Unticked: only the codes that are to be reported to the carrier.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Print All Codes` | Ticked: all codes including z-codes (internal extra-service codes). Unticked: only codes to be reported to the carrier"
+    },
+    {
+     "correction_id": "insurance_reports.r02.k03",
+     "about": "meaning",
+     "control_id": "insurance_reports.r02.s10.c02",
+     "text": "Include Fees Charged shows the fees associated with the reported procedures. It is on by default, as captured.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Fees Charged` (default on) | Shows the fees associated with the reported procedures"
+    },
+    {
+     "correction_id": "insurance_reports.r02.k04",
+     "about": "meaning",
+     "control_id": "insurance_reports.r02.s10.c03",
+     "text": "Print Office Address prints the office location block in the report header.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Print Office Address` | Prints the office location block in the header"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r03",
+   "name": "Claims Created Not Sent",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "3.PNG only (default state). Row layout: [CLAIM TYPE | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [CREATED ON DATE RANGE | NAME RANGE], [CLAIM AMOUNT OVER OR EQUAL TO | CARRIER], [GROUP BY full]. Compared with Claims List there is no CLAIM/PRE-AUTH, CLAIM SENT TYPE or OTHER OPTIONS section, the date section is titled CREATED ON DATE RANGE, and PROVIDER and GROUP BY are added. Large blank area below GROUP BY; nothing clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r03.s01.c01",
+     "section": "CLAIM TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "Dental",
+      "Medical"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Left column of row 1 (PRINT FORMAT is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r03.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of row 1."
+    },
+    {
+     "control_id": "insurance_reports.r03.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r03.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s05.c01",
+     "section": "CREATED ON DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left column (NAME RANGE is to its right). MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s05.c02",
+     "section": "CREATED ON DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c01",
+     "section": "NAME RANGE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Right column, beside CREATED ON DATE RANGE. Editable-style box (same light fill as the date fields) pre-filled with AAAAA; blue SEARCH button to its right."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c02",
+     "section": "NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start of the name range; its dialog is not shown)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c03",
+     "section": "NAME RANGE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Editable-style box pre-filled with ZZZZZ; blue SEARCH button to its right."
+    },
+    {
+     "control_id": "insurance_reports.r03.s06.c04",
+     "section": "NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end of the name range; its dialog is not shown)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s07.c01",
+     "section": "CLAIM AMOUNT OVER OR EQUAL TO",
+     "label": "",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0.00",
+     "enabled": true,
+     "notes": "Left column (CARRIER is to its right). Unlabelled editable box - the section header acts as its label; the value is right-aligned."
+    },
+    {
+     "control_id": "insurance_reports.r03.s08.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, beside CLAIM AMOUNT OVER OR EQUAL TO. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r03.s09.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Full-width last section. No row label; nothing else in the row (no Page Break checkbox)."
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r04",
+   "name": "Procedures on Hold",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "4.PNG only (default state). Three full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, DATE RANGE); the rest of the panel is blank down to the action bar, nothing clipped. No PROVIDER, CARRIER, GROUP BY or OTHER OPTIONS section. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r04.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width first section. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r04.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r04.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r04.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width last section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r04.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r04.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "Population rule with no criteria control: the report shows the procedures whose billing the office put on hold, so that the hold can be released and a claim generated. (The hold is the `Hold Claim` tick on a procedure.)",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Shows procedures whose billing the office put on hold, so the hold can be released and a claim generated"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r05",
+   "name": "DPS Eligibility Report",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "5.PNG only (default state: DATE RANGE TYPE = Appointment Date). Row layout: [DPS ELIGIBILITY | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [DATE RANGE TYPE full], [APPOINTMENT DATE RANGE | APPOINTMENT CREATED DATE RANGE], [OTHER OPTIONS full]. The two APPOINTMENT CREATED DATE RANGE inputs are greyed (fill 220,223,226 against 241,241,241 for the editable APPOINTMENT DATE RANGE inputs). 'DPS' is not expanded anywhere on the screen. Blank space below OTHER OPTIONS; nothing clipped.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r05.s01.c01",
+     "section": "DPS ELIGIBILITY",
+     "label": "On Hold",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left column of row 1 (PRINT FORMAT is to its right). The only control in this section."
+    },
+    {
+     "control_id": "insurance_reports.r05.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of row 1."
+    },
+    {
+     "control_id": "insurance_reports.r05.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r05.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r05.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r05.s05.c01",
+     "section": "DATE RANGE TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Appointment Date",
+      "Appointment Created Date",
+      "Both"
+     ],
+     "default_value": "Appointment Date",
+     "enabled": true,
+     "notes": "Full-width section, no row label. Appears to control which of the two date-range sections below is usable: with Appointment Date selected only APPOINTMENT DATE RANGE is editable (the other two states were not captured)."
+    },
+    {
+     "control_id": "insurance_reports.r05.s06.c01",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left column (APPOINTMENT CREATED DATE RANGE is to its right). Editable (light fill) MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date."
+    },
+    {
+     "control_id": "insurance_reports.r05.s06.c02",
+     "section": "APPOINTMENT DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Editable (light fill) box with a calendar icon at its right end; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r05.s07.c01",
+     "section": "APPOINTMENT CREATED DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": false,
+     "notes": "Right column, beside APPOINTMENT DATE RANGE. Box is greyed out (grey fill like the read-only picker boxes) while DATE RANGE TYPE = Appointment Date; it still shows the date and a calendar icon, and its row label is black."
+    },
+    {
+     "control_id": "insurance_reports.r05.s07.c02",
+     "section": "APPOINTMENT CREATED DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": false,
+     "notes": "Greyed out (grey fill) while DATE RANGE TYPE = Appointment Date; shows the date and a calendar icon."
+    },
+    {
+     "control_id": "insurance_reports.r05.s08.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include patients with no insurance",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width last section. Label in sentence case exactly as shown (lower-case 'patients with no insurance')."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r05.k01",
+     "about": "meaning",
+     "control_id": "insurance_reports.r05.s01.c01",
+     "text": "DPS = Denticon Practice Services, the vendor's insurance-verification service. A `DPS Ins. Verification` request is made per appointment on a form that carries an `On Hold` flag.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "DPS = Denticon Practice Services; `DPS Ins. Verification` is a per-appointment request with a form and an `On Hold` flag"
+    },
+    {
+     "correction_id": "insurance_reports.r05.k02",
+     "about": "meaning",
+     "control_id": "insurance_reports.r05.s01.c01",
+     "text": "The On Hold checkbox corresponds to the `On Hold` tick on the `Subscriber / Insurance Verification` form (the DPS verification request of an appointment). The vendor shows the tick on that form; that the report criterion refers to it rests on the identical name, and its effect on the report is not documented (see the open question).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`On Hold` corresponds to the `On Hold` tick on the `Subscriber / Insurance Verification` form"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r06",
+   "name": "Capitation Payment",
+   "screenshots": [
+    "6.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "6.PNG only (default state). Four full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, DATE RANGE, CARRIER); blank panel below, nothing clipped. No PROVIDER section. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r06.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width first section. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r06.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r06.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r06.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r06.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r06.s04.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width last section (the read-only grey box is wider than in the two-column reports). Header is singular CARRIER, row label is plural 'Carriers'. Blue SELECT button (single-person icon)."
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r07",
+   "name": "Benefits Used/Unused",
+   "screenshots": [
+    "7.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "7.PNG only (default state). Row layout: [TREATMENT PLAN/RECALL | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.) full], [EXCLUDE RESPONSIBLE PARTY TYPE full]. The parenthetical in the ANNIVERSARY header is the only explanatory note text in this category and is kept as part of the section title, exactly as displayed. Date defaults differ from every other report (12/01/2026 to 11/30/2027). Blank space below; nothing clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r07.s01.c01",
+     "section": "TREATMENT PLAN/RECALL",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Treatment Plan",
+      "Recall"
+     ],
+     "default_value": "Treatment Plan",
+     "enabled": true,
+     "notes": "Left column of row 1 (PRINT FORMAT is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r07.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column of row 1."
+    },
+    {
+     "control_id": "insurance_reports.r07.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r07.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r07.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r07.s05.c01",
+     "section": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "12/01/2026",
+     "enabled": true,
+     "notes": "Full-width section; the explanatory note '(* UPCOMING BENEFIT ROLLOVER PERIOD.)' is printed inside the section header bar itself, after ANNIVERSARY DATE RANGE. MM/DD/YYYY box with a calendar icon. Default is NOT today: it is the first day of the month after the capture date (captured 11/21/2026)."
+    },
+    {
+     "control_id": "insurance_reports.r07.s05.c02",
+     "section": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/30/2027",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box. Default is one year minus one day after the Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r07.s06.c01",
+     "section": "EXCLUDE RESPONSIBLE PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Full-width last section. Unlabelled read-only grey box showing None; blue SELECT button with a person-plus icon to its right. Title is spelled out in full here (RESPONSIBLE PARTY, not RESP. PARTY)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r07.k01",
+     "about": "meaning",
+     "control_id": "insurance_reports.r07.s01.c01",
+     "text": "TREATMENT PLAN/RECALL chooses both the population and the layout of the report: patients with benefits remaining who have a treatment plan (Treatment Plan) or who are due for recall (Recall).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`TREATMENT PLAN/RECALL` | Chooses the layout and population"
+    },
+    {
+     "correction_id": "insurance_reports.r07.k02",
+     "about": "other",
+     "control_id": "insurance_reports.r07.s01.c01",
+     "text": "The captured criteria show the Treatment Plan state only. The footer of the vendor's 2011 Recall sample echoes three criteria that this state does not have: `Recall Date From / Thru`, `Max Over` and `Recall Codes`. They come from an older build and the current Recall screen is unverified, so they are NOT added as controls (see the open question); the Recall state of the screen still has to be captured.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "The 2011 Recall footer echoes `Recall Date From / Thru`, `Max Over` and `Recall Codes` — criteria that do not exist on the `Treatment Plan` state we captured"
+    },
+    {
+     "correction_id": "insurance_reports.r07.k03",
+     "about": "meaning",
+     "control_id": "insurance_reports.r07.s05.c01",
+     "text": "ANNIVERSARY DATE RANGE is on the plan's anniversary - the next date on which the benefits roll over.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`ANNIVERSARY DATE RANGE` | The plan's anniversary — the next date benefits roll over; default = first day of next month through one year later minus a day"
+    },
+    {
+     "correction_id": "insurance_reports.r07.k04",
+     "about": "default",
+     "control_id": "insurance_reports.r07.s05.c01",
+     "text": "Default range: Start Date = the first day of next month, End Date = one year later minus a day (our capture of 11/21/2026 shows 12/01/2026 to 11/30/2027). The research document states this rule without separating what the vendor article says from what our capture shows.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`ANNIVERSARY DATE RANGE` | The plan's anniversary — the next date benefits roll over; default = first day of next month through one year later minus a day"
+    },
+    {
+     "correction_id": "insurance_reports.r07.k05",
+     "about": "meaning",
+     "control_id": "insurance_reports.r07.s06.c01",
+     "text": "EXCLUDE RESPONSIBLE PARTY TYPE removes the accounts (responsible parties) of the picked types from the report; the vendor's sample echoes the choice in its footer as `Ex Resp. Type`.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`EXCLUDE PATIENT TYPE` / `EXCLUDE RESPONSIBLE PARTY TYPE` | Removes patients / accounts of the picked types; echoed as `Exclude Pat Type` / `Ex Resp. Type`"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r08",
+   "name": "Outstanding Claims",
+   "screenshots": [
+    "8.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "CREATE TASK",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "8.PNG only (default state). Row layout: [CLAIM/PRE-AUTH | CLAIM TYPE], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [REPORT DATE full], [CLAIM AMOUNT OVER OR EQUAL TO | CARRIER], [CLAIM SENT TYPE | OTHER OPTIONS], [PRINT FORMAT | GROUP BY]. The only report in this category whose bottom action bar has an extra blue CREATE TASK button (plus icon), placed left of PRINT / PREVIEW. Uses a single as-of Report Date instead of a date range; OTHER OPTIONS holds the five aging-bucket checkboxes. Blank space below the last row; nothing clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r08.s01.c01",
+     "section": "CLAIM/PRE-AUTH",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Claims",
+      "Pre-Authorization"
+     ],
+     "default_value": "Claims",
+     "enabled": true,
+     "notes": "Left column of row 1 (CLAIM TYPE is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r08.s02.c01",
+     "section": "CLAIM TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "Dental",
+      "Medical"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Right column of row 1. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r08.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r08.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r08.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r08.s05.c01",
+     "section": "REPORT DATE",
+     "label": "Report Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section with a single as-of date (no start/end range). MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r08.s06.c01",
+     "section": "CLAIM AMOUNT OVER OR EQUAL TO",
+     "label": "",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0.00",
+     "enabled": true,
+     "notes": "Left column (CARRIER is to its right). Unlabelled editable box - the section header acts as its label; the value is right-aligned."
+    },
+    {
+     "control_id": "insurance_reports.r08.s07.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, beside CLAIM AMOUNT OVER OR EQUAL TO. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r08.s08.c01",
+     "section": "CLAIM SENT TYPE",
+     "label": "EClaim",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Left column (OTHER OPTIONS is to its right). Written 'EClaim' (capital E and capital C, one word)."
+    },
+    {
+     "control_id": "insurance_reports.r08.s08.c02",
+     "section": "CLAIM SENT TYPE",
+     "label": "Paper",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as EClaim."
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Current",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Right column, beside CLAIM SENT TYPE. First of five aging-bucket checkboxes on one row (Current, Over 30, Over 60, Over 90, Over 120), all ticked by default."
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Over 30",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Aging bucket, second in the row."
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Over 60",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Aging bucket, third in the row."
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Over 90",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Aging bucket, fourth in the row."
+    },
+    {
+     "control_id": "insurance_reports.r08.s09.c05",
+     "section": "OTHER OPTIONS",
+     "label": "Over 120",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Aging bucket, fifth in the row."
+    },
+    {
+     "control_id": "insurance_reports.r08.s10.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Left column of the last row (GROUP BY is to its right)."
+    },
+    {
+     "control_id": "insurance_reports.r08.s11.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right column of the last row, beside PRINT FORMAT. No row label; nothing else in the row (no Page Break checkbox)."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "insurance_reports.r08.d01",
+     "when": "PRINT FORMAT = Excel",
+     "effect": "Both GROUP BY radios (None / Provider) are greyed out; the Excel output is a flat workbook.",
+     "controls": [
+      "insurance_reports.r08.s10.c01",
+      "insurance_reports.r08.s11.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "Selecting `Excel` greys both `GROUP BY` radios"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r08.k01",
+     "about": "meaning",
+     "control_id": "insurance_reports.r08.s01.c01",
+     "text": "Claims lists all claims sent but not yet recorded as paid; Pre-Authorization lists the outstanding pre-authorizations instead.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "All claims sent but not yet recorded as paid, for follow-up; `Pre-Authorization` gives outstanding pre-auths"
+    },
+    {
+     "correction_id": "insurance_reports.r08.k02",
+     "about": "meaning",
+     "control_id": "insurance_reports.r08.s05.c01",
+     "text": "REPORT DATE is a single as-of date (not a range); the vendor advises running the report on the default date for a 'right now' figure.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`REPORT DATE` | Single as-of date; vendor advises running on the default date for a \"right now\" figure"
+    },
+    {
+     "correction_id": "insurance_reports.r08.k03",
+     "about": "meaning",
+     "control_id": "insurance_reports.r08.s10.c01",
+     "text": "PDF opens the report in the report viewer; Excel produces a flat download instead and can disable layout options (here GROUP BY, see the rule).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PRINT FORMAT` (`PDF` / `Excel`) | PDF → viewer. Excel → flat download. Excel can disable layout options (section 7)"
+    },
+    {
+     "correction_id": "insurance_reports.r08.k04",
+     "about": "meaning",
+     "control_id": "",
+     "text": "CREATE TASK (the extra action button of this report) creates Task Manager tasks of type `Outstanding Claim` (or `Outstanding Pre-Auth`) for the claims on the report, after a confirmation that states the count.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Creates Task Manager tasks of type `Outstanding Claim` (or `Outstanding Pre-Auth`) for the claims on the report, after a confirmation stating the count"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r09",
+   "name": "Claims Not Created",
+   "screenshots": [
+    "9.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "9.PNG only (default state: REPORT DATE radio = ALL). Four full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, REPORT DATE, CLAIM TYPE). Only greyed control: the Report Date input. No PROVIDER, CARRIER or GROUP BY section. Large blank area below CLAIM TYPE; nothing clipped.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r09.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width first section. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r09.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r09.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r09.s03.c01",
+     "section": "REPORT DATE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "ALL",
+      "DOS Date",
+      "Transaction Date"
+     ],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "First row of the section, no row label. 'ALL' is in capitals. Appears to control whether the Report Date box below is usable (it is greyed while ALL is selected)."
+    },
+    {
+     "control_id": "insurance_reports.r09.s03.c02",
+     "section": "REPORT DATE",
+     "label": "Report Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": false,
+     "notes": "Second row of the section; a single date, not a range. Box is greyed out (grey fill) while the radio above is on ALL, but still shows the date and a calendar icon; its row label is black. Presumably editable when DOS Date or Transaction Date is chosen - inference, those states were not captured."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c01",
+     "section": "CLAIM TYPE",
+     "label": "Primary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Full-width last section; four checkboxes on one row, all ticked by default. On this report CLAIM TYPE means coverage order, not the Both / Dental / Medical choice used under the same title on other reports."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c02",
+     "section": "CLAIM TYPE",
+     "label": "Secondary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Second in the row."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c03",
+     "section": "CLAIM TYPE",
+     "label": "Tertiary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Third in the row."
+    },
+    {
+     "control_id": "insurance_reports.r09.s04.c04",
+     "section": "CLAIM TYPE",
+     "label": "Quaternary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Fourth in the row."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r09.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: procedures that are on hold (`Hold Claim` ticked on the procedure) also appear on this report.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "procedures held with `Hold Claim` appear here"
+    },
+    {
+     "correction_id": "insurance_reports.r09.k02",
+     "about": "meaning",
+     "control_id": "insurance_reports.r09.s03.c02",
+     "text": "Report Date is a single day, not a range: the vendor describes single-day use of this report (run it daily, or once per day of service at the end of the week). That DOS Date / Transaction Date decide which date that day is compared with comes from our transcription.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "otherwise one day, by date of service or by transaction date | `[C]`; single-day use `[D]` `[R11]`"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r10",
+   "name": "Unbilled Report Due to No Insurance",
+   "screenshots": [
+    "10.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "10.PNG only (default state). Three full-width sections in a single column - the same criteria set as Procedures on Hold (PRINT FORMAT, OFFICE/GROUP, DATE RANGE). Blank panel below; nothing clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r10.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width first section. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r10.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r10.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r10.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width last section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r10.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r10.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: the report lists patient records whose procedures were posted before insurance was attached (billing order `None`, no `D` in the Bill column); such procedures have to be edited before a claim can be generated.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Patient records whose procedures were posted **before** insurance was attached (billing order `None`, no `D` in Bill), which must be edited before a claim can be generated"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r11",
+   "name": "EOB 835 Claims Reconcile Report",
+   "screenshots": [
+    "11.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "11.PNG only (default state). Row layout: [PRINT FORMAT full], [835 CLAIM MATCHING STATUS | CLAIM STATUS], [OFFICE/GROUP full], [DATE RANGE full: date-basis radio row, then Start Date and End Date], [OTHER OPTIONS | CARRIER]. No PROVIDER section. Blank space below; nothing clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r11.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width first section. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r11.s02.c01",
+     "section": "835 CLAIM MATCHING STATUS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "Matched",
+      "UnMatched"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Left column of row 2 (CLAIM STATUS is to its right). No row label. 'UnMatched' is written with a capital M."
+    },
+    {
+     "control_id": "insurance_reports.r11.s03.c01",
+     "section": "CLAIM STATUS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "ALL",
+      "Partial Closed",
+      "Closed"
+     ],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of row 2, beside 835 CLAIM MATCHING STATUS. No row label. 'ALL' is in capitals."
+    },
+    {
+     "control_id": "insurance_reports.r11.s04.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r11.s04.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r11.s05.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "By Payment Date",
+      "By File Received on Date"
+     ],
+     "default_value": "By Payment Date",
+     "enabled": true,
+     "notes": "First row of the full-width DATE RANGE section, above the Start/End dates; no row label. Chooses which date the range applies to. 'on' is lower-case in 'By File Received on Date'."
+    },
+    {
+     "control_id": "insurance_reports.r11.s05.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r11.s05.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r11.s06.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Show Details UCR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Left column of the last row (CARRIER is to its right). Ticked by default; the only option in this section."
+    },
+    {
+     "control_id": "insurance_reports.r11.s07.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column of the last row, beside OTHER OPTIONS. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r11.k01",
+     "about": "meaning",
+     "control_id": "insurance_reports.r11.s05.c02",
+     "text": "The date range selects the ERA (835) payments that were processed: per the vendor the report lists all processed payments for the selected date range, whether or not they were auto-posted. (The vendor article calls the report `EOB Claim Reconcile Report`.)",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "(the vendor calls it \"EOB Claim Reconcile Report\"): lists all processed payments"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r12",
+   "name": "835 Denial Report",
+   "screenshots": [
+    "12.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "12.PNG only. Row layout: [REPORT FORMAT | PRINT FORMAT], [OFFICE/GROUP full], [DATE RANGE full], [CARRIER full], [EXCLUDE REASON CODE full]. The captured state differs from every other report of the category in three ways: Excel (not PDF) is the selected print format, both REPORT FORMAT radios are greyed out with Detail marked, and the office box shows ALL instead of 108. Every other screenshot shows an untouched default form, so these are probably this report's own defaults, but a single screenshot cannot prove it. No PROVIDER section. Blank space below; nothing clipped.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r12.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": false,
+     "notes": "Left column of row 1 (PRINT FORMAT is to its right). BOTH radios and both labels are greyed out (disabled); Detail is the one marked (grey dot inside a grey ring), Summary is an empty grey circle. Possibly locked because Excel is the selected print format - inference, only this one state was captured."
+    },
+    {
+     "control_id": "insurance_reports.r12.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "Excel",
+     "enabled": true,
+     "notes": "Right column of row 1. Excel is selected here - the only report in this category not showing PDF selected. The PDF radio and its label look enabled (black). Whether Excel is this report's built-in default or was chosen by the person capturing cannot be told from the screenshot."
+    },
+    {
+     "control_id": "insurance_reports.r12.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r12.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. Shows ALL here - every other report in this category shows 108 (the current office id)."
+    },
+    {
+     "control_id": "insurance_reports.r12.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r12.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    },
+    {
+     "control_id": "insurance_reports.r12.s05.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section (wide read-only grey box). Header is singular CARRIER, row label is plural 'Carriers'. Blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "insurance_reports.r12.s06.c01",
+     "section": "EXCLUDE REASON CODE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Full-width last section. Unlabelled read-only grey box showing None; blue SELECT button to its right with the same building icon as the office SELECT button. The reason-code list behind SELECT is not shown."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "insurance_reports.r12.d01",
+     "when": "PRINT FORMAT = Excel (the state the report opens in)",
+     "effect": "REPORT FORMAT is greyed with Detail marked - the Excel output exists only as Detail. With PRINT FORMAT = PDF, REPORT FORMAT can be set to Summary or Detail.",
+     "controls": [
+      "insurance_reports.r12.s01.c01",
+      "insurance_reports.r12.s02.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Summary` / `Detail` for PDF; greyed with `Detail` marked when `Excel` is selected (only \"Detail-Excel\" is documented)"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r12.k01",
+     "about": "default",
+     "control_id": "insurance_reports.r12.s02.c01",
+     "text": "Excel is the print format this report opens with. The vendor's own screenshot shows the same opening state as our capture (Excel selected, REPORT FORMAT greyed with Detail marked, office box ALL), so the captured state is the report's normal default and not a leftover selection.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Excel` selected, `REPORT FORMAT` greyed with `Detail` marked, office `ALL` — identical in the vendor's screenshot, so this is the report's normal opening state; Excel exists only as Detail"
+    },
+    {
+     "correction_id": "insurance_reports.r12.k02",
+     "about": "meaning",
+     "control_id": "insurance_reports.r12.s02.c01",
+     "text": "PDF opens the report in the report viewer (Summary or Detail layout); Excel produces a flat download instead and locks REPORT FORMAT (see the rule).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PRINT FORMAT` (`PDF` / `Excel`) | PDF → viewer. Excel → flat download. Excel can disable layout options (section 7)"
+    },
+    {
+     "correction_id": "insurance_reports.r12.k03",
+     "about": "default",
+     "control_id": "insurance_reports.r12.s03.c02",
+     "text": "The office box opens on ALL on this report (the other reports of the category open on the logged-in office); the vendor's own screenshot shows the same.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "The vendor's own screenshot shows the state we captured: `Excel` selected and the office box `ALL`"
+    },
+    {
+     "correction_id": "insurance_reports.r12.k04",
+     "about": "meaning",
+     "control_id": "insurance_reports.r12.s04.c01",
+     "text": "DATE RANGE (Start Date / End Date) may cover at most one month per run.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Enabled per tenant on request to support or the account manager; date range up to one month"
+    },
+    {
+     "correction_id": "insurance_reports.r12.k05",
+     "about": "other",
+     "control_id": "",
+     "text": "Population rule with no criteria control: the report covers ERA 835 auto-payments that were denied or partially paid.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "ERA 835 auto-payments that were denied or partially paid, to find and fix claim problems"
+    },
+    {
+     "correction_id": "insurance_reports.r12.k06",
+     "about": "other",
+     "control_id": "",
+     "text": "Tenant-dependent report: it is listed only for tenants that asked the vendor to enable it. Without it the Insurance Reports list has 12 entries, in another order than the 13-entry list we captured.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`835 Denial Report` is listed only for tenants that asked for it; without it the list has 12 entries in another order"
+    }
+   ]
+  },
+  {
+   "report_id": "insurance_reports.r13",
+   "name": "RTE Sweep Details",
+   "screenshots": [
+    "13.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "13.PNG only (default state). Three full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, CREATED ON DATE RANGE); blank panel below, nothing clipped. 'RTE' is not expanded anywhere on the screen. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "insurance_reports.r13.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width first section. No row label."
+    },
+    {
+     "control_id": "insurance_reports.r13.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section on this report). No row label."
+    },
+    {
+     "control_id": "insurance_reports.r13.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+    },
+    {
+     "control_id": "insurance_reports.r13.s03.c01",
+     "section": "CREATED ON DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width last section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+    },
+    {
+     "control_id": "insurance_reports.r13.s03.c02",
+     "section": "CREATED ON DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon at the right end of the box; same default as Start Date."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "insurance_reports.r13.k01",
+     "about": "meaning",
+     "control_id": "",
+     "text": "RTE = real-time eligibility. `RTE Sweep` is the daily automatic real-time-eligibility sweep of the schedule through DentalXChange (actor `Auto_RTE`).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "**`RTE Sweep`** = the daily real-time-eligibility sweep of the schedule through DentalXChange (actor `Auto_RTE`)"
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "insurance_reports.r01",
+   "question": "`Include Resolved Claims`: the effect is not documented; the research document only infers that it adds closed claims and that by default only unresolved claims are listed."
+  },
+  {
+   "report_id": "insurance_reports.r01",
+   "question": "Older build: the vendor's 2011 sample footer echoes `Provider : ALL`, but the current criteria have no PROVIDER picker. An older build apparently filtered Claims List by provider; it is NOT added because the current screen (captured complete) does not have it. Whether the filter was removed or is only hidden in the current build is not documented."
+  },
+  {
+   "report_id": "",
+   "question": "`CLAIM TYPE` (`Both` / `Dental` / `Medical`) on Claims List, Claims Created Not Sent and Outstanding Claims: that it filters dental versus medical claims is inferred (on Outstanding Claims the research document only presumes a separate `Medical Claims` band)."
+  },
+  {
+   "report_id": "insurance_reports.r02",
+   "question": "`Show Billing Provider For Hygienist`: not documented; taken (inferred) to print the billing provider instead of a hygienist in the provider column."
+  },
+  {
+   "report_id": "insurance_reports.r02",
+   "question": "`FACILITY ID`: the vendor sample header prints `Facility ID : <value>`; that the criteria text box supplies that header line (the carrier's id for the office) is inferred. The basis of `DATE RANGE` (transaction date of the procedures) is also inferred from the sample."
+  },
+  {
+   "report_id": "insurance_reports.r02",
+   "question": "`Fee Schedule To Compare`: which fee schedules the list contains (all of the practice or only those of the selected office), their order and the rule for the pre-selected entry are not documented."
+  },
+  {
+   "report_id": "insurance_reports.r02",
+   "question": "`REPORT FORMAT` = `Summary`: what it changes is not documented (the vendor sample and the old report name `Capitation Utilization - Detail` cover Detail only). `GROUP BY` = `Provider`: taken (inferred) to add a provider level."
+  },
+  {
+   "report_id": "",
+   "question": "Whether PRINT FORMAT = Excel also greys GROUP BY on Capitation Utilization and on Claims Created Not Sent, as it does on Outstanding Claims, is not documented."
+  },
+  {
+   "report_id": "insurance_reports.r03",
+   "question": "No vendor article names this report. Open: the date basis of CREATED ON DATE RANGE (date the claim was created is our reading), whether the other criteria behave as on Claims List (inferred) and what GROUP BY = Provider does (a provider level is inferred). Also unverified: whether a claim saved with `E-Claim` (ledger text `Recreated` instead of `Created, Not Sent`) is included."
+  },
+  {
+   "report_id": "insurance_reports.r04",
+   "question": "Whether `DATE RANGE` is the date of service or the transaction date is unverified."
+  },
+  {
+   "report_id": "insurance_reports.r05",
+   "question": "`On Hold`: that ticking it limits the report to requests flagged On Hold on the verification form is inferred; `Include patients with no insurance` (adds appointments of patients with no plan attached) is inferred too. The report itself is not described by the vendor."
+  },
+  {
+   "report_id": "insurance_reports.r05",
+   "question": "`DATE RANGE TYPE`: the non-default states (Appointment Created Date, Both) are not shown by the vendor. That they enable the greyed APPOINTMENT CREATED DATE RANGE inputs, and which range each choice disables, remains an inference from our screenshot."
+  },
+  {
+   "report_id": "insurance_reports.r06",
+   "question": "The basis of `DATE RANGE` (payment date) is inferred."
+  },
+  {
+   "report_id": "insurance_reports.r07",
+   "question": "Older build / unseen mode: Recall mode was not captured, and its criteria are known only from an older build: the footer of the vendor's 2011 Recall sample (then the separate report `Benefits Used/Unused - Recall`) echoes three criteria that the Treatment Plan state does not have - `Recall Date From / Thru`, `Max Over` and `Recall Codes`. They are NOT added as controls: the current Recall screen is unverified, and the footer wording gives neither the section titles nor the on-screen labels, control types, value lists or defaults. To settle: capture the screen with TREATMENT PLAN/RECALL = Recall and record which criteria appear, change or disappear."
+  },
+  {
+   "report_id": "insurance_reports.r07",
+   "question": "`EXCLUDE RESPONSIBLE PARTY TYPE`: the value list of the picker is not documented."
+  },
+  {
+   "report_id": "insurance_reports.r08",
+   "question": "OTHER OPTIONS `Current` / `Over 30` / `Over 60` / `Over 90` / `Over 120`: that they choose which age buckets are included is inferred. Also unknown: the age basis (claim sent date or date of service) and whether `Report Date` reconstructs history or only shifts the aging."
+  },
+  {
+   "report_id": "insurance_reports.r08",
+   "question": "`GROUP BY` = `Provider`: taken (inferred) to add a provider grouping level. Vendor material still uses the old report name `Outstanding Claim Report for Provider`; mapping it to this option is inferred."
+  },
+  {
+   "report_id": "insurance_reports.r09",
+   "question": "`REPORT DATE`: that `DOS Date` / `Transaction Date` enable the single Report Date input (and that `ALL` means every unclaimed procedure) comes from our own screenshot; the vendor documents only single-day use. `CLAIM TYPE` Primary / Secondary / Tertiary / Quaternary (coverage levels whose missing claims are listed) is inferred."
+  },
+  {
+   "report_id": "insurance_reports.r10",
+   "question": "The basis of `DATE RANGE` is unverified."
+  },
+  {
+   "report_id": "insurance_reports.r11",
+   "question": "`Show Details UCR` (ticked by default): not documented; taken (unverified) to add service-line detail with the billed (UCR) amount. The meanings of `835 CLAIM MATCHING STATUS` (payment matched to a claim or not) and of `CLAIM STATUS` `Partial Closed` / `Closed` (claim state after posting) are inferred."
+  },
+  {
+   "report_id": "insurance_reports.r12",
+   "question": "`EXCLUDE REASON CODE`: the effect (removes lines with the picked reason codes) is inferred and the value list of the picker is not documented (sample values suggest the standard 835 adjustment reason codes - inferred)."
+  },
+  {
+   "report_id": "insurance_reports.r13",
+   "question": "The report is not described by the vendor: what `CREATED ON DATE RANGE` filters (taken to be the date-time of the automatic eligibility check) is inferred."
+  },
+  {
+   "report_id": "",
+   "question": "ADD TO MY FAVORITES (action on every report): vendor training material says it saves the criteria - one version per report - and that a saved version is later changed with `Update My Favorites`. Where `Update My Favorites` appears (this button relabelled once the report is a favourite, or an action elsewhere) is not described in this document."
+  },
+  {
+   "report_id": "",
+   "question": "SELECT / SEARCH dialogs: apart from `Include All` (stated for the PROVIDER and CARRIER pickers and, generally, for all pickers) and the fact that one or more offices or an office group can be chosen, the contents of the office / office group, provider, carrier, responsible-party-type and reason-code dialogs and of the NAME RANGE SEARCH lookups are not described in this research document."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_insurance_txplan_ortho.md",
+ "screenshot_control_count": 130,
+ "vendor_doc_control_count": 0
+}

@@ -1,0 +1,529 @@
+{
+  "category": "ortho_reports",
+  "window_title": "Ortho Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/ortho_reports",
+  "report_list": [
+    "Ortho Compliance Report",
+    "Ortho Daily Journal",
+    "Patients by Ortho Status with Time in Treatment",
+    "Ortho Report",
+    "Missing Ortho Visits"
+  ],
+  "reports": [
+    {
+      "name": "Ortho Compliance Report",
+      "screenshots": [
+        "1.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section, first in the panel. Two radios on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label). The Excel state was not captured."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel (PROVIDER section is to its right). Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label). The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "On its own row directly below the OFFICE/GROUP + PROVIDER row; the row spans the full panel width. Unlabelled read-only grey box; blue SELECT button with a building icon to its right. 108 = current office id (same number as 'OID :108' in the title bar). The office / office-group selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, beside OFFICE/GROUP. Row label 'Provider' in a label cell, then a read-only grey box showing ALL and a blue SELECT button with a person icon. The selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "NUMBER OF WEEKS SINCE LAST VISIT",
+          "controls": [
+            {
+              "label": "",
+              "type": "number_input",
+              "options": [],
+              "default_value": "6",
+              "enabled": true,
+              "notes": "Full-width section, last in the panel. Single unlabelled input box at the left (the section header is its only label); light editable fill (not the grey read-only picker fill); the value 6 is right-aligned. No spinner arrows, no unit text and no button beside it; the rest of the row is empty."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "1.PNG only (first radio of the left list column is the filled one). Layout: PRINT FORMAT full width; OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker row spanning the full width underneath; NUMBER OF WEEKS SINCE LAST VISIT full width. This report has no date range - its only filter besides office and provider is the weeks threshold (shown as 6). The criteria end at the weeks input; a uniform empty area follows down to the action bar and there is no scrollbar, so nothing is clipped. Nothing is greyed out."
+    },
+    {
+      "name": "Ortho Daily Journal",
+      "screenshots": [
+        "2.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section, first in the panel. Two radios on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label). The Excel state was not captured."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel (PROVIDER section is to its right). Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label). The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "On its own row directly below the OFFICE/GROUP + PROVIDER row; the row spans the full panel width. Unlabelled read-only grey box; blue SELECT button with a building icon to its right. 108 = current office id (same number as 'OID :108' in the title bar). The office / office-group selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, beside OFFICE/GROUP. Row label 'Provider' in a label cell, then a read-only grey box showing ALL and a blue SELECT button with a person icon. The selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "VISIT DATE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section, last in the panel; the controls sit in its left part and the right part of both rows is empty. Label cell at the left, then a date box (light editable fill) with a blue calendar icon inside its right edge; format MM/DD/YYYY. 11/21/2026 is the day the screenshots were captured, i.e. the field is pre-filled with the current date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: date box with a blue calendar icon; pre-filled with the capture-day date."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "2.PNG only (second radio of the left list column is the filled one). Same layout as Ortho Compliance Report except that the last section is VISIT DATE (Start Date / End Date, both 11/21/2026) instead of NUMBER OF WEEKS SINCE LAST VISIT. The criteria end at the End Date row; a uniform empty area follows down to the action bar and there is no scrollbar, so nothing is clipped. Nothing is greyed out. 2.PNG is cropped about 4 px tighter at the top than the other files (the top of the printer icon is cut; all title-bar text is complete)."
+    },
+    {
+      "name": "Patients by Ortho Status with Time in Treatment",
+      "screenshots": [
+        "3.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section, first in the panel. Two radios on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label). The Excel state was not captured."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section on this report (no PROVIDER section beside it). Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label). The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "On the row directly below the Office / Office Group radios. Unlabelled read-only grey box; blue SELECT button with a building icon to its right. 108 = current office id (same number as 'OID :108' in the title bar). The office / office-group selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "ORTHO START DATE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Left half of the panel (PATIENT LAST VISIT section is to its right). Label cell at the left, then a date box (light editable fill) with a blue calendar icon inside its right edge. The box is EMPTY: it shows only the lighter grey placeholder text 'Select Date'."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout. EMPTY: shows only the grey placeholder text 'Select Date' plus the blue calendar icon."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT LAST VISIT",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Right half of the panel, beside ORTHO START DATE. Label cell at the left, then a date box (light editable fill) with a blue calendar icon inside its right edge. The box is EMPTY: it shows only the lighter grey placeholder text 'Select Date'."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout. EMPTY: shows only the grey placeholder text 'Select Date' plus the blue calendar icon."
+            }
+          ]
+        },
+        {
+          "title": "ORTHO STATUS",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section, last in the panel. Unlabelled read-only grey box showing ALL (the section header is its only label); blue SELECT button to its right with the same building icon as the office SELECT button (not the person icon used by provider pickers). The list of ortho status values is not visible (dialog not opened in any screenshot)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "3.PNG only (third radio of the left list column is the filled one; in the list the name wraps onto two lines: 'Patients by Ortho Status with Time in' / 'Treatment'). Layout: PRINT FORMAT full width; OFFICE/GROUP full width (this report has no PROVIDER section); ORTHO START DATE (left half) beside PATIENT LAST VISIT (right half); ORTHO STATUS full width. All four date boxes are blank and show the grey placeholder 'Select Date', whereas the same four boxes on Ortho Report (4.PNG) show 11/21/2026. The screenshot cannot prove whether blank is this report's default or the criteria had been cleared before the capture; the other four screenshots look like untouched defaults, so blank is probably the default (inference). The right-hand date header reads PATIENT LAST VISIT here but PATIENT FIRST VISIT on Ortho Report - both confirmed at 12x zoom. A uniform empty area follows ORTHO STATUS down to the action bar and there is no scrollbar, so nothing is clipped. Nothing is greyed out."
+    },
+    {
+      "name": "Ortho Report",
+      "screenshots": [
+        "4.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section, first in the panel. Two radios on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label). The Excel state was not captured."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section on this report (no PROVIDER section beside it). Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label). The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "On the row directly below the Office / Office Group radios. Unlabelled read-only grey box; blue SELECT button with a building icon to its right. 108 = current office id (same number as 'OID :108' in the title bar). The office / office-group selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "ORTHO START DATE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left half of the panel (PATIENT FIRST VISIT section is to its right). Label cell at the left, then a date box (light editable fill) with a blue calendar icon inside its right edge; format MM/DD/YYYY. 11/21/2026 is the day the screenshots were captured, i.e. the field is pre-filled with the current date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: date box with a blue calendar icon; pre-filled with the capture-day date."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT FIRST VISIT",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Right half of the panel, beside ORTHO START DATE. Label cell at the left, then a date box (light editable fill) with a blue calendar icon inside its right edge; format MM/DD/YYYY. 11/21/2026 is the day the screenshots were captured, i.e. the field is pre-filled with the current date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: date box with a blue calendar icon; pre-filled with the capture-day date."
+            }
+          ]
+        },
+        {
+          "title": "ORTHO STATUS",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section, last in the panel. Unlabelled read-only grey box showing ALL (the section header is its only label); blue SELECT button to its right with the same building icon as the office SELECT button (not the person icon used by provider pickers). The list of ortho status values is not visible (dialog not opened in any screenshot)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "4.PNG only (first radio of the right list column is the filled one). Same layout as Patients by Ortho Status with Time in Treatment, but the right-hand date section is titled PATIENT FIRST VISIT (not PATIENT LAST VISIT) and all four date boxes are pre-filled with 11/21/2026. No PROVIDER section. A uniform empty area follows ORTHO STATUS down to the action bar and there is no scrollbar, so nothing is clipped. Nothing is greyed out. Only in this file a 5 px strip of the host application's bright-blue top bar is visible above the title bar (white fragments of clipped elements, no legible text); it is outside the report screen."
+    },
+    {
+      "name": "Missing Ortho Visits",
+      "screenshots": [
+        "5.PNG"
+      ],
+      "sections": [
+        {
+          "title": "MISSING",
+          "controls": [
+            {
+              "label": "Ledger Transaction",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Left half of the panel, first row (PRINT FORMAT section is to its right). First of two checkboxes on one line; ticked (blue check mark)."
+            },
+            {
+              "label": "Ortho Visit",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same line, to the right of Ledger Transaction; ticked (blue check mark)."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right half of the panel, first row, beside MISSING - on this report PRINT FORMAT is neither full-width nor the first section. Two radios on one row, no row label. PDF carries the blue dot; Excel is enabled (white radio, black label). The Excel state was not captured."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel (APPOINTMENT PROVIDER section is to its right). Two radios on one row, no row label. Office carries the blue dot; Office Group is enabled (white radio, black label). The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "On its own row directly below the OFFICE/GROUP + APPOINTMENT PROVIDER row; the row spans the full panel width. Unlabelled read-only grey box; blue SELECT button with a building icon to its right. 108 = current office id (same number as 'OID :108' in the title bar). The office / office-group selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT PROVIDER",
+          "controls": [
+            {
+              "label": "Appointment Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, second row, beside OFFICE/GROUP. Row label 'Appointment Provider' in a label cell, then a read-only grey box showing ALL and a blue SELECT button with a person icon. The selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section; the controls sit in its left part and the right part of both rows is empty. Label cell at the left, then a date box (light editable fill) with a blue calendar icon inside its right edge; format MM/DD/YYYY. 11/21/2026 is the day the screenshots were captured, i.e. the field is pre-filled with the current date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: date box with a blue calendar icon; pre-filled with the capture-day date."
+            }
+          ]
+        },
+        {
+          "title": "VISIT DOCTOR",
+          "controls": [
+            {
+              "label": "Visit Doctor",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section, last in the panel; the controls sit in its left part and the rest of the row is empty. Row label 'Visit Doctor' in a label cell, then a read-only grey box showing ALL and a blue SELECT button with a person icon. The selection dialog is not shown in any screenshot."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "5.PNG only (second radio of the right list column is the filled one). Layout: row 1 = MISSING (left half) beside PRINT FORMAT (right half) - the only ortho report where PRINT FORMAT is not the first, full-width section; row 2 = OFFICE/GROUP (left half) beside APPOINTMENT PROVIDER (right half) with the office picker row spanning the full width underneath; then APPOINTMENT DATE RANGE (full width) and VISIT DOCTOR (full width). It is the only ortho report with checkboxes (MISSING: Ledger Transaction and Ortho Visit, both ticked) and with two separate provider pickers (Appointment Provider and Visit Doctor, both ALL). A uniform empty area follows VISIT DOCTOR down to the action bar and there is no scrollbar, so nothing is clipped. Nothing is greyed out. The header pixels look like 'MISSINC', 'OFFICE/CROUP' and 'APPOINTMENT DATE RANCE' because the header font draws G almost like C at this size (see observations); they are MISSING, OFFICE/GROUP and APPOINTMENT DATE RANGE."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory. All 5 original screenshots (1366 px wide, 580-594 px high), the 10 pre-rendered zooms and about 45 additional tight crops (prefix c in the zoom folder) were read. Readers A and B agreed on every report, section, control, option list, default value, enabled state and truncation flag (5 reports, 24 sections, 36 controls); their differences were note wording only. Every point was nevertheless re-checked on the pixels: the selected list radio of every file, blue-mark counts for every selected criteria radio and ticked checkbox, a colour census of every blue button, a fill-colour census of every input box, and a cluster map of every pixel in each criteria panel that is not one of the flat fill colours. Nothing exists beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no second column of controls, no greyed-out control, no instruction / warning / legend text, no dropdown, no listbox, no scrollbar on either panel and no footer text. COVERAGE: 5 screenshots = 5 reports, each selected exactly once, in list order: 1.PNG = Ortho Compliance Report, 2.PNG = Ortho Daily Journal, 3.PNG = Patients by Ortho Status with Time in Treatment, 4.PNG = Ortho Report, 5.PNG = Missing Ortho Visits. Every listed report has a screenshot. All five are the normal two-panel screen - no popup, no expanded dropdown, no opened picker, no scrolled second view, no foreign screen - so the dialogs behind the SELECT buttons (office / office group, provider, appointment provider, visit doctor, ortho status) and therefore the list of ortho status values are NOT documented by this category. Only one state per report was captured, so the non-default states (Excel, Office Group, unticked MISSING boxes) are not shown either. TITLE BAR (identical in all 5): 'Ortho Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (icon only, no text) at the far right. LEFT PANEL 'SELECT REPORT': 5 radio entries in a two-column bordered grid - left column: Ortho Compliance Report, Ortho Daily Journal, Patients by Ortho Status with Time in Treatment (the label wraps onto two lines); right column: Ortho Report, Missing Ortho Visits (the third right-hand cell is empty). The rest of the panel is uniform empty navy down to the window edge, so the list is NOT scrollable or clipped. A splitter / collapse grip (three dots in a notch) sits between the two panels. RIGHT PANEL 'REPORT CRITERIA': the grey-styled CLEAR CRITERIA button (refresh icon) sits at the right end of the blue header bar - same grey look in all 5 files and in the other report categories, so it is its normal style, not a disabled state; the blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) buttons sit in a grey action bar pinned to the bottom of the panel. Every criteria panel ends well above that bar, so no report is truncated. RECURRING PATTERNS: PRINT FORMAT (PDF / Excel, PDF selected) is on all 5 reports - first and full-width on four of them, top-right beside MISSING on Missing Ortho Visits. OFFICE/GROUP (Office / Office Group radios, Office selected, plus an unlabelled read-only box showing 108 with a building-icon SELECT button) is on all 5 reports. Provider-type pickers (row label + read-only box ALL + person-icon SELECT) exist only on Ortho Compliance Report (Provider), Ortho Daily Journal (Provider) and Missing Ortho Visits (Appointment Provider and Visit Doctor). The ORTHO STATUS picker (unlabelled box ALL + building-icon SELECT) exists on Patients by Ortho Status with Time in Treatment and on Ortho Report; these two reports are identical except for the second date header (PATIENT LAST VISIT vs PATIENT FIRST VISIT) and the date-box contents. None of the five reports has REPORT FORMAT, GROUP BY, SORT BY, PATIENT TYPE or OTHER OPTIONS sections. FILLS: picker boxes use the darker read-only grey fill (RGB 220,223,226); date boxes and the weeks box use the lighter editable fill (RGB 241,241,241). All labels are black and all SELECT buttons are blue, i.e. every control is enabled. DATE CONTENTS: Ortho Daily Journal, Ortho Report and Missing Ortho Visits show 11/21/2026 in every date box - the day the screenshots were captured, so these fields default to the current date (inference). Patients by Ortho Status with Time in Treatment shows all four date boxes blank with the placeholder 'Select Date'. TEXT-RENDERING CAVEAT: the small bold caps font of the grey section headers draws a capital G almost like a C, so the pixels look like 'OFFICE/CROUP', 'MISSINC' and 'APPOINTMENT DATE RANCE'. A pixel dump shows the disputed glyph is asymmetric (heavier lower-right terminal) while the true C in OFFICE and in SINCE is symmetric, the mixed-case radio label clearly reads 'Office Group', and the other verified categories carry the same header; the titles are therefore recorded as OFFICE/GROUP, MISSING and APPOINTMENT DATE RANGE. The value font draws '11' with flat-topped ones (can look like 'TI'); the dates read 11/21/2026. MINOR CAPTURE DIFFERENCES: 4.PNG includes a 5 px strip of the host application's bright-blue top bar above the title bar (white fragments, no legible text) and 5.PNG a 2 px line of it; 2.PNG is cropped about 4 px tighter at the top; 1.PNG, 4.PNG and 5.PNG end with a thin grey window-edge strip below the panels. None of this carries report content."
+}

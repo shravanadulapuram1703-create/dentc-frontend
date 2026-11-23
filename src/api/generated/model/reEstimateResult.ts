@@ -22,4 +22,10 @@ export interface ReEstimateResult {
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_patient_estimate: string;
   lines: ReEstimateLine[];
+  benefit_year_start?: string | null;
+  benefits_used_ytd?: string | null;
+  annual_max_remaining_before?: string | null;
+  deductible_remaining_before?: string | null;
+  max_remaining_source?: string | null;
+  netted_plan_ids?: string[];
 }

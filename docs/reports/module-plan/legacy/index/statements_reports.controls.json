@@ -1,0 +1,662 @@
+{
+ "category": "statements_reports",
+ "window_title": "Statements",
+ "report_list": [],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory. The original screenshot, both pre-rendered crops and 23 extra crops (prefix c3_ in the zoom folder: 21 crops at 1.15x-12x plus two contrast-equalised halves) were read, and whole-image pixel scans were run (clusters of dark text/icon pixels, light boxes and borders, uniformity of every blank cell and margin, fill colours of every input, button, checkbox and radio). SCREEN TYPE: this category has a single screenshot (1.PNG) and it is NOT the standard report-selector screen - there is no left 'SELECT REPORT' radio list and no right 'REPORT CRITERIA' panel with grey section-header bars. report_list is therefore EMPTY ON PURPOSE (no list exists on screen) and reports_without_screenshot is empty; the whole screen is transcribed as the single entry reports[0], named 'Statements' after the title bar. It is a statement-run form (batch billing statements selected by responsible party) with two print outputs (PRINT STATEMENT REPORT, PRINT STATEMENTS), one maintenance action (UPDATE STATEMENT DATES), a FINANCE CHARGES button and a disabled PAPER STATEMENT SENT button under the row label 'Print Reports'. The pre-rendered crops simply split this form down the middle: 1_list.png = left table + red texts, 1_criteria.png = right table + footer buttons + title-bar identifiers. READERS: A and B agreed on the screen type, the empty report_list, the report name, every visible text, every default, the single disabled control, the three actions and the not-truncated verdict; all of it was re-checked on the pixels and confirmed. They differed only in modelling: (a) A recorded the row labels 'Responsible Party Range' and 'Print Reports' as static_text controls while B kept them in notes - kept as static_text here because they are visible captions that are not the label of any single control (hence 26 controls); (b) the info icon label (A a bracketed description, B 'i') - recorded with an empty label, as in the other categories, since the icon carries no text; (c) row 4 of the right table - the checkbox label is the exact text before the inline dropdown and the dropdown is labelled with the trailing text 'days.' (B had put a '[dropdown]' placeholder inside the checkbox label and left the dropdown unlabelled); (d) the wording of the placeholder section titles - shortened to '[no header] LEFT TABLE', '[no header] RIGHT TABLE', '[no header] BELOW THE TABLES'. TITLE BAR: 'Statements' at left; identifiers 'PGID :2829 / OID :108' at right, followed by an unlabeled white printer icon at the far right edge (not part of the form and not counted as an action). DEFAULTS AS DISPLAYED: Statement Date 11/20/2026 (both readers assumed this was the capture date, but it is one day BEFORE the 2026-11-21 capture date indicated by the file timestamp and by the 11/21/2026 date defaults on the other categories' screenshots taken the same evening - so it is apparently not a plain current-date default and its rule is unknown), Start Name AAAAA, End Name ZZZZZ, Account Balance Over 5.00, sort radio = 'Sort by Resp.Party Lastname', days dropdown = 0, Exclude Responsible Party Type = None, Last Statement Date blank, Last Close Out Date 12/31/2019. Checkboxes: only 'Exclude accounts where patient portion is paid and insurance portion is expected' is checked; the other seven are unchecked (Include Credit Balances, Suppress Aging, Hide Insurance Shares, Hide Credit Card Section, Exclude accounts where statement was sent within last ... days., Exclude patients Sent to Collection., Exclude Responsible Parties where the Patient has an open claim). ENABLED STATES: the only greyed-out control is the PAPER STATEMENT SENT button (grey fill RGB 176,183,190 versus blue RGB 0,108,187 on the seven other buttons); the 'None' box of the picker is a read-only grey box (RGB 225,225,225, grey text) but its SELECT button is enabled; the date, name and balance boxes and the days dropdown have the light editable fill (RGB 241,241,241) with black text. ABSENT: no office/group, provider, date-range, print-format, report-format, group-by or page-break controls exist on this screen; the office context presumably comes from the OID in the title bar (the red note speaks of 'respective Office Statements') - inference. MISSING MESSAGE INPUT: the red hint 'Maximum 100 characters per message' is shown without any message text box; the light-element scan found only six input boxes on the whole screen (date, Start Name, End Name, balance, days dropdown, None) and the area around and below the hint is pixel-uniform, so the statement message field(s) the hint refers to are not rendered in this state - their number and labels cannot be taken from this screenshot and should be confirmed on the live legacy screen. NOT SHOWN: the dialogs behind FINANCE CHARGES, the two SEARCH buttons and the SELECT button, the option list of the days dropdown and the tooltip of the info icon. CAPTURE: 1366x586 px; nothing lies below the container (blank page from y 479) except a uniform 3 px grey line on the last pixel rows (y 583-585, identical across all 1366 px - a frame border, not a scrollbar); no scrollbars, popups or expanded dropdowns. All text was legible after zooming; no uncertain readings remain.",
+ "report_count": 1,
+ "control_count": 33,
+ "reports": [
+  {
+   "report_id": "statements_reports.r01",
+   "name": "Statements",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "PRINT STATEMENT REPORT",
+    "PRINT STATEMENTS",
+    "UPDATE STATEMENT DATES"
+   ],
+   "notes": "1.PNG only. NOT the usual SELECT REPORT / REPORT CRITERIA layout: the screenshot (1366x586 px) shows one single-purpose statement-run form with no report radio list, no 'REPORT CRITERIA' heading and no grey section-header bars. The name 'Statements' is the title-bar text (there is no filled report radio). The three section titles are descriptive placeholders prefixed '[no header]', NOT on-screen text. Layout: one light-grey rounded container holding two side-by-side bordered tables whose rows are a label cell plus a value cell, with alternating row shading. LEFT TABLE, 7 rows: (1) Statement Date + info icon - date box 11/20/2026 with calendar icon, FINANCE CHARGES button; (2) Responsible Party Range - Start Name AAAAA + SEARCH, End Name ZZZZZ + SEARCH; (3) Account Balance Over - 5.00; (4) checkbox Include Credit Balances - radio Sort by Resp.Party Lastname (filled); (5) checkbox Suppress Aging - radio Sort by Resp.Party ID; (6) checkbox Hide Insurance Shares - empty value cell; (7) checkbox Hide Credit Card Section - empty value cell. RIGHT TABLE, 8 rows: (1) Last Statement Date - blank; (2) Last Close Out Date - 12/31/2019; (3) Print Reports - greyed PAPER STATEMENT SENT button; (4)-(7) four full-width 'Exclude ...' checkbox rows (the first with an inline days dropdown showing 0; the second is the only checked box); (8) Exclude Responsible Party Type - read-only box 'None' + SELECT button. BELOW THE TABLES: red text 'Maximum 100 characters per message' (no message input is rendered), a thin horizontal rule, the red 'Note: ...' line, then a blue-grey footer strip with three right-aligned blue (enabled) buttons, left to right: PRINT STATEMENT REPORT (printer icon), PRINT STATEMENTS (printer icon), UPDATE STATEMENT DATES (document icon) - these are recorded as the actions. There is NO CLEAR CRITERIA, PRINT / PREVIEW or ADD TO MY FAVORITES button, and no print-format, report-format, office/group, provider or date-range selector on this screen. Only PAPER STATEMENT SENT is greyed out. Not truncated: the rounded bottom edge of the container and the footer strip are fully visible, the page below is blank and there is no scrollbar; the only open point is the missing message input(s) implied by the red hint. Verified by whole-image pixel scans: every cluster of text/icon pixels and every box or line on the screen corresponds to an element listed here (the only input boxes drawn are the date box, the two name boxes, the balance box, the days dropdown and the 'None' box). No dropdown is expanded and no popup is open.",
+   "controls": [
+    {
+     "control_id": "statements_reports.r01.s01.c01",
+     "section": "[no header] LEFT TABLE",
+     "label": "Statement Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/20/2026",
+     "enabled": true,
+     "notes": "Row 1 of the left table (label cell + value cell). Editable date box (light fill, black text) with a calendar icon inside its right end. An info icon follows the label text (next control) and the FINANCE CHARGES button sits in the same value cell, to the right of the box. The value reads 11/20/2026 (confirmed at 12x zoom). It is one day EARLIER than the screenshot file's timestamp (2026-11-21) and than the 11/21/2026 date defaults on the other categories' screenshots captured the same evening, so it is apparently NOT a plain current-date default; what it represents (previous day, a stored statement date, or a page opened a day earlier) cannot be determined from the screenshot."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c02",
+     "section": "[no header] LEFT TABLE",
+     "label": "",
+     "type": "other",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Info icon: small blue circle with a white 'i' immediately after the row label 'Statement Date' (presumably a tooltip); its tooltip text is not visible in the screenshot. The icon carries no text, hence the empty label."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c03",
+     "section": "[no header] LEFT TABLE",
+     "label": "FINANCE CHARGES",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue (enabled) button with a white document icon, in the value cell of the Statement Date row, to the right of the date box. What it opens or runs is not shown in the screenshot."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c04",
+     "section": "[no header] LEFT TABLE",
+     "label": "Responsible Party Range",
+     "type": "static_text",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Row label in the label cell of row 2; it captions the Start Name / End Name pair in the value cell of the same row (a caption, not an instruction - recorded so the text is not lost, because the two inputs carry their own sub-labels)."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c05",
+     "section": "[no header] LEFT TABLE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Row 2 (row label 'Responsible Party Range'), first of two stacked lines in the value cell: sub-label 'Start Name', then the box, then a SEARCH button (next control). Editable-looking box: same light fill (RGB 241,241,241) and black text as the date and balance inputs, unlike the grey read-only box of the picker in the right table."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c06",
+     "section": "[no header] LEFT TABLE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue (enabled) button with a magnifier icon immediately right of the Start Name box (lookup for the start of the responsible party range). Dialog not shown."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c07",
+     "section": "[no header] LEFT TABLE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Row 2 (row label 'Responsible Party Range'), second stacked line directly under Start Name: sub-label 'End Name', then the box, then a SEARCH button (next control). Same editable-looking box as Start Name."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c08",
+     "section": "[no header] LEFT TABLE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue (enabled) button with a magnifier icon immediately right of the End Name box (lookup for the end of the responsible party range). Dialog not shown."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c09",
+     "section": "[no header] LEFT TABLE",
+     "label": "Account Balance Over",
+     "type": "number_input",
+     "options": [],
+     "default_value": "5.00",
+     "enabled": true,
+     "notes": "Row 3: label in the label cell, editable box in the value cell; the value is right-aligned; no currency symbol and no spinner arrows."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c10",
+     "section": "[no header] LEFT TABLE",
+     "label": "Include Credit Balances",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 4, in the label (left) cell. The value cell of the same row holds the radio 'Sort by Resp.Party Lastname'."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c11",
+     "section": "[no header] LEFT TABLE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Sort by Resp.Party Lastname",
+      "Sort by Resp.Party ID"
+     ],
+     "default_value": "Sort by Resp.Party Lastname",
+     "enabled": true,
+     "notes": "No group label. The two radios are stacked one per row in the value (right) cells of rows 4 and 5, beside the 'Include Credit Balances' and 'Suppress Aging' checkboxes; exactly one is filled (the first), so they form one group. Text is displayed with no space after 'Resp.' and with 'Lastname' as one word. This is the only sort choice on the screen."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c12",
+     "section": "[no header] LEFT TABLE",
+     "label": "Suppress Aging",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 5, in the label (left) cell. The value cell of the same row holds the radio 'Sort by Resp.Party ID'."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c13",
+     "section": "[no header] LEFT TABLE",
+     "label": "Hide Insurance Shares",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 6, in the label (left) cell. The value cell of this row is empty (pixel-uniform)."
+    },
+    {
+     "control_id": "statements_reports.r01.s01.c14",
+     "section": "[no header] LEFT TABLE",
+     "label": "Hide Credit Card Section",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 7 (last row of the left table), in the label (left) cell. The value cell of this row is empty (pixel-uniform)."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c01",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Last Statement Date",
+     "type": "static_text",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Row 1 of the right table: read-only display row (label cell + value cell). The value cell is completely blank (pixel-uniform): no date is shown and no input box is drawn."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c02",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Last Close Out Date",
+     "type": "static_text",
+     "options": [],
+     "default_value": "12/31/2019",
+     "enabled": true,
+     "notes": "Row 2: read-only display row; the value 12/31/2019 is plain text in the value cell (no input box)."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c03",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Print Reports",
+     "type": "static_text",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Row label in the label cell of row 3; the value cell holds only the PAPER STATEMENT SENT button (next control). Recorded so the caption is not lost (the button has its own text)."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c04",
+     "section": "[no header] RIGHT TABLE",
+     "label": "PAPER STATEMENT SENT",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": false,
+     "notes": "Row 3 (row label 'Print Reports'). GREYED OUT: grey fill (RGB 176,183,190) with pale text and a pale document icon, unlike every other button on the screen (blue, RGB 0,108,187), i.e. disabled in this state. The condition that enables it and what it does are not visible."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c05",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Exclude accounts where statement was sent within last",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 4, full-width row (no separate label cell). The sentence continues inline: checkbox text, then a small dropdown showing 0 (next control), then the text 'days.' - the whole line reads 'Exclude accounts where statement was sent within last [0] days.'"
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c06",
+     "section": "[no header] RIGHT TABLE",
+     "label": "days.",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "0",
+     "enabled": true,
+     "notes": "list collapsed - other values not visible. Small inline dropdown (shows 0 with a down chevron) embedded in the row-4 sentence between 'within last' and the trailing text 'days.'; the label given here is that trailing text (the dropdown has no leading label of its own). It looks enabled (light fill, black text) even though its checkbox is unchecked."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c07",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Exclude accounts where patient portion is paid and insurance portion is expected",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Row 5, full-width row. The ONLY checked checkbox on the whole screen (blue tick). No trailing period."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c08",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Exclude patients Sent to Collection.",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 6, full-width row. The text ends with a period; 'Sent' and 'Collection' are capitalised as displayed."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c09",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Exclude Responsible Parties where the Patient has an open claim",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 7, full-width row. No trailing period."
+    },
+    {
+     "control_id": "statements_reports.r01.s02.c10",
+     "section": "[no header] RIGHT TABLE",
+     "label": "Exclude Responsible Party Type",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Row 8 (last row of the right table): label in the label cell; the value cell has a read-only grey box (fill RGB 225,225,225, grey text) showing None; button immediately to its right: SELECT (blue = enabled, user-plus icon: person silhouette with a + sign). The selection dialog and the list of responsible party types are not shown in the screenshot."
+    },
+    {
+     "control_id": "statements_reports.r01.s03.c01",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Maximum 100 characters per message",
+     "type": "static_text",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Red text, left-aligned, directly under the left table. NO message input is visible anywhere on the screen: a whole-image scan found only six input boxes (date, Start Name, End Name, balance, days dropdown, None) and the area to the right of and below this text is pixel-uniform. The statement message field(s) this hint refers to are therefore not rendered in this screenshot (possibly hidden or conditional) - their number and labels are unknown."
+    },
+    {
+     "control_id": "statements_reports.r01.s03.c02",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Note: Please update Statement Dates after Printing respective Office Statements.",
+     "type": "static_text",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Red text, left-aligned, below a thin horizontal rule that spans the container and directly above the footer button strip."
+    },
+    {
+     "control_id": "statements_reports.r01.x01",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "General Message",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on all statements.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    },
+    {
+     "control_id": "statements_reports.r01.x02",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Current Message",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts whose ageing is current.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    },
+    {
+     "control_id": "statements_reports.r01.x03",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Over 30 Message",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged 30-59 days.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    },
+    {
+     "control_id": "statements_reports.r01.x04",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Over 60 Message",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged 60-89 days.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    },
+    {
+     "control_id": "statements_reports.r01.x05",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Over 90 Message",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged 90-119 days.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    },
+    {
+     "control_id": "statements_reports.r01.x06",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Over 120 Message",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged more than 120 days.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    },
+    {
+     "control_id": "statements_reports.r01.x07",
+     "section": "[no header] BELOW THE TABLES",
+     "label": "Remaining Characters",
+     "type": "static_text",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Character counter that accompanies the statement message boxes (each box takes up to 100 characters). Shown on the vendor's screenshots, not rendered in our capture. Whether there is one counter per box or a shared one, and its exact position, are not documented.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Up to 100 characters each with a `Remaining Characters` counter",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "statements_reports.r01.d01",
+     "when": "The account-level feature \"Enable Advance Hold Statements with Open Claims\" is activated",
+     "effect": "The checkbox `Exclude Responsible Parties where the Patient has an open claim` is present on the screen; it is only present when that feature is activated.",
+     "controls": [
+      "statements_reports.r01.s02.c09"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Exclude Responsible Parties where the Patient has an open claim` | Only present when the account has the feature \"Enable Advance Hold Statements with Open Claims\" activated"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "statements_reports.r01.k01",
+     "about": "other",
+     "control_id": "statements_reports.r01.s03.c01",
+     "text": "The caption belongs to six statement message boxes - General Message, Current Message, Over 30 Message, Over 60 Message, Over 90 Message, Over 120 Message - that the vendor's screenshots show on this screen; they were not rendered in our capture (recorded as added controls).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "**Not rendered in our capture** although the \"Maximum 100 characters per message\" caption is"
+    },
+    {
+     "correction_id": "statements_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s01.c03",
+     "text": "FINANCE CHARGES opens the separate finance-charge run (Finance Charge Date, Responsible Party Range, Exclude Responsible Party Type, Provider, Apply Finance Charge to: Patient Portion / Entire Balance, Apply). It is not a statement criterion; the dialog is recorded in the pickers file.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`FINANCE CHARGES` | Opens the finance-charge run: `Finance Charge Date`, `Responsible Party Range`, `Exclude Responsible Party Type`, `Provider`, `Apply Finance Charge to` (`Patient Portion` / `Entire Balance`), `Apply`."
+    },
+    {
+     "correction_id": "statements_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s01.c01",
+     "text": "Statement Date is the billing date printed on the statement and the date of the ageing / \"Total Due as of\" line (read from the vendor's sample statements, which print `Billing Date :` and `Total Due as of <date> :`).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Statement Date` (info icon) | Billing date printed on the statement; ageing / \"Total Due as of\" date | `[S]`"
+    },
+    {
+     "correction_id": "statements_reports.r01.k04",
+     "about": "other",
+     "control_id": "statements_reports.r01.s02.c04",
+     "text": "PAPER STATEMENT SENT is enabled in the vendor's screenshots; it is disabled only in our capture, so the greyed state is state-dependent. What enables it and what it does is not documented.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Print Reports` > `PAPER STATEMENT SENT` | Button (enabled in vendor screenshots, disabled in ours)"
+    },
+    {
+     "correction_id": "statements_reports.r01.k05",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c01",
+     "text": "Last Statement Date and Last Close Out Date are read-only lock dates (display only, not criteria inputs).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Last Statement Date`, `Last Close Out Date` | Read-only lock dates | `[D]` `[V54]`"
+    },
+    {
+     "correction_id": "statements_reports.r01.k06",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s01.c05",
+     "text": "Start Name / End Name are an alphabetical range by the responsible party LAST name.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Alphabetical range by responsible-party last name | `[D]` `[V51]`"
+    },
+    {
+     "correction_id": "statements_reports.r01.k07",
+     "about": "meaning",
+     "control_id": "",
+     "text": "Batch Statements follow the HOME office of the responsible party - the same office rule as Aging Report by Home Office. (The screen itself has no office selector.)",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Aging Report by Home Office`, batch `Statements` and the Executive Summary new-patient counts follow the **home office** (of the responsible party for aging / statements; the preferred home office on the patient record for new patients)"
+    },
+    {
+     "correction_id": "statements_reports.r01.k08",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s03.c02",
+     "text": "The red note follows from the statement run being per office: one consolidated statement per account from the responsible party's home office, with that office's settings and messages.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Dates after Printing respective Office Statements\" follows from this: the run is per office `[D]` `[V52]`."
+    },
+    {
+     "correction_id": "statements_reports.r01.k09",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s01.c09",
+     "text": "Account Balance Over is the minimum account balance for a statement to be produced.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Account Balance Over` (5.00) | Minimum balance for a statement | `[D]` `[V51]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k10",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c05",
+     "text": "No statement is produced for an account that was already sent one within the chosen number of days.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Exclude accounts where statement was sent within last [n] days.` | No statement if one was sent within n days | `[D]` `[V51]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k11",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c07",
+     "text": "No statement is produced when the balance is expected in full from insurance. The option is on by default (vendor text), as captured.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Exclude accounts where patient portion is paid and insurance portion is expected` (default on) | No statement if the balance is expected in full from insurance | `[D]` `[V51]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k12",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c08",
+     "text": "No statement is produced for accounts flagged as sent to collection.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Exclude patients Sent to Collection.` | No statement for accounts flagged sent to collection | `[D]` `[V51]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k13",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c10",
+     "text": "Excludes the accounts of the selected responsible-party types.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Exclude Responsible Party Type` + `SELECT` | Excludes selected responsible-party types | `[D]` `[V51]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k14",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c01",
+     "text": "Statements itemise only the transactions entered since the account's Last Statement Date - this screen has no date-range criterion; when UPDATE STATEMENT DATES is skipped, later statements repeat the older history.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "- Statements itemise only transactions entered since `Last Statement Date`; skipping the update produces"
+    },
+    {
+     "correction_id": "statements_reports.r01.k15",
+     "about": "meaning",
+     "control_id": "statements_reports.r01.s02.c02",
+     "text": "Last Close Out Date is the date of the last Close Out (Setup > Close Out), which locks all accounts through that date and cannot be reversed.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `Close Out` | `Setup > Close Out` (`New Closing Date`, `Close All Offices`) | Locks **all** accounts through the date; no ledger line; cannot be reversed;"
+    },
+    {
+     "correction_id": "statements_reports.r01.k16",
+     "about": "meaning",
+     "control_id": "",
+     "text": "Action PRINT STATEMENT REPORT: prints the list of the accounts that are eligible under the current criteria, to be reviewed before the statements are printed.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `PRINT STATEMENT REPORT` | List of the accounts that are **eligible** under the current criteria, to review before printing | `[D]` `[V49]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k17",
+     "about": "meaning",
+     "control_id": "",
+     "text": "Action PRINT STATEMENTS: produces the statements themselves as one PDF batch.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `PRINT STATEMENTS` | The statements PDF (batch) | `[D]` `[V48]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k18",
+     "about": "meaning",
+     "control_id": "",
+     "text": "Action UPDATE STATEMENT DATES: writes a `Statement Sent - $X.XX` line to the ledger of every recipient, sets Last Statement Date and locks the data on or before that date.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `UPDATE STATEMENT DATES` | Writes `Statement Sent - $X.XX` to each recipient's ledger, sets `Last Statement Date`, locks data on or before the date | `[D]` `[V54]` |"
+    },
+    {
+     "correction_id": "statements_reports.r01.k19",
+     "about": "other",
+     "control_id": "",
+     "text": "Vendor sequence for the buttons of this screen: FINANCE CHARGES (if configured), then PRINT STATEMENT REPORT, then PRINT STATEMENTS (save the PDF), and UPDATE STATEMENT DATES only after the statements are confirmed correct.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PRINT STATEMENT REPORT` > `PRINT STATEMENTS` (save the PDF) > `UPDATE STATEMENT DATES` only after the"
+    },
+    {
+     "correction_id": "statements_reports.r01.k20",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: a responsible party is skipped when `Send Statements` is unticked on the responsible-party record.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "- A responsible party is skipped when `Send Statements` is unticked on the responsible-party record, when the"
+    },
+    {
+     "correction_id": "statements_reports.r01.k21",
+     "about": "other",
+     "control_id": "",
+     "text": "Further hidden population rules with no criteria control: a responsible party is also skipped when its balance changed after the pull, or when the account has allocation issues.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "criteria exclude it, when the balance changed after the pull, or when the account has allocation issues"
+    },
+    {
+     "correction_id": "statements_reports.r01.k22",
+     "about": "other",
+     "control_id": "",
+     "text": "This screen has no PRINT FORMAT choice; a statement opens in the report viewer, whose header strip offers Export to Excel and Word. The vendor image cited is a statement shown in the viewer (article on reviewing a sent statement); the batch run itself is not shown.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Present even for reports that have no `PRINT FORMAT` section (Audit Trail, Walkout, Statement)"
+    },
+    {
+     "correction_id": "statements_reports.r01.k23",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden rule with no control on this screen: the account option `Statement Update – Close out ALL statements including zero and credit balance statements` (Setup > Account Info > Advanced) makes UPDATE STATEMENT DATES also stamp the zero and credit balance accounts.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "- Account option `Statement Update – Close out ALL statements including zero and credit balance statements`"
+    },
+    {
+     "correction_id": "statements_reports.r01.k24",
+     "about": "other",
+     "control_id": "statements_reports.r01.s01.c01",
+     "text": "Vendor advice: do not run UPDATE STATEMENT DATES with today's date - it locks today's entries.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "- Do not run `Update Statement Dates` or `Close Out` with **today's** date (locks today's entries) `[D]` `[V54]`."
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "statements_reports.r01",
+   "question": "The value list of the `days.` dropdown (Exclude accounts where statement was sent within last [n] days.) is not documented."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "Purpose of PAPER STATEMENT SENT (the document only presumes a report of paper statements sent - unverified) and the condition that enables it."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "Why are the six message boxes not rendered in our capture (setting, permission or state)? Their exact position relative to the caption and whether the `Remaining Characters` counter is shown per box are not documented."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "Tooltip of the Statement Date info icon and the default rule of Statement Date (our capture shows the day before the capture date) are not documented."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "Contents of the two SEARCH dialogs and of the Exclude Responsible Party Type > SELECT dialog are not documented."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "The meaning of Include Credit Balances, Suppress Aging, Hide Insurance Shares and Hide Credit Card Section is only inferred in the document (no vendor description). For Hide Credit Card Section the vendor's viewer shows statement report variants named `..._withoutCC`, which fits the reading but does not prove it."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "FINANCE CHARGES run: only the field labels of its dialog are documented - control types, defaults, layout and the dialog title are not."
+  },
+  {
+   "report_id": "statements_reports.r01",
+   "question": "A single statement can also be printed per patient (toolbar Print Reports icon > Statement; after UPDATE STATEMENT DATES that reprint shows only the Last Statement Balance line). Whether that path opens a criteria dialog of its own, and with which options, is not documented."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+ "screenshot_control_count": 26,
+ "vendor_doc_control_count": 7
+}
