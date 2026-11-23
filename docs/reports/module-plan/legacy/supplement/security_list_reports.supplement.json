@@ -1,0 +1,60 @@
+{
+  "category": "security_list_reports",
+  "source_document": "research/legacy_report_outputs_lists.md",
+  "reports": [
+    {
+      "report_id": "security_list_reports.r04",
+      "legacy_name": "User-Group Membership",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "LOCATION = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. This is the OFFICE/GROUP control of the other Lists screens, headed LOCATION on this report - the only Security List report that has it. The vendor documents the behaviour for the Office / Office Group control in general; the report itself is absent from vendor documentation, hence likely.",
+          "controls": [
+            "security_list_reports.r04.s04.c01",
+            "security_list_reports.r04.s04.c02"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "`Office Group` picks groups defined in `Setup > Office Groups` (for example regions); without groups a group run covers all offices of the account. On `User-Group Membership` the same control is headed `LOCATION`."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "default",
+          "control_id": "security_list_reports.r04.s04.c02",
+          "text": "The number in the LOCATION box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Stated by the vendor for the Office / Office Group control in general, of which LOCATION is the instance on this report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Office` picks offices (default the current OID)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "security_list_reports.r04.s03.c01",
+          "text": "What a security group is, i.e. what the Group picker chooses from: security groups are defined per office (the same group name can exist under several offices), and a user has a primary group plus optional additional groups - so one user can appear under several groups. Vendor-documented for security groups; that the picker lists them follows from the name of the criterion.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Defined per office; holds rights named `<Area> - <Function>` with `Full Control` / `View Only` variants; a user has a primary group plus optional additional groups."
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "security_list_reports.r01",
+      "question": "Older build: a vendor screenshot of c. 2023 shows REPORT FORMAT Detail (default) / Summary on User List, between PRINT FORMAT and USER. Our 2026 capture (complete) has no REPORT FORMAT, so it is not added. Where did the Summary format (a list of usernames) go?"
+    },
+    {
+      "report_id": "security_list_reports.r03",
+      "question": "Older builds: the 2016 / 2019 screen of Group Rights List had Detail / Summary and an Office multi-select (default ALL); the 2023 screen had PRINT FORMAT and REPORT FORMAT Detail (default) / Summary with no office filter; our 2026 capture has PRINT FORMAT only. None of these is added - confirm that the current report really takes no filter."
+    },
+    {
+      "report_id": "security_list_reports.r04",
+      "question": "User-Group Membership is absent from the vendor's 2023 screenshots of this screen and from every article: what REPORT FORMAT Detail / Summary change, and how the Group picker, LOCATION and Include Inactive Users filter the members, is inferred only."
+    },
+    {
+      "report_id": "",
+      "question": "The Security List screen is evidently still changing between builds (three reports on the 2023 vendor screenshots, four in our 2026 capture, REPORT FORMAT moved); our capture is one tenant on one date."
+    }
+  ]
+}

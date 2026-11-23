@@ -1,0 +1,320 @@
+{
+  "category": "ledger_reports",
+  "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+  "reports": [
+    {
+      "report_id": "ledger_reports.r01",
+      "legacy_name": "Ledger Report",
+      "added_controls": [
+        {
+          "section": "Patient Ledger Report (print-menu dialog)",
+          "label": "[prompt, legacy wording not documented: add a patient note]",
+          "type": "other",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`Start Date*`, `End Date*`, `Print / Preview`, `Cancel`) and ask whether to add a patient note `[S]` `[D]`",
+          "notes": "Appears only when the ledger is printed from the patient toolbar Print Reports icon > Patient Ledger / Account Ledger: the flow asks whether to add a patient note. Form (confirmation box or checkbox) and wording of the prompt are not documented. Not present on the Reports > Ledger Reports criteria panel."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "The ledger is printed from the patient toolbar Print Reports icon > Patient Ledger / Account Ledger instead of Reports > Ledger Reports",
+          "effect": "The print menu lists `Patient Ledger` and `Account Ledger` as separate items; each opens a dialog (`Patient Ledger Report`) with `Date Range` (`Start Date*`, `End Date*`) and the buttons `Print / Preview` / `Cancel`, and the flow asks whether to add a patient note.",
+          "controls": [
+            "ledger_reports.r01.s03.c01",
+            "ledger_reports.r01.s03.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "From the print menu: `Patient Ledger` / `Account Ledger` open a dialog (`Patient Ledger Report`: `Date Range`,"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "ledger_reports.r01.s02.c02",
+          "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "in `Ledger Reports` the `Office Group` radio and the `SELECT` button are disabled in the vendor's own screenshots too, so the single-office lock is by design, not a side effect of our capture"
+        },
+        {
+          "about": "meaning",
+          "control_id": "ledger_reports.r01.s01.c01",
+          "text": "Account Ledger = the whole account (the responsible party with all family members); Patient Ledger = one patient. In the vendor text the patient ledger is run by selecting the patient, the account ledger by selecting the responsible party.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`REPORT FORMAT` `Account Ledger` / `Patient Ledger` | Whole account vs one patient. In the vendor text the patient ledger is run by selecting the **patient**, the account ledger by selecting the **responsible party**"
+        }
+      ]
+    },
+    {
+      "report_id": "ledger_reports.r02",
+      "legacy_name": "Walkout Report",
+      "added_controls": [
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "General Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented."
+        },
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "Current Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented."
+        },
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "Over 30 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented."
+        },
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "Over 60 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented."
+        },
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "Over 90 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented."
+        },
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "Over 120 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented."
+        },
+        {
+          "section": "Walkout Report print-menu dialog (title not documented)",
+          "label": "[option, legacy label not documented: add a note to the patient's Notes that a walkout was printed]",
+          "type": "other",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+          "notes": "Appears only in the print dialog shown when the walkout is printed from the print menu, not on the Reports > Ledger Reports criteria panel. Records in the patient's Notes that a walkout was printed. Exact label, control type and default are not documented."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "The walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report) instead of Reports > Ledger Reports",
+          "effect": "A print dialog offers extras that the Reports criteria panel does not have: six editable message boxes (`General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`) and an option to add a note to the patient's Notes that a walkout was printed.",
+          "controls": [],
+          "confidence": "confirmed",
+          "evidence_quote": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "ledger_reports.r02.s01.c02",
+          "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "in `Ledger Reports` the `Office Group` radio and the `SELECT` button are disabled in the vendor's own screenshots too, so the single-office lock is by design, not a side effect of our capture"
+        },
+        {
+          "about": "default",
+          "control_id": "ledger_reports.r02.s02.c01",
+          "text": "Start Date / End Date default to today (vendor text) - the capture-day value in our screenshot is the current-date default.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Start Date` / `End Date` | Transactions listed; default today | `[D]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "ledger_reports.r02.s04.c01",
+          "text": "Show charges break down adds the estimated patient and estimated insurance amounts (Est. Pat / Est. Ins) to every line.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Show charges break down` | Adds `Est. Pat` and `Est. Ins` per line | `[S]` `[V40]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "ledger_reports.r02.s04.c02",
+          "text": "Include UCR adds the UCR fee of every line (a UCR column next to the charges).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include UCR` | Adds a `UCR` column immediately left of the charges column | `[D]` `[V40]`"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The absence of a PRINT FORMAT section is real (as captured): the walkout opens in the report viewer, whose header strip offers Export to Excel and Word.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Present even for reports that have no `PRINT FORMAT` section (Audit Trail, Walkout, Statement)"
+        }
+      ]
+    },
+    {
+      "report_id": "ledger_reports.r03",
+      "legacy_name": "Super Bill",
+      "added_controls": [
+        {
+          "section": "Super Bill Report (print-menu dialog)",
+          "label": "Include Previous Balance",
+          "type": "checkbox",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Previous Balance` (dialog only) | Adds a previous-balance line | `[S]` `[V46]`",
+          "notes": "Dialog only: offered in the print-menu dialog `Super Bill Report` (patient toolbar Print Reports icon > Superbill), not on the Reports > Ledger Reports criteria panel. Adds a previous-balance line. Typed as a checkbox from the \"Include ...\" wording - the document does not name the control type. Default not documented."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "The super bill is printed from the print menu (patient toolbar Print Reports icon > Superbill) instead of Reports > Ledger Reports",
+          "effect": "The dialog `Super Bill Report` is shown: the date range is labelled `DOS Date Range` there and the extra option `Include Previous Balance` is offered (dialog only).",
+          "controls": [
+            "ledger_reports.r03.s02.c01",
+            "ledger_reports.r03.s02.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Start Date` / `End Date` | Labelled `DOS Date Range` in the print-menu dialog `Super Bill Report` | `[S]` `[V46]`"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "ledger_reports.r03.s01.c02",
+          "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "in `Ledger Reports` the `Office Group` radio and the `SELECT` button are disabled in the vendor's own screenshots too, so the single-office lock is by design, not a side effect of our capture"
+        },
+        {
+          "about": "meaning",
+          "control_id": "ledger_reports.r03.s02.c01",
+          "text": "The print-menu dialog `Super Bill Report` labels the same range `DOS Date Range`, i.e. Start Date / End Date are matched on the date of service.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| Super Bill (print-menu dialog) | Labelled `DOS Date Range` | `[S]` `[V46]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "ledger_reports.r03.s04.c01",
+          "text": "The three TRANSACTION TYPES checkboxes choose which line types print. Payments only (Services and Adjustment unticked) is the vendor's \"tax receipt\".",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`TRANSACTION TYPES` `Services`, `Payments`, `Adjustment` | Which line types print. Payments only (untick the other two) = the vendor's \"tax receipt\""
+        },
+        {
+          "about": "meaning",
+          "control_id": "ledger_reports.r03.s02.c01",
+          "text": "Vendor advice for the date range: from the treatment date through the date the insurance payment was posted, so that all charges and payments show.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| Date range advice | Treatment date through the insurance payment posting date, so that all charges and payments show | `[D]` `[V45]` |"
+        }
+      ]
+    },
+    {
+      "report_id": "ledger_reports.r04",
+      "legacy_name": "Account Allocation",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "ledger_reports.r04.s01.c02",
+          "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office. Stated for the Ledger Reports category as a whole; the vendor screenshots cited are of the other ledger reports, none of Account Allocation.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "in `Ledger Reports` the `Office Group` radio and the `SELECT` button are disabled in the vendor's own screenshots too, so the single-office lock is by design, not a side effect of our capture"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "ledger_reports.r01",
+      "question": "Does REPORT FORMAT = Patient Ledger change the RESPONSIBLE PARTY section (for example into a patient selector)? Vendor text says the patient ledger is run by selecting the patient, but no source shows the criteria panel in that state."
+    },
+    {
+      "report_id": "ledger_reports.r01",
+      "question": "What exactly does `Print all transactions (includes statements, ledger notes)` add? The effect (Statement Sent lines, ledger notes, probably claim lines) is an inference in the document."
+    },
+    {
+      "report_id": "ledger_reports.r01",
+      "question": "Wording and form of the \"add a patient note\" prompt of the print-menu flow are not documented."
+    },
+    {
+      "report_id": "ledger_reports.r02",
+      "question": "Title of the walkout print dialog, the exact label / control type / default of its add-a-note option and the default text of its six message boxes are not documented. Is the dialog also shown when the walkout is printed by right-clicking the appointment > Print > Walkout Report?"
+    },
+    {
+      "report_id": "ledger_reports.r03",
+      "question": "Default of `Include Previous Balance` is not documented. Is the option really unavailable from Reports > Ledger Reports > Super Bill (the document marks it dialog only)?"
+    },
+    {
+      "report_id": "ledger_reports.r04",
+      "question": "No vendor description of Account Allocation was found; its criteria are known from our capture only."
+    },
+    {
+      "question": "Are the Responsible Party / Start Name / End Name boxes pre-filled from the patient in context by design, and what do they show when no patient is open? The document states the pre-fill category-wide but from our own capture, not from a vendor source."
+    },
+    {
+      "question": "Contents of the responsible-party and patient SEARCH dialogs of Ledger Reports are not documented."
+    }
+  ]
+}

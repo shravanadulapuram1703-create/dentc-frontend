@@ -1,0 +1,194 @@
+{
+  "source_document": "research/legacy_report_outputs_insurance_txplan_ortho.md",
+  "dialogs": [
+    {
+      "dialog_name": "SEARCH CODE",
+      "kind": "picker_dialog",
+      "opened_from": "CODES > SELECT",
+      "used_by": [
+        "treatmentplan_reports"
+      ],
+      "elements": [
+        {
+          "label": "CATEGORY",
+          "type": "radio_group",
+          "options": [
+            "Diagnostic",
+            "Restorative",
+            "Periodontics",
+            "Maxilo Prosth",
+            "Prosth. fixed",
+            "Orthodontics",
+            "Other",
+            "Preventive",
+            "Endodontics",
+            "Prosth. remov",
+            "Implant Serv",
+            "Oral Surgery",
+            "Adjunct Serv",
+            "All Medical"
+          ],
+          "notes": "14 radios, in the order the document lists them."
+        },
+        {
+          "label": "SORT BY",
+          "type": "radio_group",
+          "options": [
+            "Code",
+            "Desc"
+          ],
+          "notes": ""
+        },
+        {
+          "label": "search box",
+          "type": "text_input",
+          "options": [],
+          "notes": "The document says only 'a search box'; its legacy label is not quoted."
+        },
+        {
+          "label": "CODE",
+          "type": "list",
+          "options": [],
+          "notes": "Source list of the transfer list CODE -> SELECTED CODE (the codes to pick from). Ctrl-click selects several codes."
+        },
+        {
+          "label": "SELECTED CODE",
+          "type": "list",
+          "options": [],
+          "notes": "Target list of the transfer list (the chosen codes)."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "`CODES` opens `SEARCH CODE` (category radios, sort, search, transfer list)",
+      "notes": "Read from vendor dialog screenshots (article on finding patients with a specific code in the treatment plan). Opened by the SELECT button of the CODES picker on Treatment Plan Detail and Treatment Plan Status. The category values, the sort options, the search box and the transfer list are quoted in the Treatment Plan Detail section of the research document. On Treatment Plan Detail the CODES box is empty by default, on Treatment Plan Status it shows ALL (our capture); whether this dialog has an Include All tick or APPLY / CANCEL buttons is not described in this document."
+    },
+    {
+      "dialog_name": "SELECT TREATMEN PLAN",
+      "kind": "picker_dialog",
+      "opened_from": "EXCLUDE TREATMENT PLANS > SELECT",
+      "used_by": [
+        "treatmentplan_reports"
+      ],
+      "elements": [
+        {
+          "label": "NONE",
+          "type": "checkbox",
+          "options": [],
+          "notes": "A NONE tick; the criteria box shows None by default (our capture). How the tick interacts with the list is not described."
+        },
+        {
+          "label": "search",
+          "type": "text_input",
+          "options": [],
+          "notes": "The document says only 'search'; its legacy label is not quoted."
+        },
+        {
+          "label": "status list",
+          "type": "list",
+          "options": [
+            "Diagnosed ( D )",
+            "Hold ( H )",
+            "Pre-Authorized Closed ( PC )",
+            "Pre-Authorized Sent ( PS )",
+            "Referred Out ( R )",
+            "Unaccepted ( U )",
+            "Completed ( C )",
+            "Scheduled ( S )"
+          ],
+          "notes": "Status list with the status code in brackets; multi-select. The eight entries are the visible part of the list, in the order the document quotes them. The document takes Accepted and Alternative to sit above the visible part - inferred, so they are not listed here."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "`EXCLUDE TREATMENT PLANS` opens a dialog titled `SELECT TREATMEN PLAN` (sic) with a `NONE` tick, search, and a status list with codes",
+      "notes": "Legacy title exactly as the vendor image shows it, misspelling included (TREATMEN). Opened by SELECT on EXCLUDE TREATMENT PLANS (Treatment Plan Status). The picked statuses are removed from the report and echoed by code in the report footer (`Exclude Tx Plan : S,C`). The status values are quoted in the Treatment Plan Status criteria table of the research document; only the visible part of the list is known, and no APPLY / CANCEL buttons are described."
+    },
+    {
+      "dialog_name": "PROVIDER SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "PROVIDER > SELECT",
+      "used_by": [
+        "insurance_reports",
+        "treatmentplan_reports",
+        "ortho_reports"
+      ],
+      "elements": [
+        {
+          "label": "Include All",
+          "type": "checkbox",
+          "options": [],
+          "notes": "Ticked when the dialog opens (the criteria box then shows ALL); it has to be unticked before a narrower selection can be made."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "Pickers default to `Include All`; narrowing needs `SELECT` then unticking `Include All`",
+      "notes": "Only this element is documented here. The research document states the same for pickers in general (they open on Include All; a narrower selection needs Include All unticked). The list columns, sort options and search fields of the provider dialog are not described in this document, and whether APPOINTMENT PROVIDER and VISIT DOCTOR (Missing Ortho Visits) open the same dialog is not stated."
+    },
+    {
+      "dialog_name": "CARRIER SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "CARRIER > SELECT",
+      "used_by": [
+        "insurance_reports"
+      ],
+      "elements": [
+        {
+          "label": "Include All",
+          "type": "checkbox",
+          "options": [],
+          "notes": "Ticked when the dialog opens (the criteria box then shows ALL); it has to be unticked before a narrower selection can be made."
+        }
+      ],
+      "values": [],
+      "confidence": "confirmed",
+      "evidence_quote": "Pickers default to `Include All`; narrowing needs `SELECT` then unticking `Include All`",
+      "notes": "Only this element is documented here. The research document states the same for pickers in general (they open on Include All; a narrower selection needs Include All unticked). The list columns, sort options and search fields of the carrier dialog are not described in this document."
+    },
+    {
+      "dialog_name": "SELECT picker dialogs - common behaviour (legacy titles not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "Any criteria picker > SELECT (general statement of the research document for all reports)",
+      "used_by": [
+        "insurance_reports",
+        "treatmentplan_reports",
+        "ortho_reports"
+      ],
+      "elements": [
+        {
+          "label": "Include All",
+          "type": "checkbox",
+          "options": [],
+          "notes": "A picker opens with Include All ticked; a narrower selection needs Include All unticked."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "Pickers open on `Include All`; a narrower selection needs `Include All` unticked",
+      "notes": "General rule, stated from the vendor's article on the new reports menu and applied by the research document to all reports. It is named explicitly only for the PROVIDER and CARRIER pickers (own entries above) and is not shown individually for the other pickers whose box shows ALL: TX COUNSELOR, CODES on Treatment Plan Status, ORTHO STATUS, APPOINTMENT PROVIDER, VISIT DOCTOR. It does not hold literally for every picker: the exclusion pickers show None by default - the one documented exclusion dialog, SELECT TREATMEN PLAN, carries a NONE tick instead - the office box opens on the logged-in office (ALL only on 835 Denial Report), and the CODES box of Treatment Plan Detail opens empty."
+    },
+    {
+      "dialog_name": "OFFICE/GROUP SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "OFFICE/GROUP > SELECT",
+      "used_by": [
+        "insurance_reports",
+        "treatmentplan_reports",
+        "ortho_reports"
+      ],
+      "elements": [
+        {
+          "label": "office list (legacy label not documented)",
+          "type": "list",
+          "options": [],
+          "notes": "Placeholder for the selection itself, the only thing documented: with the Office radio one or more offices can be chosen, with Office Group an office group. No label, column, checkbox, sort option or search field of the dialog is quoted in the research document."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`OFFICE/GROUP` + picker | One or more offices, or an office group",
+      "notes": "No element of this dialog is described in this research document; the entry records only the selection cardinality, which the document reads from vendor samples of insurance and treatment-plan reports (one `Office :` section per office in the PDF, an office column in the Excel output). Nothing ortho-specific is shown; the control is listed among the criteria shared by most reports. The dialog's title, checkboxes, sort options, search fields and its Office Group variant are not documented here."
+    }
+  ]
+}

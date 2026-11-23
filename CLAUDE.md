@@ -55,3 +55,21 @@
   Orval). `size` query params max **200** on list endpoints.
 - Document backend gaps in `backend_devreport.md`; per-module analysis lives under `docs/setup/**`.
 - Verify changes with `npx tsc -b` and `npx eslint` before considering work done.
+
+## Reports & Analytics module (in progress)
+- **The plan is the spec:** `docs/reports/module-plan/` — start at `README.md`; implementation prompts in
+  `13_agent_prompts.md`; decisions in `decisions_log.md`; progress in `implementation_log.md` (read the last entries
+  first). Frontend build order: `11_frontend_plan.md`; UX and components: `07_ux_blueprint.md`; parameters:
+  `04_filter_framework.md`; dashboards: `06_dashboards.md`; ids and acceptance: `work_items.md`.
+- New code lives in `src/features/reports/` (lazy routes, `/reports/r/:report_key` runner, hub, dashboards). Criteria
+  forms are generated from the served report definition — never hand-build a per-report filter screen.
+- Services in `src/features/reports/services/` wrap the generated Orval client only (no raw axios, no hand-written API
+  types); fields bound to the backend snake_case names. Run `npm run api:sync` only at the contract points C0..C9 of
+  `11_frontend_plan.md` §3.4, against a backend running the merged contract; commit the full `openapi.json`.
+- Test fixtures (`src/features/reports/__fixtures__/`) are synced from the backend contract tests, never edited by
+  hand; Playwright specs mock `/api/v1/reports/**` only until the endpoint is deployed.
+- Office context from `useOfficeScope()`; sizes and pointer maths through `src/utils/uiZoom.ts` (0.75 zoom).
+- Checks before done: `npx tsc -b`, `npx eslint <changed paths>`, `npm test`, the epic's Playwright specs. Append an
+  entry to `implementation_log.md` at the end of every session.
+- Plan tooling: `python -I docs/reports/module-plan/tools/<tool>.py` (README §9); never hand-edit generated files
+  (PARITY table blocks, `09_parity_matrix.md`, `work_items.*`, `plan_inputs/facts.md`).

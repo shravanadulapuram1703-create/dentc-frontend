@@ -1,0 +1,343 @@
+{
+  "category": "statements_reports",
+  "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+  "reports": [
+    {
+      "report_id": "statements_reports.r01",
+      "legacy_name": "Statements",
+      "added_controls": [
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "General Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+          "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on all statements."
+        },
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "Current Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+          "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts whose ageing is current."
+        },
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "Over 30 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+          "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged 30-59 days."
+        },
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "Over 60 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+          "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged 60-89 days."
+        },
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "Over 90 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+          "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged 90-119 days."
+        },
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "Over 120 Message",
+          "type": "text_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Message boxes `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message` | Up to 100 characters each with a `Remaining Characters` counter; defaults from `Setup > Offices > Office Setup > Statement` tab.",
+          "notes": "Statement message box shown on the vendor's screenshots of the Statements screen but NOT rendered in our capture (only its caption \"Maximum 100 characters per message\" is). Up to 100 characters, with a `Remaining Characters` counter. Its default text comes from Setup > Offices > Office Setup > Statement tab (tenant data, so no fixed default). Prints on statements of accounts aged more than 120 days."
+        },
+        {
+          "section": "[no header] BELOW THE TABLES",
+          "label": "Remaining Characters",
+          "type": "static_text",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "Up to 100 characters each with a `Remaining Characters` counter",
+          "notes": "Character counter that accompanies the statement message boxes (each box takes up to 100 characters). Shown on the vendor's screenshots, not rendered in our capture. Whether there is one counter per box or a shared one, and its exact position, are not documented."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "The account-level feature \"Enable Advance Hold Statements with Open Claims\" is activated",
+          "effect": "The checkbox `Exclude Responsible Parties where the Patient has an open claim` is present on the screen; it is only present when that feature is activated.",
+          "controls": [
+            "statements_reports.r01.s02.c09"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Exclude Responsible Parties where the Patient has an open claim` | Only present when the account has the feature \"Enable Advance Hold Statements with Open Claims\" activated"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "statements_reports.r01.s03.c01",
+          "text": "The caption belongs to six statement message boxes - General Message, Current Message, Over 30 Message, Over 60 Message, Over 90 Message, Over 120 Message - that the vendor's screenshots show on this screen; they were not rendered in our capture (recorded as added controls).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "**Not rendered in our capture** although the \"Maximum 100 characters per message\" caption is"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s01.c03",
+          "text": "FINANCE CHARGES opens the separate finance-charge run (Finance Charge Date, Responsible Party Range, Exclude Responsible Party Type, Provider, Apply Finance Charge to: Patient Portion / Entire Balance, Apply). It is not a statement criterion; the dialog is recorded in the pickers file.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`FINANCE CHARGES` | Opens the finance-charge run: `Finance Charge Date`, `Responsible Party Range`, `Exclude Responsible Party Type`, `Provider`, `Apply Finance Charge to` (`Patient Portion` / `Entire Balance`), `Apply`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s01.c01",
+          "text": "Statement Date is the billing date printed on the statement and the date of the ageing / \"Total Due as of\" line (read from the vendor's sample statements, which print `Billing Date :` and `Total Due as of <date> :`).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Statement Date` (info icon) | Billing date printed on the statement; ageing / \"Total Due as of\" date | `[S]`"
+        },
+        {
+          "about": "other",
+          "control_id": "statements_reports.r01.s02.c04",
+          "text": "PAPER STATEMENT SENT is enabled in the vendor's screenshots; it is disabled only in our capture, so the greyed state is state-dependent. What enables it and what it does is not documented.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Print Reports` > `PAPER STATEMENT SENT` | Button (enabled in vendor screenshots, disabled in ours)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c01",
+          "text": "Last Statement Date and Last Close Out Date are read-only lock dates (display only, not criteria inputs).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Last Statement Date`, `Last Close Out Date` | Read-only lock dates | `[D]` `[V54]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s01.c05",
+          "text": "Start Name / End Name are an alphabetical range by the responsible party LAST name.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Alphabetical range by responsible-party last name | `[D]` `[V51]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "Batch Statements follow the HOME office of the responsible party - the same office rule as Aging Report by Home Office. (The screen itself has no office selector.)",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Aging Report by Home Office`, batch `Statements` and the Executive Summary new-patient counts follow the **home office** (of the responsible party for aging / statements; the preferred home office on the patient record for new patients)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s03.c02",
+          "text": "The red note follows from the statement run being per office: one consolidated statement per account from the responsible party's home office, with that office's settings and messages.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Dates after Printing respective Office Statements\" follows from this: the run is per office `[D]` `[V52]`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s01.c09",
+          "text": "Account Balance Over is the minimum account balance for a statement to be produced.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Account Balance Over` (5.00) | Minimum balance for a statement | `[D]` `[V51]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c05",
+          "text": "No statement is produced for an account that was already sent one within the chosen number of days.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Exclude accounts where statement was sent within last [n] days.` | No statement if one was sent within n days | `[D]` `[V51]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c07",
+          "text": "No statement is produced when the balance is expected in full from insurance. The option is on by default (vendor text), as captured.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Exclude accounts where patient portion is paid and insurance portion is expected` (default on) | No statement if the balance is expected in full from insurance | `[D]` `[V51]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c08",
+          "text": "No statement is produced for accounts flagged as sent to collection.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Exclude patients Sent to Collection.` | No statement for accounts flagged sent to collection | `[D]` `[V51]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c10",
+          "text": "Excludes the accounts of the selected responsible-party types.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Exclude Responsible Party Type` + `SELECT` | Excludes selected responsible-party types | `[D]` `[V51]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c01",
+          "text": "Statements itemise only the transactions entered since the account's Last Statement Date - this screen has no date-range criterion; when UPDATE STATEMENT DATES is skipped, later statements repeat the older history.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "- Statements itemise only transactions entered since `Last Statement Date`; skipping the update produces"
+        },
+        {
+          "about": "meaning",
+          "control_id": "statements_reports.r01.s02.c02",
+          "text": "Last Close Out Date is the date of the last Close Out (Setup > Close Out), which locks all accounts through that date and cannot be reversed.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `Close Out` | `Setup > Close Out` (`New Closing Date`, `Close All Offices`) | Locks **all** accounts through the date; no ledger line; cannot be reversed;"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "Action PRINT STATEMENT REPORT: prints the list of the accounts that are eligible under the current criteria, to be reviewed before the statements are printed.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `PRINT STATEMENT REPORT` | List of the accounts that are **eligible** under the current criteria, to review before printing | `[D]` `[V49]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "Action PRINT STATEMENTS: produces the statements themselves as one PDF batch.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `PRINT STATEMENTS` | The statements PDF (batch) | `[D]` `[V48]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "Action UPDATE STATEMENT DATES: writes a `Statement Sent - $X.XX` line to the ledger of every recipient, sets Last Statement Date and locks the data on or before that date.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `UPDATE STATEMENT DATES` | Writes `Statement Sent - $X.XX` to each recipient's ledger, sets `Last Statement Date`, locks data on or before the date | `[D]` `[V54]` |"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Vendor sequence for the buttons of this screen: FINANCE CHARGES (if configured), then PRINT STATEMENT REPORT, then PRINT STATEMENTS (save the PDF), and UPDATE STATEMENT DATES only after the statements are confirmed correct.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PRINT STATEMENT REPORT` > `PRINT STATEMENTS` (save the PDF) > `UPDATE STATEMENT DATES` only after the"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: a responsible party is skipped when `Send Statements` is unticked on the responsible-party record.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "- A responsible party is skipped when `Send Statements` is unticked on the responsible-party record, when the"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Further hidden population rules with no criteria control: a responsible party is also skipped when its balance changed after the pull, or when the account has allocation issues.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "criteria exclude it, when the balance changed after the pull, or when the account has allocation issues"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "This screen has no PRINT FORMAT choice; a statement opens in the report viewer, whose header strip offers Export to Excel and Word. The vendor image cited is a statement shown in the viewer (article on reviewing a sent statement); the batch run itself is not shown.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Present even for reports that have no `PRINT FORMAT` section (Audit Trail, Walkout, Statement)"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden rule with no control on this screen: the account option `Statement Update – Close out ALL statements including zero and credit balance statements` (Setup > Account Info > Advanced) makes UPDATE STATEMENT DATES also stamp the zero and credit balance accounts.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "- Account option `Statement Update – Close out ALL statements including zero and credit balance statements`"
+        },
+        {
+          "about": "other",
+          "control_id": "statements_reports.r01.s01.c01",
+          "text": "Vendor advice: do not run UPDATE STATEMENT DATES with today's date - it locks today's entries.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "- Do not run `Update Statement Dates` or `Close Out` with **today's** date (locks today's entries) `[D]` `[V54]`."
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "statements_reports.r01",
+      "question": "The value list of the `days.` dropdown (Exclude accounts where statement was sent within last [n] days.) is not documented."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "Purpose of PAPER STATEMENT SENT (the document only presumes a report of paper statements sent - unverified) and the condition that enables it."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "Why are the six message boxes not rendered in our capture (setting, permission or state)? Their exact position relative to the caption and whether the `Remaining Characters` counter is shown per box are not documented."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "Tooltip of the Statement Date info icon and the default rule of Statement Date (our capture shows the day before the capture date) are not documented."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "Contents of the two SEARCH dialogs and of the Exclude Responsible Party Type > SELECT dialog are not documented."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "The meaning of Include Credit Balances, Suppress Aging, Hide Insurance Shares and Hide Credit Card Section is only inferred in the document (no vendor description). For Hide Credit Card Section the vendor's viewer shows statement report variants named `..._withoutCC`, which fits the reading but does not prove it."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "FINANCE CHARGES run: only the field labels of its dialog are documented - control types, defaults, layout and the dialog title are not."
+    },
+    {
+      "report_id": "statements_reports.r01",
+      "question": "A single statement can also be printed per patient (toolbar Print Reports icon > Statement; after UPDATE STATEMENT DATES that reprint shows only the Last Statement Balance line). Whether that path opens a criteria dialog of its own, and with which options, is not documented."
+    }
+  ]
+}

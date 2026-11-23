@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import {
   useDeleteTreatmentPlanItem,
   listTreatmentPlanItems,
   reEstimateTreatmentPlan,
+  getTreatmentPlanReport,
   getListTreatmentPlansQueryKey,
   createTreatmentPlanInsuranceDetail,
   updateTreatmentPlanInsuranceDetail,
@@ -58,6 +59,7 @@ import {
   loadEligibleProviderIds,
 } from './treatmentPlanService';
 import TxPlanGrid from './TxPlanGrid';
+import { sortTxRows, type TxSort } from './txSort';
 import TxPlanToolbar, { type IdChange, type ReEstimateArgs } from './TxPlanToolbar';
 import ProcedureEntryPanel, { type EntryState } from './ProcedureEntryPanel';
 import EditTreatmentModal, { type EditTreatmentSave } from './EditTreatmentModal';
@@ -69,6 +71,7 @@ interface OutletCtx {
 }
 
 const TX_ITEMS_KEY = 'tx-plan-items';
+const SORT_STORAGE_KEY = 'dentc:tx_plan_grid:sort';
 // Local calendar date — `toISOString()` is UTC and reads a day ahead in the US evening.
 const today = todayIso;
 
@@ -191,7 +194,25 @@ export default function TreatmentPlanPage() {
     if (preferredProviderId) setEntry((e) => (e.provider_id ? e : { ...e, provider_id: preferredProviderId }));
   }, [preferredProviderId]);
   const [reportOpen, setReportOpen] = useState(false);
-  const [sortByTooth, setSortByTooth] = useState(false);
+  // Grid sort (header click). `null` = legacy order Tx Plan → Phase → Order.
+  const [sort, setSortState] = useState<TxSort>(() => {
+    try {
+      const raw = localStorage.getItem(SORT_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as TxSort) : null;
+    } catch {
+      return null;
+    }
+  });
+  const setSort = useCallback((next: TxSort) => {
+    setSortState(next);
+    try {
+      if (next) localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(next));
+      else localStorage.removeItem(SORT_STORAGE_KEY);
+    } catch {
+      /* storage disabled — sort just won't persist */
+    }
+  }, []);
+  const sortByTooth = sort?.key === 'tooth';
   // Edit Treatment modal — the item id being edited (legacy: click Diag Date).
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   // Code waiting in the legacy "Add Procedure Details" pop-up for its tooth /
@@ -210,18 +231,8 @@ export default function TreatmentPlanPage() {
 
   const rows = useMemo(() => {
     const base = statusFilter === 'all' ? allRows : allRows.filter((r) => r.status === statusFilter);
-    if (!sortByTooth) return base;
-    return [...base].sort((a, b) => {
-      const ta = parseInt(a.tooth, 10);
-      const tb = parseInt(b.tooth, 10);
-      const na = Number.isNaN(ta);
-      const nb = Number.isNaN(tb);
-      if (na && nb) return a.tooth.localeCompare(b.tooth);
-      if (na) return 1;
-      if (nb) return -1;
-      return ta - tb;
-    });
-  }, [allRows, statusFilter, sortByTooth]);
+    return sortTxRows(base, sort);
+  }, [allRows, statusFilter, sort]);
 
   // Keep selection in sync with the visible rows.
   useEffect(() => {
@@ -289,6 +300,9 @@ export default function TreatmentPlanPage() {
     try {
       await fn();
       await invalidate();
+      // The server re-nets the whole plan's split on every item write (TX-MAX-1),
+      // so any line's insurance-detail row may have changed.
+      await queryClient.invalidateQueries({ queryKey: ['tx-item-ins-detail'] });
     } catch (err) {
       console.error(err);
       toast.error(`${label} failed`);
@@ -557,7 +571,7 @@ export default function TreatmentPlanPage() {
   /** Clear All Filters — reset the status filter, tooth sort, and selection. */
   const onClearFilters = () => {
     setStatusFilter('all');
-    setSortByTooth(false);
+    setSort(null);
     setSelected(new Set());
     toast.success('Filters cleared');
   };
@@ -565,7 +579,7 @@ export default function TreatmentPlanPage() {
   /** Sort By Tooth Number — toggle the grid ordering by tooth. */
   const onSortByTooth = () => {
     const next = !sortByTooth;
-    setSortByTooth(next);
+    setSort(next ? { key: 'tooth', dir: 'asc' } : null);
     toast.success(next ? 'Sorted by tooth number' : 'Sorted by Tx Plan / Phase / Order');
   };
 
@@ -695,7 +709,7 @@ export default function TreatmentPlanPage() {
   const onTxCounselor = () =>
     toast.info('Assign the Treatment Counselor per procedure in Edit Treatment (double-click a row). Case-presentation tracking is not available yet (PLAN-11).');
 
-  const buildHeader = async (): Promise<ReportHeader> => {
+  const buildHeader = async (tids: number[]): Promise<ReportHeader> => {
     const p = patientQuery.data;
     const offId = officeId ?? p?.home_office_id ?? null;
     let officeName = '';
@@ -711,6 +725,28 @@ export default function TreatmentPlanPage() {
         /* office header is best-effort */
       }
     }
+    // Carrier label + the netted annual-max / deductible position per printed
+    // plan come from the server report payload (TX-MAX-6), a dry run of the
+    // same netting the estimates use. Best-effort: the PDF prints without it.
+    let primaryInsurance = '';
+    const plan_benefits: NonNullable<ReportHeader['plan_benefits']> = {};
+    await Promise.all(
+      tids.map(async (tid) => {
+        const planId = planByTid.get(tid);
+        if (!planId) return;
+        try {
+          const rep = await getTreatmentPlanReport(planId);
+          const ins = rep.primary_insurance;
+          if (ins && !primaryInsurance) primaryInsurance = ins.label || ins.carrier_name || '';
+          plan_benefits[tid] = {
+            annual_max_remaining_after: rep.annual_max_remaining_after ?? null,
+            deductible_remaining_after: rep.deductible_remaining_after ?? null,
+          };
+        } catch {
+          /* report payload is best-effort */
+        }
+      }),
+    );
     const name = p ? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() : patient?.name ?? '';
     const addr = p
       ? [p.address_line1, p.address_line2, [p.city, p.state].filter(Boolean).join(', '), p.zip]
@@ -727,7 +763,8 @@ export default function TreatmentPlanPage() {
       chartNo: p?.chart_no ?? '',
       address: addr,
       respParty: name,
-      primaryInsurance: '', // PLAN-3: patient insurance not joined yet
+      primaryInsurance,
+      plan_benefits,
     };
   };
 
@@ -739,7 +776,7 @@ export default function TreatmentPlanPage() {
     }
     setBusy(true);
     try {
-      const header = await buildHeader();
+      const header = await buildHeader(opts.tids);
       const doc = buildTxPlanPdf(reportRows, header, opts);
       if (mode === 'preview') {
         const url = doc.output('bloburl');
@@ -805,6 +842,8 @@ export default function TreatmentPlanPage() {
         onToggleAll={toggleAll}
         onEditRow={setEditingItemId}
         loading={plansQuery.isLoading || itemsQuery.isLoading}
+        sort={sort}
+        onSortChange={setSort}
       />
 
       <ProcedureEntryPanel

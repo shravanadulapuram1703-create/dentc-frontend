@@ -1,0 +1,1207 @@
+{
+ "category": "recall_reports",
+ "reports": [
+  {
+   "report_id": "recall_reports.r01",
+   "legacy_name": "Procedural Recall Report",
+   "report_key": "recall.procedural_recall_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "recall_reports.r01.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "recall_reports.r01.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "recall_reports.r01.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "recall_reports.r01.s03.c01",
+     "signature_id": "sig0243",
+     "legacy_section": "PROCEDURE DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = service_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r01.s03.c02",
+     "signature_id": "sig0244",
+     "legacy_section": "PROCEDURE DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = service_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r01.s04.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "recall_reports.r01.s05.c01",
+     "signature_id": "sig0245",
+     "legacy_section": "TRANSACTION PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "transaction_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "recall_reports.r01.s06.c01",
+     "signature_id": "sig0246",
+     "legacy_section": "RECALL PROCEDURE CODES",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "recall_procedure_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Presumably limited to codes flagged as recall codes."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c01",
+     "signature_id": "sig0107",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Age Range",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_range_enabled",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Gate of the age range: the From / To boxes apply only when ticked."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c02",
+     "signature_id": "sig0108",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "From",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_from",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": 0,
+     "default_differs_reason": "",
+     "enabled_when": "age_range_enabled == true (inferred)",
+     "notes": "Lower age bound in years, inclusive; 0 is the legacy open bound (no predicate). Applies only while Age Range is ticked."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c03",
+     "signature_id": "sig0109",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "To",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "999",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_to",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": 999,
+     "default_differs_reason": "",
+     "enabled_when": "age_range_enabled == true (inferred)",
+     "notes": "Upper age bound in years, inclusive; 999 is the legacy open bound (no predicate). Applies only while Age Range is ticked."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c04",
+     "signature_id": "sig0194",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Patients",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_patients",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "recall_reports.r01.d01",
+     "legacy_when": "OFFICE/GROUP = Office Group",
+     "legacy_effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Procedural Recall Report); it applies to every report of this category that has the Office / Office Group radios.",
+     "confidence": "likely",
+     "new_behavior": ""
+    },
+    {
+     "rule_id": "recall_reports.r01.d02",
+     "legacy_when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+     "legacy_effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Procedural Recall Report); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+     "confidence": "likely",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s06.c01",
+     "text": "Despite its title, RECALL PROCEDURE CODES is not limited to recallable codes on this report: any procedure code can be chosen."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s06.c01",
+     "text": "ALL = every completed procedure code, which makes a very long report."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s03.c01",
+     "text": "PROCEDURE DATE RANGE is matched on the date the procedure was completed."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s05.c01",
+     "text": "TRANSACTION PROVIDER is the provider on the ledger line of the completed procedure."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The vendor article concerns the procedural recall report; the document states the rule for all four recall reports."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "recall_reports.r02",
+   "legacy_name": "Scheduled Recall Report",
+   "report_key": "recall.scheduled_recall_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "recall_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "recall_reports.r02.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "recall_reports.r02.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "recall_reports.r02.s03.c01",
+     "signature_id": "sig0247",
+     "legacy_section": "SCHEDULED DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = scheduled_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r02.s03.c02",
+     "signature_id": "sig0248",
+     "legacy_section": "SCHEDULED DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = scheduled_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r02.s04.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "recall_reports.r02.s05.c01",
+     "signature_id": "sig0249",
+     "legacy_section": "PREFERRED PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "preferred_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "recall_reports.r02.s06.c01",
+     "signature_id": "sig0250",
+     "legacy_section": "PREFERRED HYGIENIST",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "preferred_hygienist_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "recall_reports.r02.s07.c01",
+     "signature_id": "sig0246",
+     "legacy_section": "RECALL PROCEDURE CODES",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "recall_procedure_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Presumably limited to codes flagged as recall codes."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c01",
+     "signature_id": "sig0107",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Age Range",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_range_enabled",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Gate of the age range: the From / To boxes apply only when ticked."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c02",
+     "signature_id": "sig0108",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "From",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_from",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": 0,
+     "default_differs_reason": "",
+     "enabled_when": "age_range_enabled == true (inferred)",
+     "notes": "Lower age bound in years, inclusive; 0 is the legacy open bound (no predicate). Applies only while Age Range is ticked."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c03",
+     "signature_id": "sig0109",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "To",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "999",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_to",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": 999,
+     "default_differs_reason": "",
+     "enabled_when": "age_range_enabled == true (inferred)",
+     "notes": "Upper age bound in years, inclusive; 999 is the legacy open bound (no predicate). Applies only while Age Range is ticked."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c04",
+     "signature_id": "sig0194",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Patients",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_patients",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r02.s03.c01",
+     "text": "SCHEDULED DATE RANGE filters on the date of the scheduled appointment, not on the recall due date."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r02.s05.c01",
+     "text": "PREFERRED PROVIDER and PREFERRED HYGIENIST filter on the patient's preferred provider / hygienist from Patient Information."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r02.s03.c01",
+     "text": "A recall counts as scheduled only when the recallable procedure code is embedded in the future appointment: the scheduled recall date is filled from that appointment, and an appointment that does not carry the code does not make the recall scheduled."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Scheduled Recall Report it is implied rather than shown (see unresolved)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "recall_reports.r03",
+   "legacy_name": "Recall Due Report",
+   "report_key": "recall.recall_due_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "recall_reports.r03.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "recall_reports.r03.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "recall_reports.r03.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "recall_reports.r03.s03.c01",
+     "signature_id": "sig0251",
+     "legacy_section": "RECALL DATE RANGE",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Recall Date Range",
+      "No Recall Date"
+     ],
+     "legacy_default": "Recall Date Range",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "recall_date_mode",
+     "param_type": "enum",
+     "option_map": {
+      "Recall Date Range": "recall_date_range",
+      "No Recall Date": "no_recall_date"
+     },
+     "default": "recall_date_range",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Recall Date Range = range on the recall due date. No Recall Date = patients whose recall has no due date (predicate recall_due_date IS NULL; the two dates are disabled). The second meaning is the vendor reading and was not captured - confirm."
+    },
+    {
+     "control_id": "recall_reports.r03.s03.c02",
+     "signature_id": "sig0252",
+     "legacy_section": "RECALL DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "recall_date_mode == recall_date_range (inferred)",
+     "notes": "Primary date range. This legacy section fixes date_basis = recall_due_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r03.s03.c03",
+     "signature_id": "sig0253",
+     "legacy_section": "RECALL DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "recall_date_mode == recall_date_range (inferred)",
+     "notes": "Primary date range. This legacy section fixes date_basis = recall_due_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r03.s04.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "recall_reports.r03.s05.c01",
+     "signature_id": "sig0249",
+     "legacy_section": "PREFERRED PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "preferred_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "recall_reports.r03.s06.c01",
+     "signature_id": "sig0250",
+     "legacy_section": "PREFERRED HYGIENIST",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "preferred_hygienist_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "recall_reports.r03.s07.c01",
+     "signature_id": "sig0246",
+     "legacy_section": "RECALL PROCEDURE CODES",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "recall_procedure_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Presumably limited to codes flagged as recall codes."
+    },
+    {
+     "control_id": "recall_reports.r03.s08.c01",
+     "signature_id": "sig0254",
+     "legacy_section": "SCHEDULED/NOT SCHEDULED",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "ALL",
+      "Scheduled",
+      "Not Scheduled"
+     ],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "scheduled_status",
+     "param_type": "enum",
+     "option_map": {
+      "ALL": "all",
+      "Scheduled": "scheduled",
+      "Not Scheduled": "not_scheduled"
+     },
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c01",
+     "signature_id": "sig0107",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Age Range",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_range_enabled",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Gate of the age range: the From / To boxes apply only when ticked."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c02",
+     "signature_id": "sig0108",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "From",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "0",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_from",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": 0,
+     "default_differs_reason": "",
+     "enabled_when": "age_range_enabled == true (inferred)",
+     "notes": "Lower age bound in years, inclusive; 0 is the legacy open bound (no predicate). Applies only while Age Range is ticked."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c03",
+     "signature_id": "sig0109",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "To",
+     "legacy_type": "number_input",
+     "legacy_options": [],
+     "legacy_default": "999",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "age_to",
+     "param_type": "number_range",
+     "option_map": {},
+     "default": 999,
+     "default_differs_reason": "",
+     "enabled_when": "age_range_enabled == true (inferred)",
+     "notes": "Upper age bound in years, inclusive; 999 is the legacy open bound (no predicate). Applies only while Age Range is ticked."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c04",
+     "signature_id": "sig0194",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Patients",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_patients",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "truncation",
+     "control_id": "",
+     "text": "Include Inactive Patients is the last control of the panel: nothing lies below the row that the action bar cuts, so the criteria are complete as transcribed."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s03.c01",
+     "text": "The range is applied to the recall due date: a future range lists upcoming recalls, a past range overdue ones."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s08.c01",
+     "text": "Scheduled / Not Scheduled test whether a future appointment contains the recall code - a patient who is booked but whose appointment does not carry the code still lists as not scheduled. Not Scheduled is the working list."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s08.c01",
+     "text": "Scheduled / Not Scheduled is evaluated per recall code: a patient with two of three codes scheduled still lists for the third."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s07.c01",
+     "text": "ALL = every recallable code; the vendor advises choosing anchor codes only (for example the adult / child prophylaxis codes)."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s05.c01",
+     "text": "PREFERRED PROVIDER and PREFERRED HYGIENIST filter on the patient's preferred provider / hygienist."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s08.c01",
+     "text": "Not Scheduled reproduces the former menu report Recall Due/Overdue but Not Scheduled Report."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Recall Due Report it is implied rather than shown (see unresolved)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "recall_reports.r04",
+   "legacy_name": "Post-Op Report",
+   "report_key": "recall.post_op_report",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "recall_reports.r04.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "recall_reports.r04.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List."
+    },
+    {
+     "control_id": "recall_reports.r04.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "recall_reports.r04.s03.c01",
+     "signature_id": "sig0243",
+     "legacy_section": "PROCEDURE DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = service_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r04.s03.c02",
+     "signature_id": "sig0244",
+     "legacy_section": "PROCEDURE DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range. This legacy section fixes date_basis = service_date (no basis radio). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "recall_reports.r04.s04.c01",
+     "signature_id": "sig0007",
+     "legacy_section": "EXCLUDE PATIENT TYPE",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "None",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "exclude_patient_type_codes",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "none",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Vendor documentation describes this option as an include filter on Special Transaction Report - confirm."
+    },
+    {
+     "control_id": "recall_reports.r04.s05.c01",
+     "signature_id": "sig0245",
+     "legacy_section": "TRANSACTION PROVIDER",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "transaction_provider_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "recall_reports.r04.s06.c01",
+     "signature_id": "sig0194",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Patients",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_patients",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "The population is fixed by the Post-Op flag of the procedure code (Procedure Code Setup): nothing prints unless codes were flagged Post-Op first. That is why this screen has no procedure-code picker - its absence in our capture is by design."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r04.s03.c01",
+     "text": "PROCEDURE DATE RANGE is matched on the date the Post-Op flagged procedure was completed."
+    },
+    {
+     "about": "meaning",
+     "control_id": "recall_reports.r04.s05.c01",
+     "text": "TRANSACTION PROVIDER is the provider on the ledger line of the completed procedure."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Post-Op Report it is implied rather than shown (see unresolved)."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

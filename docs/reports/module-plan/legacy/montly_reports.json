@@ -1,0 +1,1350 @@
+{
+  "category": "montly_reports",
+  "window_title": "Monthly Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/montly_reports",
+  "report_list": [
+    "Executive Summary",
+    "Executive Day Sheet",
+    "Aging Report by Home Office",
+    "Aging Report",
+    "Income Allocation",
+    "Allocation Detail",
+    "Unallocated Payment/Adjustments",
+    "Daily Journal Summary by Allocation",
+    "WaterFall Report"
+  ],
+  "reports": [
+    {
+      "name": "Executive Summary",
+      "screenshots": [
+        "1.PNG"
+      ],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, side by side with OFFICE/GROUP. Read-only grey box followed by a blue (enabled) SELECT button (person icon). Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Show AR",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Only control in this section. Enabled (dark border, white box, black label), unchecked."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "None",
+                "Provider"
+              ],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the GROUP BY row. Two radios on one row, no row label."
+            },
+            {
+              "label": "Page Break",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Right half of the same GROUP BY row. Greyed out / disabled (grey box, grey label) while None is selected; presumably becomes available when Provider is chosen (inference - not shown)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (1.PNG). OFFICE/GROUP (left) and PROVIDER (right) are side by side; DATE RANGE, OTHER OPTIONS and GROUP BY are full width. No PRINT FORMAT or REPORT FORMAT section on this report. Blank panel space follows GROUP BY above the action bar, so nothing is cut off."
+    },
+    {
+      "name": "Executive Day Sheet",
+      "screenshots": [
+        "2.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (2.PNG). Only three sections, all full width; no PROVIDER, REPORT FORMAT or OTHER OPTIONS section. Blank space below DATE RANGE, nothing cut off."
+    },
+    {
+      "name": "Aging Report by Home Office",
+      "screenshots": [
+        "3.PNG"
+      ],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Detail",
+                "Summary"
+              ],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left column, side by side with PRINT FORMAT. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column, side by side with REPORT FORMAT. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "GROUP BY PROVIDER",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Sits inside the PROVIDER section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+            },
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Preferred Provider",
+                "Transaction Provider"
+              ],
+              "default_value": "Preferred Provider",
+              "enabled": false,
+              "notes": "First row under the header, no row label. Both radios and their labels are greyed out (disabled); Preferred Provider carries the grey selected dot. State shown is with GROUP BY PROVIDER unchecked; presumably enabled by ticking it (inference - not shown)."
+            },
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": false,
+              "notes": "Second row. Read-only grey box showing ALL with a SELECT button (person icon) that is greyed out / disabled. The 'Provider' label (black) and the box look the same as on enabled pickers; only the button is visibly disabled. State shown is with GROUP BY PROVIDER unchecked; presumably enabled together with the radios above (inference - not shown)."
+            }
+          ]
+        },
+        {
+          "title": "REPORT DATE",
+          "controls": [
+            {
+              "label": "Report Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Single date (no start/end range). MM/DD/YYYY; editable box with a calendar icon at its right end. Left column, side by side with PATIENT TYPE. Shows the capture date."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Both",
+                "General",
+                "Ortho"
+              ],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": "Right column. Three radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "RESPONSIBLE PARTY NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "AAAAA",
+              "enabled": true,
+              "notes": "Editable text box (light fill, same as the date fields - not a read-only picker box) followed by a blue SEARCH button. Left column, side by side with EXCLUDE RESP. PARTY TYPE."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start name). Popup not shown."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "ZZZZZ",
+              "enabled": true,
+              "notes": "Editable text box (light fill) followed by a blue SEARCH button."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end name). Popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESP. PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "No row label (the section title acts as the label). Read-only grey box showing None, followed by a blue SELECT button (person-with-plus icon). Right column. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "AGING BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Account AR",
+                "Patient AR"
+              ],
+              "default_value": "Account AR",
+              "enabled": true,
+              "notes": "Left column, side by side with AGING. Two radios on one row, no row label."
+            },
+            {
+              "label": "Account Balance Over",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0.00",
+              "enabled": true,
+              "notes": "Second row of AGING BY. Editable box (light fill) with the value right-aligned; no currency symbol or spinner visible."
+            }
+          ]
+        },
+        {
+          "title": "AGING",
+          "controls": [
+            {
+              "label": "SHOW ONLY CREDIT BALANCES",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Sits inside the AGING section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+            },
+            {
+              "label": "Current",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "First of five aging-bucket checkboxes on one row."
+            },
+            {
+              "label": "Over 30",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current."
+            },
+            {
+              "label": "Over 60",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current."
+            },
+            {
+              "label": "Over 90",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current."
+            },
+            {
+              "label": "Over 120",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current (last)."
+            },
+            {
+              "label": "Include Credit Balance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Own row below the aging buckets. Singular 'Balance'."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Exclude patients sent to collection.",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section with one header and two columns of checkboxes. Left column, row 1. Label ends with a period."
+            },
+            {
+              "label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left column, row 2. Label ends with a period."
+            },
+            {
+              "label": "Include Balance Status",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Right column, row 1."
+            },
+            {
+              "label": "Include Contract Balances",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Right column, row 2."
+            }
+          ]
+        },
+        {
+          "title": "SORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Resp. Party Last name [?]",
+                "Resp. Party ID [?]"
+              ],
+              "default_value": "Resp. Party Last name [?]",
+              "enabled": true,
+              "notes": "CLIPPED ROW - best reading only. The bottom action bar (PRINT / PREVIEW, ADD TO MY FAVORITES) covers this row after its first 10 pixel rows, so only the upper arcs of two radio circles and the top 2 pixel rows of their labels are visible. First radio is the selected one (blue dot), second is unselected; no third radio and no right-column control exist anywhere else on the visible strip (whole row scanned). Visible glyph tops (capitals / ascenders only): option 1 = 'R... P..t. L..t' followed by about 27 px of label width in which nothing reaches capital height; option 2 = 'R... P..t. ID'. Evidence used for the reading: (a) the R-to-P-to-t tops and spacing are pixel-identical to the fully visible checkbox 'Include Resp. Party Type' in daily_reports/2.PNG, so the prefix is 'Resp. Party' with a space after the period; (b) the 'L..t' tops are pixel-identical to 'Last' in the fully visible radio 'Patient Lastname' of daily_reports/10.PNG; (c) no capital-letter top follows 'Last', which rules out 'Last Name'; (d) the second radio starts 53 px right of the L stem here but only 51 px after it in 'Patient Lastname' (same sub-pixel phase; the label-to-radio gap is a constant 9-10 px on every fully visible radio row), i.e. the hidden tail is about 2 px - one space at this font size - wider than 'name': hence 'Last name' (two words, lower-case n) rather than 'Lastname'. The lower-case letters themselves are hidden, so both labels keep [?]; text without ascenders after 'ID' could also be hidden. The Statements screen (statements_reports/1.PNG) offers the analogous pair 'Sort by Resp.Party Lastname' / 'Sort by Resp.Party ID'. Further SORT BY rows or sections may exist below the cut."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": true,
+      "notes": "Single screenshot (3.PNG). Two-column layout, row by row: REPORT FORMAT | PRINT FORMAT, OFFICE/GROUP | PROVIDER, REPORT DATE | PATIENT TYPE, RESPONSIBLE PARTY NAME RANGE | EXCLUDE RESP. PARTY TYPE, AGING BY | AGING, then full-width OTHER OPTIONS and SORT BY. TRUNCATED at the bottom: the SORT BY header is fully visible but its option row is cut by the PRINT / PREVIEW / ADD TO MY FAVORITES bar after 10 pixel rows, so the two sort labels are best readings and anything below (more SORT BY rows or further sections) is not visible. No scrollbar is drawn on the panel. The criteria panel is pixel-identical to the Aging Report panel in 4.PNG (verified by image difference: 0 differing pixels); the two screenshots differ only in which radio is selected in the left list."
+    },
+    {
+      "name": "Aging Report",
+      "screenshots": [
+        "4.PNG"
+      ],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Detail",
+                "Summary"
+              ],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left column, side by side with PRINT FORMAT. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column, side by side with REPORT FORMAT. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "GROUP BY PROVIDER",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Sits inside the PROVIDER section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+            },
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Preferred Provider",
+                "Transaction Provider"
+              ],
+              "default_value": "Preferred Provider",
+              "enabled": false,
+              "notes": "First row under the header, no row label. Both radios and their labels are greyed out (disabled); Preferred Provider carries the grey selected dot. State shown is with GROUP BY PROVIDER unchecked; presumably enabled by ticking it (inference - not shown)."
+            },
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": false,
+              "notes": "Second row. Read-only grey box showing ALL with a SELECT button (person icon) that is greyed out / disabled. The 'Provider' label (black) and the box look the same as on enabled pickers; only the button is visibly disabled. State shown is with GROUP BY PROVIDER unchecked; presumably enabled together with the radios above (inference - not shown)."
+            }
+          ]
+        },
+        {
+          "title": "REPORT DATE",
+          "controls": [
+            {
+              "label": "Report Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Single date (no start/end range). MM/DD/YYYY; editable box with a calendar icon at its right end. Left column, side by side with PATIENT TYPE. Shows the capture date."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Both",
+                "General",
+                "Ortho"
+              ],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": "Right column. Three radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "RESPONSIBLE PARTY NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "AAAAA",
+              "enabled": true,
+              "notes": "Editable text box (light fill, same as the date fields - not a read-only picker box) followed by a blue SEARCH button. Left column, side by side with EXCLUDE RESP. PARTY TYPE."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start name). Popup not shown."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "ZZZZZ",
+              "enabled": true,
+              "notes": "Editable text box (light fill) followed by a blue SEARCH button."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end name). Popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESP. PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "No row label (the section title acts as the label). Read-only grey box showing None, followed by a blue SELECT button (person-with-plus icon). Right column. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "AGING BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Account AR",
+                "Patient AR"
+              ],
+              "default_value": "Account AR",
+              "enabled": true,
+              "notes": "Left column, side by side with AGING. Two radios on one row, no row label."
+            },
+            {
+              "label": "Account Balance Over",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0.00",
+              "enabled": true,
+              "notes": "Second row of AGING BY. Editable box (light fill) with the value right-aligned; no currency symbol or spinner visible."
+            }
+          ]
+        },
+        {
+          "title": "AGING",
+          "controls": [
+            {
+              "label": "SHOW ONLY CREDIT BALANCES",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Sits inside the AGING section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+            },
+            {
+              "label": "Current",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "First of five aging-bucket checkboxes on one row."
+            },
+            {
+              "label": "Over 30",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current."
+            },
+            {
+              "label": "Over 60",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current."
+            },
+            {
+              "label": "Over 90",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current."
+            },
+            {
+              "label": "Over 120",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as Current (last)."
+            },
+            {
+              "label": "Include Credit Balance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Own row below the aging buckets. Singular 'Balance'."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Exclude patients sent to collection.",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section with one header and two columns of checkboxes. Left column, row 1. Label ends with a period."
+            },
+            {
+              "label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left column, row 2. Label ends with a period."
+            },
+            {
+              "label": "Include Balance Status",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Right column, row 1."
+            },
+            {
+              "label": "Include Contract Balances",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Right column, row 2."
+            }
+          ]
+        },
+        {
+          "title": "SORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Resp. Party Last name [?]",
+                "Resp. Party ID [?]"
+              ],
+              "default_value": "Resp. Party Last name [?]",
+              "enabled": true,
+              "notes": "CLIPPED ROW - best reading only. The bottom action bar (PRINT / PREVIEW, ADD TO MY FAVORITES) covers this row after its first 10 pixel rows, so only the upper arcs of two radio circles and the top 2 pixel rows of their labels are visible. First radio is the selected one (blue dot), second is unselected; no third radio and no right-column control exist anywhere else on the visible strip (whole row scanned). Visible glyph tops (capitals / ascenders only): option 1 = 'R... P..t. L..t' followed by about 27 px of label width in which nothing reaches capital height; option 2 = 'R... P..t. ID'. Evidence used for the reading: (a) the R-to-P-to-t tops and spacing are pixel-identical to the fully visible checkbox 'Include Resp. Party Type' in daily_reports/2.PNG, so the prefix is 'Resp. Party' with a space after the period; (b) the 'L..t' tops are pixel-identical to 'Last' in the fully visible radio 'Patient Lastname' of daily_reports/10.PNG; (c) no capital-letter top follows 'Last', which rules out 'Last Name'; (d) the second radio starts 53 px right of the L stem here but only 51 px after it in 'Patient Lastname' (same sub-pixel phase; the label-to-radio gap is a constant 9-10 px on every fully visible radio row), i.e. the hidden tail is about 2 px - one space at this font size - wider than 'name': hence 'Last name' (two words, lower-case n) rather than 'Lastname'. The lower-case letters themselves are hidden, so both labels keep [?]; text without ascenders after 'ID' could also be hidden. The Statements screen (statements_reports/1.PNG) offers the analogous pair 'Sort by Resp.Party Lastname' / 'Sort by Resp.Party ID'. Further SORT BY rows or sections may exist below the cut."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": true,
+      "notes": "Single screenshot (4.PNG). Two-column layout, row by row: REPORT FORMAT | PRINT FORMAT, OFFICE/GROUP | PROVIDER, REPORT DATE | PATIENT TYPE, RESPONSIBLE PARTY NAME RANGE | EXCLUDE RESP. PARTY TYPE, AGING BY | AGING, then full-width OTHER OPTIONS and SORT BY. TRUNCATED at the bottom: the SORT BY header is fully visible but its option row is cut by the PRINT / PREVIEW / ADD TO MY FAVORITES bar after 10 pixel rows, so the two sort labels are best readings and anything below (more SORT BY rows or further sections) is not visible. No scrollbar is drawn on the panel. The criteria panel is pixel-identical to the Aging Report by Home Office panel in 3.PNG (verified by image difference: 0 differing pixels): same sections, controls, defaults and disabled states."
+    },
+    {
+      "name": "Income Allocation",
+      "screenshots": [
+        "5.PNG"
+      ],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Detail",
+                "Summary"
+              ],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Full-width section (no PRINT FORMAT section beside it on this report). Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, side by side with OFFICE/GROUP. Read-only grey box followed by a blue (enabled) SELECT button (person icon). Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (5.PNG). REPORT FORMAT full width; OFFICE/GROUP (left) and PROVIDER (right) side by side; DATE RANGE full width. No PRINT FORMAT and no OTHER OPTIONS section. Blank space below DATE RANGE, nothing cut off. This is the only screenshot that also shows the page footer below the panels (see observations)."
+    },
+    {
+      "name": "Allocation Detail",
+      "screenshots": [
+        "6.PNG"
+      ],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, side by side with OFFICE/GROUP. Read-only grey box followed by a blue (enabled) SELECT button (person icon). Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        },
+        {
+          "title": "PAYMENT TYPES",
+          "controls": [
+            {
+              "label": "Cash",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Six checkboxes on a single row; this is the first."
+            },
+            {
+              "label": "Check",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row."
+            },
+            {
+              "label": "Credit Card",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row."
+            },
+            {
+              "label": "CareCredit",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row. Written as one word with a capital C in the middle."
+            },
+            {
+              "label": "Direct Deposit",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row."
+            },
+            {
+              "label": "Internal Financing",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row, last."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Show Datewise Summary",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Only control in this section; checked by default."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (6.PNG). OFFICE/GROUP (left) and PROVIDER (right) side by side; DATE RANGE, PAYMENT TYPES and OTHER OPTIONS full width. No PRINT FORMAT or REPORT FORMAT section. Blank space below OTHER OPTIONS, nothing cut off."
+    },
+    {
+      "name": "Unallocated Payment/Adjustments",
+      "screenshots": [
+        "7.PNG"
+      ],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Print all unallocated payment/adjustments as of today",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "First row of the DATE RANGE section, above the Start Date / End Date rows. Presumably overrides the date range when ticked (inference - the date fields are shown enabled while it is unticked)."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Exclude Credit Balances",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 1."
+            },
+            {
+              "label": "Include Inactive Patients",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Row 2."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (7.PNG). All sections full width (single column). No PROVIDER, PRINT FORMAT or REPORT FORMAT section. Blank space below OTHER OPTIONS, nothing cut off."
+    },
+    {
+      "name": "Daily Journal Summary by Allocation",
+      "screenshots": [
+        "8.PNG"
+      ],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Detail",
+                "Summary"
+              ],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left column, side by side with PRINT FORMAT. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column, side by side with REPORT FORMAT. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (8.PNG). REPORT FORMAT (left) and PRINT FORMAT (right) side by side; OFFICE/GROUP and DATE RANGE full width. No PROVIDER and no OTHER OPTIONS section. Blank space below DATE RANGE, nothing cut off."
+    },
+    {
+      "name": "WaterFall Report",
+      "screenshots": [
+        "9.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row, no row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Payments and Adjustments",
+                "Payments only",
+                "Adjustments only"
+              ],
+              "default_value": "Payments and Adjustments",
+              "enabled": true,
+              "notes": "Three radios on one row, no row label; on this report OTHER OPTIONS holds a radio group, not checkboxes."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "Single screenshot (9.PNG). All sections full width (single column). No PROVIDER or REPORT FORMAT section. The report name is spelled 'WaterFall Report' (capital F) in the list. Blank space below OTHER OPTIONS, nothing cut off."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Screenshot-to-report mapping: 1.PNG = Executive Summary, 2.PNG = Executive Day Sheet, 3.PNG = Aging Report by Home Office, 4.PNG = Aging Report, 5.PNG = Income Allocation, 6.PNG = Allocation Detail, 7.PNG = Unallocated Payment/Adjustments, 8.PNG = Daily Journal Summary by Allocation, 9.PNG = WaterFall Report. Every report in the list has exactly one screenshot; none shows a popup, an expanded dropdown or a scrolled second view, so the contents of the Office, Office Group, Provider and Exclude Resp. Party Type SELECT dialogs and of the SEARCH lookups are not visible in this category. (The folder key is spelled 'montly'.) Title bar: 'Monthly Reports' at the left; 'PGID :2829 / OID :108' followed by a printer icon at the far right. Panel headers: 'SELECT REPORT' (left) and 'REPORT CRITERIA' (right). A splitter / collapse handle (three vertical dots) sits on the border between the two panels. SELECT REPORT is a single column of 9 radio items (no second column) with a large empty area below the last one, so the list is not clipped or scrollable; the list text is pixel-identical in all 9 screenshots. Global actions are the same on every report: CLEAR CRITERIA (slate-grey button with a refresh icon at the right end of the REPORT CRITERIA header bar), PRINT / PREVIEW (blue, printer icon) and ADD TO MY FAVORITES (blue, plus icon) in a footer bar at the bottom right of the criteria panel. Captured at 75% browser zoom. Footer, visible only in 5.PNG: '© 2026 Planet DDS | Privacy Policy | Page Time Left (hh:mm:ss) 1:58:18' ('Privacy Policy' is a blue link), a red italic notice 'Your browser zoom is set to 75%. This screen is best viewed, if zoom is set to 100%.' and a browser status-bar URL 'https://a1.denticon.com/ASCX/#'. 6.PNG and 9.PNG include a 1-3 px blue strip above the title bar (capture offset only). Header glyph caveat: at this capture size the section-header typeface renders capital G almost like C, so the pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'CROUP BY', 'ACINC BY', 'ACINC' and 'RESPONSIBLE PARTY NAME RANCE'. They are transcribed as OFFICE/GROUP, DATE RANGE, GROUP BY, AGING BY, AGING and RESPONSIBLE PARTY NAME RANGE: each of these glyphs carries a one-pixel spur at the lower right that the true C's (in OFFICE, CREDIT, BALANCES) do not have, and the same letter is an unambiguous G in 'GROUP BY PROVIDER', 'Office Group' and 'Aging Report'. Defaults: every date field shows 11/21/2026 (the capture date), the unlabelled office box shows 108 (= OID in the title bar), Provider shows ALL, Exclude Resp. Party Type shows None. Read-only picker boxes (108, ALL, None) have a darker grey fill than editable inputs (dates, Start Name / End Name, Account Balance Over). Disabled controls (confirmed by colour sampling on all nine screenshots): 'Page Break' on Executive Summary; the 'Preferred Provider / Transaction Provider' radios and the Provider SELECT button on both aging reports. Nothing else is greyed out. Recurring patterns: OFFICE/GROUP (Office / Office Group radios plus the unlabelled 108 box with SELECT) appears on all 9 reports; PRINT FORMAT (PDF / Excel, default PDF) only on Executive Day Sheet, both aging reports, Daily Journal Summary by Allocation and WaterFall Report; REPORT FORMAT (Detail / Summary, default Detail) only on both aging reports, Income Allocation and Daily Journal Summary by Allocation; a Provider picker (default ALL) on Executive Summary, Income Allocation, Allocation Detail and both aging reports; seven reports use DATE RANGE with Start Date and End Date, while the two aging reports use a single Report Date. Only real uncertainty: 'Aging Report by Home Office' (3.PNG) and 'Aging Report' (4.PNG) have pixel-identical criteria panels whose last section, SORT BY, is cut off by the action bar with no scrollbar drawn - only the top 2 pixel rows of its two radio labels show. They are given as best readings with [?] ('Resp. Party Last name', 'Resp. Party ID'; see the control notes for the pixel evidence) and both reports are flagged possibly_truncated because further SORT BY rows or sections may exist below the cut."
+}

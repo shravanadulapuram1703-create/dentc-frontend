@@ -1,0 +1,373 @@
+{
+ "category": "security_list_reports",
+ "reports": [
+  {
+   "report_id": "security_list_reports.r01",
+   "legacy_name": "User List",
+   "report_key": "lists.user_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r01.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "security_list_reports.r01.s02.c01",
+     "signature_id": "sig0169",
+     "legacy_section": "USER",
+     "legacy_label": "User",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "user_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "security_list_reports.r01.s03.c01",
+     "signature_id": "sig0294",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Users",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_users",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "security_list_reports.r02",
+   "legacy_name": "Group List",
+   "report_key": "lists.group_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "security_list_reports.r03",
+   "legacy_name": "Group Rights List",
+   "report_key": "lists.group_rights_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r03.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "security_list_reports.r04",
+   "legacy_name": "User-Group Membership",
+   "report_key": "lists.user_group_membership",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r04.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "security_list_reports.r04.s02.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Greyed on 835 Denial Report while PRINT FORMAT = Excel (vendor documentation: Excel exists only as Detail). On the Daily Production Report the Detail option alone is greyed until PRODUCTION BY = Provider (option_enabled_when)."
+    },
+    {
+     "control_id": "security_list_reports.r04.s03.c01",
+     "signature_id": "sig0295",
+     "legacy_section": "SECURITY GROUP",
+     "legacy_label": "Group",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "security_group_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool."
+    },
+    {
+     "control_id": "security_list_reports.r04.s04.c01",
+     "signature_id": "sig0296",
+     "legacy_section": "LOCATION",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "LOCATION is the OFFICE/GROUP section spelled differently."
+    },
+    {
+     "control_id": "security_list_reports.r04.s04.c02",
+     "signature_id": "sig0297",
+     "legacy_section": "LOCATION",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "LOCATION is the OFFICE/GROUP section spelled differently."
+    },
+    {
+     "control_id": "security_list_reports.r04.s05.c01",
+     "signature_id": "sig0294",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Users",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_users",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "security_list_reports.r04.d01",
+     "legacy_when": "LOCATION = Office Group",
+     "legacy_effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. This is the OFFICE/GROUP control of the other Lists screens, headed LOCATION on this report - the only Security List report that has it. The vendor documents the behaviour for the Office / Office Group control in general; the report itself is absent from vendor documentation, hence likely.",
+     "confidence": "likely",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "default",
+     "control_id": "security_list_reports.r04.s04.c02",
+     "text": "The number in the LOCATION box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Stated by the vendor for the Office / Office Group control in general, of which LOCATION is the instance on this report."
+    },
+    {
+     "about": "meaning",
+     "control_id": "security_list_reports.r04.s03.c01",
+     "text": "What a security group is, i.e. what the Group picker chooses from: security groups are defined per office (the same group name can exist under several offices), and a user has a primary group plus optional additional groups - so one user can appear under several groups. Vendor-documented for security groups; that the picker lists them follows from the name of the criterion."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

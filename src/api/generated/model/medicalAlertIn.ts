@@ -5,13 +5,18 @@
  * Dental PMS REST API. Column-tenant-scoped; snake_case; Orval-ready.
  * OpenAPI spec version: 1.0.0
  */
-import type { MedicalAlertInResponse } from './medicalAlertInResponse';
 
+/**
+ * One alert answer on the composite. Same vocabulary as the generic
+ * resource (``yes|no|unknown``, MH-5) — case-folded rather than a strict
+ * ``Literal`` so a ``"Yes"`` from a form does not 422 the whole registration.
+ */
 export interface MedicalAlertIn {
+  /** @maxLength 100 */
   alert_code: string;
   alert_label?: string | null;
   section?: string | null;
-  response?: MedicalAlertInResponse;
+  response?: string | null;
   comments?: string | null;
   is_flash_alert?: boolean | null;
   blocks_charges?: boolean | null;

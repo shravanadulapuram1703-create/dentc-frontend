@@ -1,0 +1,1161 @@
+{
+  "category": "appointment_reports",
+  "window_title": "Appointment Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/appointment_reports",
+  "report_list": [
+    "Appointment List",
+    "Missed Appointments Not Marked As Missed",
+    "New Patients via Appointments",
+    "Lab Report",
+    "SmartAssist Report Card",
+    "Appointments Confirmed Via Vendors",
+    "Appointment Time Stamps",
+    "Appointment Detail",
+    "Lab Cost Report"
+  ],
+  "reports": [
+    {
+      "name": "Appointment List",
+      "screenshots": ["1.PNG"],
+      "sections": [
+        {
+          "title": "[?]",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Confirmation Call List",
+                "Call List",
+                "Pull Chart List",
+                "Cancelled List",
+                "Cancelled From Automated Campaigns",
+                "Missed List"
+              ],
+              "default_value": "Confirmation Call List",
+              "enabled": true,
+              "notes": "List-type selector: one full-width row of six radios, all enabled (black labels). SECTION TITLE NOT READABLE (recorded as [?]): of the header bar above this row only the bottom 10 px strip is visible directly under the panel border (normal header bars are 24-25 px); the strip is full width, has no column divider and contains no text, so the title - if this header has one - is hidden above the viewport edge. Nothing was invented; for orientation only, the analogous selectors of Lab Report and Lab Cost Report are titled REPORT TYPE, but no such text is visible here. The selection evidently drives which criteria below are enabled (inference: only the 'Confirmation Call List' state was captured)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon. 108 = current office id (same as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon. The second row of this column is an empty filler row."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (appears to default to today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": false,
+              "notes": "Left column. Unlabelled read-only box showing None; its SELECT button (person-plus icon) is GREYED OUT / disabled in this state (Confirmation Call List selected)."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESP. PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": false,
+              "notes": "Right column. Unlabelled read-only box showing None; its SELECT button (person-plus icon) is GREYED OUT / disabled in this state."
+            }
+          ]
+        },
+        {
+          "title": "CANCELLATION REASON",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": false,
+              "notes": "Left column. Unlabelled read-only box showing ALL; its SELECT button (building icon) is GREYED OUT / disabled in this state."
+            }
+          ]
+        },
+        {
+          "title": "OPERATORY",
+          "controls": [
+            {
+              "label": "Operatory",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": false,
+              "notes": "Right column. Read-only box showing ALL; its SELECT button (single-person icon) is GREYED OUT / disabled in this state."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT TYPE",
+          "controls": [
+            {
+              "label": "Length",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "Any",
+              "enabled": false,
+              "notes": "Left half of the row under the full-width header. List collapsed - other values not visible. Drawn in the disabled style: fill RGB 220,223,226 with border 209,209,209, identical to the read-only picker boxes, whereas enabled inputs here and enabled dropdowns elsewhere in the tool (checked against the Referral Reports screenshots) use the lighter 241,241,241 fill. The 'Length' label, the value text and the chevron are not dimmed."
+            },
+            {
+              "label": "Missed",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Right half of the same row, after the black row label 'Status'. Checkbox and label greyed out / disabled in this state."
+            },
+            {
+              "label": "Cancelled",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Right half of the same row (row label 'Status'), immediately right of Missed. Checkbox and label greyed out / disabled in this state."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Off Call List",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Left half of the row under the full-width header. Checkbox and label greyed out / disabled in this state."
+            },
+            {
+              "label": "Include Patient Balance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Right half of the same row. Enabled and ticked (blue check)."
+            }
+          ]
+        },
+        {
+          "title": "SORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Appointment Date",
+                "Provider (Last Name) – Appointment Date",
+                "Patient Chart#",
+                "Patient Last Name"
+              ],
+              "default_value": "Appointment Date",
+              "enabled": false,
+              "notes": "Full-width single row. ALL FOUR radios and their labels are greyed out / disabled in this state; 'Appointment Date' shows a grey filled dot (selected but disabled). The dash in the 2nd option is about 5 px wide with a space on each side - read as an en dash, could be a plain hyphen. 'Patient Chart#' has no space before #."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": true,
+      "notes": "Only 1.PNG shows this report; state = 'Confirmation Call List' selected (the other five list types were not captured, so their enabled/disabled combinations are unknown). THE CLIPPING IS AT THE TOP, NOT THE BOTTOM: the criteria area was captured scrolled to its bottom end. Directly under the panel border there is only a 10 px strip of a full-width header bar (normal bars are 24-25 px) and the 1 px light line that tops the criteria content in every other screenshot is missing, i.e. the content sits about 16 px higher than normal while its last line ends exactly at the action bar. Consequences: (a) the title of the first section (the list-type radios) cannot be read - recorded as [?]; (b) it cannot be ruled out that more content lies above it. NO 'PRINT FORMAT' (PDF / Excel) section is visible for this report although the other 8 reports of the category have one - the pixels do not tell whether it does not exist here or is scrolled out of view above; verify on the live screen. The bottom edge is complete: SORT BY is the last section, followed by the closing 1 px line and the action bar. Layout top to bottom: [clipped full-width header] + list-type radios (full width); OFFICE/GROUP | PROVIDER; DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE; CANCELLATION REASON | OPERATORY; APPOINTMENT TYPE (full-width header: Length on the left half, Status checkboxes on the right half); OTHER OPTIONS (full-width header: one checkbox in each half); SORT BY (full width). GREYED OUT in this state: SELECT buttons of EXCLUDE PATIENT TYPE, EXCLUDE RESP. PARTY TYPE, CANCELLATION REASON and OPERATORY; Length dropdown; Status checkboxes Missed and Cancelled; Include Off Call List; all four SORT BY radios. ENABLED: list-type radios, Office / Office Group + office SELECT, Provider SELECT, Start Date / End Date, Include Patient Balance (checked). Presumably the other list types enable other subsets (e.g. Cancellation Reason for Cancelled List) - inference only, not shown."
+    },
+    {
+      "name": "Missed Appointments Not Marked As Missed",
+      "screenshots": ["2.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section (first row of the panel)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon. 108 = OID in the title bar."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESP. PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Right column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Show Patient Balance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Full-width section; the only option in it; ticked by default."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 2.PNG shows this report (default state). Layout: PRINT FORMAT (full width); OFFICE/GROUP | PROVIDER; DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE; OTHER OPTIONS (full width). Nothing greyed out. Large empty area between the last section and the action bar - content fully visible."
+    },
+    {
+      "name": "New Patients via Appointments",
+      "screenshots": ["3.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section (first row of the panel)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section beside it on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 3.PNG shows this report (default state). Smallest criteria set of the category: three full-width sections only (PRINT FORMAT, OFFICE/GROUP, DATE RANGE); no Provider picker and no other options. Nothing greyed out; large empty area below, then the action bar - content fully visible."
+    },
+    {
+      "name": "Lab Report",
+      "screenshots": ["4.PNG"],
+      "sections": [
+        {
+          "title": "REPORT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Appointment List", "Not Sent", "Not Received", "Due Date"],
+              "default_value": "Appointment List",
+              "enabled": true,
+              "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of the first row."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+            }
+          ]
+        },
+        {
+          "title": "DUE DATE",
+          "controls": [
+            {
+              "label": "Due Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": false,
+              "notes": "Left column (LAB section is to its right). GREYED OUT / disabled in this state: the box has the grey read-only fill (RGB 220,223,226), unlike the lighter enabled Start Date / End Date boxes (241,241,241); the calendar icon is still shown. Presumably enabled only when REPORT TYPE = 'Due Date' (inference - not verifiable from the screenshot)."
+            }
+          ]
+        },
+        {
+          "title": "LAB",
+          "controls": [
+            {
+              "label": "Lab",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESP. PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Right column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 4.PNG shows this report (state: REPORT TYPE = 'Appointment List'; the other three report types were not captured). Layout: REPORT TYPE | PRINT FORMAT; OFFICE/GROUP | PROVIDER; DUE DATE | LAB; APPOINTMENT DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE. Only greyed control: the Due Date box. No OTHER OPTIONS section. Empty area below the last section, then the action bar - content fully visible."
+    },
+    {
+      "name": "SmartAssist Report Card",
+      "screenshots": ["5.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of the first row."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Missed Appointments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section; first of two checkboxes stacked vertically."
+            },
+            {
+              "label": "Include Cancelled Appointments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Second checkbox, on its own row below Include Missed Appointments."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 5.PNG shows this report (default state). Layout: REPORT FORMAT | PRINT FORMAT; OFFICE/GROUP | PROVIDER; APPOINTMENT DATE RANGE (full width); OTHER OPTIONS (full width, two stacked checkboxes). Nothing greyed out. Empty area below the last section, then the action bar - content fully visible."
+    },
+    {
+      "name": "Appointments Confirmed Via Vendors",
+      "screenshots": ["6.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section (first row of the panel)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section beside it on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        },
+        {
+          "title": "VENDORS",
+          "controls": [
+            {
+              "label": "Vendors",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section. Read-only grey box showing ALL; blue SELECT button with building icon."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 6.PNG shows this report (default state). Four full-width sections: PRINT FORMAT; OFFICE/GROUP; DATE RANGE; VENDORS. No Provider picker. Nothing greyed out. Empty area below the last section, then the action bar - content fully visible."
+    },
+    {
+      "name": "Appointment Time Stamps",
+      "screenshots": ["7.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section (first row of the panel)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 7.PNG shows this report (default state). Layout: PRINT FORMAT (full width); OFFICE/GROUP | PROVIDER; DATE RANGE (full width). Nothing greyed out. Large empty area below, then the action bar - content fully visible."
+    },
+    {
+      "name": "Appointment Detail",
+      "screenshots": ["8.PNG"],
+      "sections": [
+        {
+          "title": "APPOINTMENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Regular", "Archived"],
+              "default_value": "Regular",
+              "enabled": true,
+              "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of the first row."
+            }
+          ]
+        },
+        {
+          "title": "APPOINT NOW",
+          "controls": [
+            {
+              "label": "Only AppointNow Appointments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width header; this checkbox is in the LEFT half of the row. The checkbox text writes AppointNow as one word, the header and the radios write 'Appoint Now'."
+            },
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "Appoint Now", "Appoint Now API"],
+              "default_value": "Both",
+              "enabled": false,
+              "notes": "RIGHT half of the same row. All three radios and their labels are GREYED OUT / disabled while 'Only AppointNow Appointments' is unchecked; 'Both' shows a grey filled dot (selected but disabled). Presumably enabled by ticking the checkbox (inference - not verifiable from the screenshot)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER/USER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER/USER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, first row. Read-only grey box; blue SELECT button with single-person icon."
+            },
+            {
+              "label": "User",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, second row (below Provider). Read-only grey box; blue SELECT button with person-plus icon."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Appointment Date", "Created On Date"],
+              "default_value": "Appointment Date",
+              "enabled": true,
+              "notes": "Full-width section; radio row above the two date rows - chooses which date the range applies to."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        },
+        {
+          "title": "OPERATORY",
+          "controls": [
+            {
+              "label": "Operatory",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section. Read-only grey box showing ALL; blue (enabled) SELECT button with single-person icon (enabled here, unlike on Appointment List)."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Provider", "User"],
+              "default_value": "Provider",
+              "enabled": true,
+              "notes": "Left column (PAGE BREAK BY section is to its right)."
+            }
+          ]
+        },
+        {
+          "title": "PAGE BREAK BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Date", "Provider", "User"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Right column. None, Date and Provider are enabled; the fourth option 'User' is GREYED OUT / disabled in this state (GROUP BY = Provider) - presumably it becomes available when GROUP BY = User (inference - not verifiable from the screenshot)."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Cancelled Appointments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left column (CANCELLATION REASON section is to its right); first row."
+            },
+            {
+              "label": "Include Patient Phone Number",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left column, second row - the last fully visible row of the panel."
+            },
+            {
+              "label": "[?]",
+              "type": "other",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "CLIPPED ROW - CONTENT NOT VISIBLE (placeholder so it is not lost; label recorded as [?]). Directly below 'Include Patient Phone Number' a THIRD row of this left column begins and is cut off by the action bar: only a 1 px sliver in row colour is visible (8.PNG y=539, x 466-908, right after the usual 2 px separator at y=537-538), exactly the row / 2 px separator / row pattern of the two rows above, while the right column shows empty panel background at the same height. Most likely one more checkbox, but nothing of it can be read and it could also be an empty row; its enabled state is unknown (true is only a filler value). Must be checked on the live screen."
+            }
+          ]
+        },
+        {
+          "title": "CANCELLATION REASON",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": false,
+              "notes": "Right column, beside OTHER OPTIONS. Unlabelled read-only box showing ALL; its SELECT button (building icon) is GREYED OUT / disabled in this state ('Include Cancelled Appointments' unchecked) - presumably enabled once cancelled appointments are included (inference - not verifiable from the screenshot)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": true,
+      "notes": "Only 8.PNG shows this report (default state). Largest criteria set of the category. Layout: APPOINTMENT TYPE | PRINT FORMAT; APPOINT NOW (full-width header: checkbox on the left half, radio group on the right half); OFFICE/GROUP | PROVIDER/USER; DATE RANGE (full width); OPERATORY (full width); GROUP BY | PAGE BREAK BY; OTHER OPTIONS | CANCELLATION REASON. Greyed out in this state: the Both / Appoint Now / Appoint Now API radios, the 'User' option of PAGE BREAK BY and the CANCELLATION REASON SELECT button. BOTTOM CLIPPED: the criteria content fills the fixed-height viewport and runs into the action bar. In the LEFT column, below 'Include Patient Phone Number' (row ends at y=536 in 8.PNG) comes the usual 2 px separator (y=537-538) and then a 1 px sliver in row colour (x 466-908, y=539) before the action bar starts at y=540; the right column shows plain empty panel background at the same height. That sliver is the top of a THIRD row under OTHER OPTIONS whose content is not visible (recorded as an 'other' placeholder control); further content below it cannot be excluded. No scrollbar is drawn. The related report 'Appointment Detail by User' in My Reports (my_reports/4.PNG) shows only the same two checkboxes in its OTHER OPTIONS, so it gives no hint about the hidden row. Must be checked on the live screen."
+    },
+    {
+      "name": "Lab Cost Report",
+      "screenshots": ["9.PNG"],
+      "sections": [
+        {
+          "title": "REPORT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["All", "Sent Date", "Due Date", "Received Date"],
+              "default_value": "All",
+              "enabled": true,
+              "notes": "Left column of the first row (PRINT FORMAT is to its right)."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of the first row."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column (PROVIDER section is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column. Read-only grey box; blue SELECT button with single-person icon."
+            }
+          ]
+        },
+        {
+          "title": "LAB",
+          "controls": [
+            {
+              "label": "Lab",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section (on Lab Report the LAB section is a right-hand column instead). Read-only grey box showing ALL; blue SELECT button with building icon."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. Calendar icon at the right end of the box; value = capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESP. PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Right column. Unlabelled read-only box showing None; blue (enabled) SELECT button with person-plus icon."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Exclude Lab Received",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section; the only option in it."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "Only 9.PNG shows this report (default state, REPORT TYPE = 'All'). Layout: REPORT TYPE | PRINT FORMAT; OFFICE/GROUP | PROVIDER; LAB (full width); APPOINTMENT DATE RANGE (full width); EXCLUDE PATIENT TYPE | EXCLUDE RESP. PARTY TYPE; OTHER OPTIONS (full width). Nothing greyed out even though REPORT TYPE has date-specific options. No separate DUE DATE section (unlike Lab Report). Empty area below the last section, then the action bar - content fully visible."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory: all 9 original screenshots and all pre-rendered zooms were re-read, every A-vs-B difference was settled on the pixels, and each file was swept for missed elements with a colour scan of the criteria area (nothing beyond the controls listed here was found). COVERAGE: all 9 files are the same two-panel screen in its normal state - no popup, no expanded dropdown, no second view of the same report; each screenshot shows a different report selected (blue radio dot located in each file), so all 9 listed reports are covered exactly once: 1=Appointment List, 2=Missed Appointments Not Marked As Missed, 3=New Patients via Appointments, 4=Lab Report, 5=SmartAssist Report Card, 6=Appointments Confirmed Via Vendors, 7=Appointment Time Stamps, 8=Appointment Detail, 9=Lab Cost Report. TITLE BAR (identical in all 9): 'Appointment Reports' at the left; 'PGID :2829 / OID :108' followed by a printer icon at the right. No footer text (only a thin grey window-edge strip below the panels). LEFT PANEL 'SELECT REPORT': 9 radio entries in a two-column grid (5 in the left column, 4 in the right, bottom-right cell empty); 'Missed Appointments Not Marked As Missed' wraps onto two lines; large empty area below - the list is not scrollable or clipped. Casing as displayed: 'New Patients via Appointments' (lower-case via) but 'Appointments Confirmed Via Vendors' (capital Via). A splitter handle (three dots) sits between the two panels. RIGHT PANEL 'REPORT CRITERIA': grey CLEAR CRITERIA button (refresh icon) at the right end of the blue panel bar - same grey look in all 9 files, so it is its normal style, not a disabled state; blue PRINT / PREVIEW (printer icon) and '+ ADD TO MY FAVORITES' buttons sit in a grey action bar pinned to the bottom of the panel. No static instruction / legend text anywhere in the criteria panels. NOT VISIBLE ANYWHERE in this category: the contents of the Office / Office Group / Provider / User / Operatory / Lab / Vendors / Cancellation Reason / Patient Type / Resp. Party Type pickers and the other values of the 'Length' dropdown (only 'Any' is shown); only one state per report was captured, so controls that depend on a radio or checkbox choice (the other five list types of Appointment List, the other Lab Report types, Only AppointNow Appointments ticked, GROUP BY = User, Include Cancelled Appointments ticked) are seen only in their default-state enabled/disabled form. RECURRING DEFAULTS: PRINT FORMAT = PDF (options PDF, Excel) on 8 of 9 reports - none visible on Appointment List; OFFICE/GROUP = Office (options Office, Office Group) with an unlabelled read-only box showing 108 (= OID) + SELECT on all 9; a Provider picker (ALL) on 7 reports (absent on New Patients via Appointments and Appointments Confirmed Via Vendors); User / Lab / Vendors / Operatory / Cancellation Reason pickers = ALL; EXCLUDE PATIENT TYPE + EXCLUDE RESP. PARTY TYPE pickers = None on Appointment List (greyed), Missed Appointments Not Marked As Missed, Lab Report and Lab Cost Report; every date box = 11/21/2026 (the capture date, i.e. today) with a calendar icon. SELECT button icons: building (Office, Lab, Vendors, Cancellation Reason), single person (Provider, Operatory), person-plus (User, Exclude Patient Type, Exclude Resp. Party Type). DISABLED-STATE EVIDENCE (pixel colours, not just by eye): disabled SELECT buttons are grey (176,183,190) instead of blue (41,134,220); disabled radio / checkbox labels are grey (161,161,161) instead of black; disabled inputs and dropdowns use the fill 220,223,226 of the read-only picker boxes instead of the 241,241,241 of enabled inputs (calibrated against the other report categories: about 35 dropdowns there use the light fill, the only other grey one is a dependency-gated Fee Schedule dropdown in My Reports). Greyed controls exist only in 1.PNG (Appointment List: both Exclude SELECT buttons, Cancellation Reason SELECT, Operatory SELECT, Length dropdown, Status Missed / Cancelled, Include Off Call List, all four SORT BY radios), 4.PNG (Lab Report: Due Date box) and 8.PNG (Appointment Detail: Both / Appoint Now / Appoint Now API radios, the 'User' option of PAGE BREAK BY, Cancellation Reason SELECT). TWO REPORTS DO NOT FIT THE VIEWPORT: the criteria viewport has a fixed height (482 px between the panel border and the action bar in every file) and no scrollbar is drawn even when the content is taller. (a) Appointment List (1.PNG) was captured scrolled to its bottom end - it is the only screenshot (also compared with the criteria screens of the other report categories) whose content does not start with a 1 px light line followed by a full 25 px header: its first header bar is cut to a 10 px strip without text, so that title is unreadable (it cannot even be told whether the bar carries a title), and no PRINT FORMAT section is visible; unknown whether the report has none or it is hidden above. (b) Appointment Detail (8.PNG) is clipped at the BOTTOM: a third row under OTHER OPTIONS begins exactly at the edge (1 px sliver). Both need verification on the live system; the other seven reports end with empty panel space below their last section and are complete. FONT CAVEAT: in the bold caps section-header font the G is drawn almost like a C at this size, so the headers look like 'OFFICE/CROUP', 'DATE RANCE', 'APPOINTMENT DATE RANCE', 'CROUP BY', 'PACE BREAK BY'; a pixel comparison with real C glyphs (e.g. in CANCELLATION) shows the extra lower-right stroke of a G, so they are transcribed as OFFICE/GROUP, DATE RANGE, APPOINTMENT DATE RANGE, GROUP BY, PAGE BREAK BY. NAMING DIFFERENCES worth keeping: the date section is 'DATE RANGE' on six reports but 'APPOINTMENT DATE RANGE' on Lab Report, SmartAssist Report Card and Lab Cost Report; 'PROVIDER' vs 'PROVIDER/USER' (Appointment Detail only); the first-row selector is titled 'REPORT TYPE' (Lab Report, Lab Cost Report), 'REPORT FORMAT' (SmartAssist Report Card) or 'APPOINTMENT TYPE' (Appointment Detail: Regular / Archived), while on Appointment List 'APPOINTMENT TYPE' is a different section (Length dropdown + Status checkboxes); header 'APPOINT NOW' is two words whereas its checkbox says 'AppointNow'; the balance option is worded 'Include Patient Balance' on Appointment List but 'Show Patient Balance' on Missed Appointments Not Marked As Missed (both ticked by default). Not part of this category's 9 files: the parent folder also holds drop_down_options.PNG (the Reports menu), not transcribed here."
+}

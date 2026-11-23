@@ -1,0 +1,847 @@
+{
+ "category": "recall_reports",
+ "window_title": "Recall Reports",
+ "report_list": [
+  "Procedural Recall Report",
+  "Scheduled Recall Report",
+  "Recall Due Report",
+  "Post-Op Report"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory. All 4 original screenshots (1363-1366 px wide, 584-589 px high), the 8 pre-rendered zooms and additional tight crops (prefix c in the zoom folder) were read. Readers A and B agreed on every report, section, control, option list, default value, enabled state and truncation flag (4 reports, 30 sections, 48 controls); their differences were note wording only. Every point was nevertheless re-checked on the pixels: the selected list radio of every file, blue-mark detection for every selected criteria radio and ticked checkbox, the fill colour of every button and input box, glyph dumps of every field value and of the disputed header letters, and a per-row scan of every pixel that differs from its row background in the criteria panel, the left panel, the title bar and the panel edges. Nothing exists beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no extra column of controls, no greyed-out control, no dropdown, no instruction / warning / legend text, no scrollbar on either panel and no footer text (below the panels 1.PNG, 3.PNG and 4.PNG show only a text-free light-grey frame strip a few pixels high; 2.PNG ends at the panels).\n\nCOVERAGE: 4 screenshots = 4 reports, each selected exactly once, in list order: 1.PNG = Procedural Recall Report, 2.PNG = Scheduled Recall Report, 3.PNG = Recall Due Report, 4.PNG = Post-Op Report. All four are the same two-panel screen in its default state - no popup, no expanded picker, no scrolled second view, no foreign screen. Consequently the contents of every SELECT dialog (offices, office groups, patient types, providers, hygienists, recall procedure codes) are NOT documented by these screenshots.\n\nSCREEN CHROME (identical in all 4): dark title bar with 'Recall Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right (the icon has no text, so it is not listed under actions). Left panel header 'SELECT REPORT' with exactly four radio entries in a 2 x 2 grid (left column: Procedural Recall Report, Scheduled Recall Report; right column: Recall Due Report, Post-Op Report); the rest of the left panel is a uniform empty dark area, so the list is neither clipped nor scrollable. A small splitter / collapse handle (three dots) sits on the border between the two panels. Right panel header 'REPORT CRITERIA' carries the CLEAR CRITERIA button (refresh icon) at its right end; it is grey in all four screenshots while every other button is blue, which appears to be its normal styling rather than a disabled state (not provable from the pixels). A fixed action bar at the bottom right of the criteria panel holds the blue buttons PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon); the left part of that bar is empty.\n\nRECURRING PATTERN: PRINT FORMAT (PDF / Excel, default PDF) and OFFICE/GROUP (Office / Office Group radios, default Office, plus an unlabelled picker showing 108 = the OID of the title bar) are identical in all four reports. Every report has one date-range section with Start Date and End Date (both 11/21/2026 = the capture day, i.e. the default appears to be today), an EXCLUDE PATIENT TYPE picker (default None) and an Include Inactive Patients checkbox (unchecked). DIFFERENCES: the date section is PROCEDURE DATE RANGE in Procedural Recall and Post-Op, SCHEDULED DATE RANGE in Scheduled Recall, and RECALL DATE RANGE with an extra radio pair Recall Date Range / No Recall Date in Recall Due. The provider filter is TRANSACTION PROVIDER in the two procedure-date reports and PREFERRED PROVIDER plus PREFERRED HYGIENIST in Scheduled Recall and Recall Due (all default ALL). RECALL PROCEDURE CODES (default ALL) and the Age Range checkbox (checked) with From 0 / To 999 exist in the three recall reports but not in Post-Op. SCHEDULED/NOT SCHEDULED (ALL / Scheduled / Not Scheduled, default ALL) exists only in Recall Due. This category has no REPORT FORMAT, GROUP BY or SORT BY section.\n\nCONVENTIONS: none of the pickers has a row label of its own - the section header is the only caption - so label is left empty, as for unlabelled radio groups. A picker is a read-only box (grey fill 220,223,226) plus a blue SELECT button; the date boxes and the From / To boxes use the lighter editable fill (241,241,241). SELECT icons: building for the office picker and for RECALL PROCEDURE CODES, person-plus for EXCLUDE PATIENT TYPE, single person for the provider and hygienist pickers. Sections that sit side by side are listed row by row, left then right. All controls are enabled in every screenshot.\n\nFONT CAVEAT: the bold uppercase header font draws G almost like C at this resolution, so the header pixels look like 'OFFICE/CROUP', '... DATE RANCE' and 'PREFERRED HYCIENIST'. A glyph-level comparison shows the small G spur at the lower right of that letter, which the genuine C in OFFICE, PROCEDURE, RECALL and SCHEDULED lacks, and the regular-weight radio label 'Office Group' under the first of those headers shows a clear capital G with its crossbar, so the titles are transcribed as OFFICE/GROUP, PROCEDURE / SCHEDULED / RECALL DATE RANGE and PREFERRED HYGIENIST.\n\nTRUNCATION: only 3.PNG (Recall Due Report) is clipped - its last visible row, Include Inactive Patients, is cut by the bottom action bar after 13 of its 20 px and no scrollbar is drawn, so any control below that row would be invisible. The other three screenshots end with uniform blank panel above the action bar.",
+ "report_count": 4,
+ "control_count": 48,
+ "reports": [
+  {
+   "report_id": "recall_reports.r01",
+   "name": "Procedural Recall Report",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "1.PNG only (first radio of the left list column is the filled one), default state. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); PROCEDURE DATE RANGE (full width: Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | TRANSACTION PROVIDER (right half); RECALL PROCEDURE CODES (full width); OTHER OPTIONS (full width: Age Range / From / To row, then Include Inactive Patients row). About 65 px of uniform blank panel follow the last row down to the action bar and there is no scrollbar, so nothing is clipped. No greyed-out control, no dropdown, no popup; the contents of the four SELECT dialogs (offices / office groups, patient types, providers, recall procedure codes) were not captured.",
+   "controls": [
+    {
+     "control_id": "recall_reports.r01.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r01.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. Office carries the blue dot. Presumably switches the picker on the next row between offices and office groups (dependency not visible)."
+    },
+    {
+     "control_id": "recall_reports.r01.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+    },
+    {
+     "control_id": "recall_reports.r01.s03.c01",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill. 11/21/2026 is the capture day (the screenshot files are dated Nov 21, 2026), so the default appears to be today's date (inference)."
+    },
+    {
+     "control_id": "recall_reports.r01.s03.c02",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date, same layout: label cell, then date box with a calendar icon inside it. Same default as Start Date."
+    },
+    {
+     "control_id": "recall_reports.r01.s04.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "LEFT half of a side-by-side row (TRANSACTION PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r01.s05.c01",
+     "section": "TRANSACTION PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the side-by-side row beside EXCLUDE PATIENT TYPE. No row label - the section header is the only caption. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r01.s06.c01",
+     "section": "RECALL PROCEDURE CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "FULL-WIDTH section in this report (in the Scheduled Recall and Recall Due reports the same section is a right-half column). No row label. Wide read-only grey box (a little over half of the panel width) showing ALL; blue SELECT button with a building icon (same icon as the office SELECT button) to its right."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Age Range",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "First cell of a row that also holds the From and To boxes (thin vertical divider after the checkbox cell). Blue tick present (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c02",
+     "section": "OTHER OPTIONS",
+     "label": "From",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0",
+     "enabled": true,
+     "notes": "Same row as the Age Range checkbox: label 'From', then a box with the light editable fill showing 0 (lower age bound). Its state when Age Range is unticked is not shown."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c03",
+     "section": "OTHER OPTIONS",
+     "label": "To",
+     "type": "number_input",
+     "options": [],
+     "default_value": "999",
+     "enabled": true,
+     "notes": "Same row, right of From: label 'To', then a box with the light editable fill showing 999 (upper age bound). Its state when Age Range is unticked is not shown."
+    },
+    {
+     "control_id": "recall_reports.r01.s07.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Own row below the Age Range row; empty box (no tick). Last control of the report - blank panel follows."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "recall_reports.r01.d01",
+     "when": "OFFICE/GROUP = Office Group",
+     "effect": "The SELECT picker chooses office groups defined in setup instead of offices; with Office it chooses one or more offices. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Procedural Recall Report); it applies to every report of this category that has the Office / Office Group radios.",
+     "controls": [
+      "recall_reports.r01.s02.c01",
+      "recall_reports.r01.s02.c02"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup."
+    },
+    {
+     "rule_id": "recall_reports.r01.d02",
+     "when": "A favorite has already been saved for the report (the legacy tool keeps one saved version per report)",
+     "effect": "The action button ADD TO MY FAVORITES reads UPDATE MY FAVORITES. Cross-cutting statement of the document for the Appointment, Recall and Referral criteria screens - recorded once here (Procedural Recall Report); it applies to every report of this category. Whether the relabel shows only when the screen is opened from My Favorites is not stated.",
+     "controls": [],
+     "confidence": "likely",
+     "evidence_quote": "One saved version per report (`ADD TO MY FAVORITES` → `UPDATE MY FAVORITES`)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "recall_reports.r01.k01",
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s06.c01",
+     "text": "Despite its title, RECALL PROCEDURE CODES is not limited to recallable codes on this report: any procedure code can be chosen.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Any code can be chosen, not only recallable ones"
+    },
+    {
+     "correction_id": "recall_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s06.c01",
+     "text": "ALL = every completed procedure code, which makes a very long report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`RECALL PROCEDURE CODES` | Codes to include; `ALL` = every completed code (very long report)."
+    },
+    {
+     "correction_id": "recall_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s03.c01",
+     "text": "PROCEDURE DATE RANGE is matched on the date the procedure was completed.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PROCEDURE DATE RANGE` | Date the procedure was completed (`Proc. Date`)."
+    },
+    {
+     "correction_id": "recall_reports.r01.k04",
+     "about": "meaning",
+     "control_id": "recall_reports.r01.s05.c01",
+     "text": "TRANSACTION PROVIDER is the provider on the ledger line of the completed procedure.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Transaction Provider` | Provider on the ledger line of the completed procedure."
+    },
+    {
+     "correction_id": "recall_reports.r01.k05",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The vendor article concerns the procedural recall report; the document states the rule for all four recall reports.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+    }
+   ]
+  },
+  {
+   "report_id": "recall_reports.r02",
+   "name": "Scheduled Recall Report",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "2.PNG only (second radio of the left list column is the filled one), default state. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); SCHEDULED DATE RANGE (full width: Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | PREFERRED PROVIDER (right half); PREFERRED HYGIENIST (left half) | RECALL PROCEDURE CODES (right half); OTHER OPTIONS (full width: Age Range / From / To row, then Include Inactive Patients row). Sections are listed row by row, left then right. Compared with the Procedural Recall Report: the date section is SCHEDULED DATE RANGE, the provider filter is PREFERRED PROVIDER instead of TRANSACTION PROVIDER, a PREFERRED HYGIENIST picker is added and RECALL PROCEDURE CODES becomes a right-half column. About 65 px of uniform blank panel follow the last row and there is no scrollbar, so nothing is clipped. No greyed-out control, no dropdown, no popup; the contents of the five SELECT dialogs were not captured.",
+   "controls": [
+    {
+     "control_id": "recall_reports.r02.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r02.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. Office carries the blue dot."
+    },
+    {
+     "control_id": "recall_reports.r02.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+    },
+    {
+     "control_id": "recall_reports.r02.s03.c01",
+     "section": "SCHEDULED DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill. 11/21/2026 is the capture day, so the default appears to be today's date (inference)."
+    },
+    {
+     "control_id": "recall_reports.r02.s03.c02",
+     "section": "SCHEDULED DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date, same layout: label cell, then date box with a calendar icon inside it. Same default as Start Date."
+    },
+    {
+     "control_id": "recall_reports.r02.s04.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "LEFT half of the first side-by-side row (PREFERRED PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r02.s05.c01",
+     "section": "PREFERRED PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the first side-by-side row beside EXCLUDE PATIENT TYPE. No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r02.s06.c01",
+     "section": "PREFERRED HYGIENIST",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "LEFT half of the second side-by-side row (RECALL PROCEDURE CODES is the right half). No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right. The header pixels look like 'PREFERRED HYCIENIST' because the bold header font draws G almost like C; the glyph has the G spur (see observations)."
+    },
+    {
+     "control_id": "recall_reports.r02.s07.c01",
+     "section": "RECALL PROCEDURE CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the second side-by-side row beside PREFERRED HYGIENIST. No row label. Read-only grey box showing ALL; blue SELECT button with a building icon (same icon as the office SELECT button) to its right."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Age Range",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "First cell of a row that also holds the From and To boxes (thin vertical divider after the checkbox cell). Blue tick present (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c02",
+     "section": "OTHER OPTIONS",
+     "label": "From",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0",
+     "enabled": true,
+     "notes": "Same row as the Age Range checkbox: label 'From', then a box with the light editable fill showing 0. Its state when Age Range is unticked is not shown."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c03",
+     "section": "OTHER OPTIONS",
+     "label": "To",
+     "type": "number_input",
+     "options": [],
+     "default_value": "999",
+     "enabled": true,
+     "notes": "Same row, right of From: label 'To', then a box with the light editable fill showing 999. Its state when Age Range is unticked is not shown."
+    },
+    {
+     "control_id": "recall_reports.r02.s08.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Own row below the Age Range row; empty box (no tick). Last control of the report - blank panel follows."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "recall_reports.r02.k01",
+     "about": "meaning",
+     "control_id": "recall_reports.r02.s03.c01",
+     "text": "SCHEDULED DATE RANGE filters on the date of the scheduled appointment, not on the recall due date.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`SCHEDULED DATE RANGE` filters on the date of the scheduled appointment"
+    },
+    {
+     "correction_id": "recall_reports.r02.k02",
+     "about": "meaning",
+     "control_id": "recall_reports.r02.s05.c01",
+     "text": "PREFERRED PROVIDER and PREFERRED HYGIENIST filter on the patient's preferred provider / hygienist from Patient Information.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "The patient's preferred provider / hygienist from Patient Information."
+    },
+    {
+     "correction_id": "recall_reports.r02.k03",
+     "about": "meaning",
+     "control_id": "recall_reports.r02.s03.c01",
+     "text": "A recall counts as scheduled only when the recallable procedure code is embedded in the future appointment: the scheduled recall date is filled from that appointment, and an appointment that does not carry the code does not make the recall scheduled.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Scheduled Recall Date` is filled only when the code is embedded in a"
+    },
+    {
+     "correction_id": "recall_reports.r02.k04",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Scheduled Recall Report it is implied rather than shown (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+    }
+   ]
+  },
+  {
+   "report_id": "recall_reports.r03",
+   "name": "Recall Due Report",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "3.PNG only (first radio of the right list column is the filled one), default state. Largest criteria set of the category. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); RECALL DATE RANGE (full width: radio row, Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | PREFERRED PROVIDER (right half); PREFERRED HYGIENIST (left half) | RECALL PROCEDURE CODES (right half); SCHEDULED/NOT SCHEDULED (full width); OTHER OPTIONS (full width). Sections are listed row by row, left then right. TRUNCATION (bottom edge): the criteria content is taller than the visible criteria area - the last visible row (Include Inactive Patients, second row of OTHER OPTIONS) is cut by the fixed bottom action bar after 13 of its 20 px, which hides the bottom of its checkbox, the row's bottom border and anything that might follow. No scrollbar is drawn (the right edge of the criteria panel is pixel-identical to 2.PNG) and the top of the panel is complete (PRINT FORMAT header fully visible), so the hidden part is below. In the two sibling reports that have the Age Range row (1.PNG, 2.PNG) Include Inactive Patients is the last row of OTHER OPTIONS, so probably nothing follows here either, but that cannot be confirmed from this screenshot. No greyed-out control, no dropdown, no popup; the contents of the five SELECT dialogs were not captured.",
+   "controls": [
+    {
+     "control_id": "recall_reports.r03.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r03.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. Office carries the blue dot."
+    },
+    {
+     "control_id": "recall_reports.r03.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+    },
+    {
+     "control_id": "recall_reports.r03.s03.c01",
+     "section": "RECALL DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Recall Date Range",
+      "No Recall Date"
+     ],
+     "default_value": "Recall Date Range",
+     "enabled": true,
+     "notes": "Two radios on the first row of the section, above the Start Date / End Date rows; no row label. Recall Date Range carries the blue dot. Only this report has this radio pair. What happens to the two date boxes when No Recall Date is chosen is not shown."
+    },
+    {
+     "control_id": "recall_reports.r03.s03.c02",
+     "section": "RECALL DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Second row of the section. Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill, shown enabled while Recall Date Range is selected. 11/21/2026 is the capture day, so the default appears to be today's date (inference)."
+    },
+    {
+     "control_id": "recall_reports.r03.s03.c03",
+     "section": "RECALL DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Third row of the section, same layout as Start Date (calendar icon inside the box). Shown enabled while Recall Date Range is selected."
+    },
+    {
+     "control_id": "recall_reports.r03.s04.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "LEFT half of the first side-by-side row (PREFERRED PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r03.s05.c01",
+     "section": "PREFERRED PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the first side-by-side row beside EXCLUDE PATIENT TYPE. No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r03.s06.c01",
+     "section": "PREFERRED HYGIENIST",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "LEFT half of the second side-by-side row (RECALL PROCEDURE CODES is the right half). No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right. The header pixels look like 'PREFERRED HYCIENIST' because the bold header font draws G almost like C; the glyph has the G spur (see observations)."
+    },
+    {
+     "control_id": "recall_reports.r03.s07.c01",
+     "section": "RECALL PROCEDURE CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the second side-by-side row beside PREFERRED HYGIENIST. No row label. Read-only grey box showing ALL; blue SELECT button with a building icon (same icon as the office SELECT button) to its right."
+    },
+    {
+     "control_id": "recall_reports.r03.s08.c01",
+     "section": "SCHEDULED/NOT SCHEDULED",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "ALL",
+      "Scheduled",
+      "Not Scheduled"
+     ],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section; three radios on one row, no row label. ALL carries the blue dot. Only this report has this section."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Age Range",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "First cell of a row that also holds the From and To boxes (thin vertical divider after the checkbox cell). Blue tick present (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c02",
+     "section": "OTHER OPTIONS",
+     "label": "From",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0",
+     "enabled": true,
+     "notes": "Same row as the Age Range checkbox: label 'From', then a box with the light editable fill showing 0. Its state when Age Range is unticked is not shown."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c03",
+     "section": "OTHER OPTIONS",
+     "label": "To",
+     "type": "number_input",
+     "options": [],
+     "default_value": "999",
+     "enabled": true,
+     "notes": "Same row, right of From: label 'To', then a box with the light editable fill showing 999. Its state when Age Range is unticked is not shown."
+    },
+    {
+     "control_id": "recall_reports.r03.s09.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Own row below the Age Range row. PARTIALLY CLIPPED: only the top 13 px of this 20 px row are visible before the bottom action bar covers it. The label text is fully readable and the top 9 of the checkbox's 12 pixel rows are visible; they are empty, including the rows where a tick would be drawn, so it is unchecked. Whether it is the last control cannot be seen."
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "recall_reports.r03.k01",
+     "about": "truncation",
+     "control_id": "",
+     "text": "Include Inactive Patients is the last control of the panel: nothing lies below the row that the action bar cuts, so the criteria are complete as transcribed.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Inactive Patients` is the last control."
+    },
+    {
+     "correction_id": "recall_reports.r03.k02",
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s03.c01",
+     "text": "The range is applied to the recall due date: a future range lists upcoming recalls, a past range overdue ones.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Range on the recall due date: future range = upcoming, past range = overdue."
+    },
+    {
+     "correction_id": "recall_reports.r03.k03",
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s08.c01",
+     "text": "Scheduled / Not Scheduled test whether a future appointment contains the recall code - a patient who is booked but whose appointment does not carry the code still lists as not scheduled. Not Scheduled is the working list.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Whether a future appointment contains the code. `Not Scheduled` is the working list."
+    },
+    {
+     "correction_id": "recall_reports.r03.k04",
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s08.c01",
+     "text": "Scheduled / Not Scheduled is evaluated per recall code: a patient with two of three codes scheduled still lists for the third.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Evaluation is per code: with two of three codes scheduled, the patient still lists for the third"
+    },
+    {
+     "correction_id": "recall_reports.r03.k05",
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s07.c01",
+     "text": "ALL = every recallable code; the vendor advises choosing anchor codes only (for example the adult / child prophylaxis codes).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`ALL` = every recallable code; vendor advises anchor codes only"
+    },
+    {
+     "correction_id": "recall_reports.r03.k06",
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s05.c01",
+     "text": "PREFERRED PROVIDER and PREFERRED HYGIENIST filter on the patient's preferred provider / hygienist.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Filter on the patient's preferred provider / hygienist (columns `Pref Prdr`, `Pref Hyg`)."
+    },
+    {
+     "correction_id": "recall_reports.r03.k07",
+     "about": "meaning",
+     "control_id": "recall_reports.r03.s08.c01",
+     "text": "Not Scheduled reproduces the former menu report Recall Due/Overdue but Not Scheduled Report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Recall Due/Overdue but Not Scheduled Report` | `Recall Due Report` → `Not Scheduled`"
+    },
+    {
+     "correction_id": "recall_reports.r03.k08",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Recall Due Report it is implied rather than shown (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+    }
+   ]
+  },
+  {
+   "report_id": "recall_reports.r04",
+   "name": "Post-Op Report",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "4.PNG only (second radio of the right list column is the filled one), default state. Smallest criteria set of the category. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); PROCEDURE DATE RANGE (full width: Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | TRANSACTION PROVIDER (right half); OTHER OPTIONS (full width, one row). Same criteria as the Procedural Recall Report minus the RECALL PROCEDURE CODES section and minus the Age Range / From / To row. About 150 px of uniform blank panel follow the last row down to the action bar and there is no scrollbar, so nothing is clipped. No greyed-out control, no dropdown, no popup; the contents of the three SELECT dialogs were not captured.",
+   "controls": [
+    {
+     "control_id": "recall_reports.r04.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+    },
+    {
+     "control_id": "recall_reports.r04.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Two radios on one row, no row label. Office carries the blue dot."
+    },
+    {
+     "control_id": "recall_reports.r04.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+    },
+    {
+     "control_id": "recall_reports.r04.s03.c01",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill. 11/21/2026 is the capture day, so the default appears to be today's date (inference)."
+    },
+    {
+     "control_id": "recall_reports.r04.s03.c02",
+     "section": "PROCEDURE DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Row directly below Start Date, same layout: label cell, then date box with a calendar icon inside it. Same default as Start Date."
+    },
+    {
+     "control_id": "recall_reports.r04.s04.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "LEFT half of a side-by-side row (TRANSACTION PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r04.s05.c01",
+     "section": "TRANSACTION PROVIDER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "RIGHT half of the side-by-side row beside EXCLUDE PATIENT TYPE. No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+    },
+    {
+     "control_id": "recall_reports.r04.s06.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Only control of OTHER OPTIONS in this report - there is NO Age Range / From / To row here (unlike the other three reports). Empty box (no tick); a large blank area follows."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "recall_reports.r04.k01",
+     "about": "other",
+     "control_id": "",
+     "text": "The population is fixed by the Post-Op flag of the procedure code (Procedure Code Setup): nothing prints unless codes were flagged Post-Op first. That is why this screen has no procedure-code picker - its absence in our capture is by design.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Nothing prints unless codes were flagged `Post-Op` first"
+    },
+    {
+     "correction_id": "recall_reports.r04.k02",
+     "about": "meaning",
+     "control_id": "recall_reports.r04.s03.c01",
+     "text": "PROCEDURE DATE RANGE is matched on the date the Post-Op flagged procedure was completed.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "List patients who had procedures flagged `Post-Op` in Procedure Code Setup completed in the range"
+    },
+    {
+     "correction_id": "recall_reports.r04.k03",
+     "about": "meaning",
+     "control_id": "recall_reports.r04.s05.c01",
+     "text": "TRANSACTION PROVIDER is the provider on the ledger line of the completed procedure.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Transaction Provider` | Provider on the ledger line of the completed procedure."
+    },
+    {
+     "correction_id": "recall_reports.r04.k04",
+     "about": "other",
+     "control_id": "",
+     "text": "Hidden population rule with no criteria control: accounts marked for collection (Send to Collection) are left out of the report. The document states the rule for all recall reports; the vendor article it cites concerns the procedural recall report, so for Post-Op Report it is implied rather than shown (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Accounts marked for collection are excluded from all recall reports"
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "recall_reports.r01",
+   "question": "What happens to the From / To boxes when Age Range is unticked? Not documented (the same row exists on Scheduled Recall Report and Recall Due Report)."
+  },
+  {
+   "report_id": "recall_reports.r02",
+   "question": "Is the RECALL PROCEDURE CODES list limited to recallable codes on Scheduled Recall Report and Recall Due Report? The document states only that any code can be chosen on Procedural Recall Report and that ALL means every recallable code on Recall Due Report."
+  },
+  {
+   "report_id": "recall_reports.r03",
+   "question": "What does No Recall Date select - presumably patients without any recall due date (unverified) - and what happens to Start Date / End Date when it is chosen?"
+  },
+  {
+   "report_id": "",
+   "question": "The document says accounts flagged Send to Collection are excluded from ALL recall reports, but the vendor article it cites is about the procedural recall report. Confirm the exclusion on Scheduled Recall Report, Recall Due Report and Post-Op Report."
+  },
+  {
+   "report_id": "",
+   "question": "Picker dialogs this document does not describe (it refers to legacy_report_outputs_daily_my.md for the picker dialogs): Transaction Provider, Preferred Provider, Preferred Hygienist, and the layout of the Recall Procedure Codes and Exclude Patient Type dialogs - for the last two only the value domain is given."
+  },
+  {
+   "report_id": "",
+   "question": "The Office / Office Group semantics and the UPDATE MY FAVORITES relabel are stated by the document as cross-cutting facts for the Appointment, Recall and Referral criteria screens and are recorded once, on Procedural Recall Report. Confirm that they hold on every report screen of the category."
+  },
+  {
+   "report_id": "",
+   "question": "Rights: the vendor lists the security right Reports - Recall Reports Screen in two variants, Full Control and View Only (view only = see the report list and the parameters, cannot generate). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described, so no rule is recorded."
+  },
+  {
+   "report_id": "",
+   "question": "Vendor sources the research could not read and that may document the criteria left open here (No Recall Date, the Age Range row): the release-note articles (sign-in required) and the video-only webinar 17 Recalls Keep'Em Coming Back For More."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+ "screenshot_control_count": 48,
+ "vendor_doc_control_count": 0
+}

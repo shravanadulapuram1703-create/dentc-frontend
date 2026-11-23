@@ -49,10 +49,10 @@ export default function InsuranceBenefitsModal({ patientId, insuranceType, onTyp
             {/* Benefits */}
             <div className="mb-4 grid grid-cols-3 gap-3">
               <Stat label="Individual Max" value={money(plan?.individual_max)} />
-              <Stat label="Max Remaining" value={money(record.max_remaining)} />
+              <Stat label="Max Remaining" value={money(record.max_remaining_effective ?? record.max_remaining)} />
               <Stat label="Family Max" value={money(plan?.family_max)} />
               <Stat label="Individual Deductible" value={money(plan?.individual_deductible)} />
-              <Stat label="Deductible Remaining" value={money(record.deductible_remaining)} />
+              <Stat label="Deductible Remaining" value={money(record.deductible_remaining_effective ?? record.deductible_remaining)} />
               <Stat label="Ortho Max" value={money(plan?.ortho_max)} />
             </div>
 

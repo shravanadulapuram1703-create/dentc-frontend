@@ -1,0 +1,174 @@
+{
+  "category": "statements_reports",
+  "reports": {
+    "statements_reports.r01": {
+      "report_key": "statements.statement_run",
+      "phase": "P1",
+      "actions": {
+        "PRINT STATEMENT REPORT": "run_format:statement_report - run of statements.statement_run with report_format = statement_report (side_effects none): one row per eligible responsible-party account, count and totals; never writes. View Only runs it and sees the list on screen; the PDF print and the XLSX / CSV of the list need Full Control of the statements family (PD-10), exports additionally reports_export_data_files.",
+        "PRINT STATEMENTS": "run_format:statements - run with report_format = statements (side_effects writes): one statement document per eligible account, PDF layout statement in volumes of 500; the commit_builder writes a NEW statement_runs header (DATA-22) and one frozen patient_statements row per account (batch_id = statement_runs id, statement_date, totals, ageing, message, snapshot of the lines, delivery_status generated) in the terminal transaction. Needs action_right_codes.commit = reports_statements_screen_full_control and a confirmation (confirm_side_effects); never cached, never scheduled.",
+        "UPDATE STATEMENT DATES": "action:update_statement_dates - bulk action (scope bulk, legacy_action UPDATE STATEMENT DATES) over the snapshot of a succeeded statements run: per account sets accounts.last_statement_date and accounts.statement_locked_through to the run's statement_date, sets the run's patient_statements rows (by batch_id) to delivery_status sent and delivery_method print (email or both once e-statements apply; NEW delivery_status vocabulary generated / sent / paper_sent / emailed / reopened, owner 03 DATA-22), so they print as the 'Statement Sent - $X.XX' ledger line; stamps the NEW columns statement_runs.dates_updated_at / dates_updated_by (DATA-22); skips accounts whose balance changed since the run (reason balance_changed); idempotent per (batch_id, action_key, account_id). Right reports_statement_allow_updating_statement_dates; confirmation required; a statement_date equal to the office-local today needs a second confirmation (vendor advice)."
+      },
+      "dynamic_rules": {
+        "statements_reports.r01.d01": "exclude_open_claim_accounts is declared with visible_when [\"ctx\", \"feature.hold_statements_with_open_claims\"] (04 shared rule). The ctx fact is read from a NEW organisation setting account_settings.hold_statements_with_open_claims (owner 03 / 08). Feature off: the checkbox is not served and its value is forced to the disabled_value false, so it adds no predicate and is echoed as 'not applied'. Feature on: shown in the RIGHT TABLE with default false; ticked drops every account with an open claim of any member."
+      }
+    }
+  },
+  "controls": {
+    "statements_reports.r01.s01.c01": {
+      "status": "unknown_legacy",
+      "param": "statement_date",
+      "param_type": "date",
+      "default": "yesterday",
+      "default_differs_reason": "04 proposes today; the capture shows the day before the capture date (11/20/2026), and the vendor warns against updating statement dates with today's date because it locks today's entries. The token yesterday reproduces the captured value; confirm the rule on the live tool.",
+      "notes": "Role run_date (04 section 3.3): the Billing Date printed on every statement, the as-of date of the balances and the ageing grid ('Total Due as of <date>'), the upper bound of the itemised lines, and the value UPDATE STATEMENT DATES writes. Required. Default rule unconfirmed: check on the live tool whether the box opens with the previous day, today or a stored date (for example the end of last month)."
+    },
+    "statements_reports.r01.s01.c09": {
+      "status": "replicated",
+      "param": "account_balance_over",
+      "param_type": "decimal",
+      "default": "5.00",
+      "notes": "Statements meaning: strictly greater than, applied to the total balance of the guarantor account (insurance plus patient portions, all offices of the account, as of statement_date; rpt_ar_open_items unit account). Accounts with a balance of exactly 0.00 never qualify. Legacy measure (account total versus estimated patient portion) is not documented in so many words - confirm on the live tool with an account whose patient portion is below and whose total is above the threshold."
+    },
+    "statements_reports.r01.s01.c10": {
+      "status": "replicated",
+      "param": "include_credit_balances",
+      "param_type": "boolean",
+      "default": false,
+      "notes": "Statements meaning differs from the Aging reports: the threshold account_balance_over already drops every account below 5.00, so true ADDS the accounts whose total balance is negative (credit statements) to the population; the threshold is not applied to them. false = no credit statement. Meaning inferred (no vendor description); confirm on the live tool."
+    },
+    "statements_reports.r01.s01.c12": {
+      "status": "replicated",
+      "param": "suppress_aging",
+      "param_type": "boolean",
+      "default": false,
+      "notes": "Role layout on format statements: true removes the ageing grid (Current ... Over120, Total Balance, Estimated Insurance / Patient rows) from each statement; Total Due stays. Whether Reg Cont. Bal. / Ort Cont. Bal. are removed as well is not documented (proposal: kept). On format statement_report it has no effect. Meaning inferred from the label (no vendor description)."
+    },
+    "statements_reports.r01.s01.c13": {
+      "status": "replicated",
+      "param": "hide_insurance_shares",
+      "param_type": "boolean",
+      "default": false,
+      "notes": "Role layout on format statements: true replaces the Estimated Insurance and Estimated Patient rows of the ageing grid by one row Total (Current ... Over120, Total Balance) and removes the Ins Exp / Pat Por columns of the service_style layout. Population unchanged. Meaning inferred from the label."
+    },
+    "statements_reports.r01.s01.c14": {
+      "status": "replicated",
+      "param": "hide_credit_card_section",
+      "param_type": "boolean",
+      "default": false,
+      "notes": "Role layout on format statements: true prints the remittance slip without the card fields (Credit Card # / CID / Exp Date / Name as it appears on the Credit Card / Type of Card / Signature); Check stays. Vendor viewer shows statement variants named ..._withoutCC, which fits; meaning otherwise inferred."
+    },
+    "statements_reports.r01.s02.c01": {
+      "status": "replicated",
+      "param": "last_statement_date",
+      "param_type": "display",
+      "default": "server_value",
+      "notes": "display_source office_last_statement_date: statement_date of the latest statement_runs row (NEW, DATA-22) of the resolved office (home office of the run) whose dates were updated (NEW column dates_updated_at not null), else empty. Empty for every migrated tenant until a run is updated (no statement was migrated)."
+    },
+    "statements_reports.r01.s02.c02": {
+      "status": "replicated",
+      "param": "last_close_out_date",
+      "param_type": "display",
+      "default": "server_value",
+      "notes": "display_source office_last_close_out_date: latest financial_period_locks row covering the resolved office (DATA-29, P2). Until DATA-29 the value is the NEW tenant setting legacy_close_out_date written by the migration (the captured 12/31/2019), else empty. Read-only; Close Out itself is Setup, not this screen."
+    },
+    "statements_reports.r01.s02.c05": {
+      "status": "replicated",
+      "param": "exclude_statement_sent_within",
+      "param_type": "lookback_days",
+      "default": false,
+      "notes": "Checkbox of the sentence 'Exclude accounts where statement was sent within last [n] days.'. true drops an account that has a patient_statements row that counts as sent (delivery_status in sent, paper_sent, emailed; reopened and generated do not count; set defined by DATA-22), any office, with statement_date > statement_date - n days and <= statement_date; with n = 0 only a statement of the same statement_date counts (inferred: the legacy reference day is not documented - statement date assumed, not today)."
+    },
+    "statements_reports.r01.s02.c06": {
+      "status": "unknown_legacy",
+      "param": "exclude_statement_sent_within_days",
+      "param_type": "lookback_days",
+      "default": 0,
+      "notes": "Day list of the within-last sentence, captured collapsed with value 0 and enabled while the checkbox is unticked (no enabling rule, 04 section 9.6; the value is ignored while exclude_statement_sent_within is false). Until the list is read, the server accepts an integer 0-365. Live check: expand the dropdown and record every value."
+    },
+    "statements_reports.r01.s02.c07": {
+      "status": "replicated",
+      "param": "exclude_insurance_expected_accounts",
+      "param_type": "boolean",
+      "default": true,
+      "notes": "Default checked on Statements (captured and vendor text). true drops accounts whose open patient portion is <= 0 while an insurance portion is still expected (sum open_patient <= 0 AND sum open_insurance_est > 0 over the account's open items as of statement_date). For migrated charges without the claim_id backfill open_insurance_est is 0 (split_quality unknown), so such accounts are NOT dropped - counted in the run warning."
+    },
+    "statements_reports.r01.s02.c08": {
+      "status": "replicated",
+      "param": "exclude_sent_to_collection",
+      "param_type": "boolean",
+      "default": false,
+      "notes": "true drops accounts with rpt_account_dim.send_collections = true (the legacy Sent to Collection flag of the responsible party)."
+    },
+    "statements_reports.r01.s02.c09": {
+      "status": "replicated",
+      "param": "exclude_open_claim_accounts",
+      "param_type": "boolean",
+      "default": false,
+      "notes": "Visible only with the organisation feature hold_statements_with_open_claims (rule d01). true drops an account when any member patient has a claim in rpt_claim_facts with status_class in (unsent, sent, partially_paid), NOT is_preauth and outstanding_quality <> unknown. Migrated open claims with outstanding_quality unknown do not hold the account: availability code open_claim_quality_unknown prints their count. Inferred: whether the legacy 'open claim' includes created-not-sent claims and pre-authorisations, and whether 'the Patient' means any member or the guarantor patient only - confirm on the live tool."
+    },
+    "statements_reports.r01.s02.c10": {
+      "status": "replicated_enhanced",
+      "param": "exclude_resp_party_type_codes",
+      "param_type": "entity_multi",
+      "default": "none",
+      "notes": "Exclude filter on rpt_account_dim.resp_party_type (source definitions:resp_party_type); none = exclude nothing; rows without a type are kept. Needs DATA-53 (the type is NULL on self-guarantor accounts until then). Enhanced: chip box with search instead of the SELECT dialog, whose content was never captured."
+    },
+    "statements_reports.r01.x01": {
+      "status": "replicated",
+      "param": "general_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": "server_value",
+      "notes": "Shared vendor-doc parameter (04 section 9.7): text, validation.max_length 100, default server_value = office_statement_settings.message_general of the run's office. Printed in the Messages area of every statement of the run. On this report role query, not layout as 04 section 9.7 declares: the text is frozen into patient_statements.message by the commit, so it must be part of params, the run hash and the audit record (challenge to 04: role query for the Statements messages, layout kept for the Walkout Report)."
+    },
+    "statements_reports.r01.x02": {
+      "status": "replicated",
+      "param": "current_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": "server_value",
+      "notes": "Shared vendor-doc parameter: max_length 100, default server_value = office_statement_settings.message_current. Printed after the general message on statements whose message_bucket is current (oldest open debit of the account aged 0-29 days as of statement_date, bucket set legacy). Role query on this report (frozen into patient_statements.message)."
+    },
+    "statements_reports.r01.x03": {
+      "status": "replicated",
+      "param": "over_30_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": "server_value",
+      "notes": "Shared vendor-doc parameter: max_length 100, default server_value = office_statement_settings.message_30. Printed when message_bucket is over_30 (oldest open debit 30-59 days). Role query on this report."
+    },
+    "statements_reports.r01.x04": {
+      "status": "replicated",
+      "param": "over_60_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": "server_value",
+      "notes": "Shared vendor-doc parameter: max_length 100, default server_value = office_statement_settings.message_60. Printed when message_bucket is over_60 (60-89 days). Role query on this report."
+    },
+    "statements_reports.r01.x05": {
+      "status": "replicated",
+      "param": "over_90_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": "server_value",
+      "notes": "Shared vendor-doc parameter: max_length 100, default server_value = office_statement_settings.message_90. Printed when message_bucket is over_90 (90-119 days). Role query on this report."
+    },
+    "statements_reports.r01.x06": {
+      "status": "replicated",
+      "param": "over_120_message",
+      "param_type": "text",
+      "option_map": {},
+      "default": "server_value",
+      "notes": "Shared vendor-doc parameter: max_length 100, default server_value = office_statement_settings.message_120. Printed when message_bucket is over_120 (120 days and more). Role query on this report. Live check: whether the legacy bucket is driven by the oldest open debit of the account or by the patient portion only."
+    },
+    "statements_reports.r01.x07": {
+      "status": "help_text",
+      "param": "",
+      "param_type": "",
+      "option_map": {},
+      "default": "",
+      "notes": "Remaining Characters counter of the message boxes: kept as the live counter that TextParam shows under each of the six message parameters (validation.max_length 100). One counter per box assumed; position not documented."
+    }
+  }
+}

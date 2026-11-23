@@ -1,0 +1,230 @@
+{
+ "category": "appointment_reports",
+ "reports": {
+  "appointment_reports.r01": {
+   "report_key": "appointment.appointment_list",
+   "phase": "P3",
+   "dynamic_rules": {
+    "appointment_reports.r01.d01": "report_type = confirmation_call_list: only office_scope, provider_ids, date_range (date_from / date_to) and include_patient_balance are enabled. exclude_patient_type_codes, exclude_resp_party_type_codes, cancellation_reason_codes, include_off_call_list and sort_by are disabled by enabled_when report_type != confirmation_call_list; operatory_ids, appointment_length and appointment_statuses by enabled_when report_type not in [confirmation_call_list, cancelled_list]. A disabled parameter is replaced by its disabled_value (= its default: none, none, all, false, appointment_date, all, any, []) before hashing and execution, so it cannot change the rows.",
+    "appointment_reports.r01.d02": "report_type = cancelled_list: exclude_patient_type_codes, exclude_resp_party_type_codes, cancellation_reason_codes and include_off_call_list are enabled (enabled_when report_type != confirmation_call_list); operatory_ids, appointment_length and appointment_statuses stay disabled (enabled_when report_type not in [confirmation_call_list, cancelled_list]). sort_by is enabled (inferred rule report_type != confirmation_call_list) and include_patient_balance has no rule (always enabled); both states are unconfirmed for this format and are open questions of the catalog entry.",
+    "appointment_reports.r01.d03": "office_scope: mode office (legacy Office) fills office_ids - default token working_office, also an office id list, my_offices or all; mode office_group (legacy Office Group) fills office_group_id or office_group_ids from lookup:office_groups, default all. Exactly one value key is set. The same rule holds on all nine reports of the category; the resolved office list filters the appointment office (rpt_appointment_facts.office_id / rpt_lab_cases.office_id).",
+    "appointment_reports.r01.d04": "No relabel rule: ADD TO MY FAVORITES maps to saved_view (server-side saved view plus favorite, report_saved_views). Several views per report are allowed; when the runner was opened from a saved view the action reads Update saved view and overwrites that view. Applies to all nine reports of the category."
+   }
+  },
+  "appointment_reports.r02": {
+   "report_key": "appointment.missed_appointments_not_marked_as_missed",
+   "phase": "P3"
+  },
+  "appointment_reports.r03": {
+   "report_key": "appointment.new_patients_via_appointments",
+   "phase": "P3"
+  },
+  "appointment_reports.r04": {
+   "report_key": "appointment.lab_report",
+   "phase": "P3"
+  },
+  "appointment_reports.r05": {
+   "report_key": "appointment.smartassist_report_card",
+   "phase": "P3"
+  },
+  "appointment_reports.r06": {
+   "report_key": "appointment.appointments_confirmed_via_vendors",
+   "phase": "P3"
+  },
+  "appointment_reports.r07": {
+   "report_key": "appointment.appointment_time_stamps",
+   "phase": "P3"
+  },
+  "appointment_reports.r08": {
+   "report_key": "appointment.appointment_detail",
+   "phase": "P3",
+   "dynamic_rules": {
+    "appointment_reports.r08.d01": "only_appointnow_appointments = true enables appointnow_source (enabled_when only_appointnow_appointments == true; otherwise disabled_value both) and disables user_ids and group_by (enabled_when only_appointnow_appointments == false; disabled values all and provider). The printed title becomes Appointment Detail (For Only AppointNow Appointments) through title_templates, and the main block groups Office -> User Appoint Now -> Provider -> day band as in the legacy sample. The AppointNow block takes its level list from only_appointnow_appointments, never from group_by: it ignores the (disabled) group_by value."
+   }
+  },
+  "appointment_reports.r09": {
+   "report_key": "appointment.lab_cost_report",
+   "phase": "P3"
+  }
+ },
+ "controls": {
+  "appointment_reports.r01.s01.c01": {
+   "notes": "Legacy section title is REPORT FORMAT TO PRINT (clipped above our capture; read from vendor screenshots). Selects the list variant: population, columns and printed title (Cancelled List prints Appointment Cancellation List). Fifth option was labelled Cancelled From Denticon Patient Engagement until 2023: kept as a search alias (legacy_names), not as an option. Only the Confirmation Call List (our capture) and Cancelled List (vendor screenshot) states are known; capture Call List, Pull Chart List, Cancelled From Automated Campaigns and Missed List on the live tool - they drive the nine greyed controls."
+  },
+  "appointment_reports.r01.x01": {
+   "status": "replicated_enhanced",
+   "param": "output_format",
+   "param_type": "enum",
+   "option_map": {
+    "PDF": "pdf",
+    "Excel": "xlsx"
+   },
+   "default": "pdf",
+   "default_differs_reason": "",
+   "enabled_when": "",
+   "notes": "VENDOR-DOC: PRINT FORMAT section above the list-type radios, outside our capture. Shared vendor-doc parameter of 04 (output_format, PDF -> pdf, Excel -> xlsx, default pdf). The legacy default is not stated for this report; pdf is the captured default of the other eight reports of the category - confirm on the live tool. Enhanced with csv; role output (never changes the rows)."
+  },
+  "appointment_reports.r04.s05.c01": {
+   "enabled_when": "report_type == due_date",
+   "notes": "Rule inferred (greyed with Appointment List in our capture). Override of 04 9.3 row 10 (report_type != appointment_list, inferred): the research notes (Lab Report, criteria table) infer the box is disabled unless REPORT TYPE = Due Date, and the old menu report Appointment List - Lab due date is the only documented use of a due date; no source gives the box a meaning for Not Sent or Not Received (the Not Received vendor screenshot shows a date in the box but its state is unreadable, and a greyed box also shows a date). Narrower rule chosen so that an undefined filter never reaches the builder; aligning 04 9.3 row 10 and the 04 DUE DATE row is part of RPT-APPT-21. Single date on rpt_lab_cases.lab_due_on (equality, the cases due on that day - unverified); APPOINTMENT DATE RANGE is disabled with Due Date (r04.s07 rule). Confirm on the live tool which report types enable it."
+  },
+  "appointment_reports.r08.s01.c01": {
+   "notes": "Regular = live appointments (NOT is_legacy_archive); Archived = the migrated legacy archive partition (rpt_appointment_facts.is_legacy_archive, loaded from APPTH_ARCHIVE). On app rows appointments.is_archived means deleted, never archived (03 3.6): deleted appointments are excluded under both options, as in the legacy tool. Archived returns migrated history only; app-era appointments are never archived. Meaning of Archived in the legacy tool is unverified (research 10 #5) - confirm."
+  },
+  "appointment_reports.r08.s05.c02": {
+   "notes": "User role = the user who created the appointment (rpt_appointment_facts.created_by_user_id -> rpt_user_dim.user_key); vendor documentation: the report reviews the appointments created by a user. Migrated appointments carry no creating user and match only under all (APP). AppointNow bookings belong to the system user shown as Appoint Now (legacy login _APPOINTNOWPAT_): whether the legacy picker lists it is unknown. Disabled while only_appointnow_appointments is true (vendor screenshot)."
+  },
+  "appointment_reports.r08.s10.c03": {
+   "status": "superseded",
+   "param": "include_patient_home_office",
+   "param_type": "boolean",
+   "notes": "Clipped third row of OTHER OPTIONS in our capture. Vendor screenshots identify it as the checkbox Include Patient Home Office, recorded as appointment_reports.r08.x01 and mapped there (one control, not two). This placeholder row adds no parameter of its own."
+  },
+  "appointment_reports.r08.x01": {
+   "status": "replicated",
+   "param": "include_patient_home_office",
+   "param_type": "boolean",
+   "option_map": {},
+   "default": false,
+   "default_differs_reason": "legacy default not documented (vendor screenshots); unticked like the other OTHER OPTIONS rows, confirm on the live tool",
+   "enabled_when": "",
+   "notes": "VENDOR-DOC: third OTHER OPTIONS row of Appointment Detail (vendor screenshots 2023, 2026). Legacy default not documented: the definition uses false (unticked, like the two other rows of the column) until confirmed. Meaning unverified: read as a layout switch that prints the patient's home office (rpt_appointment_facts.patient_home_office_id -> rpt_office_dim.office_name) beside the appointment office; the alternative reading - widen the office filter to patients whose home office is selected - must be ruled out on the live tool. Role query (adds a column)."
+  },
+  "appointment_reports.r09.s01.c01": {
+   "notes": "Legacy title REPORT TYPE, but the radio is the date basis of the APPOINTMENT DATE RANGE below it (vendor documentation; the section keeps its title whichever option is chosen). Sent Date / Due Date / Received Date -> rpt_lab_cases.lab_sent_on / lab_due_on / lab_received_on. All -> appointment_date is unverified (04 7.3, to confirm): the alternative reading - the range matches any of the four dates - must be checked on the live tool. The vendor recommends Received Date for the monthly lab cost run. Same choice as date_basis of the existing lab cost report endpoint (appointment / sent / due / received). If the live tool shows the any-of-four reading, the option value any_lab_date (NEW, owner 04 7.3) is reserved for it."
+  },
+  "appointment_reports.r01.s02.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r01.s02.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r01.s03.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id."
+  },
+  "appointment_reports.r01.s05.c01": {
+   "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them."
+  },
+  "appointment_reports.r02.s02.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r02.s02.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r02.s03.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id."
+  },
+  "appointment_reports.r02.s05.c01": {
+   "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them."
+  },
+  "appointment_reports.r03.s02.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r03.s02.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r04.s03.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r04.s03.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r04.s04.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id."
+  },
+  "appointment_reports.r04.s08.c01": {
+   "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them."
+  },
+  "appointment_reports.r05.s03.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r05.s03.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r05.s04.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id."
+  },
+  "appointment_reports.r06.s02.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r06.s02.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r07.s02.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r07.s02.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r07.s03.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id."
+  },
+  "appointment_reports.r08.s04.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r08.s04.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r09.s03.c01": {
+   "notes": "Office versus Office Group. Both options enabled on this report (nothing greyed in the capture); applied to the appointment office (rule d03)."
+  },
+  "appointment_reports.r09.s03.c02": {
+   "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. Filters the appointment office (rpt_appointment_facts.office_id; rpt_lab_cases.office_id on the lab reports)."
+  },
+  "appointment_reports.r09.s04.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Provider role (line, appointment, preferred) is declared per report. Role appointment on this report: the appointment provider; roster-first list, never scoped by providers.office_id."
+  },
+  "appointment_reports.r09.s07.c01": {
+   "notes": "Exclude filter: None = exclude nothing; rows whose value is in the list are dropped. Dialog content was never captured - confirm on the live tool. Patients without a type are kept; no_type_defined drops them."
+  },
+  "appointment_reports.r02.s04.c01": {
+   "notes": "Range on rpt_appointment_facts.appointment_date (fixed basis), office-local; capped at the office-local now: past dates plus, on today, only appointments whose scheduled end (start_time + duration_minutes) has passed (product decision, INFERRED - the legacy treatment of today is open question 1 of the catalog entry). Without the today branch the legacy default run (today / today, end of day) would always be empty. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r02.s04.c02": {
+   "notes": "Inclusive end, capped at the office-local now (same rule as Start Date). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r04.s07.c01": {
+   "enabled_when": "report_type != due_date",
+   "notes": "Range on the date of the appointment that carries the lab case (rpt_lab_cases.appointment_date), office-local. Disabled with REPORT TYPE = Due Date (inferred): that type lists the cases due on DUE DATE whatever their appointment date, and the disabled range (disabled_value = the default) is not applied by the due_date branch. Confirm on the live tool (Lab Report open question 1). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r04.s07.c02": {
+   "enabled_when": "report_type != due_date",
+   "notes": "Inclusive end of the appointment-date range. Disabled with REPORT TYPE = Due Date (inferred): that type lists the cases due on DUE DATE whatever their appointment date, and the disabled range (disabled_value = the default) is not applied by the due_date branch. Confirm on the live tool (Lab Report open question 1). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r05.s01.c01": {
+   "notes": "Detail = one row per appointment (block card_detail, title SmartAssist Report Card - Detail, DOCUMENTED); Summary = percentage rows per office and provider without patient rows (block card_summary, title SmartAssist Report Card - Summary, layout INFERRED: not seen in vendor material). Nothing greyed in the capture; whether Summary greys any control is unknown (catalog open question 1)."
+  },
+  "appointment_reports.r05.s05.c01": {
+   "notes": "Range on rpt_appointment_facts.appointment_date (fixed basis), office-local. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r05.s05.c02": {
+   "notes": "Inclusive end of the appointment-date range. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r05.s06.c01": {
+   "notes": "Unticked (default): population = status_class = 'completed' OR (status_class = 'past_unresolved' AND is_kept) - checked in through checked out, or posted procedures (on migrated rows the same-day visit charge). Ticked: adds every other not-cancelled row (no_show, past_unresolved not kept, in_office, confirmed, unconfirmed, scheduled), future appointments included. Cancelled rows depend on Include Cancelled Appointments only. Whether an in_office row needs the tick is unverified (catalog open question 5)."
+  },
+  "appointment_reports.r06.s03.c01": {
+   "notes": "Basis inferred: rpt_appointment_facts.appointment_date (04 7.2 row 4); the alternative reading, the confirmation date, is offered as the enhancement date_basis = confirmed_date (NEW value of 04 7.3). Confirm on the live tool (catalog open question 2). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r06.s03.c02": {
+   "notes": "Inclusive end; basis inferred as Start Date. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r08.s11.c01": {
+   "enabled_when": "include_cancelled_appointments == true",
+   "notes": "Rule inferred: greyed while Include Cancelled Appointments is unticked in our capture; the unlock was not observed (catalog open question 5). Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Applies to cancelled rows only."
+  },
+  "appointment_reports.r01.s07.c01": {
+   "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Dialog content was never captured - confirm list source and inactive rows on the live tool. Greyed with confirmation_call_list (our capture); enabled with cancelled_list (vendor screenshot, d02). Applies to cancelled rows only; states for call_list, pull_chart_list, cancelled_from_automated_campaigns and missed_list never captured (catalog family question 1)."
+  },
+  "appointment_reports.r01.s11.c01": {
+   "enabled_when": "report_type != confirmation_call_list",
+   "notes": "Rule inferred: disabled with confirmation_call_list (captured); enabled for the other formats is presumed, the cancelled_list state is not stated (family question 1). Row order inside the innermost band."
+  },
+  "appointment_reports.r09.s06.c01": {
+   "notes": "Basis chosen by REPORT TYPE (date_basis): appointment_date, lab_sent_on, lab_due_on or lab_received_on of rpt_lab_cases; the section keeps its legacy title APPOINTMENT DATE RANGE whatever the basis. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  },
+  "appointment_reports.r09.s06.c02": {
+   "notes": "Inclusive end; basis chosen by REPORT TYPE (date_basis). Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+  }
+ }
+}

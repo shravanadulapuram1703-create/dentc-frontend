@@ -1,0 +1,585 @@
+{
+  "category": "recall_reports",
+  "window_title": "Recall Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/recall_reports",
+  "report_list": [
+    "Procedural Recall Report",
+    "Scheduled Recall Report",
+    "Recall Due Report",
+    "Post-Op Report"
+  ],
+  "reports": [
+    {
+      "name": "Procedural Recall Report",
+      "screenshots": ["1.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. Office carries the blue dot. Presumably switches the picker on the next row between offices and office groups (dependency not visible)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill. 11/21/2026 is the capture day (the screenshot files are dated Nov 21, 2026), so the default appears to be today's date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: label cell, then date box with a calendar icon inside it. Same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "LEFT half of a side-by-side row (TRANSACTION PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "TRANSACTION PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half of the side-by-side row beside EXCLUDE PATIENT TYPE. No row label - the section header is the only caption. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "RECALL PROCEDURE CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "FULL-WIDTH section in this report (in the Scheduled Recall and Recall Due reports the same section is a right-half column). No row label. Wide read-only grey box (a little over half of the panel width) showing ALL; blue SELECT button with a building icon (same icon as the office SELECT button) to its right."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Age Range",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "First cell of a row that also holds the From and To boxes (thin vertical divider after the checkbox cell). Blue tick present (pixel-checked)."
+            },
+            {
+              "label": "From",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0",
+              "enabled": true,
+              "notes": "Same row as the Age Range checkbox: label 'From', then a box with the light editable fill showing 0 (lower age bound). Its state when Age Range is unticked is not shown."
+            },
+            {
+              "label": "To",
+              "type": "number_input",
+              "options": [],
+              "default_value": "999",
+              "enabled": true,
+              "notes": "Same row, right of From: label 'To', then a box with the light editable fill showing 999 (upper age bound). Its state when Age Range is unticked is not shown."
+            },
+            {
+              "label": "Include Inactive Patients",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Own row below the Age Range row; empty box (no tick). Last control of the report - blank panel follows."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "1.PNG only (first radio of the left list column is the filled one), default state. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); PROCEDURE DATE RANGE (full width: Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | TRANSACTION PROVIDER (right half); RECALL PROCEDURE CODES (full width); OTHER OPTIONS (full width: Age Range / From / To row, then Include Inactive Patients row). About 65 px of uniform blank panel follow the last row down to the action bar and there is no scrollbar, so nothing is clipped. No greyed-out control, no dropdown, no popup; the contents of the four SELECT dialogs (offices / office groups, patient types, providers, recall procedure codes) were not captured."
+    },
+    {
+      "name": "Scheduled Recall Report",
+      "screenshots": ["2.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. Office carries the blue dot."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+            }
+          ]
+        },
+        {
+          "title": "SCHEDULED DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill. 11/21/2026 is the capture day, so the default appears to be today's date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: label cell, then date box with a calendar icon inside it. Same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "LEFT half of the first side-by-side row (PREFERRED PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "PREFERRED PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half of the first side-by-side row beside EXCLUDE PATIENT TYPE. No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "PREFERRED HYGIENIST",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "LEFT half of the second side-by-side row (RECALL PROCEDURE CODES is the right half). No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right. The header pixels look like 'PREFERRED HYCIENIST' because the bold header font draws G almost like C; the glyph has the G spur (see observations)."
+            }
+          ]
+        },
+        {
+          "title": "RECALL PROCEDURE CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half of the second side-by-side row beside PREFERRED HYGIENIST. No row label. Read-only grey box showing ALL; blue SELECT button with a building icon (same icon as the office SELECT button) to its right."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Age Range",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "First cell of a row that also holds the From and To boxes (thin vertical divider after the checkbox cell). Blue tick present (pixel-checked)."
+            },
+            {
+              "label": "From",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0",
+              "enabled": true,
+              "notes": "Same row as the Age Range checkbox: label 'From', then a box with the light editable fill showing 0. Its state when Age Range is unticked is not shown."
+            },
+            {
+              "label": "To",
+              "type": "number_input",
+              "options": [],
+              "default_value": "999",
+              "enabled": true,
+              "notes": "Same row, right of From: label 'To', then a box with the light editable fill showing 999. Its state when Age Range is unticked is not shown."
+            },
+            {
+              "label": "Include Inactive Patients",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Own row below the Age Range row; empty box (no tick). Last control of the report - blank panel follows."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "2.PNG only (second radio of the left list column is the filled one), default state. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); SCHEDULED DATE RANGE (full width: Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | PREFERRED PROVIDER (right half); PREFERRED HYGIENIST (left half) | RECALL PROCEDURE CODES (right half); OTHER OPTIONS (full width: Age Range / From / To row, then Include Inactive Patients row). Sections are listed row by row, left then right. Compared with the Procedural Recall Report: the date section is SCHEDULED DATE RANGE, the provider filter is PREFERRED PROVIDER instead of TRANSACTION PROVIDER, a PREFERRED HYGIENIST picker is added and RECALL PROCEDURE CODES becomes a right-half column. About 65 px of uniform blank panel follow the last row and there is no scrollbar, so nothing is clipped. No greyed-out control, no dropdown, no popup; the contents of the five SELECT dialogs were not captured."
+    },
+    {
+      "name": "Recall Due Report",
+      "screenshots": ["3.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. Office carries the blue dot."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+            }
+          ]
+        },
+        {
+          "title": "RECALL DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Recall Date Range", "No Recall Date"],
+              "default_value": "Recall Date Range",
+              "enabled": true,
+              "notes": "Two radios on the first row of the section, above the Start Date / End Date rows; no row label. Recall Date Range carries the blue dot. Only this report has this radio pair. What happens to the two date boxes when No Recall Date is chosen is not shown."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Second row of the section. Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill, shown enabled while Recall Date Range is selected. 11/21/2026 is the capture day, so the default appears to be today's date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Third row of the section, same layout as Start Date (calendar icon inside the box). Shown enabled while Recall Date Range is selected."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "LEFT half of the first side-by-side row (PREFERRED PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "PREFERRED PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half of the first side-by-side row beside EXCLUDE PATIENT TYPE. No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "PREFERRED HYGIENIST",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "LEFT half of the second side-by-side row (RECALL PROCEDURE CODES is the right half). No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right. The header pixels look like 'PREFERRED HYCIENIST' because the bold header font draws G almost like C; the glyph has the G spur (see observations)."
+            }
+          ]
+        },
+        {
+          "title": "RECALL PROCEDURE CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half of the second side-by-side row beside PREFERRED HYGIENIST. No row label. Read-only grey box showing ALL; blue SELECT button with a building icon (same icon as the office SELECT button) to its right."
+            }
+          ]
+        },
+        {
+          "title": "SCHEDULED/NOT SCHEDULED",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["ALL", "Scheduled", "Not Scheduled"],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section; three radios on one row, no row label. ALL carries the blue dot. Only this report has this section."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Age Range",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "First cell of a row that also holds the From and To boxes (thin vertical divider after the checkbox cell). Blue tick present (pixel-checked)."
+            },
+            {
+              "label": "From",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0",
+              "enabled": true,
+              "notes": "Same row as the Age Range checkbox: label 'From', then a box with the light editable fill showing 0. Its state when Age Range is unticked is not shown."
+            },
+            {
+              "label": "To",
+              "type": "number_input",
+              "options": [],
+              "default_value": "999",
+              "enabled": true,
+              "notes": "Same row, right of From: label 'To', then a box with the light editable fill showing 999. Its state when Age Range is unticked is not shown."
+            },
+            {
+              "label": "Include Inactive Patients",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Own row below the Age Range row. PARTIALLY CLIPPED: only the top 13 px of this 20 px row are visible before the bottom action bar covers it. The label text is fully readable and the top 9 of the checkbox's 12 pixel rows are visible; they are empty, including the rows where a tick would be drawn, so it is unchecked. Whether it is the last control cannot be seen."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": true,
+      "notes": "3.PNG only (first radio of the right list column is the filled one), default state. Largest criteria set of the category. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); RECALL DATE RANGE (full width: radio row, Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | PREFERRED PROVIDER (right half); PREFERRED HYGIENIST (left half) | RECALL PROCEDURE CODES (right half); SCHEDULED/NOT SCHEDULED (full width); OTHER OPTIONS (full width). Sections are listed row by row, left then right. TRUNCATION (bottom edge): the criteria content is taller than the visible criteria area - the last visible row (Include Inactive Patients, second row of OTHER OPTIONS) is cut by the fixed bottom action bar after 13 of its 20 px, which hides the bottom of its checkbox, the row's bottom border and anything that might follow. No scrollbar is drawn (the right edge of the criteria panel is pixel-identical to 2.PNG) and the top of the panel is complete (PRINT FORMAT header fully visible), so the hidden part is below. In the two sibling reports that have the Age Range row (1.PNG, 2.PNG) Include Inactive Patients is the last row of OTHER OPTIONS, so probably nothing follows here either, but that cannot be confirmed from this screenshot. No greyed-out control, no dropdown, no popup; the contents of the five SELECT dialogs were not captured."
+    },
+    {
+      "name": "Post-Op Report",
+      "screenshots": ["4.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. PDF carries the blue dot (pixel-checked)."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on one row, no row label. Office carries the blue dot."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios; blue SELECT button with a building icon to its right. 108 is the office id shown as 'OID :108' in the title bar (current office)."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row label in the left cell; date box in the next cell (starts about one third across the panel) with a calendar icon inside the box at its right end. Light editable fill. 11/21/2026 is the capture day, so the default appears to be today's date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row directly below Start Date, same layout: label cell, then date box with a calendar icon inside it. Same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "LEFT half of a side-by-side row (TRANSACTION PROVIDER is the right half). No row label - the section header is the only caption. Read-only grey box showing None; blue SELECT button with a person-plus icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "TRANSACTION PROVIDER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half of the side-by-side row beside EXCLUDE PATIENT TYPE. No row label. Read-only grey box showing ALL; blue SELECT button with a single-person icon to its right."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Inactive Patients",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Only control of OTHER OPTIONS in this report - there is NO Age Range / From / To row here (unlike the other three reports). Empty box (no tick); a large blank area follows."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "4.PNG only (second radio of the right list column is the filled one), default state. Smallest criteria set of the category. Row layout: PRINT FORMAT (full width); OFFICE/GROUP (full width: radio row, then picker row); PROCEDURE DATE RANGE (full width: Start Date row, End Date row); EXCLUDE PATIENT TYPE (left half) | TRANSACTION PROVIDER (right half); OTHER OPTIONS (full width, one row). Same criteria as the Procedural Recall Report minus the RECALL PROCEDURE CODES section and minus the Age Range / From / To row. About 150 px of uniform blank panel follow the last row down to the action bar and there is no scrollbar, so nothing is clipped. No greyed-out control, no dropdown, no popup; the contents of the three SELECT dialogs were not captured."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory. All 4 original screenshots (1363-1366 px wide, 584-589 px high), the 8 pre-rendered zooms and additional tight crops (prefix c in the zoom folder) were read. Readers A and B agreed on every report, section, control, option list, default value, enabled state and truncation flag (4 reports, 30 sections, 48 controls); their differences were note wording only. Every point was nevertheless re-checked on the pixels: the selected list radio of every file, blue-mark detection for every selected criteria radio and ticked checkbox, the fill colour of every button and input box, glyph dumps of every field value and of the disputed header letters, and a per-row scan of every pixel that differs from its row background in the criteria panel, the left panel, the title bar and the panel edges. Nothing exists beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no extra column of controls, no greyed-out control, no dropdown, no instruction / warning / legend text, no scrollbar on either panel and no footer text (below the panels 1.PNG, 3.PNG and 4.PNG show only a text-free light-grey frame strip a few pixels high; 2.PNG ends at the panels).\n\nCOVERAGE: 4 screenshots = 4 reports, each selected exactly once, in list order: 1.PNG = Procedural Recall Report, 2.PNG = Scheduled Recall Report, 3.PNG = Recall Due Report, 4.PNG = Post-Op Report. All four are the same two-panel screen in its default state - no popup, no expanded picker, no scrolled second view, no foreign screen. Consequently the contents of every SELECT dialog (offices, office groups, patient types, providers, hygienists, recall procedure codes) are NOT documented by these screenshots.\n\nSCREEN CHROME (identical in all 4): dark title bar with 'Recall Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right (the icon has no text, so it is not listed under actions). Left panel header 'SELECT REPORT' with exactly four radio entries in a 2 x 2 grid (left column: Procedural Recall Report, Scheduled Recall Report; right column: Recall Due Report, Post-Op Report); the rest of the left panel is a uniform empty dark area, so the list is neither clipped nor scrollable. A small splitter / collapse handle (three dots) sits on the border between the two panels. Right panel header 'REPORT CRITERIA' carries the CLEAR CRITERIA button (refresh icon) at its right end; it is grey in all four screenshots while every other button is blue, which appears to be its normal styling rather than a disabled state (not provable from the pixels). A fixed action bar at the bottom right of the criteria panel holds the blue buttons PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon); the left part of that bar is empty.\n\nRECURRING PATTERN: PRINT FORMAT (PDF / Excel, default PDF) and OFFICE/GROUP (Office / Office Group radios, default Office, plus an unlabelled picker showing 108 = the OID of the title bar) are identical in all four reports. Every report has one date-range section with Start Date and End Date (both 11/21/2026 = the capture day, i.e. the default appears to be today), an EXCLUDE PATIENT TYPE picker (default None) and an Include Inactive Patients checkbox (unchecked). DIFFERENCES: the date section is PROCEDURE DATE RANGE in Procedural Recall and Post-Op, SCHEDULED DATE RANGE in Scheduled Recall, and RECALL DATE RANGE with an extra radio pair Recall Date Range / No Recall Date in Recall Due. The provider filter is TRANSACTION PROVIDER in the two procedure-date reports and PREFERRED PROVIDER plus PREFERRED HYGIENIST in Scheduled Recall and Recall Due (all default ALL). RECALL PROCEDURE CODES (default ALL) and the Age Range checkbox (checked) with From 0 / To 999 exist in the three recall reports but not in Post-Op. SCHEDULED/NOT SCHEDULED (ALL / Scheduled / Not Scheduled, default ALL) exists only in Recall Due. This category has no REPORT FORMAT, GROUP BY or SORT BY section.\n\nCONVENTIONS: none of the pickers has a row label of its own - the section header is the only caption - so label is left empty, as for unlabelled radio groups. A picker is a read-only box (grey fill 220,223,226) plus a blue SELECT button; the date boxes and the From / To boxes use the lighter editable fill (241,241,241). SELECT icons: building for the office picker and for RECALL PROCEDURE CODES, person-plus for EXCLUDE PATIENT TYPE, single person for the provider and hygienist pickers. Sections that sit side by side are listed row by row, left then right. All controls are enabled in every screenshot.\n\nFONT CAVEAT: the bold uppercase header font draws G almost like C at this resolution, so the header pixels look like 'OFFICE/CROUP', '... DATE RANCE' and 'PREFERRED HYCIENIST'. A glyph-level comparison shows the small G spur at the lower right of that letter, which the genuine C in OFFICE, PROCEDURE, RECALL and SCHEDULED lacks, and the regular-weight radio label 'Office Group' under the first of those headers shows a clear capital G with its crossbar, so the titles are transcribed as OFFICE/GROUP, PROCEDURE / SCHEDULED / RECALL DATE RANGE and PREFERRED HYGIENIST.\n\nTRUNCATION: only 3.PNG (Recall Due Report) is clipped - its last visible row, Include Inactive Patients, is cut by the bottom action bar after 13 of its 20 px and no scrollbar is drawn, so any control below that row would be invisible. The other three screenshots end with uniform blank panel above the action bar."
+}

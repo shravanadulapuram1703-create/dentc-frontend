@@ -1491,8 +1491,13 @@ export default function AddNewPatient({
       else navigate(`/patient/${editPatientId}/overview`);
     } catch (error: any) {
       console.error("Error updating patient:", error);
+      // The backend's error envelope is `{ error: { message } }`; reading only
+      // `detail` surfaced the bare "Request failed with status code 422".
       const errorMessage =
-        error.response?.data?.detail || error.message || "Failed to update patient";
+        error.response?.data?.error?.message ||
+        error.response?.data?.detail ||
+        error.message ||
+        "Failed to update patient";
       setSaveError(errorMessage);
       alert(`Error updating patient: ${errorMessage}`);
     } finally {

@@ -1,0 +1,380 @@
+{
+ "category": "security_list_reports",
+ "reports": [
+  {
+   "report_id": "security_list_reports.r01",
+   "legacy_name": "User List",
+   "report_key": "lists.user_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r01.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "security_list_reports.r01.s02.c01",
+     "signature_id": "sig0169",
+     "legacy_section": "USER",
+     "legacy_label": "User",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "user_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog (dual list with INCLUDE ALL, search, sort) becomes a searchable multi-select; ALL = no restriction. Role on this report: the listed user account itself (rpt_user_dim.user_id IN (:user_ids)), not a poster or creator of records. Only real accounts are listed (rpt_user_dim rows with is_legacy_login = false); bare legacy login strings are never rows or options. The option source lookup:users returns active and inactive users with a status badge; a picked inactive user is printed only when include_inactive_users = true (inferred: the legacy precedence of the picker over the checkbox is not documented). Dialog content never captured - confirm list source and whether inactive users are listed on the live tool.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "security_list_reports.r01.s03.c01",
+     "signature_id": "sig0294",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Users",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_users",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "false (legacy default) = users with users.is_active = true only; true = active and inactive users, with an Active column showing the state. Applied after user_ids (a picked inactive user is dropped while unticked; inferred). Inactive in DentC = the deactivated account of Security > Users (no separate deleted state for users).",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "security_list_reports.r02",
+   "legacy_name": "Group List",
+   "report_key": "lists.group_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r02.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "security_list_reports.r03",
+   "legacy_name": "Group Rights List",
+   "report_key": "lists.group_rights_list",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r03.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  },
+  {
+   "report_id": "security_list_reports.r04",
+   "legacy_name": "User-Group Membership",
+   "report_key": "lists.user_group_membership",
+   "phase": "P3",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "security_list_reports.r04.s01.c01",
+     "signature_id": "sig0017",
+     "legacy_section": "PRINT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "PDF",
+      "Excel"
+     ],
+     "legacy_default": "PDF",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "output_format",
+     "param_type": "enum",
+     "option_map": {
+      "PDF": "pdf",
+      "Excel": "xlsx"
+     },
+     "default": "pdf",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "PRINT / PREVIEW always previews on screen first. Enhanced with csv. Excel is a flat typed sheet, not the legacy merged layout."
+    },
+    {
+     "control_id": "security_list_reports.r04.s02.c01",
+     "signature_id": "sig0024",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Detail",
+      "Summary"
+     ],
+     "legacy_default": "Detail",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_format",
+     "param_type": "enum",
+     "option_map": {
+      "Detail": "detail",
+      "Summary": "summary"
+     },
+     "default": "detail",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Row grain of the same membership population: detail = one row per office band x security group x member user; summary = one row per office band x security group with member_count = all printed members of the band and group (active members, plus inactive members when include_inactive_users = true) and inactive_member_count = its inactive part (only when include_inactive_users = true). Both layouts are INFERRED (the report is absent from every vendor source) - confirm on the live tool. No dependency on PRINT FORMAT on this report: both formats export to PDF and Excel.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "security_list_reports.r04.s03.c01",
+     "signature_id": "sig0295",
+     "legacy_section": "SECURITY GROUP",
+     "legacy_label": "Group",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "ALL",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "security_group_ids",
+     "param_type": "entity_multi",
+     "option_map": {},
+     "default": "all",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy SELECT dialog becomes a searchable multi-select on lookup:security_groups (GET /user-groups, id and name only, needs no data class); ALL = no restriction. Filters user_group_memberships.group_id IN (:security_group_ids). Legacy groups are defined per office (the same name under several offices, vendor-documented); DentC user_groups are organisation-level (no office column), so the picker lists each group once and the office of a row comes from the member's office assignment, not from the group. Inactive groups (user_groups.is_active = false, the delete state of the Security Groups screen) are not offered and grant nothing (effective_permissions ignores them); enhancement group_status shows them. Dialog content never captured - confirm on the live tool whether the legacy list shows office-qualified group names.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "security_list_reports.r04.s04.c01",
+     "signature_id": "sig0296",
+     "legacy_section": "LOCATION",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Deviation (model): the legacy tool presumably filters by the security group's own office (legacy groups are defined per office); DentC groups have no office, so the member's office assignment is used (office_attribution = assigned_office, NEW value for 03 5.1: user_offices.office_id) - confirm by r04 open question 2 (RPT-SLIST-09). Options and default unchanged: LOCATION is the OFFICE/GROUP section spelled differently, Office versus Office Group, see rule d01.",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "security_list_reports.r04.s04.c02",
+     "signature_id": "sig0297",
+     "legacy_section": "LOCATION",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "108 = id of the office the user was working in (vendor-documented correction: the box defaults to the session office, SELECT picks others) -> token working_office. Offices (mode office) or office groups (mode office_group); the selection becomes exactly one of office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read. On this report the office is the member's office assignment (user_offices.office_id, all assignments, not only the primary row): a user assigned to two selected offices is listed under both office bands and counted once in the grand total. Assignments are de-duplicated per (user_id, office_id) before the band join (user_offices has no unique constraint). Users with no office assignment at all (ungated: they reach every office) are listed in a trailing band 'No office assignment' (enhancement include_unassigned_users, default true, INFERRED) and the footer echoes '* Includes users with no office assignment'; the legacy handling of such users is unknown, confirm on the live tool (r04 open question 3).",
+     "decided_in_catalog": true
+    },
+    {
+     "control_id": "security_list_reports.r04.s05.c01",
+     "signature_id": "sig0294",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include Inactive Users",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_inactive_users",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "false (legacy default) = members whose users.is_active = true only; true = active and inactive members, with an Active column (detail) and an inactive-member count (summary). DentC keeps memberships of a deactivated user (user_group_memberships is hard-deleted only by an edit), so the checkbox decides whether those rows print.",
+     "decided_in_catalog": true
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "security_list_reports.r04.d01",
+     "legacy_when": "LOCATION = Office Group",
+     "legacy_effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. This is the OFFICE/GROUP control of the other Lists screens, headed LOCATION on this report - the only Security List report that has it. The vendor documents the behaviour for the Office / Office Group control in general; the report itself is absent from vendor documentation, hence likely.",
+     "confidence": "likely",
+     "new_behavior": "office_scope (legacy section LOCATION): office_scope.mode = office_group switches the picker to lookup:office_groups and the selection fills office_group_id (one group) or office_group_ids (several, enhancement); mode office fills office_ids (default working_office). A group resolves to its member offices intersected with the offices the caller may read. With no office groups defined (every migrated tenant: office_groups is empty) the group mode offers the single value all, which resolves to every office the caller may read - the legacy 'group run covers all offices'. The resolved office set filters the user's office assignment (office_attribution = assigned_office, NEW, user_offices.office_id), not the security group: DentC security groups are organisation-level and carry no office. Not offered on lists.user_list, lists.group_list, lists.group_rights_list (no LOCATION control, scope.office_mode = none)."
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "default",
+     "control_id": "security_list_reports.r04.s04.c02",
+     "text": "The number in the LOCATION box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Stated by the vendor for the Office / Office Group control in general, of which LOCATION is the instance on this report."
+    },
+    {
+     "about": "meaning",
+     "control_id": "security_list_reports.r04.s03.c01",
+     "text": "What a security group is, i.e. what the Group picker chooses from: security groups are defined per office (the same group name can exist under several offices), and a user has a primary group plus optional additional groups - so one user can appear under several groups. Vendor-documented for security groups; that the picker lists them follows from the name of the criterion."
+    }
+   ],
+   "shared_rules": [],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

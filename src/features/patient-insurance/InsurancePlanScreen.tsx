@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2, Save, X, ArrowLeftRight, Printer, CalendarClock } from "lucide-react";
-import type { InsurancePlanRead } from "@/api/generated/model";
+import type { InsurancePlanRead, PatientInsuranceRead } from "@/api/generated/model";
 import {
   type InsCategory,
   type InsOrder,
@@ -88,6 +88,8 @@ export default function InsurancePlanScreen({ category, order }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recordId, setRecordId] = useState<number | null>(null);
+  // Server-derived benefit usage (TX-MAX-3) shown beside the editable Rem. inputs.
+  const [usage, setUsage] = useState<PatientInsuranceRead | null>(null);
   const [form, setForm] = useState<InsuranceForm>(() => emptyForm());
   const [planDisplay, setPlanDisplay] = useState<PlanDisplay>(EMPTY_PLAN_DISPLAY);
   const [showNewPlan, setShowNewPlan] = useState(false);
@@ -101,6 +103,7 @@ export default function InsurancePlanScreen({ category, order }: Props) {
     try {
       const data = await loadSlot(patientId, slot);
       setRecordId(data.record?.id ?? null);
+      setUsage(data.record ?? null);
       if (data.record || data.subscriber) {
         setForm(formFromSlot(data));
       } else {
@@ -273,7 +276,7 @@ export default function InsurancePlanScreen({ category, order }: Props) {
             {/* Right: benefit + eligibility + subscriber + notes */}
             <div className="space-y-4">
               <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-4">
-                <BenefitInformation form={form} planDisplay={planDisplay} onChange={update} />
+                <BenefitInformation form={form} planDisplay={planDisplay} usage={usage} onChange={update} />
                 <EligibilitySection
                   form={form}
                   planDisplay={planDisplay}

@@ -1,0 +1,1606 @@
+{
+  "category": "insurance_reports",
+  "window_title": "Insurance Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/insurance_reports",
+  "report_list": [
+    "Claims List",
+    "Capitation Utilization",
+    "Claims Created Not Sent",
+    "Procedures on Hold",
+    "DPS Eligibility Report",
+    "Capitation Payment",
+    "Benefits Used/Unused",
+    "Outstanding Claims",
+    "Claims Not Created",
+    "Unbilled Report Due to No Insurance",
+    "EOB 835 Claims Reconcile Report",
+    "835 Denial Report",
+    "RTE Sweep Details"
+  ],
+  "reports": [
+    {
+      "name": "Claims List",
+      "screenshots": ["1.PNG"],
+      "sections": [
+        {
+          "title": "CLAIM/PRE-AUTH",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Claims", "Pre-Authorization"],
+              "default_value": "Claims",
+              "enabled": true,
+              "notes": "Left column of row 1 (CLAIM TYPE is to its right). No row label."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "Dental", "Medical"],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": "Right column of row 1. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Section spans the full panel width on this report (there is no PROVIDER section beside it). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left column (NAME RANGE is to its right). MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "AAAAA",
+              "enabled": true,
+              "notes": "Right column, beside DATE RANGE. Editable-style box (same light fill as the date fields, not the grey read-only picker fill) pre-filled with AAAAA; blue SEARCH button to its right."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start of the name range; its dialog is not shown)."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "ZZZZZ",
+              "enabled": true,
+              "notes": "Editable-style box pre-filled with ZZZZZ; blue SEARCH button to its right."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end of the name range; its dialog is not shown)."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM AMOUNT OVER OR EQUAL TO",
+          "controls": [
+            {
+              "label": "",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0.00",
+              "enabled": true,
+              "notes": "Left column (CARRIER is to its right). Unlabelled editable box - the section header acts as its label; the value is right-aligned."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, beside CLAIM AMOUNT OVER OR EQUAL TO. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM SENT TYPE",
+          "controls": [
+            {
+              "label": "EClaim",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Left column (OTHER OPTIONS is to its right). Written 'EClaim' (capital E and capital C, one word)."
+            },
+            {
+              "label": "Paper",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as EClaim."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Resolved Claims",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Right column, beside CLAIM SENT TYPE. The only option in this section."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width last section (on this report PRINT FORMAT sits at the bottom of the criteria, not at the top)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "1.PNG only (default state, no popup). Row layout: [CLAIM/PRE-AUTH | CLAIM TYPE], [OFFICE/GROUP full width], [DATE RANGE | NAME RANGE], [CLAIM AMOUNT OVER OR EQUAL TO | CARRIER], [CLAIM SENT TYPE | OTHER OPTIONS], [PRINT FORMAT full width]. No PROVIDER section and no GROUP BY section on this report. Blank panel remains between PRINT FORMAT and the action bar, so nothing is clipped. No greyed-out controls."
+    },
+    {
+      "name": "Capitation Utilization",
+      "screenshots": ["2.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left column of row 1 (PRINT FORMAT is to its right). No row label."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of row 1."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "FACILITY ID",
+          "controls": [
+            {
+              "label": "",
+              "type": "text_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Left column (CARRIER is to its right). Unlabelled, empty editable box - the section header acts as its label. No placeholder text."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, beside FACILITY ID. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "INCLUDE UCR",
+          "controls": [
+            {
+              "label": "Include UCR",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left column (FEE SCHEDULE TO COMPARE is to its right). Section header and checkbox label carry the same words."
+            }
+          ]
+        },
+        {
+          "title": "FEE SCHEDULE TO COMPARE",
+          "controls": [
+            {
+              "label": "Fee Schedule To Compare",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "CP-40 ( 135 )",
+              "enabled": false,
+              "notes": "list collapsed - other values not visible. Right column, beside INCLUDE UCR. The dropdown is greyed out (grey fill, light-grey text, up/down chevrons at its right end) while its row label is black. Value exactly as shown, with spaces inside the parentheses. Probably enabled only when Include UCR is ticked - inference, the dependency is not shown."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Print All Codes",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section; the four checkboxes sit on one row, in this order."
+            },
+            {
+              "label": "Include Fees Charged",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Second checkbox of the row; the only one ticked by default."
+            },
+            {
+              "label": "Print Office Address",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Third checkbox of the row."
+            },
+            {
+              "label": "Show Billing Provider For Hygienist",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Fourth checkbox of the row."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Full-width last section. No row label; nothing else in the row (no Page Break checkbox)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "2.PNG only (default state). Row layout: [REPORT FORMAT | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [DATE RANGE full], [FACILITY ID | CARRIER], [INCLUDE UCR | FEE SCHEDULE TO COMPARE], [OTHER OPTIONS full], [GROUP BY full]. Tallest criteria set of the category: the GROUP BY row is complete and ends about 27 px above the action bar with blank panel in between and no scrollbar, so nothing is clipped. Only greyed control: the Fee Schedule To Compare dropdown."
+    },
+    {
+      "name": "Claims Created Not Sent",
+      "screenshots": ["3.PNG"],
+      "sections": [
+        {
+          "title": "CLAIM TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "Dental", "Medical"],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": "Left column of row 1 (PRINT FORMAT is to its right). No row label."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of row 1."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "CREATED ON DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left column (NAME RANGE is to its right). MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "AAAAA",
+              "enabled": true,
+              "notes": "Right column, beside CREATED ON DATE RANGE. Editable-style box (same light fill as the date fields) pre-filled with AAAAA; blue SEARCH button to its right."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start of the name range; its dialog is not shown)."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "ZZZZZ",
+              "enabled": true,
+              "notes": "Editable-style box pre-filled with ZZZZZ; blue SEARCH button to its right."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end of the name range; its dialog is not shown)."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM AMOUNT OVER OR EQUAL TO",
+          "controls": [
+            {
+              "label": "",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0.00",
+              "enabled": true,
+              "notes": "Left column (CARRIER is to its right). Unlabelled editable box - the section header acts as its label; the value is right-aligned."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, beside CLAIM AMOUNT OVER OR EQUAL TO. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Full-width last section. No row label; nothing else in the row (no Page Break checkbox)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "3.PNG only (default state). Row layout: [CLAIM TYPE | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [CREATED ON DATE RANGE | NAME RANGE], [CLAIM AMOUNT OVER OR EQUAL TO | CARRIER], [GROUP BY full]. Compared with Claims List there is no CLAIM/PRE-AUTH, CLAIM SENT TYPE or OTHER OPTIONS section, the date section is titled CREATED ON DATE RANGE, and PROVIDER and GROUP BY are added. Large blank area below GROUP BY; nothing clipped. No greyed-out controls."
+    },
+    {
+      "name": "Procedures on Hold",
+      "screenshots": ["4.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width first section. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width last section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "4.PNG only (default state). Three full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, DATE RANGE); the rest of the panel is blank down to the action bar, nothing clipped. No PROVIDER, CARRIER, GROUP BY or OTHER OPTIONS section. No greyed-out controls."
+    },
+    {
+      "name": "DPS Eligibility Report",
+      "screenshots": ["5.PNG"],
+      "sections": [
+        {
+          "title": "DPS ELIGIBILITY",
+          "controls": [
+            {
+              "label": "On Hold",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left column of row 1 (PRINT FORMAT is to its right). The only control in this section."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of row 1."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Appointment Date", "Appointment Created Date", "Both"],
+              "default_value": "Appointment Date",
+              "enabled": true,
+              "notes": "Full-width section, no row label. Appears to control which of the two date-range sections below is usable: with Appointment Date selected only APPOINTMENT DATE RANGE is editable (the other two states were not captured)."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left column (APPOINTMENT CREATED DATE RANGE is to its right). Editable (light fill) MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Editable (light fill) box with a calendar icon at its right end; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENT CREATED DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": false,
+              "notes": "Right column, beside APPOINTMENT DATE RANGE. Box is greyed out (grey fill like the read-only picker boxes) while DATE RANGE TYPE = Appointment Date; it still shows the date and a calendar icon, and its row label is black."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": false,
+              "notes": "Greyed out (grey fill) while DATE RANGE TYPE = Appointment Date; shows the date and a calendar icon."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include patients with no insurance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width last section. Label in sentence case exactly as shown (lower-case 'patients with no insurance')."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "5.PNG only (default state: DATE RANGE TYPE = Appointment Date). Row layout: [DPS ELIGIBILITY | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [DATE RANGE TYPE full], [APPOINTMENT DATE RANGE | APPOINTMENT CREATED DATE RANGE], [OTHER OPTIONS full]. The two APPOINTMENT CREATED DATE RANGE inputs are greyed (fill 220,223,226 against 241,241,241 for the editable APPOINTMENT DATE RANGE inputs). 'DPS' is not expanded anywhere on the screen. Blank space below OTHER OPTIONS; nothing clipped."
+    },
+    {
+      "name": "Capitation Payment",
+      "screenshots": ["6.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width first section. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width last section (the read-only grey box is wider than in the two-column reports). Header is singular CARRIER, row label is plural 'Carriers'. Blue SELECT button (single-person icon)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "6.PNG only (default state). Four full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, DATE RANGE, CARRIER); blank panel below, nothing clipped. No PROVIDER section. No greyed-out controls."
+    },
+    {
+      "name": "Benefits Used/Unused",
+      "screenshots": ["7.PNG"],
+      "sections": [
+        {
+          "title": "TREATMENT PLAN/RECALL",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Treatment Plan", "Recall"],
+              "default_value": "Treatment Plan",
+              "enabled": true,
+              "notes": "Left column of row 1 (PRINT FORMAT is to its right). No row label."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right column of row 1."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.)",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "12/01/2026",
+              "enabled": true,
+              "notes": "Full-width section; the explanatory note '(* UPCOMING BENEFIT ROLLOVER PERIOD.)' is printed inside the section header bar itself, after ANNIVERSARY DATE RANGE. MM/DD/YYYY box with a calendar icon. Default is NOT today: it is the first day of the month after the capture date (captured 11/21/2026)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/30/2027",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box. Default is one year minus one day after the Start Date."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE RESPONSIBLE PARTY TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Full-width last section. Unlabelled read-only grey box showing None; blue SELECT button with a person-plus icon to its right. Title is spelled out in full here (RESPONSIBLE PARTY, not RESP. PARTY)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "7.PNG only (default state). Row layout: [TREATMENT PLAN/RECALL | PRINT FORMAT], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [ANNIVERSARY DATE RANGE (* UPCOMING BENEFIT ROLLOVER PERIOD.) full], [EXCLUDE RESPONSIBLE PARTY TYPE full]. The parenthetical in the ANNIVERSARY header is the only explanatory note text in this category and is kept as part of the section title, exactly as displayed. Date defaults differ from every other report (12/01/2026 to 11/30/2027). Blank space below; nothing clipped. No greyed-out controls."
+    },
+    {
+      "name": "Outstanding Claims",
+      "screenshots": ["8.PNG"],
+      "sections": [
+        {
+          "title": "CLAIM/PRE-AUTH",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Claims", "Pre-Authorization"],
+              "default_value": "Claims",
+              "enabled": true,
+              "notes": "Left column of row 1 (CLAIM TYPE is to its right). No row label."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "Dental", "Medical"],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": "Right column of row 1. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left column of row 2 (PROVIDER is to its right). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on a full-width row below the radios (the row runs under both the OFFICE/GROUP and PROVIDER columns); blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of row 2. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "REPORT DATE",
+          "controls": [
+            {
+              "label": "Report Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section with a single as-of date (no start/end range). MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM AMOUNT OVER OR EQUAL TO",
+          "controls": [
+            {
+              "label": "",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0.00",
+              "enabled": true,
+              "notes": "Left column (CARRIER is to its right). Unlabelled editable box - the section header acts as its label; the value is right-aligned."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column, beside CLAIM AMOUNT OVER OR EQUAL TO. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM SENT TYPE",
+          "controls": [
+            {
+              "label": "EClaim",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Left column (OTHER OPTIONS is to its right). Written 'EClaim' (capital E and capital C, one word)."
+            },
+            {
+              "label": "Paper",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Same row as EClaim."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Current",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Right column, beside CLAIM SENT TYPE. First of five aging-bucket checkboxes on one row (Current, Over 30, Over 60, Over 90, Over 120), all ticked by default."
+            },
+            {
+              "label": "Over 30",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Aging bucket, second in the row."
+            },
+            {
+              "label": "Over 60",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Aging bucket, third in the row."
+            },
+            {
+              "label": "Over 90",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Aging bucket, fourth in the row."
+            },
+            {
+              "label": "Over 120",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Aging bucket, fifth in the row."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Left column of the last row (GROUP BY is to its right)."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Right column of the last row, beside PRINT FORMAT. No row label; nothing else in the row (no Page Break checkbox)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "CREATE TASK", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "8.PNG only (default state). Row layout: [CLAIM/PRE-AUTH | CLAIM TYPE], [OFFICE/GROUP | PROVIDER] with the office picker row spanning the full width underneath, [REPORT DATE full], [CLAIM AMOUNT OVER OR EQUAL TO | CARRIER], [CLAIM SENT TYPE | OTHER OPTIONS], [PRINT FORMAT | GROUP BY]. The only report in this category whose bottom action bar has an extra blue CREATE TASK button (plus icon), placed left of PRINT / PREVIEW. Uses a single as-of Report Date instead of a date range; OTHER OPTIONS holds the five aging-bucket checkboxes. Blank space below the last row; nothing clipped. No greyed-out controls."
+    },
+    {
+      "name": "Claims Not Created",
+      "screenshots": ["9.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width first section. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "REPORT DATE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["ALL", "DOS Date", "Transaction Date"],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "First row of the section, no row label. 'ALL' is in capitals. Appears to control whether the Report Date box below is usable (it is greyed while ALL is selected)."
+            },
+            {
+              "label": "Report Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": false,
+              "notes": "Second row of the section; a single date, not a range. Box is greyed out (grey fill) while the radio above is on ALL, but still shows the date and a calendar icon; its row label is black. Presumably editable when DOS Date or Transaction Date is chosen - inference, those states were not captured."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM TYPE",
+          "controls": [
+            {
+              "label": "Primary",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Full-width last section; four checkboxes on one row, all ticked by default. On this report CLAIM TYPE means coverage order, not the Both / Dental / Medical choice used under the same title on other reports."
+            },
+            {
+              "label": "Secondary",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Second in the row."
+            },
+            {
+              "label": "Tertiary",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Third in the row."
+            },
+            {
+              "label": "Quaternary",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Fourth in the row."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "9.PNG only (default state: REPORT DATE radio = ALL). Four full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, REPORT DATE, CLAIM TYPE). Only greyed control: the Report Date input. No PROVIDER, CARRIER or GROUP BY section. Large blank area below CLAIM TYPE; nothing clipped."
+    },
+    {
+      "name": "Unbilled Report Due to No Insurance",
+      "screenshots": ["10.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width first section. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width last section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "10.PNG only (default state). Three full-width sections in a single column - the same criteria set as Procedures on Hold (PRINT FORMAT, OFFICE/GROUP, DATE RANGE). Blank panel below; nothing clipped. No greyed-out controls."
+    },
+    {
+      "name": "EOB 835 Claims Reconcile Report",
+      "screenshots": ["11.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width first section. No row label."
+            }
+          ]
+        },
+        {
+          "title": "835 CLAIM MATCHING STATUS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "Matched", "UnMatched"],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": "Left column of row 2 (CLAIM STATUS is to its right). No row label. 'UnMatched' is written with a capital M."
+            }
+          ]
+        },
+        {
+          "title": "CLAIM STATUS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["ALL", "Partial Closed", "Closed"],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of row 2, beside 835 CLAIM MATCHING STATUS. No row label. 'ALL' is in capitals."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["By Payment Date", "By File Received on Date"],
+              "default_value": "By Payment Date",
+              "enabled": true,
+              "notes": "First row of the full-width DATE RANGE section, above the Start/End dates; no row label. Chooses which date the range applies to. 'on' is lower-case in 'By File Received on Date'."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Show Details UCR",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Left column of the last row (CARRIER is to its right). Ticked by default; the only option in this section."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right column of the last row, beside OTHER OPTIONS. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "11.PNG only (default state). Row layout: [PRINT FORMAT full], [835 CLAIM MATCHING STATUS | CLAIM STATUS], [OFFICE/GROUP full], [DATE RANGE full: date-basis radio row, then Start Date and End Date], [OTHER OPTIONS | CARRIER]. No PROVIDER section. Blank space below; nothing clipped. No greyed-out controls."
+    },
+    {
+      "name": "835 Denial Report",
+      "screenshots": ["12.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Detail",
+              "enabled": false,
+              "notes": "Left column of row 1 (PRINT FORMAT is to its right). BOTH radios and both labels are greyed out (disabled); Detail is the one marked (grey dot inside a grey ring), Summary is an empty grey circle. Possibly locked because Excel is the selected print format - inference, only this one state was captured."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "Excel",
+              "enabled": true,
+              "notes": "Right column of row 1. Excel is selected here - the only report in this category not showing PDF selected. The PDF radio and its label look enabled (black). Whether Excel is this report's built-in default or was chosen by the person capturing cannot be told from the screenshot."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. Shows ALL here - every other report in this category shows 108 (the current office id)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section (wide read-only grey box). Header is singular CARRIER, row label is plural 'Carriers'. Blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE REASON CODE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Full-width last section. Unlabelled read-only grey box showing None; blue SELECT button to its right with the same building icon as the office SELECT button. The reason-code list behind SELECT is not shown."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "12.PNG only. Row layout: [REPORT FORMAT | PRINT FORMAT], [OFFICE/GROUP full], [DATE RANGE full], [CARRIER full], [EXCLUDE REASON CODE full]. The captured state differs from every other report of the category in three ways: Excel (not PDF) is the selected print format, both REPORT FORMAT radios are greyed out with Detail marked, and the office box shows ALL instead of 108. Every other screenshot shows an untouched default form, so these are probably this report's own defaults, but a single screenshot cannot prove it. No PROVIDER section. Blank space below; nothing clipped."
+    },
+    {
+      "name": "RTE Sweep Details",
+      "screenshots": ["13.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width first section. No row label."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Full-width section (no PROVIDER section on this report). No row label."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 = current office id (same value as OID :108 in the title bar)."
+            }
+          ]
+        },
+        {
+          "title": "CREATED ON DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width last section. MM/DD/YYYY box with a calendar icon at its right end; the value equals the capture date (default appears to be today)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon at the right end of the box; same default as Start Date."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "13.PNG only (default state). Three full-width sections in a single column (PRINT FORMAT, OFFICE/GROUP, CREATED ON DATE RANGE); blank panel below, nothing clipped. 'RTE' is not expanded anywhere on the screen. No greyed-out controls."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Verification: third-reader pass over all 13 original screenshots, all 13 pre-rendered list / criteria zooms and about 70 extra crops at 3x-9x. Readers A and B agreed on every report, section, control, option, default and enabled state (13 reports, 85 sections, 130 controls); their only differences were descriptive wording. Everything was re-checked on the pixels: blue-mark detection for every selected radio and ticked checkbox, a census of every input box by fill and border colour, a census of every section header bar (full-width or split in two), an ink-blob map and a light-colour histogram of each criteria area, and contrast-stretched renders. No control, icon, note or greyed element exists outside those listed here.\n\nCoverage: 13 screenshots = 13 different reports, one screenshot each, in list order (1.PNG Claims List, 2 Capitation Utilization, 3 Claims Created Not Sent, 4 Procedures on Hold, 5 DPS Eligibility Report, 6 Capitation Payment, 7 Benefits Used/Unused = left column; 8 Outstanding Claims, 9 Claims Not Created, 10 Unbilled Report Due to No Insurance, 11 EOB 835 Claims Reconcile Report, 12 835 Denial Report, 13 RTE Sweep Details = right column). The selected radio of every screenshot was located from the pixels. Every listed report has a screenshot. No screenshot shows a popup, an expanded dropdown, a scrolled second view or a foreign screen, so the contents of every SELECT / SEARCH dialog (office, office group, provider, carriers, responsible party type, reason code, name search) and the other values of the Fee Schedule To Compare dropdown are NOT documented by these screenshots. Only one state per report was captured, so the non-default states (Pre-Authorization, Office Group, Summary, Recall, Include UCR ticked, Appointment Created Date / Both, DOS Date / Transaction Date, By File Received on Date, PDF on 835 Denial Report) are not shown.\n\nScreen chrome (pixel-identical in all 13): dark title bar with 'Insurance Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right. Blue sub-header 'SELECT REPORT' over the left panel and 'REPORT CRITERIA' over the right panel; the right end of the REPORT CRITERIA bar holds the grey-styled CLEAR CRITERIA button (refresh icon) - grey is its normal look in every screenshot, not a disabled state. A splitter / collapse handle (three vertical dots on an arrow-shaped tab) sits on the border between the two panels. The action bar at the bottom of the criteria panel holds the blue buttons PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon); Outstanding Claims alone adds CREATE TASK (plus icon) to their left. No footer text: below the panels there are only uniform window-edge strips.\n\nReport list: 13 radio entries in a two-column grid (7 in the left column, 6 in the right; the cell under RTE Sweep Details is empty). The dark panel below the grid is empty and there is no scrollbar, so the list is not scrollable or clipped. The list text is pixel-identical in all 13 screenshots. Casing as displayed: 'Procedures on Hold' and 'Unbilled Report Due to No Insurance' use lower-case 'on' / 'to'.\n\nText-rendering caveat: the bold section-header font draws a capital G almost exactly like a C at this resolution, so the header pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'NAME RANCE', 'CROUP BY', 'DPS ELICIBILITY', '835 CLAIM MATCHINC STATUS', 'UPCOMINC'. The mixed-case label 'Office Group' on every report shows a clear G and the same rendering was resolved the same way in the other categories, so these headers are transcribed with G (OFFICE/GROUP, DATE RANGE, NAME RANGE, GROUP BY, DPS ELIGIBILITY, 835 CLAIM MATCHING STATUS, UPCOMING). The date digits '11' also render like 'TI' (the value is 11/21/2026).\n\nRecurring patterns: PRINT FORMAT (PDF | Excel) is on all 13 reports - PDF selected on 12, Excel on 835 Denial Report; its position varies (full-width first section on 6 reports, right column of row 1 on 5, last section on Claims List, bottom-left on Outstanding Claims). REPORT FORMAT (Detail | Summary) appears only on Capitation Utilization (enabled, Detail) and 835 Denial Report (both radios greyed, Detail marked). OFFICE/GROUP (Office | Office Group radios, default Office, plus an unlabelled read-only box with a SELECT button, building icon) is on all 13; the box shows 108 (= the OID in the title bar) on 12 reports and ALL on 835 Denial Report. A PROVIDER picker (row label Provider, ALL, SELECT with single-person icon) is on 5 reports: Capitation Utilization, Claims Created Not Sent, DPS Eligibility Report, Benefits Used/Unused, Outstanding Claims. A CARRIER picker (row label Carriers, ALL, SELECT with single-person icon) is on 7 reports: Claims List, Capitation Utilization, Claims Created Not Sent, Capitation Payment, Outstanding Claims, EOB 835 Claims Reconcile Report, 835 Denial Report. GROUP BY (None | Provider, default None) is on 3 reports: Capitation Utilization, Claims Created Not Sent, Outstanding Claims - none of them has a Page Break checkbox or any other right-edge control. NAME RANGE (Start Name AAAAA / End Name ZZZZZ, each an editable-style box with its own SEARCH button, magnifier icon) is on Claims List and Claims Created Not Sent. CLAIM AMOUNT OVER OR EQUAL TO (0.00) is on Claims List, Claims Created Not Sent and Outstanding Claims; CLAIM/PRE-AUTH and CLAIM SENT TYPE are on Claims List and Outstanding Claims. The title CLAIM TYPE is used with two meanings: Both | Dental | Medical radios (Claims List, Claims Created Not Sent, Outstanding Claims) and Primary / Secondary / Tertiary / Quaternary checkboxes (Claims Not Created). OTHER OPTIONS has different content on each of the 5 reports that have it. The two 'exclude' pickers default to None: EXCLUDE RESPONSIBLE PARTY TYPE (person-plus icon) on Benefits Used/Unused and EXCLUDE REASON CODE (building icon) on 835 Denial Report.\n\nDate sections: a Start Date / End Date range titled DATE RANGE on Claims List, Capitation Utilization, Procedures on Hold, Capitation Payment, Unbilled Report Due to No Insurance, EOB 835 Claims Reconcile Report (preceded there by a By Payment Date | By File Received on Date radio) and 835 Denial Report; titled CREATED ON DATE RANGE on Claims Created Not Sent and RTE Sweep Details; APPOINTMENT DATE RANGE plus APPOINTMENT CREATED DATE RANGE switched by DATE RANGE TYPE on DPS Eligibility Report; ANNIVERSARY DATE RANGE on Benefits Used/Unused. A single Report Date titled REPORT DATE is used on Outstanding Claims and on Claims Not Created (preceded there by an ALL | DOS Date | Transaction Date radio). All date fields are MM/DD/YYYY boxes with a calendar icon and show 11/21/2026 (the capture day, i.e. the default is today), except Benefits Used/Unused (12/01/2026 to 11/30/2027 = first day of the next month to one year later minus a day).\n\nEnabled / disabled states were confirmed by pixel colour: editable fields have fill 241,241,241; read-only picker boxes and disabled fields have fill 220,223,226; disabled labels are mid-grey (161) against black for enabled ones. Controls greyed in the captured default states (what enables them is inferred, never shown): the Fee Schedule To Compare dropdown on Capitation Utilization (Include UCR unticked); both APPOINTMENT CREATED DATE RANGE dates on DPS Eligibility Report (DATE RANGE TYPE = Appointment Date); Report Date on Claims Not Created (radio = ALL); both REPORT FORMAT radios on 835 Denial Report (Excel selected). All SELECT and SEARCH buttons are blue (enabled) in every screenshot.\n\nTruncation: the criteria area has a fixed height (about 481 px in every screenshot) with the action bar pinned below it, and no scrollbar is drawn anywhere. In all 13 screenshots the first section header is fully visible at the top and blank panel background separates the last section from the action bar (smallest gap about 27 px, under GROUP BY on Capitation Utilization), so no report is flagged possibly_truncated."
+}

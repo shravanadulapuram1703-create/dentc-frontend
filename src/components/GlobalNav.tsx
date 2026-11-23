@@ -1466,7 +1466,7 @@ export default function GlobalNav({ onLogout }: GlobalNavProps) {
   return (
     <div
       ref={navRootRef}
-      className="bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] border-b-2 border-[#162942] shadow-lg fixed top-0 left-0 z-50"
+      className="app-global-nav bg-gradient-to-r from-[#1F3A5F] to-[#2d5080] border-b-2 border-[#162942] shadow-lg fixed top-0 left-0 z-50"
       style={{
         right: `${chatWidth}px`,
         transition: 'right 0.3s ease-in-out',

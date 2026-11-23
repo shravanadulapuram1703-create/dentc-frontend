@@ -1,0 +1,860 @@
+{
+ "category": "treatmentplan_reports",
+ "window_title": "Treatment Plan Reports",
+ "report_list": [
+  "Treatment Plan Proposal",
+  "Treatment Plan Status",
+  "Treatment Plan Analysis",
+  "Treatment Plan Detail"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory. All 4 original screenshots (1366 px wide; 589, 582, 590 and 586 px high), the 8 pre-rendered zooms and 20 additional tight crops (prefix c in the zoom folder) were read. Readers A and B agreed on every report, section, control, option list, default value, enabled state and truncation flag (4 reports, 35 sections, 50 controls); their differences were note wording only. Every point was nevertheless re-checked on the pixels: the selected list radio of every file, blue-mark detection for every chosen criteria radio and ticked checkbox, fill colours of every input box, glyph dumps of the disputed header letters and of the dropdown / date values, vertical colour profiles of the option rows at the bottom of each criteria panel, and an ink-cluster map of every criteria panel, the title bar and the panel header bar. Nothing exists beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no GROUP BY / SORT BY, no extra column of controls, no greyed-out control, no instruction / warning / legend text, no scrollbar on either panel, no footer text. COVERAGE: 4 screenshots = 4 different reports, one screenshot each, in list order (1.PNG = Treatment Plan Proposal, 2.PNG = Treatment Plan Status, 3.PNG = Treatment Plan Analysis, 4.PNG = Treatment Plan Detail); every listed report has a screenshot. All four are the same two-panel screen in its normal state - no popup, no expanded dropdown, no scrolled second view, no foreign screen - so the contents of every SELECT dialog (Office, Office Group, Provider, Exclude Patient Type, Codes, Exclude Treatment Plans, TX Counselor), of the two name SEARCH lookups and of the FINANCIAL DISCLOSURE dropdown list are NOT documented by these screenshots. TITLE BAR (identical in all 4): 'Treatment Plan Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (no text) at the far right. LEFT PANEL: blue header 'SELECT REPORT'; exactly 4 reports as radio buttons in a 2 x 2 grid (left column: Treatment Plan Proposal, Treatment Plan Status; right column: Treatment Plan Analysis, Treatment Plan Detail). The rest of the panel is one uniform dark-blue colour down to the bottom edge, so the list is complete - not scrollable, nothing clipped. A splitter / collapse handle (three vertical dots) sits on the border between the two panels. RIGHT PANEL: blue header 'REPORT CRITERIA' with the slate-grey CLEAR CRITERIA button (refresh icon) at its right end - grey is its normal style on this screen, not a disabled state; a docked bar at the bottom right of the criteria panel holds the blue buttons PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon). COMMON TO ALL 4 REPORTS: PRINT FORMAT (PDF / Excel, default PDF); OFFICE/GROUP (Office / Office Group radios, default Office, plus an unlabelled office picker showing 108 = the OID); PROVIDER (picker labelled 'Provider', value ALL); DIAGNOSED DATE RANGE (Start Date and End Date, both 11/21/2026 - apparently the capture day, i.e. default = current date; the date range is always titled DIAGNOSED DATE RANGE in this category); EXCLUDE PATIENT TYPE (picker, None); an OTHER OPTIONS checkbox section. REPORT-SPECIFIC: Treatment Plan Proposal adds NAME RANGE (Start Name AAAAA / End Name ZZZZZ, each with a SEARCH button), TREATMENT PLAN ID, PHASE ID, ORDER ID (three empty text boxes), a FINANCIAL DISCLOSURE dropdown (value '.Treatment Plan Disclosure', with a leading period) and four print-oriented checkboxes (Include Office UCR and Itemize Prices ticked; Include Completed Procedures and Print Responsible Party Address not ticked). Treatment Plan Status adds REPORT FORMAT (Detail / Summary, default Detail), the TREATMENT PLANS status radio grid (ALL default plus 10 statuses), EXCLUDE TREATMENT PLANS (None), CODES (ALL), TX COUNSELOR (ALL) and the checkbox 'Include internal plan id'. Treatment Plan Detail adds CODES (box empty). 'Include Inactive Patients' (unticked) is visible on Status, Analysis and Detail but not in the visible part of Proposal. TRUNCATION: the criteria area is a fixed-height viewport (about 482 px) with the action bar docked directly under it and no scrollbar drawn. In 1.PNG the top 5 px of a third, full-width OTHER OPTIONS row are visible before the action bar hides it, and in 2.PNG the second OTHER OPTIONS row is cut at its lower edge, so Treatment Plan Proposal and Treatment Plan Status are flagged possibly_truncated - more options may exist below that these screenshots do not show. 3.PNG and 4.PNG end with about 140 px of empty background and are complete. ICONS AND FILLS: building icon on the SELECT buttons of the office, CODES and EXCLUDE TREATMENT PLANS pickers; single-person icon on Provider; person-plus icon on EXCLUDE PATIENT TYPE and TX COUNSELOR; magnifier on SEARCH; calendar icon inside the date boxes; chevron on the dropdown. Picker value boxes use a darker grey read-only fill (RGB 220,223,226) while the name, ID and date boxes and the dropdown use the lighter editable fill (RGB 241,241,241). TYPING CONVENTION (same as the other category files): a light editable box followed by a SEARCH button is recorded as text_input plus a separate button control; a grey read-only box followed by SELECT is recorded as one picker. HEADER FONT: in the grey section-header bars the capital G is drawn almost like a C, so the headers look like 'OFFICE/CROUP', 'DIACNOSED DATE RANCE' and 'NAME RANCE' at normal zoom; the glyph differs from a true C only by a slightly heavier lower-right terminal, and the normal-text radio label 'Office Group' shows a clear G, so the titles are transcribed as OFFICE/GROUP, DIAGNOSED DATE RANGE and NAME RANGE. All controls in all four reports appear enabled.",
+ "report_count": 4,
+ "control_count": 50,
+ "reports": [
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "name": "Treatment Plan Proposal",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": true,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (1.PNG, 1366 x 589); no popup, no expanded list, no second view. Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker on its own full-width row underneath; DIAGNOSED DATE RANGE (left) beside NAME RANGE (right); TREATMENT PLAN ID (left) beside PHASE ID (right); ORDER ID (left) beside FINANCIAL DISCLOSURE (right); EXCLUDE PATIENT TYPE (full width); OTHER OPTIONS (full-width header, checkboxes in a two-column grid). TRUNCATION (pixel-measured): the criteria viewport ends at y=538 and the docked action bar (PRINT / PREVIEW, ADD TO MY FAVORITES) starts at y=539. OTHER OPTIONS row 1 occupies y 485-506 and row 2 y 509-531; after a 2 px separator a THIRD row starts at y=534 with the same row fill, and only its top 5 px are visible. Unlike rows 1-2 it has no centre divider (x 910-911), so it is a single full-width row. A checkbox in it would begin about 5 px below the row top, exactly where the action bar begins, so whatever it holds is completely hidden. In 3.PNG and 4.PNG, where the option list is not clipped, no such row follows the last option (the lighter empty background follows instead), so this strip is a real further row: at least one more option probably exists below the four visible checkboxes and cannot be read from this screenshot. No scrollbar is drawn. All controls are enabled (nothing is greyed out apart from the normal read-only picker boxes). This report shows no REPORT FORMAT, no CODES and no 'Include Inactive Patients' in the visible area. CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar; PRINT / PREVIEW has a printer icon and ADD TO MY FAVORITES a plus icon.",
+   "controls": [
+    {
+     "control_id": "treatmentplan_reports.r01.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the criteria panel; both radios on one row, no row label. PDF carries the blue dot."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' because the header font draws G almost like C (see observations)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios (that row spans the full panel width, under both OFFICE/GROUP and PROVIDER); blue SELECT button with a building icon to its right. 108 equals the OID shown in the title bar. The SELECT dialog and the Office Group state are not shown in any screenshot."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, side by side with OFFICE/GROUP. Row label 'Provider' in the left cell, read-only grey box in the right cell; blue SELECT button with a single-person icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s04.c01",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left half, side by side with NAME RANGE. Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C). 11/21/2026 is apparently the capture day, i.e. the field defaults to the current date."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s04.c02",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left half, second row. Light editable box with a calendar icon inside its right end. Same value as Start Date."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s05.c01",
+     "section": "NAME RANGE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Right half, side by side with DIAGNOSED DATE RANGE. Label in the left cell; box in the right cell has the light editable-field fill (same as the date and ID boxes, not the grey read-only picker fill) and is pre-filled with AAAAA; a blue SEARCH button follows it. The header glyphs look like 'NAME RANCE' (font draws G like C). The header does not say whose name (patient or responsible party)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s05.c02",
+     "section": "NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with a magnifier icon immediately right of the Start Name box (lookup for the start of the name range). Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s05.c03",
+     "section": "NAME RANGE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Right half, second row. Light editable-field box pre-filled with ZZZZZ; a blue SEARCH button follows it."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s05.c04",
+     "section": "NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with a magnifier icon immediately right of the End Name box (lookup for the end of the name range). Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s06.c01",
+     "section": "TREATMENT PLAN ID",
+     "label": "",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Left half, side by side with PHASE ID. Single empty box with the light editable-field fill; no row label (the section header is its only label), no placeholder text, no button, no spinner arrows."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s07.c01",
+     "section": "PHASE ID",
+     "label": "",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Right half, side by side with TREATMENT PLAN ID. Single empty box with the light editable-field fill; no row label (the section header is its only label), no placeholder text, no button, no spinner arrows."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s08.c01",
+     "section": "ORDER ID",
+     "label": "",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Left half, side by side with FINANCIAL DISCLOSURE. Single empty box with the light editable-field fill; no row label (the section header is its only label), no placeholder text, no button, no spinner arrows."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s09.c01",
+     "section": "FINANCIAL DISCLOSURE",
+     "label": "",
+     "type": "dropdown",
+     "options": [],
+     "default_value": ".Treatment Plan Disclosure",
+     "enabled": true,
+     "notes": "Right half, side by side with ORDER ID. list collapsed - other values not visible. The displayed value really begins with a period character ('.Treatment Plan Disclosure') - the dot is present in the pixels. Light fill with a chevron at the right end of the box; no row label other than the section header."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s10.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Full-width section (no right-hand neighbour on this report). Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s11.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Office UCR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Row 1, left column of a two-column checkbox grid (full-width header). Blue tick present."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s11.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Itemize Prices",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Row 1, right column. Blue tick present."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s11.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Include Completed Procedures",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, left column. Empty box."
+    },
+    {
+     "control_id": "treatmentplan_reports.r01.s11.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Print Responsible Party Address",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, right column. Empty box. Directly below this row the top 5 px of a further (third, full-width) row are visible before the bottom action bar covers it - its content cannot be read (see report notes)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "treatmentplan_reports.r01.k01",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r01.s04.c01",
+     "text": "DIAGNOSED DATE RANGE (Start Date / End Date) filters on the diagnosed date of the planned procedures: the date range in which the procedures were entered into the treatment plan (the diagnosed date defaults to the entry date and can be back-dated).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "All four filter on `DIAGNOSED DATE RANGE` — the date range in which procedures were entered into the plan"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r01.s06.c01",
+     "text": "TREATMENT PLAN ID limits the print to one treatment plan (vendor training PDF on the treatment-plan print; its text was only partly legible).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`TREATMENT PLAN ID`, `PHASE ID` | Limit to one plan / phase; a blank phase prints all phases of the plan (training-PDF note, partly legible in the text layer)"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r01.s07.c01",
+     "text": "PHASE ID limits the print to one phase; left blank, all phases of the plan print (vendor training PDF on the treatment-plan print; its text was only partly legible).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`TREATMENT PLAN ID`, `PHASE ID` | Limit to one plan / phase; a blank phase prints all phases of the plan (training-PDF note, partly legible in the text layer)"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r01.k04",
+     "about": "options",
+     "control_id": "treatmentplan_reports.r01.s09.c01",
+     "text": "The FINANCIAL DISCLOSURE dropdown lists the letters of type `Financial Disclosure` that are assigned to the office (`Setup > Offices > Office Assignment > Letters`) - office data, not a fixed value list. The leading period of the captured value is a vendor-recommended sort trick, not a system value.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`FINANCIAL DISCLOSURE` lists letters of type `Financial Disclosure` assigned to the office (`Setup > Offices > Office Assignment > Letters`); the leading period is a vendor-recommended sort trick, not a system value"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r01.k05",
+     "about": "default",
+     "control_id": "treatmentplan_reports.r01.s09.c01",
+     "text": "The selection decides which disclosure letter prints. The list is alphabetical, and the vendor's tip is to prefix a letter's name with a period so that it becomes the default - which is why the captured default starts with a period.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Which disclosure letter prints; the list is alphabetical, hence the vendor tip to prefix a name with a period to make it the default"
+    }
+   ]
+  },
+  {
+   "report_id": "treatmentplan_reports.r02",
+   "name": "Treatment Plan Status",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (2.PNG, 1366 x 582); no popup, no expanded list, no second view. Layout top to bottom: REPORT FORMAT (left half) beside PRINT FORMAT (right half); OFFICE/GROUP (left) beside PROVIDER (right) with the office picker on a full-width row underneath; DIAGNOSED DATE RANGE (full width); TREATMENT PLANS (full width, 11 radios in a 6 x 2 grid); EXCLUDE TREATMENT PLANS (left) beside CODES (right); TX COUNSELOR (left) beside EXCLUDE PATIENT TYPE (right); OTHER OPTIONS (full width, one checkbox per row). TRUNCATION (pixel-measured): the criteria viewport ends at y=536 and the docked action bar starts at y=537. OTHER OPTIONS row 1 occupies y 496-517 (22 px); row 2 ('Include internal plan id') starts at y=520 and only 17 px of it are visible, so the content is taller than the viewport and further option rows may exist below that cannot be seen. No scrollbar is drawn. This is the only report of the category with REPORT FORMAT, the TREATMENT PLANS status filter, EXCLUDE TREATMENT PLANS and TX COUNSELOR, and the only one where the CODES box shows ALL. All controls are enabled (nothing greyed out apart from the normal read-only picker boxes); CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar.",
+   "controls": [
+    {
+     "control_id": "treatmentplan_reports.r02.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left half of the first row, side by side with PRINT FORMAT. No row label. Detail carries the blue dot."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right half of the first row, side by side with REPORT FORMAT. No row label. PDF carries the blue dot."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' (font draws G like C)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own full-width row below the Office / Office Group radios; blue SELECT button with a building icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half, side by side with OFFICE/GROUP. Row label 'Provider', read-only grey box; blue SELECT button with a single-person icon. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s05.c01",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section on this report (the right part of the row is empty). Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s05.c02",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Second row. Light editable box with a calendar icon inside its right end."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s06.c01",
+     "section": "TREATMENT PLANS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "ALL",
+      "Diagnosed",
+      "Accepted",
+      "Alternative",
+      "Hold",
+      "Unaccepted",
+      "Pre-Authorized Sent",
+      "Scheduled",
+      "Completed",
+      "Referred Out",
+      "Pre-Authorized Closed"
+     ],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section. ONE group of 11 single-select radio buttons (circles, not checkboxes) laid out in a 6-column x 2-row grid with no row label; only ALL carries the blue dot. Options are listed here row by row. Row 1: ALL, Diagnosed, Accepted, Alternative, Hold, Unaccepted. Row 2: Pre-Authorized Sent, Scheduled, Completed, Referred Out, Pre-Authorized Closed (the 6th cell of row 2, under Unaccepted, is empty). The same grid would also result from a column-by-column fill, in which case the underlying order is ALL, Pre-Authorized Sent, Diagnosed, Scheduled, Accepted, Completed, Alternative, Referred Out, Hold, Pre-Authorized Closed, Unaccepted - the screenshot cannot tell the two apart."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s07.c01",
+     "section": "EXCLUDE TREATMENT PLANS",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half, side by side with CODES. Unlabelled read-only grey box; blue SELECT button with a building icon (same icon as the office SELECT) to its right. Dialog not shown, so the selectable values are unknown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s08.c01",
+     "section": "CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half, side by side with EXCLUDE TREATMENT PLANS. Unlabelled read-only grey box showing ALL; blue SELECT button with a building icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s09.c01",
+     "section": "TX COUNSELOR",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half, side by side with EXCLUDE PATIENT TYPE. Unlabelled read-only grey box showing ALL; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s10.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right half, side by side with TX COUNSELOR. Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s11.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1. On this report the option rows are single-column (one checkbox per full-width row, no centre divider). Empty box."
+    },
+    {
+     "control_id": "treatmentplan_reports.r02.s11.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include internal plan id",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2, full-width row. Wording is lower-case exactly as shown ('internal plan id'). Empty box. The row is cut off at its lower edge by the bottom action bar: the checkbox and the text are complete, only the row's bottom padding is missing, so further rows below it cannot be ruled out."
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "treatmentplan_reports.r02.k01",
+     "about": "truncation",
+     "control_id": "",
+     "text": "Not truncated. A full-height vendor screenshot of this criteria screen shows exactly the two OTHER OPTIONS we transcribed (Include Inactive Patients, Include internal plan id) with blank space below: no further option row exists and the criteria panel is complete.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "Not truncated. A full-height vendor screenshot shows exactly two `OTHER OPTIONS` (`Include Inactive Patients`, `Include internal plan id`) and blank space below"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k02",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s05.c01",
+     "text": "DIAGNOSED DATE RANGE (Start Date / End Date) filters on the diagnosed date of the planned procedures: the date range in which the procedures were entered into the treatment plan (the diagnosed date defaults to the entry date and can be back-dated).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "All four filter on `DIAGNOSED DATE RANGE` — the date range in which procedures were entered into the plan"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k03",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s06.c01",
+     "text": "Six of the ten statuses are exclusive: each planned procedure has exactly one of Diagnosed (D, the default when a procedure is entered), Accepted (A), Unaccepted (U), Hold (H), Alternative (L) or Referred Out (R).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Exclusive status | `D` Diagnosed (default on entry), `A` Accepted, `U` Unaccepted, `H` Hold, `L` Alternative, `R` Referred Out"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k04",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s06.c01",
+     "text": "The other four statuses are a second layer: Scheduled (S) and Completed (C) are additive flags and Pre-Authorized Sent (PS) / Pre-Authorized Closed (PC) are the pre-auth status, so a procedure can carry them on top of its exclusive status.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`L` Alternative, `R` Referred Out) plus additive flags `Scheduled` (`S`), `Completed` (`C`) and pre-auth `PS` / `PC`"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k05",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s06.c01",
+     "text": "The radio limits the report to the procedures in the chosen status (ALL = no status filter). The vendor's sample echoes the choice in its footer as `Tx Plan`.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`TREATMENT PLANS` (radio, `ALL` + 10 statuses) | Only procedures in that status; footer `Tx Plan`"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k06",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s06.c01",
+     "text": "Vendor recipe that uses the status radio together with the exclusion picker: choose Accepted here and exclude Completed and / or Scheduled in EXCLUDE TREATMENT PLANS. It only works if staff actually mark plans Accepted.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Accepted` and exclude `Completed` and / or `Scheduled` — which only works if staff actually mark plans `Accepted`"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k07",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s07.c01",
+     "text": "EXCLUDE TREATMENT PLANS is a multi-select: the procedures in the picked statuses are removed from the report. The vendor sample echoes the picked status codes in its footer (`Exclude Tx Plan : S,C`).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`EXCLUDE TREATMENT PLANS` (multi-select) | Removes procedures in the picked statuses; footer prints the codes (`S,C`)"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k08",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s07.c01",
+     "text": "Vendor recipe for the list of unscheduled / uncompleted treatment: exclude Scheduled and Completed to get everything not yet scheduled or done.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "**Vendor recipes**: exclude `Scheduled` and `Completed` to get everything not yet scheduled or done"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k09",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s08.c01",
+     "text": "CODES limits the report to the picked procedure codes; SELECT opens the SEARCH CODE dialog (see the picker file).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`CODES` | Limit to procedure codes"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k10",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s09.c01",
+     "text": "TX COUNSELOR = treatment counselor, a field the vendor's treatment-plan screen keeps on each planned procedure. The picker is read as limiting the report to the procedures of the picked treatment counselor(s); that reading comes from our transcription - the vendor documents the field, not this criterion.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`TX COUNSELOR` | Limit to procedures of the picked treatment counselor(s)"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r02.k11",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r02.s10.c01",
+     "text": "EXCLUDE PATIENT TYPE removes the patients of the picked patient types from the report; the vendor's sample of this report echoes the choice in its footer as `Exclude Pat Type`.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`EXCLUDE PATIENT TYPE` / `EXCLUDE RESPONSIBLE PARTY TYPE` | Removes patients / accounts of the picked types; echoed as `Exclude Pat Type` / `Ex Resp. Type`"
+    }
+   ]
+  },
+  {
+   "report_id": "treatmentplan_reports.r03",
+   "name": "Treatment Plan Analysis",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (3.PNG, 1366 x 590); no popup, no expanded list, no second view. Smallest criteria set of the category. Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker on a full-width row underneath; DIAGNOSED DATE RANGE (full width); EXCLUDE PATIENT TYPE (full width); OTHER OPTIONS (full width, one checkbox). The option row ends at y=395 and about 140 px of empty lighter background follow before the action bar (y=539), so nothing is clipped and the criteria are complete. No REPORT FORMAT, CODES, NAME RANGE or status filter on this report. All controls are enabled; CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar.",
+   "controls": [
+    {
+     "control_id": "treatmentplan_reports.r03.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top; both radios on one row, no row label. PDF carries the blue dot."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' (font draws G like C)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own full-width row below the Office / Office Group radios; blue SELECT button with a building icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half, side by side with OFFICE/GROUP. Row label 'Provider', read-only grey box; blue SELECT button with a single-person icon. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s04.c01",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section (the right part of the row is empty). Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s04.c02",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Second row. Light editable box with a calendar icon inside its right end."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s05.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Full-width section. Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r03.s06.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Only option in this section; single full-width row. Empty box."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "treatmentplan_reports.r03.k01",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r03.s04.c01",
+     "text": "DIAGNOSED DATE RANGE (Start Date / End Date) filters on the diagnosed date of the planned procedures: the date range in which the procedures were entered into the treatment plan (the diagnosed date defaults to the entry date and can be back-dated).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "All four filter on `DIAGNOSED DATE RANGE` — the date range in which procedures were entered into the plan"
+    }
+   ]
+  },
+  {
+   "report_id": "treatmentplan_reports.r04",
+   "name": "Treatment Plan Detail",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (4.PNG, 1366 x 586); no popup, no expanded list, no second view. Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker on a full-width row underneath; DIAGNOSED DATE RANGE (full width); CODES (left) beside EXCLUDE PATIENT TYPE (right); OTHER OPTIONS (full width, one checkbox). Same as Treatment Plan Analysis plus the CODES picker. The option row ends at y=397 and about 140 px of empty lighter background follow before the action bar (y=541), so nothing is clipped and the criteria are complete. All controls are enabled; CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar.",
+   "controls": [
+    {
+     "control_id": "treatmentplan_reports.r04.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top; both radios on one row, no row label. PDF carries the blue dot."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' (font draws G like C)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on its own full-width row below the Office / Office Group radios; blue SELECT button with a building icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half, side by side with OFFICE/GROUP. Row label 'Provider', read-only grey box; blue SELECT button with a single-person icon. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s04.c01",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Full-width section (the right part of the row is empty). Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C)."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s04.c02",
+     "section": "DIAGNOSED DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Second row. Light editable box with a calendar icon inside its right end."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s05.c01",
+     "section": "CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Left half, side by side with EXCLUDE PATIENT TYPE. Unlabelled read-only grey box that is completely EMPTY on this report (interior is one uniform fill colour - no 'ALL' text, unlike the CODES picker of Treatment Plan Status); blue SELECT button with a building icon to its right. Dialog not shown; the screen does not say what an empty box means."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s06.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right half, side by side with CODES. Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+    },
+    {
+     "control_id": "treatmentplan_reports.r04.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Only option in this section; single full-width row. Empty box."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "treatmentplan_reports.r04.k01",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r04.s04.c01",
+     "text": "DIAGNOSED DATE RANGE (Start Date / End Date) filters on the diagnosed date of the planned procedures: the date range in which the procedures were entered into the treatment plan (the diagnosed date defaults to the entry date and can be back-dated).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "All four filter on `DIAGNOSED DATE RANGE` — the date range in which procedures were entered into the plan"
+    },
+    {
+     "correction_id": "treatmentplan_reports.r04.k02",
+     "about": "meaning",
+     "control_id": "treatmentplan_reports.r04.s05.c01",
+     "text": "CODES takes one or more procedure codes, picked in the SEARCH CODE dialog; the report finds the patients who have those codes in their treatment plan.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "set the date range in which the plan was entered, pick one or more codes, print."
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "question": "Truncation NOT resolved: the hidden third OTHER OPTIONS row was not read from any vendor source. The research document names candidates only (mapping unverified): three options of the single-patient Treatment Plan print dialog that the visible batch criteria lack - `Print Account Name`, `Good Faith Estimate`, `X-Rays` (+ picker). That dialog belongs to another screen (the patient's treatment plan), so it is not recorded as a picker of this report; per the vendor screenshots it holds `Good Faith Estimate`, tabs `SINGLE` / `MULTIPLE`, `Items to Print` (`Selected` / `All`, newer builds), `Plan ID*`, `Phase ID`, `Financial Disclosure`, `Include Statuses`, `Other Options`, `X-Rays` and the buttons `PRINT/PREVIEW`, `EMAIL PATIENT`, `TEXT PATIENT`. To settle: capture the Treatment Plan Proposal criteria scrolled to the bottom or in a taller window."
+  },
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "question": "That the batch report prints, for each selected patient, the same `Treatment Plan` document as the single-patient print is inferred; how NAME RANGE, DIAGNOSED DATE RANGE, PROVIDER and EXCLUDE PATIENT TYPE select the patients and procedures is inferred as well."
+  },
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "question": "`Itemize Prices`: the effect (per-procedure amounts vs totals only) is inferred and unverified. `Include Office UCR` (shows the `UCR` column) and `Print Responsible Party Address` (prints the address in the header box) are mapped by inference."
+  },
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "question": "`ORDER ID`: the meaning (limit to one order id) is inferred; the vendor removed `Order` from the treatment-plan screen and from the printed plan in newer builds, so whether this criterion still has an effect is unknown."
+  },
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "question": "`Include Completed Procedures`: the single-patient print dialog offers `Include Statuses` (`Diagnosed`, `Accepted`, `Unaccepted`, `Hold`, `Alternative`, `Completed`; defaults `Diagnosed` + `Accepted`) instead; which statuses the batch report prints by default is not documented."
+  },
+  {
+   "report_id": "treatmentplan_reports.r01",
+   "question": "`FINANCIAL DISCLOSURE`: the entries are the office's own letters, so no fixed value list exists; what the dropdown shows when no letter of type `Financial Disclosure` is assigned to the office is not documented."
+  },
+  {
+   "report_id": "treatmentplan_reports.r02",
+   "question": "`Include internal plan id`: not documented; taken (unverified) to add the system's internal treatment-plan identifier."
+  },
+  {
+   "report_id": "treatmentplan_reports.r02",
+   "question": "`SELECT TREATMEN PLAN` dialog behind EXCLUDE TREATMENT PLANS: the vendor image shows eight statuses; that `Accepted` and `Alternative` sit above the visible part of the list is inferred, and their exact spelling with code is not shown."
+  },
+  {
+   "report_id": "treatmentplan_reports.r02",
+   "question": "The vendor's claims vocabulary lists three pre-authorization statuses - `PS`, `PC` and `PU` (uncovered) - while the TREATMENT PLANS radio (captured complete) and the visible part of the SELECT TREATMEN PLAN list offer only Pre-Authorized Sent and Pre-Authorized Closed. Whether procedures with status `PU` can be selected or excluded on this report is not documented."
+  },
+  {
+   "report_id": "treatmentplan_reports.r02",
+   "question": "`TX COUNSELOR`: the contents of the picker are not documented, and that it limits the report to the procedures of the picked treatment counselor(s) comes from our transcription (the vendor documents only the Treatment Counselor field of a planned procedure)."
+  },
+  {
+   "report_id": "treatmentplan_reports.r02",
+   "question": "`REPORT FORMAT` = `Summary`: what it prints is not documented (taken, unverified, to be patient-level totals only), and whether it changes or disables any criterion is not documented either."
+  },
+  {
+   "report_id": "treatmentplan_reports.r04",
+   "question": "Whether an empty `CODES` box (the captured default; on Treatment Plan Status the box shows ALL) means all codes or blocks the run is unverified."
+  },
+  {
+   "report_id": "",
+   "question": "ADD TO MY FAVORITES (action on every report): vendor training material says it saves the criteria - one version per report - and that a saved version is later changed with `Update My Favorites`. Where `Update My Favorites` appears (this button relabelled once the report is a favourite, or an action elsewhere) is not described in this document."
+  },
+  {
+   "report_id": "",
+   "question": "SELECT / SEARCH dialogs not described in this research document: office / office group (beyond the fact that one or more offices or an office group can be chosen), provider (beyond `Include All`), EXCLUDE PATIENT TYPE, TX COUNSELOR and the NAME RANGE SEARCH lookups of Treatment Plan Proposal."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_insurance_txplan_ortho.md",
+ "screenshot_control_count": 50,
+ "vendor_doc_control_count": 0
+}

@@ -1,0 +1,1215 @@
+{
+  "category": "setup_list_reports",
+  "window_title": "Setup List Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/setup_list_reports",
+  "report_list": [
+    "Employer List",
+    "Carrier List",
+    "Insurance Plan List",
+    "Inactive Plans List",
+    "Drug List",
+    "Procedure Codes List",
+    "Procedure Codes by Fee Schedule",
+    "Explosion Codes List",
+    "Credit Codes Report",
+    "Fee Schedule List",
+    "Capitation Fee Schedule",
+    "Office List",
+    "Operatory List",
+    "Office Holidays",
+    "ADA Categories List",
+    "Document Types List",
+    "Notes Macros List",
+    "Default Ins Plan Coverage Category List",
+    "Notes Macro Category List",
+    "Patient Types List"
+  ],
+  "reports": [
+    {
+      "name": "Employer List",
+      "screenshots": [
+        "1.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "EMPLOYER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No label of its own (the section header acts as the label). Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "STATE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "1.PNG. Left-list group INSURANCE (row 1, left cell). Three full-width sections stacked top to bottom: PRINT FORMAT, EMPLOYER, STATE. The rest of the criteria box is blank down to its bottom border (exact-colour pixel sweep found nothing else) - not truncated."
+    },
+    {
+      "name": "Insurance Plan List",
+      "screenshots": [
+        "2.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "LEFT column, top. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "SORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Carrier",
+                "Employer"
+              ],
+              "default_value": "Carrier",
+              "enabled": true,
+              "notes": "LEFT column, directly under PRINT FORMAT (beside the lower half of DATE RANGE). Two radios on one row; no row label. Carrier is the filled radio. A blank filler strip follows under the radios because the right-hand DATE RANGE block is taller."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Created On",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "RIGHT column, top (beside PRINT FORMAT + SORT BY). First of two square checkboxes on the row directly under the DATE RANGE header. Empty box."
+            },
+            {
+              "label": "Modified On",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Second checkbox on the same row, right of 'Created On'; shown ticked (blue box with tick). Both are square checkboxes, not radios; presumably they can be combined and choose whether the Start/End Date range is applied to the plan's created and/or modified date (inference, not visible)."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": false,
+              "notes": "RIGHT column. Row label 'Start Date' at the left, date box with a blue calendar icon in a second sub-column. GREYED: the box has the grey read-only/disabled fill (RGB 220,223,226 - identical to the read-only picker boxes) instead of the light editable fill (241,241,241) of the Start Date / End Date boxes on Office Holidays (13.PNG). Its text colour (72,72,72), border and calendar icon are NOT dimmed. Recorded as disabled, as in the other categories where this fill marks a disabled date box, but a static screenshot cannot prove disabled versus read-only, and nothing visible shows what would enable it ('Modified On' is already ticked)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": false,
+              "notes": "Row below Start Date; same layout, blue calendar icon and the same grey read-only/disabled fill (RGB 220,223,226) as Start Date - see that note. Both dates equal the capture date."
+            }
+          ]
+        },
+        {
+          "title": "EMPLOYER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "LEFT column, second band (beside USER). No label of its own (the section header acts as the label). Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "USER",
+          "controls": [
+            {
+              "label": "Include User in Filters",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "RIGHT column, second band (beside EMPLOYER). Checkbox on the row directly under the USER header, above the user picker; shown ticked. Text exactly as shown (lower-case 'in')."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Row below the 'Include User in Filters' checkbox. No label of its own. Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, person-with-plus icon). Presumably only applied when the checkbox above is ticked (inference)."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section below the two-column area. No label of its own (the section header acts as the label). Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "GROUP #",
+          "controls": [
+            {
+              "label": "",
+              "type": "text_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Full-width section, last on the panel. One short empty editable text box (light fill RGB 241,241,241, about 90 px wide) under the header; no placeholder text (its interior is uniformly empty) and no label other than the section header 'GROUP #'."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "2.PNG. Left-list group INSURANCE (row 1, right cell). The only report of the category whose criteria start in two columns: LEFT column = PRINT FORMAT, SORT BY, then EMPLOYER; RIGHT column = DATE RANGE (as tall as PRINT FORMAT + SORT BY), then USER (level with EMPLOYER); below them the full-width CARRIER and GROUP # sections. Sections are listed band by band, left column first, then right. It is also the only report here with a SORT BY choice, Created On / Modified On checkboxes, an 'Include User in Filters' checkbox and a free-text box, and its Start Date / End Date boxes are the only greyed controls of the whole category. Blank space below GROUP # down to the bottom border of the box - not truncated."
+    },
+    {
+      "name": "Carrier List",
+      "screenshots": [
+        "3.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No label of its own (the section header acts as the label). Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "STATE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "3.PNG. Left-list group INSURANCE (row 2, left cell). Three full-width stacked sections; same shape as Employer List with a CARRIER picker in place of EMPLOYER. Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Inactive Plans List",
+      "screenshots": [
+        "4.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No label of its own (the section header acts as the label). Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, single-person icon)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "4.PNG. Left-list group INSURANCE (row 2, right cell). Only two full-width sections (PRINT FORMAT, CARRIER) - no STATE, no date range, no status choice. Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Drug List",
+      "screenshots": [
+        "5.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "USER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "No label of its own (the section header acts as the label). Read-only grey box (fill RGB 220,223,226) showing ALL; button to its right: SELECT (blue = enabled, person-with-plus icon). No 'Include User in Filters' checkbox here (unlike Insurance Plan List)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "5.PNG. Left-list group PRESCRIPTION (its only report: a single cell at the left with no right-hand cell). Two full-width sections (PRINT FORMAT, USER). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Procedure Codes List",
+      "screenshots": [
+        "6.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "CATEGORY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "LEFT half, side by side with PRODUCTION TYPE. list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        },
+        {
+          "title": "PRODUCTION TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half, side by side with CATEGORY. list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        },
+        {
+          "title": "STATUS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Active",
+                "Inactive",
+                "Both"
+              ],
+              "default_value": "Active",
+              "enabled": true,
+              "notes": "Full-width section. Three radios on one row; no row label. Active is the filled radio."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Only Tooth Required",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section; first of three checkboxes, one per row. Empty box."
+            },
+            {
+              "label": "Include Only Surface Required",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Second row. Empty box."
+            },
+            {
+              "label": "Include Only Bill to Insurance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Third row; last control on the panel. Empty box. Text exactly as shown (lower-case 'to')."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "6.PNG. Left-list group PROCEDURE (row 1, left cell). Layout: PRINT FORMAT full width; CATEGORY (left half) | PRODUCTION TYPE (right half) side by side; STATUS full width; OTHER OPTIONS full width with three checkbox rows. Blank space below OTHER OPTIONS down to the bottom border of the box - not truncated."
+    },
+    {
+      "name": "Explosion Codes List",
+      "screenshots": [
+        "7.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "SUMMARY/DETAIL",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Summary",
+                "Detail"
+              ],
+              "default_value": "Summary",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. Summary is the filled radio."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "7.PNG. Left-list group PROCEDURE (row 1, right cell). Two full-width sections only (PRINT FORMAT, SUMMARY/DETAIL). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Procedure Codes by Fee Schedule",
+      "screenshots": [
+        "8.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "PROCEDURE CODE TYPE",
+          "controls": [
+            {
+              "label": "Dental",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Full-width section; first of three checkboxes, one per row. Shown ticked (blue box with tick)."
+            },
+            {
+              "label": "Medical",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Second row. Shown ticked."
+            },
+            {
+              "label": "Other",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Third row. Shown ticked."
+            }
+          ]
+        },
+        {
+          "title": "CATEGORY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "LEFT half, side by side with PRODUCTION TYPE. list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        },
+        {
+          "title": "PRODUCTION TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "RIGHT half, side by side with CATEGORY. list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        },
+        {
+          "title": "FEE SCHEDULE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "CIGNA PPO HAMILTON",
+              "enabled": true,
+              "notes": "LEFT half, side by side with EFFECTIVE DATE. list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end. Shows a specific fee schedule name (tenant data) rather than ALL - unlike the FEE SCHEDULE dropdown of Fee Schedule List - so one schedule is always chosen here by default (whether an ALL choice exists in the list is not visible). The G of CIGNA renders close to a C at this size (looks like CICNA); the lower-right spur of the glyph was confirmed against the leading C on the pixels."
+            }
+          ]
+        },
+        {
+          "title": "EFFECTIVE DATE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "01/01/2020",
+              "enabled": true,
+              "notes": "RIGHT half, side by side with FEE SCHEDULE. list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end. It is a dropdown with a chevron, NOT a calendar date box. Presumably lists the effective dates of the selected fee schedule (inference)."
+            }
+          ]
+        },
+        {
+          "title": "STATUS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Active",
+                "Inactive",
+                "Both"
+              ],
+              "default_value": "Active",
+              "enabled": true,
+              "notes": "Full-width section. Three radios on one row; no row label. Active is the filled radio."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Only Tooth Required",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Full-width section; first of three checkboxes, one per row. Empty box."
+            },
+            {
+              "label": "Include Only Surface Required",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Second row. Empty box."
+            },
+            {
+              "label": "Include Only Bill to Insurance",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Third row; last control on the panel. Empty box. Text exactly as shown (lower-case 'to')."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "8.PNG. Left-list group PROCEDURE (row 2, left cell). Layout top to bottom: PRINT FORMAT (full width); PROCEDURE CODE TYPE (full width, three checkbox rows, all ticked); CATEGORY | PRODUCTION TYPE (side by side); FEE SCHEDULE | EFFECTIVE DATE (side by side); STATUS (full width); OTHER OPTIONS (full width, three checkbox rows, all unticked). Same criteria as Procedure Codes List plus PROCEDURE CODE TYPE, FEE SCHEDULE and EFFECTIVE DATE. Fullest panel of the category, yet it still ends 83 px above the bottom border of the box (blank body in between) - not truncated."
+    },
+    {
+      "name": "Credit Codes Report",
+      "screenshots": [
+        "9.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        },
+        {
+          "title": "CLASS",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "9.PNG. Left-list group PROCEDURE (row 2, right cell). Three full-width stacked sections (PRINT FORMAT, TYPE, CLASS - TYPE and CLASS are stacked, not side by side). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Fee Schedule List",
+      "screenshots": [
+        "10.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "FEE SCHEDULE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end. Default here is ALL (on Procedure Codes by Fee Schedule the same-named dropdown shows a specific schedule)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "10.PNG. Left-list group FEE SCHEDULE (left cell). Two full-width sections only (PRINT FORMAT, FEE SCHEDULE). Rest of the criteria box blank - not truncated. (This screenshot is 1364 px wide, i.e. cropped 2 px further left than the others; content is unaffected.)"
+    },
+    {
+      "name": "Capitation Fee Schedule",
+      "screenshots": [
+        "11.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "CAPITATION FEE SCHEDULE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "11.PNG. Left-list group FEE SCHEDULE (right cell). Two full-width sections only (PRINT FORMAT, CAPITATION FEE SCHEDULE). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Office List",
+      "screenshots": [
+        "12.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on the first row under the header; no row label. Office is the filled radio."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Second row of the section, under the Office / Office Group radios. No label of its own. Read-only grey box (fill RGB 220,223,226) showing 108 - the same number as 'OID :108' in the title bar, i.e. the current office; button to its right: SELECT (blue = enabled, building icon). Presumably picks offices or office groups depending on the radio above (inference, not visible)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "12.PNG. Left-list group OFFICE (row 1, left cell). Two full-width sections (PRINT FORMAT, OFFICE/GROUP). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Office Holidays",
+      "screenshots": [
+        "13.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on the first row under the header; no row label. Office is the filled radio."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Second row of the section, under the Office / Office Group radios. No label of its own. Read-only grey box (fill RGB 220,223,226) showing 108 - the same number as 'OID :108' in the title bar, i.e. the current office; button to its right: SELECT (blue = enabled, building icon). Presumably picks offices or office groups depending on the radio above (inference, not visible)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row label 'Start Date' at the left; date box with a blue calendar icon in a second sub-column. Light editable fill (RGB 241,241,241) - not greyed. No Created On / Modified On checkboxes in the DATE RANGE of this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row below Start Date; same layout with a blue calendar icon; light editable fill (RGB 241,241,241)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "13.PNG. Left-list group OFFICE (row 1, right cell). Three full-width stacked sections (PRINT FORMAT, OFFICE/GROUP, DATE RANGE). Both dates show 11/21/2026 (apparently the capture date, i.e. the default looks like today). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "Operatory List",
+      "screenshots": [
+        "14.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on the first row under the header; no row label. Office is the filled radio."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Second row of the section, under the Office / Office Group radios. No label of its own. Read-only grey box (fill RGB 220,223,226) showing 108 - the same number as 'OID :108' in the title bar, i.e. the current office; button to its right: SELECT (blue = enabled, building icon). Presumably picks offices or office groups depending on the radio above (inference, not visible)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "14.PNG. Left-list group OFFICE (row 2, left cell; the cell to its right is empty). Criteria identical to Office List (PRINT FORMAT, OFFICE/GROUP). Rest of the criteria box blank - not truncated."
+    },
+    {
+      "name": "ADA Categories List",
+      "screenshots": [
+        "15.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "15.PNG. Left-list group MISC (row 1, left cell). PRINT FORMAT is the only criteria section - this report has no filters at all. The rest of the criteria box is blank down to its bottom border (exact-colour pixel sweep found nothing else) - not truncated."
+    },
+    {
+      "name": "Default Ins Plan Coverage Category List",
+      "screenshots": [
+        "16.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "16.PNG. Left-list group MISC (row 1, right cell). PRINT FORMAT is the only criteria section - this report has no filters at all. The rest of the criteria box is blank down to its bottom border (exact-colour pixel sweep found nothing else) - not truncated."
+    },
+    {
+      "name": "Document Types List",
+      "screenshots": [
+        "17.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "17.PNG. Left-list group MISC (row 2, left cell). PRINT FORMAT is the only criteria section - this report has no filters at all. The rest of the criteria box is blank down to its bottom border (exact-colour pixel sweep found nothing else) - not truncated."
+    },
+    {
+      "name": "Notes Macro Category List",
+      "screenshots": [
+        "18.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "18.PNG. Left-list group MISC (row 2, right cell). PRINT FORMAT is the only criteria section - this report has no filters at all. The rest of the criteria box is blank down to its bottom border (exact-colour pixel sweep found nothing else) - not truncated."
+    },
+    {
+      "name": "Notes Macros List",
+      "screenshots": [
+        "19.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        },
+        {
+          "title": "MACRO CATEGORY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. No label of its own (the section header acts as the label); light editable fill with a single down-chevron at the right end."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "19.PNG. Left-list group MISC (row 3, left cell - the last visible row of the left list, which the bottom edge of the window cuts through). Two full-width sections (PRINT FORMAT, MACRO CATEGORY). Rest of the criteria box blank - the criteria panel itself is not truncated."
+    },
+    {
+      "name": "Patient Types List",
+      "screenshots": [
+        "20.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "20.PNG. Left-list group MISC (row 3, right cell - the last visible item of the left list, which the bottom edge of the window cuts through). PRINT FORMAT is the only criteria section - this report has no filters at all. The rest of the criteria box is blank down to its bottom border (exact-colour pixel sweep found nothing else) - not truncated."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory. All 20 original screenshots, all 20 pre-rendered criteria zooms, the list zooms of 1.PNG and 2.PNG and about 40 extra crops at 3x-6x (prefix c_ in the zoom folder) were read; the left list of the other files was verified by pixel comparison (2-8 identical to 1.PNG, 9-19 identical to 20.PNG, and 1 versus 20 differ only in text anti-aliasing) plus 4x crops of 20.PNG. Readers A and B agreed on every report, section, control, option, default value, enabled state and truncation flag (20 reports, 67 controls); they differed only in the ordering of report_list and in descriptive wording. Everything was nevertheless re-checked on the pixels: the selected-radio glyph located in each file, blue-mark detection for every ticked checkbox / chosen radio, fill and border colours of every input box and button, a pixel comparison of the left list across all 20 files, and an exact-colour sweep of each criteria panel that found nothing beyond the controls listed here (no 'Page Break', no right-edge or second-column extras, no greyed control other than the two date boxes noted below, no instruction or legend text, no scrollbar, no footer text). COVERAGE: 20 screenshots = 20 different reports, each selected exactly once, in the app's row-major order: 1 Employer List, 2 Insurance Plan List, 3 Carrier List, 4 Inactive Plans List, 5 Drug List, 6 Procedure Codes List, 7 Explosion Codes List, 8 Procedure Codes by Fee Schedule, 9 Credit Codes Report, 10 Fee Schedule List, 11 Capitation Fee Schedule, 12 Office List, 13 Office Holidays, 14 Operatory List, 15 ADA Categories List, 16 Default Ins Plan Coverage Category List, 17 Document Types List, 18 Notes Macro Category List, 19 Notes Macros List, 20 Patient Types List. All are the normal two-panel screen in its default state - no popup, no expanded dropdown, no scrolled second view, no foreign screen - so the dialogs behind the SELECT buttons (employer, carrier, user, office / office group) and the option lists of every dropdown (STATE, CATEGORY, PRODUCTION TYPE, FEE SCHEDULE, EFFECTIVE DATE, TYPE, CLASS, CAPITATION FEE SCHEDULE, MACRO CATEGORY) are NOT documented by this category. TITLE BAR (identical in all 20): 'Setup List Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (icon only, no text) at the far right. LEFT PANEL - DIFFERENT FROM THE USUAL LAYOUT: there is NO 'SELECT REPORT' header bar. Directly under the title bar the report radios are organised under six blue group-header bars, each followed by a two-column grid of radio cells: INSURANCE = row 1 Employer List | Insurance Plan List, row 2 Carrier List | Inactive Plans List; PRESCRIPTION = Drug List (single cell, no right-hand cell); PROCEDURE = row 1 Procedure Codes List | Explosion Codes List, row 2 Procedure Codes by Fee Schedule | Credit Codes Report; FEE SCHEDULE = Fee Schedule List | Capitation Fee Schedule; OFFICE = row 1 Office List | Office Holidays, row 2 Operatory List | (empty cell); MISC = row 1 ADA Categories List | Default Ins Plan Coverage Category List, row 2 Document Types List | Notes Macro Category List, row 3 Notes Macros List | Patient Types List. report_list is given group by group from top to bottom and, inside each group, left column top-to-bottom then right column (4 INSURANCE, 1 PRESCRIPTION, 4 PROCEDURE, 2 FEE SCHEDULE, 3 OFFICE, 6 MISC), so the groups stay contiguous; the app's own item order is evidently row-major (the screenshots follow it and MISC is alphabetical that way). The new system must keep these six group headings. Each of the first five groups is closed by a thin rule carrying a small blue tab with three dots (a collapse / resize handle); a dark vertical tab with three dots on the border between the two panels is the splitter / collapse handle. The group-header bars carry nothing but their title. LIST CLIPPED AT THE BOTTOM: in all 20 screenshots the bottom edge of the window cuts the left panel inside the third MISC row (Notes Macros List | Patient Types List), about 7 px below its radios - the bottom border of that row and the rule-with-handle that closes every other group are not visible, and no scrollbar is drawn. All 20 visible reports are transcribed, but further MISC reports below the visible area cannot be ruled out. RIGHT PANEL: blue bar 'REPORT CRITERIA' with the CLEAR CRITERIA button (refresh icon) at its right end - drawn slate-grey in every screenshot while all other buttons are blue; a bordered criteria box built from grey section-header bars; footer bar with blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) at the bottom right. The same three actions appear on every report. No criteria panel is truncated: each shows the bottom border of its box with blank space under the last section. PATTERNS: every report starts with PRINT FORMAT = PDF (default) / Excel; five reports have nothing else (ADA Categories List, Default Ins Plan Coverage Category List, Document Types List, Notes Macro Category List, Patient Types List). Section headers act as the labels - pickers, dropdowns and the GROUP # text box have no label of their own, so their label is recorded as empty. Pickers are a read-only grey box (fill RGB 220,223,226) plus a blue SELECT button whose icon varies: single person for EMPLOYER and CARRIER, person-with-plus for USER, building for the office picker; every SELECT button in this category is blue (enabled). Office pickers show 108 (= the OID in the title bar), all other pickers show ALL. All dropdowns are collapsed, so only the selected value is known: ALL everywhere except Procedure Codes by Fee Schedule (FEE SCHEDULE = CIGNA PPO HAMILTON, EFFECTIVE DATE = 01/01/2020, both tenant data). Date boxes show 11/21/2026 for both start and end (apparently the capture date) with a blue calendar icon. ONLY GREYED CONTROLS: the Start Date / End Date boxes of Insurance Plan List (2.PNG) have the grey read-only/disabled fill (220,223,226) whereas those of Office Holidays (13.PNG) have the light editable fill (241,241,241). Section headers seen in this category: PRINT FORMAT, SORT BY, DATE RANGE, EMPLOYER, USER, CARRIER, GROUP #, STATE, CATEGORY, PRODUCTION TYPE, STATUS, OTHER OPTIONS, SUMMARY/DETAIL, PROCEDURE CODE TYPE, FEE SCHEDULE, EFFECTIVE DATE, TYPE, CLASS, CAPITATION FEE SCHEDULE, OFFICE/GROUP, MACRO CATEGORY. There is no REPORT FORMAT, PROVIDER, PATIENT TYPE or GROUP BY section anywhere in this category. FONT NOTE: the capital G of the UI font renders almost like a C at screenshot resolution (GROUP #, OFFICE/GROUP, DATE RANGE, CATEGORY, MACRO CATEGORY and the value CIGNA look like CROUP / RANCE / CATECORY / CICNA); each was confirmed as G by comparing the lower-right spur of the glyph with real C glyphs on the pixels. Screenshot sizes vary slightly (1364-1366 x 582-597 px; 10.PNG is cropped 2 px further left, 9.PNG and 14.PNG are 1365 px wide); the selected-radio glyph is 1 px taller in the FEE SCHEDULE row (10.PNG, 11.PNG) - a rendering detail, not a different state."
+}

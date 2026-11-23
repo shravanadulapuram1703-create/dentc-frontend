@@ -1,0 +1,231 @@
+{
+  "category": "security_list_reports",
+  "window_title": "Security List Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/security_list_reports",
+  "report_list": [
+    "User List",
+    "Group List",
+    "Group Rights List",
+    "User-Group Membership"
+  ],
+  "reports": [
+    {
+      "name": "User List",
+      "screenshots": [
+        "1.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header, at the left edge; no row label. PDF is the filled (blue) radio. Both option labels are black (not greyed)."
+            }
+          ]
+        },
+        {
+          "title": "USER",
+          "controls": [
+            {
+              "label": "User",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Row label 'User' at the far left of the row; read-only grey box (fill RGB 220,223,226, grey text) showing ALL, starting about a quarter of the way across the panel (x 698-1074 of the 1366 px screenshot); button immediately to its right: SELECT (blue = enabled, user-plus icon: person silhouette with a + sign). The value is set through SELECT, not typed."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Inactive Users",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Single checkbox at the left edge of the row; box empty; label in black (not greyed). Nothing else in this section."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "1.PNG only; 'User List' is the filled radio in SELECT REPORT. Three full-width sections stacked top to bottom: PRINT FORMAT, USER, OTHER OPTIONS, then blank space down to the criteria box's bottom border, which is fully visible above the action band; no scrollbar - not truncated. No office/location, report-format, date-range, group-by or sort-by section for this report. A whole-image pixel-cluster scan found nothing else in the criteria box (no right-edge or second-column controls such as Page Break, no instruction text). No dropdown expanded, no popup open."
+    },
+    {
+      "name": "Group List",
+      "screenshots": [
+        "2.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header, at the left edge; no row label. PDF is the filled (blue) radio. Both option labels are black (not greyed)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "2.PNG only; 'Group List' is the filled radio in SELECT REPORT. PRINT FORMAT is the ONLY section; the rest of the criteria box is blank down to its fully visible bottom border (whole-image pixel-cluster scan: no other text or control, no faint/greyed content, no scrollbar) - not truncated. The report takes no filters at all (no user, group, office or other options)."
+    },
+    {
+      "name": "Group Rights List",
+      "screenshots": [
+        "3.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header, at the left edge; no row label. PDF is the filled (blue) radio. Both option labels are black (not greyed)."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "3.PNG only; 'Group Rights List' is the filled radio in SELECT REPORT. Criteria panel identical to Group List: PRINT FORMAT is the ONLY section; the rest of the criteria box is blank down to its fully visible bottom border (whole-image pixel-cluster scan: no other text or control, no scrollbar) - not truncated. Notably there is no group picker or any other filter on this report."
+    },
+    {
+      "name": "User-Group Membership",
+      "screenshots": [
+        "4.PNG"
+      ],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "PDF",
+                "Excel"
+              ],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header, at the left edge; no row label. PDF is the filled (blue) radio. Both option labels are black (not greyed)."
+            }
+          ]
+        },
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Detail",
+                "Summary"
+              ],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Two radios on one row directly under the header, at the left edge; no row label. Detail is the filled (blue) radio. Both option labels are black (not greyed)."
+            }
+          ]
+        },
+        {
+          "title": "SECURITY GROUP",
+          "controls": [
+            {
+              "label": "Group",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Row label 'Group' at the far left of the row; read-only grey box (fill RGB 220,223,226, grey text) showing ALL, starting about a quarter of the way across the panel (x 697-1074); button immediately to its right: SELECT (blue = enabled, group-of-people icon). Header reading: in this small bold caps font the G of GROUP renders almost like a C (it looks like 'SECURITY CROUP' when enlarged); the glyph has the extra lower-right stem pixels that the genuine C of SECURITY lacks, so the header is SECURITY GROUP."
+            }
+          ]
+        },
+        {
+          "title": "LOCATION",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": [
+                "Office",
+                "Office Group"
+              ],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Two radios on the first row under the header, at the left edge; no row label. Office is the filled (blue) radio. Both option labels are black (not greyed)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Second row of the section, directly under the Office / Office Group radios. No label of its own. Read-only grey box (fill RGB 220,223,226, grey text) starting at the left edge of the row (x 472-1067) showing 108 - the same number as 'OID :108' in the title bar, i.e. the current office; button to its right: SELECT (blue = enabled, building/office icon). Presumably picks offices or office groups depending on the radio above (inferred from layout, not stated on screen)."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Inactive Users",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Single checkbox at the left edge of the row; box empty (interior pixels uniformly blank); label in black (not greyed). Nothing else in this section."
+            }
+          ]
+        }
+      ],
+      "actions": [
+        "CLEAR CRITERIA",
+        "PRINT / PREVIEW",
+        "ADD TO MY FAVORITES"
+      ],
+      "possibly_truncated": false,
+      "notes": "4.PNG only; 'User-Group Membership' is the filled radio in SELECT REPORT. Five full-width sections in a single column (no side-by-side columns), top to bottom: PRINT FORMAT, REPORT FORMAT, SECURITY GROUP, LOCATION, OTHER OPTIONS, then blank space down to the criteria box's fully visible bottom border; no scrollbar - not truncated. Unlike User List there is NO user picker on this report, and there is no date range. The office section is headed LOCATION here. Whole-image pixel-cluster scan found nothing else (nothing at the right edge of any row, no instruction text). No dropdown expanded, no popup open."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory. All 4 original screenshots, the 4 pre-rendered criteria zooms, the 4 list zooms and 7 extra crops at 3x-7x (prefix C_ in the zoom folder) were read. Readers A and B agreed on every report, section, control, option, default value, enabled state and truncation flag (4 reports, 11 controls); they differed only in descriptive wording. Everything was nevertheless re-checked on the pixels: a whole-image scan of each screenshot for every cluster of non-background pixels found exactly the elements listed here and nothing else (no 'Page Break', no right-edge or second-column extras, no greyed-out control, no instruction or legend text, no scrollbar, no footer text); numeric pixel checks confirmed the filled radios, the empty checkboxes and the SECURITY GROUP header glyphs. COVERAGE: 4 screenshots = 4 different reports of the same screen, each selected exactly once: 1.PNG User List, 2.PNG Group List, 3.PNG Group Rights List, 4.PNG User-Group Membership. No popups, expanded dropdowns or scrolled views. TITLE BAR: 'Security List Reports' at left; identifiers 'PGID :2829 / OID :108' at right, followed by an unlabeled white printer icon at the far right edge (present in all 4 screenshots; not part of the criteria area and not counted as an action). LEFT PANEL 'SELECT REPORT': a SINGLE column of exactly four full-width radio rows separated by thin white lines, with a large empty dark area below; no second column, no scrollbar, not clipped - the list is complete. A vertical splitter/collapse handle (three dots between two notches) sits on the border between the left and right panels at mid-height. RIGHT PANEL 'REPORT CRITERIA': grey section-header bars each followed by a lighter control row, all in one column; the 'CLEAR CRITERIA' button (grey/slate fill, white text, refresh/circular-arrows icon) sits at the right end of the blue REPORT CRITERIA header bar - grey is its styling in every screenshot, not evidence of a disabled state. Bottom action band (right aligned): 'PRINT / PREVIEW' (printer icon) and 'ADD TO MY FAVORITES' (plus icon), both blue. RECURRING PATTERNS: every report starts with PRINT FORMAT = PDF (default) / Excel. Group List and Group Rights List have nothing but PRINT FORMAT. User List adds USER (User picker, ALL) and OTHER OPTIONS (Include Inactive Users, unchecked). User-Group Membership adds REPORT FORMAT (Detail default / Summary), SECURITY GROUP (Group picker, ALL), LOCATION (Office default / Office Group radios plus a label-less picker showing 108) and OTHER OPTIONS (Include Inactive Users, unchecked). Picker rows are a read-only grey box plus a blue SELECT button whose icon varies by entity (user-plus for User, group of people for Group, building for Location). No date range, sort-by, group-by or page-break controls appear anywhere in this category. No control is greyed out or disabled in any screenshot. CAPTURE ARTIFACTS (outside the report window, no readable text): 1.PNG has a 4 px blue strip above the title bar with a small white-outlined rectangle fragment at the top-left corner (x 0-26) - the cropped bottom edge of the application chrome above; 1.PNG, 2.PNG and 3.PNG end with a plain grey strip carrying one darker 1 px line across the full width below the window (uniform across all 1366 px, so it is a frame border, not a scrollbar); the last pixel row of 3.PNG has two 3 px pinkish specks near x 1342-1350 (top edge of something cropped below); 4.PNG is cropped just below the action band. Screenshot sizes: 1366 px wide, 583-598 px tall. All text was legible after zooming; no uncertain readings remain."
+}

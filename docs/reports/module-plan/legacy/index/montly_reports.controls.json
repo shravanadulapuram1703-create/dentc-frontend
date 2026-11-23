@@ -1,0 +1,1969 @@
+{
+ "category": "montly_reports",
+ "window_title": "Monthly Reports",
+ "report_list": [
+  "Executive Summary",
+  "Executive Day Sheet",
+  "Aging Report by Home Office",
+  "Aging Report",
+  "Income Allocation",
+  "Allocation Detail",
+  "Unallocated Payment/Adjustments",
+  "Daily Journal Summary by Allocation",
+  "WaterFall Report"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Screenshot-to-report mapping: 1.PNG = Executive Summary, 2.PNG = Executive Day Sheet, 3.PNG = Aging Report by Home Office, 4.PNG = Aging Report, 5.PNG = Income Allocation, 6.PNG = Allocation Detail, 7.PNG = Unallocated Payment/Adjustments, 8.PNG = Daily Journal Summary by Allocation, 9.PNG = WaterFall Report. Every report in the list has exactly one screenshot; none shows a popup, an expanded dropdown or a scrolled second view, so the contents of the Office, Office Group, Provider and Exclude Resp. Party Type SELECT dialogs and of the SEARCH lookups are not visible in this category. (The folder key is spelled 'montly'.) Title bar: 'Monthly Reports' at the left; 'PGID :2829 / OID :108' followed by a printer icon at the far right. Panel headers: 'SELECT REPORT' (left) and 'REPORT CRITERIA' (right). A splitter / collapse handle (three vertical dots) sits on the border between the two panels. SELECT REPORT is a single column of 9 radio items (no second column) with a large empty area below the last one, so the list is not clipped or scrollable; the list text is pixel-identical in all 9 screenshots. Global actions are the same on every report: CLEAR CRITERIA (slate-grey button with a refresh icon at the right end of the REPORT CRITERIA header bar), PRINT / PREVIEW (blue, printer icon) and ADD TO MY FAVORITES (blue, plus icon) in a footer bar at the bottom right of the criteria panel. Captured at 75% browser zoom. Footer, visible only in 5.PNG: '© 2026 Planet DDS | Privacy Policy | Page Time Left (hh:mm:ss) 1:58:18' ('Privacy Policy' is a blue link), a red italic notice 'Your browser zoom is set to 75%. This screen is best viewed, if zoom is set to 100%.' and a browser status-bar URL 'https://a1.denticon.com/ASCX/#'. 6.PNG and 9.PNG include a 1-3 px blue strip above the title bar (capture offset only). Header glyph caveat: at this capture size the section-header typeface renders capital G almost like C, so the pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'CROUP BY', 'ACINC BY', 'ACINC' and 'RESPONSIBLE PARTY NAME RANCE'. They are transcribed as OFFICE/GROUP, DATE RANGE, GROUP BY, AGING BY, AGING and RESPONSIBLE PARTY NAME RANGE: each of these glyphs carries a one-pixel spur at the lower right that the true C's (in OFFICE, CREDIT, BALANCES) do not have, and the same letter is an unambiguous G in 'GROUP BY PROVIDER', 'Office Group' and 'Aging Report'. Defaults: every date field shows 11/21/2026 (the capture date), the unlabelled office box shows 108 (= OID in the title bar), Provider shows ALL, Exclude Resp. Party Type shows None. Read-only picker boxes (108, ALL, None) have a darker grey fill than editable inputs (dates, Start Name / End Name, Account Balance Over). Disabled controls (confirmed by colour sampling on all nine screenshots): 'Page Break' on Executive Summary; the 'Preferred Provider / Transaction Provider' radios and the Provider SELECT button on both aging reports. Nothing else is greyed out. Recurring patterns: OFFICE/GROUP (Office / Office Group radios plus the unlabelled 108 box with SELECT) appears on all 9 reports; PRINT FORMAT (PDF / Excel, default PDF) only on Executive Day Sheet, both aging reports, Daily Journal Summary by Allocation and WaterFall Report; REPORT FORMAT (Detail / Summary, default Detail) only on both aging reports, Income Allocation and Daily Journal Summary by Allocation; a Provider picker (default ALL) on Executive Summary, Income Allocation, Allocation Detail and both aging reports; seven reports use DATE RANGE with Start Date and End Date, while the two aging reports use a single Report Date. Only real uncertainty: 'Aging Report by Home Office' (3.PNG) and 'Aging Report' (4.PNG) have pixel-identical criteria panels whose last section, SORT BY, is cut off by the action bar with no scrollbar drawn - only the top 2 pixel rows of its two radio labels show. They are given as best readings with [?] ('Resp. Party Last name', 'Resp. Party ID'; see the control notes for the pixel evidence) and both reports are flagged possibly_truncated because further SORT BY rows or sections may exist below the cut.",
+ "report_count": 9,
+ "control_count": 108,
+ "reports": [
+  {
+   "report_id": "montly_reports.r01",
+   "name": "Executive Summary",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (1.PNG). OFFICE/GROUP (left) and PROVIDER (right) are side by side; DATE RANGE, OTHER OPTIONS and GROUP BY are full width. No PRINT FORMAT or REPORT FORMAT section on this report. Blank panel space follows GROUP BY above the action bar, so nothing is cut off.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r01.s01.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r01.s01.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r01.s02.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, side by side with OFFICE/GROUP. Read-only grey box followed by a blue (enabled) SELECT button (person icon). Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r01.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r01.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r01.s04.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Show AR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Only control in this section. Enabled (dark border, white box, black label), unchecked."
+    },
+    {
+     "control_id": "montly_reports.r01.s05.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the GROUP BY row. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r01.s05.c02",
+     "section": "GROUP BY",
+     "label": "Page Break",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Right half of the same GROUP BY row. Greyed out / disabled (grey box, grey label) while None is selected; presumably becomes available when Provider is chosen (inference - not shown)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r01.k01",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s01.c02",
+     "text": "Several or all offices can be chosen for one run: the vendor-recommended run is SELECT > `Select All` offices. `Select All` is the wording of the vendor's reporting guide; the dialog itself is not shown in the document, so its on-screen label may differ.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Date range; `SELECT` > `Select All` offices"
+    },
+    {
+     "correction_id": "montly_reports.r01.k02",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s04.c01",
+     "text": "Show AR adds an A/R snapshot whose as-of date is the END of the report range (End Date); it matches the Aging report only when the Executive Summary is run for a single day.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Executive Summary A/R | \"A/R as of\" = end of the report range; matches Aging only when run for a single day"
+    },
+    {
+     "correction_id": "montly_reports.r01.k03",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s04.c01",
+     "text": "Show AR is off by default (vendor text). Ticking it adds the `A/R as of` block to the report and the footer flag `* Show AR.`; without it no A/R figures print.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Show AR` (default off) | Adds the `A/R as of` block and the footer flag `* Show AR.` | `[D]` `[V2]`"
+    },
+    {
+     "correction_id": "montly_reports.r01.k04",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s03.c02",
+     "text": "Start Date / End Date give the range for the counts and the money figures. The MTD and YTD blocks are derived from the End Date alone: MTD = first day of that month through the End Date, YTD = January 1 through the End Date.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Start Date` / `End Date` | Range for the counts and money; MTD / YTD are derived from the **end** date | `[S]` `[V1]`"
+    },
+    {
+     "correction_id": "montly_reports.r01.k05",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s02.c01",
+     "text": "The Provider picker limits the figures to the selected providers; the default ALL is echoed in the report footer as `Providers : ALL`.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| `Provider` | Limits the figures to selected providers; footer shows `Providers : ALL` by default | `[S]` |"
+    },
+    {
+     "correction_id": "montly_reports.r01.k06",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s01.c02",
+     "text": "One KPI block is printed per selected office, and the figures reflect the activity within that office.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "One KPI block per selected office (the vendor pitches it as a single report holding the KPIs of every location); figures reflect activity **within the named location**."
+    },
+    {
+     "correction_id": "montly_reports.r01.k07",
+     "about": "meaning",
+     "control_id": "montly_reports.r01.s01.c02",
+     "text": "Exception to the office rule: the new-patient counts follow the patient's preferred HOME office (from the patient record), not the office where the activity was recorded.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "the Executive Summary new-patient counts follow the **home office** (of the responsible party for aging / statements; the preferred home office on the patient record for new patients)"
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r02",
+   "name": "Executive Day Sheet",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (2.PNG). Only three sections, all full width; no PROVIDER, REPORT FORMAT or OTHER OPTIONS section. Blank space below DATE RANGE, nothing cut off.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r02.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r02.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r02.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r02.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r02.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r02.k01",
+     "about": "meaning",
+     "control_id": "montly_reports.r02.s01.c01",
+     "text": "PRINT FORMAT = Excel downloads a spreadsheet instead of opening the PDF report viewer; Excel layouts are flat (one record per row). Cross-cutting statement of the document for every report with a PRINT FORMAT section - in this category Executive Day Sheet, both aging reports, Daily Journal Summary by Allocation and WaterFall Report - recorded once here. The vendor evidence it cites is for a Daily report and for the aging Excel output, not for this report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`PRINT FORMAT` = `Excel` | Downloads a spreadsheet instead of opening the viewer"
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r03",
+   "name": "Aging Report by Home Office",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (3.PNG). Two-column layout, row by row: REPORT FORMAT | PRINT FORMAT, OFFICE/GROUP | PROVIDER, REPORT DATE | PATIENT TYPE, RESPONSIBLE PARTY NAME RANGE | EXCLUDE RESP. PARTY TYPE, AGING BY | AGING, then full-width OTHER OPTIONS and SORT BY. TRUNCATED at the bottom: the SORT BY header is fully visible but its option row is cut by the PRINT / PREVIEW / ADD TO MY FAVORITES bar after 10 pixel rows, so the two sort labels are best readings and anything below (more SORT BY rows or further sections) is not visible. No scrollbar is drawn on the panel. The criteria panel is pixel-identical to the Aging Report panel in 4.PNG (verified by image difference: 0 differing pixels); the two screenshots differ only in which radio is selected in the left list.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r03.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left column, side by side with PRINT FORMAT. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r03.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column, side by side with REPORT FORMAT. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r03.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r03.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r03.s04.c01",
+     "section": "PROVIDER",
+     "label": "GROUP BY PROVIDER",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Sits inside the PROVIDER section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+    },
+    {
+     "control_id": "montly_reports.r03.s04.c02",
+     "section": "PROVIDER",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Preferred Provider",
+      "Transaction Provider"
+     ],
+     "default_value": "Preferred Provider",
+     "enabled": false,
+     "notes": "First row under the header, no row label. Both radios and their labels are greyed out (disabled); Preferred Provider carries the grey selected dot. State shown is with GROUP BY PROVIDER unchecked; presumably enabled by ticking it (inference - not shown)."
+    },
+    {
+     "control_id": "montly_reports.r03.s04.c03",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": false,
+     "notes": "Second row. Read-only grey box showing ALL with a SELECT button (person icon) that is greyed out / disabled. The 'Provider' label (black) and the box look the same as on enabled pickers; only the button is visibly disabled. State shown is with GROUP BY PROVIDER unchecked; presumably enabled together with the radios above (inference - not shown)."
+    },
+    {
+     "control_id": "montly_reports.r03.s05.c01",
+     "section": "REPORT DATE",
+     "label": "Report Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Single date (no start/end range). MM/DD/YYYY; editable box with a calendar icon at its right end. Left column, side by side with PATIENT TYPE. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r03.s06.c01",
+     "section": "PATIENT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Right column. Three radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c01",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Editable text box (light fill, same as the date fields - not a read-only picker box) followed by a blue SEARCH button. Left column, side by side with EXCLUDE RESP. PARTY TYPE."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c02",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start name). Popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c03",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Editable text box (light fill) followed by a blue SEARCH button."
+    },
+    {
+     "control_id": "montly_reports.r03.s07.c04",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end name). Popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r03.s08.c01",
+     "section": "EXCLUDE RESP. PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "No row label (the section title acts as the label). Read-only grey box showing None, followed by a blue SELECT button (person-with-plus icon). Right column. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r03.s09.c01",
+     "section": "AGING BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Account AR",
+      "Patient AR"
+     ],
+     "default_value": "Account AR",
+     "enabled": true,
+     "notes": "Left column, side by side with AGING. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r03.s09.c02",
+     "section": "AGING BY",
+     "label": "Account Balance Over",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0.00",
+     "enabled": true,
+     "notes": "Second row of AGING BY. Editable box (light fill) with the value right-aligned; no currency symbol or spinner visible."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c01",
+     "section": "AGING",
+     "label": "SHOW ONLY CREDIT BALANCES",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Sits inside the AGING section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c02",
+     "section": "AGING",
+     "label": "Current",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "First of five aging-bucket checkboxes on one row."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c03",
+     "section": "AGING",
+     "label": "Over 30",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c04",
+     "section": "AGING",
+     "label": "Over 60",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c05",
+     "section": "AGING",
+     "label": "Over 90",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c06",
+     "section": "AGING",
+     "label": "Over 120",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current (last)."
+    },
+    {
+     "control_id": "montly_reports.r03.s10.c07",
+     "section": "AGING",
+     "label": "Include Credit Balance",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Own row below the aging buckets. Singular 'Balance'."
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Exclude patients sent to collection.",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width section with one header and two columns of checkboxes. Left column, row 1. Label ends with a period."
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left column, row 2. Label ends with a period."
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Include Balance Status",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Right column, row 1."
+    },
+    {
+     "control_id": "montly_reports.r03.s11.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Include Contract Balances",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Right column, row 2."
+    },
+    {
+     "control_id": "montly_reports.r03.s12.c01",
+     "section": "SORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Resp. Party Last name [?]",
+      "Resp. Party ID [?]"
+     ],
+     "default_value": "Resp. Party Last name [?]",
+     "enabled": true,
+     "notes": "CLIPPED ROW - best reading only. The bottom action bar (PRINT / PREVIEW, ADD TO MY FAVORITES) covers this row after its first 10 pixel rows, so only the upper arcs of two radio circles and the top 2 pixel rows of their labels are visible. First radio is the selected one (blue dot), second is unselected; no third radio and no right-column control exist anywhere else on the visible strip (whole row scanned). Visible glyph tops (capitals / ascenders only): option 1 = 'R... P..t. L..t' followed by about 27 px of label width in which nothing reaches capital height; option 2 = 'R... P..t. ID'. Evidence used for the reading: (a) the R-to-P-to-t tops and spacing are pixel-identical to the fully visible checkbox 'Include Resp. Party Type' in daily_reports/2.PNG, so the prefix is 'Resp. Party' with a space after the period; (b) the 'L..t' tops are pixel-identical to 'Last' in the fully visible radio 'Patient Lastname' of daily_reports/10.PNG; (c) no capital-letter top follows 'Last', which rules out 'Last Name'; (d) the second radio starts 53 px right of the L stem here but only 51 px after it in 'Patient Lastname' (same sub-pixel phase; the label-to-radio gap is a constant 9-10 px on every fully visible radio row), i.e. the hidden tail is about 2 px - one space at this font size - wider than 'name': hence 'Last name' (two words, lower-case n) rather than 'Lastname'. The lower-case letters themselves are hidden, so both labels keep [?]; text without ascenders after 'ID' could also be hidden. The Statements screen (statements_reports/1.PNG) offers the analogous pair 'Sort by Resp.Party Lastname' / 'Sort by Resp.Party ID'. Further SORT BY rows or sections may exist below the cut."
+    },
+    {
+     "control_id": "montly_reports.r03.x01",
+     "section": "AGING",
+     "label": "Over 120+",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Appears only when PRINT FORMAT = Excel: it then stands in place of the `Over 120` bucket checkbox and carries an info icon (tooltip not documented). Our screenshot was taken with PRINT FORMAT = PDF and therefore shows `Over 120`. Excel-only option: the spreadsheet then carries Over 120 / Over 150 / Over 180 / Over 270 / Over 365 buckets. Default state not documented.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "montly_reports.r03.d01",
+     "when": "PRINT FORMAT = Excel",
+     "effect": "In the AGING section the bucket checkbox `Over 120` is replaced by the checkbox `Over 120+` (with an info icon); with PRINT FORMAT = PDF the plain `Over 120` checkbox is shown.",
+     "controls": [
+      "montly_reports.r03.s02.c01",
+      "montly_reports.r03.s10.c06"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`PRINT FORMAT` `PDF` / `Excel` | Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`"
+    },
+    {
+     "rule_id": "montly_reports.r03.d02",
+     "when": "AGING BY = Patient AR",
+     "effect": "The threshold field `Account Balance Over` is relabelled `Patient Balance Over`; with AGING BY = Account AR the label is `Account Balance Over`.",
+     "controls": [
+      "montly_reports.r03.s09.c01",
+      "montly_reports.r03.s09.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`AGING BY` `Patient AR` | Threshold label becomes `Patient Balance Over`"
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r03.k01",
+     "about": "truncation",
+     "control_id": "montly_reports.r03.s12.c01",
+     "text": "SORT BY is the LAST section of the criteria panel and holds the two radios `Resp. Party Last name` / `Resp. Party ID`: vendor screenshots of the full aging criteria screen confirm both labels and that no section follows the row that our screenshot clips.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "This row is clipped in our own screenshots; the vendor's full screenshots confirm both labels and that `SORT BY` is the **last** section"
+    },
+    {
+     "correction_id": "montly_reports.r03.k02",
+     "about": "label",
+     "control_id": "montly_reports.r03.s12.c01",
+     "text": "The two clipped option labels are confirmed as read: `Resp. Party Last name` and `Resp. Party ID`. The [?] markers of the inventory can be dropped.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`SORT BY` `Resp. Party Last name` / `Resp. Party ID` | Order of accounts. This row is clipped in our own screenshots; the vendor's full screenshots confirm both labels"
+    },
+    {
+     "correction_id": "montly_reports.r03.k03",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s03.c02",
+     "text": "On this report the selected office(s) are HOME offices: it lists the responsible parties whose home office is selected and considers all of their transactions wherever they were recorded.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Office` / `Office Group` | Home offices whose responsible parties are listed | `[D]` `[V5]`"
+    },
+    {
+     "correction_id": "montly_reports.r03.k04",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s05.c01",
+     "text": "Report Date is the single as-of date of the ageing (not a range); ageing starts when a procedure is marked completed.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| Aging | A single `Report Date` (as-of). Aging starts when a procedure is marked completed | `[D]` `[V8]` |"
+    },
+    {
+     "correction_id": "montly_reports.r03.k05",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s07.c01",
+     "text": "Start Name / End Name are an alphabetical range on the responsible party LAST name.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Alphabetical range on responsible-party last name | `[S]` `[V51]`"
+    },
+    {
+     "correction_id": "montly_reports.r03.k06",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s09.c01",
+     "text": "AGING BY = Account AR counts the insurance + patient balances on the account and can include balances that belong to another office (for example a dependant whose home office differs).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`AGING BY` `Account AR` | Threshold label `Account Balance Over`; counts insurance + patient balances on the account; can include balances that belong to another office"
+    },
+    {
+     "correction_id": "montly_reports.r03.k07",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s09.c01",
+     "text": "AGING BY = Patient AR counts only the patient balances for this office; accounts that only have an estimated insurance balance do not appear.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "only patient balances for this office; accounts with only an estimated insurance balance do not appear"
+    },
+    {
+     "correction_id": "montly_reports.r03.k08",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c02",
+     "text": "The five bucket checkboxes (Current, Over 30, Over 60, Over 90, Over 120) are an ACCOUNT filter: they select the accounts that have a balance in a ticked bucket.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Bucket checkboxes `Current` ... `Over 120` | Select accounts that have a balance in the ticked buckets (2019 footer wording `Accounts with Bal :`)"
+    },
+    {
+     "correction_id": "montly_reports.r03.k09",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c07",
+     "text": "Include Credit Balance adds the accounts whose total is negative; left unticked (the default) credits are left out and the grand total is higher than the real A/R.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Credit Balance` | Includes accounts whose total is negative; without it credits are left out and the grand total is higher than the \"true AR\""
+    },
+    {
+     "correction_id": "montly_reports.r03.k10",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c01",
+     "text": "SHOW ONLY CREDIT BALANCES lists only the accounts with a negative total.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`SHOW ONLY CREDIT BALANCES` | Lists only accounts with a negative total"
+    },
+    {
+     "correction_id": "montly_reports.r03.k11",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s11.c03",
+     "text": "Include Balance Status prints the account's Balance Status - a tenant-defined collections-stage note (10-character code + description) set with the Ledger's Balance Stat button and maintained in Setup > Misc Setups > Balance Status.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Balance Status` | Prints the account's **Balance Status** (a tenant-defined collections-stage note: 10-character code + description, set with the Ledger's `Balance Stat` button; setup in `Setup > Misc Setups > Balance Status`)."
+    },
+    {
+     "correction_id": "montly_reports.r03.k12",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s11.c04",
+     "text": "Include Contract Balances adds the remaining payment-contract balances (regular / ortho contracts keep their balance off the ledger until the periodic charges post).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Contract Balances` | Adds remaining payment-contract balances (regular / ortho contracts keep balances **off** the ledger until periodic charges post)."
+    },
+    {
+     "correction_id": "montly_reports.r03.k13",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s01.c01",
+     "text": "REPORT FORMAT: Detail = one block per account (responsible party); Summary = office totals - the vendor describes it as the A/R snapshot of the outstanding patient and insurance balances of each selected office.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `REPORT FORMAT` `Detail` / `Summary` | Per-account blocks vs office totals | `[D]` `[V25]` |"
+    },
+    {
+     "correction_id": "montly_reports.r03.k14",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s02.c01",
+     "text": "PRINT FORMAT = Excel downloads a flat spreadsheet (one record per row) instead of opening the PDF viewer, and the Excel layout can carry columns the PDF does not - here the extended buckets behind `Over 120+`.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Excel layouts are flat (one record per row, repeated key columns, title in a merged cell) and can contain columns the PDF does not (see Aging `Over 120+`)"
+    },
+    {
+     "correction_id": "montly_reports.r03.k15",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s06.c01",
+     "text": "PATIENT TYPE restricts the report to general or to ortho patients (Both = no restriction); the choice is echoed in the report footer.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| `PATIENT TYPE` `Both` / `General` / `Ortho` | Restricts to general or ortho patients; echoed in the footer | `[S]` |"
+    },
+    {
+     "correction_id": "montly_reports.r03.k16",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s08.c01",
+     "text": "EXCLUDE RESP. PARTY TYPE drops the accounts of the selected responsible-party types; the selection is echoed in the report footer as `Ex Resp Party Type`.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| `EXCLUDE RESP. PARTY TYPE` | Drops accounts of the selected types; echoed as `Ex Resp Party Type` | `[S]` |"
+    },
+    {
+     "correction_id": "montly_reports.r03.k17",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s11.c02",
+     "text": "This option drops the accounts whose remaining balance is expected entirely from insurance.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Drops accounts whose remaining balance is expected entirely from insurance | `[C]` `[V51]`"
+    },
+    {
+     "correction_id": "montly_reports.r03.k18",
+     "about": "meaning",
+     "control_id": "montly_reports.r03.s10.c02",
+     "text": "Bucket boundaries in days, as the vendor defines them: Current = 0-29 (article) or 0-30 (glossary); Over 30 = 30 or 31 to 59; Over 60 = 60 or 61 to 89; Over 90 = 90 or 91 to 119; Over 120 = 120 and more, or more than 120. The vendor's two definitions differ by one day at the boundaries.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Aging bucket boundaries are defined inconsistently by the vendor (0–29 vs 0–30; 120+ vs more than 120)"
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r04",
+   "name": "Aging Report",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (4.PNG). Two-column layout, row by row: REPORT FORMAT | PRINT FORMAT, OFFICE/GROUP | PROVIDER, REPORT DATE | PATIENT TYPE, RESPONSIBLE PARTY NAME RANGE | EXCLUDE RESP. PARTY TYPE, AGING BY | AGING, then full-width OTHER OPTIONS and SORT BY. TRUNCATED at the bottom: the SORT BY header is fully visible but its option row is cut by the PRINT / PREVIEW / ADD TO MY FAVORITES bar after 10 pixel rows, so the two sort labels are best readings and anything below (more SORT BY rows or further sections) is not visible. No scrollbar is drawn on the panel. The criteria panel is pixel-identical to the Aging Report by Home Office panel in 3.PNG (verified by image difference: 0 differing pixels): same sections, controls, defaults and disabled states.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r04.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left column, side by side with PRINT FORMAT. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r04.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column, side by side with REPORT FORMAT. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r04.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r04.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r04.s04.c01",
+     "section": "PROVIDER",
+     "label": "GROUP BY PROVIDER",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Sits inside the PROVIDER section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+    },
+    {
+     "control_id": "montly_reports.r04.s04.c02",
+     "section": "PROVIDER",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Preferred Provider",
+      "Transaction Provider"
+     ],
+     "default_value": "Preferred Provider",
+     "enabled": false,
+     "notes": "First row under the header, no row label. Both radios and their labels are greyed out (disabled); Preferred Provider carries the grey selected dot. State shown is with GROUP BY PROVIDER unchecked; presumably enabled by ticking it (inference - not shown)."
+    },
+    {
+     "control_id": "montly_reports.r04.s04.c03",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": false,
+     "notes": "Second row. Read-only grey box showing ALL with a SELECT button (person icon) that is greyed out / disabled. The 'Provider' label (black) and the box look the same as on enabled pickers; only the button is visibly disabled. State shown is with GROUP BY PROVIDER unchecked; presumably enabled together with the radios above (inference - not shown)."
+    },
+    {
+     "control_id": "montly_reports.r04.s05.c01",
+     "section": "REPORT DATE",
+     "label": "Report Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Single date (no start/end range). MM/DD/YYYY; editable box with a calendar icon at its right end. Left column, side by side with PATIENT TYPE. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r04.s06.c01",
+     "section": "PATIENT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": "Right column. Three radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c01",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Editable text box (light fill, same as the date fields - not a read-only picker box) followed by a blue SEARCH button. Left column, side by side with EXCLUDE RESP. PARTY TYPE."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c02",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the Start Name box (lookup for the start name). Popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c03",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Editable text box (light fill) followed by a blue SEARCH button."
+    },
+    {
+     "control_id": "montly_reports.r04.s07.c04",
+     "section": "RESPONSIBLE PARTY NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the End Name box (lookup for the end name). Popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r04.s08.c01",
+     "section": "EXCLUDE RESP. PARTY TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "No row label (the section title acts as the label). Read-only grey box showing None, followed by a blue SELECT button (person-with-plus icon). Right column. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r04.s09.c01",
+     "section": "AGING BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Account AR",
+      "Patient AR"
+     ],
+     "default_value": "Account AR",
+     "enabled": true,
+     "notes": "Left column, side by side with AGING. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r04.s09.c02",
+     "section": "AGING BY",
+     "label": "Account Balance Over",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0.00",
+     "enabled": true,
+     "notes": "Second row of AGING BY. Editable box (light fill) with the value right-aligned; no currency symbol or spinner visible."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c01",
+     "section": "AGING",
+     "label": "SHOW ONLY CREDIT BALANCES",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Sits inside the AGING section-header bar, to the right of the section title (upper-case label). Right column. Enabled, unchecked."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c02",
+     "section": "AGING",
+     "label": "Current",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "First of five aging-bucket checkboxes on one row."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c03",
+     "section": "AGING",
+     "label": "Over 30",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c04",
+     "section": "AGING",
+     "label": "Over 60",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c05",
+     "section": "AGING",
+     "label": "Over 90",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c06",
+     "section": "AGING",
+     "label": "Over 120",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row as Current (last)."
+    },
+    {
+     "control_id": "montly_reports.r04.s10.c07",
+     "section": "AGING",
+     "label": "Include Credit Balance",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Own row below the aging buckets. Singular 'Balance'."
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Exclude patients sent to collection.",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Full-width section with one header and two columns of checkboxes. Left column, row 1. Label ends with a period."
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Exclude accounts where patient portion is paid & insurance portion is expected.",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left column, row 2. Label ends with a period."
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Include Balance Status",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Right column, row 1."
+    },
+    {
+     "control_id": "montly_reports.r04.s11.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Include Contract Balances",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Right column, row 2."
+    },
+    {
+     "control_id": "montly_reports.r04.s12.c01",
+     "section": "SORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Resp. Party Last name [?]",
+      "Resp. Party ID [?]"
+     ],
+     "default_value": "Resp. Party Last name [?]",
+     "enabled": true,
+     "notes": "CLIPPED ROW - best reading only. The bottom action bar (PRINT / PREVIEW, ADD TO MY FAVORITES) covers this row after its first 10 pixel rows, so only the upper arcs of two radio circles and the top 2 pixel rows of their labels are visible. First radio is the selected one (blue dot), second is unselected; no third radio and no right-column control exist anywhere else on the visible strip (whole row scanned). Visible glyph tops (capitals / ascenders only): option 1 = 'R... P..t. L..t' followed by about 27 px of label width in which nothing reaches capital height; option 2 = 'R... P..t. ID'. Evidence used for the reading: (a) the R-to-P-to-t tops and spacing are pixel-identical to the fully visible checkbox 'Include Resp. Party Type' in daily_reports/2.PNG, so the prefix is 'Resp. Party' with a space after the period; (b) the 'L..t' tops are pixel-identical to 'Last' in the fully visible radio 'Patient Lastname' of daily_reports/10.PNG; (c) no capital-letter top follows 'Last', which rules out 'Last Name'; (d) the second radio starts 53 px right of the L stem here but only 51 px after it in 'Patient Lastname' (same sub-pixel phase; the label-to-radio gap is a constant 9-10 px on every fully visible radio row), i.e. the hidden tail is about 2 px - one space at this font size - wider than 'name': hence 'Last name' (two words, lower-case n) rather than 'Lastname'. The lower-case letters themselves are hidden, so both labels keep [?]; text without ascenders after 'ID' could also be hidden. The Statements screen (statements_reports/1.PNG) offers the analogous pair 'Sort by Resp.Party Lastname' / 'Sort by Resp.Party ID'. Further SORT BY rows or sections may exist below the cut."
+    },
+    {
+     "control_id": "montly_reports.r04.x01",
+     "section": "AGING",
+     "label": "Over 120+",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Appears only when PRINT FORMAT = Excel: it then stands in place of the `Over 120` bucket checkbox and carries an info icon (tooltip not documented). Our screenshot was taken with PRINT FORMAT = PDF and therefore shows `Over 120`. Excel-only option: the spreadsheet then carries Over 120 / Over 150 / Over 180 / Over 270 / Over 365 buckets. Default state not documented. Documented for the aging criteria panel in the Aging Report by Home Office section; the document states that the Aging Report panel is identical and that every option behaves the same.",
+     "origin": "vendor_doc",
+     "confidence": "likely",
+     "options_unknown": false,
+     "evidence_quote": "Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`",
+     "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "montly_reports.r04.d01",
+     "when": "PRINT FORMAT = Excel",
+     "effect": "In the AGING section the bucket checkbox `Over 120` is replaced by the checkbox `Over 120+` (with an info icon); with PRINT FORMAT = PDF the plain `Over 120` checkbox is shown.",
+     "controls": [
+      "montly_reports.r04.s02.c01",
+      "montly_reports.r04.s10.c06"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "`PRINT FORMAT` `PDF` / `Excel` | Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`"
+    },
+    {
+     "rule_id": "montly_reports.r04.d02",
+     "when": "AGING BY = Patient AR",
+     "effect": "The threshold field `Account Balance Over` is relabelled `Patient Balance Over`; with AGING BY = Account AR the label is `Account Balance Over`.",
+     "controls": [
+      "montly_reports.r04.s09.c01",
+      "montly_reports.r04.s09.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`AGING BY` `Patient AR` | Threshold label becomes `Patient Balance Over`"
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r04.k01",
+     "about": "truncation",
+     "control_id": "montly_reports.r04.s12.c01",
+     "text": "SORT BY is the LAST section of the criteria panel and holds the two radios `Resp. Party Last name` / `Resp. Party ID`: vendor screenshots of the full aging criteria screen confirm both labels and that no section follows the row that our screenshot clips. For this report the conclusion rests on its panel being pixel-identical to Aging Report by Home Office, under which the document reports the vendor screenshots.",
+     "resolves_truncation": true,
+     "confidence": "likely",
+     "evidence_quote": "This row is clipped in our own screenshots; the vendor's full screenshots confirm both labels and that `SORT BY` is the **last** section"
+    },
+    {
+     "correction_id": "montly_reports.r04.k02",
+     "about": "label",
+     "control_id": "montly_reports.r04.s12.c01",
+     "text": "The two clipped option labels are confirmed as read: `Resp. Party Last name` and `Resp. Party ID`. The [?] markers of the inventory can be dropped.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "with the first-reader version; its two `[?]` sort labels are confirmed here."
+    },
+    {
+     "correction_id": "montly_reports.r04.k03",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s03.c02",
+     "text": "On this report the selected office(s) are TRANSACTION offices: only the transactions recorded in the selected office(s) are evaluated (unlike Aging Report by Home Office, which has the same criteria panel).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "it evaluates **only the transactions recorded in the selected office(s)**. Recommended by the vendor for"
+    },
+    {
+     "correction_id": "montly_reports.r04.k04",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s05.c01",
+     "text": "Report Date is the single as-of date of the ageing (not a range); ageing starts when a procedure is marked completed.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| Aging | A single `Report Date` (as-of). Aging starts when a procedure is marked completed | `[D]` `[V8]` |"
+    },
+    {
+     "correction_id": "montly_reports.r04.k05",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s07.c01",
+     "text": "Start Name / End Name are an alphabetical range on the responsible party LAST name.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Alphabetical range on responsible-party last name | `[S]` `[V51]`"
+    },
+    {
+     "correction_id": "montly_reports.r04.k06",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s09.c01",
+     "text": "AGING BY = Account AR counts the insurance + patient balances on the account and can include balances that belong to another office (for example a dependant whose home office differs).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`AGING BY` `Account AR` | Threshold label `Account Balance Over`; counts insurance + patient balances on the account; can include balances that belong to another office"
+    },
+    {
+     "correction_id": "montly_reports.r04.k07",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s09.c01",
+     "text": "AGING BY = Patient AR counts only the patient balances for this office; accounts that only have an estimated insurance balance do not appear.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "only patient balances for this office; accounts with only an estimated insurance balance do not appear"
+    },
+    {
+     "correction_id": "montly_reports.r04.k08",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c02",
+     "text": "The five bucket checkboxes (Current, Over 30, Over 60, Over 90, Over 120) are an ACCOUNT filter: they select the accounts that have a balance in a ticked bucket.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Bucket checkboxes `Current` ... `Over 120` | Select accounts that have a balance in the ticked buckets (2019 footer wording `Accounts with Bal :`)"
+    },
+    {
+     "correction_id": "montly_reports.r04.k09",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c07",
+     "text": "Include Credit Balance adds the accounts whose total is negative; left unticked (the default) credits are left out and the grand total is higher than the real A/R.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Credit Balance` | Includes accounts whose total is negative; without it credits are left out and the grand total is higher than the \"true AR\""
+    },
+    {
+     "correction_id": "montly_reports.r04.k10",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c01",
+     "text": "SHOW ONLY CREDIT BALANCES lists only the accounts with a negative total.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`SHOW ONLY CREDIT BALANCES` | Lists only accounts with a negative total"
+    },
+    {
+     "correction_id": "montly_reports.r04.k11",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s11.c03",
+     "text": "Include Balance Status prints the account's Balance Status - a tenant-defined collections-stage note (10-character code + description) set with the Ledger's Balance Stat button and maintained in Setup > Misc Setups > Balance Status.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Balance Status` | Prints the account's **Balance Status** (a tenant-defined collections-stage note: 10-character code + description, set with the Ledger's `Balance Stat` button; setup in `Setup > Misc Setups > Balance Status`)."
+    },
+    {
+     "correction_id": "montly_reports.r04.k12",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s11.c04",
+     "text": "Include Contract Balances adds the remaining payment-contract balances (regular / ortho contracts keep their balance off the ledger until the periodic charges post).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Contract Balances` | Adds remaining payment-contract balances (regular / ortho contracts keep balances **off** the ledger until periodic charges post)."
+    },
+    {
+     "correction_id": "montly_reports.r04.k13",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s01.c01",
+     "text": "REPORT FORMAT: Detail = one block per account (responsible party); Summary = office totals - the vendor describes it as the A/R snapshot of the outstanding patient and insurance balances of each selected office.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "| `REPORT FORMAT` `Detail` / `Summary` | Per-account blocks vs office totals | `[D]` `[V25]` |"
+    },
+    {
+     "correction_id": "montly_reports.r04.k14",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s02.c01",
+     "text": "PRINT FORMAT = Excel downloads a flat spreadsheet (one record per row) instead of opening the PDF viewer, and the Excel layout can carry columns the PDF does not - here the extended buckets behind `Over 120+`. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Excel layouts are flat (one record per row, repeated key columns, title in a merged cell) and can contain columns the PDF does not (see Aging `Over 120+`)"
+    },
+    {
+     "correction_id": "montly_reports.r04.k15",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s06.c01",
+     "text": "PATIENT TYPE restricts the report to general or to ortho patients (Both = no restriction); the choice is echoed in the report footer. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| `PATIENT TYPE` `Both` / `General` / `Ortho` | Restricts to general or ortho patients; echoed in the footer | `[S]` |"
+    },
+    {
+     "correction_id": "montly_reports.r04.k16",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s08.c01",
+     "text": "EXCLUDE RESP. PARTY TYPE drops the accounts of the selected responsible-party types; the selection is echoed in the report footer as `Ex Resp Party Type`. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| `EXCLUDE RESP. PARTY TYPE` | Drops accounts of the selected types; echoed as `Ex Resp Party Type` | `[S]` |"
+    },
+    {
+     "correction_id": "montly_reports.r04.k17",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s11.c02",
+     "text": "This option drops the accounts whose remaining balance is expected entirely from insurance. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Drops accounts whose remaining balance is expected entirely from insurance | `[C]` `[V51]`"
+    },
+    {
+     "correction_id": "montly_reports.r04.k18",
+     "about": "meaning",
+     "control_id": "montly_reports.r04.s10.c02",
+     "text": "Bucket boundaries in days, as the vendor defines them: Current = 0-29 (article) or 0-30 (glossary); Over 30 = 30 or 31 to 59; Over 60 = 60 or 61 to 89; Over 90 = 90 or 91 to 119; Over 120 = 120 and more, or more than 120. The vendor's two definitions differ by one day at the boundaries.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Aging bucket boundaries are defined inconsistently by the vendor (0–29 vs 0–30; 120+ vs more than 120)"
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r05",
+   "name": "Income Allocation",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (5.PNG). REPORT FORMAT full width; OFFICE/GROUP (left) and PROVIDER (right) side by side; DATE RANGE full width. No PRINT FORMAT and no OTHER OPTIONS section. Blank space below DATE RANGE, nothing cut off. This is the only screenshot that also shows the page footer below the panels (see observations).",
+   "controls": [
+    {
+     "control_id": "montly_reports.r05.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Full-width section (no PRINT FORMAT section beside it on this report). Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r05.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r05.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r05.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, side by side with OFFICE/GROUP. Read-only grey box followed by a blue (enabled) SELECT button (person icon). Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r05.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r05.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r05.k01",
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s04.c01",
+     "text": "Start Date / End Date are matched against the CREATED (entry) date of the payment, not the editable transaction date: a payment entered Feb 1 and back-dated to Jan 15 appears in February.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "**Created (entry) date** of the payment, not the (editable) transaction date. A payment entered Feb 1 and back-dated to Jan 15 appears in February"
+    },
+    {
+     "correction_id": "montly_reports.r05.k02",
+     "about": "default",
+     "control_id": "montly_reports.r05.s02.c02",
+     "text": "The office box defaults to the logged-in office; several offices or an office group can be selected for one run.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "logged-in office; multiple offices or a group allowed); `Provider` (default all); `Start Date` / `End Date`"
+    },
+    {
+     "correction_id": "montly_reports.r05.k03",
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s02.c02",
+     "text": "Money is credited to the office where the procedure was charged (the production / allocation office), not to the office where the payment was entered - so the selected offices are the offices where the treatment was charged.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "- **By production office**: allocation follows the office where the procedure was charged, not where the"
+    },
+    {
+     "correction_id": "montly_reports.r05.k04",
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s01.c01",
+     "text": "REPORT FORMAT = Summary: one row per provider, then an Unallocated row and a Total row - the vendor's basis for collection-based provider pay.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Office : <name>`; one row per provider (zero rows included), then an `Unallocated` row and a `Total :` row;"
+    },
+    {
+     "correction_id": "montly_reports.r05.k05",
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s01.c01",
+     "text": "REPORT FORMAT = Detail: the individual lines, each with its Pay Date, Allo Date (allocation date) and Proc Date; the vendor uses it to find back-dated payments and payments made outside the date range yet allocated inside it.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "**`Pay Date`, `Allo Date` (allocation date) and `Proc Date`** of each line `[D]` `[V16]` `[V20]`."
+    },
+    {
+     "correction_id": "montly_reports.r05.k06",
+     "about": "meaning",
+     "control_id": "montly_reports.r05.s03.c01",
+     "text": "Provider here is the provider whose completed work the money was allocated to (the allocation provider), not the provider the payment was entered under.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "reports attribute it to the office / provider whose work it paid `[D]` `[V14]` `[V21]`."
+    },
+    {
+     "correction_id": "montly_reports.r05.k07",
+     "about": "other",
+     "control_id": "",
+     "text": "The absence of a PRINT FORMAT section is real (as captured): the output is exported from the report viewer instead.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "No `PRINT FORMAT` section — export through the viewer."
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r06",
+   "name": "Allocation Detail",
+   "screenshots": [
+    "6.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (6.PNG). OFFICE/GROUP (left) and PROVIDER (right) side by side; DATE RANGE, PAYMENT TYPES and OTHER OPTIONS full width. No PRINT FORMAT or REPORT FORMAT section. Blank space below OTHER OPTIONS, nothing cut off.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r06.s01.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r06.s01.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r06.s02.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right column, side by side with OFFICE/GROUP. Read-only grey box followed by a blue (enabled) SELECT button (person icon). Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r06.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r06.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c01",
+     "section": "PAYMENT TYPES",
+     "label": "Cash",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Six checkboxes on a single row; this is the first."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c02",
+     "section": "PAYMENT TYPES",
+     "label": "Check",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c03",
+     "section": "PAYMENT TYPES",
+     "label": "Credit Card",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c04",
+     "section": "PAYMENT TYPES",
+     "label": "CareCredit",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row. Written as one word with a capital C in the middle."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c05",
+     "section": "PAYMENT TYPES",
+     "label": "Direct Deposit",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row."
+    },
+    {
+     "control_id": "montly_reports.r06.s04.c06",
+     "section": "PAYMENT TYPES",
+     "label": "Internal Financing",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Same row, last."
+    },
+    {
+     "control_id": "montly_reports.r06.s05.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Show Datewise Summary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Only control in this section; checked by default."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r06.k01",
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s03.c01",
+     "text": "The report covers money collected and entered in the date range that applies to completed procedures with payment due; an overpayment (prepayment) does not appear until it pays a completed procedure. Vendor text about the \"Allocation report\", which the document reads as the older name of this report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "entered** in the date range that applies to completed procedures with payment due; an overpayment does not"
+    },
+    {
+     "correction_id": "montly_reports.r06.k02",
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s03.c01",
+     "text": "Date basis of the allocation report family (Income Allocation / Allocation): the created (entry) date of the payment, not its editable transaction date.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "| Income Allocation / Allocation | **Created (entry) date** of the payment, not the (editable) transaction date."
+    },
+    {
+     "correction_id": "montly_reports.r06.k03",
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s02.c01",
+     "text": "Allocation reports attribute a payment to the office and the provider whose work it paid, not to the office / provider it was entered under (stated for the allocation reports as a family). That the OFFICE/GROUP and Provider selections of this report follow the same attribution is implied, not stated.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "reports attribute it to the office / provider whose work it paid `[D]` `[V14]` `[V21]`."
+    },
+    {
+     "correction_id": "montly_reports.r06.k04",
+     "about": "meaning",
+     "control_id": "montly_reports.r06.s04.c01",
+     "text": "The six PAYMENT TYPES checkboxes are tender classes; the document equates them with the tender classes of the daily Deposit Slip.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "classes as the daily `Deposit Slip` `[D]` `[V25]` `[T]` `[T1]`"
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r07",
+   "name": "Unallocated Payment/Adjustments",
+   "screenshots": [
+    "7.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (7.PNG). All sections full width (single column). No PROVIDER, PRINT FORMAT or REPORT FORMAT section. Blank space below OTHER OPTIONS, nothing cut off.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r07.s01.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r07.s01.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r07.s02.c01",
+     "section": "DATE RANGE",
+     "label": "Print all unallocated payment/adjustments as of today",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "First row of the DATE RANGE section, above the Start Date / End Date rows. Presumably overrides the date range when ticked (inference - the date fields are shown enabled while it is unticked)."
+    },
+    {
+     "control_id": "montly_reports.r07.s02.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r07.s02.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r07.s03.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Exclude Credit Balances",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 1."
+    },
+    {
+     "control_id": "montly_reports.r07.s03.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Inactive Patients",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Row 2."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r07.k01",
+     "about": "meaning",
+     "control_id": "montly_reports.r07.s03.c01",
+     "text": "Vendor text gives this report's parameters as a date range with credit balances optionally excluded - the option behind this checkbox. Which accounts count as credit balances here is only inferred (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Date range; optionally exclude credit balances"
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r08",
+   "name": "Daily Journal Summary by Allocation",
+   "screenshots": [
+    "8.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (8.PNG). REPORT FORMAT (left) and PRINT FORMAT (right) side by side; OFFICE/GROUP and DATE RANGE full width. No PROVIDER and no OTHER OPTIONS section. Blank space below DATE RANGE, nothing cut off.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r08.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left column, side by side with PRINT FORMAT. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r08.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right column, side by side with REPORT FORMAT. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r08.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r08.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r08.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r08.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    }
+   ]
+  },
+  {
+   "report_id": "montly_reports.r09",
+   "name": "WaterFall Report",
+   "screenshots": [
+    "9.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "Single screenshot (9.PNG). All sections full width (single column). No PROVIDER or REPORT FORMAT section. The report name is spelled 'WaterFall Report' (capital F) in the list. Blank space below OTHER OPTIONS, nothing cut off.",
+   "controls": [
+    {
+     "control_id": "montly_reports.r09.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section. Two radios on one row, no row label."
+    },
+    {
+     "control_id": "montly_reports.r09.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Full-width section (no PROVIDER section beside it). Two radios on one row, no row label; Office carries the blue dot. The Office Group state was not captured."
+    },
+    {
+     "control_id": "montly_reports.r09.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "No visible label: read-only grey box (darker fill than editable inputs) on the row below the Office / Office Group radios, followed by a blue SELECT button (building icon). 108 equals the OID shown in the title bar. Picker popup not shown."
+    },
+    {
+     "control_id": "montly_reports.r09.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r09.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "MM/DD/YYYY; editable box with a calendar icon at its right end. Shows the capture date."
+    },
+    {
+     "control_id": "montly_reports.r09.s04.c01",
+     "section": "OTHER OPTIONS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Payments and Adjustments",
+      "Payments only",
+      "Adjustments only"
+     ],
+     "default_value": "Payments and Adjustments",
+     "enabled": true,
+     "notes": "Three radios on one row, no row label; on this report OTHER OPTIONS holds a radio group, not checkboxes."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "montly_reports.r09.k01",
+     "about": "meaning",
+     "control_id": "montly_reports.r09.s03.c01",
+     "text": "Vendor guidance for the criteria: pick the office(s) and use a date range of at least one quarter; the report breaks collections down by the month of the date of service (`Service Date`) for the chosen range.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "(`Service Date`) for the chosen range. Parameters: pick the office(s) and use a range of at least one quarter."
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "montly_reports.r01",
+   "question": "What enables the greyed `Page Break` checkbox? The document only repeats our own reading (enabled only with GROUP BY = Provider) and infers its effect (each provider on a new page); no vendor source shows the enabled state."
+  },
+  {
+   "report_id": "montly_reports.r01",
+   "question": "The meaning of GROUP BY = Provider (the values per provider instead of office totals) is documented only by a third-party guide, and the per-provider layout is inferred; no vendor source."
+  },
+  {
+   "report_id": "montly_reports.r03",
+   "question": "What does ticking GROUP BY PROVIDER enable? That it enables the Preferred Provider / Transaction Provider radios and the Provider SELECT, and what the two radios mean (grouping by the patient's preferred provider or by the provider on the transactions), is inferred in the document, not vendor-documented. Vendor traces only: the 2020 menu had separate `Aging by Provider - Detail / Summary` reports, and the vendor still writes \"Aging Report – Detail (Select Provider(s))\". Same question for Aging Report (r04)."
+  },
+  {
+   "report_id": "montly_reports.r03",
+   "question": "Default state and info-icon tooltip of the Excel-only `Over 120+` checkbox are not documented. Same question for Aging Report (r04)."
+  },
+  {
+   "report_id": "montly_reports.r03",
+   "question": "Contents of the EXCLUDE RESP. PARTY TYPE > SELECT dialog and of the Start Name / End Name SEARCH dialogs are not documented (responsible-party types are tenant-defined; the demo output shows the codes CA, IN, AA, OO, meaning unverified). Same question for Aging Report (r04)."
+  },
+  {
+   "report_id": "montly_reports.r04",
+   "question": "The document reports the vendor screenshots of the full aging criteria screen under Aging Report by Home Office and does not say whether one of them shows Aging Report. That nothing is hidden below SORT BY on Aging Report, and that `Over 120+` appears there in Excel mode, rests on the two panels being pixel-identical in our captures - confirm on the live legacy screen."
+  },
+  {
+   "report_id": "montly_reports.r06",
+   "question": "No vendor description of how PAYMENT TYPES and `Show Datewise Summary` act on Allocation Detail; the effects in the document are inferences."
+  },
+  {
+   "report_id": "montly_reports.r07",
+   "question": "Does ticking `Print all unallocated payment/adjustments as of today` disable or ignore Start Date / End Date? The document gives this, the exact meaning of `Exclude Credit Balances` / `Include Inactive Patients` and the meaning of the office selection (the office that entered / holds the money) only as inferences. Vendor anchor for the last one: unallocated money \"resides\" with the office that entered it until a completed procedure absorbs it."
+  },
+  {
+   "report_id": "montly_reports.r08",
+   "question": "No vendor article, PDF or image exists for Daily Journal Summary by Allocation; its criteria are known from our capture only and the meaning of Detail / Summary is unverified."
+  },
+  {
+   "report_id": "montly_reports.r09",
+   "question": "The effect of the OTHER OPTIONS radio (Payments and Adjustments / Payments only / Adjustments only) on the WaterFall Report is inferred, not vendor-documented."
+  },
+  {
+   "question": "Contents of the OFFICE/GROUP > SELECT dialog (list columns, sort options, search fields, the Office Group variant) and of the Provider > SELECT dialog are not documented; only the `Select All` option of the office dialog is."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+ "screenshot_control_count": 106,
+ "vendor_doc_control_count": 2
+}
