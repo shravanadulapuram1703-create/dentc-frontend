@@ -42,6 +42,8 @@ export interface ReportHeader {
   address: string;
   respParty: string;
   primaryInsurance: string;
+  /** Per Tx Plan ID: the server's netted benefit position after the plan (TX-MAX-6). */
+  plan_benefits?: Record<number, { annual_max_remaining_after: string | null; deductible_remaining_after: string | null }>;
 }
 
 export function filterReportRows(rows: TxRow[], opts: ReportOptions): TxRow[] {
@@ -184,6 +186,15 @@ export function buildTxPlanPdf(rows: TxRow[], header: ReportHeader, opts: Report
       y + 4,
     );
     doc.text(`Net Est Pat : ${money(planTotal.pat)}`, marginX, y + 16);
+    const ben = header.plan_benefits?.[plan.tid];
+    if (ben && (ben.annual_max_remaining_after != null || ben.deductible_remaining_after != null)) {
+      doc.setFont('helvetica', 'normal').setFontSize(7.5);
+      const parts = [
+        ben.annual_max_remaining_after != null ? `Annual Max Remaining after this plan : ${money(ben.annual_max_remaining_after)}` : '',
+        ben.deductible_remaining_after != null ? `Deductible Remaining : ${money(ben.deductible_remaining_after)}` : '',
+      ].filter(Boolean);
+      doc.text(parts.join('   ·   '), marginX, y + 27);
+    }
   }
 
   // ---- Disclosure + signature ----

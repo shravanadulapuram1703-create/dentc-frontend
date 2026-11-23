@@ -1,0 +1,69 @@
+{
+  "category": "providers_list_reports",
+  "source_document": "research/legacy_report_outputs_lists.md",
+  "reports": [
+    {
+      "report_id": "providers_list_reports.r01",
+      "legacy_name": "Provider List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. Cross-cutting statement of the document for all Lists screens (vendor articles on office groups and on the new reports menu) - recorded once here; it applies to all four Provider List reports.",
+          "controls": [
+            "providers_list_reports.r01.s02.c01",
+            "providers_list_reports.r01.s02.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Office Group` picks groups defined in `Setup > Office Groups` (for example regions); without groups a group run covers all offices of the account."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "default",
+          "control_id": "providers_list_reports.r01.s02.c02",
+          "text": "The number in the office box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Recorded once here; it applies to the office box of all four Provider List reports.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office` picks offices (default the current OID)."
+        }
+      ]
+    },
+    {
+      "report_id": "providers_list_reports.r02",
+      "legacy_name": "Provider Holidays",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "label",
+          "control_id": "providers_list_reports.r02.s04.c01",
+          "text": "The section header LAST VISIT DATE RANGE is not a misreading: it is a re-used string. The vendor's screenshots show that header on Patient List - Grouped By in Last Visit mode. On Provider Holidays the two dates are read as the holiday date range - that reading is the document's, since no vendor description of this report exists.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "The section header `LAST VISIT DATE RANGE` on `Provider Holidays` is a re-used string."
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "providers_list_reports.r01",
+      "question": "SPECIALTY and STATE dropdowns: the value lists are not documented (only the default ALL is known). Which provider field does STATE read (the state of the provider address is assumed), and which assignment does OFFICE/GROUP read (the Works At offices are assumed)?"
+    },
+    {
+      "report_id": "providers_list_reports.r02",
+      "question": "What do the two dates under the re-used header LAST VISIT DATE RANGE match? \"Holidays or exceptions intersecting the range\" is only the document's reading; no vendor description of the report exists."
+    },
+    {
+      "report_id": "providers_list_reports.r04",
+      "question": "Provider Registration: no vendor page uses the term, so what the report covers (provider registration numbers per office, or enrolment with connected services) is unknown. Its criteria are OFFICE/GROUP only and nothing can be added until a generated sample is obtained."
+    },
+    {
+      "report_id": "",
+      "question": "No vendor article describes any of the four Provider List reports: what PROVIDER and OFFICE/GROUP relate to on Provider Holidays and Provider Operatory is inferred from the provider setup screens only."
+    }
+  ]
+}

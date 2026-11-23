@@ -26,4 +26,14 @@ export interface PatientInsuranceRead {
   id: number;
   created_at: string;
   updated_at?: string | null;
+  benefit_year_start?: string | null;
+  benefit_year_end?: string | null;
+  annual_max?: string | null;
+  benefits_used_ytd?: string | null;
+  benefit_claim_count?: number | null;
+  max_remaining_effective?: string | null;
+  max_remaining_source?: string | null;
+  deductible_remaining_effective?: string | null;
+  deductible_remaining_source?: string | null;
+  slot_values_stale?: boolean | null;
 }

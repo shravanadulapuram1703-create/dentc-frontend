@@ -1,0 +1,82 @@
+{
+  "category": "ortho_reports",
+  "source_document": "research/legacy_report_outputs_insurance_txplan_ortho.md",
+  "reports": [
+    {
+      "report_id": "ortho_reports.r01",
+      "legacy_name": "Ortho Compliance Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: the report identifies patients overdue for a visit - patients with an active ortho contract and no future appointment. How the NUMBER OF WEEKS SINCE LAST VISIT threshold combines with that rule is not documented.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Identify patients overdue for a visit: patients with an **active ortho contract** and **no future appointment**"
+        }
+      ]
+    },
+    {
+      "report_id": "ortho_reports.r05",
+      "legacy_name": "Missing Ortho Visits",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Audit rule behind the report, with no criteria control for the population: every ortho patient with an appointment should have an Ortho Visit on the Ortho Treatment Card and a ledger entry. The two MISSING ticks carry the names of these two items; how the ticks select rows is inferred only.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "every ortho patient with an appointment should have an Ortho Visit on the card **and** a ledger entry"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "ortho_reports.r01",
+      "question": "`NUMBER OF WEEKS SINCE LAST VISIT`: the threshold semantics are inferred - which last visit is meant (ortho-card visit or general visit), how the weeks are compared and how the threshold combines with the vendor's population rule (active ortho contract, no future appointment) are not stated."
+    },
+    {
+      "report_id": "ortho_reports.r02",
+      "question": "`PROVIDER`: whether it filters on the visit's `Doctor` is not stated; the vendor documents the output fields only."
+    },
+    {
+      "report_id": "ortho_reports.r03",
+      "question": "`ORTHO STATUS`: the value list of the picker is unverified - not shown in any source (the status comes from the newest ortho treatment plan)."
+    },
+    {
+      "report_id": "ortho_reports.r03",
+      "question": "The vendor defines the output fields `Ortho Start Date` (start date of the ortho payment plan), `Last Visit` (date of service of the last Ortho Treatment Card entry) and `Ortho Status` (from the newest ortho treatment plan); that the criteria ORTHO START DATE, PATIENT LAST VISIT and ORTHO STATUS filter on exactly these values is not stated. That all four dates are blank by default rests on our capture only."
+    },
+    {
+      "report_id": "ortho_reports.r04",
+      "question": "`ORTHO STATUS`: the value list of the picker is unverified - not shown in any source."
+    },
+    {
+      "report_id": "ortho_reports.r04",
+      "question": "The vendor defines the output fields `Ortho Start Date`, `First Visit` (first Ortho Treatment Card entry) and `Ortho Status`; that the criteria ORTHO START DATE, PATIENT FIRST VISIT and ORTHO STATUS filter on exactly these values is not stated. The vendor describes the report as a list of patients who recently started ortho treatment that can also be used to find patients with an ortho visit who have not started treatment; how the two date ranges combine, and whether patients without a start date are listed, is not stated."
+    },
+    {
+      "report_id": "ortho_reports.r05",
+      "question": "The `MISSING` ticks `Ledger Transaction` / `Ortho Visit` (which gaps qualify a row) and the two provider pickers (APPOINTMENT PROVIDER on the appointment's provider, VISIT DOCTOR on the provider of the ortho visit) are explained by inference only."
+    },
+    {
+      "report_id": "",
+      "question": "A 2022 vendor blog names an \"Ortho revenue report\" that matches none of the five current Ortho Reports; whether another ortho report exists in some builds or tenants is unknown."
+    },
+    {
+      "report_id": "",
+      "question": "ADD TO MY FAVORITES (action on every report): vendor training material says it saves the criteria - one version per report - and that a saved version is later changed with `Update My Favorites`. Where `Update My Favorites` appears (this button relabelled once the report is a favourite, or an action elsewhere) is not described in this document."
+    },
+    {
+      "report_id": "",
+      "question": "SELECT dialogs not described in this research document: office / office group, provider, appointment provider, visit doctor and ortho status. Only general statements are documented: pickers open on `Include All` (named explicitly for PROVIDER only among the ortho pickers), and one or more offices or an office group can be chosen."
+    }
+  ]
+}

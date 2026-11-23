@@ -1,0 +1,476 @@
+{
+  "category": "insurance_reports",
+  "source_document": "research/legacy_report_outputs_insurance_txplan_ortho.md",
+  "reports": [
+    {
+      "report_id": "insurance_reports.r01",
+      "legacy_name": "Claims List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r01.s01.c01",
+          "text": "Pre-Authorization lists the pre-authorization claims instead of the claims.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`CLAIM/PRE-AUTH` | `Pre-Authorization` lists pre-auth claims instead of claims"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r01.s04.c01",
+          "text": "DATE RANGE (Start Date / End Date) is the date on which the claim was generated, not the date of service.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`DATE RANGE` | Date the claim was **generated**, not the date of service"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r01.s05.c01",
+          "text": "NAME RANGE (Start Name / End Name) is a range of patient names: the vendor's sample report echoes it in its footer as `Pat From` / `Thru`. From that footer the research document reads it as a patient last-name range.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`NAME RANGE` | Patient last-name range; footer `Pat From` / `Thru`"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r02",
+      "legacy_name": "Capitation Utilization",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "INCLUDE UCR: Include UCR is ticked",
+          "effect": "The Fee Schedule To Compare dropdown becomes available (it is greyed while Include UCR is unticked); it offers a list of fee schedules and the chosen one is shown on the report for comparison.",
+          "controls": [
+            "insurance_reports.r02.s08.c01",
+            "insurance_reports.r02.s09.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Fee Schedule To Compare` becomes available once `Include UCR` is ticked (confirmed by vendor text)"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "options",
+          "control_id": "insurance_reports.r02.s09.c01",
+          "text": "The Fee Schedule To Compare dropdown holds a list of fee schedules (data of the practice, not a fixed value list); the schedule chosen is shown for comparison.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Ticking `Include UCR` reveals a list of fee schedules; the chosen one is shown for comparison"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r02.s10.c01",
+          "text": "Print All Codes ticked: all codes are reported, including z-codes (internal extra-service codes). Unticked: only the codes that are to be reported to the carrier.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Print All Codes` | Ticked: all codes including z-codes (internal extra-service codes). Unticked: only codes to be reported to the carrier"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r02.s10.c02",
+          "text": "Include Fees Charged shows the fees associated with the reported procedures. It is on by default, as captured.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Fees Charged` (default on) | Shows the fees associated with the reported procedures"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r02.s10.c03",
+          "text": "Print Office Address prints the office location block in the report header.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Print Office Address` | Prints the office location block in the header"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r04",
+      "legacy_name": "Procedures on Hold",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Population rule with no criteria control: the report shows the procedures whose billing the office put on hold, so that the hold can be released and a claim generated. (The hold is the `Hold Claim` tick on a procedure.)",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Shows procedures whose billing the office put on hold, so the hold can be released and a claim generated"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r05",
+      "legacy_name": "DPS Eligibility Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r05.s01.c01",
+          "text": "DPS = Denticon Practice Services, the vendor's insurance-verification service. A `DPS Ins. Verification` request is made per appointment on a form that carries an `On Hold` flag.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "DPS = Denticon Practice Services; `DPS Ins. Verification` is a per-appointment request with a form and an `On Hold` flag"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r05.s01.c01",
+          "text": "The On Hold checkbox corresponds to the `On Hold` tick on the `Subscriber / Insurance Verification` form (the DPS verification request of an appointment). The vendor shows the tick on that form; that the report criterion refers to it rests on the identical name, and its effect on the report is not documented (see the open question).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`On Hold` corresponds to the `On Hold` tick on the `Subscriber / Insurance Verification` form"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r07",
+      "legacy_name": "Benefits Used/Unused",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r07.s01.c01",
+          "text": "TREATMENT PLAN/RECALL chooses both the population and the layout of the report: patients with benefits remaining who have a treatment plan (Treatment Plan) or who are due for recall (Recall).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`TREATMENT PLAN/RECALL` | Chooses the layout and population"
+        },
+        {
+          "about": "other",
+          "control_id": "insurance_reports.r07.s01.c01",
+          "text": "The captured criteria show the Treatment Plan state only. The footer of the vendor's 2011 Recall sample echoes three criteria that this state does not have: `Recall Date From / Thru`, `Max Over` and `Recall Codes`. They come from an older build and the current Recall screen is unverified, so they are NOT added as controls (see the open question); the Recall state of the screen still has to be captured.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "The 2011 Recall footer echoes `Recall Date From / Thru`, `Max Over` and `Recall Codes` — criteria that do not exist on the `Treatment Plan` state we captured"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r07.s05.c01",
+          "text": "ANNIVERSARY DATE RANGE is on the plan's anniversary - the next date on which the benefits roll over.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`ANNIVERSARY DATE RANGE` | The plan's anniversary — the next date benefits roll over; default = first day of next month through one year later minus a day"
+        },
+        {
+          "about": "default",
+          "control_id": "insurance_reports.r07.s05.c01",
+          "text": "Default range: Start Date = the first day of next month, End Date = one year later minus a day (our capture of 11/21/2026 shows 12/01/2026 to 11/30/2027). The research document states this rule without separating what the vendor article says from what our capture shows.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`ANNIVERSARY DATE RANGE` | The plan's anniversary — the next date benefits roll over; default = first day of next month through one year later minus a day"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r07.s06.c01",
+          "text": "EXCLUDE RESPONSIBLE PARTY TYPE removes the accounts (responsible parties) of the picked types from the report; the vendor's sample echoes the choice in its footer as `Ex Resp. Type`.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`EXCLUDE PATIENT TYPE` / `EXCLUDE RESPONSIBLE PARTY TYPE` | Removes patients / accounts of the picked types; echoed as `Exclude Pat Type` / `Ex Resp. Type`"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r08",
+      "legacy_name": "Outstanding Claims",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PRINT FORMAT = Excel",
+          "effect": "Both GROUP BY radios (None / Provider) are greyed out; the Excel output is a flat workbook.",
+          "controls": [
+            "insurance_reports.r08.s10.c01",
+            "insurance_reports.r08.s11.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "Selecting `Excel` greys both `GROUP BY` radios"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r08.s01.c01",
+          "text": "Claims lists all claims sent but not yet recorded as paid; Pre-Authorization lists the outstanding pre-authorizations instead.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "All claims sent but not yet recorded as paid, for follow-up; `Pre-Authorization` gives outstanding pre-auths"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r08.s05.c01",
+          "text": "REPORT DATE is a single as-of date (not a range); the vendor advises running the report on the default date for a 'right now' figure.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`REPORT DATE` | Single as-of date; vendor advises running on the default date for a \"right now\" figure"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r08.s10.c01",
+          "text": "PDF opens the report in the report viewer; Excel produces a flat download instead and can disable layout options (here GROUP BY, see the rule).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PRINT FORMAT` (`PDF` / `Excel`) | PDF → viewer. Excel → flat download. Excel can disable layout options (section 7)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "CREATE TASK (the extra action button of this report) creates Task Manager tasks of type `Outstanding Claim` (or `Outstanding Pre-Auth`) for the claims on the report, after a confirmation that states the count.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Creates Task Manager tasks of type `Outstanding Claim` (or `Outstanding Pre-Auth`) for the claims on the report, after a confirmation stating the count"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r09",
+      "legacy_name": "Claims Not Created",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: procedures that are on hold (`Hold Claim` ticked on the procedure) also appear on this report.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "procedures held with `Hold Claim` appear here"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r09.s03.c02",
+          "text": "Report Date is a single day, not a range: the vendor describes single-day use of this report (run it daily, or once per day of service at the end of the week). That DOS Date / Transaction Date decide which date that day is compared with comes from our transcription.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "otherwise one day, by date of service or by transaction date | `[C]`; single-day use `[D]` `[R11]`"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r10",
+      "legacy_name": "Unbilled Report Due to No Insurance",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Hidden population rule with no criteria control: the report lists patient records whose procedures were posted before insurance was attached (billing order `None`, no `D` in the Bill column); such procedures have to be edited before a claim can be generated.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Patient records whose procedures were posted **before** insurance was attached (billing order `None`, no `D` in Bill), which must be edited before a claim can be generated"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r11",
+      "legacy_name": "EOB 835 Claims Reconcile Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r11.s05.c02",
+          "text": "The date range selects the ERA (835) payments that were processed: per the vendor the report lists all processed payments for the selected date range, whether or not they were auto-posted. (The vendor article calls the report `EOB Claim Reconcile Report`.)",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "(the vendor calls it \"EOB Claim Reconcile Report\"): lists all processed payments"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r12",
+      "legacy_name": "835 Denial Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PRINT FORMAT = Excel (the state the report opens in)",
+          "effect": "REPORT FORMAT is greyed with Detail marked - the Excel output exists only as Detail. With PRINT FORMAT = PDF, REPORT FORMAT can be set to Summary or Detail.",
+          "controls": [
+            "insurance_reports.r12.s01.c01",
+            "insurance_reports.r12.s02.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Summary` / `Detail` for PDF; greyed with `Detail` marked when `Excel` is selected (only \"Detail-Excel\" is documented)"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "default",
+          "control_id": "insurance_reports.r12.s02.c01",
+          "text": "Excel is the print format this report opens with. The vendor's own screenshot shows the same opening state as our capture (Excel selected, REPORT FORMAT greyed with Detail marked, office box ALL), so the captured state is the report's normal default and not a leftover selection.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Excel` selected, `REPORT FORMAT` greyed with `Detail` marked, office `ALL` — identical in the vendor's screenshot, so this is the report's normal opening state; Excel exists only as Detail"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r12.s02.c01",
+          "text": "PDF opens the report in the report viewer (Summary or Detail layout); Excel produces a flat download instead and locks REPORT FORMAT (see the rule).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PRINT FORMAT` (`PDF` / `Excel`) | PDF → viewer. Excel → flat download. Excel can disable layout options (section 7)"
+        },
+        {
+          "about": "default",
+          "control_id": "insurance_reports.r12.s03.c02",
+          "text": "The office box opens on ALL on this report (the other reports of the category open on the logged-in office); the vendor's own screenshot shows the same.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The vendor's own screenshot shows the state we captured: `Excel` selected and the office box `ALL`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "insurance_reports.r12.s04.c01",
+          "text": "DATE RANGE (Start Date / End Date) may cover at most one month per run.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Enabled per tenant on request to support or the account manager; date range up to one month"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Population rule with no criteria control: the report covers ERA 835 auto-payments that were denied or partially paid.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "ERA 835 auto-payments that were denied or partially paid, to find and fix claim problems"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Tenant-dependent report: it is listed only for tenants that asked the vendor to enable it. Without it the Insurance Reports list has 12 entries, in another order than the 13-entry list we captured.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`835 Denial Report` is listed only for tenants that asked for it; without it the list has 12 entries in another order"
+        }
+      ]
+    },
+    {
+      "report_id": "insurance_reports.r13",
+      "legacy_name": "RTE Sweep Details",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "RTE = real-time eligibility. `RTE Sweep` is the daily automatic real-time-eligibility sweep of the schedule through DentalXChange (actor `Auto_RTE`).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "**`RTE Sweep`** = the daily real-time-eligibility sweep of the schedule through DentalXChange (actor `Auto_RTE`)"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "insurance_reports.r01",
+      "question": "`Include Resolved Claims`: the effect is not documented; the research document only infers that it adds closed claims and that by default only unresolved claims are listed."
+    },
+    {
+      "report_id": "insurance_reports.r01",
+      "question": "Older build: the vendor's 2011 sample footer echoes `Provider : ALL`, but the current criteria have no PROVIDER picker. An older build apparently filtered Claims List by provider; it is NOT added because the current screen (captured complete) does not have it. Whether the filter was removed or is only hidden in the current build is not documented."
+    },
+    {
+      "report_id": "",
+      "question": "`CLAIM TYPE` (`Both` / `Dental` / `Medical`) on Claims List, Claims Created Not Sent and Outstanding Claims: that it filters dental versus medical claims is inferred (on Outstanding Claims the research document only presumes a separate `Medical Claims` band)."
+    },
+    {
+      "report_id": "insurance_reports.r02",
+      "question": "`Show Billing Provider For Hygienist`: not documented; taken (inferred) to print the billing provider instead of a hygienist in the provider column."
+    },
+    {
+      "report_id": "insurance_reports.r02",
+      "question": "`FACILITY ID`: the vendor sample header prints `Facility ID : <value>`; that the criteria text box supplies that header line (the carrier's id for the office) is inferred. The basis of `DATE RANGE` (transaction date of the procedures) is also inferred from the sample."
+    },
+    {
+      "report_id": "insurance_reports.r02",
+      "question": "`Fee Schedule To Compare`: which fee schedules the list contains (all of the practice or only those of the selected office), their order and the rule for the pre-selected entry are not documented."
+    },
+    {
+      "report_id": "insurance_reports.r02",
+      "question": "`REPORT FORMAT` = `Summary`: what it changes is not documented (the vendor sample and the old report name `Capitation Utilization - Detail` cover Detail only). `GROUP BY` = `Provider`: taken (inferred) to add a provider level."
+    },
+    {
+      "report_id": "",
+      "question": "Whether PRINT FORMAT = Excel also greys GROUP BY on Capitation Utilization and on Claims Created Not Sent, as it does on Outstanding Claims, is not documented."
+    },
+    {
+      "report_id": "insurance_reports.r03",
+      "question": "No vendor article names this report. Open: the date basis of CREATED ON DATE RANGE (date the claim was created is our reading), whether the other criteria behave as on Claims List (inferred) and what GROUP BY = Provider does (a provider level is inferred). Also unverified: whether a claim saved with `E-Claim` (ledger text `Recreated` instead of `Created, Not Sent`) is included."
+    },
+    {
+      "report_id": "insurance_reports.r04",
+      "question": "Whether `DATE RANGE` is the date of service or the transaction date is unverified."
+    },
+    {
+      "report_id": "insurance_reports.r05",
+      "question": "`On Hold`: that ticking it limits the report to requests flagged On Hold on the verification form is inferred; `Include patients with no insurance` (adds appointments of patients with no plan attached) is inferred too. The report itself is not described by the vendor."
+    },
+    {
+      "report_id": "insurance_reports.r05",
+      "question": "`DATE RANGE TYPE`: the non-default states (Appointment Created Date, Both) are not shown by the vendor. That they enable the greyed APPOINTMENT CREATED DATE RANGE inputs, and which range each choice disables, remains an inference from our screenshot."
+    },
+    {
+      "report_id": "insurance_reports.r06",
+      "question": "The basis of `DATE RANGE` (payment date) is inferred."
+    },
+    {
+      "report_id": "insurance_reports.r07",
+      "question": "Older build / unseen mode: Recall mode was not captured, and its criteria are known only from an older build: the footer of the vendor's 2011 Recall sample (then the separate report `Benefits Used/Unused - Recall`) echoes three criteria that the Treatment Plan state does not have - `Recall Date From / Thru`, `Max Over` and `Recall Codes`. They are NOT added as controls: the current Recall screen is unverified, and the footer wording gives neither the section titles nor the on-screen labels, control types, value lists or defaults. To settle: capture the screen with TREATMENT PLAN/RECALL = Recall and record which criteria appear, change or disappear."
+    },
+    {
+      "report_id": "insurance_reports.r07",
+      "question": "`EXCLUDE RESPONSIBLE PARTY TYPE`: the value list of the picker is not documented."
+    },
+    {
+      "report_id": "insurance_reports.r08",
+      "question": "OTHER OPTIONS `Current` / `Over 30` / `Over 60` / `Over 90` / `Over 120`: that they choose which age buckets are included is inferred. Also unknown: the age basis (claim sent date or date of service) and whether `Report Date` reconstructs history or only shifts the aging."
+    },
+    {
+      "report_id": "insurance_reports.r08",
+      "question": "`GROUP BY` = `Provider`: taken (inferred) to add a provider grouping level. Vendor material still uses the old report name `Outstanding Claim Report for Provider`; mapping it to this option is inferred."
+    },
+    {
+      "report_id": "insurance_reports.r09",
+      "question": "`REPORT DATE`: that `DOS Date` / `Transaction Date` enable the single Report Date input (and that `ALL` means every unclaimed procedure) comes from our own screenshot; the vendor documents only single-day use. `CLAIM TYPE` Primary / Secondary / Tertiary / Quaternary (coverage levels whose missing claims are listed) is inferred."
+    },
+    {
+      "report_id": "insurance_reports.r10",
+      "question": "The basis of `DATE RANGE` is unverified."
+    },
+    {
+      "report_id": "insurance_reports.r11",
+      "question": "`Show Details UCR` (ticked by default): not documented; taken (unverified) to add service-line detail with the billed (UCR) amount. The meanings of `835 CLAIM MATCHING STATUS` (payment matched to a claim or not) and of `CLAIM STATUS` `Partial Closed` / `Closed` (claim state after posting) are inferred."
+    },
+    {
+      "report_id": "insurance_reports.r12",
+      "question": "`EXCLUDE REASON CODE`: the effect (removes lines with the picked reason codes) is inferred and the value list of the picker is not documented (sample values suggest the standard 835 adjustment reason codes - inferred)."
+    },
+    {
+      "report_id": "insurance_reports.r13",
+      "question": "The report is not described by the vendor: what `CREATED ON DATE RANGE` filters (taken to be the date-time of the automatic eligibility check) is inferred."
+    },
+    {
+      "report_id": "",
+      "question": "ADD TO MY FAVORITES (action on every report): vendor training material says it saves the criteria - one version per report - and that a saved version is later changed with `Update My Favorites`. Where `Update My Favorites` appears (this button relabelled once the report is a favourite, or an action elsewhere) is not described in this document."
+    },
+    {
+      "report_id": "",
+      "question": "SELECT / SEARCH dialogs: apart from `Include All` (stated for the PROVIDER and CARRIER pickers and, generally, for all pickers) and the fact that one or more offices or an office group can be chosen, the contents of the office / office group, provider, carrier, responsible-party-type and reason-code dialogs and of the NAME RANGE SEARCH lookups are not described in this research document."
+    }
+  ]
+}

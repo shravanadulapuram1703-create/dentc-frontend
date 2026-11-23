@@ -118,6 +118,46 @@ the header truthful.
 
 ---
 
+### PE-5 — PATCH `/patients/{id}` rejects the WHOLE update when a guarantor key is sent as `null` &nbsp;·&nbsp; **Medium**
+
+*Added 2026-11-21 — reported as "I cannot change the fee schedule after I added the insurance".
+Verified on the UAT DB (`Test_Dental_Group`), patient **142**, office 2.*
+
+`family_account_service.apply_patch_guarantor` (RP-4/RP-7) treats **any** guarantor key present
+in a PATCH body (`responsible_party_id`, `guarantor_patient_id`, `guarantor_party_id`,
+`account_id`) as an attempt to change the guarantor. If all of them are `null`/blank it raises:
+
+```
+422 {"error":{"code":"validation_error",
+      "message":"A patient must always have a responsible party; send a replacement guarantor (or use POST /patients/{id}/change-guarantor)",
+      "details":{"code":"guarantor_required","fields":["responsible_party_id"]}}}
+```
+
+…and the **entire** PATCH fails, including unrelated fields such as `fee_schedule_id`. The edit
+wizard's shared payload builder emitted `responsible_party_id: null` (meaning "not set by this
+step"), so after the RP-4/RP-7 change **every** Step-1 save in edit mode returned 422. The
+fee schedule was just the field the user happened to change. Nothing about the fee-schedule
+validation (`_validate_fee_schedule_pointer`) or insurance was involved.
+
+**Frontend fix (shipped):** `savePatientEdits` now drops empty guarantor keys before the PATCH
+(`stripEmptyGuarantorKeys` in `src/features/add-patient/editMode.ts`). The Responsible Party
+step still writes the guarantor. The save alert now shows `error.message` from the envelope
+instead of the bare "Request failed with status code 422". Re-verified: PATCH 200,
+`fee_schedule_id` 85→55, guarantor (`guarantor_patient_id` 142 / `account_id` 141) unchanged.
+The patient was then restored to 85.
+
+**Ask (pick one):**
+1. Treat an explicit `null` on guarantor keys as "not touched" when the patient already has a
+   guarantor (the refusal stays for a real attempt to clear it via `change-guarantor`), **or**
+2. Keep the 422 but document it on `PatientUpdate` in `openapi.json` (the schema advertises
+   all four keys as nullable, which invites exactly this payload).
+
+Also note: `PatientUpdate` is a plain PATCH. Clients that send `null` for every unset field will
+silently clear other columns. An `exclude_unset`-style contract note in the OpenAPI description
+would help.
+
+---
+
 ### Cross-references (not repeated here)
 
 - Responsible-party guarantor records are unmigrated and legacy ids 404 against

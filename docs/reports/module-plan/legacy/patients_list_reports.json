@@ -1,0 +1,1299 @@
+{
+ "category": "patients_list_reports",
+ "window_title": "Patient/Resp. Party List Reports",
+ "source_folder": "C:/Users/Sravan/Downloads/reports/patients_list_reports",
+ "report_list": [
+  "Patient List",
+  "Patient List - New Patient",
+  "Patients Seen",
+  "Patient's Notes",
+  "Patient List - Grouped By",
+  "Patients on Payment Plan",
+  "Online Registered Patients",
+  "Update Patient Insurance (Conversion) List - By Appointment",
+  "Responsible Party List",
+  "Responsible Party - Statements Sent",
+  "Responsible Party - Sent to Collection",
+  "Responsible Party - Email Statement Error Report"
+ ],
+ "reports": [
+  {
+   "name": "Update Patient Insurance (Conversion) List - By Appointment",
+   "screenshots": [
+    "1.PNG",
+    "9.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "REPORT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Summary",
+        "Detail"
+       ],
+       "default_value": "Summary",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label. Summary carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "APPOINTMENT DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "1.PNG and 9.PNG both show this report selected, in the same default state: after allowing for a 6 px vertical shift the two screenshots are pixel-identical over the whole window content (list and criteria), so 9.PNG adds nothing to 1.PNG. Four full-width sections: PRINT FORMAT; REPORT TYPE; OFFICE/GROUP; APPOINTMENT DATE RANGE. No provider, patient-type or other-options section. In the report list the name wraps onto two lines ('Update Patient Insurance (Conversion)' / 'List - By Appointment'). Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Patient List",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "PATIENT STATUS",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Active",
+        "Inactive",
+        "Both"
+       ],
+       "default_value": "Active",
+       "enabled": true,
+       "notes": "Left column, side by side with PATIENT TYPE. Three radios on one row, no row label. Active carries the blue dot; all options enabled."
+      }
+     ]
+    },
+    {
+     "title": "PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Both",
+        "General",
+        "Ortho"
+       ],
+       "default_value": "Both",
+       "enabled": true,
+       "notes": "Right column, side by side with PATIENT STATUS. Three radios on one row, no row label. Both carries the blue dot; all options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PROVIDER row, is empty). Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right column. Row label 'Provider' in the left cell; read-only box (grey read-only fill) showing ALL in the right cell; button to its right: blue 'SELECT' with a single-person icon (enabled). The provider selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "INCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Left column, side by side with EXCLUDE PATIENT TYPE. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing ALL; button to its right: blue 'SELECT' with a person-plus icon (enabled). The patient-type selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Right column, side by side with INCLUDE PATIENT TYPE. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing None (mixed case as displayed); button to its right: blue 'SELECT' with a person-plus icon (enabled). The patient-type selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "SEX",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "------",
+       "enabled": true,
+       "notes": "Left column, side by side with AGE RANGE. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right) whose displayed value is six hyphens (counted on the pixels), i.e. a blank / no-selection placeholder. list collapsed - other values not visible."
+      }
+     ]
+    },
+    {
+     "title": "AGE RANGE",
+     "controls": [
+      {
+       "label": "From",
+       "type": "number_input",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Right column, side by side with SEX. Label 'From' followed by a small EMPTY editable box (light editable-field fill); the 'To' label and box follow on the same row. No placeholder, unit or spinner shown - presumably a numeric age (inference; field type not verifiable from the screenshot)."
+      },
+      {
+       "label": "To",
+       "type": "number_input",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Right column, same row as From. Label 'To' followed by a small EMPTY editable box identical to the From box. No placeholder, unit or spinner shown - presumably a numeric age (inference)."
+      }
+     ]
+    },
+    {
+     "title": "OTHER OPTIONS",
+     "controls": [
+      {
+       "label": "Include Patients With No Email",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "checked",
+       "enabled": true,
+       "notes": "Full-width section holding this single checkbox. Ticked (blue check mark) in the captured default state."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "2.PNG only (default state). Layout: PRINT FORMAT (full width); then four two-column rows - PATIENT STATUS | PATIENT TYPE; OFFICE/GROUP | PROVIDER (the office box + SELECT row sits beneath, across the panel); INCLUDE PATIENT TYPE | EXCLUDE PATIENT TYPE; SEX | AGE RANGE; then OTHER OPTIONS (full width). Richest criteria set of the category and the only report with PATIENT TYPE, SEX and AGE RANGE. No date range, REPORT BY or REPORT TYPE section. The header reads like 'ACE RANCE' in the screenshot font (capital G drawn like C) and is transcribed AGE RANGE. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Patient List - New Patient",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "sections": [
+    {
+     "title": "REPORT BY",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "Appointment",
+       "enabled": true,
+       "notes": "Left column of the first row, side by side with PRINT FORMAT. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right). list collapsed - other values not visible. The date section below is titled APPOINTMENT DATE RANGE, which matches this value, so that title may change with the selection (inference - no other value was captured)."
+      }
+     ]
+    },
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Right column of the first row, side by side with REPORT BY. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "APPOINTMENT DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "3.PNG only (state: REPORT BY = 'Appointment'; its other values were not captured). Layout: REPORT BY | PRINT FORMAT side by side; then OFFICE/GROUP and APPOINTMENT DATE RANGE, each full width. No provider, patient-type or other-options section. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Patients Seen",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "sections": [
+    {
+     "title": "REPORT BY",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "Day",
+       "enabled": true,
+       "notes": "Left column of the first row, side by side with PRINT FORMAT. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right). list collapsed - other values not visible."
+      }
+     ]
+    },
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Right column of the first row, side by side with REPORT BY. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "REPORT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Summary",
+        "Detail"
+       ],
+       "default_value": "Summary",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label. Summary carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PROVIDER row, is empty). Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right column. Row label 'Provider' in the left cell; read-only box (grey read-only fill) showing ALL in the right cell; button to its right: blue 'SELECT' with a single-person icon (enabled). The provider selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "DATE RANGE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Transaction Date",
+        "DOS Date"
+       ],
+       "default_value": "Transaction Date",
+       "enabled": true,
+       "notes": "Unlabelled radio row directly under the DATE RANGE header, above the Start Date / End Date rows; it selects which date the range applies to. Transaction Date carries the blue dot; both options enabled."
+      },
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "4.PNG only (state: REPORT BY = 'Day'; its other values were not captured). Layout: REPORT BY | PRINT FORMAT; REPORT TYPE (full width); OFFICE/GROUP | PROVIDER (the office box + SELECT row sits beneath, across the panel); DATE RANGE (full width) with its own Transaction Date / DOS Date radio row above the two date rows. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Patient's Notes",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "PRINT NOTES",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Full-width section. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing ALL; button to its right: blue 'SELECT' with the same small building-style icon as the office SELECT button of the other reports (enabled). The selection dialog is not shown in any screenshot, so the selectable values (presumably note types / categories - inference) are unknown."
+      }
+     ]
+    },
+    {
+     "title": "PATIENT",
+     "controls": [
+      {
+       "label": "Patient",
+       "type": "text_input",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Full-width section. Row label 'Patient' in the left cell; wide EMPTY box in the right cell. The box has the light editable-field fill (RGB 241,241,241 - same as the date boxes), not the grey read-only fill (RGB 220,223,226) of the PRINT NOTES box, so it is recorded as text_input with its SEARCH button as a separate control (same convention as the Patient lookups in daily_reports.json and management_reports.json; readers A and B had typed box + button as one picker). Whether the box accepts typing or is filled only through SEARCH cannot be told from the screenshot."
+      },
+      {
+       "label": "SEARCH",
+       "type": "button",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Blue enabled button with a magnifier icon immediately right of the Patient box (patient search / lookup). The dialog it opens is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "5.PNG only (default state, no patient chosen). Four full-width sections: PRINT FORMAT; PRINT NOTES; PATIENT; DATE RANGE. The ONLY report of the category with no OFFICE/GROUP section - it is driven by a single patient lookup instead. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Patient List - Grouped By",
+   "screenshots": [
+    "6.PNG"
+   ],
+   "sections": [
+    {
+     "title": "REPORT BY",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "Attached to Provider",
+       "enabled": true,
+       "notes": "Left column of the first row, side by side with PRINT FORMAT. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right). list collapsed - other values not visible. This is the 'grouped by' choice of the report; whether other values change the PROVIDER / SPECIALTY sections below is not shown (no other value was captured)."
+      }
+     ]
+    },
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Right column of the first row, side by side with REPORT BY. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "PATIENT STATUS",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Active",
+        "Inactive",
+        "Both"
+       ],
+       "default_value": "Active",
+       "enabled": true,
+       "notes": "Full-width section in this report (no PATIENT TYPE section beside it). Three radios on one row, no row label. Active carries the blue dot; all options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left column, side by side with PROVIDER. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PROVIDER row, is empty). Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right column. Row label 'Provider' in the left cell; read-only box (grey read-only fill) showing ALL in the right cell; button to its right: blue 'SELECT' with a single-person icon (enabled). The provider selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "INCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Left column, side by side with EXCLUDE PATIENT TYPE. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing ALL; button to its right: blue 'SELECT' with a person-plus icon (enabled). The patient-type selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Right column, side by side with INCLUDE PATIENT TYPE. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing None (mixed case as displayed); button to its right: blue 'SELECT' with a person-plus icon (enabled). The patient-type selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "SPECIALTY",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Full-width section; the dropdown sits at the left and is the same width as the REPORT BY dropdown. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right) showing ALL in capitals. list collapsed - other values not visible."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "6.PNG only (state: REPORT BY = 'Attached to Provider'; its other values were not captured). Layout: REPORT BY | PRINT FORMAT; PATIENT STATUS (full width); OFFICE/GROUP | PROVIDER (the office box + SELECT row sits beneath, across the panel); INCLUDE PATIENT TYPE | EXCLUDE PATIENT TYPE; SPECIALTY (full width). No date range, PATIENT TYPE, SEX, AGE RANGE or OTHER OPTIONS section. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Patients on Payment Plan",
+   "screenshots": [
+    "7.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PLAN TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Regular",
+        "Ortho"
+       ],
+       "default_value": "Regular",
+       "enabled": true,
+       "notes": "Left column of the first row, side by side with PRINT FORMAT. Two radios on one row, no row label. Regular carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Right column of the first row, side by side with PLAN TYPE. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left column, side by side with PREFERRED PROVIDER. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PREFERRED PROVIDER row, is empty). Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "PREFERRED PROVIDER",
+     "controls": [
+      {
+       "label": "Preferred Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right column. Row label 'Preferred Provider' in the left cell; read-only box (grey read-only fill) showing ALL in the right cell; button to its right: blue 'SELECT' with a single-person icon (enabled). The provider selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "PLAN SETUP DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day)."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Full-width section in this report (there is no INCLUDE PATIENT TYPE section beside it); the box sits at the left. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing None (mixed case as displayed); button to its right: blue 'SELECT' with a person-plus icon (enabled). The patient-type selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "CREDIT CARD ON FILE",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "Both",
+       "enabled": true,
+       "notes": "Full-width section; the dropdown sits at the left. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right). list collapsed - other values not visible."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "7.PNG only (default state, PLAN TYPE = Regular). Layout: PLAN TYPE | PRINT FORMAT; OFFICE/GROUP | PREFERRED PROVIDER (the office box + SELECT row sits beneath, across the panel); then PLAN SETUP DATE RANGE, EXCLUDE PATIENT TYPE and CREDIT CARD ON FILE, each full width. The provider section is titled PREFERRED PROVIDER here (row label 'Preferred Provider'), not PROVIDER. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Online Registered Patients",
+   "screenshots": [
+    "8.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "REPORT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Summary",
+        "Detail"
+       ],
+       "default_value": "Summary",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label. Summary carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "CREATED DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today). The label cell is wider in this report than in the other reports of the category, so the date box sits further right (box starts at about x=762 px instead of 613 px); nothing else is in the row."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day). Same wider label cell as Start Date."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "8.PNG only (default state). Four full-width sections: PRINT FORMAT; REPORT TYPE; OFFICE/GROUP; CREATED DATE RANGE. Same structure as 'Update Patient Insurance (Conversion) List - By Appointment' except that the date section is titled CREATED DATE RANGE and its label cells are wider. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Responsible Party List",
+   "screenshots": [
+    "10.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "REPORT BY",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": "Created Date",
+       "enabled": true,
+       "notes": "Full-width section in this report (below PRINT FORMAT, not beside it); the dropdown sits at the left. No row label - the section header is the only caption. Collapsed dropdown (chevron at the right). list collapsed - other values not visible. The date section below is titled CREATED DATE RANGE, which matches this value, so that title may change with the selection (inference - no other value was captured)."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "CREATED DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Label in the left cell, date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Same value as Start Date (the capture day)."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE RESPONSIBLE PARTY TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Full-width section; the box sits at the left. No row label - the section header is the only caption. Read-only box (grey read-only fill) showing None (mixed case as displayed); button to its right: blue 'SELECT' with a person-plus icon (enabled). The responsible-party-type selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "OTHER OPTIONS",
+     "controls": [
+      {
+       "label": "Include Inactive Accounts (All patients inactive in account)",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Full-width section holding this single checkbox. Empty box = unchecked in the captured default state. The parenthesised explanation is part of the checkbox label."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "10.PNG only (state: REPORT BY = 'Created Date'; its other values were not captured). Six full-width sections (no side-by-side columns): PRINT FORMAT; REPORT BY; OFFICE/GROUP; CREATED DATE RANGE; EXCLUDE RESPONSIBLE PARTY TYPE; OTHER OPTIONS. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Responsible Party - Sent to Collection",
+   "screenshots": [
+    "11.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "ACCOUNT BALANCE RANGE",
+     "controls": [
+      {
+       "label": "Start",
+       "type": "number_input",
+       "options": [],
+       "default_value": "0.00",
+       "enabled": true,
+       "notes": "Label 'Start' in the left cell; small editable box (light editable-field fill) in the right cell, value right-aligned with two decimals. No currency symbol or spinner shown."
+      },
+      {
+       "label": "End",
+       "type": "number_input",
+       "options": [],
+       "default_value": "999999.99",
+       "enabled": true,
+       "notes": "Label 'End' in the left cell; small editable box identical to the Start box, value right-aligned: six 9s, a decimal point and two 9s (digits counted on a 6x crop). No currency symbol or spinner shown."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "11.PNG only (default state). Three full-width sections: PRINT FORMAT; OFFICE/GROUP; ACCOUNT BALANCE RANGE. No date range - the report is filtered by office and account balance only. Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Responsible Party - Statements Sent",
+   "screenshots": [
+    "12.PNG"
+   ],
+   "sections": [
+    {
+     "title": "STATEMENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Paper",
+        "Email",
+        "Both"
+       ],
+       "default_value": "Paper",
+       "enabled": true,
+       "notes": "PARTIALLY DISABLED: 'Paper' is selected and active (blue ring and dot, black label); the 'Email' and 'Both' options are GREYED OUT / disabled (grey-filled radio circles, grey labels), so only Paper can be chosen in the captured state. The reason for the disabling is not shown on screen. Left column of the first row, side by side with PRINT FORMAT; three radios on one row, no row label."
+      }
+     ]
+    },
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Right column of the first row, side by side with STATEMENT TYPE. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "STATEMENT DATE",
+     "controls": [
+      {
+       "label": "Statement Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "ONE date, not a range (no Start / End pair). Row label 'Statement Date' in the left cell (same wording as the section header, in mixed case); date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "12.PNG only (default state). Layout: STATEMENT TYPE | PRINT FORMAT side by side; then OFFICE/GROUP and STATEMENT DATE, each full width. STATEMENT DATE is a single date, not a range. The only greyed-out items in the whole category are the Email and Both options of STATEMENT TYPE here (a pixel scan of all 13 screenshots found no other grey text, grey radio or grey button inside a criteria panel). Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  },
+  {
+   "name": "Responsible Party - Email Statement Error Report",
+   "screenshots": [
+    "13.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "First section of the panel, full width. Two radios on one row, no row label. PDF carries the blue dot; both options enabled."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Full-width section. Two radios on one row, no row label, directly under the header. Office carries the blue dot; Office Group is enabled too (black label, normal empty radio)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only box (grey read-only fill) on its own row directly below the Office / Office Group radios. Shows the office id 108 (same number as 'OID :108' in the title bar). Button to its right: blue 'SELECT' with a small building icon (enabled). The office / office-group selection dialog is not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "STATEMENT SENT DATE",
+     "controls": [
+      {
+       "label": "Statement Sent Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "ONE date, not a range (no Start / End pair). Row label 'Statement Sent Date' in the left cell (same wording as the section header, in mixed case); date box (light editable-field fill) in the right cell with a calendar icon inside the box at its right end. Format MM/DD/YYYY. Value equals the capture day (default appears to be today)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "13.PNG only (default state). Three full-width sections: PRINT FORMAT; OFFICE/GROUP; STATEMENT SENT DATE (a single date, not a range). Smallest criteria set of the category (three sections, four controls). In the report list the name wraps onto two lines ('Responsible Party - Email Statement' / 'Error Report'). Nothing greyed out. Nothing is clipped: the last criteria row is followed by blank panel space down to the action bar (PRINT / PREVIEW, ADD TO MY FAVORITES), and there is no scrollbar."
+  }
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory. All 13 original screenshots, all 26 pre-rendered zooms and additional tight crops were read. Readers A and B agreed on every report, section, control, option list, default value and enabled state (84 controls each; they differed only in report order and note wording); every point was nevertheless re-checked on the pixels. One typing change was made by the third reader: the Patient box + SEARCH button of Patient's Notes is recorded as text_input + button instead of one picker (see TYPING CONVENTION), which gives 85 controls. An automated pixel scan of every criteria panel (every pixel that is not one of the panel's flat fill colours, clustered into boxes) found nothing beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no extra column, no instruction / warning / legend text, no scrollbar, no footer text. COVERAGE: 13 screenshots = 12 reports, every report of the list is shown selected at least once (blue radio dot): 1.PNG and 9.PNG = Update Patient Insurance (Conversion) List - By Appointment (pixel-identical apart from a 6 px vertical shift - a duplicate capture); 2 = Patient List; 3 = Patient List - New Patient; 4 = Patients Seen; 5 = Patient's Notes; 6 = Patient List - Grouped By; 7 = Patients on Payment Plan; 8 = Online Registered Patients; 10 = Responsible Party List; 11 = Responsible Party - Sent to Collection; 12 = Responsible Party - Statements Sent; 13 = Responsible Party - Email Statement Error Report. All 13 are the normal two-panel screen: no popup, no expanded dropdown, no scrolled second view, no foreign screen. TITLE BAR (identical in all 13): 'Patient/Resp. Party List Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (icon only, no text) at the far right. LEFT PANEL: this category has NO 'SELECT REPORT' header. The panel holds two groups, each with its own blue header bar and its own two-column grid of radio cells: 'PATIENT LIST' (8 reports, 4 rows x 2 columns) and 'RESPONSIBLE PARTY LIST' (4 reports, 2 rows x 2 columns). report_list is given group by group - PATIENT LIST left column top-to-bottom, then its right column, then RESPONSIBLE PARTY LIST left column, then its right column - so the first 8 names belong to PATIENT LIST and the last 4 to RESPONSIBLE PARTY LIST. Two names wrap onto a second line inside their cell ('Update Patient Insurance (Conversion)' / 'List - By Appointment' and 'Responsible Party - Email Statement' / 'Error Report'). Each group ends with a thin divider line carrying a small blue '...' handle tab, and a vertical three-dot grip sits in a notch on the border between the left and right panels (collapse / resize handles). Below the second group the panel is uniform empty navy down to the window edge, so the list is NOT scrollable or clipped. RIGHT PANEL 'REPORT CRITERIA': the grey-styled CLEAR CRITERIA button (refresh icon) sits at the right end of the blue header bar - it is grey in all 13 screenshots, which is its normal styling (the other category inventories record the same), not a disabled state; the action bar at the bottom of the panel holds the blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) buttons, right-aligned. All three actions appear for every report. NO TRUNCATION: in every screenshot the first section header is fully visible under the panel border, the last criteria row is followed by blank panel space down to the action bar, and no scrollbar is drawn on either panel. RECURRING PATTERNS: (1) PRINT FORMAT = PDF (selected) / Excel on every report - either the full-width first section, or the right column of the first row beside REPORT BY, PLAN TYPE or STATEMENT TYPE. (2) OFFICE/GROUP = radios Office (selected) / Office Group, both ENABLED, then an unlabelled read-only box '108' (the OID of the title bar) with a blue, enabled SELECT button - on every report except Patient's Notes (in ledger_reports.json the same Office Group radio and SELECT button are greyed out; here they are not). In two-column layouts the OFFICE/GROUP header and radios occupy the left column beside PROVIDER / PREFERRED PROVIDER and the office box + SELECT row follows beneath, across the panel. (3) Every date box shows 11/21/2026 = the capture day (MM/DD/YYYY, calendar icon inside the box), i.e. dates appear to default to today. (4) Unlabelled controls: many sections have no row label, the grey section header being the only caption (all radio rows, the office box, INCLUDE / EXCLUDE PATIENT TYPE, EXCLUDE RESPONSIBLE PARTY TYPE, PRINT NOTES, and the REPORT BY, SEX, SPECIALTY and CREDIT CARD ON FILE dropdowns); labelled rows are Provider, Preferred Provider, Patient, Start Date / End Date, Statement Date, Statement Sent Date, From / To and Start / End. (5) SELECT button icons: building for the office box and for PRINT NOTES; single person for Provider / Preferred Provider; person-plus for INCLUDE / EXCLUDE PATIENT TYPE and EXCLUDE RESPONSIBLE PARTY TYPE; the SEARCH button has a magnifier. TYPING CONVENTION: read-only picker boxes are drawn with a grey fill (RGB 220,223,226); editable inputs (date boxes, dropdowns, Age From / To, balance Start / End and the Patient box of Patient's Notes) with a lighter fill (RGB 241,241,241). Grey box + SELECT is recorded as ONE picker with the button described in its notes; the light Patient box + SEARCH is recorded as text_input plus a separate SEARCH button, the same convention as in daily_reports.json, ledger_reports.json and management_reports.json. DISABLED CONTROLS: the only greyed-out items in the category are the 'Email' and 'Both' options of STATEMENT TYPE in Responsible Party - Statements Sent (12.PNG); the radio group is recorded enabled = true with the partial disabling described in its notes. Every SELECT / SEARCH button and every other radio, checkbox, dropdown and input is drawn in its normal enabled style (button fills sampled: all blue). NOT CAPTURED (needs follow-up screenshots): every dropdown is collapsed, so only the current value is known - REPORT BY ('Appointment' in Patient List - New Patient, 'Day' in Patients Seen, 'Attached to Provider' in Patient List - Grouped By, 'Created Date' in Responsible Party List), SEX ('------'), SPECIALTY ('ALL') and CREDIT CARD ON FILE ('Both'). No dialog is shown, so the contents behind the office, office-group, provider, patient-type, responsible-party-type and PRINT NOTES SELECT buttons and behind the patient SEARCH button are unknown. Whether changing REPORT BY (or REPORT TYPE / PLAN TYPE / Office Group) alters the sections below it cannot be told from these screenshots. ABSENT in this category: GROUP BY and SORT BY sections, listboxes, Page Break checkboxes, free-standing instruction text. Only two checkboxes exist: 'Include Patients With No Email' (Patient List, checked) and 'Include Inactive Accounts (All patients inactive in account)' (Responsible Party List, unchecked). RENDERING CAVEAT: in the bold section-header font the capital G shows almost no crossbar at this resolution, so the headers look like 'OFFICE/CROUP', 'ACE RANCE', 'DATE RANCE', 'APPOINTMENT DATE RANCE', 'CREATED DATE RANCE', 'PLAN SETUP DATE RANCE' and 'ACCOUNT BALANCE RANCE'; a native-resolution pixel dump shows a heavier lower-right terminal on those glyphs than on the true C of 'OFFICE', and they are transcribed OFFICE/GROUP, AGE RANGE, DATE RANGE and so on (same reading as in the other category inventories). Screenshot sizes: 1366x598, 1364x590, 1366x592, 1366x587, 1366x589, 1366x583, 1366x582, 1366x583, 1366x582, 1366x579, 1366x590, 1366x586 and 1365x581 px (for 1.PNG to 13.PNG); the thin grey strip at the very bottom of some screenshots is the window edge and carries no text. No reading needed a '[?]' marker."
+}

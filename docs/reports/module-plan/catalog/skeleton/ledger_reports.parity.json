@@ -1,0 +1,1280 @@
+{
+ "category": "ledger_reports",
+ "reports": [
+  {
+   "report_id": "ledger_reports.r01",
+   "legacy_name": "Ledger Report",
+   "report_key": "ledger.ledger_report",
+   "phase": "P1",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ledger_reports.r01.s01.c01",
+     "signature_id": "sig0154",
+     "legacy_section": "REPORT FORMAT",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Account Ledger",
+      "Patient Ledger"
+     ],
+     "legacy_default": "Account Ledger",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "report_type",
+     "param_type": "enum",
+     "option_map": {
+      "Account Ledger": "account_ledger",
+      "Patient Ledger": "patient_ledger"
+     },
+     "default": "account_ledger",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Legacy title is REPORT FORMAT, but the choice selects the report variant (account versus patient ledger), so it maps to report_type. Only the Account Ledger state was captured. Vendor documentation: the patient ledger is run by selecting the patient, so Patient Ledger shows a patient selector (patient_id) in place of the responsible party."
+    },
+    {
+     "control_id": "ledger_reports.r01.s02.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List.",
+     "option_enabled_when": {
+      "office_group": "false"
+     }
+    },
+    {
+     "control_id": "ledger_reports.r01.s02.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "false",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "ledger_reports.r01.s03.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r01.s03.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r01.s04.c01",
+     "signature_id": "sig0155",
+     "legacy_section": "RESPONSIBLE PARTY",
+     "legacy_label": "Responsible Party",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "[responsible party open at capture]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_id",
+     "param_type": "entity_single",
+     "option_map": {},
+     "default": "current_account",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "One responsible party = one guarantor account (value accounts.id), shown as Last, First. Pre-filled with the account of the patient in context (token current_account). Required, except on Ledger Report with REPORT FORMAT = Patient Ledger, where the patient is selected instead (vendor documentation)."
+    },
+    {
+     "control_id": "ledger_reports.r01.s04.c02",
+     "signature_id": "sig0156",
+     "legacy_section": "RESPONSIBLE PARTY",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "account_id.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "ledger_reports.r01.s05.c01",
+     "signature_id": "sig0157",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Print all transactions (includes statements, ledger notes)",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "print_all_transactions",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r01.x01",
+     "signature_id": null,
+     "legacy_section": "Patient Ledger Report (print-menu dialog)",
+     "legacy_label": "[prompt, legacy wording not documented: add a patient note]",
+     "legacy_type": "other",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "`Start Date*`, `End Date*`, `Print / Preview`, `Cancel`) and ask whether to add a patient note `[S]` `[D]`",
+     "legacy_notes": "Appears only when the ledger is printed from the patient toolbar Print Reports icon > Patient Ledger / Account Ledger: the flow asks whether to add a patient note. Form (confirmation box or checkbox) and wording of the prompt are not documented. Not present on the Reports > Ledger Reports criteria panel.",
+     "status": "TODO",
+     "param": "prompt_legacy_wording_not_documented_add_a_patient_note",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "ledger_reports.r01.d01",
+     "legacy_when": "The ledger is printed from the patient toolbar Print Reports icon > Patient Ledger / Account Ledger instead of Reports > Ledger Reports",
+     "legacy_effect": "The print menu lists `Patient Ledger` and `Account Ledger` as separate items; each opens a dialog (`Patient Ledger Report`) with `Date Range` (`Start Date*`, `End Date*`) and the buttons `Print / Preview` / `Cancel`, and the flow asks whether to add a patient note.",
+     "confidence": "confirmed",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "ledger_reports.r01.s02.c02",
+     "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office."
+    },
+    {
+     "about": "meaning",
+     "control_id": "ledger_reports.r01.s01.c01",
+     "text": "Account Ledger = the whole account (the responsible party with all family members); Patient Ledger = one patient. In the vendor text the patient ledger is run by selecting the patient, the account ledger by selecting the responsible party."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "office_scope",
+     "field": "forced_when",
+     "when": "true",
+     "value": {
+      "office_ids": {
+       "token": "working_office"
+      }
+     },
+     "evidence": "shown",
+     "note": "Lock of the four Ledger reports: always the working office."
+    },
+    {
+     "param": "account_id",
+     "field": "visible_when",
+     "when": "report_type == account_ledger",
+     "evidence": "documented",
+     "note": "The account ledger is run by selecting the responsible party."
+    },
+    {
+     "param": "account_id",
+     "field": "required_when",
+     "when": "report_type == account_ledger",
+     "evidence": "documented"
+    },
+    {
+     "param": "patient_id",
+     "field": "visible_when",
+     "when": "report_type == patient_ledger",
+     "evidence": "documented",
+     "note": "The patient ledger is run by selecting the patient (panel not captured)."
+    },
+    {
+     "param": "patient_id",
+     "field": "required_when",
+     "when": "report_type == patient_ledger",
+     "evidence": "documented"
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "patient_id",
+     "param_type": "entity_single",
+     "legacy_control": "patient selector of REPORT FORMAT = Patient Ledger",
+     "default": "current_patient",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Vendor text: the patient ledger is run by selecting the patient. The panel in that state was not captured."
+    },
+    {
+     "param": "add_patient_note",
+     "param_type": "boolean",
+     "legacy_control": "print-menu dialog Patient Ledger Report > prompt to add a patient note",
+     "default": "false",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Print-menu flow only; wording and form of the prompt are not documented."
+    }
+   ]
+  },
+  {
+   "report_id": "ledger_reports.r02",
+   "legacy_name": "Walkout Report",
+   "report_key": "ledger.walkout_report",
+   "phase": "P1",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ledger_reports.r02.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List.",
+     "option_enabled_when": {
+      "office_group": "false"
+     }
+    },
+    {
+     "control_id": "ledger_reports.r02.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "false",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "ledger_reports.r02.s02.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r02.s02.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r02.s03.c01",
+     "signature_id": "sig0158",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "Start Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "[name of the patient open at capture]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "responsible_party_name_from",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "current_responsible_party_name",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Start of an alphabetical range on the responsible-party sort name (Last, First of the guarantor). AAAAA / ZZZZZ are the legacy open bounds. On Walkout Report both boxes are pre-filled from the patient in context (token current_responsible_party_name); whether the legacy tool writes the patient or the guarantor is to confirm with a dependent."
+    },
+    {
+     "control_id": "ledger_reports.r02.s03.c02",
+     "signature_id": "sig0159",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "responsible_party_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "ledger_reports.r02.s03.c03",
+     "signature_id": "sig0160",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "End Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "[name of the patient open at capture]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "responsible_party_name_to",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "current_responsible_party_name",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the range on the responsible-party sort name (inclusive, prefix rule)."
+    },
+    {
+     "control_id": "ledger_reports.r02.s03.c04",
+     "signature_id": "sig0159",
+     "legacy_section": "RESPONSIBLE PARTY NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "responsible_party_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "ledger_reports.r02.s04.c01",
+     "signature_id": "sig0161",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Show charges break down",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "show_charges_breakdown",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.s04.c02",
+     "signature_id": "sig0054",
+     "legacy_section": "OTHER OPTIONS",
+     "legacy_label": "Include UCR",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "unchecked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "include_ucr",
+     "param_type": "boolean",
+     "option_map": {},
+     "default": false,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x01",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "General Message",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented.",
+     "status": "TODO",
+     "param": "general_message",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x02",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "Current Message",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented.",
+     "status": "TODO",
+     "param": "current_message",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x03",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "Over 30 Message",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented.",
+     "status": "TODO",
+     "param": "over_30_message",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x04",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "Over 60 Message",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented.",
+     "status": "TODO",
+     "param": "over_60_message",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x05",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "Over 90 Message",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented.",
+     "status": "TODO",
+     "param": "over_90_message",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x06",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "Over 120 Message",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report), not on the Reports > Ledger Reports criteria panel. Editable message box; the messages print in the Messages area of the walkout. Default text not documented.",
+     "status": "TODO",
+     "param": "over_120_message",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r02.x07",
+     "signature_id": null,
+     "legacy_section": "Walkout Report print-menu dialog (title not documented)",
+     "legacy_label": "[option, legacy label not documented: add a note to the patient's Notes that a walkout was printed]",
+     "legacy_type": "other",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "Print-menu dialog extras | Editable `General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`; option to add a note to the patient's Notes that a walkout was printed",
+     "legacy_notes": "Appears only in the print dialog shown when the walkout is printed from the print menu, not on the Reports > Ledger Reports criteria panel. Records in the patient's Notes that a walkout was printed. Exact label, control type and default are not documented.",
+     "status": "TODO",
+     "param": "option_legacy_label_not_documented_add_a_note_to_the_patient_s_notes_that_a_walkout_was_printed",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "ledger_reports.r02.d01",
+     "legacy_when": "The walkout is printed from the print menu (patient toolbar Print Reports icon > Walkout Report) instead of Reports > Ledger Reports",
+     "legacy_effect": "A print dialog offers extras that the Reports criteria panel does not have: six editable message boxes (`General Message`, `Current Message`, `Over 30 Message`, `Over 60 Message`, `Over 90 Message`, `Over 120 Message`) and an option to add a note to the patient's Notes that a walkout was printed.",
+     "confidence": "confirmed",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "ledger_reports.r02.s01.c02",
+     "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office."
+    },
+    {
+     "about": "default",
+     "control_id": "ledger_reports.r02.s02.c01",
+     "text": "Start Date / End Date default to today (vendor text) - the capture-day value in our screenshot is the current-date default."
+    },
+    {
+     "about": "meaning",
+     "control_id": "ledger_reports.r02.s04.c01",
+     "text": "Show charges break down adds the estimated patient and estimated insurance amounts (Est. Pat / Est. Ins) to every line."
+    },
+    {
+     "about": "meaning",
+     "control_id": "ledger_reports.r02.s04.c02",
+     "text": "Include UCR adds the UCR fee of every line (a UCR column next to the charges)."
+    },
+    {
+     "about": "other",
+     "control_id": "",
+     "text": "The absence of a PRINT FORMAT section is real (as captured): the walkout opens in the report viewer, whose header strip offers Export to Excel and Word."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "office_scope",
+     "field": "forced_when",
+     "when": "true",
+     "value": {
+      "office_ids": {
+       "token": "working_office"
+      }
+     },
+     "evidence": "shown",
+     "note": "Lock of the four Ledger reports: always the working office."
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "general_message",
+     "param_type": "text",
+     "legacy_control": "Walkout print-menu dialog > General Message",
+     "default": "server_value (office statement setup)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "validation.max_length 100; role layout. Print-menu dialog only."
+    },
+    {
+     "param": "current_message",
+     "param_type": "text",
+     "legacy_control": "Walkout print-menu dialog > Current Message",
+     "default": "server_value (office statement setup)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "validation.max_length 100; role layout. Print-menu dialog only."
+    },
+    {
+     "param": "over_30_message",
+     "param_type": "text",
+     "legacy_control": "Walkout print-menu dialog > Over 30 Message",
+     "default": "server_value (office statement setup)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "validation.max_length 100; role layout. Print-menu dialog only."
+    },
+    {
+     "param": "over_60_message",
+     "param_type": "text",
+     "legacy_control": "Walkout print-menu dialog > Over 60 Message",
+     "default": "server_value (office statement setup)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "validation.max_length 100; role layout. Print-menu dialog only."
+    },
+    {
+     "param": "over_90_message",
+     "param_type": "text",
+     "legacy_control": "Walkout print-menu dialog > Over 90 Message",
+     "default": "server_value (office statement setup)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "validation.max_length 100; role layout. Print-menu dialog only."
+    },
+    {
+     "param": "over_120_message",
+     "param_type": "text",
+     "legacy_control": "Walkout print-menu dialog > Over 120 Message",
+     "default": "server_value (office statement setup)",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "validation.max_length 100; role layout. Print-menu dialog only."
+    },
+    {
+     "param": "add_patient_note",
+     "param_type": "boolean",
+     "legacy_control": "Walkout print-menu dialog > option to add a note that a walkout was printed",
+     "default": "false",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Label, control type and default are not documented."
+    }
+   ]
+  },
+  {
+   "report_id": "ledger_reports.r03",
+   "legacy_name": "Super Bill",
+   "report_key": "ledger.super_bill",
+   "phase": "P1",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ledger_reports.r03.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List.",
+     "option_enabled_when": {
+      "office_group": "false"
+     }
+    },
+    {
+     "control_id": "ledger_reports.r03.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "false",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "ledger_reports.r03.s02.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r03.s02.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r03.s03.c01",
+     "signature_id": "sig0098",
+     "legacy_section": "PATIENT NAME RANGE",
+     "legacy_label": "Start Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "[name of the patient open at capture]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_name_from",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "current_patient_name",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Start of an alphabetical range on the patient sort name (Last, First). AAAAA / ZZZZZ are the legacy open bounds. On Super Bill both boxes are pre-filled with the patient in context (token current_patient_name = Last, First), which selects exactly that patient."
+    },
+    {
+     "control_id": "ledger_reports.r03.s03.c02",
+     "signature_id": "sig0099",
+     "legacy_section": "PATIENT NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "ledger_reports.r03.s03.c03",
+     "signature_id": "sig0100",
+     "legacy_section": "PATIENT NAME RANGE",
+     "legacy_label": "End Name",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "[name of the patient open at capture]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "patient_name_to",
+     "param_type": "text_range",
+     "option_map": {},
+     "default": "current_patient_name",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "End of the alphabetical range on the patient sort name (inclusive, prefix rule). Vendor documentation: the same patient in both boxes limits the report to that patient."
+    },
+    {
+     "control_id": "ledger_reports.r03.s03.c04",
+     "signature_id": "sig0099",
+     "legacy_section": "PATIENT NAME RANGE",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "patient_name.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    },
+    {
+     "control_id": "ledger_reports.r03.s04.c01",
+     "signature_id": "sig0043",
+     "legacy_section": "TRANSACTION TYPES",
+     "legacy_label": "Services",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "transaction_types.services",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r03.s04.c02",
+     "signature_id": "sig0044",
+     "legacy_section": "TRANSACTION TYPES",
+     "legacy_label": "Payments",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "transaction_types.payments",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    },
+    {
+     "control_id": "ledger_reports.r03.s04.c03",
+     "signature_id": "sig0162",
+     "legacy_section": "TRANSACTION TYPES",
+     "legacy_label": "Adjustment",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "checked",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "transaction_types.adjustments",
+     "param_type": "enum_multi",
+     "option_map": {},
+     "default": true,
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Singular spelling of the Adjustments member."
+    },
+    {
+     "control_id": "ledger_reports.r03.x01",
+     "signature_id": null,
+     "legacy_section": "Super Bill Report (print-menu dialog)",
+     "legacy_label": "Include Previous Balance",
+     "legacy_type": "checkbox",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "vendor_doc",
+     "vendor_doc_confidence": "confirmed",
+     "vendor_doc_evidence": "`Include Previous Balance` (dialog only) | Adds a previous-balance line | `[S]` `[V46]`",
+     "legacy_notes": "Dialog only: offered in the print-menu dialog `Super Bill Report` (patient toolbar Print Reports icon > Superbill), not on the Reports > Ledger Reports criteria panel. Adds a previous-balance line. Typed as a checkbox from the \"Include ...\" wording - the document does not name the control type. Default not documented.",
+     "status": "TODO",
+     "param": "include_previous_balance",
+     "param_type": "",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "ledger_reports.r03.d01",
+     "legacy_when": "The super bill is printed from the print menu (patient toolbar Print Reports icon > Superbill) instead of Reports > Ledger Reports",
+     "legacy_effect": "The dialog `Super Bill Report` is shown: the date range is labelled `DOS Date Range` there and the extra option `Include Previous Balance` is offered (dialog only).",
+     "confidence": "confirmed",
+     "new_behavior": ""
+    }
+   ],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "ledger_reports.r03.s01.c02",
+     "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office."
+    },
+    {
+     "about": "meaning",
+     "control_id": "ledger_reports.r03.s02.c01",
+     "text": "The print-menu dialog `Super Bill Report` labels the same range `DOS Date Range`, i.e. Start Date / End Date are matched on the date of service."
+    },
+    {
+     "about": "meaning",
+     "control_id": "ledger_reports.r03.s04.c01",
+     "text": "The three TRANSACTION TYPES checkboxes choose which line types print. Payments only (Services and Adjustment unticked) is the vendor's \"tax receipt\"."
+    },
+    {
+     "about": "meaning",
+     "control_id": "ledger_reports.r03.s02.c01",
+     "text": "Vendor advice for the date range: from the treatment date through the date the insurance payment was posted, so that all charges and payments show."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "office_scope",
+     "field": "forced_when",
+     "when": "true",
+     "value": {
+      "office_ids": {
+       "token": "working_office"
+      }
+     },
+     "evidence": "shown",
+     "note": "Lock of the four Ledger reports: always the working office."
+    }
+   ],
+   "shared_vendor_doc_parameters": [
+    {
+     "param": "include_previous_balance",
+     "param_type": "boolean",
+     "legacy_control": "print-menu dialog Super Bill Report > Include Previous Balance",
+     "default": "false",
+     "evidence": "documented",
+     "kind": "vendor_doc",
+     "note": "Dialog only; default not documented."
+    }
+   ]
+  },
+  {
+   "report_id": "ledger_reports.r04",
+   "legacy_name": "Account Allocation",
+   "report_key": "ledger.account_allocation",
+   "phase": "P1",
+   "actions": [
+    {
+     "legacy_action": "CLEAR CRITERIA",
+     "new_feature": "Clear criteria: resets every parameter of the report to its default value."
+    },
+    {
+     "legacy_action": "PRINT / PREVIEW",
+     "new_feature": "Run: preview on screen, then print or export in the chosen output format."
+    },
+    {
+     "legacy_action": "ADD TO MY FAVORITES",
+     "new_feature": "Add to favorites: saves the report with the current criteria as a favorite (saved view)."
+    }
+   ],
+   "controls": [
+    {
+     "control_id": "ledger_reports.r04.s01.c01",
+     "signature_id": "sig0002",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "radio_group",
+     "legacy_options": [
+      "Office",
+      "Office Group"
+     ],
+     "legacy_default": "Office",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "office_scope.mode",
+     "param_type": "office_scope",
+     "option_map": {
+      "Office": "office",
+      "Office Group": "office_group"
+     },
+     "default": "office",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Office versus Office Group. The Office Group option is greyed on Routing Slip and the four Ledger reports (mode locked to office); the whole control is greyed on Referral Source List.",
+     "option_enabled_when": {
+      "office_group": "false"
+     }
+    },
+    {
+     "control_id": "ledger_reports.r04.s01.c02",
+     "signature_id": "sig0003",
+     "legacy_section": "OFFICE/GROUP",
+     "legacy_label": "",
+     "legacy_type": "picker",
+     "legacy_options": [],
+     "legacy_default": "108",
+     "legacy_enabled": false,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "office_scope.selection",
+     "param_type": "office_scope",
+     "option_map": {},
+     "default": "working_office",
+     "default_differs_reason": "",
+     "enabled_when": "false",
+     "notes": "108 = id of the office the user was working in. Offices (mode office) or office groups (mode office_group). Vendor documentation: Office = one or more offices the user can access (default the logged-in office); Office Group = groups from Setup > Office Groups (default ALL). Greyed (locked to the working office) on the four Ledger reports and display-only on Referral Source List. The selection becomes exactly one of the value keys office_ids / office_group_id / office_group_ids; tokens working_office, my_offices; all = every office (or group) the caller may read."
+    },
+    {
+     "control_id": "ledger_reports.r04.s02.c01",
+     "signature_id": "sig0005",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "Start Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_from",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range; date_basis is fixed per report or chosen by the basis radio of the same section. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r04.s02.c02",
+     "signature_id": "sig0006",
+     "legacy_section": "DATE RANGE",
+     "legacy_label": "End Date",
+     "legacy_type": "date_input",
+     "legacy_options": [],
+     "legacy_default": "11/21/2026",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated_enhanced",
+     "param": "date_to",
+     "param_type": "date_range",
+     "option_map": {},
+     "default": "today",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Primary date range, inclusive end. Default = today in the office time zone (relative token). Enhanced with presets and relative tokens."
+    },
+    {
+     "control_id": "ledger_reports.r04.s03.c01",
+     "signature_id": "sig0155",
+     "legacy_section": "RESPONSIBLE PARTY",
+     "legacy_label": "Responsible Party",
+     "legacy_type": "text_input",
+     "legacy_options": [],
+     "legacy_default": "[responsible party open at capture]",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "replicated",
+     "param": "account_id",
+     "param_type": "entity_single",
+     "option_map": {},
+     "default": "current_account",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "One responsible party = one guarantor account (value accounts.id), shown as Last, First. Pre-filled with the account of the patient in context (token current_account). Required, except on Ledger Report with REPORT FORMAT = Patient Ledger, where the patient is selected instead (vendor documentation)."
+    },
+    {
+     "control_id": "ledger_reports.r04.s03.c02",
+     "signature_id": "sig0156",
+     "legacy_section": "RESPONSIBLE PARTY",
+     "legacy_label": "SEARCH",
+     "legacy_type": "button",
+     "legacy_options": [],
+     "legacy_default": "",
+     "legacy_enabled": true,
+     "origin": "screenshot",
+     "status": "superseded",
+     "param": "account_id.search",
+     "param_type": "action",
+     "option_map": {},
+     "default": "",
+     "default_differs_reason": "",
+     "enabled_when": "",
+     "notes": "Superseded by the lookup built into the bound control: typing searches (typeahead) and the search icon opens the full search dialog; no separate button."
+    }
+   ],
+   "dynamic_rules": [],
+   "legacy_corrections": [
+    {
+     "about": "other",
+     "control_id": "ledger_reports.r04.s01.c02",
+     "text": "The greyed Office Group radio and the greyed SELECT button are by design: they are disabled in the vendor's own screenshots of Ledger Reports too, so the report always runs for the single active office. Stated for the Ledger Reports category as a whole; the vendor screenshots cited are of the other ledger reports, none of Account Allocation."
+    }
+   ],
+   "shared_rules": [
+    {
+     "param": "office_scope",
+     "field": "forced_when",
+     "when": "true",
+     "value": {
+      "office_ids": {
+       "token": "working_office"
+      }
+     },
+     "evidence": "shown",
+     "note": "Lock of the four Ledger reports: always the working office."
+    },
+    {
+     "param": "account_id",
+     "field": "required_when",
+     "when": "true",
+     "evidence": "shown",
+     "note": "One account per run."
+    }
+   ],
+   "shared_vendor_doc_parameters": []
+  }
+ ]
+}

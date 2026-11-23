@@ -1,0 +1,689 @@
+{
+ "category": "treatmentplan_reports",
+ "window_title": "Treatment Plan Reports",
+ "source_folder": "C:/Users/Sravan/Downloads/reports/treatmentplan_reports",
+ "report_list": [
+  "Treatment Plan Proposal",
+  "Treatment Plan Status",
+  "Treatment Plan Analysis",
+  "Treatment Plan Detail"
+ ],
+ "reports": [
+  {
+   "name": "Treatment Plan Proposal",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Full-width section at the top of the criteria panel; both radios on one row, no row label. PDF carries the blue dot."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left half of the panel, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' because the header font draws G almost like C (see observations)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only grey box on its own row directly below the Office / Office Group radios (that row spans the full panel width, under both OFFICE/GROUP and PROVIDER); blue SELECT button with a building icon to its right. 108 equals the OID shown in the title bar. The SELECT dialog and the Office Group state are not shown in any screenshot."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right half of the panel, side by side with OFFICE/GROUP. Row label 'Provider' in the left cell, read-only grey box in the right cell; blue SELECT button with a single-person icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "DIAGNOSED DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Left half, side by side with NAME RANGE. Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C). 11/21/2026 is apparently the capture day, i.e. the field defaults to the current date."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Left half, second row. Light editable box with a calendar icon inside its right end. Same value as Start Date."
+      }
+     ]
+    },
+    {
+     "title": "NAME RANGE",
+     "controls": [
+      {
+       "label": "Start Name",
+       "type": "text_input",
+       "options": [],
+       "default_value": "AAAAA",
+       "enabled": true,
+       "notes": "Right half, side by side with DIAGNOSED DATE RANGE. Label in the left cell; box in the right cell has the light editable-field fill (same as the date and ID boxes, not the grey read-only picker fill) and is pre-filled with AAAAA; a blue SEARCH button follows it. The header glyphs look like 'NAME RANCE' (font draws G like C). The header does not say whose name (patient or responsible party)."
+      },
+      {
+       "label": "SEARCH",
+       "type": "button",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Blue button with a magnifier icon immediately right of the Start Name box (lookup for the start of the name range). Dialog not shown."
+      },
+      {
+       "label": "End Name",
+       "type": "text_input",
+       "options": [],
+       "default_value": "ZZZZZ",
+       "enabled": true,
+       "notes": "Right half, second row. Light editable-field box pre-filled with ZZZZZ; a blue SEARCH button follows it."
+      },
+      {
+       "label": "SEARCH",
+       "type": "button",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Blue button with a magnifier icon immediately right of the End Name box (lookup for the end of the name range). Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "TREATMENT PLAN ID",
+     "controls": [
+      {
+       "label": "",
+       "type": "text_input",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Left half, side by side with PHASE ID. Single empty box with the light editable-field fill; no row label (the section header is its only label), no placeholder text, no button, no spinner arrows."
+      }
+     ]
+    },
+    {
+     "title": "PHASE ID",
+     "controls": [
+      {
+       "label": "",
+       "type": "text_input",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Right half, side by side with TREATMENT PLAN ID. Single empty box with the light editable-field fill; no row label (the section header is its only label), no placeholder text, no button, no spinner arrows."
+      }
+     ]
+    },
+    {
+     "title": "ORDER ID",
+     "controls": [
+      {
+       "label": "",
+       "type": "text_input",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Left half, side by side with FINANCIAL DISCLOSURE. Single empty box with the light editable-field fill; no row label (the section header is its only label), no placeholder text, no button, no spinner arrows."
+      }
+     ]
+    },
+    {
+     "title": "FINANCIAL DISCLOSURE",
+     "controls": [
+      {
+       "label": "",
+       "type": "dropdown",
+       "options": [],
+       "default_value": ".Treatment Plan Disclosure",
+       "enabled": true,
+       "notes": "Right half, side by side with ORDER ID. list collapsed - other values not visible. The displayed value really begins with a period character ('.Treatment Plan Disclosure') - the dot is present in the pixels. Light fill with a chevron at the right end of the box; no row label other than the section header."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Full-width section (no right-hand neighbour on this report). Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "OTHER OPTIONS",
+     "controls": [
+      {
+       "label": "Include Office UCR",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "checked",
+       "enabled": true,
+       "notes": "Row 1, left column of a two-column checkbox grid (full-width header). Blue tick present."
+      },
+      {
+       "label": "Itemize Prices",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "checked",
+       "enabled": true,
+       "notes": "Row 1, right column. Blue tick present."
+      },
+      {
+       "label": "Include Completed Procedures",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Row 2, left column. Empty box."
+      },
+      {
+       "label": "Print Responsible Party Address",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Row 2, right column. Empty box. Directly below this row the top 5 px of a further (third, full-width) row are visible before the bottom action bar covers it - its content cannot be read (see report notes)."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": true,
+   "notes": "Single screenshot (1.PNG, 1366 x 589); no popup, no expanded list, no second view. Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker on its own full-width row underneath; DIAGNOSED DATE RANGE (left) beside NAME RANGE (right); TREATMENT PLAN ID (left) beside PHASE ID (right); ORDER ID (left) beside FINANCIAL DISCLOSURE (right); EXCLUDE PATIENT TYPE (full width); OTHER OPTIONS (full-width header, checkboxes in a two-column grid). TRUNCATION (pixel-measured): the criteria viewport ends at y=538 and the docked action bar (PRINT / PREVIEW, ADD TO MY FAVORITES) starts at y=539. OTHER OPTIONS row 1 occupies y 485-506 and row 2 y 509-531; after a 2 px separator a THIRD row starts at y=534 with the same row fill, and only its top 5 px are visible. Unlike rows 1-2 it has no centre divider (x 910-911), so it is a single full-width row. A checkbox in it would begin about 5 px below the row top, exactly where the action bar begins, so whatever it holds is completely hidden. In 3.PNG and 4.PNG, where the option list is not clipped, no such row follows the last option (the lighter empty background follows instead), so this strip is a real further row: at least one more option probably exists below the four visible checkboxes and cannot be read from this screenshot. No scrollbar is drawn. All controls are enabled (nothing is greyed out apart from the normal read-only picker boxes). This report shows no REPORT FORMAT, no CODES and no 'Include Inactive Patients' in the visible area. CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar; PRINT / PREVIEW has a printer icon and ADD TO MY FAVORITES a plus icon."
+  },
+  {
+   "name": "Treatment Plan Status",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "sections": [
+    {
+     "title": "REPORT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Detail",
+        "Summary"
+       ],
+       "default_value": "Detail",
+       "enabled": true,
+       "notes": "Left half of the first row, side by side with PRINT FORMAT. No row label. Detail carries the blue dot."
+      }
+     ]
+    },
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Right half of the first row, side by side with REPORT FORMAT. No row label. PDF carries the blue dot."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left half, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' (font draws G like C)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only grey box on its own full-width row below the Office / Office Group radios; blue SELECT button with a building icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right half, side by side with OFFICE/GROUP. Row label 'Provider', read-only grey box; blue SELECT button with a single-person icon. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "DIAGNOSED DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Full-width section on this report (the right part of the row is empty). Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Second row. Light editable box with a calendar icon inside its right end."
+      }
+     ]
+    },
+    {
+     "title": "TREATMENT PLANS",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "ALL",
+        "Diagnosed",
+        "Accepted",
+        "Alternative",
+        "Hold",
+        "Unaccepted",
+        "Pre-Authorized Sent",
+        "Scheduled",
+        "Completed",
+        "Referred Out",
+        "Pre-Authorized Closed"
+       ],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Full-width section. ONE group of 11 single-select radio buttons (circles, not checkboxes) laid out in a 6-column x 2-row grid with no row label; only ALL carries the blue dot. Options are listed here row by row. Row 1: ALL, Diagnosed, Accepted, Alternative, Hold, Unaccepted. Row 2: Pre-Authorized Sent, Scheduled, Completed, Referred Out, Pre-Authorized Closed (the 6th cell of row 2, under Unaccepted, is empty). The same grid would also result from a column-by-column fill, in which case the underlying order is ALL, Pre-Authorized Sent, Diagnosed, Scheduled, Accepted, Completed, Alternative, Referred Out, Hold, Pre-Authorized Closed, Unaccepted - the screenshot cannot tell the two apart."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE TREATMENT PLANS",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Left half, side by side with CODES. Unlabelled read-only grey box; blue SELECT button with a building icon (same icon as the office SELECT) to its right. Dialog not shown, so the selectable values are unknown."
+      }
+     ]
+    },
+    {
+     "title": "CODES",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right half, side by side with EXCLUDE TREATMENT PLANS. Unlabelled read-only grey box showing ALL; blue SELECT button with a building icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "TX COUNSELOR",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Left half, side by side with EXCLUDE PATIENT TYPE. Unlabelled read-only grey box showing ALL; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Right half, side by side with TX COUNSELOR. Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "OTHER OPTIONS",
+     "controls": [
+      {
+       "label": "Include Inactive Patients",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Row 1. On this report the option rows are single-column (one checkbox per full-width row, no centre divider). Empty box."
+      },
+      {
+       "label": "Include internal plan id",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Row 2, full-width row. Wording is lower-case exactly as shown ('internal plan id'). Empty box. The row is cut off at its lower edge by the bottom action bar: the checkbox and the text are complete, only the row's bottom padding is missing, so further rows below it cannot be ruled out."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": true,
+   "notes": "Single screenshot (2.PNG, 1366 x 582); no popup, no expanded list, no second view. Layout top to bottom: REPORT FORMAT (left half) beside PRINT FORMAT (right half); OFFICE/GROUP (left) beside PROVIDER (right) with the office picker on a full-width row underneath; DIAGNOSED DATE RANGE (full width); TREATMENT PLANS (full width, 11 radios in a 6 x 2 grid); EXCLUDE TREATMENT PLANS (left) beside CODES (right); TX COUNSELOR (left) beside EXCLUDE PATIENT TYPE (right); OTHER OPTIONS (full width, one checkbox per row). TRUNCATION (pixel-measured): the criteria viewport ends at y=536 and the docked action bar starts at y=537. OTHER OPTIONS row 1 occupies y 496-517 (22 px); row 2 ('Include internal plan id') starts at y=520 and only 17 px of it are visible, so the content is taller than the viewport and further option rows may exist below that cannot be seen. No scrollbar is drawn. This is the only report of the category with REPORT FORMAT, the TREATMENT PLANS status filter, EXCLUDE TREATMENT PLANS and TX COUNSELOR, and the only one where the CODES box shows ALL. All controls are enabled (nothing greyed out apart from the normal read-only picker boxes); CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar."
+  },
+  {
+   "name": "Treatment Plan Analysis",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Full-width section at the top; both radios on one row, no row label. PDF carries the blue dot."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left half, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' (font draws G like C)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only grey box on its own full-width row below the Office / Office Group radios; blue SELECT button with a building icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right half, side by side with OFFICE/GROUP. Row label 'Provider', read-only grey box; blue SELECT button with a single-person icon. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "DIAGNOSED DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Full-width section (the right part of the row is empty). Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Second row. Light editable box with a calendar icon inside its right end."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Full-width section. Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "OTHER OPTIONS",
+     "controls": [
+      {
+       "label": "Include Inactive Patients",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Only option in this section; single full-width row. Empty box."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "Single screenshot (3.PNG, 1366 x 590); no popup, no expanded list, no second view. Smallest criteria set of the category. Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker on a full-width row underneath; DIAGNOSED DATE RANGE (full width); EXCLUDE PATIENT TYPE (full width); OTHER OPTIONS (full width, one checkbox). The option row ends at y=395 and about 140 px of empty lighter background follow before the action bar (y=539), so nothing is clipped and the criteria are complete. No REPORT FORMAT, CODES, NAME RANGE or status filter on this report. All controls are enabled; CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar."
+  },
+  {
+   "name": "Treatment Plan Detail",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "sections": [
+    {
+     "title": "PRINT FORMAT",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "PDF",
+        "Excel"
+       ],
+       "default_value": "PDF",
+       "enabled": true,
+       "notes": "Full-width section at the top; both radios on one row, no row label. PDF carries the blue dot."
+      }
+     ]
+    },
+    {
+     "title": "OFFICE/GROUP",
+     "controls": [
+      {
+       "label": "",
+       "type": "radio_group",
+       "options": [
+        "Office",
+        "Office Group"
+       ],
+       "default_value": "Office",
+       "enabled": true,
+       "notes": "Left half, side by side with PROVIDER. No row label. The header glyphs look like 'OFFICE/CROUP' (font draws G like C)."
+      },
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "108",
+       "enabled": true,
+       "notes": "Unlabelled read-only grey box on its own full-width row below the Office / Office Group radios; blue SELECT button with a building icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "PROVIDER",
+     "controls": [
+      {
+       "label": "Provider",
+       "type": "picker",
+       "options": [],
+       "default_value": "ALL",
+       "enabled": true,
+       "notes": "Right half, side by side with OFFICE/GROUP. Row label 'Provider', read-only grey box; blue SELECT button with a single-person icon. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "DIAGNOSED DATE RANGE",
+     "controls": [
+      {
+       "label": "Start Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Full-width section (the right part of the row is empty). Light editable box with a calendar icon inside its right end. The header glyphs look like 'DIACNOSED DATE RANCE' (font draws G like C)."
+      },
+      {
+       "label": "End Date",
+       "type": "date_input",
+       "options": [],
+       "default_value": "11/21/2026",
+       "enabled": true,
+       "notes": "Second row. Light editable box with a calendar icon inside its right end."
+      }
+     ]
+    },
+    {
+     "title": "CODES",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "",
+       "enabled": true,
+       "notes": "Left half, side by side with EXCLUDE PATIENT TYPE. Unlabelled read-only grey box that is completely EMPTY on this report (interior is one uniform fill colour - no 'ALL' text, unlike the CODES picker of Treatment Plan Status); blue SELECT button with a building icon to its right. Dialog not shown; the screen does not say what an empty box means."
+      }
+     ]
+    },
+    {
+     "title": "EXCLUDE PATIENT TYPE",
+     "controls": [
+      {
+       "label": "",
+       "type": "picker",
+       "options": [],
+       "default_value": "None",
+       "enabled": true,
+       "notes": "Right half, side by side with CODES. Unlabelled read-only grey box; blue SELECT button with a person-plus icon to its right. Dialog not shown."
+      }
+     ]
+    },
+    {
+     "title": "OTHER OPTIONS",
+     "controls": [
+      {
+       "label": "Include Inactive Patients",
+       "type": "checkbox",
+       "options": [],
+       "default_value": "unchecked",
+       "enabled": true,
+       "notes": "Only option in this section; single full-width row. Empty box."
+      }
+     ]
+    }
+   ],
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "possibly_truncated": false,
+   "notes": "Single screenshot (4.PNG, 1366 x 586); no popup, no expanded list, no second view. Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) beside PROVIDER (right half) with the office picker on a full-width row underneath; DIAGNOSED DATE RANGE (full width); CODES (left) beside EXCLUDE PATIENT TYPE (right); OTHER OPTIONS (full width, one checkbox). Same as Treatment Plan Analysis plus the CODES picker. The option row ends at y=397 and about 140 px of empty lighter background follow before the action bar (y=541), so nothing is clipped and the criteria are complete. All controls are enabled; CLEAR CRITERIA is the slate-grey button with a refresh icon in the REPORT CRITERIA header bar."
+  }
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Third-reader verified inventory. All 4 original screenshots (1366 px wide; 589, 582, 590 and 586 px high), the 8 pre-rendered zooms and 20 additional tight crops (prefix c in the zoom folder) were read. Readers A and B agreed on every report, section, control, option list, default value, enabled state and truncation flag (4 reports, 35 sections, 50 controls); their differences were note wording only. Every point was nevertheless re-checked on the pixels: the selected list radio of every file, blue-mark detection for every chosen criteria radio and ticked checkbox, fill colours of every input box, glyph dumps of the disputed header letters and of the dropdown / date values, vertical colour profiles of the option rows at the bottom of each criteria panel, and an ink-cluster map of every criteria panel, the title bar and the panel header bar. Nothing exists beyond the controls listed here: no tiny right-edge checkbox (no 'Page Break'), no GROUP BY / SORT BY, no extra column of controls, no greyed-out control, no instruction / warning / legend text, no scrollbar on either panel, no footer text. COVERAGE: 4 screenshots = 4 different reports, one screenshot each, in list order (1.PNG = Treatment Plan Proposal, 2.PNG = Treatment Plan Status, 3.PNG = Treatment Plan Analysis, 4.PNG = Treatment Plan Detail); every listed report has a screenshot. All four are the same two-panel screen in its normal state - no popup, no expanded dropdown, no scrolled second view, no foreign screen - so the contents of every SELECT dialog (Office, Office Group, Provider, Exclude Patient Type, Codes, Exclude Treatment Plans, TX Counselor), of the two name SEARCH lookups and of the FINANCIAL DISCLOSURE dropdown list are NOT documented by these screenshots. TITLE BAR (identical in all 4): 'Treatment Plan Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (no text) at the far right. LEFT PANEL: blue header 'SELECT REPORT'; exactly 4 reports as radio buttons in a 2 x 2 grid (left column: Treatment Plan Proposal, Treatment Plan Status; right column: Treatment Plan Analysis, Treatment Plan Detail). The rest of the panel is one uniform dark-blue colour down to the bottom edge, so the list is complete - not scrollable, nothing clipped. A splitter / collapse handle (three vertical dots) sits on the border between the two panels. RIGHT PANEL: blue header 'REPORT CRITERIA' with the slate-grey CLEAR CRITERIA button (refresh icon) at its right end - grey is its normal style on this screen, not a disabled state; a docked bar at the bottom right of the criteria panel holds the blue buttons PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon). COMMON TO ALL 4 REPORTS: PRINT FORMAT (PDF / Excel, default PDF); OFFICE/GROUP (Office / Office Group radios, default Office, plus an unlabelled office picker showing 108 = the OID); PROVIDER (picker labelled 'Provider', value ALL); DIAGNOSED DATE RANGE (Start Date and End Date, both 11/21/2026 - apparently the capture day, i.e. default = current date; the date range is always titled DIAGNOSED DATE RANGE in this category); EXCLUDE PATIENT TYPE (picker, None); an OTHER OPTIONS checkbox section. REPORT-SPECIFIC: Treatment Plan Proposal adds NAME RANGE (Start Name AAAAA / End Name ZZZZZ, each with a SEARCH button), TREATMENT PLAN ID, PHASE ID, ORDER ID (three empty text boxes), a FINANCIAL DISCLOSURE dropdown (value '.Treatment Plan Disclosure', with a leading period) and four print-oriented checkboxes (Include Office UCR and Itemize Prices ticked; Include Completed Procedures and Print Responsible Party Address not ticked). Treatment Plan Status adds REPORT FORMAT (Detail / Summary, default Detail), the TREATMENT PLANS status radio grid (ALL default plus 10 statuses), EXCLUDE TREATMENT PLANS (None), CODES (ALL), TX COUNSELOR (ALL) and the checkbox 'Include internal plan id'. Treatment Plan Detail adds CODES (box empty). 'Include Inactive Patients' (unticked) is visible on Status, Analysis and Detail but not in the visible part of Proposal. TRUNCATION: the criteria area is a fixed-height viewport (about 482 px) with the action bar docked directly under it and no scrollbar drawn. In 1.PNG the top 5 px of a third, full-width OTHER OPTIONS row are visible before the action bar hides it, and in 2.PNG the second OTHER OPTIONS row is cut at its lower edge, so Treatment Plan Proposal and Treatment Plan Status are flagged possibly_truncated - more options may exist below that these screenshots do not show. 3.PNG and 4.PNG end with about 140 px of empty background and are complete. ICONS AND FILLS: building icon on the SELECT buttons of the office, CODES and EXCLUDE TREATMENT PLANS pickers; single-person icon on Provider; person-plus icon on EXCLUDE PATIENT TYPE and TX COUNSELOR; magnifier on SEARCH; calendar icon inside the date boxes; chevron on the dropdown. Picker value boxes use a darker grey read-only fill (RGB 220,223,226) while the name, ID and date boxes and the dropdown use the lighter editable fill (RGB 241,241,241). TYPING CONVENTION (same as the other category files): a light editable box followed by a SEARCH button is recorded as text_input plus a separate button control; a grey read-only box followed by SELECT is recorded as one picker. HEADER FONT: in the grey section-header bars the capital G is drawn almost like a C, so the headers look like 'OFFICE/CROUP', 'DIACNOSED DATE RANCE' and 'NAME RANCE' at normal zoom; the glyph differs from a true C only by a slightly heavier lower-right terminal, and the normal-text radio label 'Office Group' shows a clear G, so the titles are transcribed as OFFICE/GROUP, DIAGNOSED DATE RANGE and NAME RANGE. All controls in all four reports appear enabled."
+}

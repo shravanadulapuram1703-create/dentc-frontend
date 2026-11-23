@@ -1,0 +1,506 @@
+{
+  "category": "patients_list_reports",
+  "source_document": "research/legacy_report_outputs_lists.md",
+  "reports": [
+    {
+      "report_id": "patients_list_reports.r01",
+      "legacy_name": "Update Patient Insurance (Conversion) List - By Appointment",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. Cross-cutting statement of the document for all Lists screens (vendor articles on office groups and on the new reports menu) - recorded once here; it applies to every report of this category that has the Office / Office Group radios (all except Patient's Notes).",
+          "controls": [
+            "patients_list_reports.r01.s03.c01",
+            "patients_list_reports.r01.s03.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Office Group` picks groups defined in `Setup > Office Groups` (for example regions); without groups a group run covers all offices of the account."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "default",
+          "control_id": "patients_list_reports.r01.s03.c02",
+          "text": "The number in the office box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Recorded once here; it applies to the office box of every report of this category (all except Patient's Notes).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office` picks offices (default the current OID)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r01.s04.c01",
+          "text": "APPOINTMENT DATE RANGE (Start Date / End Date) is matched on the appointment date: the report lists patients of a converted practice who have appointments in the range and whose insurance still needs to be updated.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "lists patients with appointments in the date range whose"
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r02",
+      "legacy_name": "Patient List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r02.s03.c01",
+          "text": "PATIENT TYPE (Both / General / Ortho) is a row filter on the orthodontic status of the patient: the vendor article on listing all orthodontic patients uses PATIENT TYPE = Ortho. That the filter reads the Ortho Patient checkbox of the patient record (and not the patient-type tags of INCLUDE / EXCLUDE PATIENT TYPE) is the document's assumption - see unresolved.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PATIENT TYPE` `Both` / `General` / `Ortho` | Row filter on the ortho flag `[P55]`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r02.s02.c01",
+          "text": "PATIENT STATUS (Active / Inactive / Both) replaces the checkbox Include Inactive Patients of the older screens (2014 criteria of Patient List - Detail): Active leaves inactive patients out. The same radio row sits on Patient List - Grouped By.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PATIENT STATUS` `Active` / `Inactive` / `Both` | Replaces the old checkbox `Include Inactive Patients`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r02.s06.c01",
+          "text": "INCLUDE PATIENT TYPE / EXCLUDE PATIENT TYPE filter on patient types: optional report tags of which a patient can carry up to six. Recorded once here; it applies to the same pickers on Patient List - Grouped By and Patients on Payment Plan.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Patient types are optional report tags; a patient can carry up to six."
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r03",
+      "legacy_name": "Patient List - New Patient",
+      "added_controls": [],
+      "added_options": [
+        {
+          "control_id": "patients_list_reports.r03.s01.c01",
+          "options": [
+            "Carrier",
+            "Created Date / First Visit Date",
+            "Referral"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Patient List - New Patient` = `Appointment`, `Carrier`, `Created Date / First Visit Date`, `Referral`,",
+          "notes": "Collapsed REPORT BY list, read by the research pass from a 2022 vendor screenshot of the opened dropdown. Complete list in the order given: Appointment (the default already in the inventory), Carrier, Created Date / First Visit Date, Referral, Referral Type - the fifth value is the next entry because the list wraps onto a second line of the document. Created Date / First Visit Date is ONE value whose name contains a slash; it is the legacy New Patient List (patient records newly created within the date range; the option name adds the second definition, first completed procedure). Referral = the legacy New Patients - By Referral (new records in the range, sorted by referral source). The meaning of Carrier (new patients by insurance carrier) is only inferred."
+        },
+        {
+          "control_id": "patients_list_reports.r03.s01.c01",
+          "options": [
+            "Referral Type"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Referral Type` | `New Patients - By Referral Type` | New records in the range, sorted by referral type.",
+          "notes": "Fifth and last value of the same REPORT BY list (a row of the document's REPORT BY table, which is headed as read from the 2022 vendor screenshot). Legacy report New Patients - By Referral Type: new records in the range, sorted by referral type."
+        }
+      ],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r03.s01.c01",
+          "text": "REPORT BY = Appointment (the captured default; legacy report New Patient Thru Appointment) lists patients who have only a \"New Patient\" appointment and have not been activated into a full patient record - scheduler placeholders, not patient records.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Patients who have only a \"New Patient\" appointment and have not been activated into a full patient record."
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r03.s01.c01",
+          "text": "The value Created Date / First Visit Date names the two report definitions of a new patient: Created Date = the date the record was entered; First Visit Date = the first date a procedure was posted as completed. (How the screen lets the user choose between the two dates is not visible - see unresolved.)",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Two report definitions: `Created Date` (date the record was entered) and `First Visit Date` (first date a procedure was posted as completed)."
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r04",
+      "legacy_name": "Patients Seen",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Population rule with no criteria control: the vendor states that Patients Seen does not consider missed or cancelled appointments.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "the vendor states it does not consider missed or cancelled appointments"
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r05",
+      "legacy_name": "Patient's Notes",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r05.s02.c01",
+          "text": "PRINT NOTES selects the note types to print (ALL = every type). The list box of the 2020 screen starts ALL, Patient Notes, Resp. Party Notes; the rest of the list is not documented (see the picker entry and unresolved). The evidence is the 2020 screen, where the selector was a list box; on the current screen it is a read-only box with SELECT.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Note types to print. The 2020 list box starts `ALL`, `Patient Notes`, `Resp. Party Notes`,"
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r05.s03.c01",
+          "text": "A single patient is mandatory. The Patient box takes typing: type the last name, press SEARCH, then pick the patient.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Patient` + `SEARCH` | Mandatory single patient: type the last name, search, pick."
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r05.s04.c01",
+          "text": "DATE RANGE (Start Date / End Date) is matched on the note's created date.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`DATE RANGE` | On the note's created date."
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r06",
+      "legacy_name": "Patient List - Grouped By",
+      "added_controls": [
+        {
+          "section": "PREFERRED PROVIDER",
+          "label": "",
+          "type": "radio_group",
+          "options": [
+            "Preferred Provider",
+            "Treating Provider"
+          ],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`",
+          "notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). Read by the research pass from vendor screenshots of the Last Visit mode (2022 and 2023). The radio chooses which provider relation the provider filter of this mode uses. Which option is preselected is not documented."
+        },
+        {
+          "section": "PREFERRED PROVIDER",
+          "label": "",
+          "type": "picker",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "patients_list_reports.r06.s05.c01",
+          "confidence": "likely",
+          "evidence_quote": "`PROVIDER` / `PREFERRED PROVIDER` | Provider multi-select. Which provider relation is used depends on the report; in `Last Visit` mode a radio chooses `Preferred Provider` or `Treating Provider`.",
+          "notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). In that mode the PREFERRED PROVIDER block takes the place of the PROVIDER section. The document describes PREFERRED PROVIDER as a provider multi-select and reports the block from the vendor screenshots of the mode, but quotes neither the row label nor the default of the box (on Patients on Payment Plan the PREFERRED PROVIDER picker is labelled Preferred Provider and shows ALL)."
+        },
+        {
+          "section": "LAST VISIT DATE RANGE",
+          "label": "",
+          "type": "date_input",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`; `LAST VISIT DATE RANGE`",
+          "notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). A date range on the Last Visit date of the patient record (two date boxes, recorded as one control). The document quotes the section title only: row labels and defaults are not quoted (the same header, re-used on Provider Holidays, carries Start Date / End Date in our capture)."
+        },
+        {
+          "section": "OTHER OPTIONS",
+          "label": "Include Patients with No Lastvisit date.",
+          "type": "checkbox",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`; `LAST VISIT DATE RANGE`; `INCLUDE` / `EXCLUDE PATIENT TYPE`; `OTHER OPTIONS` `Include Patients with No Lastvisit date.`",
+          "notes": "Appears only when REPORT BY = Last Visit (our capture shows the default mode, Attached to Provider). Label exactly as quoted, with 'Lastvisit' as one word and the trailing full stop. Last Visit is a date on the patient record and a patient may have none; the box brings those patients into the list. Its default (ticked or not) is not documented."
+        }
+      ],
+      "added_options": [
+        {
+          "control_id": "patients_list_reports.r06.s01.c01",
+          "options": [
+            "Birthdate",
+            "Carrier",
+            "Employer"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Patient List - Grouped By` = 13 values (`Attached to Provider`, `Birthdate`, `Carrier`, `Employer`,",
+          "notes": "Collapsed REPORT BY list of 13 values, read by the research pass from vendor screenshots of the opened dropdown (2022 and 2023). Order as listed: Attached to Provider (the default already in the inventory), Birthdate, Carrier, Employer, Fee Schedule, HIPAA Agreement, Insurance Plan, Last Visit, Medical Alert, Patient Type, Preferred Provider, Uninsured, Zip Code - three entries because the list wraps over three lines of the document. Birthdate = legacy Patients by Birthdate (list sorted by birthday month). Carrier = legacy Patients by Carrier (patients attached to a carrier). Employer = patients by employer of the insurance plan (meaning partly inferred)."
+        },
+        {
+          "control_id": "patients_list_reports.r06.s01.c01",
+          "options": [
+            "Fee Schedule",
+            "HIPAA Agreement",
+            "Insurance Plan",
+            "Last Visit",
+            "Medical Alert",
+            "Patient Type"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Fee Schedule`, `HIPAA Agreement`, `Insurance Plan`, `Last Visit`, `Medical Alert`, `Patient Type`,",
+          "notes": "Second line of the same 13-value REPORT BY list. Fee Schedule = legacy Patients by Fee Schedule (patients with their default fee schedule). HIPAA Agreement = who is and is not flagged as having a HIPAA agreement on file. Insurance Plan = legacy Patients Insurance List (plan assigned to each patient record). Last Visit = legacy Patients by Lastvisit (patients with their Last Visit date; used to find patients not seen for a period) - this mode changes the criteria panel, see the added controls and rules. Medical Alert = legacy Patients with Medical Alerts (patients having selected medical alerts). Patient Type = legacy Patients by Patient Type (patients per patient type, when one is set)."
+        },
+        {
+          "control_id": "patients_list_reports.r06.s01.c01",
+          "options": [
+            "Preferred Provider",
+            "Uninsured",
+            "Zip Code"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Preferred Provider`, `Uninsured`, `Zip Code`);",
+          "notes": "Third line of the same 13-value REPORT BY list. Preferred Provider = legacy Patients by Provider / Patients by Preferred Provider (patients assigned to a preferred provider). Uninsured = legacy UnInsured Patient List (patients without insurance; meaning partly inferred). Zip Code = legacy Patients by Zip Code (list sorted by zip code)."
+        }
+      ],
+      "dynamic_rules": [
+        {
+          "when": "REPORT BY = Last Visit",
+          "effect": "The criteria panel becomes: PATIENT STATUS; OFFICE/GROUP; a PREFERRED PROVIDER block with the radio Preferred Provider / Treating Provider; LAST VISIT DATE RANGE; INCLUDE PATIENT TYPE / EXCLUDE PATIENT TYPE; OTHER OPTIONS with the checkbox 'Include Patients with No Lastvisit date.'. The PROVIDER and SPECIALTY sections of the default mode are replaced and no longer shown.",
+          "controls": [
+            "patients_list_reports.r06.s01.c01",
+            "patients_list_reports.r06.s05.c01",
+            "patients_list_reports.r06.s08.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Last Visit` | `PATIENT STATUS`; `OFFICE/GROUP`; `PREFERRED PROVIDER` with radio `Preferred Provider` / `Treating Provider`; `LAST VISIT DATE RANGE`; `INCLUDE` / `EXCLUDE PATIENT TYPE`; `OTHER OPTIONS` `Include Patients with No Lastvisit date.`"
+        },
+        {
+          "when": "REPORT BY = Attached to Provider (the default)",
+          "effect": "The panel shows PATIENT STATUS; OFFICE/GROUP; PROVIDER; INCLUDE PATIENT TYPE / EXCLUDE PATIENT TYPE; SPECIALTY - the state our screenshot captured, and a vendor screenshot shows the same set. PROVIDER and SPECIALTY belong to this mode (Last Visit replaces them).",
+          "controls": [
+            "patients_list_reports.r06.s01.c01",
+            "patients_list_reports.r06.s05.c01",
+            "patients_list_reports.r06.s08.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Attached to Provider` | `PATIENT STATUS`; `OFFICE/GROUP`; `PROVIDER`; `INCLUDE` / `EXCLUDE PATIENT TYPE`; `SPECIALTY`"
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "report_id": "patients_list_reports.r07",
+      "legacy_name": "Patients on Payment Plan",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r07.s01.c01",
+          "text": "PLAN TYPE selects the kind of contract that is listed: Regular = patients on a regular payment contract (legacy report Patients on Regular Payment Plan), Ortho = patients on an orthodontic contract (legacy report Patients on Ortho Payment Plan).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Patients on Payment Plan` | `PLAN TYPE` | `Patients on Regular Payment Plan`, `Patients on Ortho Payment Plan`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r07.s05.c01",
+          "text": "PLAN SETUP DATE RANGE (Start Date / End Date) is matched on the setup date of the contract: the report lists patients whose regular or orthodontic contract was set up within the range.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Patients who have a regular payment contract or an orthodontic contract whose setup date falls in a range;"
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r08",
+      "legacy_name": "Online Registered Patients",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r08.s04.c01",
+          "text": "CREATED DATE RANGE (Start Date / End Date) is matched on the date the online registration was received: the report lists all online patient registrations received during the range, per office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "All online patient registrations received during the date range, per office;"
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r09",
+      "legacy_name": "Responsible Party List",
+      "added_controls": [
+        {
+          "section": "SEND STATEMENT STATUS",
+          "label": "",
+          "type": "dropdown",
+          "options": [
+            "Yes",
+            "No"
+          ],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "",
+          "confidence": "confirmed",
+          "evidence_quote": "`Send Statement Status` | `Responsible Party-Send Statement Status` | Accounts eligible / ineligible to receive a statement | Date range replaced by `SEND STATEMENT STATUS` (`Yes` / `No`); `EXCLUDE RESPONSIBLE PARTY TYPE`; inactive-accounts checkbox",
+          "notes": "Appears only when REPORT BY = Send Statement Status, where it takes the place of CREATED DATE RANGE (our capture shows the default mode, Created Date). Read by the research pass from a 2023 vendor screenshot of that mode; the document calls it a dropdown. It filters on the Send Statement flag of the responsible party; documented use: choose No before a statement run to list the accounts that will get no statement. Default not documented."
+        }
+      ],
+      "added_options": [
+        {
+          "control_id": "patients_list_reports.r09.s02.c01",
+          "options": [
+            "Balance",
+            "Balance Aged Over X Days"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Responsible Party List` = `Balance`, `Balance Aged Over X Days`,",
+          "notes": "Collapsed REPORT BY list of six values, taken by the research pass from the vendor article on listing responsible parties. Order as listed: Balance, Balance Aged Over X Days, Created Date (the default already in the inventory), Resp. Party Type, Send Statement Status, Zip - two entries because the list wraps onto a second line of the document. Balance = legacy Responsible Party List by Balance (which accounts have a balance). Balance Aged Over X Days = legacy Responsible Party List Over [30/60/90/120] days (accounts overdue in the selected aging period). The default Created Date = legacy Responsible Party List (number of responsible-party accounts)."
+        },
+        {
+          "control_id": "patients_list_reports.r09.s02.c01",
+          "options": [
+            "Resp. Party Type",
+            "Send Statement Status",
+            "Zip"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Created Date`, `Resp. Party Type`, `Send Statement Status`, `Zip`",
+          "notes": "Second line of the same six-value REPORT BY list. Resp. Party Type = legacy Responsible Party by Billing Type (accounts by type). Send Statement Status = legacy Responsible Party-Send Statement Status (accounts eligible / ineligible to receive a statement) - this mode changes the criteria panel, see the added control and rule. Zip = legacy Responsible Party Zip Code (accounts by zip code)."
+        }
+      ],
+      "dynamic_rules": [
+        {
+          "when": "REPORT BY = Send Statement Status",
+          "effect": "The CREATED DATE RANGE section is replaced by a SEND STATEMENT STATUS dropdown (Yes / No); EXCLUDE RESPONSIBLE PARTY TYPE and the inactive-accounts checkbox (Include Inactive Accounts (All patients inactive in account)) stay.",
+          "controls": [
+            "patients_list_reports.r09.s02.c01",
+            "patients_list_reports.r09.s04.c01",
+            "patients_list_reports.r09.s04.c02",
+            "patients_list_reports.r09.s05.c01",
+            "patients_list_reports.r09.s06.c01"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "Date range replaced by `SEND STATEMENT STATUS` (`Yes` / `No`); `EXCLUDE RESPONSIBLE PARTY TYPE`; inactive-accounts checkbox"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r09.s05.c01",
+          "text": "The responsible party type is the account's billing type: every account has exactly one, and it is mandatory (examples: Cash, Collections, Discount Plan, No Type Defined).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Exactly one mandatory type per account (billing type; examples `Cash`, `Collections`, `Discount Plan`, `No Type Defined`)."
+        }
+      ]
+    },
+    {
+      "report_id": "patients_list_reports.r11",
+      "legacy_name": "Responsible Party - Statements Sent",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r11.s04.c01",
+          "text": "The single Statement Date identifies the statement run: the report lists the accounts for which a statement was generated on that statement date, so it has to equal the date of the run.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "After statements are generated, lists the accounts for which a statement was generated on a given statement"
+        },
+        {
+          "about": "meaning",
+          "control_id": "patients_list_reports.r11.s01.c01",
+          "text": "STATEMENT TYPE is the delivery channel of the statement. It mirrors the statement formats Paper / Email / Both of Statement Setup (Only Paper / Only Email / Email & Paper on the 2014 Statements screen). Why Email and Both are greyed in our capture is not documented (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Delivery channel. Mirrors the statement formats `Only Paper` / `Only Email` / `Email & Paper` (2014 screen) and `Paper` / `Email` / `Both` (Statement Setup)"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "patients_list_reports.r02",
+      "question": "SEX dropdown: the value list is not documented (our capture shows only the six-hyphen placeholder). Which values does it offer?"
+    },
+    {
+      "report_id": "patients_list_reports.r02",
+      "question": "Older build: the old Active Patient List offered Summary / Detail and the old Patients List showed which records have the HIPAA box ticked. The current Patient List screen (captured complete) has no REPORT TYPE, so nothing is added - does a count-only (summary) mode or a HIPAA indication survive anywhere? How the six legacy variants (Active Patient List, Inactive Patient List, Patients List, Patients List - Email, Patient List - Detail, Patient List - Address) map onto the one current report is inferred from shared criteria."
+    },
+    {
+      "report_id": "patients_list_reports.r02",
+      "question": "Unverified meanings: which provider relation PROVIDER filters on (preferred provider is only assumed), which office relation OFFICE/GROUP uses (home office is assumed), which patient-record field drives PATIENT TYPE General / Ortho (the Ortho Patient checkbox is assumed), and what unticking Include Patients With No Email does (assumed: only patients with an e-mail address, the old Patients List - Email)."
+    },
+    {
+      "report_id": "patients_list_reports.r03",
+      "question": "The criteria panels of the four non-default REPORT BY modes (Carrier, Created Date / First Visit Date, Referral, Referral Type) were not captured: does the date section keep the title APPOINTMENT DATE RANGE, and do provider, referral, carrier or patient-type filters appear?"
+    },
+    {
+      "report_id": "patients_list_reports.r03",
+      "question": "How does REPORT BY = Created Date / First Visit Date let the user choose between the two dates? It is not visible in any vendor screenshot. The meaning of REPORT BY = Carrier is only inferred."
+    },
+    {
+      "report_id": "patients_list_reports.r04",
+      "question": "REPORT BY values other than Day were never seen. The legacy reports folded into Patients Seen (Patients Seen Per Day By Age, Patients Seen by Medical Alerts, Patients Seen by Zip code) suggest by-age, by-medical-alert and by-zip-code values, but the labels and the criteria panels of those modes are inferred from legacy report names, not shown by the vendor - not added."
+    },
+    {
+      "report_id": "patients_list_reports.r04",
+      "question": "Unverified meanings: what Summary and Detail print, which provider relation PROVIDER filters on (the transaction provider is assumed), and whether \"seen\" means a ledger procedure flagged Visit Code as on the Executive Summary (assumed)."
+    },
+    {
+      "report_id": "patients_list_reports.r05",
+      "question": "The complete PRINT NOTES value list and the current SELECT dialog were not seen: the list box of the 2020 screen starts ALL, Patient Notes, Resp. Party Notes and continues; the printed Note Type column also shows Financial Notes and Chart Notes. What are the remaining entries?"
+    },
+    {
+      "report_id": "patients_list_reports.r06",
+      "question": "The criteria panels of 11 of the 13 REPORT BY modes were not captured (Birthdate, Carrier, Employer, Fee Schedule, HIPAA Agreement, Insurance Plan, Medical Alert, Patient Type, Preferred Provider, Uninsured, Zip Code). Vendor text hints at mode-specific selectors without quoting their labels, so they are not added: the patients-by-carrier list can be narrowed to one carrier submission address and/or state, and the medical-alert list covers patients having selected medical alerts. Older build: the 2020 old Patient List screen gave the predecessor Patients by Fee Schedule the criteria Provider, Exclude Patient Type, Fee Schedule (default All) and Include Inactive Patients - not added, because the current Fee Schedule mode was never seen. Does the current mode show a Fee Schedule selector, and with which title and default?"
+    },
+    {
+      "report_id": "patients_list_reports.r06",
+      "question": "What distinguishes REPORT BY = Attached to Provider from Preferred Provider, what is the SPECIALTY filter applied to, and which values does the SPECIALTY dropdown offer besides ALL?"
+    },
+    {
+      "report_id": "patients_list_reports.r06",
+      "question": "Last Visit mode: which option of the Preferred Provider / Treating Provider radio is preselected, the default of 'Include Patients with No Lastvisit date.', the row labels and defaults of LAST VISIT DATE RANGE, and the row label and default of the provider box of the PREFERRED PROVIDER block are not documented."
+    },
+    {
+      "report_id": "patients_list_reports.r07",
+      "question": "CREDIT CARD ON FILE: values other than the default Both are not documented (yes / no is only presumed)."
+    },
+    {
+      "report_id": "patients_list_reports.r09",
+      "question": "The criteria panels of REPORT BY = Balance, Balance Aged Over X Days, Resp. Party Type and Zip were not captured. Older build: on the 2021 old screen the predecessor Responsible Party List Over [30/60/90/120] days had Created Date Range, Exclude Responsible Party Type, an Aged Balance range (Start 1.00 / End 999,999.99) and the aging days 30 / 60 / 90 / 120 - not added, because the current Balance Aged Over X Days panel was never seen. Do these criteria still exist, and with which section titles, labels, control form and defaults?"
+    },
+    {
+      "report_id": "patients_list_reports.r09",
+      "question": "The default of the SEND STATEMENT STATUS dropdown (Yes or No) is not documented."
+    },
+    {
+      "report_id": "patients_list_reports.r09",
+      "question": "Older build: the old screens also listed Responsible Party List - Email, which has no named successor among the six REPORT BY values. Not added - is there a current equivalent?"
+    },
+    {
+      "report_id": "patients_list_reports.r11",
+      "question": "Why are the Email and Both options of STATEMENT TYPE disabled in our capture - the e-statement subscription, or an office setting? The cause is only presumed (offices without e-statements), so no enable / disable rule is added. That the old Email Statement Sent Report is covered by STATEMENT TYPE = Email is likewise only inferred."
+    },
+    {
+      "report_id": "patients_list_reports.r12",
+      "question": "Does the single Statement Sent Date match the statement date of the run or the day the e-mails went out? The vendor documents that e-statements go out three days after the statement date; which of the two dates the criterion expects is not stated."
+    },
+    {
+      "report_id": "",
+      "question": "Older picker value: the INCLUDE / EXCLUDE PATIENT TYPE pickers of the old screens offered No Type Defined as a selectable value - does the current dialog still list it? The SELECT / SEARCH dialogs of this screen (titles, sort options, search fields, list columns) are not described in the research document."
+    }
+  ]
+}

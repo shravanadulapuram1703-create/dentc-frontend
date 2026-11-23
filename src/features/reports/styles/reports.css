@@ -1,0 +1,138 @@
+/* Reports module stylesheet (UX-15; 07 §9.5, §9.8, §9.9; spike S-1 checks 5, 7, 9).
+   Loaded with the module's lazy chunk and kept for the rest of the session, so every rule is scoped to
+   module markup (`.rpt-*` classes) or to a page that renders `.rpt-root`. Container sizes (@rpt-sm/md/lg)
+   live in src/styles/globals.css because Tailwind reads @theme only from the main stylesheet. */
+
+/* ── Layer tokens: all below nav dropdowns (9999) and the messaging panel (10000) ─────────────── */
+:root {
+  --rpt-z-sticky: 10;
+  --rpt-z-panel: 40; /* side panel, below the nav at 50 */
+  --rpt-z-dialog: 60;
+  --rpt-z-popover: 80;
+  --rpt-z-tooltip: 90;
+  --rpt-control-h: 28px;
+  --rpt-border: #cbd5e1;
+  --rpt-focus: #3a6ea5;
+}
+
+.rpt-root {
+  container-type: inline-size;
+}
+
+/* ── Compact controls. The global stylesheet forces !important borders and padding on every input /
+   select / textarea inside @layer base; important declarations reverse layer order, so these rules
+   must be in the SAME layer, !important, and at least as specific as the global selectors. ───── */
+@layer base {
+  input.rpt-input:not([type="checkbox"]):not([type="radio"]),
+  textarea.rpt-input {
+    height: var(--rpt-control-h) !important;
+    padding: 2px 8px !important;
+    border: 1px solid var(--rpt-border) !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  textarea.rpt-input {
+    height: auto !important;
+    min-height: 56px !important;
+  }
+  input.rpt-input:not([type="checkbox"]):not([type="radio"]):focus,
+  textarea.rpt-input:focus,
+  select.rpt-select:focus {
+    border-color: var(--rpt-focus) !important;
+    outline: 2px solid color-mix(in srgb, var(--rpt-focus) 35%, transparent) !important;
+    outline-offset: 0 !important;
+  }
+  input.rpt-input:not([type="checkbox"]):not([type="radio"]):disabled,
+  select.rpt-select:disabled {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    cursor: not-allowed !important;
+  }
+  select.rpt-select {
+    height: var(--rpt-control-h) !important;
+    padding: 0 1.75rem 0 0.5rem !important;
+    border: 1px solid var(--rpt-border) !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+  }
+  /* react-day-picker caption dropdowns: rdp overlays an invisible native select on its label (spike
+     check 7). Without this the global select rule turns them into visible 48 px boxes. */
+  select.rpt-select.rdp-dropdown,
+  select.rpt-select[class*="rdp-"] {
+    opacity: 0 !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+  input.rpt-check[type="checkbox"],
+  input.rpt-radio[type="radio"] {
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+  }
+}
+
+/* ── Radix poppers under the global zoom (spike check 5). Floating UI computes viewport px and
+   writes them as a transform inside the zoomed <html>, which scales them a second time. Counter-zoom
+   the wrapper and restore the zoom on the content. Scoped to module layers (.rpt-layer) so other
+   features keep their current behaviour. ─────────────────────────────────────────────────────── */
+[data-radix-popper-content-wrapper]:has(> .rpt-layer) {
+  zoom: calc(1 / var(--app-zoom));
+}
+[data-radix-popper-content-wrapper] > .rpt-layer {
+  zoom: var(--app-zoom);
+}
+
+/* Portalled dialogs and panels size by their own container (07 §9.8). */
+.rpt-dialog,
+.rpt-side-panel {
+  container-type: inline-size;
+}
+
+.rpt-print-notice {
+  display: none;
+}
+
+/* ── Print safety net (07 §9.9). Output is a server document; Ctrl+P cannot be prevented, so on a
+   page that renders the module: no app chrome, no criteria, no patient-level rows. Every rule is
+   scoped to such a page; other screens print as before. ─────────────────────────────────────── */
+@media print {
+  html:has(.rpt-root) {
+    --app-zoom: 1; /* reset the variable so --vh / --vw follow */
+  }
+  html:has(.rpt-root) .app-global-nav,
+  html:has(.rpt-root) .app-messaging-panel {
+    display: none !important;
+  }
+  .rpt-root :is(.rpt-rail, .rpt-criteria, .rpt-toolbar, .rpt-side-panel, .rpt-bulk-bar) {
+    display: none !important;
+  }
+  .rpt-root {
+    padding: 0 !important;
+  }
+  .rpt-root .rpt-results-scroll {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .rpt-root .rpt-table thead {
+    display: table-header-group;
+  }
+  .rpt-root .rpt-table tr {
+    break-inside: avoid;
+  }
+  .rpt-root .rpt-block[data-patient-level="true"] .rpt-table {
+    display: none !important;
+  }
+  .rpt-root .rpt-print-notice {
+    display: block;
+  }
+}

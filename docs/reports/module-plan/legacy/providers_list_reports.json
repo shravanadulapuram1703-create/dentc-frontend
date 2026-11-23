@@ -1,0 +1,273 @@
+{
+  "category": "providers_list_reports",
+  "window_title": "Provider List Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/providers_list_reports",
+  "report_list": [
+    "Provider List",
+    "Provider Holidays",
+    "Provider Operatory",
+    "Provider Registration"
+  ],
+  "reports": [
+    {
+      "name": "Provider List",
+      "screenshots": ["1.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio, Excel is empty."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of a two-column band (the PROVIDER section sits beside it on the right). Two radios on one row directly under the header; no row label. Office is the filled (blue) radio; Office Group is empty but enabled (black label, normal radio)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box (grey read-only fill RGB 220,223,226) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PROVIDER row, is empty). Shows 108 - the same number as 'OID :108' in the title bar, i.e. the current office. Button to its right: SELECT (blue = enabled, building icon). Presumably picks offices or office groups depending on the radio above (inference, not visible); the selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the two-column band, on the same row as the Office / Office Group radios. Row label 'Provider' in the left cell; read-only box (grey read-only fill RGB 220,223,226) showing ALL in the right cell; button to its right: SELECT (blue = enabled, single-person icon). The provider selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "SPECIALTY",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. Left half of the second two-column band (STATE beside it on the right), below the office picker row. No label of its own (the section header acts as the label). Light editable fill (RGB 241,241,241) with a single down-chevron at its right end; about 245 px wide."
+            }
+          ]
+        },
+        {
+          "title": "STATE",
+          "controls": [
+            {
+              "label": "",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. Right half of the second two-column band, side by side with SPECIALTY. No label of its own (the section header acts as the label). Light editable fill (RGB 241,241,241) with a single down-chevron at its right end; about 245 px wide."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "1.PNG only (left-list radio 'Provider List' filled). Layout top to bottom: PRINT FORMAT (full width); OFFICE/GROUP (left half) + PROVIDER (right half) side by side, with the office box + SELECT on a full-width row under the radios; SPECIALTY (left half) + STATE (right half) side by side. The only report of the category with SPECIALTY and STATE filters; both dropdowns are collapsed, so only their current value ALL is known. Below them the criteria box is blank down to the footer bar (exact-colour sweep and a histogram-equalised render found nothing else: no checkbox, no Page Break, no instruction text). The footer bar with PRINT / PREVIEW and ADD TO MY FAVORITES and the bottom border of the box are fully visible and there is no scrollbar - not truncated. No greyed-out control; the picker boxes are grey only because they are read-only."
+    },
+    {
+      "name": "Provider Holidays",
+      "screenshots": ["2.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio, Excel is empty."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of a two-column band (the PROVIDER section sits beside it on the right). Two radios on one row directly under the header; no row label. Office is the filled (blue) radio; Office Group is empty but enabled."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box (grey read-only fill RGB 220,223,226) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PROVIDER row, is empty). Shows 108 (= 'OID :108' in the title bar, the current office). Button to its right: SELECT (blue = enabled, building icon). The selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the two-column band, on the same row as the Office / Office Group radios. Row label 'Provider' in the left cell; read-only box (grey read-only fill RGB 220,223,226) showing ALL in the right cell; button to its right: SELECT (blue = enabled, single-person icon). The provider selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "LAST VISIT DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Full-width section below the office picker row. Row label 'Start Date' in the left cell (about one third of the panel width); date box in the next cell with a blue calendar icon inside its right end; the rest of the row is empty. Light editable fill (RGB 241,241,241) - not greyed. Format MM/DD/YYYY. The value equals the capture day, so the default appears to be today's date (inference)."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Row below Start Date; same layout: label in the left cell, date box with a blue calendar icon in the next cell. Light editable fill (RGB 241,241,241) - not greyed. Same value as Start Date (the capture day)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "2.PNG only (left-list radio 'Provider Holidays' filled). Same PRINT FORMAT / OFFICE/GROUP / PROVIDER block as Provider List, then ONE full-width date section whose header literally reads LAST VISIT DATE RANGE - odd wording for a provider-holidays report (it looks like a header reused from a patient report) but that is the text displayed, so it is transcribed as shown and not corrected. No SPECIALTY or STATE section. The only report of the category with a date range. Blank below the End Date row down to the footer bar (exact-colour sweep found nothing else); footer bar and the bottom border of the box fully visible, no scrollbar - not truncated. No greyed-out control."
+    },
+    {
+      "name": "Provider Operatory",
+      "screenshots": ["3.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio, Excel is empty."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of a two-column band (the PROVIDER section sits beside it on the right). Two radios on one row directly under the header; no row label. Office is the filled (blue) radio; Office Group is empty but enabled."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box (grey read-only fill RGB 220,223,226) on its own row directly below the Office / Office Group radios; that row runs across the full panel width (its right half, under the PROVIDER row, is empty). Shows 108 (= 'OID :108' in the title bar, the current office). Button to its right: SELECT (blue = enabled, building icon). The selection dialog is not shown in any screenshot."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the two-column band, on the same row as the Office / Office Group radios. Row label 'Provider' in the left cell; read-only box (grey read-only fill RGB 220,223,226) showing ALL in the right cell; button to its right: SELECT (blue = enabled, single-person icon). The provider selection dialog is not shown in any screenshot."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "3.PNG only (left-list radio 'Provider Operatory' filled). Three sections only: PRINT FORMAT, OFFICE/GROUP and PROVIDER - no date range, no SPECIALTY, no STATE. The criteria box is blank from the office picker row down to the footer bar (exact-colour sweep found nothing else); footer bar and the bottom border of the box fully visible, no scrollbar - not truncated. No greyed-out control."
+    },
+    {
+      "name": "Provider Registration",
+      "screenshots": ["4.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section. Two radios on one row directly under the header; no row label. PDF is the filled (blue) radio, Excel is empty."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "In this report the OFFICE/GROUP header bar spans the FULL panel width (there is no PROVIDER section beside it). Two radios on one row directly under the header; no row label. Office is the filled (blue) radio; Office Group is empty but enabled."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only box (grey read-only fill RGB 220,223,226) on its own row directly below the Office / Office Group radios. Shows 108 (= 'OID :108' in the title bar, the current office). Button to its right: SELECT (blue = enabled, building icon). The selection dialog is not shown in any screenshot."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "4.PNG only (left-list radio 'Provider Registration' filled). The smallest criteria set of the category: only PRINT FORMAT and OFFICE/GROUP. There is NO PROVIDER picker (the right half of the OFFICE/GROUP header and rows is empty - confirmed by the exact-colour sweep), no date range, no SPECIALTY, no STATE. Blank below the office picker row down to the footer bar; footer bar and the bottom border of the box fully visible, no scrollbar - not truncated. No greyed-out control."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Third-reader verified inventory. All 4 original screenshots, the 4 pre-rendered criteria zooms, the 4 list zooms and 13 extra renders (prefix c in the zoom folder: 5x-20x crops of the title bar, every section header, picker, dropdown and date box, plus a histogram-equalised copy of each full screenshot) were read. Readers A and B agreed on every report, section, control, option, default value, enabled state and truncation flag (4 reports, 19 controls); they differed only in the wording of notes. Everything was nevertheless re-checked on the pixels: the selected radio located in each file (left list, PDF, Office), fill colours of every box and button, and an exact-colour sweep of each criteria box (every pixel that is not one of the flat background colours, grouped into connected regions) which returned only the elements listed here - no 'Page Break' or other checkbox, no right-edge or second-column extras, no greyed-out control, no instruction or legend text, no scrollbar, no footer text. COVERAGE: 4 screenshots = 4 different reports, each selected exactly once, in list order: 1.PNG Provider List, 2.PNG Provider Holidays, 3.PNG Provider Operatory, 4.PNG Provider Registration. All are the normal two-panel screen in its default state - no popup, no expanded dropdown, no scrolled second view, no foreign screen - so the dialogs behind the SELECT buttons (office / office group, provider) and the option lists of the SPECIALTY and STATE dropdowns are NOT documented by this category. TITLE BAR (identical in all 4): 'Provider List Reports' at the left; 'PGID :2829 / OID :108' followed by a white printer icon (icon only, no text) at the far right. LEFT PANEL: blue header bar 'SELECT REPORT', then exactly four radio rows in a SINGLE column (no second column), each closed by a thin white rule; everything below the fourth row is uniform navy (pixel-exact) down to the bottom edge, so the list is neither clipped nor scrollable. A dark tab with three vertical dots on the border between the two panels is the splitter / collapse handle. RIGHT PANEL: blue header bar 'REPORT CRITERIA' with the CLEAR CRITERIA button (refresh icon) at its right end - drawn slate-grey (RGB 112,127,140) in every screenshot while all other buttons are blue (41,134,220), which is its normal styling in this application, not a disabled state; a bordered criteria box built from grey section-header bars; a footer bar inside the box with blue PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon) right-aligned. The same three actions appear on every report. No criteria panel is truncated: each shows the footer bar and the bottom border of its box, and in 1.PNG and 2.PNG the lower edge line of the page frame is visible under it. PATTERNS: every report starts with PRINT FORMAT = PDF (default) / Excel and OFFICE/GROUP = Office (default) / Office Group radios plus an unlabelled read-only office box showing 108 (= the OID in the title bar) with a SELECT button (building icon). Provider List, Provider Holidays and Provider Operatory add a PROVIDER section in a right-hand column beside OFFICE/GROUP (row label 'Provider', read-only box ALL, SELECT button with single-person icon); Provider Registration has NO provider filter and its OFFICE/GROUP header spans the full width. Only Provider List has SPECIALTY and STATE (side-by-side dropdowns, both ALL, collapsed). Only Provider Holidays has a date range, under the header text 'LAST VISIT DATE RANGE' (odd for a holidays report - apparently a reused header - kept exactly as displayed), with Start Date and End Date both 11/21/2026 (the capture day). Pickers are a read-only grey box (fill RGB 220,223,226) plus a blue SELECT button; dropdowns and date boxes have the light editable fill (241,241,241), so every control in this category is enabled. There is no REPORT FORMAT, DATE RANGE (plain), PATIENT TYPE, OTHER OPTIONS, GROUP BY or SORT BY section anywhere in this category. FONT NOTE: the capital G of the header font renders almost like a C at screenshot resolution (headers look like 'OFFICE/CROUP' and 'LAST VISIT DATE RANCE'); both were confirmed as G on the pixels - the glyph is darker at its lower right (the G spur) whereas the true C of OFFICE in the same header is exactly symmetric top/bottom - and the mixed-case radio label 'Office Group' is unambiguous. Screenshot sizes vary slightly (1.PNG 1366x588, 2.PNG 1363x587, 3.PNG 1365x584, 4.PNG 1365x582) with the content shifted 1-3 px vertically between files; this is a capture detail, not a different state."
+}

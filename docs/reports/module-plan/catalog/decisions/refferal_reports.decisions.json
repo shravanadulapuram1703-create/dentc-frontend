@@ -1,0 +1,187 @@
+{
+  "category": "refferal_reports",
+  "reports": {
+    "refferal_reports.r01": {
+      "report_key": "referral.referral_production_list",
+      "phase": "P3",
+      "dynamic_rules": {
+        "refferal_reports.r01.d01": "office_scope (r01, r02, r05, r06; display-only on r03), referred_from_office_scope (r04, r07) and referred_to_office_scope (r07, r08): the mode radio decides the value key. mode office -> the picker lists offices (lookup:offices) and writes office_ids (list, working_office, my_offices or all); mode office_group -> it lists office groups (lookup:office_groups) and writes office_group_id or office_group_ids (all = every group). Switching the mode resets the selection to that mode's default (working_office / all). Exactly one value key is sent.",
+        "refferal_reports.r01.d02": "Every report of the category: the ADD TO MY FAVORITES action saves the current params as a server-side saved view flagged favorite (report_saved_views, report_favorites). When the caller already holds a favorite for this report_key the action is labelled UPDATE MY FAVORITES and overwrites that favorite's params (legacy: one saved version per report); further named views are an additive enhancement. Shown on every open of the report, from the hub or from My Favorites."
+      }
+    },
+    "refferal_reports.r02": {
+      "report_key": "referral.referred_out_list",
+      "phase": "P3"
+    },
+    "refferal_reports.r03": {
+      "report_key": "referral.referral_source_list",
+      "phase": "P3"
+    },
+    "refferal_reports.r04": {
+      "report_key": "referral.external_outgoing_referral_management",
+      "phase": "P3"
+    },
+    "refferal_reports.r05": {
+      "report_key": "referral.referral_summary_report",
+      "phase": "P3"
+    },
+    "refferal_reports.r06": {
+      "report_key": "referral.referral_count_summary",
+      "phase": "P3"
+    },
+    "refferal_reports.r07": {
+      "report_key": "referral.internal_referral_management",
+      "phase": "P3"
+    },
+    "refferal_reports.r08": {
+      "report_key": "referral.external_incoming_referral_management",
+      "phase": "P3"
+    }
+  },
+  "controls": {
+    "refferal_reports.r01.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report: home office of the patient (scope.office_attribution = home_office: rpt_referral_facts.office_id of the inbound_source rows = rpt_patient_dim.home_office_id, current state). Named exception NEW scope.money_leg_office_filter (owner 03 section 5.1 / 02): the money legs of those patients are restricted to the same resolved office set - production, #Proc and # Visits on office of service (rpt_charges.office_id, rpt_visits.office_id); Collection on the allocation office (rpt_payment_allocations.allocation_office_id = office of the paid charge), so only payments allocated to counted charges count; Adjs on rpt_adjustments.office_id. This reproduces the legacy rule 'data limited to the office the report is run in, for patients currently in that office, no cross-office data' when one office is selected [I: whether a payment applied in another office counts is unconfirmed]. With several offices or an office group the result is the union; whether the legacy tool allowed that at all is an open question. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read."
+    },
+    "refferal_reports.r05.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report: home office of the patient (scope.office_attribution = home_office: rpt_referral_facts.office_id of the inbound_source rows = rpt_patient_dim.home_office_id, current state). Named exception NEW scope.money_leg_office_filter (owner 03 section 5.1 / 02): production is restricted to charges with rpt_charges.office_id in the resolved set and Collection to allocations to those charges (rpt_payment_allocations.allocation_office_id in the set); #Ref and the Referral # columns count only the patients of the set. This reproduces the legacy rule 'data limited to the office the report is run in, for patients currently in that office, no cross-office data' when one office is selected. With several offices or an office group the result is the union; whether the legacy tool allowed that at all is an open question. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read."
+    },
+    "refferal_reports.r06.s02.c02": {
+      "notes": "108 = id of the office the user was working in. Office attribution on this report: home office of the patient (scope.office_attribution = home_office: rpt_referral_facts.office_id of the inbound_source rows = rpt_patient_dim.home_office_id, current state). Named exception NEW scope.money_leg_office_filter (owner 03 section 5.1 / 02): the qualifying visit must be in an office of the resolved set (rpt_visits.office_id under the default count_basis = visit). No money legs on this report. This reproduces the legacy rule 'data limited to the office the report is run in, for patients currently in that office, no cross-office data' when one office is selected. With several offices or an office group the result is the union; whether the legacy tool allowed that at all is an open question. Mode office lists offices, mode office_group lists office groups; all = every office the caller may read."
+    },
+    "refferal_reports.r01.s03.c01": {
+      "notes": "Primary date range, fixed date_basis = service_date: the date of service of the posted procedures (rpt_charges.service_date) of the referred patients. Production and #Proc count charges with service_date in the range, # Visits counts rpt_visits rows with visit_date in the range; Collection = payments allocated to those charges (PD-3 definition; allocation via rpt_payment_allocations, data card 2.13, PD-7); Adjs = adjustments whose effective service date (coalesce(linked_service_date, transaction_date)) is in the range. Default today in the office time zone."
+    },
+    "refferal_reports.r01.s03.c02": {
+      "notes": "Primary date range, fixed date_basis = service_date: the date of service of the posted procedures (rpt_charges.service_date) of the referred patients. Production and #Proc count charges with service_date in the range, # Visits counts rpt_visits rows with visit_date in the range; Collection = payments allocated to those charges (PD-3 definition; allocation via rpt_payment_allocations, data card 2.13, PD-7); Adjs = adjustments whose effective service date (coalesce(linked_service_date, transaction_date)) is in the range. Default today in the office time zone."
+    },
+    "refferal_reports.r05.s03.c01": {
+      "notes": "Primary date range, fixed date_basis = service_date: Production counts charges of the referred patients with rpt_charges.service_date in the range; Collection = payments allocated to those charges (PD-3 definition; allocation via rpt_payment_allocations, data card 2.13, PD-7). The same range bounds #Ref: patients of the source whose referral_date (NEW patients.referral_date, else first_visit_date) lies in the range [I]. MTD / YTD / Last Year are anchored on date_to and not bounded by date_from [I]. Default today in the office time zone."
+    },
+    "refferal_reports.r05.s03.c02": {
+      "notes": "Primary date range, fixed date_basis = service_date: Production counts charges of the referred patients with rpt_charges.service_date in the range; Collection = payments allocated to those charges (PD-3 definition; allocation via rpt_payment_allocations, data card 2.13, PD-7). The same range bounds #Ref: patients of the source whose referral_date (NEW patients.referral_date, else first_visit_date) lies in the range [I]. MTD / YTD / Last Year are anchored on date_to and not bounded by date_from [I]. Default today in the office time zone."
+    },
+    "refferal_reports.r06.s03.c01": {
+      "notes": "Primary date range, fixed date_basis = service_date. On this report the range defines 'seen': a referred patient is counted once per referral source when at least one rpt_visits row (patient-office-day with a live visit-code production charge, data card 2.17, the one definition of legacy 'Patients Seen') has visit_date in the range and an office of the set (default count_basis = visit). A contract instalment, a broken-appointment fee or another non-visit charge alone does not count. Presumed - vendor text says only 'referred patients seen in the period'; confirm on the live legacy tool whether a kept appointment without a posted procedure also counts. Default today in the office time zone."
+    },
+    "refferal_reports.r06.s03.c02": {
+      "notes": "Primary date range, fixed date_basis = service_date. On this report the range defines 'seen': a referred patient is counted once per referral source when at least one rpt_visits row (patient-office-day with a live visit-code production charge, data card 2.17, the one definition of legacy 'Patients Seen') has visit_date in the range and an office of the set (default count_basis = visit). A contract instalment, a broken-appointment fee or another non-visit charge alone does not count. Presumed - vendor text says only 'referred patients seen in the period'; confirm on the live legacy tool whether a kept appointment without a posted procedure also counts. Default today in the office time zone."
+    },
+    "refferal_reports.r01.s06.c01": {
+      "notes": "Filters the patient's own referral type (patients.referral_type), NOT the type stored on the referral-source row. Predicate on NEW rpt_referral_facts.referral_type_code of the inbound_source row: canonical value of patients.referral_type through rpt_value_map domain referral_type (migrated REFTYPE codes and app labels fold to one value; owner 03_data_foundation.md, DATA-40); the printed label stays source_type_label. A patient with a type and no Referred By source is kept; Referral prints blank (standard layout), and the source group is labelled (no source) in the zip layout. Legacy single-select (one type or ALL); the parameter accepts a list (enhancement). Options: the canonical values of rpt_value_map domain referral_type with their definitions:referral_type labels (option-source variant requested from 04 section 13.3)."
+    },
+    "refferal_reports.r05.s04.c01": {
+      "notes": "Filters the patient's own referral type (patients.referral_type), NOT the type stored on the referral-source row. Predicate on NEW rpt_referral_facts.referral_type_code of the inbound_source row: canonical value of patients.referral_type through rpt_value_map domain referral_type (migrated REFTYPE codes and app labels fold to one value; owner 03_data_foundation.md, DATA-40); the printed label stays source_type_label. A patient with a type and no Referred By source is kept and prints under the source row 'No Referral'. Legacy single-select (one type or ALL); the parameter accepts a list (enhancement). Options: the canonical values of rpt_value_map domain referral_type with their definitions:referral_type labels (option-source variant requested from 04 section 13.3)."
+    },
+    "refferal_reports.r06.s04.c01": {
+      "notes": "Filters the patient's own referral type (patients.referral_type), NOT the type stored on the referral-source row. Predicate on NEW rpt_referral_facts.referral_type_code of the inbound_source row: canonical value of patients.referral_type through rpt_value_map domain referral_type (migrated REFTYPE codes and app labels fold to one value; owner 03_data_foundation.md, DATA-40); the printed label stays source_type_label. A patient with a type and no Referred By source is kept and prints under the source row 'No Referred By'. Legacy single-select (one type or ALL); the parameter accepts a list (enhancement). Options: the canonical values of rpt_value_map domain referral_type with their definitions:referral_type labels (option-source variant requested from 04 section 13.3)."
+    },
+    "refferal_reports.r03.s04.c01": {
+      "notes": "On Referral Source List this filters the type of the referral-source row itself (legacy setup field Type), not a patient. DentC referrals has no such column today (referrals.referral_type holds the by/to direction code '0'/'1'): NEW column referrals.source_type_code, owner 03_data_foundation.md (extension of DATA-40), back-filled for the 665 migrated sources from the legacy referral-source export by referrals.legacy_id. Until it exists only ALL returns rows and any type choice prints the availability[] warning referral_source_type_unavailable. Legacy single-select; list accepted (enhancement). Options: definitions:referral_type."
+    },
+    "refferal_reports.r03.s03.c01": {
+      "notes": "Static dropdown captured collapsed: only the default ALL is known. Filters the source on its Referred by/To setting; the footer echoes a code (99 = all). Candidate options to confirm on the live legacy tool (labels and order): ALL -> all, Referred By -> referred_by, Referred To -> referred_to, Both -> both. Proposed until confirmed: Referred By and Referred To also select sources set to Both; Both selects only Both sources. DentC stores the direction in referrals.referral_type ('0' / '1'); 'Both' has no stored value today and the migration loaded all 665 sources as referred by (NEW three-valued direction with back-fill, owner 03, DATA-40 extension); until then Both prints the warning referral_direction_both_unavailable."
+    },
+    "refferal_reports.r01.s04.c01": {
+      "notes": "Optional cohort range on the patient's first visit date (rpt_patient_dim.first_visit_date = min(rpt_visits.visit_date), any office, maintained by DATA-19); blank = no restriction (all patients). Not the primary range. Header instruction ( LEAVE BLANK FOR ALL PATIENTS ) is kept as help text. Footer echo legacy spelling 'Firsti Visit Date From' is not copied."
+    },
+    "refferal_reports.r01.s05.c01": {
+      "notes": "Start of the patient zip range on rpt_patient_dim.zip5 (string comparison on the first five characters); blank = no lower bound. Footer echo From Zip."
+    },
+    "refferal_reports.r01.s05.c02": {
+      "notes": "End of the patient zip range, inclusive, on rpt_patient_dim.zip5; blank = no upper bound. Footer echo Zip."
+    },
+    "refferal_reports.r01.s07.c01": {
+      "notes": "Ticked sets group_by = zip_code: variant 'by Zip Code' (subtitle '(by Zip Code)'), groups Referral Type -> Zip Code -> Referral, no Adjs column (legacy layout). Unticked = group_by none = standard layout grouped by Referral Type. Former report name Referral Production Listing by Zipcode kept as alias."
+    },
+    "refferal_reports.r02.s02.c02": {
+      "notes": "108 = working office. Office attribution: home office of the patient (rpt_patient_dim.home_office_id), because the referred-out fact sits on the patient record (patients.referred_to / referral_to_date). Mode office lists offices, mode office_group office groups; all = every office the caller may read."
+    },
+    "refferal_reports.r02.s03.c01": {
+      "notes": "Primary date range, fixed date_basis = referred_out_date = patients.referral_to_date (rpt_referral_facts.referral_date of the outbound_patient rows; column Ref Out On). Presumed by the research, unverified: confirm on the live tool that the range matches the patient's Ref. To Date. Patients without a date are never listed. Default today in the office time zone."
+    },
+    "refferal_reports.r02.s03.c02": {
+      "notes": "Primary date range, fixed date_basis = referred_out_date = patients.referral_to_date (rpt_referral_facts.referral_date of the outbound_patient rows; column Ref Out On). Presumed by the research, unverified: confirm on the live tool that the range matches the patient's Ref. To Date. Patients without a date are never listed. Default today in the office time zone."
+    },
+    "refferal_reports.r02.s04.c01": {
+      "notes": "Exclude filter on the patient's user-defined types (rpt_patient_dim.patient_type_codes): None = exclude nothing; patients with any selected type are dropped; patients without a type are kept. Footer echo Exclude Pat Type. Dialog content not captured - confirm on the live tool."
+    },
+    "refferal_reports.r02.s05.c01": {
+      "notes": "Filters the referred-to target of the patient record (patients.referred_to; Ref Out Dentist column). Option source referral_sources limited to direction referred-to. Migrated and app patients hold the target as free text today: matching on a source id needs the structured link (SCHEMA(40), DATA-40); until then a list matches by source name and ALL is exact. Footer echo Referred Out to."
+    },
+    "refferal_reports.r02.s06.c01": {
+      "notes": "Specialty of the referred-to referral source (referrals.specialty of the Ref Out Dentist; free text today), not a provider specialty. Option source: NEW referral-source variant of lookup:specialties (distinct trimmed referrals.specialty values; to be declared in 04 section 13.3), not GET /provider-specialties. Legacy single-select; list accepted (enhancement). Values not captured - confirm on the live tool."
+    },
+    "refferal_reports.r04.s02.c02": {
+      "notes": "Offices or office groups that created the referral case (referring office of referral_cases, NEW in DATA-40). security_scope parameter of this report (04 section 6.7). 108 = working office."
+    },
+    "refferal_reports.r04.s03.c01": {
+      "notes": "Primary date range, fixed date_basis = referral_date = Referral Date of the case (referral_cases, NEW DATA-40; rpt_referral_facts.referral_date of the case rows). Default today in the office time zone."
+    },
+    "refferal_reports.r04.s03.c02": {
+      "notes": "Primary date range, fixed date_basis = referral_date = Referral Date of the case (referral_cases, NEW DATA-40; rpt_referral_facts.referral_date of the case rows). Default today in the office time zone."
+    },
+    "refferal_reports.r04.s05.c01": {
+      "notes": "External referral source the case was sent to (Referred To of the EXTERNAL - OUTGOING grid). Option source referral_sources, direction referred-to. Inferred meaning (no vendor description of the report) - confirm on the live tool."
+    },
+    "refferal_reports.r04.s06.c01": {
+      "notes": "Matches a case when ANY of its Referred Out Procedure Codes is in the list (EXISTS on the code list of the case); ALL = no restriction. Inferred meaning - confirm on the live tool."
+    },
+    "refferal_reports.r04.s07.c01": {
+      "notes": "User role on this report: the user who created the referral case (created_by of referral_cases, NEW DATA-40). Inferred - the research marks USERS on the referral reports as unverified; confirm on the live tool (creator versus last modifier)."
+    },
+    "refferal_reports.r04.s08.c01": {
+      "notes": "Specialty of the referred-to external source (referrals.specialty), not a provider specialty; a case-level specialty fallback is [I] (open question 3). Option source: NEW referral-source variant of lookup:specialties (distinct trimmed referrals.specialty values; 04 section 13.3). Legacy single-select; list accepted (enhancement). Values not captured; inferred meaning - confirm on the live tool."
+    },
+    "refferal_reports.r07.s02.c02": {
+      "notes": "Referring office of the internal case (Referring Office). Plain filter inside the two-column readability rule 08 S-13 (row readable when its from OR to office is allowed); not the security scope (04 section 6.7). 108 = working office; it also gives the reference time zone."
+    },
+    "refferal_reports.r07.s03.c02": {
+      "notes": "Office of the referred-to provider (receiving office). Plain filter inside 08 S-13; default ALL as captured. ALL (and all on referred_from_office_scope) = no predicate inside the S-13 readable set: it never narrows to the offices the caller may read, so a case sent from the caller's office to an office the caller cannot read is still listed (04 section 6.7)."
+    },
+    "refferal_reports.r07.s04.c01": {
+      "notes": "Primary date range, fixed date_basis = referral_date = Referral Date of the internal case (NEW DATA-40). Default today in the office time zone."
+    },
+    "refferal_reports.r07.s04.c02": {
+      "notes": "Primary date range, fixed date_basis = referral_date = Referral Date of the internal case (NEW DATA-40). Default today in the office time zone."
+    },
+    "refferal_reports.r07.s07.c01": {
+      "notes": "Matches a case when ANY of its Referred Out Procedure Codes is in the list; ALL = no restriction. Inferred - confirm."
+    },
+    "refferal_reports.r07.s08.c01": {
+      "notes": "User role: the user who created the internal referral case (NEW DATA-40). Inferred - confirm on the live tool."
+    },
+    "refferal_reports.r07.s09.c01": {
+      "notes": "Specialty of the case: coalesce(referral_cases.specialty, referred-to provider specialty rpt_provider_dim.specialty); referral_cases.specialty is stamped from the referred-to provider when the case is created (rule owned by DATA-40), because the provider attribute is blank on 96 of 97 migrated providers. Option list built from both values. Legacy single-select; list accepted. Inferred - confirm (open question 4)."
+    },
+    "refferal_reports.r07.s10.c01": {
+      "notes": "Filters the Tx Status of the internal case: All -> all (no predicate), Completed -> completed, Incomplete -> incomplete (the two values of the INTERNAL REFERRAL grid). Inferred from the utility grid - confirm on the live tool."
+    },
+    "refferal_reports.r07.s10.c02": {
+      "notes": "true = cases marked deleted are left out (same as Hide Deleted Referrals of the utility). Needs a soft-delete flag on referral_cases (NEW DATA-40)."
+    },
+    "refferal_reports.r08.s02.c02": {
+      "notes": "Office that received the incoming case; security_scope parameter of this report (04 section 6.7). 108 = working office."
+    },
+    "refferal_reports.r08.s03.c01": {
+      "notes": "Primary date range, fixed date_basis = referral_date = Referral Date of the incoming case (NEW DATA-40). Default today in the office time zone."
+    },
+    "refferal_reports.r08.s03.c02": {
+      "notes": "Primary date range, fixed date_basis = referral_date = Referral Date of the incoming case (NEW DATA-40). Default today in the office time zone."
+    },
+    "refferal_reports.r08.s04.c01": {
+      "notes": "Our provider the incoming case is addressed to (Referred To Provider of the EXTERNAL - INCOMING grid). Inferred - confirm."
+    },
+    "refferal_reports.r08.s05.c01": {
+      "notes": "Outside referral source that sent the case (Referred By of the grid). Option source referral_sources, direction referred-by. Cases keyed with ADD REFERRAL without a source row match only under ALL. Inferred - confirm."
+    },
+    "refferal_reports.r08.s07.c01": {
+      "notes": "All box of the contact status grid: ticked = scalar all (no restriction). A list filters the current contact_status of the case (= latest contact-tracking entry, phone icon of the grid; referral_cases.contact_status, NEW DATA-40, which stores no entry history); cases without a contact status are dropped under a list (interim null_policy drop, to be replaced by the policy RPT-REF-08 confirms). Inferred meaning - confirm on the live tool, including whether a case without an entry counts as No Response."
+    },
+    "refferal_reports.r04.s09.c09": {
+      "notes": "Member of the status checkbox grid; applies when All is unticked. Every member binds to effective_status IN (...): effective_status = stored status, except that a pending case with office-local today - referral_date > 30 reads expired until the referral feature stores it [I] (legacy sets Expired automatically after 30 days; rule owned by DATA-40)."
+    },
+    "refferal_reports.r08.s06.c09": {
+      "notes": "Member of the status checkbox grid; applies when All is unticked. Every member binds to effective_status IN (...): effective_status = stored status, except that a pending case with office-local today - referral_date > 30 reads expired until the referral feature stores it [I] (legacy sets Expired automatically after 30 days; rule owned by DATA-40)."
+    }
+  }
+}

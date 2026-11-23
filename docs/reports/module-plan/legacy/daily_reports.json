@@ -1,0 +1,1774 @@
+{
+  "category": "daily_reports",
+  "window_title": "Daily Reports",
+  "source_folder": "C:/Users/Sravan/Downloads/reports/daily_reports",
+  "report_list": [
+    "Peg Board Day Sheet",
+    "Daily Journal",
+    "Production Report",
+    "Collection Report",
+    "Deposit Slip",
+    "Scheduled Production",
+    "Routing Slip",
+    "Progress Notes",
+    "Production Analysis Report",
+    "Daily Audit",
+    "Claims Printed",
+    "Special Transaction Report"
+  ],
+  "reports": [
+    {
+      "name": "Peg Board Day Sheet",
+      "screenshots": ["1.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section at the top of the criteria panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 is the same value as the OID shown in the title bar."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "REPORT DATE",
+          "controls": [
+            {
+              "label": "Report Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Single date only (no start/end range). Editable-style field with a calendar icon inside it at the right."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "1.PNG only. Smallest criteria set of the category: PRINT FORMAT (full width), OFFICE/GROUP | PROVIDER (side by side), REPORT DATE (full width, single date). Large empty area between REPORT DATE and the action bar, nothing clipped. No greyed-out controls. No REPORT FORMAT, GROUP BY, SORT BY or OTHER OPTIONS section."
+    },
+    {
+      "name": "Daily Journal",
+      "screenshots": ["2.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PRINT FORMAT."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right half of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER/USER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER/USER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, first row. Read-only grey box; blue SELECT button (single-person icon)."
+            },
+            {
+              "label": "User",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, second row. Read-only grey box; blue SELECT button (person-plus icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Transaction Date", "Created Date"],
+              "default_value": "Transaction Date",
+              "enabled": true,
+              "notes": "Date-basis selector on the first row of the section, above Start Date / End Date. Full-width section."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "General", "Ortho"],
+              "default_value": "Both",
+              "enabled": true,
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "title": "TRANSACTION TYPES",
+          "controls": [
+            {
+              "label": "Services",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "All three transaction-type checkboxes sit on one row and all are ticked."
+            },
+            {
+              "label": "Payments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "Adjustments",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Show AR",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Greyed out (box and label grey) in this default state; on its own row. What enables it is not visible."
+            },
+            {
+              "label": "Include Resp. Party Type",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "On its own row."
+            },
+            {
+              "label": "Show Datewise Summary",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "On its own row."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider", "User"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the row. The row is cut at its lower edge by the action bar (only about 16 px of a normal 22 px row are visible) but all three options are fully readable."
+            },
+            {
+              "label": "Page Break",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Small greyed-out checkbox alone in the right half of the GROUP BY radio row. Greyed while None is the selected grouping (that a grouping enables it is an inference, not shown)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": true,
+      "notes": "2.PNG only. The criteria content is taller than the fixed-height criteria area: the last visible row (GROUP BY radios + Page Break) is cut horizontally by the PRINT / PREVIEW action bar (about 16 px visible against 22 px for the other radio rows, and no bottom border). No scrollbar is drawn, so anything below GROUP BY (for example a further section) would be hidden and can neither be confirmed nor ruled out. Everything above the cut is fully legible. Greyed in the default state: Show AR and Page Break. This is also the only screenshot in which a slice of the page footer is visible (see observations)."
+    },
+    {
+      "name": "Production Report",
+      "screenshots": ["3.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Summary",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PRINT FORMAT. The 'Detail' radio and its label are greyed out (disabled) in this state; 'Summary' is selected. What enables Detail is not visible."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right half of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Section spans the full width (this report has no PROVIDER section beside it)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field. No date-basis radio on this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "PRODUCTION BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Code", "Provider", "Category", "Carrier"],
+              "default_value": "Code",
+              "enabled": true,
+              "notes": "Full-width section; all four options on one row."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider", "Carrier"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the row."
+            },
+            {
+              "label": "Page Break",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Small greyed-out checkbox alone in the right half of the GROUP BY radio row; greyed while None is selected."
+            }
+          ]
+        },
+        {
+          "title": "CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Unlabelled wide read-only grey box (spans about two thirds of the panel); blue SELECT button (building icon) to its right."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include UCR",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with FEE SCHEDULE TO COMPARE; first line."
+            },
+            {
+              "label": "Include Z-Codes",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Greyed out in this default state; second line, directly under Include UCR. What enables it is not visible."
+            }
+          ]
+        },
+        {
+          "title": "FEE SCHEDULE TO COMPARE",
+          "controls": [
+            {
+              "label": "Fee Schedule To Compare",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "CIGNA PPO HAMILTON ( 128 )",
+              "enabled": false,
+              "notes": "list collapsed - other values not visible. Right half of the panel beside OTHER OPTIONS. Dropdown is greyed out (grey fill, grey text, up/down chevrons at its right); the row label itself is black. Probably tied to Include UCR being unticked - inference only, the dependency is not shown."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "3.PNG only. No PROVIDER picker section on this report (provider appears only as a PRODUCTION BY / GROUP BY choice). Four greyed items in the default state (PRODUCTION BY = Code, GROUP BY = None, Include UCR unticked): the Detail radio, Page Break, Include Z-Codes and the Fee Schedule To Compare dropdown. Blank space remains below OTHER OPTIONS / FEE SCHEDULE TO COMPARE, nothing clipped."
+    },
+    {
+      "name": "Collection Report",
+      "screenshots": ["4.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PRINT FORMAT."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right half of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Section spans the full width (this report has no PROVIDER section beside it)."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field. No date-basis radio on this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "PAYMENT TYPES",
+          "controls": [
+            {
+              "label": "Payment Types",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Read-only grey box; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "COLLECTION BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider", "Carrier", "Code"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the row."
+            },
+            {
+              "label": "Page Break",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Small greyed-out checkbox alone in the right half of the COLLECTION BY radio row; greyed while None is selected."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Include Adjustments(Collection)",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "Text exactly as shown - no space before the parenthesis. Ticked by default."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "4.PNG only. No PROVIDER picker section on this report. Only Page Break is greyed. Blank space below OTHER OPTIONS, nothing clipped."
+    },
+    {
+      "name": "Deposit Slip",
+      "screenshots": ["5.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section at the top of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER/USER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER/USER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, first row. Read-only grey box; blue SELECT button (single-person icon)."
+            },
+            {
+              "label": "User",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, second row. Read-only grey box; blue SELECT button (person-plus icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Transaction Date", "Payment Date"],
+              "default_value": "Transaction Date",
+              "enabled": true,
+              "notes": "Date-basis selector on the first row of the section. Full-width section."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "PAYMENT TYPES",
+          "controls": [
+            {
+              "label": "Cash",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "All seven payment-type checkboxes sit on one row; Cash is the only one ticked by default."
+            },
+            {
+              "label": "Check",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "Credit Card",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "CareCredit",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Written as one word."
+            },
+            {
+              "label": "Direct Deposit",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "Internal Financing",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "None",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Last checkbox in the payment-type row, literally labelled None."
+            }
+          ]
+        },
+        {
+          "title": "CHECK TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Both", "Patient Checks", "Insurance Checks"],
+              "default_value": "Both",
+              "enabled": false,
+              "notes": "Left half of the panel, side by side with GROUP BATCH CHECKS. Whole group greyed out (Both shown selected in grey) in this default state. Greyed while the Check payment type is unticked - the link to Check is an inference, not shown."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BATCH CHECKS",
+          "controls": [
+            {
+              "label": "GROUP BATCH CHECKS",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Right half of the panel. The section header itself is a checkbox: a greyed-out box sits inside the grey header bar in front of the (also greyed) header text, so the label doubles as the section title."
+            },
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Batch ID(Batch Insurance Payment)", "Check#"],
+              "default_value": "Batch ID(Batch Insurance Payment)",
+              "enabled": false,
+              "notes": "Row under the GROUP BATCH CHECKS header checkbox; whole group greyed out with Batch ID(Batch Insurance Payment) shown selected in grey. Text exactly as shown - no space before the parenthesis, and Check# with no space."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Show Responsible Party", "Show Patient", "None"],
+              "default_value": "Show Responsible Party",
+              "enabled": true,
+              "notes": "Full-width section; all three options on one row."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "5.PNG only. No REPORT FORMAT section. CHECK TYPE (three radios) and the whole GROUP BATCH CHECKS block (header checkbox plus its two radios) are greyed in the default state where only Cash is ticked. Blank space below OTHER OPTIONS, nothing clipped."
+    },
+    {
+      "name": "Scheduled Production",
+      "screenshots": ["6.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section at the top of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field. No date-basis radio on this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "6.PNG only. Only four sections (PRINT FORMAT, OFFICE/GROUP | PROVIDER, DATE RANGE); large empty area below DATE RANGE, nothing clipped. No greyed-out controls. No REPORT FORMAT, GROUP BY or OTHER OPTIONS."
+    },
+    {
+      "name": "Routing Slip",
+      "screenshots": ["7.PNG"],
+      "sections": [
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER. The 'Office Group' radio and its label are greyed out (disabled) on this report - the only report in the category where that is so; only Office is selectable."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with REPORT BY. Field is narrower than on the full-width DATE RANGE sections; calendar icon inside the field. No date-basis radio."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "REPORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Next Scheduled Appointment", "Next Scheduled Recall"],
+              "default_value": "Next Scheduled Appointment",
+              "enabled": true,
+              "notes": "Right half of the panel, beside DATE RANGE; the two options are stacked vertically, one per line."
+            }
+          ]
+        },
+        {
+          "title": "OPERATORY",
+          "controls": [
+            {
+              "label": "Operatory",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "PATIENTS",
+          "controls": [
+            {
+              "label": "Patient",
+              "type": "text_input",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Empty box with the lighter editable-field fill (same as the date fields, not the grey read-only picker fill); the blue SEARCH button to its right is the patient lookup. Whether the box accepts typing or is filled only through SEARCH cannot be told from the screenshot. Header is plural PATIENTS, row label singular Patient."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon immediately right of the Patient box (patient search / lookup)."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Recommended", "Active Treatment Plan", "Codes"],
+              "default_value": "Recommended",
+              "enabled": true,
+              "notes": "Three options stacked vertically at the left of the section, one per line."
+            },
+            {
+              "label": "",
+              "type": "other",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Info icon: small blue circle with a white 'i' directly after the 'Recommended' radio label (presumably a tooltip explaining Recommended); its tooltip text is not visible."
+            },
+            {
+              "label": "Include Completed Procedures",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "Positioned to the right (about one third across the section), level with the 'Recommended' line."
+            }
+          ]
+        },
+        {
+          "title": "SORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Appointment Date", "Provider (Last Name) – Appointment Date", "Operatory – Appointment Date", "Patient Last Name"],
+              "default_value": "Appointment Date",
+              "enabled": true,
+              "notes": "All four options on one row. The separator in options 2 and 3 is a spaced dash that is wider than the hyphen used elsewhere (e.g. Include Z-Codes), so it is transcribed as an en dash; it could be a plain hyphen."
+            },
+            {
+              "label": "Print Blank Routing Slip",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "On its own row directly under the SORT BY radios (still inside the SORT BY section, no separate header)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "7.PNG only. This is the only Daily report with NO PRINT FORMAT (PDF/Excel) section. Layout: OFFICE/GROUP | PROVIDER, then DATE RANGE | REPORT BY, then full-width OPERATORY, PATIENTS, OTHER OPTIONS, SORT BY. Only greyed item: the Office Group radio. A blank strip (about 23 px) is visible between the Print Blank Routing Slip row and the action bar, so nothing appears clipped."
+    },
+    {
+      "name": "Progress Notes",
+      "screenshots": ["8.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section at the top of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Preferred Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Row label reads 'Preferred Provider' (not 'Provider') on this report although the header is PROVIDER. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROGRESS NOTES TO PRINT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Unsigned", "Missing"],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Full-width section; all three options on one row."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["DOS Date", "Created On Date", "Appointment Date"],
+              "default_value": "DOS Date",
+              "enabled": true,
+              "notes": "Date-basis selector on the first row of the section. The 'Appointment Date' radio and its label are greyed out (disabled) in this default state (Detail selected above); DOS Date and Created On Date are enabled. That it belongs to the Missing choice is an inference, not shown."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "APPOINTMENTS TO INCLUDE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Only with Missing Progress Notes", "ALL"],
+              "default_value": "Only with Missing Progress Notes",
+              "enabled": false,
+              "notes": "Whole group greyed out in this default state; 'Only with Missing Progress Notes' is shown selected in grey. Presumably becomes active for the Missing choice - inference, not shown."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Page Break by Patient",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": ""
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "8.PNG only. Greyed in the default (Detail) state: the Appointment Date radio and both APPOINTMENTS TO INCLUDE radios. Header reads PROGRESS NOTES TO PRINT (the header font draws G like C, so the pixels look like PROCRESS). No REPORT FORMAT section. Blank space below OTHER OPTIONS, nothing clipped."
+    },
+    {
+      "name": "Production Analysis Report",
+      "screenshots": ["9.PNG"],
+      "sections": [
+        {
+          "title": "ANALYSIS BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Category", "Carrier"],
+              "default_value": "Category",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PRINT FORMAT (the position where other reports show REPORT FORMAT)."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right half of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field. No date-basis radio on this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "CATEGORY",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with CARRIER. Unlabelled read-only grey box; blue (active) SELECT button (single-person icon). Active while ANALYSIS BY = Category."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": false,
+              "notes": "Right half of the panel. Unlabelled read-only grey box showing ALL (box looks the same as the CATEGORY box); its SELECT button (single-person icon) is greyed out / disabled while ANALYSIS BY = Category. That it becomes active when Carrier is chosen is implied but not shown."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "9.PNG only. Visible dependency: with ANALYSIS BY = Category the CATEGORY picker is active and the CARRIER picker's SELECT button is greyed. No REPORT FORMAT section; ANALYSIS BY occupies that top-left slot. Large empty area below CATEGORY / CARRIER, nothing clipped."
+    },
+    {
+      "name": "Daily Audit",
+      "screenshots": ["10.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section at the top of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field. No date-basis radio on this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT HAS",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["ALL", "Appointment", "Transaction in Ledger", "Progress Notes"],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section; all four options on one row."
+            }
+          ]
+        },
+        {
+          "title": "BUT MISSING",
+          "controls": [
+            {
+              "label": "Appointment",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": "All four BUT MISSING checkboxes sit on one row and all are ticked by default."
+            },
+            {
+              "label": "Transaction in Ledger",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "Progress Notes",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": ""
+            },
+            {
+              "label": "Progress Notes with Signature",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "checked",
+              "enabled": true,
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "title": "SORT BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Date", "Patient Lastname", "Provider"],
+              "default_value": "Date",
+              "enabled": true,
+              "notes": "'Patient Lastname' is written with Lastname as one word."
+            }
+          ]
+        },
+        {
+          "title": "GROUP BY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["None", "Provider"],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the row."
+            },
+            {
+              "label": "Page Break",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": false,
+              "notes": "Small greyed-out checkbox alone in the right half of the GROUP BY radio row; greyed while None is selected."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "10.PNG only. PATIENT HAS (radio) and BUT MISSING (checkboxes) together form the audit rule. On this report SORT BY comes before GROUP BY. Header reads BUT MISSING (rendered like MISSINC by the header font). Only Page Break is greyed. Blank space (about 57 px) below GROUP BY, nothing clipped."
+    },
+    {
+      "name": "Claims Printed",
+      "screenshots": ["11.PNG"],
+      "sections": [
+        {
+          "title": "REPORT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Detail", "Summary"],
+              "default_value": "Detail",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PRINT FORMAT."
+            }
+          ]
+        },
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Right half of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field. No date-basis radio on this report."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "CARRIER",
+          "controls": [
+            {
+              "label": "Carriers",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Full-width section. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": false,
+      "notes": "11.PNG only. Large empty area below CARRIER, nothing clipped. No greyed-out controls."
+    },
+    {
+      "name": "Special Transaction Report",
+      "screenshots": ["12.PNG"],
+      "sections": [
+        {
+          "title": "PRINT FORMAT",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["PDF", "Excel"],
+              "default_value": "PDF",
+              "enabled": true,
+              "notes": "Full-width section at the top of the panel."
+            }
+          ]
+        },
+        {
+          "title": "OFFICE/GROUP",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Office", "Office Group"],
+              "default_value": "Office",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PROVIDER/USER."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "108",
+              "enabled": true,
+              "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+            }
+          ]
+        },
+        {
+          "title": "PROVIDER/USER",
+          "controls": [
+            {
+              "label": "Provider",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, first row. Read-only grey box; blue SELECT button (single-person icon)."
+            },
+            {
+              "label": "User",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Right half of the panel, second row. Read-only grey box; blue SELECT button (person-plus icon)."
+            }
+          ]
+        },
+        {
+          "title": "DATE RANGE",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Transaction Date", "Service Date"],
+              "default_value": "Transaction Date",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PATIENT NAME RANGE. Date-basis selector on the first row of the section."
+            },
+            {
+              "label": "Start Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Narrower field than on the full-width DATE RANGE sections; calendar icon inside the field."
+            },
+            {
+              "label": "End Date",
+              "type": "date_input",
+              "options": [],
+              "default_value": "11/21/2026",
+              "enabled": true,
+              "notes": "Calendar icon inside the field."
+            }
+          ]
+        },
+        {
+          "title": "PATIENT NAME RANGE",
+          "controls": [
+            {
+              "label": "Start Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "AAAAA",
+              "enabled": true,
+              "notes": "Right half of the panel. Editable-style (lighter) box pre-filled with AAAAA; blue SEARCH button to its right."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon right of the Start Name box (patient lookup for the start of the name range)."
+            },
+            {
+              "label": "End Name",
+              "type": "text_input",
+              "options": [],
+              "default_value": "ZZZZZ",
+              "enabled": true,
+              "notes": "Editable-style (lighter) box pre-filled with ZZZZZ; blue SEARCH button to its right."
+            },
+            {
+              "label": "SEARCH",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with magnifier icon right of the End Name box (patient lookup for the end of the name range)."
+            }
+          ]
+        },
+        {
+          "title": "EXCLUDE PATIENT TYPE",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with PAYMENT/ADJ CODES. Unlabelled read-only grey box showing 'None' (mixed case); blue SELECT button (person-plus icon). No NONE button here."
+            }
+          ]
+        },
+        {
+          "title": "PAYMENT/ADJ CODES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "None",
+              "enabled": true,
+              "notes": "Right half of the panel. Unlabelled read-only grey box showing 'None' (mixed case); blue SELECT button (building icon), followed by a NONE button."
+            },
+            {
+              "label": "NONE",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with circle-slash (ban) icon, right of the SELECT button; presumably resets the selection to None."
+            }
+          ]
+        },
+        {
+          "title": "INSURANCE PLANS/SUB TYPES",
+          "controls": [
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Left half of the panel, side by side with CODE/CATEGORY. Unlabelled read-only grey box; blue SELECT button (building icon). No NONE button here."
+            }
+          ]
+        },
+        {
+          "title": "CODE/CATEGORY",
+          "controls": [
+            {
+              "label": "",
+              "type": "radio_group",
+              "options": ["Code", "Category"],
+              "default_value": "Code",
+              "enabled": true,
+              "notes": "Right half of the panel; first row of the section."
+            },
+            {
+              "label": "",
+              "type": "picker",
+              "options": [],
+              "default_value": "ALL",
+              "enabled": true,
+              "notes": "Row under the Code / Category radios. Unlabelled read-only grey box; blue SELECT button (building icon), followed by a NONE button."
+            },
+            {
+              "label": "NONE",
+              "type": "button",
+              "options": [],
+              "default_value": "",
+              "enabled": true,
+              "notes": "Blue button with circle-slash (ban) icon, right of the SELECT button; presumably sets the code/category selection to none."
+            }
+          ]
+        },
+        {
+          "title": "OTHER OPTIONS",
+          "controls": [
+            {
+              "label": "Age Range",
+              "type": "checkbox",
+              "options": [],
+              "default_value": "unchecked",
+              "enabled": true,
+              "notes": "First cell of the first OTHER OPTIONS row; followed on the same row by the From and To boxes."
+            },
+            {
+              "label": "From",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0",
+              "enabled": false,
+              "notes": "Right-aligned value in a box with the grey read-only/disabled fill (same grey as the picker boxes) while Age Range is unticked; presumably editable once Age Range is ticked - inference."
+            },
+            {
+              "label": "To",
+              "type": "number_input",
+              "options": [],
+              "default_value": "999",
+              "enabled": false,
+              "notes": "Right-aligned value in a box with the grey read-only/disabled fill while Age Range is unticked."
+            },
+            {
+              "label": "Amount",
+              "type": "dropdown",
+              "options": [],
+              "default_value": "All Amount",
+              "enabled": true,
+              "notes": "list collapsed - other values not visible. Right half of the same row as Age Range / From / To; light editable fill with a down chevron."
+            },
+            {
+              "label": "",
+              "type": "number_input",
+              "options": [],
+              "default_value": "0",
+              "enabled": false,
+              "notes": "Unlabelled numeric box immediately right of the Amount dropdown; right-aligned 0 with the grey read-only/disabled fill while the dropdown shows 'All Amount' (presumably the comparison amount for the other dropdown choices - inference)."
+            },
+            {
+              "label": "Group By",
+              "type": "radio_group",
+              "options": ["Code", "Username", "Insurance Plan", "Transaction Provider"],
+              "default_value": "Code",
+              "enabled": true,
+              "notes": "Second row of OTHER OPTIONS; 'Group By' is a row label here, not a grey section header. This is the last visible row, flush against the action bar."
+            }
+          ]
+        }
+      ],
+      "actions": ["CLEAR CRITERIA", "PRINT / PREVIEW", "ADD TO MY FAVORITES"],
+      "possibly_truncated": true,
+      "notes": "12.PNG only. Layout pairs: OFFICE/GROUP | PROVIDER/USER; DATE RANGE | PATIENT NAME RANGE; EXCLUDE PATIENT TYPE | PAYMENT/ADJ CODES; INSURANCE PLANS/SUB TYPES | CODE/CATEGORY; then full-width OTHER OPTIONS. Truncation flag is precautionary: the criteria fill the fixed-height area completely and the last visible row (Group By) runs straight into the PRINT / PREVIEW bar with no bottom border and no blank strip (the row measures 26 px against 28-29 px for comparable rows), so the content is at or just over the visible height. No control is visibly cut and no scrollbar is drawn, but any further rows below Group By would be hidden. Greyed in the default state: the From / To age boxes and the amount value box. Headers DATE RANGE, PATIENT NAME RANGE and CODE/CATEGORY are transcribed with G (the header font draws G like C)."
+    }
+  ],
+  "reports_without_screenshot": [],
+  "observations": "Coverage: 12 screenshots, each showing a different one of the 12 listed reports selected, in list order (1.PNG Peg Board Day Sheet, 2 Daily Journal, 3 Production Report, 4 Collection Report, 5 Deposit Slip, 6 Scheduled Production = left column; 7 Routing Slip, 8 Progress Notes, 9 Production Analysis Report, 10 Daily Audit, 11 Claims Printed, 12 Special Transaction Report = right column). The selected radio of every screenshot was confirmed from the pixels. There are no popups, expanded dropdowns, scrolled second views or foreign screens, so the contents of every SELECT / SEARCH picker dialog and of the two dropdown lists (Amount on Special Transaction Report, Fee Schedule To Compare on Production Report) are NOT documented by these screenshots.\n\nScreen chrome (identical in all 12): dark title bar with 'Daily Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right. Blue sub-header 'SELECT REPORT' over the left panel and 'REPORT CRITERIA' over the right panel; the right end of the REPORT CRITERIA bar holds the grey-styled CLEAR CRITERIA button (refresh icon). A splitter / collapse handle with three vertical dots sits between the two panels. The bottom action bar of the criteria panel holds PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon), both blue.\n\nReport list: 12 radio items in a 2-column x 6-row grid; the dark panel below the grid is empty (checked pixel by pixel), so the list is not scrollable or clipped.\n\nText-rendering caveat: the bold dark section-header font draws a capital G almost exactly like a C at this resolution (the partly visible footer message suggests the page was captured at 75% browser zoom), so the pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'CROUP BY', 'PROCRESS NOTES TO PRINT', 'BUT MISSINC', 'CATECORY', 'CODE/CATECORY', 'PATIENT NAME RANCE'. The greyed 'GROUP BATCH CHECKS' header on Deposit Slip and the mixed-case labels ('Office Group', 'Group By') show a clear G, so all of these are transcribed with G. The date digits '11' also render like 'TI' (the value is 11/21/2026).\n\nRecurring patterns: PRINT FORMAT (PDF | Excel, default PDF) is on 11 of 12 reports - missing only on Routing Slip. REPORT FORMAT (Detail | Summary) appears only on Daily Journal, Production Report (Detail greyed, Summary selected), Collection Report and Claims Printed; Production Analysis Report has ANALYSIS BY in that slot. OFFICE/GROUP (Office | Office Group radios, default Office, plus an unlabelled read-only box showing 108 = the current OID with a SELECT button) is on all 12; Office Group is greyed only on Routing Slip. A PROVIDER picker (default ALL) is on 10 reports - Production Report and Collection Report have none - and a User picker is added (section title PROVIDER/USER) on Daily Journal, Deposit Slip and Special Transaction Report; Progress Notes labels its provider row 'Preferred Provider'. Every date field shows 11/21/2026 (the capture day, i.e. the default is today); Peg Board Day Sheet has a single Report Date instead of a Start Date / End Date range. A date-basis radio precedes the range on Daily Journal (Transaction Date | Created Date), Deposit Slip (Transaction Date | Payment Date), Progress Notes (DOS Date | Created On Date | Appointment Date) and Special Transaction Report (Transaction Date | Service Date). Apart from the office box (108), the read-only picker boxes (grey fill + blue SELECT) default to ALL, except EXCLUDE PATIENT TYPE and PAYMENT/ADJ CODES on Special Transaction Report which default to 'None'. A small 'Page Break' checkbox sits alone in the right half of the grouping row on Daily Journal, Production Report, Collection Report and Daily Audit and is greyed in every screenshot (grouping = None in all of them). Button icons: building icon for office / codes / payment types / payment-adj codes / insurance plans / code-category; single-person icon for provider / operatory / category / carrier(s); person-plus icon for user and exclude patient type; magnifier for SEARCH; circle-slash for NONE.\n\nDisabled states were confirmed by pixel colour: disabled labels are mid-grey (RGB 161) against black for enabled ones; read-only / disabled boxes are grey (220,223,226) against (241,241,241) for editable fields. Controls greyed in the captured default state (what enables them is not shown): Show AR and Page Break (Daily Journal); Detail, Page Break, Include Z-Codes and the Fee Schedule To Compare dropdown (Production Report); Page Break (Collection Report); CHECK TYPE and the whole GROUP BATCH CHECKS block (Deposit Slip); Office Group (Routing Slip); Appointment Date and APPOINTMENTS TO INCLUDE (Progress Notes); the CARRIER SELECT button (Production Analysis Report); Page Break (Daily Audit); Age Range From / To and the amount value box (Special Transaction Report).\n\nTruncation: the criteria area has a fixed height (about 481 px in every screenshot) with the action bar pinned below it and no scrollbar is ever drawn. Daily Journal (2.PNG) is visibly clipped - its GROUP BY row is cut by the action bar - and Special Transaction Report (12.PNG) fills the area exactly with its last row flush against (and about 2-3 px short at) the action bar, so both are flagged possibly_truncated; in both cases the overflow is only a few pixels, which is consistent with the visible row being the last one, but hidden rows cannot be ruled out. The other ten reports show blank space under their last section.\n\nFooter: only 2.PNG shows a sliver of the page footer, and only the top 3-4 pixel rows of the glyphs are visible, so it cannot be read reliably. Best reading: '© 2026 Planet DDS | Privacy Policy | ... [?]' in black (Privacy Policy in link blue, followed by further unreadable text ending in digits) and, in red at the right, 'You have zoomed ... to 75%. This page is best viewed if zoomed to 100% [?]'. It is browser-zoom chrome of the host page, not report criteria.\n\nVerification: third-reader pass over the original PNGs and enlarged crops. Readers A and B agreed on every report, section, control, option, default and enabled state (151 controls); their only differences were descriptive (SELECT icon wording, the label given to the Routing Slip info icon, the wording of the unreadable footer). A pixel-cluster sweep of every criteria panel found no control outside those listed here."
+}

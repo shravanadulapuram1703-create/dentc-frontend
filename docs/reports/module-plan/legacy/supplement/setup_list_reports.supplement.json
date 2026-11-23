@@ -1,0 +1,319 @@
+{
+  "category": "setup_list_reports",
+  "source_document": "research/legacy_report_outputs_lists.md",
+  "reports": [
+    {
+      "report_id": "setup_list_reports.r02",
+      "legacy_name": "Insurance Plan List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "EMPLOYER, CARRIER and GROUP # are the three parts of a plan's identity: the vendor defines a plan as the combination group number + employer + carrier.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "A plan is the combination group number + employer + carrier."
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r04",
+      "legacy_name": "Inactive Plans List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "Population rule with no criteria control: \"inactive\" means unused here. The report lists plans that exist in the plan database but are not in use on any patient record; it does not filter on a status flag.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Plans that exist in the database but are **not in use on any patient record**"
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r06",
+      "legacy_name": "Procedure Codes List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s02.c01",
+          "text": "CATEGORY restricts the list to the codes of one ADA category (ALL = every category).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`CATEGORY` (`ALL`) | Codes of one ADA category"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s03.c01",
+          "text": "PRODUCTION TYPE restricts the list to the codes of one scheduler production type (ALL = every type).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`PRODUCTION TYPE` (`ALL`) | Codes of one scheduler production type"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s04.c01",
+          "text": "STATUS (Active / Inactive / Both) filters on the status of the procedure code.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`STATUS` `Active` / `Inactive` / `Both` | Code status"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s05.c01",
+          "text": "Include Only Tooth Required: only codes that require a tooth number.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Only Tooth Required` | Only codes that require a tooth number"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s05.c02",
+          "text": "Include Only Surface Required: only codes that require a surface.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Only Surface Required` | Only codes that require a surface"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s05.c03",
+          "text": "Include Only Bill to Insurance: only codes set up to be billed to insurance.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Only Bill to Insurance` | Only codes set up to be billed to insurance"
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The missing office filter is by design, not a capture gap: procedure codes are global to the account.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Procedure codes are global to the account, hence no office filter"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r06.s01.c01",
+          "text": "With PRINT FORMAT = Excel the file downloads immediately. The document states this for all 40 Lists reports and cites the vendor article on printing the procedure codes list for it - recorded once here.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "With `Excel` the file downloads immediately."
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r08",
+      "legacy_name": "Procedure Codes by Fee Schedule",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "FEE SCHEDULE = a given schedule (the selection changes)",
+          "effect": "EFFECTIVE DATE offers the effective-dated versions of the chosen schedule; one version is selected.",
+          "controls": [
+            "setup_list_reports.r08.s05.c01",
+            "setup_list_reports.r08.s06.c01"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "`EFFECTIVE DATE` (dropdown) | One effective-dated version of the chosen schedule."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r08.s02.c01",
+          "text": "PROCEDURE CODE TYPE (Dental / Medical / Other, all three ticked by default) selects the code families that are included in the printout.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PROCEDURE CODE TYPE` `Dental` / `Medical` / `Other` (all ticked) | Code families included"
+        },
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "CATEGORY, PRODUCTION TYPE, STATUS and the three Include Only boxes work as on Procedure Codes List: one ADA category, one scheduler production type, code status, and tooth-required / surface-required / bill-to-insurance codes only.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`CATEGORY`, `PRODUCTION TYPE`, `STATUS`, three `Include Only …` boxes | As in `Procedure Codes List`"
+        },
+        {
+          "about": "options",
+          "control_id": "setup_list_reports.r08.s05.c01",
+          "text": "FEE SCHEDULE takes one schedule: there is no ALL default here - a specific schedule is preselected (the name in our capture is tenant data, not a fixed default). Whether the list holds an ALL entry at all is not stated.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`FEE SCHEDULE` | One schedule; there is no `ALL` default (a specific schedule is preselected)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r08.s05.c01",
+          "text": "This report is the vendor's documented way to print an office (UCR) fee schedule or a contracted PPO fee schedule: that schedule is the one picked under FEE SCHEDULE.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "The vendor's way to print an office (UCR) or contracted PPO fee schedule"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r08.s06.c01",
+          "text": "EFFECTIVE DATE picks one effective-dated version of the chosen fee schedule. It came with the Effective Date feature (2020); before that the schedule dropdown itself carried the date as a suffix [ED: m/d/yyyy] after the schedule name.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Added with the Effective Date feature (2020); the old dropdown showed the date as a suffix `[ED: m/d/yyyy]` after the schedule name"
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r09",
+      "legacy_name": "Credit Codes Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "",
+          "text": "The report lists the account's payment and adjustment types (the credit codes). For the complete list the vendor says to run it with TYPE = ALL and CLASS = ALL; any other choice narrows the list (the value lists themselves are not shown - see the picker entries and unresolved).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Complete list of the account's payment and adjustment types; run with `TYPE` = `ALL` and `CLASS` = `ALL`"
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r10",
+      "legacy_name": "Fee Schedule List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "options",
+          "control_id": "setup_list_reports.r10.s02.c01",
+          "text": "Besides the default ALL, the entries of the FEE SCHEDULE dropdown are the account's fee schedules, each shown with its effective date as an ED suffix after the name (the 2020 screen wrote it [ED: m/d/yyyy]).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`FEE SCHEDULE` dropdown, default `ALL`; entries show the effective date as `ED`"
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r11",
+      "legacy_name": "Capitation Fee Schedule",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "options",
+          "control_id": "setup_list_reports.r11.s02.c01",
+          "text": "Besides the default ALL, the entries of the CAPITATION FEE SCHEDULE dropdown are fee schedules, each shown with its effective date as an ED suffix after the name.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`CAPITATION FEE SCHEDULE` dropdown (`ALL`); entries show the effective date as `ED`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r11.s02.c01",
+          "text": "The schedules behind this criterion are managed-care fee schedules: the vendor's term covers capitation, dental HMO, HMO and Medicaid schedules.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Prints a managed-care fee schedule; the vendor's term covers capitation, dental HMO, HMO and Medicaid"
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r12",
+      "legacy_name": "Office List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "OFFICE/GROUP = Office Group",
+          "effect": "The SELECT picker chooses office groups defined in Setup > Office Groups (for example regions) instead of offices; when no office groups are defined, a group run covers all offices of the account. Cross-cutting statement of the document for all Lists screens (vendor articles on office groups and on the new reports menu) - recorded once here; it applies to the three Setup List reports that have the Office / Office Group radios (Office List, Office Holidays, Operatory List).",
+          "controls": [
+            "setup_list_reports.r12.s02.c01",
+            "setup_list_reports.r12.s02.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`Office Group` picks groups defined in `Setup > Office Groups` (for example regions); without groups a group run covers all offices of the account."
+        }
+      ],
+      "corrections": [
+        {
+          "about": "default",
+          "control_id": "setup_list_reports.r12.s02.c02",
+          "text": "The number in the office box is not a fixed default: with the Office radio the box defaults to the current office (the OID of the session, the same number the title bar shows) and SELECT picks other offices. Recorded once here; it applies to the office box of Office List, Office Holidays and Operatory List.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office` picks offices (default the current OID)."
+        }
+      ]
+    },
+    {
+      "report_id": "setup_list_reports.r19",
+      "legacy_name": "Notes Macros List",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "setup_list_reports.r19.s02.c01",
+          "text": "MACRO CATEGORY filters on the category of a notes macro. The categories are a setup list (a category is only a Description) whose standard content follows the ADA code categories plus a few extras.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Categories that organise notes macros; a category needs only a `Description`. The standard list follows the"
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "setup_list_reports.r01",
+      "question": "STATE dropdown: the value list is not documented (only the default ALL is known) and which state of the employer record it reads is not stated. The same holds for STATE on Carrier List, where one carrier can have several claim submission addresses."
+    },
+    {
+      "report_id": "setup_list_reports.r02",
+      "question": "Not vendor-documented: what enables the greyed Start Date / End Date boxes of DATE RANGE (ticking Created On / Modified On?), whether both ticks can be combined, and whether unticking Include User in Filters disables the USER picker (the document says the USER selection is applied only while the box is ticked, on the strength of our capture alone). The meanings of SORT BY, DATE RANGE and USER are inferred."
+    },
+    {
+      "report_id": "setup_list_reports.r05",
+      "question": "What is the USER relation on Drug List - drugs created by the chosen users, or user-specific drugs? Not documented."
+    },
+    {
+      "report_id": "setup_list_reports.r06",
+      "question": "CATEGORY and PRODUCTION TYPE: the value lists are not given (one entry per ADA category and per scheduler production type is implied). The same dropdowns sit on Procedure Codes by Fee Schedule."
+    },
+    {
+      "report_id": "setup_list_reports.r08",
+      "question": "FEE SCHEDULE and EFFECTIVE DATE: the list contents are tenant data. Which effective date is preselected for a schedule, and whether the EFFECTIVE DATE list reloads when another schedule is chosen, is implied but not shown."
+    },
+    {
+      "report_id": "setup_list_reports.r09",
+      "question": "TYPE and CLASS dropdowns: the opened lists were never seen. The vendor defines the underlying fields (Type = Payment / Adjustment; Class = None, Insurance Payment, Capitation Payment ... for payments and None, Write-Off, Finance Charge ... for adjustments); they are recorded as likely dropdown lists but not added as options. Do the dropdowns list exactly these values, and does CLASS depend on TYPE?"
+    },
+    {
+      "report_id": "setup_list_reports.r10",
+      "question": "Fee Schedule List: what the report prints is not documented (a catalogue of schedules, or the fees of every selected schedule), so the effect of choosing one schedule instead of ALL is unknown."
+    },
+    {
+      "report_id": "setup_list_reports.r13",
+      "question": "Office Holidays: what the DATE RANGE matches (holidays intersecting the range is only inferred) and whether enterprise, account-wide holidays are included is unknown."
+    },
+    {
+      "report_id": "setup_list_reports.r19",
+      "question": "MACRO CATEGORY: the entries other than ALL are the notes-macro categories of the account; the exact entries of the standard list are not quoted."
+    },
+    {
+      "report_id": "",
+      "question": "Older build: the old Prescription/Drug List screen offered Prescription Detail besides Drug List; only Drug List moved to the Setup List screen (the old screen was still served under Reports (Old) in a 2024 capture). Prescription Detail is not added here - confirm whether it is in scope and where it lives now."
+    }
+  ]
+}

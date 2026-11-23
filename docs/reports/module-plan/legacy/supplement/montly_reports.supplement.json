@@ -1,0 +1,649 @@
+{
+  "category": "montly_reports",
+  "source_document": "research/legacy_report_outputs_monthly_mgmt_ledger_statements.md",
+  "reports": [
+    {
+      "report_id": "montly_reports.r01",
+      "legacy_name": "Executive Summary",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s01.c02",
+          "text": "Several or all offices can be chosen for one run: the vendor-recommended run is SELECT > `Select All` offices. `Select All` is the wording of the vendor's reporting guide; the dialog itself is not shown in the document, so its on-screen label may differ.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Date range; `SELECT` > `Select All` offices"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s04.c01",
+          "text": "Show AR adds an A/R snapshot whose as-of date is the END of the report range (End Date); it matches the Aging report only when the Executive Summary is run for a single day.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Executive Summary A/R | \"A/R as of\" = end of the report range; matches Aging only when run for a single day"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s04.c01",
+          "text": "Show AR is off by default (vendor text). Ticking it adds the `A/R as of` block to the report and the footer flag `* Show AR.`; without it no A/R figures print.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Show AR` (default off) | Adds the `A/R as of` block and the footer flag `* Show AR.` | `[D]` `[V2]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s03.c02",
+          "text": "Start Date / End Date give the range for the counts and the money figures. The MTD and YTD blocks are derived from the End Date alone: MTD = first day of that month through the End Date, YTD = January 1 through the End Date.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Start Date` / `End Date` | Range for the counts and money; MTD / YTD are derived from the **end** date | `[S]` `[V1]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s02.c01",
+          "text": "The Provider picker limits the figures to the selected providers; the default ALL is echoed in the report footer as `Providers : ALL`.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| `Provider` | Limits the figures to selected providers; footer shows `Providers : ALL` by default | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s01.c02",
+          "text": "One KPI block is printed per selected office, and the figures reflect the activity within that office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "One KPI block per selected office (the vendor pitches it as a single report holding the KPIs of every location); figures reflect activity **within the named location**."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r01.s01.c02",
+          "text": "Exception to the office rule: the new-patient counts follow the patient's preferred HOME office (from the patient record), not the office where the activity was recorded.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "the Executive Summary new-patient counts follow the **home office** (of the responsible party for aging / statements; the preferred home office on the patient record for new patients)"
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r02",
+      "legacy_name": "Executive Day Sheet",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r02.s01.c01",
+          "text": "PRINT FORMAT = Excel downloads a spreadsheet instead of opening the PDF report viewer; Excel layouts are flat (one record per row). Cross-cutting statement of the document for every report with a PRINT FORMAT section - in this category Executive Day Sheet, both aging reports, Daily Journal Summary by Allocation and WaterFall Report - recorded once here. The vendor evidence it cites is for a Daily report and for the aging Excel output, not for this report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`PRINT FORMAT` = `Excel` | Downloads a spreadsheet instead of opening the viewer"
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r03",
+      "legacy_name": "Aging Report by Home Office",
+      "added_controls": [
+        {
+          "section": "AGING",
+          "label": "Over 120+",
+          "type": "checkbox",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "montly_reports.r03.s10.c06",
+          "confidence": "confirmed",
+          "evidence_quote": "Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`",
+          "notes": "Appears only when PRINT FORMAT = Excel: it then stands in place of the `Over 120` bucket checkbox and carries an info icon (tooltip not documented). Our screenshot was taken with PRINT FORMAT = PDF and therefore shows `Over 120`. Excel-only option: the spreadsheet then carries Over 120 / Over 150 / Over 180 / Over 270 / Over 365 buckets. Default state not documented."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PRINT FORMAT = Excel",
+          "effect": "In the AGING section the bucket checkbox `Over 120` is replaced by the checkbox `Over 120+` (with an info icon); with PRINT FORMAT = PDF the plain `Over 120` checkbox is shown.",
+          "controls": [
+            "montly_reports.r03.s02.c01",
+            "montly_reports.r03.s10.c06"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`PRINT FORMAT` `PDF` / `Excel` | Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`"
+        },
+        {
+          "when": "AGING BY = Patient AR",
+          "effect": "The threshold field `Account Balance Over` is relabelled `Patient Balance Over`; with AGING BY = Account AR the label is `Account Balance Over`.",
+          "controls": [
+            "montly_reports.r03.s09.c01",
+            "montly_reports.r03.s09.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`AGING BY` `Patient AR` | Threshold label becomes `Patient Balance Over`"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "truncation",
+          "control_id": "montly_reports.r03.s12.c01",
+          "text": "SORT BY is the LAST section of the criteria panel and holds the two radios `Resp. Party Last name` / `Resp. Party ID`: vendor screenshots of the full aging criteria screen confirm both labels and that no section follows the row that our screenshot clips.",
+          "resolves_truncation": true,
+          "confidence": "confirmed",
+          "evidence_quote": "This row is clipped in our own screenshots; the vendor's full screenshots confirm both labels and that `SORT BY` is the **last** section"
+        },
+        {
+          "about": "label",
+          "control_id": "montly_reports.r03.s12.c01",
+          "text": "The two clipped option labels are confirmed as read: `Resp. Party Last name` and `Resp. Party ID`. The [?] markers of the inventory can be dropped.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`SORT BY` `Resp. Party Last name` / `Resp. Party ID` | Order of accounts. This row is clipped in our own screenshots; the vendor's full screenshots confirm both labels"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s03.c02",
+          "text": "On this report the selected office(s) are HOME offices: it lists the responsible parties whose home office is selected and considers all of their transactions wherever they were recorded.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office` / `Office Group` | Home offices whose responsible parties are listed | `[D]` `[V5]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s05.c01",
+          "text": "Report Date is the single as-of date of the ageing (not a range); ageing starts when a procedure is marked completed.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| Aging | A single `Report Date` (as-of). Aging starts when a procedure is marked completed | `[D]` `[V8]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s07.c01",
+          "text": "Start Name / End Name are an alphabetical range on the responsible party LAST name.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Alphabetical range on responsible-party last name | `[S]` `[V51]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s09.c01",
+          "text": "AGING BY = Account AR counts the insurance + patient balances on the account and can include balances that belong to another office (for example a dependant whose home office differs).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`AGING BY` `Account AR` | Threshold label `Account Balance Over`; counts insurance + patient balances on the account; can include balances that belong to another office"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s09.c01",
+          "text": "AGING BY = Patient AR counts only the patient balances for this office; accounts that only have an estimated insurance balance do not appear.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "only patient balances for this office; accounts with only an estimated insurance balance do not appear"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s10.c02",
+          "text": "The five bucket checkboxes (Current, Over 30, Over 60, Over 90, Over 120) are an ACCOUNT filter: they select the accounts that have a balance in a ticked bucket.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Bucket checkboxes `Current` ... `Over 120` | Select accounts that have a balance in the ticked buckets (2019 footer wording `Accounts with Bal :`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s10.c07",
+          "text": "Include Credit Balance adds the accounts whose total is negative; left unticked (the default) credits are left out and the grand total is higher than the real A/R.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Credit Balance` | Includes accounts whose total is negative; without it credits are left out and the grand total is higher than the \"true AR\""
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s10.c01",
+          "text": "SHOW ONLY CREDIT BALANCES lists only the accounts with a negative total.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`SHOW ONLY CREDIT BALANCES` | Lists only accounts with a negative total"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s11.c03",
+          "text": "Include Balance Status prints the account's Balance Status - a tenant-defined collections-stage note (10-character code + description) set with the Ledger's Balance Stat button and maintained in Setup > Misc Setups > Balance Status.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Balance Status` | Prints the account's **Balance Status** (a tenant-defined collections-stage note: 10-character code + description, set with the Ledger's `Balance Stat` button; setup in `Setup > Misc Setups > Balance Status`)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s11.c04",
+          "text": "Include Contract Balances adds the remaining payment-contract balances (regular / ortho contracts keep their balance off the ledger until the periodic charges post).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Contract Balances` | Adds remaining payment-contract balances (regular / ortho contracts keep balances **off** the ledger until periodic charges post)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s01.c01",
+          "text": "REPORT FORMAT: Detail = one block per account (responsible party); Summary = office totals - the vendor describes it as the A/R snapshot of the outstanding patient and insurance balances of each selected office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `REPORT FORMAT` `Detail` / `Summary` | Per-account blocks vs office totals | `[D]` `[V25]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s02.c01",
+          "text": "PRINT FORMAT = Excel downloads a flat spreadsheet (one record per row) instead of opening the PDF viewer, and the Excel layout can carry columns the PDF does not - here the extended buckets behind `Over 120+`.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Excel layouts are flat (one record per row, repeated key columns, title in a merged cell) and can contain columns the PDF does not (see Aging `Over 120+`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s06.c01",
+          "text": "PATIENT TYPE restricts the report to general or to ortho patients (Both = no restriction); the choice is echoed in the report footer.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| `PATIENT TYPE` `Both` / `General` / `Ortho` | Restricts to general or ortho patients; echoed in the footer | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s08.c01",
+          "text": "EXCLUDE RESP. PARTY TYPE drops the accounts of the selected responsible-party types; the selection is echoed in the report footer as `Ex Resp Party Type`.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| `EXCLUDE RESP. PARTY TYPE` | Drops accounts of the selected types; echoed as `Ex Resp Party Type` | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s11.c02",
+          "text": "This option drops the accounts whose remaining balance is expected entirely from insurance.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Drops accounts whose remaining balance is expected entirely from insurance | `[C]` `[V51]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r03.s10.c02",
+          "text": "Bucket boundaries in days, as the vendor defines them: Current = 0-29 (article) or 0-30 (glossary); Over 30 = 30 or 31 to 59; Over 60 = 60 or 61 to 89; Over 90 = 90 or 91 to 119; Over 120 = 120 and more, or more than 120. The vendor's two definitions differ by one day at the boundaries.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Aging bucket boundaries are defined inconsistently by the vendor (0–29 vs 0–30; 120+ vs more than 120)"
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r04",
+      "legacy_name": "Aging Report",
+      "added_controls": [
+        {
+          "section": "AGING",
+          "label": "Over 120+",
+          "type": "checkbox",
+          "options": [],
+          "default_value": "",
+          "enabled": true,
+          "options_unknown": false,
+          "distinct_from": "montly_reports.r04.s10.c06",
+          "confidence": "likely",
+          "evidence_quote": "Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`",
+          "notes": "Appears only when PRINT FORMAT = Excel: it then stands in place of the `Over 120` bucket checkbox and carries an info icon (tooltip not documented). Our screenshot was taken with PRINT FORMAT = PDF and therefore shows `Over 120`. Excel-only option: the spreadsheet then carries Over 120 / Over 150 / Over 180 / Over 270 / Over 365 buckets. Default state not documented. Documented for the aging criteria panel in the Aging Report by Home Office section; the document states that the Aging Report panel is identical and that every option behaves the same."
+        }
+      ],
+      "added_options": [],
+      "dynamic_rules": [
+        {
+          "when": "PRINT FORMAT = Excel",
+          "effect": "In the AGING section the bucket checkbox `Over 120` is replaced by the checkbox `Over 120+` (with an info icon); with PRINT FORMAT = PDF the plain `Over 120` checkbox is shown.",
+          "controls": [
+            "montly_reports.r04.s02.c01",
+            "montly_reports.r04.s10.c06"
+          ],
+          "confidence": "likely",
+          "evidence_quote": "`PRINT FORMAT` `PDF` / `Excel` | Excel = flat sheet; Excel also reveals the `Over 120+` checkbox (with an info icon) in place of `Over 120`"
+        },
+        {
+          "when": "AGING BY = Patient AR",
+          "effect": "The threshold field `Account Balance Over` is relabelled `Patient Balance Over`; with AGING BY = Account AR the label is `Account Balance Over`.",
+          "controls": [
+            "montly_reports.r04.s09.c01",
+            "montly_reports.r04.s09.c02"
+          ],
+          "confidence": "confirmed",
+          "evidence_quote": "`AGING BY` `Patient AR` | Threshold label becomes `Patient Balance Over`"
+        }
+      ],
+      "corrections": [
+        {
+          "about": "truncation",
+          "control_id": "montly_reports.r04.s12.c01",
+          "text": "SORT BY is the LAST section of the criteria panel and holds the two radios `Resp. Party Last name` / `Resp. Party ID`: vendor screenshots of the full aging criteria screen confirm both labels and that no section follows the row that our screenshot clips. For this report the conclusion rests on its panel being pixel-identical to Aging Report by Home Office, under which the document reports the vendor screenshots.",
+          "resolves_truncation": true,
+          "confidence": "likely",
+          "evidence_quote": "This row is clipped in our own screenshots; the vendor's full screenshots confirm both labels and that `SORT BY` is the **last** section"
+        },
+        {
+          "about": "label",
+          "control_id": "montly_reports.r04.s12.c01",
+          "text": "The two clipped option labels are confirmed as read: `Resp. Party Last name` and `Resp. Party ID`. The [?] markers of the inventory can be dropped.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "with the first-reader version; its two `[?]` sort labels are confirmed here."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s03.c02",
+          "text": "On this report the selected office(s) are TRANSACTION offices: only the transactions recorded in the selected office(s) are evaluated (unlike Aging Report by Home Office, which has the same criteria panel).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "it evaluates **only the transactions recorded in the selected office(s)**. Recommended by the vendor for"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s05.c01",
+          "text": "Report Date is the single as-of date of the ageing (not a range); ageing starts when a procedure is marked completed.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| Aging | A single `Report Date` (as-of). Aging starts when a procedure is marked completed | `[D]` `[V8]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s07.c01",
+          "text": "Start Name / End Name are an alphabetical range on the responsible party LAST name.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Alphabetical range on responsible-party last name | `[S]` `[V51]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s09.c01",
+          "text": "AGING BY = Account AR counts the insurance + patient balances on the account and can include balances that belong to another office (for example a dependant whose home office differs).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`AGING BY` `Account AR` | Threshold label `Account Balance Over`; counts insurance + patient balances on the account; can include balances that belong to another office"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s09.c01",
+          "text": "AGING BY = Patient AR counts only the patient balances for this office; accounts that only have an estimated insurance balance do not appear.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "only patient balances for this office; accounts with only an estimated insurance balance do not appear"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s10.c02",
+          "text": "The five bucket checkboxes (Current, Over 30, Over 60, Over 90, Over 120) are an ACCOUNT filter: they select the accounts that have a balance in a ticked bucket.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Bucket checkboxes `Current` ... `Over 120` | Select accounts that have a balance in the ticked buckets (2019 footer wording `Accounts with Bal :`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s10.c07",
+          "text": "Include Credit Balance adds the accounts whose total is negative; left unticked (the default) credits are left out and the grand total is higher than the real A/R.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Include Credit Balance` | Includes accounts whose total is negative; without it credits are left out and the grand total is higher than the \"true AR\""
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s10.c01",
+          "text": "SHOW ONLY CREDIT BALANCES lists only the accounts with a negative total.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`SHOW ONLY CREDIT BALANCES` | Lists only accounts with a negative total"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s11.c03",
+          "text": "Include Balance Status prints the account's Balance Status - a tenant-defined collections-stage note (10-character code + description) set with the Ledger's Balance Stat button and maintained in Setup > Misc Setups > Balance Status.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Balance Status` | Prints the account's **Balance Status** (a tenant-defined collections-stage note: 10-character code + description, set with the Ledger's `Balance Stat` button; setup in `Setup > Misc Setups > Balance Status`)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s11.c04",
+          "text": "Include Contract Balances adds the remaining payment-contract balances (regular / ortho contracts keep their balance off the ledger until the periodic charges post).",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "`Include Contract Balances` | Adds remaining payment-contract balances (regular / ortho contracts keep balances **off** the ledger until periodic charges post)."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s01.c01",
+          "text": "REPORT FORMAT: Detail = one block per account (responsible party); Summary = office totals - the vendor describes it as the A/R snapshot of the outstanding patient and insurance balances of each selected office.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "| `REPORT FORMAT` `Detail` / `Summary` | Per-account blocks vs office totals | `[D]` `[V25]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s02.c01",
+          "text": "PRINT FORMAT = Excel downloads a flat spreadsheet (one record per row) instead of opening the PDF viewer, and the Excel layout can carry columns the PDF does not - here the extended buckets behind `Over 120+`. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Excel layouts are flat (one record per row, repeated key columns, title in a merged cell) and can contain columns the PDF does not (see Aging `Over 120+`)"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s06.c01",
+          "text": "PATIENT TYPE restricts the report to general or to ortho patients (Both = no restriction); the choice is echoed in the report footer. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| `PATIENT TYPE` `Both` / `General` / `Ortho` | Restricts to general or ortho patients; echoed in the footer | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s08.c01",
+          "text": "EXCLUDE RESP. PARTY TYPE drops the accounts of the selected responsible-party types; the selection is echoed in the report footer as `Ex Resp Party Type`. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| `EXCLUDE RESP. PARTY TYPE` | Drops accounts of the selected types; echoed as `Ex Resp Party Type` | `[S]` |"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s11.c02",
+          "text": "This option drops the accounts whose remaining balance is expected entirely from insurance. Documented for the aging criteria panel under Aging Report by Home Office; the document states that the Aging Report panel is identical and that every option behaves the same.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "Drops accounts whose remaining balance is expected entirely from insurance | `[C]` `[V51]`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r04.s10.c02",
+          "text": "Bucket boundaries in days, as the vendor defines them: Current = 0-29 (article) or 0-30 (glossary); Over 30 = 30 or 31 to 59; Over 60 = 60 or 61 to 89; Over 90 = 90 or 91 to 119; Over 120 = 120 and more, or more than 120. The vendor's two definitions differ by one day at the boundaries.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Aging bucket boundaries are defined inconsistently by the vendor (0–29 vs 0–30; 120+ vs more than 120)"
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r05",
+      "legacy_name": "Income Allocation",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r05.s04.c01",
+          "text": "Start Date / End Date are matched against the CREATED (entry) date of the payment, not the editable transaction date: a payment entered Feb 1 and back-dated to Jan 15 appears in February.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "**Created (entry) date** of the payment, not the (editable) transaction date. A payment entered Feb 1 and back-dated to Jan 15 appears in February"
+        },
+        {
+          "about": "default",
+          "control_id": "montly_reports.r05.s02.c02",
+          "text": "The office box defaults to the logged-in office; several offices or an office group can be selected for one run.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "logged-in office; multiple offices or a group allowed); `Provider` (default all); `Start Date` / `End Date`"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r05.s02.c02",
+          "text": "Money is credited to the office where the procedure was charged (the production / allocation office), not to the office where the payment was entered - so the selected offices are the offices where the treatment was charged.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "- **By production office**: allocation follows the office where the procedure was charged, not where the"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r05.s01.c01",
+          "text": "REPORT FORMAT = Summary: one row per provider, then an Unallocated row and a Total row - the vendor's basis for collection-based provider pay.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "`Office : <name>`; one row per provider (zero rows included), then an `Unallocated` row and a `Total :` row;"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r05.s01.c01",
+          "text": "REPORT FORMAT = Detail: the individual lines, each with its Pay Date, Allo Date (allocation date) and Proc Date; the vendor uses it to find back-dated payments and payments made outside the date range yet allocated inside it.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "**`Pay Date`, `Allo Date` (allocation date) and `Proc Date`** of each line `[D]` `[V16]` `[V20]`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r05.s03.c01",
+          "text": "Provider here is the provider whose completed work the money was allocated to (the allocation provider), not the provider the payment was entered under.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "reports attribute it to the office / provider whose work it paid `[D]` `[V14]` `[V21]`."
+        },
+        {
+          "about": "other",
+          "control_id": "",
+          "text": "The absence of a PRINT FORMAT section is real (as captured): the output is exported from the report viewer instead.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "No `PRINT FORMAT` section — export through the viewer."
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r06",
+      "legacy_name": "Allocation Detail",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r06.s03.c01",
+          "text": "The report covers money collected and entered in the date range that applies to completed procedures with payment due; an overpayment (prepayment) does not appear until it pays a completed procedure. Vendor text about the \"Allocation report\", which the document reads as the older name of this report.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "entered** in the date range that applies to completed procedures with payment due; an overpayment does not"
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r06.s03.c01",
+          "text": "Date basis of the allocation report family (Income Allocation / Allocation): the created (entry) date of the payment, not its editable transaction date.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "| Income Allocation / Allocation | **Created (entry) date** of the payment, not the (editable) transaction date."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r06.s02.c01",
+          "text": "Allocation reports attribute a payment to the office and the provider whose work it paid, not to the office / provider it was entered under (stated for the allocation reports as a family). That the OFFICE/GROUP and Provider selections of this report follow the same attribution is implied, not stated.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "reports attribute it to the office / provider whose work it paid `[D]` `[V14]` `[V21]`."
+        },
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r06.s04.c01",
+          "text": "The six PAYMENT TYPES checkboxes are tender classes; the document equates them with the tender classes of the daily Deposit Slip.",
+          "resolves_truncation": false,
+          "confidence": "likely",
+          "evidence_quote": "classes as the daily `Deposit Slip` `[D]` `[V25]` `[T]` `[T1]`"
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r07",
+      "legacy_name": "Unallocated Payment/Adjustments",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r07.s03.c01",
+          "text": "Vendor text gives this report's parameters as a date range with credit balances optionally excluded - the option behind this checkbox. Which accounts count as credit balances here is only inferred (see unresolved).",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "Date range; optionally exclude credit balances"
+        }
+      ]
+    },
+    {
+      "report_id": "montly_reports.r09",
+      "legacy_name": "WaterFall Report",
+      "added_controls": [],
+      "added_options": [],
+      "dynamic_rules": [],
+      "corrections": [
+        {
+          "about": "meaning",
+          "control_id": "montly_reports.r09.s03.c01",
+          "text": "Vendor guidance for the criteria: pick the office(s) and use a date range of at least one quarter; the report breaks collections down by the month of the date of service (`Service Date`) for the chosen range.",
+          "resolves_truncation": false,
+          "confidence": "confirmed",
+          "evidence_quote": "(`Service Date`) for the chosen range. Parameters: pick the office(s) and use a range of at least one quarter."
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "report_id": "montly_reports.r01",
+      "question": "What enables the greyed `Page Break` checkbox? The document only repeats our own reading (enabled only with GROUP BY = Provider) and infers its effect (each provider on a new page); no vendor source shows the enabled state."
+    },
+    {
+      "report_id": "montly_reports.r01",
+      "question": "The meaning of GROUP BY = Provider (the values per provider instead of office totals) is documented only by a third-party guide, and the per-provider layout is inferred; no vendor source."
+    },
+    {
+      "report_id": "montly_reports.r03",
+      "question": "What does ticking GROUP BY PROVIDER enable? That it enables the Preferred Provider / Transaction Provider radios and the Provider SELECT, and what the two radios mean (grouping by the patient's preferred provider or by the provider on the transactions), is inferred in the document, not vendor-documented. Vendor traces only: the 2020 menu had separate `Aging by Provider - Detail / Summary` reports, and the vendor still writes \"Aging Report – Detail (Select Provider(s))\". Same question for Aging Report (r04)."
+    },
+    {
+      "report_id": "montly_reports.r03",
+      "question": "Default state and info-icon tooltip of the Excel-only `Over 120+` checkbox are not documented. Same question for Aging Report (r04)."
+    },
+    {
+      "report_id": "montly_reports.r03",
+      "question": "Contents of the EXCLUDE RESP. PARTY TYPE > SELECT dialog and of the Start Name / End Name SEARCH dialogs are not documented (responsible-party types are tenant-defined; the demo output shows the codes CA, IN, AA, OO, meaning unverified). Same question for Aging Report (r04)."
+    },
+    {
+      "report_id": "montly_reports.r04",
+      "question": "The document reports the vendor screenshots of the full aging criteria screen under Aging Report by Home Office and does not say whether one of them shows Aging Report. That nothing is hidden below SORT BY on Aging Report, and that `Over 120+` appears there in Excel mode, rests on the two panels being pixel-identical in our captures - confirm on the live legacy screen."
+    },
+    {
+      "report_id": "montly_reports.r06",
+      "question": "No vendor description of how PAYMENT TYPES and `Show Datewise Summary` act on Allocation Detail; the effects in the document are inferences."
+    },
+    {
+      "report_id": "montly_reports.r07",
+      "question": "Does ticking `Print all unallocated payment/adjustments as of today` disable or ignore Start Date / End Date? The document gives this, the exact meaning of `Exclude Credit Balances` / `Include Inactive Patients` and the meaning of the office selection (the office that entered / holds the money) only as inferences. Vendor anchor for the last one: unallocated money \"resides\" with the office that entered it until a completed procedure absorbs it."
+    },
+    {
+      "report_id": "montly_reports.r08",
+      "question": "No vendor article, PDF or image exists for Daily Journal Summary by Allocation; its criteria are known from our capture only and the meaning of Detail / Summary is unverified."
+    },
+    {
+      "report_id": "montly_reports.r09",
+      "question": "The effect of the OTHER OPTIONS radio (Payments and Adjustments / Payments only / Adjustments only) on the WaterFall Report is inferred, not vendor-documented."
+    },
+    {
+      "question": "Contents of the OFFICE/GROUP > SELECT dialog (list columns, sort options, search fields, the Office Group variant) and of the Provider > SELECT dialog are not documented; only the `Select All` option of the office dialog is."
+    }
+  ]
+}

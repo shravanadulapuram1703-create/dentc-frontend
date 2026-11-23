@@ -23,4 +23,10 @@ export interface ReEstimateLine {
   rule_start_code?: string | null;
   fee_schedule_id?: number | null;
   fee_source?: string | null;
+  status?: string | null;
+  consumes_benefit?: boolean;
+  benefit_year_start?: string | null;
+  primary_insurance_estimate?: string | null;
+  benefit_model?: string | null;
+  annual_max_remaining_after?: string | null;
 }

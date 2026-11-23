@@ -1,0 +1,140 @@
+{
+  "source_document": "research/legacy_report_outputs_appointment_recall_referral.md",
+  "dialogs": [
+    {
+      "dialog_name": "OFFICE/GROUP SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "OFFICE/GROUP > SELECT",
+      "used_by": [
+        "appointment_reports",
+        "recall_reports",
+        "refferal_reports"
+      ],
+      "elements": [
+        {
+          "label": "office list (Office mode)",
+          "type": "list",
+          "options": [],
+          "notes": "With the Office radio the dialog selects one or more offices."
+        },
+        {
+          "label": "office group list (Office Group mode)",
+          "type": "list",
+          "options": [],
+          "notes": "With the Office Group radio the dialog selects office groups defined in setup."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`Office` = one or more offices; `Office Group` = groups from setup.",
+      "notes": "Only the scope of the two modes is stated. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document, which refers to legacy_report_outputs_daily_my.md for the picker dialogs. On the referral management reports the same control sits under REFERRED FROM OFFICE/GROUP and REFERRED TO OFFICE/GROUP; on Referral Source List it is disabled by design."
+    },
+    {
+      "dialog_name": "CANCELLATION REASON SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "CANCELLATION REASON > SELECT",
+      "used_by": [
+        "appointment_reports"
+      ],
+      "elements": [
+        {
+          "label": "cancellation reason list",
+          "type": "list",
+          "options": [
+            "Cancelled by office",
+            "Cancelled same day",
+            "No reason provided",
+            "Cancelled by Denticon Patient Engagement"
+          ],
+          "notes": "Each reason is a code of up to 10 characters plus a description. About ten system defaults exist that cannot be inactivated - only these four are named - and offices add their own reasons, so the list is tenant data and the four values are a PARTIAL list."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "Reason (code up to 10 characters + description; about ten system defaults that cannot be inactivated, such as `Cancelled by office`, `Cancelled same day`, `No reason provided`, `Cancelled by Denticon Patient Engagement`; offices add their own)",
+      "notes": "The document describes the cancellation-reason records and says the criterion limits the cancelled appointments to the chosen reasons (system and office-defined). The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document, which refers to legacy_report_outputs_daily_my.md for the picker dialogs. Opened from Appointment List (enabled with Cancelled List) and from Appointment Detail (greyed by default)."
+    },
+    {
+      "dialog_name": "EXCLUDE PATIENT TYPE SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "EXCLUDE PATIENT TYPE > SELECT",
+      "used_by": [
+        "appointment_reports",
+        "recall_reports",
+        "refferal_reports"
+      ],
+      "elements": [
+        {
+          "label": "patient type list",
+          "type": "list",
+          "options": [],
+          "notes": "User-defined patient types, identified by codes; a patient can carry up to six types. No fixed value list - tenant data."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "User-defined patient types (up to six per patient), printed as codes.",
+      "notes": "The document states what patient types are; that this picker lists them follows from the name of the criterion. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document, which refers to legacy_report_outputs_daily_my.md for the picker dialogs."
+    },
+    {
+      "dialog_name": "EXCLUDE RESP. PARTY TYPE SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "EXCLUDE RESP. PARTY TYPE > SELECT",
+      "used_by": [
+        "appointment_reports"
+      ],
+      "elements": [
+        {
+          "label": "responsible party type list",
+          "type": "list",
+          "options": [
+            "CA - Cash",
+            "CC - Collections",
+            "IN - Indemnity",
+            "OO - PPO"
+          ],
+          "notes": "Account-level type codes, written code - description. PARTIAL list: the document names these four and ends with an ellipsis; whether they are system defaults or tenant-defined is not stated."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "`Resp. Party Type` is a separate account-level code (`CA - Cash`, `CC - Collections`, `IN - Indemnity`, `OO - PPO`, …).",
+      "notes": "The document states what the responsible-party type is; that this picker lists those codes follows from the name of the criterion. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document, which refers to legacy_report_outputs_daily_my.md for the picker dialogs."
+    },
+    {
+      "dialog_name": "RECALL PROCEDURE CODES SELECT dialog (legacy title not documented)",
+      "kind": "picker_dialog",
+      "opened_from": "RECALL PROCEDURE CODES > SELECT",
+      "used_by": [
+        "recall_reports"
+      ],
+      "elements": [
+        {
+          "label": "procedure code list",
+          "type": "list",
+          "options": [],
+          "notes": "On Procedural Recall Report any procedure code can be chosen, not only recallable ones (ALL = every completed code). On Recall Due Report ALL stands for every recallable code; whether the list itself is limited to recallable codes there and on Scheduled Recall Report is not stated. Recallable codes are the procedure codes flagged recallable (with a recall interval) in procedure-code setup; they include office-defined codes that offices use for non-dental recalls such as membership renewal or a yearly consent."
+        }
+      ],
+      "values": [],
+      "confidence": "likely",
+      "evidence_quote": "Any code can be chosen, not only recallable ones",
+      "notes": "Only the value domain is stated. The dialog itself - title, checkboxes, sort options, search field, list columns - is not described in this document, which refers to legacy_report_outputs_daily_my.md for the picker dialogs."
+    },
+    {
+      "dialog_name": "REFERRAL TYPE dropdown",
+      "kind": "dropdown_list",
+      "opened_from": "REFERRAL TYPE (Referral Production List, Referral Source List, Referral Summary Report, Referral Count Summary)",
+      "used_by": [
+        "refferal_reports"
+      ],
+      "elements": [],
+      "values": [
+        "ALL"
+      ],
+      "confidence": "likely",
+      "evidence_quote": "`REFERRAL TYPE` | One referral type or `ALL`.",
+      "notes": "PARTIAL list: ALL (the default) is the only fixed entry. The other entries are the organisation's referral types (tenant data); exactly one type or ALL can be chosen. Stated for Referral Production List; the same dropdown sits on the other three reports."
+    }
+  ]
+}

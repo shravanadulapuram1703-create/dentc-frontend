@@ -1,0 +1,2948 @@
+{
+ "category": "daily_reports",
+ "window_title": "Daily Reports",
+ "report_list": [
+  "Peg Board Day Sheet",
+  "Daily Journal",
+  "Production Report",
+  "Collection Report",
+  "Deposit Slip",
+  "Scheduled Production",
+  "Routing Slip",
+  "Progress Notes",
+  "Production Analysis Report",
+  "Daily Audit",
+  "Claims Printed",
+  "Special Transaction Report"
+ ],
+ "reports_without_screenshot": [],
+ "observations": "Coverage: 12 screenshots, each showing a different one of the 12 listed reports selected, in list order (1.PNG Peg Board Day Sheet, 2 Daily Journal, 3 Production Report, 4 Collection Report, 5 Deposit Slip, 6 Scheduled Production = left column; 7 Routing Slip, 8 Progress Notes, 9 Production Analysis Report, 10 Daily Audit, 11 Claims Printed, 12 Special Transaction Report = right column). The selected radio of every screenshot was confirmed from the pixels. There are no popups, expanded dropdowns, scrolled second views or foreign screens, so the contents of every SELECT / SEARCH picker dialog and of the two dropdown lists (Amount on Special Transaction Report, Fee Schedule To Compare on Production Report) are NOT documented by these screenshots.\n\nScreen chrome (identical in all 12): dark title bar with 'Daily Reports' at the left and 'PGID :2829 / OID :108' followed by a white printer icon at the far right. Blue sub-header 'SELECT REPORT' over the left panel and 'REPORT CRITERIA' over the right panel; the right end of the REPORT CRITERIA bar holds the grey-styled CLEAR CRITERIA button (refresh icon). A splitter / collapse handle with three vertical dots sits between the two panels. The bottom action bar of the criteria panel holds PRINT / PREVIEW (printer icon) and ADD TO MY FAVORITES (plus icon), both blue.\n\nReport list: 12 radio items in a 2-column x 6-row grid; the dark panel below the grid is empty (checked pixel by pixel), so the list is not scrollable or clipped.\n\nText-rendering caveat: the bold dark section-header font draws a capital G almost exactly like a C at this resolution (the partly visible footer message suggests the page was captured at 75% browser zoom), so the pixels look like 'OFFICE/CROUP', 'DATE RANCE', 'CROUP BY', 'PROCRESS NOTES TO PRINT', 'BUT MISSINC', 'CATECORY', 'CODE/CATECORY', 'PATIENT NAME RANCE'. The greyed 'GROUP BATCH CHECKS' header on Deposit Slip and the mixed-case labels ('Office Group', 'Group By') show a clear G, so all of these are transcribed with G. The date digits '11' also render like 'TI' (the value is 11/21/2026).\n\nRecurring patterns: PRINT FORMAT (PDF | Excel, default PDF) is on 11 of 12 reports - missing only on Routing Slip. REPORT FORMAT (Detail | Summary) appears only on Daily Journal, Production Report (Detail greyed, Summary selected), Collection Report and Claims Printed; Production Analysis Report has ANALYSIS BY in that slot. OFFICE/GROUP (Office | Office Group radios, default Office, plus an unlabelled read-only box showing 108 = the current OID with a SELECT button) is on all 12; Office Group is greyed only on Routing Slip. A PROVIDER picker (default ALL) is on 10 reports - Production Report and Collection Report have none - and a User picker is added (section title PROVIDER/USER) on Daily Journal, Deposit Slip and Special Transaction Report; Progress Notes labels its provider row 'Preferred Provider'. Every date field shows 11/21/2026 (the capture day, i.e. the default is today); Peg Board Day Sheet has a single Report Date instead of a Start Date / End Date range. A date-basis radio precedes the range on Daily Journal (Transaction Date | Created Date), Deposit Slip (Transaction Date | Payment Date), Progress Notes (DOS Date | Created On Date | Appointment Date) and Special Transaction Report (Transaction Date | Service Date). Apart from the office box (108), the read-only picker boxes (grey fill + blue SELECT) default to ALL, except EXCLUDE PATIENT TYPE and PAYMENT/ADJ CODES on Special Transaction Report which default to 'None'. A small 'Page Break' checkbox sits alone in the right half of the grouping row on Daily Journal, Production Report, Collection Report and Daily Audit and is greyed in every screenshot (grouping = None in all of them). Button icons: building icon for office / codes / payment types / payment-adj codes / insurance plans / code-category; single-person icon for provider / operatory / category / carrier(s); person-plus icon for user and exclude patient type; magnifier for SEARCH; circle-slash for NONE.\n\nDisabled states were confirmed by pixel colour: disabled labels are mid-grey (RGB 161) against black for enabled ones; read-only / disabled boxes are grey (220,223,226) against (241,241,241) for editable fields. Controls greyed in the captured default state (what enables them is not shown): Show AR and Page Break (Daily Journal); Detail, Page Break, Include Z-Codes and the Fee Schedule To Compare dropdown (Production Report); Page Break (Collection Report); CHECK TYPE and the whole GROUP BATCH CHECKS block (Deposit Slip); Office Group (Routing Slip); Appointment Date and APPOINTMENTS TO INCLUDE (Progress Notes); the CARRIER SELECT button (Production Analysis Report); Page Break (Daily Audit); Age Range From / To and the amount value box (Special Transaction Report).\n\nTruncation: the criteria area has a fixed height (about 481 px in every screenshot) with the action bar pinned below it and no scrollbar is ever drawn. Daily Journal (2.PNG) is visibly clipped - its GROUP BY row is cut by the action bar - and Special Transaction Report (12.PNG) fills the area exactly with its last row flush against (and about 2-3 px short at) the action bar, so both are flagged possibly_truncated; in both cases the overflow is only a few pixels, which is consistent with the visible row being the last one, but hidden rows cannot be ruled out. The other ten reports show blank space under their last section.\n\nFooter: only 2.PNG shows a sliver of the page footer, and only the top 3-4 pixel rows of the glyphs are visible, so it cannot be read reliably. Best reading: '© 2026 Planet DDS | Privacy Policy | ... [?]' in black (Privacy Policy in link blue, followed by further unreadable text ending in digits) and, in red at the right, 'You have zoomed ... to 75%. This page is best viewed if zoomed to 100% [?]'. It is browser-zoom chrome of the host page, not report criteria.\n\nVerification: third-reader pass over the original PNGs and enlarged crops. Readers A and B agreed on every report, section, control, option, default and enabled state (151 controls); their only differences were descriptive (SELECT icon wording, the label given to the Routing Slip info icon, the wording of the unreadable footer). A pixel-cluster sweep of every criteria panel found no control outside those listed here.",
+ "report_count": 12,
+ "control_count": 154,
+ "reports": [
+  {
+   "report_id": "daily_reports.r01",
+   "name": "Peg Board Day Sheet",
+   "screenshots": [
+    "1.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "1.PNG only. Smallest criteria set of the category: PRINT FORMAT (full width), OFFICE/GROUP | PROVIDER (side by side), REPORT DATE (full width, single date). Large empty area between REPORT DATE and the action bar, nothing clipped. No greyed-out controls. No REPORT FORMAT, GROUP BY, SORT BY or OTHER OPTIONS section.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r01.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the criteria panel."
+    },
+    {
+     "control_id": "daily_reports.r01.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER."
+    },
+    {
+     "control_id": "daily_reports.r01.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box on the row below the Office / Office Group radios; blue SELECT button (building icon) to its right. 108 is the same value as the OID shown in the title bar."
+    },
+    {
+     "control_id": "daily_reports.r01.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r01.s04.c01",
+     "section": "REPORT DATE",
+     "label": "Report Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Single date only (no start/end range). Editable-style field with a calendar icon inside it at the right."
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r02",
+   "name": "Daily Journal",
+   "screenshots": [
+    "2.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "2.PNG only. The criteria content is taller than the fixed-height criteria area: the last visible row (GROUP BY radios + Page Break) is cut horizontally by the PRINT / PREVIEW action bar (about 16 px visible against 22 px for the other radio rows, and no bottom border). No scrollbar is drawn, so anything below GROUP BY (for example a further section) would be hidden and can neither be confirmed nor ruled out. Everything above the cut is fully legible. Greyed in the default state: Show AR and Page Break. This is also the only screenshot in which a slice of the page footer is visible (see observations).",
+   "controls": [
+    {
+     "control_id": "daily_reports.r02.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PRINT FORMAT."
+    },
+    {
+     "control_id": "daily_reports.r02.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right half of the panel."
+    },
+    {
+     "control_id": "daily_reports.r02.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER/USER."
+    },
+    {
+     "control_id": "daily_reports.r02.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r02.s04.c01",
+     "section": "PROVIDER/USER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, first row. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r02.s04.c02",
+     "section": "PROVIDER/USER",
+     "label": "User",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, second row. Read-only grey box; blue SELECT button (person-plus icon)."
+    },
+    {
+     "control_id": "daily_reports.r02.s05.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Transaction Date",
+      "Created Date"
+     ],
+     "default_value": "Transaction Date",
+     "enabled": true,
+     "notes": "Date-basis selector on the first row of the section, above Start Date / End Date. Full-width section."
+    },
+    {
+     "control_id": "daily_reports.r02.s05.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r02.s05.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r02.s06.c01",
+     "section": "PATIENT TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "General",
+      "Ortho"
+     ],
+     "default_value": "Both",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r02.s07.c01",
+     "section": "TRANSACTION TYPES",
+     "label": "Services",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "All three transaction-type checkboxes sit on one row and all are ticked."
+    },
+    {
+     "control_id": "daily_reports.r02.s07.c02",
+     "section": "TRANSACTION TYPES",
+     "label": "Payments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r02.s07.c03",
+     "section": "TRANSACTION TYPES",
+     "label": "Adjustments",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r02.s08.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Show AR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Greyed out (box and label grey) in this default state; on its own row. What enables it is not visible."
+    },
+    {
+     "control_id": "daily_reports.r02.s08.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Resp. Party Type",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "On its own row."
+    },
+    {
+     "control_id": "daily_reports.r02.s08.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Show Datewise Summary",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "On its own row."
+    },
+    {
+     "control_id": "daily_reports.r02.s09.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider",
+      "User"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the row. The row is cut at its lower edge by the action bar (only about 16 px of a normal 22 px row are visible) but all three options are fully readable."
+    },
+    {
+     "control_id": "daily_reports.r02.s09.c02",
+     "section": "GROUP BY",
+     "label": "Page Break",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Small greyed-out checkbox alone in the right half of the GROUP BY radio row. Greyed while None is the selected grouping (that a grouping enables it is an inference, not shown)."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "daily_reports.r02.d01",
+     "when": "GROUP BY = Provider or User (any grouping other than None)",
+     "effect": "the Page Break checkbox becomes available - a page break is offered only when the journal is grouped; it stays greyed while GROUP BY = None",
+     "controls": [
+      "daily_reports.r02.s09.c01",
+      "daily_reports.r02.s09.c02"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "Sections per provider or per user (old `Daily Journal by Provider`, `Daily Journal by User – Detail`); page break only when grouped"
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r02.k01",
+     "about": "truncation",
+     "control_id": "",
+     "text": "Nothing lies below GROUP BY: a 2023 vendor screenshot of this criteria screen shows empty space under that row, so GROUP BY (with Page Break) is the last row and the panel is complete as transcribed.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "Nothing lies below `GROUP BY`; a 2023 screenshot shows empty space there, so the truncation flag can be cleared"
+    },
+    {
+     "correction_id": "daily_reports.r02.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s04.c01",
+     "text": "The Provider picker restricts the journal lines by the provider on the ledger line (Prdr); the User picker restricts them by the user who entered the line.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Provider`, `User` pickers | Restrict lines by `Prdr` / by entering `User`"
+    },
+    {
+     "correction_id": "daily_reports.r02.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s05.c01",
+     "text": "Created Date = the system entry timestamp of the line; it cannot be edited.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Created Date` | System entry timestamp; not editable"
+    },
+    {
+     "correction_id": "daily_reports.r02.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s06.c01",
+     "text": "PATIENT TYPE Both / General / Ortho is the ortho-patient flag - not the user-defined patient types (those are a separate concept, used by EXCLUDE PATIENT TYPE on the Special Transaction Report).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`PATIENT TYPE` `Both / General / Ortho` (Daily Journal) is the ortho-patient flag"
+    },
+    {
+     "correction_id": "daily_reports.r02.k05",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s08.c03",
+     "text": "Show Datewise Summary adds a per-day recap when the date range spans several days.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Show Datewise Summary` | Adds a per-day recap when the range spans several days"
+    },
+    {
+     "correction_id": "daily_reports.r02.k06",
+     "about": "other",
+     "control_id": "daily_reports.r02.s08.c01",
+     "text": "Show AR is also greyed in every vendor screenshot seen (Detail, Office, any transaction mix); what enables it is not documented (see unresolved).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Greyed in every screenshot seen (Detail, Office, any transaction mix)"
+    },
+    {
+     "correction_id": "daily_reports.r02.k07",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s01.c01",
+     "text": "REPORT FORMAT: Detail = a line listing with patient names; Summary = code-level totals only.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`REPORT FORMAT` Detail / Summary | Line listing with names vs code-level totals"
+    },
+    {
+     "correction_id": "daily_reports.r02.k08",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s05.c01",
+     "text": "The date-basis radio decides which date selects and groups the lines. Created Date reproduces the older report Daily Journal by User – Detail (by created date) and catches back-dated entries.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Which date selects and groups the lines; `Created Date` reproduces the old `Daily Journal by User – Detail (by created date)` and catches back-dated entries"
+    },
+    {
+     "correction_id": "daily_reports.r02.k09",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s07.c01",
+     "text": "TRANSACTION TYPES (Services / Payments / Adjustments): unticking a class removes it from the lines and from the summary.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`TRANSACTION TYPES` Services / Payments / Adjustments | Removes the unticked classes from lines and summary"
+    },
+    {
+     "correction_id": "daily_reports.r02.k10",
+     "about": "meaning",
+     "control_id": "daily_reports.r02.s09.c01",
+     "text": "GROUP BY Provider / User gives one section per provider or per user; the two choices reproduce the older reports Daily Journal by Provider and Daily Journal by User – Detail.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`GROUP BY` None / Provider / User (+ `Page Break`) | Sections per provider or per user (old `Daily Journal by Provider`, `Daily Journal by User – Detail`)"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r03",
+   "name": "Production Report",
+   "screenshots": [
+    "3.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "3.PNG only. No PROVIDER picker section on this report (provider appears only as a PRODUCTION BY / GROUP BY choice). Four greyed items in the default state (PRODUCTION BY = Code, GROUP BY = None, Include UCR unticked): the Detail radio, Page Break, Include Z-Codes and the Fee Schedule To Compare dropdown. Blank space remains below OTHER OPTIONS / FEE SCHEDULE TO COMPARE, nothing clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r03.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Summary",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PRINT FORMAT. The 'Detail' radio and its label are greyed out (disabled) in this state; 'Summary' is selected. What enables Detail is not visible."
+    },
+    {
+     "control_id": "daily_reports.r03.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right half of the panel."
+    },
+    {
+     "control_id": "daily_reports.r03.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Section spans the full width (this report has no PROVIDER section beside it)."
+    },
+    {
+     "control_id": "daily_reports.r03.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r03.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field. No date-basis radio on this report."
+    },
+    {
+     "control_id": "daily_reports.r03.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r03.s05.c01",
+     "section": "PRODUCTION BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Code",
+      "Provider",
+      "Category",
+      "Carrier"
+     ],
+     "default_value": "Code",
+     "enabled": true,
+     "notes": "Full-width section; all four options on one row."
+    },
+    {
+     "control_id": "daily_reports.r03.s06.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider",
+      "Carrier"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the row."
+    },
+    {
+     "control_id": "daily_reports.r03.s06.c02",
+     "section": "GROUP BY",
+     "label": "Page Break",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Small greyed-out checkbox alone in the right half of the GROUP BY radio row; greyed while None is selected."
+    },
+    {
+     "control_id": "daily_reports.r03.s07.c01",
+     "section": "CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Unlabelled wide read-only grey box (spans about two thirds of the panel); blue SELECT button (building icon) to its right."
+    },
+    {
+     "control_id": "daily_reports.r03.s08.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include UCR",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with FEE SCHEDULE TO COMPARE; first line."
+    },
+    {
+     "control_id": "daily_reports.r03.s08.c02",
+     "section": "OTHER OPTIONS",
+     "label": "Include Z-Codes",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Greyed out in this default state; second line, directly under Include UCR. What enables it is not visible."
+    },
+    {
+     "control_id": "daily_reports.r03.s09.c01",
+     "section": "FEE SCHEDULE TO COMPARE",
+     "label": "Fee Schedule To Compare",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "CIGNA PPO HAMILTON ( 128 )",
+     "enabled": false,
+     "notes": "list collapsed - other values not visible. Right half of the panel beside OTHER OPTIONS. Dropdown is greyed out (grey fill, grey text, up/down chevrons at its right); the row label itself is black. Probably tied to Include UCR being unticked - inference only, the dependency is not shown."
+    },
+    {
+     "control_id": "daily_reports.r03.x01",
+     "section": "PROVIDERS",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Conditional control, absent from our default-state capture (PRODUCTION BY = Code, GROUP BY = None). Appears only when GROUP BY = Provider (beside CODES) or when PRODUCTION BY = Provider (in place of CODES). Its default value and its picker dialog are not documented.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "Conditional controls: `PROVIDERS` picker, `SORT BY` (`Transaction Date` / `Patient Lastname`), label `Page Break by Provider`",
+     "source_document": "research/legacy_report_outputs_daily_my.md"
+    },
+    {
+     "control_id": "daily_reports.r03.x02",
+     "section": "SORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Transaction Date",
+      "Patient Lastname"
+     ],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Conditional section, absent from our default-state capture. Appears only when PRODUCTION BY = Provider (the vendor screenshot shows that state with REPORT FORMAT = Detail selected). The legacy default is not documented.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "`CODES` replaced by `PROVIDERS`; new `SORT BY` (`Transaction Date` / `Patient Lastname`)",
+     "source_document": "research/legacy_report_outputs_daily_my.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "daily_reports.r03.d01",
+     "when": "PRODUCTION BY = Code (the default)",
+     "effect": "REPORT FORMAT is locked to Summary (Detail greyed); the CODES picker is shown; GROUP BY None / Provider / Carrier is available; Include UCR is available",
+     "controls": [
+      "daily_reports.r03.s05.c01",
+      "daily_reports.r03.s01.c01",
+      "daily_reports.r03.s07.c01",
+      "daily_reports.r03.s06.c01",
+      "daily_reports.r03.s08.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`REPORT FORMAT` locked to Summary; `CODES` picker; `GROUP BY` None / Provider / Carrier available; `Include UCR` available"
+    },
+    {
+     "rule_id": "daily_reports.r03.d02",
+     "when": "Include UCR is ticked (PRODUCTION BY = Code)",
+     "effect": "Include Z-Codes and the Fee Schedule To Compare dropdown unlock; both are greyed while Include UCR is unticked",
+     "controls": [
+      "daily_reports.r03.s08.c01",
+      "daily_reports.r03.s08.c02",
+      "daily_reports.r03.s09.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Include Z-Codes` and `Fee Schedule To Compare` unlock when `Include UCR` is ticked"
+    },
+    {
+     "rule_id": "daily_reports.r03.d03",
+     "when": "GROUP BY = Provider (with PRODUCTION BY = Code)",
+     "effect": "the Page Break checkbox reads `Page Break by Provider` (shown ticked in the sample)",
+     "controls": [
+      "daily_reports.r03.s06.c01",
+      "daily_reports.r03.s06.c02"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "Checkbox reads `Page Break by Provider` (ticked in the sample)"
+    },
+    {
+     "rule_id": "daily_reports.r03.d04",
+     "when": "GROUP BY = Provider (with PRODUCTION BY = Code)",
+     "effect": "a PROVIDERS picker appears beside the CODES picker",
+     "controls": [
+      "daily_reports.r03.s06.c01",
+      "daily_reports.r03.s07.c01"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "a `PROVIDERS` picker appears beside `CODES`"
+    },
+    {
+     "rule_id": "daily_reports.r03.d05",
+     "when": "PRODUCTION BY = Provider",
+     "effect": "REPORT FORMAT Detail becomes selectable. The document states that Detail is selectable only for PRODUCTION BY = Provider; the Category and Carrier states were not seen in any screenshot.",
+     "controls": [
+      "daily_reports.r03.s05.c01",
+      "daily_reports.r03.s01.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Detail` selectable only for `Production By` = Provider"
+    },
+    {
+     "rule_id": "daily_reports.r03.d06",
+     "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+     "effect": "the GROUP BY options Provider and Carrier are greyed",
+     "controls": [
+      "daily_reports.r03.s05.c01",
+      "daily_reports.r03.s06.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`GROUP BY` Provider / Carrier greyed"
+    },
+    {
+     "rule_id": "daily_reports.r03.d07",
+     "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+     "effect": "the CODES picker is replaced by the PROVIDERS picker",
+     "controls": [
+      "daily_reports.r03.s05.c01",
+      "daily_reports.r03.s07.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`CODES` replaced by `PROVIDERS`"
+    },
+    {
+     "rule_id": "daily_reports.r03.d08",
+     "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+     "effect": "a SORT BY section (Transaction Date / Patient Lastname) appears",
+     "controls": [
+      "daily_reports.r03.s05.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "new `SORT BY` (`Transaction Date` / `Patient Lastname`)"
+    },
+    {
+     "rule_id": "daily_reports.r03.d09",
+     "when": "PRODUCTION BY = Provider (state seen with REPORT FORMAT = Detail selected)",
+     "effect": "Include UCR and Include Z-Codes are greyed",
+     "controls": [
+      "daily_reports.r03.s05.c01",
+      "daily_reports.r03.s08.c01",
+      "daily_reports.r03.s08.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Include UCR`, `Include Z-Codes` greyed"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r03.k01",
+     "about": "default",
+     "control_id": "daily_reports.r03.s09.c01",
+     "text": "The greyed default of Fee Schedule To Compare is tenant data, not a fixed legacy default: vendor screenshots of other tenants show ANTHEM ( 115 ) and 2022 UCR Master ( 272 ) in the same greyed box.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "The greyed default differs per tenant (`ANTHEM ( 115 )`, `2022 UCR Master ( 272 )`"
+    },
+    {
+     "correction_id": "daily_reports.r03.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s08.c01",
+     "text": "Include UCR together with Fee Schedule To Compare adds a compare-fee column to the report; the vendor uses it to price production at another (\"provider pay\") fee schedule.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Include UCR` + `Fee Schedule To Compare` | Adds the compare-fee column. Used to price production at a \"provider pay\" fee schedule"
+    },
+    {
+     "correction_id": "daily_reports.r03.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s08.c02",
+     "text": "Include Z-Codes includes the office-defined Z codes as rows of the report.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Z-Codes` | Includes office-defined `Z…` codes as rows"
+    },
+    {
+     "correction_id": "daily_reports.r03.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s05.c01",
+     "text": "On this report Provider (PRODUCTION BY / GROUP BY Provider, the PROVIDERS picker) means the provider of record on the procedure - the Prdr column of the Ledger.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Production Report | Provider of record on the procedure (the `Prdr` column of the Ledger)"
+    },
+    {
+     "correction_id": "daily_reports.r03.k05",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s04.c01",
+     "text": "The date range is applied to the posting date: a completed procedure counts in the period in which it was posted to the ledger (this report has no date-basis choice).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "The posting date decides the period `[P47]`"
+    },
+    {
+     "correction_id": "daily_reports.r03.k06",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s05.c01",
+     "text": "PRODUCTION BY chooses the row dimension of the report: Code, Provider, Category or Carrier.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PRODUCTION BY` Code / Provider / Category / Carrier | Row dimension and title"
+    },
+    {
+     "correction_id": "daily_reports.r03.k07",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s01.c01",
+     "text": "REPORT FORMAT Detail itemises each completed procedure per provider (the older report Production by Provider Detail).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`REPORT FORMAT` Detail | Itemises each completed procedure per provider (old `Production by Provider Detail`)"
+    },
+    {
+     "correction_id": "daily_reports.r03.k08",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s05.c01",
+     "text": "PRODUCTION BY = Provider together with REPORT FORMAT (Detail / Summary) reproduces the older reports Production by Provider Detail and Production by Provider Summary.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Production by Provider Detail`, `Production by Provider Summary` | `Production Report` | `PRODUCTION BY` Provider + `REPORT FORMAT`"
+    },
+    {
+     "correction_id": "daily_reports.r03.k09",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s06.c01",
+     "text": "PRODUCTION BY Code / Category, with GROUP BY Provider and Office Group where wanted, reproduces the older reports Production by Codes, Production by Codes - Provider and Production by Category (formerly under Group Reports > Management Reports).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Production by Codes`, `Production by Codes - Provider`, `Production by Category` (Group Reports > Management Reports) | `Production Report` | `PRODUCTION BY` Code / Category, `GROUP BY` Provider, Office Group"
+    },
+    {
+     "correction_id": "daily_reports.r03.k10",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s03.c01",
+     "text": "Office reports each selected office on its own; Office Group gives the enterprise (group-wide) view.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`OFFICE/GROUP` | One `Office :` section per office; Office Group gives the enterprise view"
+    },
+    {
+     "correction_id": "daily_reports.r03.k11",
+     "about": "meaning",
+     "control_id": "daily_reports.r03.s09.c01",
+     "text": "Fee Schedule To Compare supplies the fee of the compare-fee column: the column is the procedure count times the fee of the chosen schedule.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Compare-fee column | Count × fee from `Fee Schedule To Compare`"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r04",
+   "name": "Collection Report",
+   "screenshots": [
+    "4.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "4.PNG only. No PROVIDER picker section on this report. Only Page Break is greyed. Blank space below OTHER OPTIONS, nothing clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r04.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PRINT FORMAT."
+    },
+    {
+     "control_id": "daily_reports.r04.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right half of the panel."
+    },
+    {
+     "control_id": "daily_reports.r04.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Section spans the full width (this report has no PROVIDER section beside it)."
+    },
+    {
+     "control_id": "daily_reports.r04.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r04.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field. No date-basis radio on this report."
+    },
+    {
+     "control_id": "daily_reports.r04.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r04.s05.c01",
+     "section": "PAYMENT TYPES",
+     "label": "Payment Types",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Read-only grey box; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r04.s06.c01",
+     "section": "COLLECTION BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider",
+      "Carrier",
+      "Code"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the row."
+    },
+    {
+     "control_id": "daily_reports.r04.s06.c02",
+     "section": "COLLECTION BY",
+     "label": "Page Break",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Small greyed-out checkbox alone in the right half of the COLLECTION BY radio row; greyed while None is selected."
+    },
+    {
+     "control_id": "daily_reports.r04.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Include Adjustments(Collection)",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "Text exactly as shown - no space before the parenthesis. Ticked by default."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r04.k01",
+     "about": "meaning",
+     "control_id": "daily_reports.r04.s05.c01",
+     "text": "The Payment Types picker restricts the report to the chosen payment codes.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Payment Types` picker | Restricts to chosen payment codes"
+    },
+    {
+     "correction_id": "daily_reports.r04.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r04.s07.c01",
+     "text": "Include Adjustments(Collection), on by default, adds the collection adjustments to the report (read from a third-party screenshot of the legacy output, whose footer carries the matching note).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Include Adjustments(Collection)` (default on) | Adds collection adjustments and the footer note"
+    },
+    {
+     "correction_id": "daily_reports.r04.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r04.s06.c01",
+     "text": "COLLECTION BY sets the grouping dimension of the report (None, Provider, Carrier or Code); Code also changes the column set.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Grouping dimension and title; By Code changes the column set"
+    },
+    {
+     "correction_id": "daily_reports.r04.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r04.s06.c01",
+     "text": "COLLECTION BY = Provider with REPORT FORMAT = Detail reproduces the older report Daily Collection.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Daily Collection` | `Collection Report` | `COLLECTION BY` Provider, Detail"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r05",
+   "name": "Deposit Slip",
+   "screenshots": [
+    "5.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "5.PNG only. No REPORT FORMAT section. CHECK TYPE (three radios) and the whole GROUP BATCH CHECKS block (header checkbox plus its two radios) are greyed in the default state where only Cash is ticked. Blank space below OTHER OPTIONS, nothing clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r05.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the panel."
+    },
+    {
+     "control_id": "daily_reports.r05.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER/USER."
+    },
+    {
+     "control_id": "daily_reports.r05.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r05.s03.c01",
+     "section": "PROVIDER/USER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, first row. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r05.s03.c02",
+     "section": "PROVIDER/USER",
+     "label": "User",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, second row. Read-only grey box; blue SELECT button (person-plus icon)."
+    },
+    {
+     "control_id": "daily_reports.r05.s04.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Transaction Date",
+      "Payment Date"
+     ],
+     "default_value": "Transaction Date",
+     "enabled": true,
+     "notes": "Date-basis selector on the first row of the section. Full-width section."
+    },
+    {
+     "control_id": "daily_reports.r05.s04.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r05.s04.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c01",
+     "section": "PAYMENT TYPES",
+     "label": "Cash",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "All seven payment-type checkboxes sit on one row; Cash is the only one ticked by default."
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c02",
+     "section": "PAYMENT TYPES",
+     "label": "Check",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c03",
+     "section": "PAYMENT TYPES",
+     "label": "Credit Card",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c04",
+     "section": "PAYMENT TYPES",
+     "label": "CareCredit",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Written as one word."
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c05",
+     "section": "PAYMENT TYPES",
+     "label": "Direct Deposit",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c06",
+     "section": "PAYMENT TYPES",
+     "label": "Internal Financing",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r05.s05.c07",
+     "section": "PAYMENT TYPES",
+     "label": "None",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Last checkbox in the payment-type row, literally labelled None."
+    },
+    {
+     "control_id": "daily_reports.r05.s06.c01",
+     "section": "CHECK TYPE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Both",
+      "Patient Checks",
+      "Insurance Checks"
+     ],
+     "default_value": "Both",
+     "enabled": false,
+     "notes": "Left half of the panel, side by side with GROUP BATCH CHECKS. Whole group greyed out (Both shown selected in grey) in this default state. Greyed while the Check payment type is unticked - the link to Check is an inference, not shown."
+    },
+    {
+     "control_id": "daily_reports.r05.s07.c01",
+     "section": "GROUP BATCH CHECKS",
+     "label": "GROUP BATCH CHECKS",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Right half of the panel. The section header itself is a checkbox: a greyed-out box sits inside the grey header bar in front of the (also greyed) header text, so the label doubles as the section title."
+    },
+    {
+     "control_id": "daily_reports.r05.s07.c02",
+     "section": "GROUP BATCH CHECKS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Batch ID(Batch Insurance Payment)",
+      "Check#"
+     ],
+     "default_value": "Batch ID(Batch Insurance Payment)",
+     "enabled": false,
+     "notes": "Row under the GROUP BATCH CHECKS header checkbox; whole group greyed out with Batch ID(Batch Insurance Payment) shown selected in grey. Text exactly as shown - no space before the parenthesis, and Check# with no space."
+    },
+    {
+     "control_id": "daily_reports.r05.s08.c01",
+     "section": "OTHER OPTIONS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Show Responsible Party",
+      "Show Patient",
+      "None"
+     ],
+     "default_value": "Show Responsible Party",
+     "enabled": true,
+     "notes": "Full-width section; all three options on one row."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "daily_reports.r05.d01",
+     "when": "PAYMENT TYPES Check is ticked",
+     "effect": "CHECK TYPE (Both / Patient Checks / Insurance Checks) unlocks; it is enabled only while Check is ticked",
+     "controls": [
+      "daily_reports.r05.s05.c02",
+      "daily_reports.r05.s06.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`CHECK TYPE` unlocks when `Check` is ticked"
+    },
+    {
+     "rule_id": "daily_reports.r05.d02",
+     "when": "the GROUP BATCH CHECKS header checkbox is ticked",
+     "effect": "its radios Batch ID(Batch Insurance Payment) / Check# unlock",
+     "controls": [
+      "daily_reports.r05.s07.c01",
+      "daily_reports.r05.s07.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`GROUP BATCH CHECKS` radios unlock with its checkbox"
+    },
+    {
+     "rule_id": "daily_reports.r05.d03",
+     "when": "OFFICE/GROUP = Office Group",
+     "effect": "the picker box selects office groups defined in Setup > Office Groups instead of offices, and its default is ALL (in Office mode the default is the logged-in OID)",
+     "controls": [
+      "daily_reports.r05.s02.c01",
+      "daily_reports.r05.s02.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "logged-in OID); `Office Group` = groups from `Setup > Office Groups` (default ALL)"
+    },
+    {
+     "rule_id": "daily_reports.r05.d04",
+     "when": "the criteria screen was opened from a saved favorite (My Favorites)",
+     "effect": "the ADD TO MY FAVORITES action button reads UPDATE MY FAVORITES",
+     "controls": [],
+     "confidence": "confirmed",
+     "evidence_quote": "The button reads `UPDATE MY FAVORITES` when the screen was opened from a saved favorite"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r05.k01",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s03.c01",
+     "text": "The Provider filter and the User filter both always apply.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Provider`, `User` | Both filters always apply"
+    },
+    {
+     "correction_id": "daily_reports.r05.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s04.c01",
+     "text": "Transaction Date = the ledger date of the payment; Payment Date = the date the payment applies to (used for back-dated payments). The vendor texts disagree on what Transaction Date is - see unresolved.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Date basis `Transaction Date` / `Payment Date` | Ledger date vs the date the payment applies to (back-dated payments)"
+    },
+    {
+     "correction_id": "daily_reports.r05.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s05.c07",
+     "text": "The None checkbox selects the payment types whose type field is blank. Which payment code falls under which PAYMENT TYPES checkbox comes from Setup > Payment/Adjustment Types.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`None` = payment types whose type field is blank. Mapping comes from `Setup > Payment/Adjustment Types`"
+    },
+    {
+     "correction_id": "daily_reports.r05.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s05.c04",
+     "text": "A payment code only appears under a PAYMENT TYPES checkbox if its Sub Type / Class are set in setup; the vendor example is a legacy Care Credit payment code that never reaches the CareCredit section.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "a payment code only appears under a type if its `Sub Type` / `Class` are set — a legacy `PMT PAT-Care Credit`"
+    },
+    {
+     "correction_id": "daily_reports.r05.k05",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s06.c01",
+     "text": "Patient Checks = checks posted in Transaction Entry; Insurance Checks = checks posted in the Insurance Payment screen.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "patient checks are those posted in Transaction Entry, insurance checks those posted in the Insurance Payment screen"
+    },
+    {
+     "correction_id": "daily_reports.r05.k06",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s08.c01",
+     "text": "The radio chooses the name shown per payment: Show Responsible Party = the family, Show Patient = the patient account, None = no names (totals only).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Name shown per payment: family, patient account, or no names (totals only)"
+    },
+    {
+     "correction_id": "daily_reports.r05.k07",
+     "about": "meaning",
+     "control_id": "daily_reports.r05.s02.c01",
+     "text": "Office = one or more offices picked from all the offices the user can access; the box defaults to the logged-in office (its OID), so the value in our capture is session data, not a fixed default.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Office` = one or more offices picked from all offices the user can access (default the"
+    },
+    {
+     "correction_id": "daily_reports.r05.k08",
+     "about": "meaning",
+     "control_id": "",
+     "text": "The PAYMENT TYPES checkboxes reproduce the older separate reports Deposit Slip - Credit Card, Deposit Slip - Care Credit and Deposit Slip - Direct Deposit.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Deposit Slip - Credit Card`, `Deposit Slip - Care Credit`, `Deposit Slip - Direct Deposit` | `Deposit Slip` | `PAYMENT TYPES`"
+    },
+    {
+     "correction_id": "daily_reports.r05.k09",
+     "about": "other",
+     "control_id": "daily_reports.r05.s05.c01",
+     "text": "Older vendor guidance calls this option \"Show Cash\"; it is the Cash checkbox of the current screen (no separate control).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "\"Show Cash\" in older guidance is today's"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r06",
+   "name": "Scheduled Production",
+   "screenshots": [
+    "6.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "6.PNG only. Only four sections (PRINT FORMAT, OFFICE/GROUP | PROVIDER, DATE RANGE); large empty area below DATE RANGE, nothing clipped. No greyed-out controls. No REPORT FORMAT, GROUP BY or OTHER OPTIONS.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r06.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the panel."
+    },
+    {
+     "control_id": "daily_reports.r06.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER."
+    },
+    {
+     "control_id": "daily_reports.r06.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r06.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r06.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field. No date-basis radio on this report."
+    },
+    {
+     "control_id": "daily_reports.r06.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r06.k01",
+     "about": "meaning",
+     "control_id": "daily_reports.r06.s04.c01",
+     "text": "The date range is meant to reach into the future: the vendor describes the report as the total production dollars on the schedule for future dates (it projects revenue for coming days and exposes slow days). The date basis itself is not stated - see unresolved.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "future days and exposes slow days — \"total production dollars on schedule for future dates\""
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r07",
+   "name": "Routing Slip",
+   "screenshots": [
+    "7.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "7.PNG only. This is the only Daily report with NO PRINT FORMAT (PDF/Excel) section. Layout: OFFICE/GROUP | PROVIDER, then DATE RANGE | REPORT BY, then full-width OPERATORY, PATIENTS, OTHER OPTIONS, SORT BY. Only greyed item: the Office Group radio. A blank strip (about 23 px) is visible between the Print Blank Routing Slip row and the action bar, so nothing appears clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r07.s01.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER. The 'Office Group' radio and its label are greyed out (disabled) on this report - the only report in the category where that is so; only Office is selectable."
+    },
+    {
+     "control_id": "daily_reports.r07.s01.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r07.s02.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r07.s03.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with REPORT BY. Field is narrower than on the full-width DATE RANGE sections; calendar icon inside the field. No date-basis radio."
+    },
+    {
+     "control_id": "daily_reports.r07.s03.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r07.s04.c01",
+     "section": "REPORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Next Scheduled Appointment",
+      "Next Scheduled Recall"
+     ],
+     "default_value": "Next Scheduled Appointment",
+     "enabled": true,
+     "notes": "Right half of the panel, beside DATE RANGE; the two options are stacked vertically, one per line."
+    },
+    {
+     "control_id": "daily_reports.r07.s05.c01",
+     "section": "OPERATORY",
+     "label": "Operatory",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r07.s06.c01",
+     "section": "PATIENTS",
+     "label": "Patient",
+     "type": "text_input",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Empty box with the lighter editable-field fill (same as the date fields, not the grey read-only picker fill); the blue SEARCH button to its right is the patient lookup. Whether the box accepts typing or is filled only through SEARCH cannot be told from the screenshot. Header is plural PATIENTS, row label singular Patient."
+    },
+    {
+     "control_id": "daily_reports.r07.s06.c02",
+     "section": "PATIENTS",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon immediately right of the Patient box (patient search / lookup)."
+    },
+    {
+     "control_id": "daily_reports.r07.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Recommended",
+      "Active Treatment Plan",
+      "Codes"
+     ],
+     "default_value": "Recommended",
+     "enabled": true,
+     "notes": "Three options stacked vertically at the left of the section, one per line."
+    },
+    {
+     "control_id": "daily_reports.r07.s07.c02",
+     "section": "OTHER OPTIONS",
+     "label": "",
+     "type": "other",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Info icon: small blue circle with a white 'i' directly after the 'Recommended' radio label (presumably a tooltip explaining Recommended); its tooltip text is not visible."
+    },
+    {
+     "control_id": "daily_reports.r07.s07.c03",
+     "section": "OTHER OPTIONS",
+     "label": "Include Completed Procedures",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "Positioned to the right (about one third across the section), level with the 'Recommended' line."
+    },
+    {
+     "control_id": "daily_reports.r07.s08.c01",
+     "section": "SORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Appointment Date",
+      "Provider (Last Name) – Appointment Date",
+      "Operatory – Appointment Date",
+      "Patient Last Name"
+     ],
+     "default_value": "Appointment Date",
+     "enabled": true,
+     "notes": "All four options on one row. The separator in options 2 and 3 is a spaced dash that is wider than the hyphen used elsewhere (e.g. Include Z-Codes), so it is transcribed as an en dash; it could be a plain hyphen."
+    },
+    {
+     "control_id": "daily_reports.r07.s08.c02",
+     "section": "SORT BY",
+     "label": "Print Blank Routing Slip",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "On its own row directly under the SORT BY radios (still inside the SORT BY section, no separate header)."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r07.k01",
+     "about": "other",
+     "control_id": "daily_reports.r07.s01.c01",
+     "text": "Office only: the Office Group radio is disabled on this report in the vendor screenshot of the criteria screen as well.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`OFFICE/GROUP` | Office only; `Office Group` is disabled"
+    },
+    {
+     "correction_id": "daily_reports.r07.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s03.c01",
+     "text": "DATE RANGE, Provider and Operatory select which appointments get a slip.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`DATE RANGE`, `Provider`, `Operatory` | Which appointments get a slip"
+    },
+    {
+     "correction_id": "daily_reports.r07.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s06.c01",
+     "text": "Patient + SEARCH limits the run to one patient; left blank, a slip prints for every patient with an appointment in the range.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Patient` + `SEARCH` | One patient; blank = every patient with an appointment in the range"
+    },
+    {
+     "correction_id": "daily_reports.r07.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s04.c01",
+     "text": "REPORT BY chooses which of the two - the next scheduled appointment or the next scheduled recall - prints in the next-appointment block of the slip.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`REPORT BY` `Next Scheduled Appointment` / `Next Scheduled Recall` | Which of the two prints in the next-appointment block"
+    },
+    {
+     "correction_id": "daily_reports.r07.k05",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s07.c02",
+     "text": "Tooltip of the info icon beside Recommended (not visible in our capture): procedure codes = the appointment codes if present, otherwise the appointment provider's default codes, otherwise blank; then treatment-plan codes from Accepted plans, otherwise from Diagnosed plans, otherwise blank.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Procedure codes: appointment codes if present, otherwise the appointment provider's default codes, otherwise blank; then treatment-plan codes from Accepted plans, otherwise from Diagnosed plans, otherwise blank"
+    },
+    {
+     "correction_id": "daily_reports.r07.k06",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s07.c01",
+     "text": "Active Treatment Plan prints the active treatment plan; Codes prints procedure codes only.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Active Treatment Plan` / `Codes` | Print the active treatment plan, or procedure codes only"
+    },
+    {
+     "correction_id": "daily_reports.r07.k07",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s07.c01",
+     "text": "The provider default codes that Recommended falls back to are set per provider (Setup > Providers > Provider Setup > Edit, routing-slip section) and print only when the appointment has no services attached.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "they print only when the appointment has no services attached"
+    },
+    {
+     "correction_id": "daily_reports.r07.k08",
+     "about": "meaning",
+     "control_id": "daily_reports.r07.s08.c02",
+     "text": "Print Blank Routing Slip prints an empty form for photocopying (outage preparation).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Print Blank Routing Slip` | Empty form for photocopying (outage preparation)"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r08",
+   "name": "Progress Notes",
+   "screenshots": [
+    "8.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "8.PNG only. Greyed in the default (Detail) state: the Appointment Date radio and both APPOINTMENTS TO INCLUDE radios. Header reads PROGRESS NOTES TO PRINT (the header font draws G like C, so the pixels look like PROCRESS). No REPORT FORMAT section. Blank space below OTHER OPTIONS, nothing clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r08.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the panel."
+    },
+    {
+     "control_id": "daily_reports.r08.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER."
+    },
+    {
+     "control_id": "daily_reports.r08.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r08.s03.c01",
+     "section": "PROVIDER",
+     "label": "Preferred Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Row label reads 'Preferred Provider' (not 'Provider') on this report although the header is PROVIDER. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r08.s04.c01",
+     "section": "PROGRESS NOTES TO PRINT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Unsigned",
+      "Missing"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Full-width section; all three options on one row."
+    },
+    {
+     "control_id": "daily_reports.r08.s05.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "DOS Date",
+      "Created On Date",
+      "Appointment Date"
+     ],
+     "default_value": "DOS Date",
+     "enabled": true,
+     "notes": "Date-basis selector on the first row of the section. The 'Appointment Date' radio and its label are greyed out (disabled) in this default state (Detail selected above); DOS Date and Created On Date are enabled. That it belongs to the Missing choice is an inference, not shown."
+    },
+    {
+     "control_id": "daily_reports.r08.s05.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r08.s05.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r08.s06.c01",
+     "section": "APPOINTMENTS TO INCLUDE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Only with Missing Progress Notes",
+      "ALL"
+     ],
+     "default_value": "Only with Missing Progress Notes",
+     "enabled": false,
+     "notes": "Whole group greyed out in this default state; 'Only with Missing Progress Notes' is shown selected in grey. Presumably becomes active for the Missing choice - inference, not shown."
+    },
+    {
+     "control_id": "daily_reports.r08.s07.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Page Break by Patient",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": ""
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "daily_reports.r08.d01",
+     "when": "PROGRESS NOTES TO PRINT = Detail (the default)",
+     "effect": "the Appointment Date date-basis radio and the APPOINTMENTS TO INCLUDE radios are greyed",
+     "controls": [
+      "daily_reports.r08.s04.c01",
+      "daily_reports.r08.s05.c01",
+      "daily_reports.r08.s06.c01"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Appointment Date` and `APPOINTMENTS TO INCLUDE` are greyed under Detail"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r08.k01",
+     "about": "label",
+     "control_id": "daily_reports.r08.s03.c01",
+     "text": "The provider row label really is `Preferred Provider` (the vendor screenshot of the criteria screen reads the same).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "The provider row label really is `Preferred Provider`"
+    },
+    {
+     "correction_id": "daily_reports.r08.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r08.s03.c01",
+     "text": "The Preferred Provider picker filters by the patient's preferred provider.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Preferred Provider` picker | Filters by the patient's preferred provider"
+    },
+    {
+     "correction_id": "daily_reports.r08.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r08.s04.c01",
+     "text": "PROGRESS NOTES TO PRINT folds three older reports into one: Detail = Patient Progress Notes, Unsigned = Unsigned Progress Notes Report, Missing = Missing Progress Notes.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Patient Progress Notes`, `Unsigned Progress Notes Report`, `Missing Progress Notes` | `Progress Notes` | `PROGRESS NOTES TO PRINT` Detail / Unsigned / Missing"
+    },
+    {
+     "correction_id": "daily_reports.r08.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r08.s04.c01",
+     "text": "Detail prints every note in the date range.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PROGRESS NOTES TO PRINT` Detail | Every note in the range"
+    },
+    {
+     "correction_id": "daily_reports.r08.k05",
+     "about": "meaning",
+     "control_id": "daily_reports.r08.s04.c01",
+     "text": "Unsigned lists the notes that were entered but not signed, for the chosen range and criteria.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Unsigned | Notes entered but not signed, for the chosen range and criteria."
+    },
+    {
+     "correction_id": "daily_reports.r08.k06",
+     "about": "meaning",
+     "control_id": "daily_reports.r08.s07.c01",
+     "text": "Page Break by Patient prints one patient per page.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Page Break by Patient` | One patient per page"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r09",
+   "name": "Production Analysis Report",
+   "screenshots": [
+    "9.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "9.PNG only. Visible dependency: with ANALYSIS BY = Category the CATEGORY picker is active and the CARRIER picker's SELECT button is greyed. No REPORT FORMAT section; ANALYSIS BY occupies that top-left slot. Large empty area below CATEGORY / CARRIER, nothing clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r09.s01.c01",
+     "section": "ANALYSIS BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Category",
+      "Carrier"
+     ],
+     "default_value": "Category",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PRINT FORMAT (the position where other reports show REPORT FORMAT)."
+    },
+    {
+     "control_id": "daily_reports.r09.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right half of the panel."
+    },
+    {
+     "control_id": "daily_reports.r09.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER."
+    },
+    {
+     "control_id": "daily_reports.r09.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r09.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r09.s05.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field. No date-basis radio on this report."
+    },
+    {
+     "control_id": "daily_reports.r09.s05.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r09.s06.c01",
+     "section": "CATEGORY",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with CARRIER. Unlabelled read-only grey box; blue (active) SELECT button (single-person icon). Active while ANALYSIS BY = Category."
+    },
+    {
+     "control_id": "daily_reports.r09.s07.c01",
+     "section": "CARRIER",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": false,
+     "notes": "Right half of the panel. Unlabelled read-only grey box showing ALL (box looks the same as the CATEGORY box); its SELECT button (single-person icon) is greyed out / disabled while ANALYSIS BY = Category. That it becomes active when Carrier is chosen is implied but not shown."
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r09.k01",
+     "about": "meaning",
+     "control_id": "daily_reports.r09.s06.c01",
+     "text": "Category on this report (ANALYSIS BY = Category, the CATEGORY picker) means the ADA category of the procedure code, as set in Setup > Procedure Codes. The value list of the picker itself is not documented.",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`Category` = ADA category of the code (from `Setup > Procedure Codes`)"
+    },
+    {
+     "correction_id": "daily_reports.r09.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r09.s01.c01",
+     "text": "ANALYSIS BY chooses between the two analyses of the report: the production mix by ADA category or by carrier.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Production mix by ADA category or by carrier"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r10",
+   "name": "Daily Audit",
+   "screenshots": [
+    "10.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "10.PNG only. PATIENT HAS (radio) and BUT MISSING (checkboxes) together form the audit rule. On this report SORT BY comes before GROUP BY. Header reads BUT MISSING (rendered like MISSINC by the header font). Only Page Break is greyed. Blank space (about 57 px) below GROUP BY, nothing clipped.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r10.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the panel."
+    },
+    {
+     "control_id": "daily_reports.r10.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER."
+    },
+    {
+     "control_id": "daily_reports.r10.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r10.s03.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r10.s04.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field. No date-basis radio on this report."
+    },
+    {
+     "control_id": "daily_reports.r10.s04.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r10.s05.c01",
+     "section": "PATIENT HAS",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "ALL",
+      "Appointment",
+      "Transaction in Ledger",
+      "Progress Notes"
+     ],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section; all four options on one row."
+    },
+    {
+     "control_id": "daily_reports.r10.s06.c01",
+     "section": "BUT MISSING",
+     "label": "Appointment",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": "All four BUT MISSING checkboxes sit on one row and all are ticked by default."
+    },
+    {
+     "control_id": "daily_reports.r10.s06.c02",
+     "section": "BUT MISSING",
+     "label": "Transaction in Ledger",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r10.s06.c03",
+     "section": "BUT MISSING",
+     "label": "Progress Notes",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r10.s06.c04",
+     "section": "BUT MISSING",
+     "label": "Progress Notes with Signature",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "checked",
+     "enabled": true,
+     "notes": ""
+    },
+    {
+     "control_id": "daily_reports.r10.s07.c01",
+     "section": "SORT BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Date",
+      "Patient Lastname",
+      "Provider"
+     ],
+     "default_value": "Date",
+     "enabled": true,
+     "notes": "'Patient Lastname' is written with Lastname as one word."
+    },
+    {
+     "control_id": "daily_reports.r10.s08.c01",
+     "section": "GROUP BY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "None",
+      "Provider"
+     ],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the row."
+    },
+    {
+     "control_id": "daily_reports.r10.s08.c02",
+     "section": "GROUP BY",
+     "label": "Page Break",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": false,
+     "notes": "Small greyed-out checkbox alone in the right half of the GROUP BY radio row; greyed while None is selected."
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "daily_reports.r10.d01",
+     "when": "GROUP BY = Provider",
+     "effect": "Page Break is ticked automatically, so each provider gets only their own list",
+     "controls": [
+      "daily_reports.r10.s08.c01",
+      "daily_reports.r10.s08.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "`Page Break` is auto-ticked when `GROUP BY` = Provider"
+    },
+    {
+     "rule_id": "daily_reports.r10.d02",
+     "when": "OFFICE/GROUP = Office Group",
+     "effect": "the picker box selects office groups defined in Setup > Office Groups instead of offices, and its default is ALL (in Office mode the default is the logged-in OID)",
+     "controls": [
+      "daily_reports.r10.s02.c01",
+      "daily_reports.r10.s02.c02"
+     ],
+     "confidence": "confirmed",
+     "evidence_quote": "logged-in OID); `Office Group` = groups from `Setup > Office Groups` (default ALL)"
+    }
+   ],
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r10.k01",
+     "about": "meaning",
+     "control_id": "daily_reports.r10.s05.c01",
+     "text": "PATIENT HAS (choose one) sets the population: patients with that record at the selected office(s) in the date range; ALL = any of the three records.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Population: patients with that record at the selected office(s) in the range; ALL = any of the three"
+    },
+    {
+     "correction_id": "daily_reports.r10.k02",
+     "about": "meaning",
+     "control_id": "",
+     "text": "BUT MISSING (any combination of its four checkboxes) sets the tests applied: a row prints when a ticked item is missing.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Tests applied; a row prints when a ticked item is missing"
+    },
+    {
+     "correction_id": "daily_reports.r10.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r10.s07.c01",
+     "text": "SORT BY Date uses the date type of the PATIENT HAS choice (with ALL: the appointment date); Patient Lastname sorts within each office.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Date = the date type of the `PATIENT HAS` choice (ALL → appointment date); Lastname sorts within each office"
+    },
+    {
+     "correction_id": "daily_reports.r10.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r10.s06.c02",
+     "text": "Transaction in Ledger only counts procedure codes flagged Visit Code: a posted procedure whose code is not flagged Visit Code is still reported as a missing ledger transaction.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "a posted procedure still shows X under `Ledger Transaction` when its code is not flagged `Visit Code`"
+    },
+    {
+     "correction_id": "daily_reports.r10.k05",
+     "about": "meaning",
+     "control_id": "",
+     "text": "The audit matches appointment, ledger transaction and progress note within the same office and on the same day.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "matching is same-office and same-day"
+    },
+    {
+     "correction_id": "daily_reports.r10.k06",
+     "about": "meaning",
+     "control_id": "daily_reports.r10.s02.c01",
+     "text": "Office = one or more offices picked from all the offices the user can access; the box defaults to the logged-in office (its OID), so the value in our capture is session data, not a fixed default.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Office` = one or more offices picked from all offices the user can access (default the"
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r11",
+   "name": "Claims Printed",
+   "screenshots": [
+    "11.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "11.PNG only. Large empty area below CARRIER, nothing clipped. No greyed-out controls.",
+   "controls": [
+    {
+     "control_id": "daily_reports.r11.s01.c01",
+     "section": "REPORT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Detail",
+      "Summary"
+     ],
+     "default_value": "Detail",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PRINT FORMAT."
+    },
+    {
+     "control_id": "daily_reports.r11.s02.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Right half of the panel."
+    },
+    {
+     "control_id": "daily_reports.r11.s03.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER."
+    },
+    {
+     "control_id": "daily_reports.r11.s03.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r11.s04.c01",
+     "section": "PROVIDER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r11.s05.c01",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field. No date-basis radio on this report."
+    },
+    {
+     "control_id": "daily_reports.r11.s05.c02",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r11.s06.c01",
+     "section": "CARRIER",
+     "label": "Carriers",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Full-width section. Header is singular CARRIER, row label is plural 'Carriers'. Read-only grey box; blue SELECT button (single-person icon)."
+    }
+   ]
+  },
+  {
+   "report_id": "daily_reports.r12",
+   "name": "Special Transaction Report",
+   "screenshots": [
+    "12.PNG"
+   ],
+   "possibly_truncated": false,
+   "actions": [
+    "CLEAR CRITERIA",
+    "PRINT / PREVIEW",
+    "ADD TO MY FAVORITES"
+   ],
+   "notes": "12.PNG only. Layout pairs: OFFICE/GROUP | PROVIDER/USER; DATE RANGE | PATIENT NAME RANGE; EXCLUDE PATIENT TYPE | PAYMENT/ADJ CODES; INSURANCE PLANS/SUB TYPES | CODE/CATEGORY; then full-width OTHER OPTIONS. Truncation flag is precautionary: the criteria fill the fixed-height area completely and the last visible row (Group By) runs straight into the PRINT / PREVIEW bar with no bottom border and no blank strip (the row measures 26 px against 28-29 px for comparable rows), so the content is at or just over the visible height. No control is visibly cut and no scrollbar is drawn, but any further rows below Group By would be hidden. Greyed in the default state: the From / To age boxes and the amount value box. Headers DATE RANGE, PATIENT NAME RANGE and CODE/CATEGORY are transcribed with G (the header font draws G like C).",
+   "controls": [
+    {
+     "control_id": "daily_reports.r12.s01.c01",
+     "section": "PRINT FORMAT",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "PDF",
+      "Excel"
+     ],
+     "default_value": "PDF",
+     "enabled": true,
+     "notes": "Full-width section at the top of the panel."
+    },
+    {
+     "control_id": "daily_reports.r12.s02.c01",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Office",
+      "Office Group"
+     ],
+     "default_value": "Office",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PROVIDER/USER."
+    },
+    {
+     "control_id": "daily_reports.r12.s02.c02",
+     "section": "OFFICE/GROUP",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "108",
+     "enabled": true,
+     "notes": "Unlabelled read-only grey box under the Office / Office Group radios; blue SELECT button (building icon)."
+    },
+    {
+     "control_id": "daily_reports.r12.s03.c01",
+     "section": "PROVIDER/USER",
+     "label": "Provider",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, first row. Read-only grey box; blue SELECT button (single-person icon)."
+    },
+    {
+     "control_id": "daily_reports.r12.s03.c02",
+     "section": "PROVIDER/USER",
+     "label": "User",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Right half of the panel, second row. Read-only grey box; blue SELECT button (person-plus icon)."
+    },
+    {
+     "control_id": "daily_reports.r12.s04.c01",
+     "section": "DATE RANGE",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Transaction Date",
+      "Service Date"
+     ],
+     "default_value": "Transaction Date",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PATIENT NAME RANGE. Date-basis selector on the first row of the section."
+    },
+    {
+     "control_id": "daily_reports.r12.s04.c02",
+     "section": "DATE RANGE",
+     "label": "Start Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Narrower field than on the full-width DATE RANGE sections; calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r12.s04.c03",
+     "section": "DATE RANGE",
+     "label": "End Date",
+     "type": "date_input",
+     "options": [],
+     "default_value": "11/21/2026",
+     "enabled": true,
+     "notes": "Calendar icon inside the field."
+    },
+    {
+     "control_id": "daily_reports.r12.s05.c01",
+     "section": "PATIENT NAME RANGE",
+     "label": "Start Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "AAAAA",
+     "enabled": true,
+     "notes": "Right half of the panel. Editable-style (lighter) box pre-filled with AAAAA; blue SEARCH button to its right."
+    },
+    {
+     "control_id": "daily_reports.r12.s05.c02",
+     "section": "PATIENT NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon right of the Start Name box (patient lookup for the start of the name range)."
+    },
+    {
+     "control_id": "daily_reports.r12.s05.c03",
+     "section": "PATIENT NAME RANGE",
+     "label": "End Name",
+     "type": "text_input",
+     "options": [],
+     "default_value": "ZZZZZ",
+     "enabled": true,
+     "notes": "Editable-style (lighter) box pre-filled with ZZZZZ; blue SEARCH button to its right."
+    },
+    {
+     "control_id": "daily_reports.r12.s05.c04",
+     "section": "PATIENT NAME RANGE",
+     "label": "SEARCH",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with magnifier icon right of the End Name box (patient lookup for the end of the name range)."
+    },
+    {
+     "control_id": "daily_reports.r12.s06.c01",
+     "section": "EXCLUDE PATIENT TYPE",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with PAYMENT/ADJ CODES. Unlabelled read-only grey box showing 'None' (mixed case); blue SELECT button (person-plus icon). No NONE button here."
+    },
+    {
+     "control_id": "daily_reports.r12.s07.c01",
+     "section": "PAYMENT/ADJ CODES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "None",
+     "enabled": true,
+     "notes": "Right half of the panel. Unlabelled read-only grey box showing 'None' (mixed case); blue SELECT button (building icon), followed by a NONE button."
+    },
+    {
+     "control_id": "daily_reports.r12.s07.c02",
+     "section": "PAYMENT/ADJ CODES",
+     "label": "NONE",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with circle-slash (ban) icon, right of the SELECT button; presumably resets the selection to None."
+    },
+    {
+     "control_id": "daily_reports.r12.s08.c01",
+     "section": "INSURANCE PLANS/SUB TYPES",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Left half of the panel, side by side with CODE/CATEGORY. Unlabelled read-only grey box; blue SELECT button (building icon). No NONE button here."
+    },
+    {
+     "control_id": "daily_reports.r12.s09.c01",
+     "section": "CODE/CATEGORY",
+     "label": "",
+     "type": "radio_group",
+     "options": [
+      "Code",
+      "Category"
+     ],
+     "default_value": "Code",
+     "enabled": true,
+     "notes": "Right half of the panel; first row of the section."
+    },
+    {
+     "control_id": "daily_reports.r12.s09.c02",
+     "section": "CODE/CATEGORY",
+     "label": "",
+     "type": "picker",
+     "options": [],
+     "default_value": "ALL",
+     "enabled": true,
+     "notes": "Row under the Code / Category radios. Unlabelled read-only grey box; blue SELECT button (building icon), followed by a NONE button."
+    },
+    {
+     "control_id": "daily_reports.r12.s09.c03",
+     "section": "CODE/CATEGORY",
+     "label": "NONE",
+     "type": "button",
+     "options": [],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Blue button with circle-slash (ban) icon, right of the SELECT button; presumably sets the code/category selection to none."
+    },
+    {
+     "control_id": "daily_reports.r12.s10.c01",
+     "section": "OTHER OPTIONS",
+     "label": "Age Range",
+     "type": "checkbox",
+     "options": [],
+     "default_value": "unchecked",
+     "enabled": true,
+     "notes": "First cell of the first OTHER OPTIONS row; followed on the same row by the From and To boxes."
+    },
+    {
+     "control_id": "daily_reports.r12.s10.c02",
+     "section": "OTHER OPTIONS",
+     "label": "From",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0",
+     "enabled": false,
+     "notes": "Right-aligned value in a box with the grey read-only/disabled fill (same grey as the picker boxes) while Age Range is unticked; presumably editable once Age Range is ticked - inference."
+    },
+    {
+     "control_id": "daily_reports.r12.s10.c03",
+     "section": "OTHER OPTIONS",
+     "label": "To",
+     "type": "number_input",
+     "options": [],
+     "default_value": "999",
+     "enabled": false,
+     "notes": "Right-aligned value in a box with the grey read-only/disabled fill while Age Range is unticked."
+    },
+    {
+     "control_id": "daily_reports.r12.s10.c04",
+     "section": "OTHER OPTIONS",
+     "label": "Amount",
+     "type": "dropdown",
+     "options": [],
+     "default_value": "All Amount",
+     "enabled": true,
+     "notes": "list collapsed - other values not visible. Right half of the same row as Age Range / From / To; light editable fill with a down chevron."
+    },
+    {
+     "control_id": "daily_reports.r12.s10.c05",
+     "section": "OTHER OPTIONS",
+     "label": "",
+     "type": "number_input",
+     "options": [],
+     "default_value": "0",
+     "enabled": false,
+     "notes": "Unlabelled numeric box immediately right of the Amount dropdown; right-aligned 0 with the grey read-only/disabled fill while the dropdown shows 'All Amount' (presumably the comparison amount for the other dropdown choices - inference)."
+    },
+    {
+     "control_id": "daily_reports.r12.s10.c06",
+     "section": "OTHER OPTIONS",
+     "label": "Group By",
+     "type": "radio_group",
+     "options": [
+      "Code",
+      "Username",
+      "Insurance Plan",
+      "Transaction Provider"
+     ],
+     "default_value": "Code",
+     "enabled": true,
+     "notes": "Second row of OTHER OPTIONS; 'Group By' is a row label here, not a grey section header. This is the last visible row, flush against the action bar."
+    },
+    {
+     "control_id": "daily_reports.r12.x01",
+     "section": "OTHER OPTIONS",
+     "label": "Sort By",
+     "type": "radio_group",
+     "options": [
+      "Patient LastName",
+      "Patient ID",
+      "Date"
+     ],
+     "default_value": "",
+     "enabled": true,
+     "notes": "Row hidden below the captured area: our capture ends at Group By, flush against the action bar, and this row sits directly below it. It orders the lines inside each group. The legacy default is not documented.",
+     "origin": "vendor_doc",
+     "confidence": "confirmed",
+     "options_unknown": false,
+     "evidence_quote": "A `Sort By` row (`Patient LastName` / `Patient ID` / `Date`) exists below `Group By`",
+     "source_document": "research/legacy_report_outputs_daily_my.md"
+    }
+   ],
+   "dynamic_rules": [
+    {
+     "rule_id": "daily_reports.r12.d01",
+     "when": "CODE/CATEGORY = Code / Category",
+     "effect": "the picker box under the radios selects procedure codes (Code) or ADA categories (Category)",
+     "controls": [
+      "daily_reports.r12.s09.c01",
+      "daily_reports.r12.s09.c02"
+     ],
+     "confidence": "likely",
+     "evidence_quote": "Procedure codes, or ADA categories; None leaves procedures out"
+    },
+    {
+     "rule_id": "daily_reports.r12.d02",
+     "when": "the criteria screen was opened from a saved favorite (My Favorites)",
+     "effect": "the ADD TO MY FAVORITES action button reads UPDATE MY FAVORITES",
+     "controls": [],
+     "confidence": "confirmed",
+     "evidence_quote": "The button reads `UPDATE MY FAVORITES` when the screen was opened from a saved favorite"
+    }
+   ],
+   "possibly_truncated_screenshot": true,
+   "corrections": [
+    {
+     "correction_id": "daily_reports.r12.k01",
+     "about": "truncation",
+     "control_id": "",
+     "text": "The capture is cut off below Group By: the transcription is short exactly one row - Sort By (Patient LastName / Patient ID / Date) - which sits below Group By. With that row (see added_controls) the criteria panel is complete.",
+     "resolves_truncation": true,
+     "confidence": "confirmed",
+     "evidence_quote": "Our `Special Transaction Report` transcription is short one row:** a `Sort By` (`Patient LastName` / `Patient ID` /"
+    },
+    {
+     "correction_id": "daily_reports.r12.k02",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s03.c01",
+     "text": "The Provider and User pickers select the transactions recorded under those providers and / or users.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Provider`, `User` | Transactions recorded under those providers and / or users"
+    },
+    {
+     "correction_id": "daily_reports.r12.k03",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s03.c01",
+     "text": "Provider on this report is the transaction provider (printed as Tran Prdr / Transaction Provider).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "Special Transaction Report | `Tran Prdr` / `Transaction Provider`"
+    },
+    {
+     "correction_id": "daily_reports.r12.k04",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s04.c01",
+     "text": "Transaction Date = the date the transaction was entered; Service Date = the date the service was completed. The vendor texts disagree on what Transaction Date is - see unresolved.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Date basis `Transaction Date` / `Service Date` | Entered date vs completed date"
+    },
+    {
+     "correction_id": "daily_reports.r12.k05",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s05.c01",
+     "text": "PATIENT NAME RANGE is an alphabetical range; entering the same patient as start and end limits the report to that one patient.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "Alphabetical range; enter the same patient twice for one patient"
+    },
+    {
+     "correction_id": "daily_reports.r12.k06",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s06.c01",
+     "text": "EXCLUDE PATIENT TYPE works on the user-defined patient types (not on the ortho-patient flag behind PATIENT TYPE on the Daily Journal).",
+     "resolves_truncation": false,
+     "confidence": "likely",
+     "evidence_quote": "`EXCLUDE PATIENT TYPE` (Special Transaction Report) and the `Pat Type` column are the user-defined patient types"
+    },
+    {
+     "correction_id": "daily_reports.r12.k07",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s07.c01",
+     "text": "Selecting codes adds those payment / adjustment codes to the report; None (the default - there is a NONE button) leaves payments and adjustments out.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PAYMENT/ADJ CODES` (default None; `NONE` button) | Adds chosen payment / adjustment codes; None leaves them out"
+    },
+    {
+     "correction_id": "daily_reports.r12.k08",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s08.c01",
+     "text": "INSURANCE PLANS/SUB TYPES filters by specific insurance plans or by sub types (medical / dental).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`INSURANCE PLANS/SUB TYPES` | Specific plans or subtypes (medical / dental)"
+    },
+    {
+     "correction_id": "daily_reports.r12.k09",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s09.c02",
+     "text": "The box selects procedure codes or ADA categories (default ALL); None (there is a NONE button) leaves procedures out of the report.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`CODE/CATEGORY` Code / Category (default ALL; `NONE` button) | Procedure codes, or ADA categories; None leaves procedures out"
+    },
+    {
+     "correction_id": "daily_reports.r12.k10",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s10.c01",
+     "text": "Age Range (From / To) is a filter on the age of the patient.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Age Range` From / To | Patient age filter"
+    },
+    {
+     "correction_id": "daily_reports.r12.k11",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s10.c06",
+     "text": "Group By (Code / Username / Insurance Plan / Transaction Provider) sets the group header and the order of the groups.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Group By` Code / Username / Insurance Plan / Transaction Provider | Group header and order"
+    },
+    {
+     "correction_id": "daily_reports.r12.k12",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s01.c01",
+     "text": "PRINT FORMAT = Excel downloads a file; the vendor article calls it a CSV in Excel format.",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`PRINT FORMAT` = `Excel` | Downloads a file (`Denticon_DlySpecialTransactionRptXls`; the article calls it a CSV in Excel format)"
+    },
+    {
+     "correction_id": "daily_reports.r12.k13",
+     "about": "meaning",
+     "control_id": "daily_reports.r12.s02.c01",
+     "text": "Office Group reproduces the older group-level report (Group Reports > Daily Reports > Special Transaction Report).",
+     "resolves_truncation": false,
+     "confidence": "confirmed",
+     "evidence_quote": "`Special Transaction Report` (Group Reports > Daily Reports) | `Special Transaction Report` | Office Group"
+    }
+   ]
+  }
+ ],
+ "supplement_unresolved": [
+  {
+   "report_id": "daily_reports.r01",
+   "question": "No vendor description of this report was found (only a glossary entry). What the Provider picker filters and what the single Report Date selects are unverified; the document reconstructs the report from comparable systems only."
+  },
+  {
+   "report_id": "daily_reports.r02",
+   "question": "What unlocks Show AR? It is greyed in our capture and in every vendor screenshot seen (Detail, Office, any transaction mix); the enabling rule is unknown. On the Executive Summary (Monthly Reports) the same option appends Total A/R; whether it does the same here is not stated."
+  },
+  {
+   "report_id": "daily_reports.r02",
+   "question": "What does Include Resp. Party Type add? \"The responsible-party type on each line\" is unverified."
+  },
+  {
+   "report_id": "daily_reports.r02",
+   "question": "Exact PATIENT TYPE rule: does General mean non-ortho patients only and Ortho ortho-flagged patients only? Unverified."
+  },
+  {
+   "report_id": "daily_reports.r02",
+   "question": "Transaction Date definition conflict inside the vendor texts: the editable ledger / posting date versus the date entered. Affects the date basis of Daily Journal, Deposit Slip and Special Transaction Report."
+  },
+  {
+   "report_id": "daily_reports.r03",
+   "question": "The criteria shown for PRODUCTION BY = Category and PRODUCTION BY = Carrier were not seen; category / carrier pickers are expected but unverified. The document says REPORT FORMAT Detail is selectable only for PRODUCTION BY = Provider, but that cannot be checked for Category and Carrier, whose states were not seen."
+  },
+  {
+   "report_id": "daily_reports.r03",
+   "question": "Is the SORT BY section (Transaction Date / Patient Lastname) tied to PRODUCTION BY = Provider or to REPORT FORMAT = Detail? The state was seen only with Detail selected. The default of SORT BY and of the PROVIDERS picker, and the state of Page Break and Fee Schedule To Compare under PRODUCTION BY = Provider, are not documented. An older (2016) sample of Production by Provider in the Summary format prints a compare-fee column, so the greying of Include UCR / Include Z-Codes may belong to REPORT FORMAT = Detail rather than to PRODUCTION BY = Provider."
+  },
+  {
+   "report_id": "daily_reports.r03",
+   "question": "With GROUP BY = Carrier: does the Page Break checkbox get a carrier label and does a carrier picker appear? Was Page Break by Provider ticked automatically or by the user in the sample?"
+  },
+  {
+   "report_id": "daily_reports.r03",
+   "question": "Fee Schedule To Compare: the value list is not documented; the greyed default is presumably just the first fee schedule in the tenant list (unverified)."
+  },
+  {
+   "report_id": "daily_reports.r04",
+   "question": "What enables Page Break (greyed while COLLECTION BY = None)? Do provider / carrier / code pickers appear for the other COLLECTION BY choices? The By Provider output echoes a Provider criterion in its footer, but the base screen has no provider picker."
+  },
+  {
+   "report_id": "daily_reports.r04",
+   "question": "REPORT FORMAT Summary is unverified, and whether COLLECTION BY Provider uses the transaction provider or the allocation provider is not stated."
+  },
+  {
+   "report_id": "daily_reports.r05",
+   "question": "What enables the GROUP BATCH CHECKS header checkbox (greyed in our capture with only Cash ticked)? Presumably the Check payment type - not stated. Its effect on the output is unverified."
+  },
+  {
+   "report_id": "daily_reports.r06",
+   "question": "Which dates does DATE RANGE select - appointment dates for scheduled production and posting dates for actual production? The document defines the three figures (scheduled, actual, estimated production) but not the date basis, and no vendor screenshot of this criteria screen or of the output is cited."
+  },
+  {
+   "report_id": "daily_reports.r07",
+   "question": "Scope question: the Routing Slip can also be printed from the Patient Overview (Print Reports > Routing Slip) and from the Scheduler (right-click Print > Routing Slip), the latter with its own options - Current appointment only / all appointments in the day for the current location / for all locations, an Appointment Date and Include Completed Procedures. They are not part of the Daily Reports criteria screen; decide whether the new module covers them."
+  },
+  {
+   "report_id": "daily_reports.r07",
+   "question": "Block appointments for events reportedly produce no slip - seen only as a search-result summary of a vendor article, not read in full. Does the appointment selection (DATE RANGE / Provider / Operatory) skip them?"
+  },
+  {
+   "report_id": "daily_reports.r07",
+   "question": "SORT BY option spelling: our transcription could not tell whether the separator in the options Provider (Last Name) – Appointment Date and Operatory – Appointment Date is an en dash (as transcribed) or a plain hyphen; the document only repeats our transcription, so the exact legacy spelling stays open."
+  },
+  {
+   "report_id": "daily_reports.r08",
+   "question": "Does Missing unlock the Appointment Date basis and APPOINTMENTS TO INCLUDE (unverified - both are greyed under Detail)? What is their state under Unsigned? Does ALL list every appointment with its note status (unverified)? The document glosses the DOS Date / Created On Date basis as the note date of service / the note entry date, from our own transcription only - no vendor source is given."
+  },
+  {
+   "report_id": "daily_reports.r09",
+   "question": "Does ANALYSIS BY = Carrier enable the CARRIER picker and grey the CATEGORY picker? Only our default-state capture suggests it; there is no vendor source. Is the CATEGORY list the 14 categories of the SEARCH CODE dialog (unverified)?"
+  },
+  {
+   "report_id": "daily_reports.r10",
+   "question": "Which provider does the Provider picker / column mean? The vendor article says the Preferred Provider and also defines it as the provider on the transaction date (conflict)."
+  },
+  {
+   "report_id": "daily_reports.r10",
+   "question": "Page Break is greyed while GROUP BY = None and is ticked automatically for GROUP BY = Provider: can the user untick it then, or does it stay locked? Not stated."
+  },
+  {
+   "report_id": "daily_reports.r10",
+   "question": "Transaction in Ledger: one vendor text says a posted procedure counts only when its code is flagged Visit Code, another that the report shows transactions that are Ledger Codes - must a code carry both flags to count?"
+  },
+  {
+   "report_id": "daily_reports.r11",
+   "question": "No vendor description of Claims Printed exists: the date basis of DATE RANGE (printed, created or sent date), whether e-claims are included, and what Detail / Summary and the Provider filter do are all inferred."
+  },
+  {
+   "report_id": "daily_reports.r12",
+   "question": "Amount dropdown: values other than All Amount are not documented, nor when the amount value box beside it unlocks."
+  },
+  {
+   "report_id": "daily_reports.r12",
+   "question": "EXCLUDE PATIENT TYPE: the vendor article describes it as including only the selected patient types, which conflicts with the label - is it an include or an exclude filter? The criteria block printed at the top of the PDF output labels it Excluded Pat Types."
+  },
+  {
+   "report_id": "daily_reports.r12",
+   "question": "Do the Age Range From / To boxes unlock when Age Range is ticked (not stated)? The default of the hidden Sort By row is not documented. Is the Category list of CODE/CATEGORY the 14 SEARCH CODE categories (unverified)?"
+  },
+  {
+   "report_id": "",
+   "question": "Picker dialogs the document does not describe: Provider, User, Operatory, Payment Types, Carrier / Carriers, Category, Exclude Patient Type, Payment/Adj Codes, Insurance Plans/Sub Types, the patient SEARCH, and the Office Group variant of the office picker. For SEARCH CODE only INCLUDE ALL, CATEGORY, SORT BY and the dual list are listed - whether it also has SEARCH TEXT / CLEAR SEARCH, >> / << and APPLY / CANCEL like SEARCH OFFICES is not stated."
+  },
+  {
+   "report_id": "",
+   "question": "Older build: before October 2021 Daily Reports also listed Executive Summary and Executive Summary by Provider (now Monthly Reports > Executive Summary) and Appointment Pull Chart List (not in the current list). Not added here; confirm they are out of scope for this category."
+  },
+  {
+   "report_id": "",
+   "question": "The UPDATE MY FAVORITES relabel is recorded on Deposit Slip and Special Transaction Report, and the Office / Office Group semantics on Deposit Slip and Daily Audit - the reports whose vendor screenshots / articles are cited. Do both hold for every report screen of the category (the document presents them as general)?"
+  },
+  {
+   "report_id": "",
+   "question": "Rights: the vendor lists Reports - Daily Reports Screen Full Control (run) and View Only (see the report list and the parameters only). How View Only shows on the criteria screen (PRINT / PREVIEW hidden or disabled?) is not described."
+  },
+  {
+   "report_id": "",
+   "question": "Provider means different things per report (provider on the ledger line, provider of record on the procedure, transaction provider, preferred provider). For Collection Report, Scheduled Production, Routing Slip, Production Analysis Report, Claims Printed and Peg Board Day Sheet the document gives no vendor statement of which provider the picker or grouping uses. The vendor glossary also says that Provider in reports means the patient's preferred dentist, not the treating clinician, which does not match the per-report meanings recorded here."
+  },
+  {
+   "report_id": "",
+   "question": "The vendor end-of-day training deck (a 17 MB PDF) and three report webinars could not be read; they may show further criteria states of the Daily Reports screens."
+  }
+ ],
+ "supplement_source_document": "research/legacy_report_outputs_daily_my.md",
+ "screenshot_control_count": 151,
+ "vendor_doc_control_count": 3
+}
